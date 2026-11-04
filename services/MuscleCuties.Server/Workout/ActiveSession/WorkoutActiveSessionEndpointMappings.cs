@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.Server.Workout.ActiveSession;
 
@@ -12,6 +13,61 @@ public static class WorkoutActiveSessionEndpointMappings
     public static IEndpointRouteBuilder MapWorkoutActiveSessionEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(SessionsRoute).RequireAuthorization();
+
+        group.MapGet("/planned/{workoutDayId:int}/history", async (int workoutDayId, ClaimsPrincipal principal,
+            [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            try { return Results.Ok(await useCase.GetPlannedSessionHistoryAsync(userId, workoutDayId, cancellationToken).ConfigureAwait(false)); }
+            catch (InvalidOperationException) { return Results.Conflict(); }
+        });
+
+        group.MapGet("/planned/{workoutDayId:int}", async (int workoutDayId, ClaimsPrincipal principal,
+            [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            var snapshot = await useCase.GetPlannedSessionAsync(userId, workoutDayId, cancellationToken).ConfigureAwait(false);
+            return snapshot is null ? Results.NotFound() : Results.Ok(snapshot);
+        });
+
+        group.MapPost("/{sessionId:guid}/timing/resume", async (Guid sessionId, TimingResumeBody body,
+            HttpContext context, [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(context.User, out var userId)) return Results.Unauthorized();
+            try
+            {
+                var result = await useCase.ResumeTimingAsync(userId, new ResumeWorkoutTimingCommand(
+                    IdempotencyKeyResolver.Resolve(context, body.IdempotencyKey), sessionId), cancellationToken).ConfigureAwait(false);
+                return result is null ? Results.NotFound() : Results.Ok(result);
+            }
+            catch (WorkoutActivityNoLongerSafeException exception)
+            { return Results.Conflict(new { code = "WorkoutActivityNoLongerSafe", message = exception.Message }); }
+            catch (WorkoutSessionStartBlockedException exception)
+            { return Results.Conflict(new { code = exception.Code, message = exception.Message }); }
+            catch (PostgresIdempotencyConflictException) { return Results.Conflict(); }
+            catch (InvalidOperationException) { return Results.Conflict(); }
+            catch (ArgumentException) { return Results.BadRequest(); }
+        });
+
+        group.MapPost("/{sessionId:guid}/timing/checkpoint", async (Guid sessionId, TimingCheckpointBody body,
+            HttpContext context, [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(context.User, out var userId)) return Results.Unauthorized();
+            try
+            {
+                var result = await useCase.CheckpointTimingAsync(userId, new CheckpointWorkoutTimingCommand(
+                    IdempotencyKeyResolver.Resolve(context, body.IdempotencyKey), sessionId, body.IntervalId,
+                    body.MeasuredSeconds, body.Pause), cancellationToken).ConfigureAwait(false);
+                return result is null ? Results.NotFound() : Results.Ok(result);
+            }
+            catch (WorkoutTimingIntervalExpiredException exception)
+            { return Results.Conflict(new { code = "WorkoutTimingIntervalExpired", message = exception.Message }); }
+            catch (WorkoutSessionStartBlockedException exception)
+            { return Results.Conflict(new { code = exception.Code, message = exception.Message }); }
+            catch (PostgresIdempotencyConflictException) { return Results.Conflict(); }
+            catch (InvalidOperationException) { return Results.Conflict(); }
+            catch (ArgumentException) { return Results.BadRequest(); }
+        });
 
         group.MapGet("/{sessionId:guid}", async (
             Guid sessionId,
@@ -43,9 +99,27 @@ public static class WorkoutActiveSessionEndpointMappings
                         body.SessionId,
                         body.WorkoutName,
                         body.StartedAtUtc,
-                        body.Notes),
+                        body.Notes,
+                        body.PlannedWorkoutDayId,
+                        body.UnplannedActivity),
                     cancellationToken).ConfigureAwait(false);
                 return Results.Ok(snapshot);
+            }
+            catch (WorkoutHiitHistoryConfirmationRequiredException exception)
+            {
+                return Results.Conflict(new
+                {
+                    code = WorkoutHiitHistoryConfirmationRequiredException.ErrorCode,
+                    message = exception.Message
+                });
+            }
+            catch (WorkoutActivityNoLongerSafeException exception)
+            {
+                return Results.Conflict(new { code = "WorkoutActivityNoLongerSafe", message = exception.Message });
+            }
+            catch (WorkoutSessionStartBlockedException exception)
+            {
+                return Results.Conflict(new { code = exception.Code, message = exception.Message });
             }
             catch (PostgresIdempotencyConflictException)
             {
@@ -175,7 +249,9 @@ public static class WorkoutActiveSessionEndpointMappings
         Guid SessionId,
         string WorkoutName,
         DateTime StartedAtUtc,
-        string? Notes = null);
+        string? Notes = null,
+        int? PlannedWorkoutDayId = null,
+        WorkoutActivityDto? UnplannedActivity = null);
 
     public sealed record UpsertWorkoutSessionSetBody(
         string? IdempotencyKey,
@@ -190,4 +266,6 @@ public static class WorkoutActiveSessionEndpointMappings
         IReadOnlyList<ActiveExerciseSetInput>? FinalSets = null);
 
     public sealed record CancelWorkoutSessionBody(string? IdempotencyKey);
+    public sealed record TimingResumeBody(string? IdempotencyKey);
+    public sealed record TimingCheckpointBody(string? IdempotencyKey, Guid IntervalId, int MeasuredSeconds, bool Pause);
 }

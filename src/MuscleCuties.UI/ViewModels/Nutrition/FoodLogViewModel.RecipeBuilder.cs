@@ -5,9 +5,9 @@ using System.ComponentModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
@@ -34,17 +34,17 @@ public partial class FoodLogViewModel
     [ObservableProperty] private string _recipeEditorStatus = string.Empty;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasRecipePreview), nameof(RecipePreviewSummary))]
-    private RecipeDetailsDto? _recipePreview;
+    private RecipeDetailsItem? _recipePreview;
 
     [ObservableProperty] private string _selectedRecipePortionServingsText = InitialRecipeServings.ToString(CultureInfo.CurrentCulture);
     [ObservableProperty] private string _selectedRecipePortionGramsText = string.Empty;
-    [ObservableProperty] private RecipePortionPreviewDto? _selectedRecipePortionPreview;
+    [ObservableProperty] private RecipePortionPreview? _selectedRecipePortionPreview;
 
     public ObservableCollection<RecipeIngredientEditor> RecipeEditorIngredients { get; } = [];
     public bool CanCreateRecipes => _createRecipeUseCase is not null;
     public bool HasRecipePreview => RecipePreview is not null;
     public string RecipePreviewSummary => RecipePreview is { } preview
-        ? string.Format(CultureInfo.CurrentCulture, RecipePreviewFormats.GetOrAdd(UiTextCatalog.Translate("Nutrition_Recipe_PreviewSummary"), CompositeFormat.Parse),
+        ? string.Format(CultureInfo.CurrentCulture, RecipePreviewFormats.GetOrAdd(UiTextCatalog.Get("Nutrition_Recipe_PreviewSummary"), CompositeFormat.Parse),
             preview.PerServingCalories, preview.PerServingProtein, preview.PerServingCarbs,
             preview.PerServingFats, preview.PerServingGrams)
         : string.Empty;
@@ -63,7 +63,7 @@ public partial class FoodLogViewModel
     }
 
     [RelayCommand]
-    public void LoadSavedRecipeIntoEditor(RecipeDetailsDto? details)
+    public void LoadSavedRecipeIntoEditor(RecipeDetailsItem? details)
     {
         if (details is null || IsWriting || !CanCreateRecipes) return;
         ResetRecipeBuilder();
@@ -112,7 +112,7 @@ public partial class FoodLogViewModel
         InvalidateRecipePreview();
     }
 
-    public void SelectCatalogFoodForRecipeIngredient(RecipeIngredientEditor? row, FoodCatalogItemDto? catalogItem, float? gramsOverride = null)
+    public void SelectCatalogFoodForRecipeIngredient(RecipeIngredientEditor? row, FoodCatalogItem? catalogItem, float? gramsOverride = null)
     {
         if (row is null || catalogItem is null || IsWriting || !IsRecipeBuilderVisible) return;
         if (!catalogItem.Calories.HasValue || !catalogItem.Protein.HasValue ||
@@ -122,9 +122,11 @@ public partial class FoodLogViewModel
             return;
         }
 
-        var servingGrams = gramsOverride
-            ?? (catalogItem.ServingSize.HasValue &&
-                FoodPortionMassRule.TryConvertMassToGrams(catalogItem.ServingSize.Value, catalogItem.ServingSizeUnit, out var resolved)
+        var servingConversion = catalogItem.ServingSize is { } servingSize
+            ? _recipePortionUseCase.ConvertMassToGrams(servingSize, catalogItem.ServingSizeUnit)
+            : null;
+        var servingGrams = gramsOverride ??
+            (servingConversion is { Succeeded: true, Grams: { } resolved }
                 ? resolved
                 : DefaultCatalogRecipeGrams);
         var scale = servingGrams / DefaultCatalogRecipeGrams;
@@ -152,7 +154,7 @@ public partial class FoodLogViewModel
     }
 
     [RelayCommand]
-    public void PreviewSelectedRecipePortion(RecipeSummaryDto? recipe)
+    public void PreviewSelectedRecipePortion(RecipeSummaryItem? recipe)
     {
         if (recipe is null)
         {
@@ -169,35 +171,8 @@ public partial class FoodLogViewModel
                 ? ParseRecipeNumber(SelectedRecipePortionGramsText)
                 : null;
 
-            var batchWeight = MathF.Max(1f, recipe.PerServingGrams * recipe.ServingsCount);
-            var batch = new RecipeBatchTotals(
-                recipe.ServingsCount,
-                batchWeight,
-                batchWeight,
-                recipe.PerServingCalories * recipe.ServingsCount,
-                recipe.PerServingProtein * recipe.ServingsCount,
-                recipe.PerServingCarbs * recipe.ServingsCount,
-                recipe.PerServingNetCarbs * recipe.ServingsCount,
-                recipe.PerServingFats * recipe.ServingsCount);
-            var portion = RecipeBatchCalculationRule.CalculatePortion(batch, requestedServings, requestedGrams);
-            SelectedRecipePortionPreview = new RecipePortionPreviewDto(
-                recipe.Id,
-                recipe.Name,
-                batch.ServingsCount,
-                batch.TotalRawWeightGrams,
-                batch.CookedWeightGrams,
-                batch.TotalCalories,
-                batch.TotalProtein,
-                batch.TotalCarbs,
-                batch.TotalNetCarbs,
-                batch.TotalFats,
-                portion.SelectedServingsCount,
-                portion.SelectedGrams,
-                portion.Calories,
-                portion.Protein,
-                portion.Carbs,
-                portion.NetCarbs,
-                portion.Fats);
+            SelectedRecipePortionPreview = NutritionPresentationMapper.CalculateRecipePortion(
+                _recipePortionUseCase, recipe, requestedServings, requestedGrams);
         }
         catch
         {
@@ -242,7 +217,12 @@ public partial class FoodLogViewModel
         RecipeEditorStatus = string.Empty;
         try
         {
-            var preview = await _createRecipeUseCase.PreviewAsync(BuildRecipeRequest());
+            var preview = await NutritionPresentationMapper.PreviewRecipeAsync(
+                _createRecipeUseCase, RecipeName,
+                string.IsNullOrWhiteSpace(RecipeDescription) ? null : RecipeDescription.Trim(),
+                ParseRecipeNumber(RecipeServingsText),
+                string.IsNullOrWhiteSpace(RecipeCookedWeightText) ? null : ParseRecipeNumber(RecipeCookedWeightText),
+                BuildRecipeIngredients());
             if (revision == _recipeEditorRevision && IsRecipeBuilderVisible)
                 RecipePreview = preview;
         }
@@ -266,26 +246,15 @@ public partial class FoodLogViewModel
         IsWriting = true;
         try
         {
-            var createRequest = BuildRecipeRequest();
-            RecipeDetailsDto saved;
-            if (EditingRecipeId.HasValue && EditingRecipeId.Value != Guid.Empty)
-            {
-                saved = await _createRecipeUseCase.UpdateAsync(new UpdateRecipeRequest(
-                    EditingRecipeId.Value,
-                    EditingRecipeVersion,
-                    createRequest.Name,
-                    createRequest.Description,
-                    createRequest.ServingsCount,
-                    createRequest.CookedWeightGrams,
-                    createRequest.Ingredients));
-            }
-            else
-            {
-                saved = await _createRecipeUseCase.ExecuteAsync(createRequest);
-            }
+            var saved = await NutritionPresentationMapper.SaveRecipeAsync(
+                _createRecipeUseCase, EditingRecipeId, EditingRecipeVersion, RecipeName,
+                string.IsNullOrWhiteSpace(RecipeDescription) ? null : RecipeDescription.Trim(),
+                ParseRecipeNumber(RecipeServingsText),
+                string.IsNullOrWhiteSpace(RecipeCookedWeightText) ? null : ParseRecipeNumber(RecipeCookedWeightText),
+                BuildRecipeIngredients());
 
             if (revision != _recipeEditorRevision || !IsRecipeBuilderVisible) return;
-            var summary = new RecipeSummaryDto(saved.Id, saved.Name,
+            var summary = new RecipeSummaryItem(saved.Id, saved.Name,
                 saved.ServingsCount, saved.PerServingCalories, saved.PerServingProtein, saved.PerServingCarbs,
                 saved.PerServingNetCarbs, saved.PerServingFats, saved.PerServingGrams, saved.Ingredients.Count,
                 saved.CreatedAtUtc, saved.ConcurrencyVersion);
@@ -298,7 +267,7 @@ public partial class FoodLogViewModel
             NotifyShelfVisibility();
             ResetRecipeBuilder();
             IsFastLoggingVisible = IsEditModalVisible;
-            ShowStatus(UiTextCatalog.Translate("Nutrition_Recipe_Saved"));
+            ShowStatus(UiTextCatalog.Get("Nutrition_Recipe_Saved"));
         }
         catch (FormatException) { RecipeEditorStatus = "Nutrition_Recipe_NumberError"; }
         catch (ArgumentException) { RecipeEditorStatus = "Nutrition_Recipe_ValidationError"; }
@@ -306,12 +275,8 @@ public partial class FoodLogViewModel
         finally { IsWriting = false; }
     }
 
-    private CreateRecipeRequest BuildRecipeRequest() => new(
-        RecipeName,
-        string.IsNullOrWhiteSpace(RecipeDescription) ? null : RecipeDescription.Trim(),
-        ParseRecipeNumber(RecipeServingsText),
-        string.IsNullOrWhiteSpace(RecipeCookedWeightText) ? null : ParseRecipeNumber(RecipeCookedWeightText),
-        RecipeEditorIngredients.Select(row => new RecipeIngredientInputDto(
+    private List<RecipeIngredientInput> BuildRecipeIngredients() =>
+        RecipeEditorIngredients.Select(row => new RecipeIngredientInput(
             row.FoodItemId,
             row.Name,
             ParseRecipeNumber(row.Grams),
@@ -321,9 +286,9 @@ public partial class FoodLogViewModel
             ParseRecipeNumber(row.Fats),
             SourceKind: row.SourceKind,
             SourceLabel: row.SourceLabel,
-            SourceVersion: row.SourceVersion)).ToList());
+            SourceVersion: row.SourceVersion)).ToList();
 
-    private static Guid TryExtractCatalogGuid(FoodCatalogItemDto item)
+    private static Guid TryExtractCatalogGuid(FoodCatalogItem item)
     {
         if (!string.IsNullOrWhiteSpace(item.FoodKey))
         {

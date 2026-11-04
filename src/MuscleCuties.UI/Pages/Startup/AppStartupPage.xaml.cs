@@ -1,5 +1,6 @@
 using Microsoft.Maui.Controls;
 using MuscleCuties.UI.Resources.Styles;
+using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Pages.Startup;
 
@@ -15,10 +16,10 @@ public partial class AppStartupPage : ContentPage
 
     internal void ShowStartupError(bool unableToUnlockData)
     {
-        StartupErrorLabel.Text = unableToUnlockData ? "Unable to Unlock Data" : "Unable to Start";
+        StartupErrorLabel.Text = unableToUnlockData ? UiTextCatalog.Get("Dashboard_Startup_UnlockFailedTitle") : UiTextCatalog.Get("Startup_UnableToStart");
         StartupRecoveryLabel.Text = unableToUnlockData
-            ? "Your data is still on this device. Try again to unlock it, or reset the local database to start fresh."
-            : "Something went wrong while starting MuscleCuties. Please retry.";
+            ? UiTextCatalog.Get("Startup_UnlockRecovery")
+            : UiTextCatalog.Get("Startup_StartRecovery");
         StartupActivityIndicator.IsVisible = false;
         StartupActivityIndicator.IsRunning = false;
         StartupStatusLabel.IsVisible = false;
@@ -34,7 +35,7 @@ public partial class AppStartupPage : ContentPage
         StartupRecoveryLabel.IsVisible = false;
         RetryButton.IsVisible = false;
         ResetButton.IsVisible = false;
-        StartupStatusLabel.Text = "Starting MuscleCuties...";
+        StartupStatusLabel.Text = UiTextCatalog.Get("Startup_Starting");
         StartupStatusLabel.IsVisible = true;
         StartupActivityIndicator.IsVisible = true;
         StartupActivityIndicator.IsRunning = true;
@@ -52,10 +53,10 @@ public partial class AppStartupPage : ContentPage
     private async void OnResetClicked(object? sender, EventArgs e)
     {
         var confirmed = await DisplayAlertAsync(
-            "Reset Local Database?",
-            "If your local data cannot be unlocked due to a key or schema error, resetting will recreate a clean database and repopulate starter data. All existing local records on this device will be erased.",
-            "Reset & Repopulate",
-            "Cancel");
+            UiTextCatalog.Get("Startup_ResetConfirmationTitle"),
+            UiTextCatalog.Get("Startup_ResetConfirmationBody"),
+            UiTextCatalog.Get("Startup_ResetAndRepopulate"),
+            UiTextCatalog.Get("Common_Cancel"));
 
         if (!confirmed)
             return;
@@ -64,7 +65,7 @@ public partial class AppStartupPage : ContentPage
         StartupRecoveryLabel.IsVisible = false;
         RetryButton.IsVisible = false;
         ResetButton.IsVisible = false;
-        StartupStatusLabel.Text = "Reinitializing database...";
+        StartupStatusLabel.Text = UiTextCatalog.Get("Startup_Reinitializing");
         StartupStatusLabel.IsVisible = true;
         StartupActivityIndicator.IsVisible = true;
         StartupActivityIndicator.IsRunning = true;

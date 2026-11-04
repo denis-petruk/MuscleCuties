@@ -18,6 +18,9 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
     private const int ClaimLimit = 1;
     private const int UsernameSuffixLength = 10;
     private const long InitialActiveLeaseGeneration = 3;
+    private const long FirstWorkoutPlanRevisionNumber = 1;
+    private const string SyntheticWorkoutRulesetVersion = "SyntheticWorkoutRuleset";
+    private const string SyntheticTrainingPolicyVersion = "SyntheticTrainingPolicy";
 
     [Xunit.Fact]
     public async Task PhotoCleanupLeaseCompletesOnceWithFencing()
@@ -76,7 +79,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var ownerId = Guid.CreateVersion7();
         var otherOwnerId = Guid.CreateVersion7();
@@ -89,6 +92,19 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
 
         await SyntheticTenantSession.SetAsync(database, ownerId);
         database.Users.Add(CreateSyntheticUser(ownerId, nowUtc));
+        AddSyntheticWorkoutProposalAndRevision(database, ownerId, nowUtc);
+        var ownerPlanId = Guid.NewGuid();
+        var ownerDayId = Guid.NewGuid();
+        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = ownerPlanId, UserId = ownerId,
+            Name = "Synthetic", IsActive = true, CreatedAt = nowUtc });
+        database.WorkoutDays.Add(new WorkoutDayRecord { Id = ownerDayId, UserId = ownerId, WorkoutPlanId = ownerPlanId,
+            Name = "Synthetic", WorkoutType = "Strength", Date = DateOnly.FromDateTime(nowUtc) });
+        database.WorkoutCycleReadinessOccurrences.Add(new WorkoutCycleReadinessOccurrenceRecord
+        {
+            Id = Guid.NewGuid(), UserId = ownerId, WorkoutDayId = ownerDayId,
+            LocalDate = DateOnly.FromDateTime(nowUtc), InputFingerprint = "synthetic",
+            PrescriptionJson = "{}", UpdatedAtUtc = nowUtc
+        });
         database.PhotoJourneyEntries.Add(new PhotoJourneyEntryRecord
         {
             Id = ownerPhotoId,
@@ -101,6 +117,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
 
         await SyntheticTenantSession.SetAsync(database, otherOwnerId);
         database.Users.Add(CreateSyntheticUser(otherOwnerId, nowUtc));
+        AddSyntheticWorkoutProposalAndRevision(database, otherOwnerId, nowUtc);
         database.PhotoJourneyEntries.Add(new PhotoJourneyEntryRecord
         {
             Id = otherPhotoId,
@@ -121,6 +138,12 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             Xunit.Assert.False(await database.Users.AsNoTracking().AnyAsync(row => row.Id == ownerId));
             Xunit.Assert.False(await database.PhotoJourneyEntries.AsNoTracking()
                 .AnyAsync(row => row.UserId == ownerId));
+            Xunit.Assert.False(await database.WorkoutPlanProposalsV02.AsNoTracking()
+                .AnyAsync(row => row.UserId == ownerId));
+            Xunit.Assert.False(await database.WorkoutPlanRevisionsV02.AsNoTracking()
+                .AnyAsync(row => row.UserId == ownerId));
+            Xunit.Assert.False(await database.WorkoutCycleReadinessOccurrences.AsNoTracking()
+                .AnyAsync(row => row.UserId == ownerId));
 
             // Durable reconciliation targets survive account deletion.
             var persistedTargets = await database.PhotoObjectReconcileTargets.AsNoTracking()
@@ -133,6 +156,10 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             Xunit.Assert.True(await database.Users.AsNoTracking().AnyAsync(row => row.Id == otherOwnerId));
             Xunit.Assert.True(await database.PhotoJourneyEntries.AsNoTracking()
                 .AnyAsync(row => row.UserId == otherOwnerId));
+            Xunit.Assert.True(await database.WorkoutPlanProposalsV02.AsNoTracking()
+                .AnyAsync(row => row.UserId == otherOwnerId));
+            Xunit.Assert.True(await database.WorkoutPlanRevisionsV02.AsNoTracking()
+                .AnyAsync(row => row.UserId == otherOwnerId));
             Xunit.Assert.False(await database.PhotoObjectReconcileTargets.AsNoTracking()
                 .AnyAsync(row => row.TargetKey == otherOwnerPublishedKey));
         }
@@ -142,6 +169,8 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
                 .Where(row => row.TargetKey == ownerUploadKey || row.TargetKey == ownerPublishedKey)
                 .ExecuteDeleteAsync();
             await SyntheticTenantSession.SetAsync(database, otherOwnerId);
+            await database.WorkoutPlanRevisionsV02.Where(row => row.UserId == otherOwnerId).ExecuteDeleteAsync();
+            await database.WorkoutPlanProposalsV02.Where(row => row.UserId == otherOwnerId).ExecuteDeleteAsync();
             await database.Users.Where(row => row.Id == otherOwnerId).ExecuteDeleteAsync();
         }
     }
@@ -152,7 +181,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var ownerId = Guid.CreateVersion7();
         var photoId = Guid.CreateVersion7();
@@ -189,7 +218,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var ownerId = Guid.CreateVersion7();
         var photoId = Guid.CreateVersion7();
@@ -237,7 +266,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var activeOwnerId = Guid.CreateVersion7();
         var otherOwnerId = Guid.CreateVersion7();
@@ -284,7 +313,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var ownerId = Guid.CreateVersion7();
         var photoId = Guid.CreateVersion7();
@@ -352,7 +381,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(RequireLocalTestConnectionString()).Options;
         await using var database = new PostgresDbContext(options);
-        await EnsureMigrationsAppliedAsync(database);
+        await EnsureSchemaInitializedAsync(database);
 
         var ownerId = Guid.CreateVersion7();
         var photoId = Guid.CreateVersion7();
@@ -383,7 +412,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             .UseNpgsql(connectionString).Options;
 
         await using (var database = new PostgresDbContext(options))
-            await EnsureMigrationsAppliedAsync(database);
+            await EnsureSchemaInitializedAsync(database);
 
 
         await using var cmd = new NpgsqlCommand("""
@@ -421,10 +450,43 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         Xunit.Assert.False(reader.GetBoolean(reader.GetOrdinal("app_inherits_reconcile")));
     }
 
-    private static async Task EnsureMigrationsAppliedAsync(PostgresDbContext database)
+    private static async Task EnsureSchemaInitializedAsync(PostgresDbContext database)
     {
-        if ((await database.Database.GetPendingMigrationsAsync()).Any())
-            await database.Database.MigrateAsync();
+        var report = await PostgresSchemaDriftInspector.InspectAsync(database);
+        if (!report.IsCompatible)
+            await PostgresSchemaBootstrap.InitializeAsync(database, seed: true);
+    }
+
+    private static void AddSyntheticWorkoutProposalAndRevision(
+        PostgresDbContext database, Guid userId, DateTime nowUtc)
+    {
+        var proposalId = Guid.CreateVersion7();
+        var revisionId = Guid.CreateVersion7();
+        var planId = Guid.CreateVersion7();
+        database.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
+        {
+            Id = proposalId,
+            UserId = userId,
+            PlanId = planId,
+            ExpectedRevisionId = Guid.CreateVersion7(),
+            RulesetVersion = SyntheticWorkoutRulesetVersion,
+            TrainingPolicyVersion = SyntheticTrainingPolicyVersion,
+            Status = "Accepted",
+            CreatedAtUtc = nowUtc,
+            DecidedAtUtc = nowUtc,
+            AcceptedRevisionId = revisionId
+        });
+        database.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record
+        {
+            Id = revisionId,
+            UserId = userId,
+            PlanId = planId,
+            RevisionNumber = FirstWorkoutPlanRevisionNumber,
+            SourceProposalId = proposalId,
+            RulesetVersion = SyntheticWorkoutRulesetVersion,
+            TrainingPolicyVersion = SyntheticTrainingPolicyVersion,
+            AcceptedAtUtc = nowUtc
+        });
     }
 
     private static UserRecord CreateSyntheticUser(Guid userId, DateTime nowUtc) => new()

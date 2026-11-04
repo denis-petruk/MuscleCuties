@@ -1,5 +1,8 @@
 using System.Text.Json;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.Infrastructure.Cloud;
@@ -14,7 +17,6 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
-using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
@@ -23,6 +25,84 @@ namespace MuscleCuties.Registration.Tests;
 
 public sealed class CloudNutritionAndWorkoutContractsTests
 {
+    private const float LegacyIngredientGrams = 120f;
+    private const float LegacyIngredientCaloriesPer100Grams = 107.5f;
+    private const float LegacyIngredientProteinPer100Grams = 6.1f;
+    private const float LegacyIngredientCarbsPer100Grams = 18.2f;
+    private const float LegacyIngredientFatsPer100Grams = 1.2f;
+    private const float LegacyOilGrams = 12f;
+    private const float LegacyOilCaloriesPer100Grams = 900f;
+    private const float MealTargetCalories = 600f;
+    private const float MealTargetFats = 20f;
+    private const float MealTargetProtein = 40f;
+    private const float MealTargetCarbs = 70f;
+    private const float DailyTargetCalories = 2000f;
+
+    [Xunit.Fact]
+    public async Task CloudGeneratedMealsReturnServerPortionsUnchangedAndPostThemBack()
+    {
+        var legacyComponents = new[] { "Tofu", "Edamame", "Broccoli", "Jasmine Rice" }
+            .Select(name => new MealSuggestionComponentDto(0, name, "Ingredient", "Base",
+                LegacyIngredientGrams, false,
+                LegacyIngredientCaloriesPer100Grams,
+                LegacyIngredientProteinPer100Grams,
+                LegacyIngredientCarbsPer100Grams,
+                LegacyIngredientFatsPer100Grams))
+            .Append(new MealSuggestionComponentDto(0, "Sesame Oil", "Sauce", "SauceOnSide",
+                LegacyOilGrams, false, LegacyOilCaloriesPer100Grams, 0f, 0f, 100f))
+            .ToArray();
+        var legacy = new MealSuggestionDto("Tofu Stir-Fry with Edamame", string.Empty, [],
+            legacyComponents,
+            [new MealSuggestionComponentGroupDto("Ingredients", "Food24", legacyComponents)],
+            MealTargetCalories, MealTargetProtein, MealTargetCarbs, MealTargetFats,
+            1f, "Balanced", "Food24", string.Empty);
+        var legacyPlan = new DayMealPlanItemDto("Dinner", MealTargetCalories, MealTargetProtein,
+            MealTargetCarbs, MealTargetFats, DailyTargetCalories, false, legacy);
+        var apiClient = new RecordingApiClient(path => path switch
+        {
+            var value when value.StartsWith("/api/v1/nutrition/suggestions?", StringComparison.Ordinal) =>
+                new List<MealSuggestionDto> { legacy },
+            var value when value.StartsWith("/api/v1/nutrition/meal-plan?", StringComparison.Ordinal) =>
+                new List<DayMealPlanItemDto> { legacyPlan },
+            _ => legacyPlan
+        });
+        var store = new CloudNutritionOverviewStore(apiClient);
+
+        var today = new DateOnly(2026, 10, 19);
+        var suggestion = Xunit.Assert.Single(await store.GetMealSuggestionsAsync("Dinner", "Savoury", null));
+        var planned = Xunit.Assert.Single(await store.GetDayMealPlanAsync("Savoury"));
+        var refreshed = await store.RefreshDayMealAsync(legacyPlan, "Savoury");
+
+        AssertServerPortionsPreserved(legacy, suggestion);
+        AssertServerPortionsPreserved(legacy, Xunit.Assert.IsType<MealSuggestionDto>(planned.Suggestion));
+        AssertServerPortionsPreserved(legacy, Xunit.Assert.IsType<MealSuggestionDto>(refreshed.Suggestion));
+
+        var logRequest = new LogMealRequest(today, "Dinner", TimeSpan.FromHours(19),
+            suggestion.Components
+                .Select(component => new MealIngredientInputDto(0, component.Name, component.Grams, component.Grams,
+                    "g", component.Calories, component.Protein, component.Carbs, component.Fats, "Generated"))
+                .ToArray());
+        await store.LogMealAsync(logRequest);
+
+        var posted = Xunit.Assert.Single(apiClient.RecordedPayloads,
+            record => record.Method == "POST" && record.Path == "/api/v1/nutrition/meals");
+        Xunit.Assert.Same(logRequest, posted.Body);
+        Xunit.Assert.Equal(legacy.Components.Select(component => component.Grams),
+            logRequest.Ingredients.Select(ingredient => ingredient.Grams));
+    }
+
+    private static void AssertServerPortionsPreserved(MealSuggestionDto server, MealSuggestionDto returned)
+    {
+        Xunit.Assert.Equal(server.Components.Select(component => (component.Name, component.Grams, component.Calories)),
+            returned.Components.Select(component => (component.Name, component.Grams, component.Calories)));
+        Xunit.Assert.Equal(server.ComponentGroups[0].Items.Select(item => (item.Name, item.Grams)),
+            returned.ComponentGroups[0].Items.Select(item => (item.Name, item.Grams)));
+        Xunit.Assert.Equal(server.Calories, returned.Calories);
+        Xunit.Assert.Equal(server.Protein, returned.Protein);
+        Xunit.Assert.Equal(server.Carbs, returned.Carbs);
+        Xunit.Assert.Equal(server.Fats, returned.Fats);
+    }
+
     [Xunit.Fact]
     public async Task CloudNutritionOverviewStoreCallsGroupedMealAndCustomFoodRoutes()
     {
@@ -166,6 +246,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
     public async Task CloudCheckInInjuryAndCycleStoresMapServerPayloadsAndRoutes()
     {
         var today = new DateOnly(2026, 10, 19);
+        var nowUtc = new DateTimeOffset(2026, 10, 19, 12, 0, 0, TimeSpan.Zero);
         var existingCheckInId = Guid.NewGuid();
         var injuryGuid = Guid.NewGuid();
         var cycleGuid = Guid.NewGuid();
@@ -175,7 +256,8 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             if (path.StartsWith("/api/v1/check-ins", StringComparison.Ordinal))
             {
                 var record = new DailyCheckInRecord(
-                    existingCheckInId, today, 8.0m, 7.8m, 9500, 9000, 4, 1, false, 62.5m, null, null, null, 91, "High", "Ovulatory");
+                    existingCheckInId, today, 8.0m, 7.8m, 9500, 9000, 4, 1, false, 62.5m, null, null, null,
+                    91, "High", "Ovulatory", 5, 1, 1, "UTC", nowUtc, 1);
                 return path == "/api/v1/check-ins" ? (object)record : new[] { record };
             }
 
@@ -220,11 +302,12 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             return new JsonElement();
         });
 
-        var checkInStore = new CloudDailyCheckInStore(apiClient);
-        var status = await checkInStore.GetStatusAsync(new DailyCheckInStatusRequest(today), CancellationToken.None);
+        var checkInStore = new CloudDailyCheckInStore(apiClient, clock: new FixedTimeProvider(nowUtc));
+        var status = await checkInStore.GetStatusAsync(new DailyCheckInStatusRequest(today, "UTC"), CancellationToken.None);
+        Xunit.Assert.Equal("Available", status.TodayReadiness?.Status);
         Xunit.Assert.True(status.IsCompleted);
-        Xunit.Assert.Equal("91", status.ScoreText);
-        Xunit.Assert.Equal("High", status.TierText);
+        Xunit.Assert.Equal("93.75", status.ScoreText);
+        Xunit.Assert.Equal("FeelingReady", status.TierText);
 
         var injuryStore = new CloudWorkoutInjuryStore(apiClient);
         var injuries = await injuryStore.GetAllInjuriesAsync(CancellationToken.None);
@@ -247,8 +330,13 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var savedPhase = await phaseEditStore.SaveAsync(
             new CyclePhaseEditRequest(today.ToDateTime(TimeOnly.MinValue), CyclePhase.Ovulatory, "Calendar phase edit"),
             CancellationToken.None);
-        Xunit.Assert.True(savedPhase);
+        Xunit.Assert.Equal(CyclePhaseEditOutcome.Saved, savedPhase.Outcome);
         Xunit.Assert.Contains(("PUT", "/api/v1/cycle/history/phases"), apiClient.RecordedCalls);
+    }
+
+    private sealed class FixedTimeProvider(DateTimeOffset nowUtc) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => nowUtc;
     }
 
     [Xunit.Fact]
@@ -259,30 +347,31 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             if (path == "/api/v1/profile")
             {
                 return new ServerProfileSnapshot(
-                    "Elena",
-                    new DateOnly(1998, 5, 14),
-                    168m,
-                    61.5m,
-                    "Strength",
-                    "Steady",
-                    "Advanced",
-                    "ManualPhaseLogging",
-                    4,
-                    29,
-                    "Vegetarian",
-                    60,
-                    "FullGym",
-                    "HighVolumeStrength,Yoga,StrengthStyle:HeavyLowRep",
-                    "Metric",
-                    "kg",
-                    "g",
-                    "cm",
-                    "km",
-                    "kcal",
-                    "{}",
-                    3,
-                    "elena@example.test",
-                    "{\"Pregnancy\":1,\"Contraception\":2}");
+                    Name: "Elena",
+                    DateOfBirth: new DateOnly(1998, 5, 14),
+                    Height: 168m,
+                    Weight: 61.5m,
+                    Goal: "Strength",
+                    WeightGoalPace: "Steady",
+                    TrainingExperienceLevel: "Advanced",
+                    WorkoutDaysPerWeek: 4,
+                    AvailableWorkoutWeekdaysJson: "[1,3,5,6]",
+                    CycleLength: 29,
+                    DietaryTags: "Vegetarian",
+                    ActivitySessionDurationsJson: "{\"HighVolumeStrength\":60,\"Yoga\":15}",
+                    EquipmentLevel: "FullGym",
+                    PreferredWorkoutActivityTypes: "HighVolumeStrength,Yoga",
+                    UnitSystem: "Metric",
+                    BodyWeightUnit: "kg",
+                    FoodMassUnit: "g",
+                    HeightUnit: "cm",
+                    DistanceUnit: "km",
+                    EnergyUnit: "kcal",
+                    NutritionGoalsJson: "{}",
+                    Version: 3,
+                    Email: "elena@example.test",
+                    ReproductiveContextJson: "{\"Pregnancy\":1,\"Contraception\":2}",
+                    RequestedActivitySessionsPerWeekJson: "{\"Yoga\":2}");
             }
 
             if (path.StartsWith("/api/v1/cycle/overview", StringComparison.Ordinal))
@@ -316,7 +405,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             new SavePersonalInfoRequest(
                 "elena@example.test", "Elena", new DateTime(1998, 5, 14), 168f, 62f,
                 (int)UserGoal.Strength, (int)WeightGoalPace.Steady, (int)TrainingExperienceLevel.Advanced,
-                (int)CycleTrackingMode.ManualPhaseLogging, 4, 29, 1, 2),
+                29, 1, 2),
             CancellationToken.None);
         Xunit.Assert.True(savedPersonal);
         Xunit.Assert.Contains(("PUT", "/api/v1/profile"), apiClient.RecordedCalls);
@@ -332,15 +421,15 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var workoutPrefsStore = new CloudProfileWorkoutPreferencesStore(apiClient);
         var loadedWorkoutPrefs = await workoutPrefsStore.LoadAsync(CancellationToken.None);
         Xunit.Assert.NotNull(loadedWorkoutPrefs);
-        Xunit.Assert.Equal(4, loadedWorkoutPrefs!.DaysPerWeek);
-        var savedWorkoutPrefs = await workoutPrefsStore.SaveAndUpdatePlanAsync(loadedWorkoutPrefs, CancellationToken.None);
-        Xunit.Assert.Equal(WorkoutPreferencesError.None, savedWorkoutPrefs);
-        Xunit.Assert.Contains(("PUT", "/api/v1/profile/workout-preferences"), apiClient.RecordedCalls);
+        Xunit.Assert.Equal(new[] { 1, 3, 5, 6 }, loadedWorkoutPrefs!.AvailableWeekdays);
+        Xunit.Assert.DoesNotContain(("PUT", "/api/v1/profile/workout-preferences"), apiClient.RecordedCalls);
     }
 
     private sealed class RecordingApiClient(Func<string, object> responder) : IMuscleCutiesBackendApiClient
     {
         public List<(string Method, string Path)> RecordedCalls { get; } = [];
+
+        public List<(string Method, string Path, object? Body)> RecordedPayloads { get; } = [];
 
         public Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
             string relativePath,
@@ -359,6 +448,7 @@ public sealed class CloudNutritionAndWorkoutContractsTests
             CancellationToken cancellationToken = default)
         {
             RecordedCalls.Add((method.Method, relativePath));
+            RecordedPayloads.Add((method.Method, relativePath, payload));
             var raw = responder(relativePath);
             var result = raw is TResponse typed ? typed :
                 raw is JsonElement json && json.ValueKind != JsonValueKind.Undefined

@@ -56,15 +56,15 @@ public sealed class StringToFluentIconImageSourceConverter : IValueConverter
     {
         var resourceKey = isDark ? "TextPrimaryDark" : "TextPrimary";
 
-        if (string.Equals(key, "White", StringComparison.OrdinalIgnoreCase))
-            return Colors.White;
+        if (string.Equals(key, "ContrastInk", StringComparison.OrdinalIgnoreCase))
+            return AppThemeResources.GetColor("ContrastInk");
 
         if (string.Equals(key, "Accent", StringComparison.OrdinalIgnoreCase))
-            return AppThemeResources.GetColor("Primary", "SecondaryDarkText", Colors.Black);
+            return AppThemeResources.GetColor("Primary", "SecondaryDarkText", default);
 
         if (string.Equals(key, "Warning", StringComparison.OrdinalIgnoreCase))
-            return AppThemeResources.GetColor("WarningAccentLight", "WarningAccentDark", Colors.Black);
+            return AppThemeResources.GetColor("WarningAccentLight", "WarningAccentDark", default);
 
-        return AppThemeResources.GetColor(resourceKey, Colors.Black) ?? Colors.Black;
+        return AppThemeResources.GetColor(resourceKey);
     }
 }

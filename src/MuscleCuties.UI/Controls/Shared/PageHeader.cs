@@ -1,4 +1,6 @@
 using System.Windows.Input;
+using Microsoft.Maui.Graphics;
+using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Controls.Shared;
@@ -44,30 +46,36 @@ public class PageHeader : ContentView
         var back = new ImageButton
         {
             Source = ImageSource.FromFile("nav_back.png"),
-            BackgroundColor = Colors.Transparent,
-            WidthRequest = 44,
-            HeightRequest = 44,
-            MinimumWidthRequest = 44,
-            MinimumHeightRequest = 44,
-            Padding = 10,
+            BackgroundColor = AppThemeResources.GetRequired<Color>("Transparent"),
+            WidthRequest = AppThemeResources.GetDouble("PresentationMinimumTouchSize"),
+            HeightRequest = AppThemeResources.GetDouble("PresentationMinimumTouchSize"),
+            MinimumWidthRequest = AppThemeResources.GetDouble("PresentationMinimumTouchSize"),
+            MinimumHeightRequest = AppThemeResources.GetDouble("PresentationMinimumTouchSize"),
+            Padding = AppThemeResources.GetThickness("UiInsets10"),
             Aspect = Aspect.AspectFit,
             VerticalOptions = LayoutOptions.Start,
             Command = new Command(() => BackCommand?.Execute(null))
         };
-        SemanticProperties.SetDescription(back, UiTextCatalog.Translate("Back"));
+        SemanticProperties.SetDescription(back, UiTextCatalog.TranslateRuntimeText("Back"));
 
         var title = new Label
         {
             Text = Title,
-            FontSize = 24,
-            FontAttributes = FontAttributes.Bold,
             VerticalOptions = LayoutOptions.Center,
             LineBreakMode = LineBreakMode.WordWrap
         };
-        title.SetDynamicResource(StyleProperty, "SubHeadline");
+        title.SetDynamicResource(StyleProperty, "PageTitle");
+        SemanticProperties.SetHeadingLevel(title, SemanticHeadingLevel.Level1);
 
-        var header = new Grid { ColumnSpacing = 8, RowSpacing = 2 };
-        header.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
+        var header = new Grid
+        {
+            ColumnSpacing = AppThemeResources.GetDouble("UiSpaceTight"),
+            RowSpacing = AppThemeResources.GetDouble("UiSpacing2")
+        };
+        header.ColumnDefinitions.Add(new ColumnDefinition
+        {
+            Width = new GridLength(AppThemeResources.GetDouble("UiDimension44"))
+        });
         header.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
         header.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         Grid.SetRow(back, 0);
@@ -82,7 +90,6 @@ public class PageHeader : ContentView
             var subtitle = new Label
             {
                 Text = Subtitle,
-                FontSize = 14,
                 LineBreakMode = LineBreakMode.WordWrap
             };
             subtitle.SetDynamicResource(StyleProperty, "MutedLabel");

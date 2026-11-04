@@ -1,7 +1,10 @@
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.Data;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.UseCases.Features.Cycle.History;
 using Npgsql;
 
@@ -10,6 +13,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Cycle.History;
 public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeProvider timeProvider) : ICycleHistoryStore
 {
     private const int UnknownCycleLength = 0;
+
     public async Task<CyclePredictionInputs> LoadPredictionInputsAsync(Guid userId, DateOnly today, CancellationToken cancellationToken)
     {
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -38,18 +42,70 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
 
     public async Task<CycleHistorySnapshot> LoadAsync(Guid userId, DateOnly from, DateOnly through, CancellationToken cancellationToken)
     {
-        return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        // This is a read-only path. A pooled Npgsql connection avoids first-request EF model and
+        // query compilation while the transaction still carries the same RLS tenant setting.
+        var connectionString = dbContext.Database.GetConnectionString()
+            ?? throw new InvalidOperationException("A PostgreSQL connection string is required.");
+        await using var connection = new NpgsqlConnection(connectionString);
+        await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
+        await using (var tenantCommand = new NpgsqlCommand(
+            "SELECT set_config('app.user_id', @user_id, true)", connection, transaction))
         {
-        dbContext.ChangeTracker.Clear();
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
-        await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
-        var cycles = await dbContext.CycleLogs.AsNoTracking().Where(row => row.UserId == userId && row.StartDate <= through && (row.EndDate == null || row.EndDate >= from))
-            .OrderBy(row => row.StartDate).Select(row => new CycleObservation(row.Id, row.StartDate, row.EndDate, row.CycleLength)).ToListAsync(cancellationToken).ConfigureAwait(false);
-        var symptoms = await dbContext.SymptomLogs.AsNoTracking().Where(row => row.UserId == userId && row.Date >= from && row.Date <= through)
-            .OrderBy(row => row.Date).Select(row => new CycleSymptom(row.Id, row.CycleLogId, row.Date, row.SymptomType, row.Severity, row.Notes)).ToListAsync(cancellationToken).ConfigureAwait(false);
+            tenantCommand.Parameters.AddWithValue("user_id", userId.ToString("D"));
+            await tenantCommand.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        var cycles = new List<CycleObservation>();
+        await using (var command = new NpgsqlCommand(
+            """
+            SELECT id, start_date, end_date, cycle_length
+            FROM app.cycle_logs
+            WHERE user_id = @user_id AND start_date <= @through AND (end_date IS NULL OR end_date >= @from)
+            ORDER BY start_date
+            """, connection, transaction))
+        {
+            command.Parameters.AddWithValue("user_id", userId);
+            command.Parameters.AddWithValue("from", from);
+            command.Parameters.AddWithValue("through", through);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                cycles.Add(new CycleObservation(
+                    reader.GetGuid(0),
+                    reader.GetFieldValue<DateOnly>(1),
+                    reader.IsDBNull(2) ? null : reader.GetFieldValue<DateOnly>(2),
+                    reader.GetInt32(3)));
+            }
+        }
+
+        var symptoms = new List<CycleSymptom>();
+        await using (var command = new NpgsqlCommand(
+            """
+            SELECT id, cycle_log_id, "date", symptom_type, severity, notes
+            FROM app.symptom_logs
+            WHERE user_id = @user_id AND "date" >= @from AND "date" <= @through
+            ORDER BY "date"
+            """, connection, transaction))
+        {
+            command.Parameters.AddWithValue("user_id", userId);
+            command.Parameters.AddWithValue("from", from);
+            command.Parameters.AddWithValue("through", through);
+            await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+            while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+            {
+                symptoms.Add(new CycleSymptom(
+                    reader.GetGuid(0),
+                    reader.GetGuid(1),
+                    reader.GetFieldValue<DateOnly>(2),
+                    reader.GetString(3),
+                    reader.GetInt32(4),
+                    reader.IsDBNull(5) ? null : reader.GetString(5)));
+            }
+        }
+
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return new CycleHistorySnapshot(cycles, symptoms);
-        }).ConfigureAwait(false);
     }
 
     public async Task<CycleObservation?> SaveCycleAsync(SaveCycleObservation request, CancellationToken cancellationToken)
@@ -59,6 +115,7 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         dbContext.ChangeTracker.Clear();
         await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken).ConfigureAwait(false);
         await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, request.UserId, cancellationToken).ConfigureAwait(false);
+        await WorkoutSessionAccountLock.AcquireAsync(dbContext, request.UserId, cancellationToken).ConfigureAwait(false);
         await LockRecordIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
         CycleLogRecord? row = await dbContext.CycleLogs.SingleOrDefaultAsync(item => item.UserId == request.UserId && item.Id == request.Id, cancellationToken).ConfigureAwait(false);
         row ??= new CycleLogRecord { Id = request.Id, UserId = request.UserId, CreatedAt = timeProvider.GetUtcNow().UtcDateTime };
@@ -71,8 +128,11 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         catch (DbUpdateException exception) when (IsUniqueIdCollision(exception))
         { throw new CycleHistoryIdConflictException(); }
         await RecalculateCycleLengthsFromStartsAsync(request.UserId, cancellationToken).ConfigureAwait(false);
+        await PostgresCycleReadinessReconciler.MarkPendingAsync(dbContext, request.UserId, cancellationToken).ConfigureAwait(false);
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, request.UserId,
+            timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
         return new CycleObservation(row.Id, row.StartDate, row.EndDate, row.CycleLength);
         }).ConfigureAwait(false);
     }
@@ -84,6 +144,7 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         dbContext.ChangeTracker.Clear();
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, request.UserId, cancellationToken).ConfigureAwait(false);
+        await WorkoutSessionAccountLock.AcquireAsync(dbContext, request.UserId, cancellationToken).ConfigureAwait(false);
         await LockRecordIdAsync(request.Id, cancellationToken).ConfigureAwait(false);
         var cycleExists = await dbContext.CycleLogs.AnyAsync(row => row.UserId == request.UserId && row.Id == request.CycleId, cancellationToken).ConfigureAwait(false);
         if (!cycleExists) return await Rollback<CycleSymptom>(transaction).ConfigureAwait(false);
@@ -91,10 +152,13 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         row ??= new SymptomLogRecord { Id = request.Id, UserId = request.UserId, CreatedAt = timeProvider.GetUtcNow().UtcDateTime };
         row.CycleLogId = request.CycleId; row.Date = request.Date; row.SymptomType = request.Type; row.Severity = request.Severity; row.Notes = request.Notes;
         if (dbContext.Entry(row).State == EntityState.Detached) dbContext.SymptomLogs.Add(row);
+        await PostgresCycleReadinessReconciler.MarkPendingAsync(dbContext, request.UserId, cancellationToken).ConfigureAwait(false);
         try { await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false); }
         catch (DbUpdateException exception) when (IsUniqueIdCollision(exception))
         { throw new CycleHistoryIdConflictException(); }
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, request.UserId,
+            timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
         return new CycleSymptom(row.Id, row.CycleLogId, row.Date, row.SymptomType, row.Severity, row.Notes);
         }).ConfigureAwait(false);
     }
@@ -106,10 +170,15 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         dbContext.ChangeTracker.Clear();
         await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken).ConfigureAwait(false);
         await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+        await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
         var row = await dbContext.SymptomLogs.SingleOrDefaultAsync(item => item.UserId == userId && item.Id == symptomId, cancellationToken).ConfigureAwait(false);
         if (row is null) { await transaction.CommitAsync(cancellationToken).ConfigureAwait(false); return false; }
+        await PostgresCycleReadinessReconciler.MarkPendingAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
         dbContext.SymptomLogs.Remove(row); await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false); return true;
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, userId,
+            timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
+        return true;
         }).ConfigureAwait(false);
     }
 
@@ -120,6 +189,7 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken).ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             var row = await dbContext.CycleLogs.SingleOrDefaultAsync(item => item.UserId == userId && item.Id == cycleId, cancellationToken).ConfigureAwait(false);
             if (row is null) { await transaction.CommitAsync(cancellationToken).ConfigureAwait(false); return false; }
             var symptoms = await dbContext.SymptomLogs.Where(item => item.UserId == userId && item.CycleLogId == cycleId).ToListAsync(cancellationToken).ConfigureAwait(false);
@@ -127,8 +197,11 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
             dbContext.CycleLogs.Remove(row);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await RecalculateCycleLengthsFromStartsAsync(userId, cancellationToken).ConfigureAwait(false);
+            await PostgresCycleReadinessReconciler.MarkPendingAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            await PostgresCycleReadinessReconciler.TryReconcileAfterWriteAsync(dbContext, userId,
+                timeProvider.GetUtcNow(), cancellationToken).ConfigureAwait(false);
             return true;
         }).ConfigureAwait(false);
     }

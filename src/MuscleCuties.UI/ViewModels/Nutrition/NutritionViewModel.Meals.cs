@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
+using MuscleCuties.UI.Services.Nutrition;
+using MuscleCuties.UI.Navigation;
 using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
@@ -20,6 +22,7 @@ public partial class NutritionViewModel
             return;
 
         _editingIngredient = ingredient;
+        ResetFoodSource();
         IsCustomFoodPanelVisible = false;
         IsFoodFinderExpanded = false;
         SelectedFoodResult = CreateFoodSearchResultItem(
@@ -37,29 +40,43 @@ public partial class NutritionViewModel
         AddFoodMessage = string.Empty;
     }
 
+    private void SelectMealType(MealType mealType)
+    {
+        if (!IsMealChoiceLocked)
+            SelectedMealType = mealType;
+    }
+
+    partial void OnSelectedMealTypeChanged(MealType value)
+    {
+        OnPropertyChanged(nameof(IsBreakfastSelected));
+        OnPropertyChanged(nameof(IsLunchSelected));
+        OnPropertyChanged(nameof(IsDinnerSelected));
+        OnPropertyChanged(nameof(IsSnackSelected));
+    }
+
     private void AddSelectedFoodAsIngredient()
     {
         if (SelectedFoodResult is null)
         {
-            AddFoodMessage = "Choose an ingredient first.";
+            AddFoodMessage = "Ui_Nutrition_Error_ChooseIngredient";
             return;
         }
 
         if (SelectedServingOption is null)
         {
-            AddFoodMessage = "Choose a serving option.";
+            AddFoodMessage = "Ui_Nutrition_Error_ChooseServing";
             return;
         }
 
         if (!TryParseAmount(FoodGrams, out var amount))
         {
-            AddFoodMessage = "Enter amount greater than zero.";
+            AddFoodMessage = "Ui_Nutrition_Error_AmountPositive";
             return;
         }
 
         if (SelectedFoodResult.Calories <= 0f)
         {
-            AddFoodMessage = "Choose a product with calories listed.";
+            AddFoodMessage = "Ui_Nutrition_Error_ProductCalories";
             return;
         }
 
@@ -89,7 +106,7 @@ public partial class NutritionViewModel
     {
         if (MealIngredients.Count == 0)
         {
-            AddFoodMessage = "Add at least one ingredient to the meal.";
+            AddFoodMessage = "Ui_Nutrition_Error_AddIngredient";
             return;
         }
 
@@ -98,7 +115,7 @@ public partial class NutritionViewModel
         {
             var date = IsEditingMeal ? DateOnly.FromDateTime(_editingMealDate) : DateOnly.FromDateTime(DateTime.Today);
             var ingredients = MealIngredients
-                .Select(i => new MealIngredientInputDto(
+                .Select(i => new NutritionMealIngredient(
                     i.FoodItemId,
                     i.Name,
                     i.Grams,
@@ -118,7 +135,7 @@ public partial class NutritionViewModel
                     date,
                     SelectedMealType.ToString(),
                     SelectedMealTime,
-                    ingredients));
+                    NutritionPresentationMapper.ToMealIngredients(ingredients)));
                 AddFoodMessage = $"{SelectedMealType} updated at {SelectedMealTime:hh\\:mm}.";
             }
             else
@@ -127,7 +144,7 @@ public partial class NutritionViewModel
                     date,
                     SelectedMealType.ToString(),
                     SelectedMealTime,
-                    ingredients,
+                    NutritionPresentationMapper.ToMealIngredients(ingredients),
                     _acceptedSuggestionName,
                     _acceptedSuggestionPhase?.ToString()));
                 AddFoodMessage = $"{SelectedMealType} logged at {SelectedMealTime:hh\\:mm}.";
@@ -153,16 +170,16 @@ public partial class NutritionViewModel
         }
         catch (InvalidOperationException)
         {
-            AddFoodMessage = "Check the meal selections and try again.";
+            AddFoodMessage = "Ui_Nutrition_Error_CheckMealSelections";
         }
         catch (ArgumentException)
         {
-            AddFoodMessage = "Check the meal amounts and try again.";
+            AddFoodMessage = "Ui_Nutrition_Error_CheckMealAmounts";
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[NutritionViewModel] Meal log failed ({ex.GetType().Name}).");
-            AddFoodMessage = "Could not log this meal. Please refresh and try again.";
+            AddFoodMessage = "Ui_Nutrition_Error_LogMeal";
         }
         finally
         {
@@ -177,7 +194,7 @@ public partial class NutritionViewModel
 
         if (meal.LoggedMealId == 0 && _navigateAsync is not null)
         {
-            await _navigateAsync($"FoodLogPage?entryId={meal.HistoryId}");
+            await _navigateAsync(NutritionNavigation.ToLogEntry(meal.HistoryId));
             return;
         }
 
@@ -187,11 +204,19 @@ public partial class NutritionViewModel
             var ingredients = await _overviewUseCase.GetMealIngredientsAsync(meal.LoggedMealId);
             if (ingredients.Count == 0)
             {
-                AddFoodMessage = "Could not find that meal. Please refresh and try again.";
+                AddFoodMessage = "Ui_Nutrition_Error_MealNotFound";
                 return;
             }
 
-            BeginMealEdit(meal, ingredients);
+            BeginMealEdit(meal, ingredients.Select(NutritionPresentationMapper.ToMealIngredient).ToList());
+        }
+        catch (InvalidOperationException)
+        {
+            AddFoodMessage = "This meal could not be opened for editing. Refresh and try again.";
+        }
+        catch (ArgumentException)
+        {
+            AddFoodMessage = "This meal could not be opened for editing. Refresh and try again.";
         }
         finally
         {
@@ -199,25 +224,77 @@ public partial class NutritionViewModel
         }
     }
 
+    private int _breakfastPreferenceVersion;
+    private bool _breakfastTargetsNeedRefresh;
+
     private async Task SetBreakfastPreferenceAsync(string? preference)
     {
-        if (string.IsNullOrWhiteSpace(preference))
+        if (!Enum.TryParse<BreakfastPreference>(preference, true, out var parsed) ||
+            !Enum.IsDefined(parsed))
             return;
 
-        BreakfastPreference = Enum.TryParse<BreakfastPreference>(preference, true, out var parsed)
-            ? parsed
-            : BreakfastPreference.Savoury;
+        BreakfastPreference = parsed;
 
         OnPropertyChanged(nameof(IsSavouryBreakfast));
         OnPropertyChanged(nameof(IsSweetBreakfast));
 
-        var targets = await _overviewUseCase.GetPlanTargetsAsync(BreakfastPreference.ToString());
-        TargetCalories = targets.Calories;
-        TargetProtein = targets.Protein;
-        TargetCarbs = targets.Carbs;
-        TargetFats = targets.Fats;
-        NotifyDisplayProperties();
-        NotifyMealTargetProperties();
+        await RefreshBreakfastPreferenceAsync();
+    }
+
+    private async Task RefreshBreakfastPreferenceAsync()
+    {
+        var preferenceVersion = ++_breakfastPreferenceVersion;
+        var selectedPreference = BreakfastPreference;
+        var suggestionVersion = ++_suggestionLoadVersion;
+        _breakfastTargetsNeedRefresh = true;
+        var refreshModal = IsSuggestionModalVisible && (IsDayPlanMode || IsBreakfastSuggestion);
+        if (refreshModal)
+        {
+            IsLoadingSuggestions = true;
+            MealSuggestionError = string.Empty;
+            MealSuggestions.Clear();
+            DayPlanMeals.Clear();
+            NotifySuggestionProperties();
+        }
+
+        try
+        {
+            var targets = await _overviewUseCase.GetPlanTargetsAsync(selectedPreference.ToString());
+            if (preferenceVersion != _breakfastPreferenceVersion)
+                return;
+
+            _mealDistribution = NutritionPresentationMapper.FromMealDistribution(targets.MealDistribution);
+            TargetCalories = targets.Calories;
+            TargetProtein = targets.Protein;
+            TargetCarbs = targets.Carbs;
+            TargetFats = targets.Fats;
+            NotifyDisplayProperties();
+            NotifyMealTargetProperties();
+            NotifySuggestionProperties();
+            _breakfastTargetsNeedRefresh = false;
+
+            if (suggestionVersion == _suggestionLoadVersion && IsSuggestionModalVisible)
+            {
+                if (IsDayPlanMode)
+                {
+                    await LoadDayPlanAsync();
+                }
+                else if (IsBreakfastSuggestion)
+                {
+                    await LoadSuggestionsAsync();
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Trace.WriteLine($"[NutritionViewModel] Breakfast targets failed ({ex.GetType().Name}).");
+            if (preferenceVersion == _breakfastPreferenceVersion && suggestionVersion == _suggestionLoadVersion && refreshModal)
+            {
+                MealSuggestionError = "Meal ideas could not refresh. Check your connection and try again.";
+                IsLoadingSuggestions = false;
+                NotifySuggestionProperties();
+            }
+        }
     }
 
     private void NotifyMealTargetProperties()
@@ -228,7 +305,7 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(SnackTargetText));
     }
 
-    private void BeginMealEdit(MealItem meal, IReadOnlyList<MealIngredientInputDto> ingredients)
+    private void BeginMealEdit(MealItem meal, IReadOnlyList<NutritionMealIngredient> ingredients)
     {
         MealIngredients = new ObservableCollection<MealIngredientItem>(ingredients.Select(i => new MealIngredientItem
         {
@@ -241,12 +318,15 @@ public partial class NutritionViewModel
             SourceSummary = i.SourceSummary,
             Grams = i.Grams,
             Amount = i.Amount,
-            ServingLabel = i.ServingLabel
+            ServingLabel = i.ServingLabel,
+            MacrosForAmount = NutritionPresentationMapper.FromPer100Grams(
+                i.Calories, i.Protein, i.Carbs, i.Fats, i.Grams)
         }));
 
         _editingMealDate = DateTime.Today;
         _editingMealId = meal.LoggedMealId;
         IsEditingMeal = true;
+        IsMealChoiceLocked = true;
         SelectedMealType = Enum.TryParse<MealType>(meal.MealType, true, out var mt) ? mt : MealType.Snack;
         SelectedMealTime = DateTime.TryParse(meal.Time, out var t) ? t.TimeOfDay : DateTime.Now.TimeOfDay;
         IsMealEditorVisible = true;
@@ -286,6 +366,7 @@ public partial class NutritionViewModel
 
     private void ResetFoodSearchAndSelection()
     {
+        ResetFoodSource();
         SelectedFoodResult = null;
         SearchQuery = string.Empty;
         ServingOptions = [];
@@ -311,7 +392,9 @@ public partial class NutritionViewModel
             SourceSummary = sourceSummary,
             Grams = grams,
             Amount = amount,
-            ServingLabel = servingLabel
+            ServingLabel = servingLabel,
+            MacrosForAmount = NutritionPresentationMapper.FromPer100Grams(
+                calories, protein, carbs, fats, grams)
         };
     }
 

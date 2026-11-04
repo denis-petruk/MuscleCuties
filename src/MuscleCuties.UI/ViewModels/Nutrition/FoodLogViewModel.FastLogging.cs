@@ -1,10 +1,13 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.Services.Nutrition;
+using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
@@ -20,7 +23,32 @@ public partial class FoodLogViewModel
     private const double DefaultQuickAddServingSize = 1.0;
     private const double DefaultQuickAddServingsCount = 1.0;
     private const string DefaultQuickAddServingUnit = "serving";
-    private const string DefaultQuickAddTitle = "Quick Calorie Add";
+    private static string DefaultQuickAddTitle => UiTextCatalog.Get("Nutrition_QuickAdd_DefaultName");
+    private const int BarcodeCameraCaptureTimeoutSeconds = 20;
+    private const string BarcodeStatusEnterDigitsKey = "Nutrition_Barcode_StatusEnterDigits";
+    private const string BarcodeStatusSearchingCatalogKey = "Nutrition_Barcode_StatusSearchingCatalog";
+    private const string BarcodeStatusFoundInCatalogFormatKey = "Nutrition_Barcode_StatusFoundInCatalogFormat";
+    private const string BarcodeStatusNotFoundFormatKey = "Nutrition_Barcode_StatusNotFoundFormat";
+    private const string BarcodeStatusIncompleteNutritionKey = "Nutrition_Barcode_StatusIncompleteNutrition";
+    private const string BarcodeStatusInvalidFormatKey = "Nutrition_Barcode_StatusInvalidFormat";
+    private const string BarcodeStatusPermissionDeniedKey = "Nutrition_Barcode_StatusPermissionDenied";
+    private const string BarcodeStatusCameraUnavailableKey = "Nutrition_Barcode_StatusCameraUnavailable";
+    private const string BarcodeStatusUnsupportedSymbologyKey = "Nutrition_Barcode_StatusUnsupportedSymbology";
+    private const string BarcodeStatusNoCodeDetectedKey = "Nutrition_Barcode_StatusNoCodeDetected";
+    private const string BarcodeStatusScanCancelledKey = "Nutrition_Barcode_StatusScanCancelled";
+    private const string BarcodeStatusLookupUnavailableKey = "Nutrition_Barcode_StatusLookupUnavailable";
+    private const string BarcodeStatusLookupFailedKey = "Nutrition_Barcode_StatusLookupFailed";
+    private const string FoodStatusEnterTwoLettersKey = "Nutrition_FoodLog_StatusEnterTwoLetters";
+    private const string FoodStatusSavedFoodsKey = "Nutrition_FoodLog_StatusSavedFoods";
+    private const string FoodStatusNoSavedMatchesKey = "Nutrition_FoodLog_StatusNoSavedMatches";
+    private const string FoodStatusSavedSearchUnavailableKey = "Nutrition_FoodLog_StatusSavedSearchUnavailable";
+    private const string FoodStatusUsdaGenericOnlyKey = "Nutrition_FoodLog_StatusUsdaGenericOnly";
+    private const string FoodStatusUsdaSearchingKey = "Nutrition_FoodLog_StatusUsdaSearching";
+    private const string FoodStatusUsdaResultsKey = "Nutrition_FoodLog_StatusUsdaResults";
+    private const string FoodStatusUsdaNoResultsKey = "Nutrition_FoodLog_StatusUsdaNoResults";
+    private const string FoodStatusUsdaUnavailableKey = "Nutrition_FoodLog_StatusUsdaUnavailable";
+    private static readonly TimeSpan BarcodeCameraCaptureTimeout =
+        TimeSpan.FromSeconds(BarcodeCameraCaptureTimeoutSeconds);
 
     private CancellationTokenSource? _foodSearchCancellation;
     private CancellationTokenSource? _barcodeCameraCancellation;
@@ -66,15 +94,13 @@ public partial class FoodLogViewModel
     public ObservableCollection<QuickFoodItemUiModel> RecentIngredients { get; } = [];
     public ObservableCollection<QuickFoodItemUiModel> RecentSuggestions { get; } = [];
     public ObservableCollection<QuickFoodItemUiModel> FoodSearchResults { get; } = [];
-    public ObservableCollection<MealTemplateDto> SavedMealTemplates { get; } = [];
-    public ObservableCollection<RecipeSummaryDto> SavedRecipes { get; } = [];
+    public ObservableCollection<RecipeSummaryItem> SavedRecipes { get; } = [];
 
     public bool IsManualEditorVisible => !IsFastLoggingVisible && !IsQuickAddCaloriesVisible &&
                                          !IsBarcodeScannerVisible && !IsRecipeBuilderVisible;
     public bool HasRecentIngredients => RecentIngredients.Count > 0;
     public bool HasRecentSuggestions => RecentSuggestions.Count > 0;
     public bool HasFoodSearchResults => FoodSearchResults.Count > 0;
-    public bool HasSavedTemplates => SavedMealTemplates.Count > 0;
     public bool HasSavedRecipes => SavedRecipes.Count > 0;
     public bool HasSelectedQuickFoods => SelectedQuickFoodsCount > 0;
 
@@ -132,7 +158,7 @@ public partial class FoodLogViewModel
         var category = EditingMealType;
         var timestamp = date.ToDateTime(TimeOnly.FromDateTime(DateTime.Now));
 
-        var drafts = selected.Select(item => new LoggedFoodItemDto(
+        var drafts = selected.Select(item => new LoggedFoodEntry(
             Guid.NewGuid(),
             _currentLogId,
             category,
@@ -145,12 +171,12 @@ public partial class FoodLogViewModel
             Math.Max(0, item.Carbs),
             Math.Max(0, item.Fat),
             timestamp,
-            item.Ingredients.Select(i => new LoggedIngredientDto(i.FoodItemId, i.Name, i.Grams)).ToList()
+            item.Ingredients.Select(i => new LoggedFoodIngredient(i.FoodItemId, i.Name, i.Grams)).ToList()
         )).ToList();
 
         var count = drafts.Count;
         await CommitFoodAsync(date,
-            () => _dailyLogUseCase.BatchSaveFoodItemsAsync(date, drafts),
+            () => _dailyLogUseCase.BatchSaveFoodItemsAsync(date, NutritionPresentationMapper.ToLoggedFoods(drafts)),
             count == 1 ? $"Logged {selected[0].Name}." : $"Logged {count} items.");
 
         ClearQuickFoodSelection();
@@ -181,26 +207,23 @@ public partial class FoodLogViewModel
                 return;
 
             foreach (var item in ingredients)
-                RecentIngredients.Add(new QuickFoodItemUiModel(ToQuickFoodItemDto(item), OnQuickFoodSelectionChanged));
+                RecentIngredients.Add(new QuickFoodItemUiModel(NutritionPresentationMapper.FromQuickSnapshot(item), OnQuickFoodSelectionChanged));
             foreach (var item in suggestions)
-                RecentSuggestions.Add(new QuickFoodItemUiModel(ToQuickFoodItemDto(item), OnQuickFoodSelectionChanged));
+                RecentSuggestions.Add(new QuickFoodItemUiModel(NutritionPresentationMapper.FromQuickSnapshot(item), OnQuickFoodSelectionChanged));
 
             if (_getRecipesAndTemplatesUseCase is not null)
             {
                 var bundle = await _getRecipesAndTemplatesUseCase.ExecuteAsync((int)mealType);
-                SavedMealTemplates.Clear();
-                foreach (var t in bundle.Templates)
-                    SavedMealTemplates.Add(t);
                 SavedRecipes.Clear();
                 foreach (var r in bundle.Recipes)
-                    SavedRecipes.Add(r);
+                    SavedRecipes.Add(NutritionPresentationMapper.FromRecipeSummary(r));
             }
 
             NotifyShelfVisibility();
         }
         catch
         {
-            FoodSearchStatus = "Recent foods could not load. You can still search or add manually.";
+            FoodSearchStatus = UiTextCatalog.Get("Food_Log_RecentUnavailable");
         }
         finally
         {
@@ -215,32 +238,21 @@ public partial class FoodLogViewModel
         var item = param switch
         {
             QuickFoodItemUiModel ui => ui.Item,
-            QuickFoodItemDto dto => dto,
+            QuickFood dto => dto,
             _ => null
         };
         if (item is null || IsWriting || IsLoading || !IsEditModalVisible || !IsFastLoggingVisible) return;
         var date = SelectedDate;
         var category = EditingMealType;
-        var draft = new FoodItemEntryDto(Guid.NewGuid(), _currentLogId, category, item.Name,
+        var draft = new FoodLogEntry(Guid.NewGuid(), _currentLogId, category, item.Name,
                 item.ServingSize, item.ServingUnit, item.ServingsCount, item.Calories, item.Protein, item.Carbs,
                 item.Fat,
                 date.ToDateTime(TimeOnly.FromDateTime(DateTime.Now)))
             { Ingredients = item.Ingredients };
         await CommitFoodAsync(date,
-            () => _dailyLogUseCase.ReLogFoodAsync(date, category, ToQuickSnapshot(item), ToLoggedFoodItemDto(draft)),
+            () => _dailyLogUseCase.ReLogFoodAsync(date, category,
+                NutritionPresentationMapper.ToQuickSnapshot(item), NutritionPresentationMapper.ToLoggedFood(draft)),
             $"Logged {item.Name}.");
-    }
-
-    private static QuickFoodItemDto ToQuickFoodItemDto(QuickFoodItemSnapshot snapshot)
-    {
-        return new QuickFoodItemDto(snapshot.Name, snapshot.ServingSize, snapshot.ServingUnit, snapshot.ServingsCount,
-            snapshot.Calories, snapshot.Protein, snapshot.Carbs, snapshot.Fat, snapshot.Detail)
-        {
-            SourceId = snapshot.SourceId,
-            IngredientFoodItemId = snapshot.IngredientFoodItemId,
-            Ingredients = snapshot.Ingredients?.Select(i => new HistoryIngredientDto(i.FoodItemId, i.Name, i.Grams))
-                .ToList() ?? []
-        };
     }
 
     [RelayCommand]
@@ -249,7 +261,7 @@ public partial class FoodLogViewModel
         var item = param switch
         {
             QuickFoodItemUiModel ui => ui.Item,
-            QuickFoodItemDto dto => dto,
+            QuickFood dto => dto,
             _ => null
         };
         if (item is null || IsWriting)
@@ -313,7 +325,7 @@ public partial class FoodLogViewModel
         CancelBarcodeCameraCapture();
         _barcodeScannerSessionRevision++;
         BarcodeInputText = string.Empty;
-        BarcodeScanStatus = "Enter barcode digits to search saved foods on this device.";
+        BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusEnterDigitsKey);
         IsFastLoggingVisible = false;
         IsQuickAddCaloriesVisible = false;
         IsBarcodeScannerVisible = true;
@@ -328,7 +340,7 @@ public partial class FoodLogViewModel
         if (IsWriting || IsProcessingBarcode || !IsBarcodeScannerVisible) return;
         if (_barcodeHardwareService is null)
         {
-            BarcodeScanStatus = "Camera scanning is unavailable on this device. Enter barcode digits manually.";
+            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
             return;
         }
 
@@ -336,31 +348,53 @@ public partial class FoodLogViewModel
         var sessionRevision = ++_barcodeScannerSessionRevision;
         using var cts = new CancellationTokenSource();
         _barcodeCameraCancellation = cts;
+        var captureTimedOut = false;
 
         try
         {
-            var capture = await _barcodeHardwareService.CaptureBarcodeAsync(cts.Token);
+            var captureTask = _barcodeHardwareService.CaptureBarcodeAsync(cts.Token);
+            var completed = await Task.WhenAny(captureTask, Task.Delay(BarcodeCameraCaptureTimeout, cts.Token))
+                .ConfigureAwait(true);
+            if (!ReferenceEquals(completed, captureTask) && !captureTask.IsCompleted)
+            {
+                captureTimedOut = true;
+                cts.Cancel();
+            }
+
+            var capture = await captureTask;
             if (sessionRevision != _barcodeScannerSessionRevision || !IsBarcodeScannerVisible || !IsEditModalVisible)
                 return;
 
+            if (captureTimedOut)
+            {
+                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusNoCodeDetectedKey);
+                return;
+            }
+
             switch (capture.Outcome)
             {
-                case BarcodeCaptureOutcomeDto.Decoded when !string.IsNullOrWhiteSpace(capture.BarcodeText):
+                case BarcodeCaptureOutcome.Decoded when !string.IsNullOrWhiteSpace(capture.BarcodeText):
                     BarcodeInputText = capture.BarcodeText.Trim();
                     await LookupBarcodeInternalAsync(capture.BarcodeText.Trim(), capture.Symbology, sessionRevision);
                     break;
-                case BarcodeCaptureOutcomeDto.PermissionDenied:
-                    BarcodeScanStatus = "Camera permission was denied. You can still enter barcode digits manually.";
+                case BarcodeCaptureOutcome.PermissionDenied:
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusPermissionDeniedKey);
                     break;
-                case BarcodeCaptureOutcomeDto.UnsupportedSymbology:
-                    BarcodeScanStatus = "Unsupported barcode format. Enter EAN-13, UPC-A, EAN-8, UPC-E, or Code-128 digits manually.";
+                case BarcodeCaptureOutcome.UnsupportedSymbology:
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusUnsupportedSymbologyKey);
                     break;
-                case BarcodeCaptureOutcomeDto.Cancelled:
+                case BarcodeCaptureOutcome.Cancelled:
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusScanCancelledKey);
                     break;
                 default:
-                    BarcodeScanStatus = "Camera is unavailable. Enter barcode digits manually.";
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
                     break;
             }
+        }
+        catch (Exception)
+        {
+            if (sessionRevision == _barcodeScannerSessionRevision)
+                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
         }
         finally
         {
@@ -391,12 +425,12 @@ public partial class FoodLogViewModel
     public async Task LookupBarcodeAsync(string? barcodeString = null)
     {
         var sessionRevision = ++_barcodeScannerSessionRevision;
-        await LookupBarcodeInternalAsync(barcodeString, BarcodeSymbologyDto.Auto, sessionRevision);
+        await LookupBarcodeInternalAsync(barcodeString, BarcodeSymbology.Auto, sessionRevision);
     }
 
     private async Task LookupBarcodeInternalAsync(
         string? barcodeString,
-        BarcodeSymbologyDto symbology,
+        BarcodeSymbology symbology,
         int expectedSessionRevision)
     {
         if (IsWriting || IsProcessingBarcode || _barcodeUseCase is null) return;
@@ -404,36 +438,37 @@ public partial class FoodLogViewModel
         var rawInput = string.IsNullOrWhiteSpace(barcodeString) ? BarcodeInputText : barcodeString;
         if (string.IsNullOrWhiteSpace(rawInput))
         {
-            BarcodeScanStatus = "Enter barcode digits to search.";
+            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusEnterDigitsKey);
             return;
         }
 
         IsProcessingBarcode = true;
-        BarcodeScanStatus = "Searching saved foods on this device…";
+        BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusSearchingCatalogKey);
 
         try
         {
-            var request = new BarcodeLookupRequest(rawInput.Trim(), symbology);
-            var result = await _barcodeUseCase.ExecuteAsync(request);
+            var result = await NutritionPresentationMapper.LookupBarcodeAsync(
+                _barcodeUseCase, rawInput.Trim(), symbology);
             if (expectedSessionRevision != _barcodeScannerSessionRevision || !IsBarcodeScannerVisible || !IsEditModalVisible)
                 return;
 
             if (!result.IsValidBarcode)
             {
-                BarcodeScanStatus = result.ErrorMessage ?? "Invalid barcode format or checksum.";
+                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusInvalidFormatKey);
                 return;
             }
 
             if (!result.IsFound || result.FoodItem is null)
             {
-                BarcodeScanStatus = $"Barcode {result.NormalizedBarcode} not found in saved foods. You can add it manually.";
+                BarcodeScanStatus = UiTextCatalog.Format(
+                    BarcodeStatusNotFoundFormatKey, result.NormalizedBarcode);
                 return;
             }
 
             var food = result.FoodItem;
             if (food.Calories is null || food.Protein is null || food.Carbs is null || food.Fats is null)
             {
-                BarcodeScanStatus = "Some nutrition values are unknown. Add this food manually before logging.";
+                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusIncompleteNutritionKey);
                 return;
             }
 
@@ -452,17 +487,45 @@ public partial class FoodLogViewModel
             IsFastLoggingVisible = false;
             IsQuickAddCaloriesVisible = false;
 
-            ShowStatus($"Found locally: {food.Name} ({Math.Round(food.Calories.Value):F0} kcal)");
+            ShowStatus(UiTextCatalog.Format(
+                BarcodeStatusFoundInCatalogFormatKey, food.Name,
+                Math.Round(food.Calories.Value)));
+        }
+        catch (BarcodeLookupUnavailableException)
+        {
+            ReportUnavailableLookup(expectedSessionRevision);
+        }
+        catch (HttpRequestException)
+        {
+            ReportUnavailableLookup(expectedSessionRevision);
+        }
+        catch (TaskCanceledException)
+        {
+            ReportUnavailableLookup(expectedSessionRevision);
+        }
+        catch (OperationCanceledException)
+        {
+            // The scanner panel was closed or superseded; the newer state owns the status.
+        }
+        catch (IOException)
+        {
+            ReportUnavailableLookup(expectedSessionRevision);
         }
         catch
         {
-            if (expectedSessionRevision == _barcodeScannerSessionRevision)
-                BarcodeScanStatus = "Barcode lookup failed. Check digits and retry.";
+            if (expectedSessionRevision == _barcodeScannerSessionRevision && IsBarcodeScannerVisible)
+                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusLookupFailedKey);
         }
         finally
         {
             IsProcessingBarcode = false;
         }
+    }
+
+    private void ReportUnavailableLookup(int expectedSessionRevision)
+    {
+        if (expectedSessionRevision == _barcodeScannerSessionRevision && IsBarcodeScannerVisible)
+            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusLookupUnavailableKey);
     }
 
     [RelayCommand]
@@ -478,7 +541,7 @@ public partial class FoodLogViewModel
         var carbs = Math.Max(0.0, QuickCarbsValue);
         var fat = Math.Max(0.0, QuickFatValue);
 
-        var draft = new LoggedFoodItemDto(
+        var draft = new LoggedFoodEntry(
             Guid.NewGuid(),
             _currentLogId,
             category,
@@ -495,7 +558,7 @@ public partial class FoodLogViewModel
         );
 
         await CommitFoodAsync(date,
-            () => _dailyLogUseCase.SaveFoodItemAsync(date, draft),
+            () => _dailyLogUseCase.SaveFoodItemAsync(date, NutritionPresentationMapper.ToLoggedFood(draft)),
             $"Logged {name} ({Math.Round(calories):F0} kcal).");
 
         IsQuickAddCaloriesVisible = false;
@@ -511,7 +574,7 @@ public partial class FoodLogViewModel
         OnPropertyChanged(nameof(HasFoodSearchResults));
         if (query.Length < 2)
         {
-            FoodSearchStatus = "Enter at least two letters to search your device.";
+            FoodSearchStatus = UiTextCatalog.Get(FoodStatusEnterTwoLettersKey);
             return;
         }
 
@@ -524,14 +587,14 @@ public partial class FoodLogViewModel
             var foods = await _dailyLogUseCase.SearchLocalFoodsAsync(query, 12, cancellation.Token);
             if (cancellation.IsCancellationRequested || query != FoodSearchQuery.Trim())
                 return;
-            SetSearchResults(foods.Select(ToQuickFood));
+            SetSearchResults(foods.Select(NutritionPresentationMapper.FromFastLookup));
             FoodSearchStatus = foods.Count == 0
-                ? "No local matches. Search USDA or add manually."
-                : "Saved foods on your device";
+                ? UiTextCatalog.Get(FoodStatusNoSavedMatchesKey)
+                : UiTextCatalog.Get(FoodStatusSavedFoodsKey);
         }
         catch
         {
-            FoodSearchStatus = "Local search is unavailable. Add a food manually.";
+            FoodSearchStatus = UiTextCatalog.Get(FoodStatusSavedSearchUnavailableKey);
         }
         finally
         {
@@ -550,29 +613,30 @@ public partial class FoodLogViewModel
     {
         CancelFoodSearch();
         var query = FoodSearchQuery.Trim();
-        if (GenericFoodQueryRule.NormalizeOrEmpty(query).Length == 0)
+        var validation = _dailyLogUseCase.ValidateOnlineFoodSearchQuery(query);
+        if (!validation.IsAccepted)
         {
-            FoodSearchStatus = "USDA search accepts generic foods only, such as chicken breast.";
+            FoodSearchStatus = UiTextCatalog.Get(FoodStatusUsdaGenericOnlyKey);
             return;
         }
 
         IsSearchingFood = true;
-        FoodSearchStatus = "Searching USDA…";
+        FoodSearchStatus = UiTextCatalog.Get(FoodStatusUsdaSearchingKey);
         var cancellation = new CancellationTokenSource();
         _foodSearchCancellation = cancellation;
         try
         {
-            var foods = await _dailyLogUseCase.SearchOnlineFoodsAsync(query, 12, cancellation.Token);
+            var foods = await _dailyLogUseCase.SearchOnlineFoodsAsync(validation.NormalizedQuery, 12, cancellation.Token);
             if (cancellation.IsCancellationRequested || query != FoodSearchQuery.Trim())
                 return;
-            SetSearchResults(foods.Select(ToQuickFood));
+            SetSearchResults(foods.Select(NutritionPresentationMapper.FromFastLookup));
             FoodSearchStatus = foods.Count == 0
-                ? "No USDA results or the 8-second lookup timed out. Your local foods remain available."
-                : "USDA results";
+                ? UiTextCatalog.Get(FoodStatusUsdaNoResultsKey)
+                : UiTextCatalog.Get(FoodStatusUsdaResultsKey);
         }
         catch
         {
-            FoodSearchStatus = "USDA lookup is unavailable. Search your device or add manually.";
+            FoodSearchStatus = UiTextCatalog.Get(FoodStatusUsdaUnavailableKey);
         }
         finally
         {
@@ -586,13 +650,7 @@ public partial class FoodLogViewModel
         }
     }
 
-    private static QuickFoodItemDto ToQuickFood(FastLookupFoodItemDto food)
-    {
-        return new QuickFoodItemDto(food.Name, 100, "g", 1, food.Calories, food.Protein,
-            food.Carbs, food.Fats, food.IsCustom ? "Custom food · per 100 g" : "Per 100 g");
-    }
-
-    private void SetSearchResults(IEnumerable<QuickFoodItemDto> results)
+    private void SetSearchResults(IEnumerable<QuickFood> results)
     {
         FoodSearchResults.Clear();
         foreach (var item in results)
@@ -606,34 +664,7 @@ public partial class FoodLogViewModel
     private const string GramsUnit = "g";
 
     [RelayCommand]
-    public async Task LogMealTemplateAsync(MealTemplateDto? template)
-    {
-        if (template is null || IsWriting || IsLoading) return;
-        var date = SelectedDate;
-        var mealType = EditingMealType;
-        var itemsToLog = template.Items.Select(item => new LoggedFoodItemDto(
-            Id: Guid.NewGuid(),
-            DailyLogId: _currentLogId,
-            MealType: mealType,
-            Name: item.Name,
-            ServingSize: item.ServingSize,
-            ServingUnit: item.ServingUnit,
-            ServingsCount: item.ServingsCount,
-            Calories: item.Calories,
-            Protein: item.Protein,
-            Carbs: item.Carbs,
-            Fat: item.Fats,
-            LoggedAtTimestamp: date.ToDateTime(TimeOnly.FromDateTime(DateTime.Now)),
-            Ingredients: []
-        )).ToList();
-
-        await CommitFoodAsync(date,
-            () => _dailyLogUseCase.BatchSaveFoodItemsAsync(date, itemsToLog),
-            $"Logged template '{template.Name}' ({template.Items.Count} items).");
-    }
-
-    [RelayCommand]
-    public async Task LogRecipeAsync(RecipeSummaryDto? recipe)
+    public async Task LogRecipeAsync(RecipeSummaryItem? recipe)
     {
         if (recipe is null || IsWriting || IsLoading) return;
         var date = SelectedDate;
@@ -654,7 +685,7 @@ public partial class FoodLogViewModel
         var carbs = preview is not null ? preview.Carbs : recipe.PerServingCarbs;
         var fats = preview is not null ? preview.Fats : recipe.PerServingFats;
 
-        var loggedItem = new LoggedFoodItemDto(
+        var loggedItem = new LoggedFoodEntry(
             Id: Guid.NewGuid(),
             DailyLogId: _currentLogId,
             MealType: mealType,
@@ -671,7 +702,7 @@ public partial class FoodLogViewModel
         );
 
         await CommitFoodAsync(date,
-            () => _dailyLogUseCase.SaveFoodItemAsync(date, loggedItem),
+            () => _dailyLogUseCase.SaveFoodItemAsync(date, NutritionPresentationMapper.ToLoggedFood(loggedItem)),
             $"Logged {servingsCount:0.##} {(Math.Abs(servingsCount - 1f) < 0.001f ? "serving" : "servings")} of '{recipe.Name}' ({Math.Round(calories):F0} kcal).");
     }
 
@@ -693,7 +724,7 @@ public partial class FoodLogViewModel
             return;
         }
 
-        var templateItems = section.Items.Select(item => new MealTemplateItemDto(
+        var templateItems = section.Items.Select(item => new MealTemplateItem(
             Id: Guid.NewGuid(),
             Name: item.Name,
             ServingSize: (float)item.ServingSize,
@@ -705,17 +736,114 @@ public partial class FoodLogViewModel
             Fats: (float)item.Fat
         )).ToList();
 
-        var templateName = $"{section.Title} Template ({DateTime.Today:MMM d})";
-        var request = new SaveMealAsTemplateRequest(templateName, (int)mealType, templateItems);
-        await _saveMealTemplateUseCase.ExecuteAsync(request);
-        ShowStatus($"Saved {section.Title} as template '{templateName}'.");
+        var templateName = UiTextCatalog.Format(
+            "Nutrition_Template_NameFormat",
+            UiTextCatalog.Get($"Nutrition_MealType_{mealType}"),
+            DateTime.Today);
+        var request = NutritionPresentationMapper.CreateSaveMealTemplateRequest(templateName, (int)mealType, templateItems);
+        IsWriting = true;
+        try
+        {
+            await _saveMealTemplateUseCase.ExecuteAsync(request);
+            ShowStatus(UiTextCatalog.Format("Nutrition_Template_SavedFormat", templateName));
+        }
+        catch
+        {
+            ShowStatus(UiTextCatalog.Get("Nutrition_Template_SaveFailed"));
+        }
+        finally
+        {
+            IsWriting = false;
+        }
     }
+
+    [RelayCommand]
+    public async Task SaveNotesAsync()
+    {
+        if (IsWriting || IsLoading) return;
+        IsWriting = true;
+        try
+        {
+            await _dailyLogUseCase.UpdateNotesAsync(SelectedDate,
+                string.IsNullOrWhiteSpace(NotesText) ? null : NotesText.Trim());
+            ShowStatus(UiTextCatalog.Get("Nutrition_FoodLog_NotesSaved"));
+        }
+        catch
+        {
+            ShowStatus(UiTextCatalog.Get("Nutrition_FoodLog_NotesSaveFailed"));
+        }
+        finally
+        {
+            IsWriting = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task EditRecipeAsync(RecipeSummaryItem? recipe)
+    {
+        if (recipe is null || IsWriting || IsLoading || _getRecipesAndTemplatesUseCase is null) return;
+        IsLoadingFastLogging = true;
+        try
+        {
+            var detailsDto = await _getRecipesAndTemplatesUseCase.GetRecipeAsync(recipe.Id);
+            var details = detailsDto is null ? null : NutritionPresentationMapper.FromRecipeDetails(detailsDto);
+            if (details is null)
+            {
+                ShowStatus(UiTextCatalog.Get("Nutrition_Recipe_Unavailable"));
+                return;
+            }
+
+            LoadSavedRecipeIntoEditor(details);
+        }
+        catch
+        {
+            ShowStatus(UiTextCatalog.Get("Nutrition_Recipe_Unavailable"));
+        }
+        finally
+        {
+            IsLoadingFastLogging = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task DeleteRecipeAsync(RecipeSummaryItem? recipe)
+    {
+        if (recipe is null || IsWriting || IsLoading || _getRecipesAndTemplatesUseCase is null) return;
+
+        var confirmed = await ConfirmAsync(
+            UiTextCatalog.Get("Nutrition_Recipe_DeleteTitle"),
+            UiTextCatalog.Format("Nutrition_Recipe_DeleteMessage", recipe.Name),
+            UiTextCatalog.Get("Common_Delete"),
+            UiTextCatalog.Get("Common_Cancel"));
+        if (!confirmed) return;
+
+        IsWriting = true;
+        try
+        {
+            await _getRecipesAndTemplatesUseCase.DeleteRecipeAsync(recipe.Id);
+            var stale = SavedRecipes.FirstOrDefault(saved => saved.Id == recipe.Id);
+            if (stale is not null)
+                SavedRecipes.Remove(stale);
+            NotifyShelfVisibility();
+            ShowStatus(UiTextCatalog.Get("Nutrition_Recipe_Deleted"));
+        }
+        catch
+        {
+            ShowStatus(UiTextCatalog.Get("Nutrition_Recipe_DeleteFailed"));
+        }
+        finally
+        {
+            IsWriting = false;
+        }
+    }
+
+    private static Task<bool> ConfirmAsync(string title, string message, string accept, string cancel) =>
+        Shell.Current.DisplayAlertAsync(title, message, accept, cancel);
 
     private void NotifyShelfVisibility()
     {
         OnPropertyChanged(nameof(HasRecentIngredients));
         OnPropertyChanged(nameof(HasRecentSuggestions));
-        OnPropertyChanged(nameof(HasSavedTemplates));
         OnPropertyChanged(nameof(HasSavedRecipes));
     }
 

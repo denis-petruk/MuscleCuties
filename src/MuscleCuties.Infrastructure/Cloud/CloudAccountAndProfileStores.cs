@@ -4,6 +4,7 @@ using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Profile;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Services.Auth;
@@ -20,6 +21,7 @@ using MuscleCuties.UseCases.Features.Account.Registration;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
 using MuscleCuties.UseCases.Features.Onboarding.Quiz;
@@ -320,12 +322,12 @@ public sealed class CloudProfileSetupStore(
 
     private static ProfileSetupDraft Map(StagedProfileData staged) =>
         new(staged.Name, staged.BirthDate, staged.Height, staged.Weight,
-            staged.ProfileImagePath, staged.WorkoutDaysPerWeek, staged.CycleLength,
+            staged.ProfileImagePath, staged.CycleLength,
             staged.SelectedActivities.Select(a => (int)a).ToArray(), staged.UseMetricSystem);
 
     private static StagedProfileData Map(ProfileSetupDraft draft) =>
         new(draft.Name.Trim(), draft.BirthDate, draft.HeightCm, draft.WeightKg,
-            draft.ProfileImagePath.Trim(), draft.WorkoutDaysPerWeek,
+            draft.ProfileImagePath.Trim(),
             draft.CycleLength > 0 ? draft.CycleLength : DefaultCycleLengthDays,
             draft.SelectedActivityTypes.Where(v => Enum.IsDefined(typeof(WorkoutActivityType), v)).Select(v => (WorkoutActivityType)v).ToHashSet(),
             draft.UseMetricSystem);
@@ -377,16 +379,40 @@ public sealed class CloudOnboardingQuizStore(
     private const string RegistrationConflictCode = "registrationConflict";
     private const string PrivacyConsentRequiredCode = "privacyConsentRequired";
     private const string ConflictingCycleLengthsCode = "conflictingCycleLengths";
+    private const string AvailableWeekdaysQuestionPrompt = "Which days of the week are you available to train?";
+    private const int SyntheticWeekdayAnswerIdBase = 10_000;
+    private const int DefaultWorkoutDaysPerWeek = 3;
+    private const int MinimumWorkoutDaysPerWeek = 2;
+    private const int MaximumWorkoutDaysPerWeek = 7;
+
+    private static readonly (string Label, int OrderIndex, DayOfWeek Day)[] CanonicalWeekdayOptions =
+    [
+        ("Monday", 1, DayOfWeek.Monday),
+        ("Tuesday", 2, DayOfWeek.Tuesday),
+        ("Wednesday", 3, DayOfWeek.Wednesday),
+        ("Thursday", 4, DayOfWeek.Thursday),
+        ("Friday", 5, DayOfWeek.Friday),
+        ("Saturday", 6, DayOfWeek.Saturday),
+        ("Sunday", 7, DayOfWeek.Sunday)
+    ];
+
+    private IReadOnlyList<QuizQuestionDto>? _rawServerQuestions;
+    private IReadOnlyList<QuizQuestionDto>? _cachedClientQuestions;
 
     public async Task<IReadOnlyList<QuizQuestionDto>> LoadQuestionsAsync(bool refresh,
         CancellationToken cancellationToken)
     {
+        if (!refresh && _cachedClientQuestions is { Count: > 0 })
+            return _cachedClientQuestions;
+
         var response = await apiClient.GetAsync<QuizQuestionDto[]>(RegistrationQuizRoute,
             cancellationToken).ConfigureAwait(false);
         if (response.Status != BackendApiStatus.Success || response.Data is not { Length: > 0 })
             throw new InvalidOperationException(RegistrationQuizUnavailableMessage);
 
-        return response.Data;
+        _rawServerQuestions = response.Data;
+        _cachedClientQuestions = UpgradeLegacyScheduleQuestionIfNeeded(response.Data);
+        return _cachedClientQuestions;
     }
 
     public async Task<QuizCommitResult> CommitAsync(
@@ -404,6 +430,9 @@ public sealed class CloudOnboardingQuizStore(
                 string.IsNullOrWhiteSpace(reg.PrivacyNoticeVersion) ||
                 reg.PrivacyConsentAcceptedAtUtc is null)
                 return new QuizCommitResult(false, true, "Complete email verification before creating an account.");
+
+            var (normalizedSelections, resolvedWorkoutDaysPerWeek) =
+                NormalizeSelectionsForServerCatalog(selections, _rawServerQuestions);
 
             var request = new
             {
@@ -424,12 +453,14 @@ public sealed class CloudOnboardingQuizStore(
                     birthDate = DateOnly.FromDateTime(profile.BirthDate),
                     heightCm = (decimal)profile.Height,
                     weightKg = (decimal)profile.Weight,
-                    workoutDaysPerWeek = profile.WorkoutDaysPerWeek,
+                    workoutDaysPerWeek = resolvedWorkoutDaysPerWeek,
                     cycleLengthDays = profile.CycleLength,
                     selectedActivityTypes = profile.SelectedActivities.Select(a => (int)a).ToList(),
                     useMetricSystem = profile.UseMetricSystem
                 },
-                quizResponses = selections.Select(s => new { questionId = s.QuestionId, answerId = s.AnswerId }).ToList()
+                quizResponses = normalizedSelections
+                    .Select(s => new { questionId = s.QuestionId, answerId = s.AnswerId })
+                    .ToList()
             };
 
             var response = await apiClient.SendMutationAsync<object, JsonElement>(
@@ -455,6 +486,83 @@ public sealed class CloudOnboardingQuizStore(
 
         return new QuizCommitResult(false, false,
             "Your registration session expired. Please start again.");
+    }
+
+    private static IReadOnlyList<QuizQuestionDto> UpgradeLegacyScheduleQuestionIfNeeded(
+        IReadOnlyList<QuizQuestionDto> serverQuestions)
+    {
+        if (serverQuestions.Any(q => q.QuestionType == QuizQuestionType.AvailableWeekdays) ||
+            serverQuestions.All(q => q.QuestionType != QuizQuestionType.WorkoutDaysPerWeek))
+            return serverQuestions;
+
+        var weekdayAnswers = CanonicalWeekdayOptions
+            .Select(option => new QuizAnswerDto(
+                SyntheticWeekdayAnswerIdBase + option.OrderIndex,
+                option.Label,
+                option.OrderIndex,
+                (int)option.Day))
+            .ToArray();
+
+        return serverQuestions
+            .Select(question => question.QuestionType == QuizQuestionType.WorkoutDaysPerWeek
+                ? new QuizQuestionDto(
+                    question.Id,
+                    AvailableWeekdaysQuestionPrompt,
+                    question.OrderIndex,
+                    QuizQuestionType.AvailableWeekdays,
+                    weekdayAnswers)
+                : question)
+            .ToArray();
+    }
+
+    private static (IReadOnlyList<QuizSelectionDto> Selections, int WorkoutDaysPerWeek)
+        NormalizeSelectionsForServerCatalog(
+            IReadOnlyList<QuizSelectionDto> selections,
+            IReadOnlyList<QuizQuestionDto>? rawServerQuestions)
+    {
+        if (rawServerQuestions is null || rawServerQuestions.Count == 0)
+            return (selections, DefaultWorkoutDaysPerWeek);
+
+        var nativeWeekdaysQuestion = rawServerQuestions.FirstOrDefault(
+            q => q.QuestionType == QuizQuestionType.AvailableWeekdays);
+        if (nativeWeekdaysQuestion is not null)
+        {
+            var count = selections.Count(s => s.QuestionId == nativeWeekdaysQuestion.Id);
+            var clamped = Math.Clamp(
+                count > 0 ? count : DefaultWorkoutDaysPerWeek,
+                MinimumWorkoutDaysPerWeek,
+                MaximumWorkoutDaysPerWeek);
+            return (selections, clamped);
+        }
+
+        var legacyDaysQuestion = rawServerQuestions.FirstOrDefault(
+            q => q.QuestionType == QuizQuestionType.WorkoutDaysPerWeek);
+        if (legacyDaysQuestion is null || legacyDaysQuestion.Answers.Count == 0)
+            return (selections, DefaultWorkoutDaysPerWeek);
+
+        var scheduleSelections = selections
+            .Where(s => s.QuestionId == legacyDaysQuestion.Id)
+            .ToArray();
+
+        var directServerAnswer = scheduleSelections.Length == 1
+            ? legacyDaysQuestion.Answers.FirstOrDefault(a => a.Id == scheduleSelections[0].AnswerId)
+            : null;
+
+        var requestedDays = directServerAnswer?.MappedValue
+                            ?? (scheduleSelections.Length > 0 ? scheduleSelections.Length : DefaultWorkoutDaysPerWeek);
+        var clampedWorkoutDays = Math.Clamp(requestedDays, MinimumWorkoutDaysPerWeek, MaximumWorkoutDaysPerWeek);
+
+        var matchedAnswer = directServerAnswer ?? legacyDaysQuestion.Answers
+            .OrderBy(a => Math.Abs(a.MappedValue - clampedWorkoutDays))
+            .ThenBy(a => a.OrderIndex)
+            .First();
+
+        var normalized = selections
+            .Where(s => s.QuestionId != legacyDaysQuestion.Id)
+            .Append(new QuizSelectionDto(legacyDaysQuestion.Id, matchedAnswer.Id))
+            .ToArray();
+
+        return (normalized, clampedWorkoutDays);
     }
 
     private static string GetRegistrationFailureMessage(BackendApiStatus status, string? errorCode)
@@ -505,7 +613,17 @@ public sealed class CloudProfileOverviewStore(
     private const string PhotosLatestRoute = "/api/v1/photos?limit=1&offset=0";
     private const string CycleOverviewRoute = "/api/v1/cycle/overview";
     private const int DefaultCycleLengthDays = 28;
-    private const int DefaultWorkoutDaysPerWeek = 3;
+
+#if DEBUG
+    private static async Task<BackendApiResponse<T>> TraceProfileResponseAsync<T>(
+        Task<BackendApiResponse<T>> responseTask, string operation)
+    {
+        var response = await responseTask.ConfigureAwait(false);
+        if (response.Status != BackendApiStatus.Success)
+            System.Diagnostics.Trace.WriteLine($"[ProfileOverview] {operation}: {response.Status}");
+        return response;
+    }
+#endif
 
     public async Task<ProfileOverviewSource> LoadAsync(CancellationToken cancellationToken)
     {
@@ -519,6 +637,14 @@ public sealed class CloudProfileOverviewStore(
         var injuriesTask = apiClient.GetAsync<InjuryObservationRecord[]>(ActiveInjuriesRoute, cancellationToken);
         var photosTask = apiClient.GetAsync<PhotoHistoryResponse>(PhotosLatestRoute, cancellationToken);
 
+#if DEBUG
+        profileTask = TraceProfileResponseAsync(profileTask, "Profile");
+        dashboardTask = TraceProfileResponseAsync(dashboardTask, "Dashboard");
+        cycleTask = TraceProfileResponseAsync(cycleTask, "Cycle");
+        workoutCountTask = TraceProfileResponseAsync(workoutCountTask, "WorkoutCount");
+        injuriesTask = TraceProfileResponseAsync(injuriesTask, "Injuries");
+        photosTask = TraceProfileResponseAsync(photosTask, "Photos");
+#endif
         await Task.WhenAll(profileTask, dashboardTask, cycleTask, workoutCountTask, injuriesTask, photosTask).ConfigureAwait(false);
 
         var profile = CloudStoreResponse.RequireData(await profileTask.ConfigureAwait(false), "profile overview profile");
@@ -587,6 +713,9 @@ public sealed class CloudProfileOverviewStore(
               Enum.IsDefined(dashboardPhase)
                 ? dashboardPhase
                 : CyclePhase.Unknown;
+        var availableWeekdaysCount = profile is null
+            ? 0
+            : CloudWorkoutPreferencesSnapshotMapper.ToPreferences(profile).AvailableWeekdays.Count;
 
         var overview = new ProfileOverviewDto(
             Email: profile?.Email ?? string.Empty,
@@ -599,11 +728,11 @@ public sealed class CloudProfileOverviewStore(
             UnitSystem: units.UnitSystem,
             BodyWeightUnit: units.BodyWeightUnit,
             HeightUnit: units.HeightUnit,
-            WorkoutDaysPerWeek: profile?.WorkoutDaysPerWeek is > 0 ? profile.WorkoutDaysPerWeek : DefaultWorkoutDaysPerWeek,
+            AvailableWeekdaysCount: availableWeekdaysCount,
             CompletedSessions: completedSessions,
             WorkoutStreakDays: dashboard?.WorkoutStreakDays ?? 0,
             NutritionStreakDays: dashboard?.NutritionStreakDays ?? 0,
-            CurrentPhase: predictedPhase,
+            CurrentPhase: CycleContractMapper.ToDto(predictedPhase),
             CyclesTracked: dashboard?.CycleCount ?? 0,
             IsHealthConnected: null,
             ActiveInjuryCount: activeInjuryCount,
@@ -650,10 +779,6 @@ public sealed class CloudProfilePersonalInfoStore(
                          Enum.IsDefined(parsedExp)
             ? (int)parsedExp
             : (int)TrainingExperienceLevel.Intermediate;
-        var trackingMode = Enum.TryParse<CycleTrackingMode>(snapshot.CycleTrackingMode, true, out var parsedMode) &&
-                           Enum.IsDefined(parsedMode)
-            ? (int)parsedMode
-            : (int)CycleTrackingMode.ManualPhaseLogging;
         var context = ReproductiveContextCodec.Parse(snapshot.ReproductiveContextJson);
 
         var profile = new PersonalInfoProfileDto(
@@ -664,8 +789,6 @@ public sealed class CloudProfilePersonalInfoStore(
             goal,
             pace,
             experience,
-            trackingMode,
-            snapshot.WorkoutDaysPerWeek,
             snapshot.CycleLength > 0 ? snapshot.CycleLength : DefaultCycleLengthDays,
             (int)context.Pregnancy,
             (int)context.Contraception);
@@ -689,9 +812,6 @@ public sealed class CloudProfilePersonalInfoStore(
         var experience = Enum.IsDefined(typeof(TrainingExperienceLevel), request.TrainingExperienceLevel)
             ? ((TrainingExperienceLevel)request.TrainingExperienceLevel).ToString()
             : currentResponse.Data.TrainingExperienceLevel;
-        var trackingMode = Enum.IsDefined(typeof(CycleTrackingMode), request.CycleTrackingMode)
-            ? ((CycleTrackingMode)request.CycleTrackingMode).ToString()
-            : currentResponse.Data.CycleTrackingMode;
         var pregnancy = Enum.IsDefined(typeof(PregnancyStatus), request.PregnancyStatus)
             ? (PregnancyStatus)request.PregnancyStatus
             : PregnancyStatus.Unknown;
@@ -714,8 +834,6 @@ public sealed class CloudProfilePersonalInfoStore(
                 goal,
                 weightGoalPace = pace,
                 trainingExperienceLevel = experience,
-                cycleTrackingMode = trackingMode,
-                workoutDaysPerWeek = request.WorkoutDaysPerWeek,
                 cycleLength = request.CycleLength,
                 reproductiveContextJson
             },
@@ -879,8 +997,6 @@ public sealed class CloudProfileWorkoutPreferencesStore(
     IMuscleCutiesBackendApiClient apiClient) : IProfileWorkoutPreferencesStore
 {
     private const string ProfileRoute = "/api/v1/profile";
-    private const string WorkoutPreferencesRoute = "/api/v1/profile/workout-preferences";
-    private const int DefaultDaysPerWeek = 3;
 
     public async Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken)
     {
@@ -888,43 +1004,7 @@ public sealed class CloudProfileWorkoutPreferencesStore(
         if (response.Status == BackendApiStatus.NotFound)
             return null;
         var snapshot = CloudStoreResponse.RequireData(response, "workout preferences profile");
-        var activities = WorkoutActivityPreferences.Parse(snapshot.PreferredWorkoutActivityTypes)
-            .Select(activity => (int)activity)
-            .ToArray();
-        var strengthStyle = (int)WorkoutActivityPreferences.ParseStrengthStyle(snapshot.PreferredWorkoutActivityTypes);
-        var days = snapshot.WorkoutDaysPerWeek > 0 ? snapshot.WorkoutDaysPerWeek : DefaultDaysPerWeek;
-
-        return new WorkoutPreferencesDto(activities, strengthStyle, days, snapshot.EquipmentLevel);
-    }
-
-    public async Task<WorkoutPreferencesError> SaveAndUpdatePlanAsync(
-        WorkoutPreferencesDto preferences, CancellationToken cancellationToken)
-    {
-        var currentResponse = await apiClient.GetAsync<ServerProfileSnapshot>(ProfileRoute, cancellationToken).ConfigureAwait(false);
-        if (currentResponse.Status == BackendApiStatus.NotFound || currentResponse.Data is null)
-            return WorkoutPreferencesError.ProfileMissing;
-
-        var response = await apiClient.SendMutationAsync<object, CloudProfileWriteResponse>(
-            HttpMethod.Put,
-            WorkoutPreferencesRoute,
-            new
-            {
-                expectedVersion = currentResponse.Data.Version,
-                activityTypes = preferences.ActivityTypes,
-                strengthStyle = preferences.StrengthStyle,
-                daysPerWeek = preferences.DaysPerWeek,
-                equipmentLevel = preferences.EquipmentLevel
-            },
-            idempotencyKey: Guid.NewGuid().ToString("N"),
-            cancellationToken).ConfigureAwait(false);
-
-        return response.Status switch
-        {
-            BackendApiStatus.Success => WorkoutPreferencesError.None,
-            BackendApiStatus.NotFound => WorkoutPreferencesError.ProfileMissing,
-            BackendApiStatus.ValidationFailed => WorkoutPreferencesError.InvalidPreferences,
-            _ => WorkoutPreferencesError.PlanUpdateFailed
-        };
+        return CloudWorkoutPreferencesSnapshotMapper.ToPreferences(snapshot);
     }
 }
 

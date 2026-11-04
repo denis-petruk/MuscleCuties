@@ -1,29 +1,67 @@
 # MuscleCuties
 
-MuscleCuties is a .NET MAUI fitness and wellness app. The current development focus is the iOS client, with a first-party ASP.NET Core API and PostgreSQL persistence.
+iOS-first fitness, nutrition, and cycle-tracking app. The mobile client is .NET MAUI; the backend is an ASP.NET Core API hosted on AWS Lambda and backed by PostgreSQL. Application logic is C# and health data stays within approved first-party services.
 
-## Repository layout
+## Architecture
 
-| Path | Purpose |
-| --- | --- |
-| `src/MuscleCuties.UI` | MAUI mobile app |
-| `src/MuscleCuties.Core` | Domain rules and state |
-| `src/MuscleCuties.UseCases` | Application workflows |
-| `src/MuscleCuties.Infrastructure*` | Storage and service adapters |
-| `services/MuscleCuties.Server` | API and AWS Lambda host |
-| `tests` | Unit, contract, and PostgreSQL integration tests |
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the verified project map, dependency direction, API/client boundaries, and current model-first database setup.
+
+## Layout
+
+- src/ — production libraries, database maintenance CLI, and MAUI client.
+- services/ — Lambda API, workout reconciliation worker, static site, and local PostgreSQL tooling.
+- tests/ — xUnit suites.
+- docs/ — canonical architecture, product, safety, verification, design, and operational references.
+- artifacts/ — local packaging output, ignored by Git.
+- MuscleCuties.sln — solution over production and test projects.
 
 ## Build and test
 
-The iOS app requires the .NET 10 SDK, the MAUI iOS workload, and Xcode. From the repository root:
+The SDK is pinned by global.json. Install a compatible .NET 10 SDK before building.
 
-```sh
-dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -f net10.0-ios -c Debug -p:RuntimeIdentifier=iossimulator-arm64
-dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj
-```
+    dotnet restore MuscleCuties.sln
+    dotnet build MuscleCuties.sln -c Release
+    dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj -c Release
 
-The PostgreSQL integration suite requires a disposable local database configured as described in its test fixtures. Keep credentials and personal data out of Git.
+| Suite | Covers |
+| --- | --- |
+| MuscleCuties.Core.Tests | Domain rules, use cases, and architecture constraints; in memory, no database. |
+| MuscleCuties.Server.Tests | Server route parity and HTTP contracts. |
+| MuscleCuties.Registration.Tests | Registration and onboarding contracts. |
+| MuscleCuties.Registration.Integration.Tests | Database-backed flows; requires disposable PostgreSQL. |
+| MuscleCuties.Mobile.Contracts.Tests | Client and backend contract shapes. |
 
-## Current status
+The backend needs PostgreSQL connection and JWT signing settings from configuration or environment variables. Keep credentials, signing files, and database connections out of the repository. Start the local API with:
 
-This is an active beta codebase. The expanded iOS candidate still needs signed-device and live-backend acceptance before TestFlight or App Store submission. See the [architecture overview](docs/ARCHITECTURE.md) for how the app and backend are organized.
+    dotnet run --project services/MuscleCuties.Server
+
+The MAUI client is iOS-only. Agents do not build, run, or screenshot it unless the user authorizes that check for the task; see [docs/VERIFICATION_GATES.md](docs/VERIFICATION_GATES.md).
+
+## Documentation
+
+### Canonical instructions
+
+- [AGENTS.md](AGENTS.md) — compact operating directive and links to on-demand references.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — project and dependency boundaries, API and persistence authority.
+- [docs/PRODUCT_WORKFLOWS.md](docs/PRODUCT_WORKFLOWS.md) — the six approved workout-planning rules.
+- [docs/SAFETY.md](docs/SAFETY.md) — health, privacy, security, and fail-safe constraints.
+- [docs/VERIFICATION_GATES.md](docs/VERIFICATION_GATES.md) — risk-based G0–G9 gates and evidence states.
+- [DESIGN.md](DESIGN.md) and [docs/UI_PRESENTATION_DESIGN_SPEC.md](docs/UI_PRESENTATION_DESIGN_SPEC.md) — design entry point and app-wide presentation contract.
+
+### Current state and detailed references
+
+- [ROADMAP.md](ROADMAP.md) — short delivery sequence.
+- [GitHub transition and incremental refactoring proposal](docs/architecture/github-transition/07-executive-summary.md) — 2026-11-04 audit, two-orchestrator ownership, governance changes and gated implementation packages; planning only.
+- [STATUS.md](STATUS.md) — current checkpoint and gate status.
+- [AUDIT.md](AUDIT.md) — owner actions and broader release evidence.
+- [docs/design/](docs/design/) — references, design decisions, implementation evidence, and current UI gate register.
+- [docs/infra/](docs/infra/) — database/release investigations, approval records, compatibility and backup/restore runbooks.
+- [docs/performance/README.md](docs/performance/README.md) — reproducible server-latency measurement procedure and reports.
+
+Canonical rule owners are linked above. Dated reports preserve evidence; verify their source date and current checkout before treating them as live instructions.
+
+## Shared development files
+
+Development instructions, design/product documents, repository skills, review reports and shared run configurations are versioned by default. `.gitignore` excludes credentials/signing keys, imported conversations, per-machine IDE/agent state and generated build/test output. Keep environment examples free of real credentials.
+
+The worker requires the public RDS CA bundle at `certs/global-bundle.pem`; it is versioned while other local certificate material remains excluded. `.codex/hooks.example.json` is a portable example of the optional installed Impeccable hooks; copy it to the ignored `.codex/hooks.json` only for local use. The hook example contains no required build or release dependency.

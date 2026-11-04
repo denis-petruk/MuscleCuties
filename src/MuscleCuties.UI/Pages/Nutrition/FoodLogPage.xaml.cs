@@ -1,4 +1,5 @@
 using MuscleCuties.UI.Controls.Shared;
+using MuscleCuties.UI.Navigation;
 using MuscleCuties.UI.ViewModels.Nutrition;
 
 namespace MuscleCuties.UI.Pages.Nutrition;
@@ -7,6 +8,8 @@ public partial class FoodLogPage : ContentPage, IQueryAttributable
 {
     private readonly FoodLogViewModel _viewModel;
     private Guid? _pendingEntry;
+    private string? _pendingAddMeal;
+    private int? _pendingAddMinuteOfDay;
 
     public FoodLogPage(FoodLogViewModel viewModel)
     {
@@ -21,8 +24,16 @@ public partial class FoodLogPage : ContentPage, IQueryAttributable
 
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
-        if (query.TryGetValue("entryId", out var value) && Guid.TryParse(value?.ToString(), out var id))
-            _pendingEntry = id;
+        if (NutritionNavigation.TryReadEntryId(query, out var entryId))
+            _pendingEntry = entryId;
+
+        // Sent by the Nutrition meal-entry sheet: which meal to add food to, and when.
+        // The page only carries the intent; the view model decides what it means.
+        if (NutritionNavigation.TryReadAddFoodIntent(query, out var mealName, out var minuteOfDay))
+        {
+            _pendingAddMeal = mealName;
+            _pendingAddMinuteOfDay = minuteOfDay;
+        }
     }
 
     protected override void OnDisappearing()
@@ -41,6 +52,15 @@ public partial class FoodLogPage : ContentPage, IQueryAttributable
             {
                 _pendingEntry = null;
                 await _viewModel.OpenRecordAsync(id);
+            }
+
+            if (!string.IsNullOrWhiteSpace(_pendingAddMeal))
+            {
+                var mealIntent = _pendingAddMeal;
+                var timeIntent = _pendingAddMinuteOfDay;
+                _pendingAddMeal = null;
+                _pendingAddMinuteOfDay = null;
+                await _viewModel.OpenAddFoodIntentAsync(mealIntent, timeIntent);
             }
         });
     }

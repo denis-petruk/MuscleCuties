@@ -1,6 +1,10 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
+
+using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Models.UI.Cycle;
 
@@ -12,6 +16,6 @@ public partial class CyclePhaseOptionItem : ObservableObject
     public string Description { get; init; } = string.Empty;
     public string IconSource { get; init; } = string.Empty;
     public bool UsesAnimatedIcon { get; init; }
-    public Color BackgroundColor { get; init; } = Colors.Transparent;
-    public Color TextColor { get; init; } = Colors.Black;
+    public Color BackgroundColor { get; init; } = AppThemeResources.GetRequired<Color>("Transparent");
+    public Color TextColor { get; init; } = AppThemeResources.GetRequired<Color>("TextPrimary");
 }

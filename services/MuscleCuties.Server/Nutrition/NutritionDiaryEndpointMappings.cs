@@ -1,5 +1,4 @@
 using System.Security.Claims;
-using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Diary;
 using MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
 

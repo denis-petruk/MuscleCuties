@@ -17,10 +17,7 @@
             <converters:StringToFluentIconImageSourceConverter x:Key="StringToFluentIconImageSourceConverter" />
             <converters:BoolToChevronConverter x:Key="BoolToChevronConverter" />
             <converters:CyclePhaseToTextColorConverter x:Key="CyclePhaseToTextColorConverter" />
-            <converters:ScoreToColorConverter x:Key="ScoreToColorConverter" />
             <converters:StringToGeometryConverter x:Key="StringToGeometryConverter" />
-            <converters:BoolToSelectionStrokeConverter x:Key="BoolToSelectionStrokeConverter" />
-            <converters:BoolToSelectionBgConverter x:Key="BoolToSelectionBgConverter" />
             <converters:BoolToEditTitleConverter x:Key="BoolToEditTitleConverter" />
             <converters:BoolToWarmupTextConverter x:Key="BoolToWarmupTextConverter" />
             <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />

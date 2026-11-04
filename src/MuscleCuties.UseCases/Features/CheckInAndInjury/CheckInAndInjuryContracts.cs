@@ -52,7 +52,10 @@ public sealed record InjuryObservationRecord(
     DateOnly Since,
     int Pain,
     DateOnly Date,
-    bool IsActive);
+    bool IsActive,
+    MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger WorseningTrigger =
+        MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+    bool? ClinicianAdvisedAvoid = null);
 
 public sealed record SaveInjuryObservationRequest(
     Guid UserId,
@@ -61,7 +64,14 @@ public sealed record SaveInjuryObservationRequest(
     string Status,
     DateOnly Since,
     int Pain,
-    DateOnly Date);
+    DateOnly Date,
+    MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger WorseningTrigger =
+        MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+    bool? ClinicianAdvisedAvoid = null);
+
+public sealed record CheckInAndInjuryHistorySnapshot(
+    IReadOnlyList<DailyCheckInRecord> CheckIns,
+    IReadOnlyList<InjuryObservationRecord> Injuries);
 
 public sealed class CheckInAndInjuryIdConflictException : Exception
 {
@@ -69,6 +79,12 @@ public sealed class CheckInAndInjuryIdConflictException : Exception
         : base("The supplied record ID cannot be used.")
     {
     }
+}
+
+public sealed class ActiveWorkoutPreventsInjuryException : Exception
+{
+    public ActiveWorkoutPreventsInjuryException()
+        : base("End or abandon the active workout before recording an injury.") { }
 }
 
 public sealed class CheckInAndInjuryDateConflictException : Exception

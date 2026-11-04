@@ -139,6 +139,15 @@ public sealed class BarcodeLookupFoundationTests
                 new BarcodeLookupRequest(SyntheticUpcA), OwnerA, cancellation.Token));
     }
 
+    [Fact]
+    public async Task Unavailable_catalog_raises_the_typed_unavailable_failure_instead_of_not_found()
+    {
+        var store = new RecordingStore { Failure = new BarcodeLookupUnavailableException() };
+
+        await Assert.ThrowsAsync<BarcodeLookupUnavailableException>(() =>
+            new LookupBarcodeUseCase(store).ExecuteAsync(new BarcodeLookupRequest(SyntheticUpcA)));
+    }
+
     private static FoodCatalogCandidate Food(string? barcode) => new(
         SyntheticFoodId, "Synthetic catalog fixture", SyntheticCalories, SyntheticProtein, SyntheticCarbs,
         SyntheticFats, false, null, null, null, null, barcode, null, null, null, null);

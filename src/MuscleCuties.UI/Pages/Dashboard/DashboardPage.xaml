@@ -12,26 +12,24 @@
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="vm:DashboardViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="{Binding IsAnyModalVisible, Converter={StaticResource InvertedBoolConverter}}"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
-    <ContentPage.Resources>
-        <x:Double x:Key="DashboardStreakIconSize">20</x:Double>
-    </ContentPage.Resources>
 
     <Grid RowDefinitions="Auto,*">
-        <Grid Padding="16,40,16,12" MaximumWidthRequest="640"
-              RowDefinitions="Auto,Auto" RowSpacing="12" HorizontalOptions="Fill">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                <VerticalStackLayout Spacing="2">
+        <Grid Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource UiDimension640}"
+              RowDefinitions="Auto" RowSpacing="{StaticResource UiSpaceCompact}" HorizontalOptions="Fill">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpacing2}">
                     <Label Text="{Binding Greetings, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource SubHeadline}" FontSize="24" />
+                           Style="{StaticResource PageTitle}"
+                           LineBreakMode="WordWrap" />
                     <Label
                         Text="{Binding DashboardPhaseHeaderText, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource MutedLabel}" FontSize="14" />
+                        Style="{StaticResource MutedLabel}" />
                 </VerticalStackLayout>
-                <Border Grid.Column="1" WidthRequest="44" HeightRequest="44"
-                        StrokeShape="RoundRectangle 14" StrokeThickness="0"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                <Border Grid.Column="1" Style="{StaticResource HeaderIconButton}"
                         SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_OpenInjuryLogA11y}">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding OpenInjuryModalCommand}" />
@@ -39,61 +37,17 @@
                     <Grid>
                         <Path Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
                               Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                              StrokeThickness="1.75" StrokeLineCap="Round" StrokeLineJoin="Round"
-                              Aspect="Uniform" WidthRequest="18" HeightRequest="18"
+                              StrokeThickness="{StaticResource UiStrokeWidth1_75}" StrokeLineCap="Round" StrokeLineJoin="Round"
+                              Aspect="Uniform" WidthRequest="{StaticResource UiDimension18}" HeightRequest="{StaticResource UiDimension18}"
                               HorizontalOptions="Center" VerticalOptions="Center" />
-                        <BoxView WidthRequest="8" HeightRequest="8" CornerRadius="4" Margin="0,6,6,0"
+                        <BoxView WidthRequest="{StaticResource UiDimension8}" HeightRequest="{StaticResource UiDimension8}" CornerRadius="{StaticResource UiCornerRadius4}" Margin="{StaticResource UiInsets0_6_6_0}"
                                  Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
                                  HorizontalOptions="End" VerticalOptions="Start"
                                  IsVisible="{Binding HasActiveInjuries}" />
                     </Grid>
                 </Border>
             </Grid>
-            <FlexLayout Grid.Row="1" JustifyContent="SpaceBetween" AlignItems="Start"
-                  SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_StreaksA11y}">
-                <VerticalStackLayout Spacing="1">
-                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="3" HorizontalOptions="Center">
-                        <Image Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
-                               Aspect="AspectFit"
-                               WidthRequest="{StaticResource DashboardStreakIconSize}"
-                               HeightRequest="{StaticResource DashboardStreakIconSize}"
-                               VerticalOptions="Center" />
-                        <Label Grid.Column="1"
-                               Text="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedStringConverter}}"
-                               FontSize="21" FontAttributes="Bold" TextColor="{StaticResource Primary}"
-                               VerticalOptions="Center" />
-                    </Grid>
-                    <Label Text="{loc:LocalizedText Dashboard_Page_WorkoutStreak}" Style="{StaticResource CaptionLabel}" FontSize="12" />
-                </VerticalStackLayout>
-                <VerticalStackLayout Spacing="1">
-                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="3" HorizontalOptions="Center">
-                        <Image Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                               Aspect="AspectFit"
-                               WidthRequest="{StaticResource DashboardStreakIconSize}"
-                               HeightRequest="{StaticResource DashboardStreakIconSize}"
-                               VerticalOptions="Center" />
-                        <Label Grid.Column="1"
-                               Text="{Binding NutritionStreakDays, Converter={StaticResource LocalizedStringConverter}}"
-                               FontSize="21" FontAttributes="Bold" TextColor="{StaticResource Primary}"
-                               VerticalOptions="Center" />
-                    </Grid>
-                    <Label Text="{loc:LocalizedText Dashboard_Page_FoodLogStreak}" Style="{StaticResource CaptionLabel}" FontSize="12" />
-                </VerticalStackLayout>
-                <VerticalStackLayout Spacing="1">
-                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="3" HorizontalOptions="Center">
-                        <Image Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
-                               Aspect="AspectFit"
-                               WidthRequest="{StaticResource DashboardStreakIconSize}"
-                               HeightRequest="{StaticResource DashboardStreakIconSize}"
-                               VerticalOptions="Center" />
-                        <Label Grid.Column="1"
-                               Text="{Binding CycleCount, Converter={StaticResource LocalizedStringConverter}}"
-                               FontSize="21" FontAttributes="Bold" TextColor="{StaticResource Primary}"
-                               VerticalOptions="Center" />
-                    </Grid>
-                    <Label Text="{loc:LocalizedText Dashboard_Page_CyclesLogged}" Style="{StaticResource CaptionLabel}" FontSize="12" />
-                </VerticalStackLayout>
-            </FlexLayout>
+
         </Grid>
         <RefreshView Grid.Row="1"
                      Command="{Binding RefreshCommand}"
@@ -101,79 +55,130 @@
                      RefreshColor="{StaticResource Primary}">
             <ScrollView>
                 <Grid
-                    Padding="16,40,16,32"
+                    Padding="{DynamicResource PresentationPageContentPadding}"
                     HorizontalOptions="Fill"
-                    MaximumWidthRequest="640"
-                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
-                    RowSpacing="16">
+                    MaximumWidthRequest="{StaticResource UiDimension640}"
+                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                    RowSpacing="{StaticResource UiSpaceContent}">
 
-                    <toolkit:LazyView
-                        x:Name="TrendCardLazy"
-                        Grid.Row="5"
-                        x:TypeArguments="dashboardControls:DashboardTrendCard" />
-
-                    <!-- Cycle context -->
-                    <toolkit:LazyView
-                        x:Name="PhaseCardLazy"
-                        Grid.Row="0"
-                        x:TypeArguments="dashboardControls:DashboardPhaseCard" />
-
-                    <!-- Today's primary action -->
+                    <!-- The next useful action leads Today. -->
                     <toolkit:LazyView
                         x:Name="WorkoutCardLazy"
-                        Grid.Row="1"
+                        Grid.Row="0"
                         x:TypeArguments="dashboardControls:DashboardWorkoutCard" />
 
-                    <!-- Readiness and recovery -->
                     <toolkit:LazyView
                         x:Name="ReadinessLazy"
-                        Grid.Row="2"
+                        Grid.Row="1"
                         x:TypeArguments="dashboardControls:ReadinessRecoveryCard" />
 
-                    <!-- Food progress -->
                     <toolkit:LazyView
                         x:Name="NutritionLazy"
-                        Grid.Row="3"
+                        Grid.Row="2"
                         x:TypeArguments="dashboardControls:DashboardNutritionCard" />
 
-                    <!-- Daily targets -->
+                    <toolkit:LazyView
+                        x:Name="PhaseCardLazy"
+                        Grid.Row="3"
+                        x:TypeArguments="dashboardControls:DashboardPhaseCard" />
+
                     <toolkit:LazyView
                         x:Name="TargetsLazy"
                         Grid.Row="4"
                         x:TypeArguments="dashboardControls:DashboardTargetsCard" />
 
+            <Border Grid.Row="5"
+                    Style="{StaticResource CardSecondary}"
+                    HorizontalOptions="Fill"
+                    SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_StreaksA11y}">
+                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
+                      ColumnSpacing="{StaticResource UiSpaceTight}"
+                      RowSpacing="{StaticResource UiSpaceTight}">
+                    <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,Auto"
+                          ColumnSpacing="{StaticResource UiSpacing6}"
+                          HorizontalOptions="Center">
+                        <Image Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
+                               Aspect="AspectFit"
+                               WidthRequest="{StaticResource UiDimension20}"
+                               HeightRequest="{StaticResource UiDimension20}"
+                               VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedStringConverter}}"
+                               Style="{StaticResource MetricValue}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                    <Label Grid.Row="1" Grid.Column="0"
+                           Text="{loc:LocalizedText Dashboard_Page_WorkoutStreak}"
+                           Style="{StaticResource CaptionCentered}"
+                           VerticalOptions="Start" LineBreakMode="WordWrap" />
+
+                    <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="Auto,Auto"
+                          ColumnSpacing="{StaticResource UiSpacing6}"
+                          HorizontalOptions="Center">
+                        <Image Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                               Aspect="AspectFit"
+                               WidthRequest="{StaticResource UiDimension20}"
+                               HeightRequest="{StaticResource UiDimension20}"
+                               VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding NutritionStreakDays, Converter={StaticResource LocalizedStringConverter}}"
+                               Style="{StaticResource MetricValue}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                    <Label Grid.Row="1" Grid.Column="1"
+                           Text="{loc:LocalizedText Dashboard_Page_FoodLogStreak}"
+                           Style="{StaticResource CaptionCentered}"
+                           VerticalOptions="Start" LineBreakMode="WordWrap" />
+
+                    <Grid Grid.Row="0" Grid.Column="2" ColumnDefinitions="Auto,Auto"
+                          ColumnSpacing="{StaticResource UiSpacing6}"
+                          HorizontalOptions="Center">
+                        <Image Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
+                               Aspect="AspectFit"
+                               WidthRequest="{StaticResource UiDimension20}"
+                               HeightRequest="{StaticResource UiDimension20}"
+                               VerticalOptions="Center" />
+                        <Label Grid.Column="1"
+                               Text="{Binding CycleCount, Converter={StaticResource LocalizedStringConverter}}"
+                               Style="{StaticResource MetricValue}"
+                               VerticalOptions="Center" />
+                    </Grid>
+                    <Label Grid.Row="1" Grid.Column="2"
+                           Text="{loc:LocalizedText Dashboard_Page_CyclesLogged}"
+                           Style="{StaticResource CaptionCentered}"
+                           VerticalOptions="Start" LineBreakMode="WordWrap" />
+                </Grid>
+            </Border>
+
+                    <toolkit:LazyView
+                        x:Name="TrendCardLazy"
+                        Grid.Row="6"
+                        x:TypeArguments="dashboardControls:DashboardTrendCard" />
+
                     <!-- Progress Photo Check-In -->
-                    <Border Grid.Row="6"
-                            StrokeShape="RoundRectangle 16"
-                            StrokeThickness="0"
-                            Padding="16,14"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                    <Border Grid.Row="7"
+                            Style="{StaticResource CardPrimary}"
                             SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_PhotoCheckInA11y}">
-                        <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="12" VerticalOptions="Center">
+                        <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                             <Border
-                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
-                                StrokeThickness="0" StrokeShape="RoundRectangle 12"
-                                WidthRequest="40" HeightRequest="40" VerticalOptions="Center">
+                                Style="{StaticResource DecorativeIconSurface}" VerticalOptions="Center">
                                 <Path Data="M3 7h4l2-3h6l2 3h4v13H3z M12 10a4 4 0 1 0 0 8a4 4 0 0 0 0-8z"
                                       Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                      StrokeThickness="1.7" StrokeLineCap="Round" StrokeLineJoin="Round"
-                                      Fill="Transparent" Aspect="Uniform" WidthRequest="21" HeightRequest="21"
+                                      StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                      Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension21}" HeightRequest="{StaticResource UiDimension21}"
                                       HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
-                            <VerticalStackLayout Grid.Column="1" Spacing="2" VerticalOptions="Center">
-                                <Label Text="{loc:LocalizedText Dashboard_Page_ProgressPhotoTitle}" Style="{StaticResource CardTitle}"
-                                       FontSize="15" />
+                            <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
+                                <Label Text="{loc:LocalizedText Dashboard_Page_ProgressPhotoTitle}" Style="{StaticResource CardTitle}" LineBreakMode="WordWrap" />
                                 <Label
                                     Text="{Binding PhotoCheckInText, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource CaptionLabel}" FontSize="12" />
+                                    Style="{StaticResource CaptionSmall}"
+                                    LineBreakMode="WordWrap" />
                             </VerticalStackLayout>
                             <Button Grid.Column="2"
                                     Text="{Binding PhotoButtonText, Converter={StaticResource LocalizedStringConverter}}"
                                     Command="{Binding OpenPhotoVaultCommand}"
-                                    Style="{StaticResource PlatformAuthButton}"
-                                    MinimumHeightRequest="36"
-                                    Padding="12,0"
-                                    FontSize="13"
+                                    Style="{StaticResource ButtonSecondary}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_Page_OpenPhotoVaultA11y}" />
                         </Grid>
                     </Border>
@@ -187,5 +192,10 @@
             Grid.RowSpan="2"
             x:TypeArguments="injuryControls:InjuryLogModal"
             InputTransparent="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
+        <toolkit:LazyView
+            x:Name="CheckInModalLazy"
+            Grid.RowSpan="2"
+            x:TypeArguments="dashboardControls:DailyCheckInModal"
+            InputTransparent="{Binding IsCheckInModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
     </Grid>
 </ContentPage>

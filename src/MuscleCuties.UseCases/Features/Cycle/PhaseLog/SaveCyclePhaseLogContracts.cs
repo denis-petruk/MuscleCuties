@@ -1,4 +1,4 @@
-using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 
@@ -6,8 +6,8 @@ namespace MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 public sealed record SaveCyclePhaseLogInput(
     string? OwnerId,
     DateOnly LocalDate,
-    CyclePhase Phase,
-    FlowIntensity? FlowIntensity = null,
+    CyclePhaseDto Phase,
+    FlowIntensityDto? FlowIntensity = null,
     string? Note = null);
 
 public enum SaveCyclePhaseLogOutcomeKind
@@ -21,7 +21,7 @@ public enum SaveCyclePhaseLogOutcomeKind
 /// <summary>A persistence-free result; SuggestedPhase is populated for phase-order conflicts.</summary>
 public sealed record SaveCyclePhaseLogOutput(
     SaveCyclePhaseLogOutcomeKind Outcome,
-    CyclePhase? SuggestedPhase = null);
+    CyclePhaseDto? SuggestedPhase = null);
 
 public interface ISaveCyclePhaseLogUseCase
 {

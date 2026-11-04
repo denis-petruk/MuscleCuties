@@ -33,7 +33,8 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _maskedEmail = string.Empty;
     [ObservableProperty] private string _newPassword = string.Empty;
     [ObservableProperty] private string _otpCode = string.Empty;
-    [ObservableProperty] private string _resendButtonText = "Resend code";
+    [ObservableProperty] private string _resendButtonText =
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Auth_PasswordRecovery_ResendCode");
 
     [ObservableProperty] private PasswordRecoveryStep _step = PasswordRecoveryStep.EnterIdentifier;
     [ObservableProperty] private string _verificationToken = string.Empty;
@@ -110,7 +111,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         var input = EmailOrUsername.Trim();
         if (string.IsNullOrWhiteSpace(input))
         {
-            ErrorMessage = "Please enter your email or username.";
+            ErrorMessage = "Ui_Auth_Error_IdentifierRequired";
             return;
         }
 
@@ -136,7 +137,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             Trace.WriteLine($"[PasswordRecoveryViewModel] Start recovery failed ({ex.GetType().Name}).");
-            ErrorMessage = "Something went wrong. Please check your connection and try again.";
+            ErrorMessage = "Ui_Common_Error_ConnectionRetry";
         }
         finally
         {
@@ -151,7 +152,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         var cleanCode = OtpCode.Trim().Replace(" ", "", StringComparison.Ordinal);
         if (cleanCode.Length != 6 || !cleanCode.All(char.IsDigit))
         {
-            ErrorMessage = "Please enter a valid 6-digit code.";
+            ErrorMessage = "Ui_Auth_Error_InvalidCode";
             return;
         }
 
@@ -179,7 +180,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             Trace.WriteLine($"[PasswordRecoveryViewModel] Verify code failed ({ex.GetType().Name}).");
-            ErrorMessage = "Could not verify code. Please check your connection and try again.";
+            ErrorMessage = "Ui_Auth_Error_VerifyCode";
         }
         finally
         {
@@ -206,13 +207,13 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
 
             if (!string.IsNullOrWhiteSpace(result.ChallengeId)) ChallengeId = result.ChallengeId;
 
-            InfoMessage = "A new verification code has been sent.";
+            InfoMessage = "Ui_Auth_Info_CodeSent";
             StartCountdown(result.ResendCooldownSeconds > 0 ? result.ResendCooldownSeconds : 60);
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[PasswordRecoveryViewModel] Resend code failed ({ex.GetType().Name}).");
-            ErrorMessage = "Could not resend code. Please check your connection and try again.";
+            ErrorMessage = "Ui_Auth_Error_ResendCode";
         }
         finally
         {
@@ -248,7 +249,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
             }
 
             Step = PasswordRecoveryStep.Completed;
-            InfoMessage = "Your password has been successfully updated.";
+            InfoMessage = "Ui_Auth_Info_PasswordUpdated";
 
             if (_onRecoverySuccessNavigateToLogin != null)
                 _onRecoverySuccessNavigateToLogin(Email);
@@ -258,7 +259,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         catch (Exception ex)
         {
             Trace.WriteLine($"[PasswordRecoveryViewModel] Reset password failed ({ex.GetType().Name}).");
-            ErrorMessage = "Failed to update password securely. Please try again.";
+            ErrorMessage = "Ui_Auth_Error_PasswordUpdate";
         }
         finally
         {

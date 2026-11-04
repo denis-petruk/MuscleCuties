@@ -4,9 +4,11 @@ using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Dashboard;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Nutrition;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Dashboard.Overview;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Targets;
@@ -15,9 +17,11 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Dashboard;
 
 public sealed class PostgresDashboardOverviewStore(
     PostgresDbContext dbContext,
-    IServerNutritionTargetProjectionStore targetStore) : IServerDashboardOverviewStore
+    IServerNutritionTargetProjectionStore targetStore,
+    TimeProvider timeProvider) : IServerDashboardOverviewStore
 {
     private const int DefaultCycleLengthDays = 28;
+    private const int UnknownCycleLength = 0;
     private const int DefaultWorkoutDaysPerWeek = 3;
     private const int TrendWindowDays = 13;
     private const int WeeklyWeightLookbackDays = 84;
@@ -32,6 +36,7 @@ public sealed class PostgresDashboardOverviewStore(
     public async Task<DashboardOverviewResponse> LoadOverviewAsync(
         Guid userId,
         DateOnly today,
+        string? timeZoneId = null,
         CancellationToken cancellationToken = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync<DashboardOverviewResponse>(async () =>
         {
@@ -91,6 +96,21 @@ public sealed class PostgresDashboardOverviewStore(
             }
 
             var cycleLength = profile?.CycleLength > 0 ? profile.CycleLength : DefaultCycleLengthDays;
+            if (activeCycle is null && coreHistory.Length == 0 && manualPhaseLog is { } onboardingAnchor)
+            {
+                // The onboarding quiz phase is the first captured observation: it anchors the first
+                // cycle so the dashboard counts days from the phase the user selected.
+                var impliedStart = CyclePhaseRule.GetImpliedCycleStart(
+                    onboardingAnchor.Phase,
+                    DateOnly.FromDateTime(onboardingAnchor.LoggedAt),
+                    cycleLength);
+                activeCycle = new CycleObservation(
+                    impliedStart.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified),
+                    null,
+                    UnknownCycleLength);
+                coreHistory = [activeCycle];
+            }
+
             var cycleEstimate = CyclePredictionDomainRule.CreatePrediction(
                 activeCycle,
                 coreHistory,
@@ -106,7 +126,9 @@ public sealed class PostgresDashboardOverviewStore(
                                   currentPhase != CyclePhase.Unknown;
             var predictionSource = hasProfilePhase ? "profile phase" : cycleEstimate.PredictionSource;
             var hasActiveCycle = activeCycle is not null;
-            var currentCycleStartDate = latestCycle?.StartDate;
+            var currentCycleStartDate = activeCycle?.StartDate is { } activeStart
+                ? DateOnly.FromDateTime(activeStart)
+                : latestCycle?.StartDate;
             var currentCycleDay = cycleEstimate.CurrentDay;
             var predictedCycleLength = cycleEstimate.PredictedCycleLength;
             var daysUntilPeriod = cycleEstimate.DaysUntilPeriod;
@@ -260,7 +282,20 @@ public sealed class PostgresDashboardOverviewStore(
                 trendPoints,
                 weeklyNutrition,
                 weeklyWeights,
-                workoutProgress);
+                workoutProgress,
+                todayCheckIn is null ? null : TodayReadinessCheckInMapper.Map(
+                    todayCheckIn.PlanningSleepQuality,
+                    todayCheckIn.Energy,
+                    todayCheckIn.PlanningSoreness,
+                    todayCheckIn.PlanningStress,
+                    todayCheckIn.Date,
+                    todayCheckIn.PlanningTimeZoneId,
+                    todayCheckIn.PlanningRecordedAtUtc is { } recorded
+                        ? new DateTimeOffset(DateTime.SpecifyKind(recorded, DateTimeKind.Utc))
+                        : null,
+                    todayCheckIn.PlanningRevision,
+                    timeProvider.GetUtcNow(),
+                    timeZoneId));
         }).ConfigureAwait(false);
 
     private async Task<(DashboardWeeklyNutritionDto?, IReadOnlyList<DashboardWeeklyWeightDto>,
@@ -315,7 +350,7 @@ public sealed class PostgresDashboardOverviewStore(
         var sets = await dbContext.ExerciseSetLogs.AsNoTracking()
             .Where(row => row.UserId == userId && sessionIds.Contains(row.WorkoutSessionLogId) &&
                           !row.IsDeleted && !row.IsWarmup)
-            .Select(row => new { row.WorkoutSessionLogId, row.WeightKg })
+            .Select(row => new { row.WorkoutSessionLogId, row.WeightKg, row.ExerciseName })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         var activeSessionIds = sets.Select(row => row.WorkoutSessionLogId).ToHashSet();
         var workoutObservations = sessions
@@ -323,17 +358,21 @@ public sealed class PostgresDashboardOverviewStore(
             .Select(row => new DashboardWorkoutProgressObservation(false, null,
                 (double)row.TotalVolumeKg, row.TotalDurationSeconds, null, null))
             .Concat(sets.Select(row => new DashboardWorkoutProgressObservation(false,
-                (double)row.WeightKg, null, null, null, null)))
+                (double)row.WeightKg, null, null, null, null, row.ExerciseName)))
             .ToList();
 
         var exerciseRows = await (
             from exercise in dbContext.WorkoutExerciseLogs.AsNoTracking()
             join log in dbContext.WorkoutLogs.AsNoTracking() on exercise.WorkoutLogId equals log.Id
             join day in dbContext.WorkoutDays.AsNoTracking() on log.WorkoutDayId equals day.Id
+            join catalogExercise in dbContext.Exercises.AsNoTracking()
+                on exercise.ExerciseId equals catalogExercise.Id into catalogMatches
+            from catalogExercise in catalogMatches.DefaultIfEmpty()
             where exercise.UserId == userId && log.UserId == userId && day.UserId == userId &&
                   log.Date >= workoutLogStart && log.Date <= today
             select new { day.WorkoutType, exercise.WeightKg, exercise.CompletedDurationSeconds,
-                exercise.DistanceKm, exercise.PaceSecondsPerKm })
+                exercise.DistanceKm, exercise.PaceSecondsPerKm,
+                ExerciseName = catalogExercise == null ? null : catalogExercise.Name })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         workoutObservations.AddRange(exerciseRows.Select(row => new DashboardWorkoutProgressObservation(
             row.WorkoutType.Equals("Rest", StringComparison.OrdinalIgnoreCase) ||
@@ -342,11 +381,13 @@ public sealed class PostgresDashboardOverviewStore(
             null,
             row.CompletedDurationSeconds,
             row.DistanceKm is { } distance ? (double)distance : null,
-            row.PaceSecondsPerKm)));
+            row.PaceSecondsPerKm,
+            row.ExerciseName)));
         var progress = DashboardTrendSummaryRule.BuildWorkoutProgress(workoutObservations);
         var workoutProgress = new DashboardWorkoutProgressDto(progress.HeaviestLiftKg,
             progress.HighestSessionVolumeKg, progress.LongestSessionMinutes,
-            progress.LongestDistanceKm, progress.FastestPaceSecondsPerKm);
+            progress.LongestDistanceKm, progress.FastestPaceSecondsPerKm,
+            progress.HeaviestLiftExerciseName);
 
         return (weeklyNutrition, weeklyWeights, workoutProgress);
     }
@@ -411,7 +452,7 @@ public sealed class PostgresDashboardOverviewStore(
             if (activePlan is not null)
             {
                 var plannedDays = await dbContext.WorkoutDays.AsNoTracking()
-                    .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id)
+                    .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id && !d.IsRemovedByReadiness)
                     .Select(d => d.DayOfWeek)
                     .Distinct()
                     .ToListAsync(cancellationToken)
@@ -571,14 +612,15 @@ public sealed class PostgresDashboardOverviewStore(
         {
             var dayOfWeek = (int)today.DayOfWeek;
             var plannedDay = await dbContext.WorkoutDays.AsNoTracking()
-                .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id && d.DayOfWeek == dayOfWeek)
+                .Where(d => d.UserId == userId && d.WorkoutPlanId == activePlan.Id &&
+                            d.DayOfWeek == dayOfWeek && !d.IsRemovedByReadiness)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
 
             if (plannedDay is not null)
             {
                 var exercisesCount = await dbContext.WorkoutDayExercises.AsNoTracking()
-                    .Where(e => e.UserId == userId && e.WorkoutDayId == plannedDay.Id)
+                    .Where(e => e.UserId == userId && e.WorkoutDayId == plannedDay.Id && !e.IsRemovedByReadiness)
                     .CountAsync(cancellationToken)
                     .ConfigureAwait(false);
 

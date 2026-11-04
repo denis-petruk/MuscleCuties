@@ -58,6 +58,17 @@ internal static class AppModelConfiguration
 
 }
 
+public sealed class WorkoutCycleReadinessOccurrenceConfiguration : IEntityTypeConfiguration<WorkoutCycleReadinessOccurrenceRecord>
+{
+    public void Configure(EntityTypeBuilder<WorkoutCycleReadinessOccurrenceRecord> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_cycle_readiness_occurrences");
+        builder.HasIndex(row => new { row.UserId, row.WorkoutDayId }).IsUnique();
+        builder.HasOne<WorkoutDayRecord>().WithMany().HasForeignKey(row => new { row.UserId, row.WorkoutDayId })
+            .HasPrincipalKey(row => new { row.UserId, row.Id }).OnDelete(DeleteBehavior.Cascade);
+    }
+}
+
 public sealed class UserConfiguration : IEntityTypeConfiguration<UserRecord>
 {
     public void Configure(EntityTypeBuilder<UserRecord> builder)
@@ -126,6 +137,9 @@ public sealed class RefreshSessionConfiguration : IEntityTypeConfiguration<Refre
         builder.Property(x => x.ReplacedAtUtc).HasColumnName("replaced_at_utc");
         builder.HasIndex(x => x.TokenHash).IsUnique().HasDatabaseName("uq_refresh_sessions_token_hash");
         builder.HasIndex(x => new { x.FamilyId, x.RevokedAtUtc }).HasDatabaseName("ix_refresh_sessions_family_revoked");
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+        builder.ToTable("refresh_sessions", "app", table =>
+            table.HasCheckConstraint("ck_refresh_sessions_expiry", "expires_at_utc > created_at_utc"));
     }
 }
 
@@ -140,6 +154,7 @@ public sealed class AppleSignInNonceConfiguration : IEntityTypeConfiguration<App
         builder.Property(x => x.ExpiresAtUtc).HasColumnName("expires_at_utc").IsRequired();
         builder.Property(x => x.RedeemedAtUtc).HasColumnName("redeemed_at_utc");
         builder.HasIndex(x => x.NonceHash).IsUnique().HasDatabaseName("uq_apple_sign_in_nonces_hash");
+        builder.HasIndex(x => x.ExpiresAtUtc).HasDatabaseName("ix_apple_sign_in_nonces_expiry");
     }
 }
 
@@ -156,6 +171,7 @@ public sealed class RevokedAccessTokenConfiguration : IEntityTypeConfiguration<R
         builder.Property(x => x.RevokedAtUtc).HasColumnName("revoked_at_utc").IsRequired();
         builder.HasIndex(x => x.TokenId).IsUnique().HasDatabaseName("uq_revoked_access_tokens_token_id");
         builder.HasIndex(x => x.ExpiresAtUtc).HasDatabaseName("ix_revoked_access_tokens_expiry");
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
     }
 }
 
@@ -182,7 +198,9 @@ public sealed class EmailChallengeSessionConfiguration : IEntityTypeConfiguratio
         builder.Property(x => x.PrivacyNoticeAcceptedAtUtc).HasColumnName("privacy_notice_accepted_at_utc");
         builder.HasIndex(x => x.ReceiptId).IsUnique().HasFilter("receipt_id IS NOT NULL")
             .HasDatabaseName("uq_email_challenge_sessions_receipt_id");
-        builder.HasIndex(x => new { x.NormalizedEmail, x.CreatedAtUtc }).HasDatabaseName("ix_email_challenge_sessions_email_created");
+        builder.HasIndex(x => new { x.NormalizedEmail, x.CreatedAtUtc }).IsDescending(false, true)
+            .HasDatabaseName("ix_email_challenge_sessions_email_created");
+        builder.HasIndex(x => x.ExpiresAtUtc).HasDatabaseName("ix_email_challenge_sessions_expiry");
         builder.ToTable("email_challenge_sessions", "app", table =>
         {
             table.HasCheckConstraint("ck_email_challenge_session_attempts", "failed_attempts >= 0");
@@ -208,6 +226,7 @@ public sealed class SourceAccountClaimNonceConfiguration : IEntityTypeConfigurat
         builder.Property(x => x.RedeemedAtUtc).HasColumnName("redeemed_at_utc");
         builder.HasIndex(x => x.NonceHash).IsUnique().HasDatabaseName("uq_source_account_claim_nonces_hash");
         builder.HasIndex(x => x.ExpiresAtUtc).HasDatabaseName("ix_source_account_claim_nonces_expiry");
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.DestinationUserId).OnDelete(DeleteBehavior.Cascade);
         builder.ToTable("source_account_claim_nonces", "app", table =>
             table.HasCheckConstraint("ck_source_account_claim_expiry", "expires_at_utc > created_at_utc"));
     }
@@ -229,6 +248,9 @@ public sealed class SourceAccountMappingConfiguration : IEntityTypeConfiguration
             .HasDatabaseName("uq_source_account_mappings_source");
         builder.HasIndex(x => x.ClaimId).IsUnique().HasDatabaseName("uq_source_account_mappings_claim_id");
         builder.HasIndex(x => x.DestinationUserId).HasDatabaseName("ix_source_account_mappings_destination_user_id");
+        builder.HasOne<SourceAccountClaimNonceRecord>().WithMany().HasForeignKey(x => x.ClaimId)
+            .OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne<UserRecord>().WithMany().HasForeignKey(x => x.DestinationUserId).OnDelete(DeleteBehavior.Cascade);
     }
 }
 
@@ -239,6 +261,27 @@ public sealed class UserProfileConfiguration : IEntityTypeConfiguration<UserProf
         AppModelConfiguration.ConfigureTenant(builder, "user_profiles");
         builder.HasIndex(x => x.UserId).IsUnique().HasDatabaseName("uq_user_profiles_user_id");
         builder.Property(x => x.ConcurrencyVersion).HasDefaultValue(1).IsConcurrencyToken();
+        builder.Property(x => x.AvailableWorkoutWeekdaysJson).HasColumnName("available_workout_weekdays_json")
+            .HasColumnType("jsonb").IsRequired();
+        builder.Property(x => x.ActivitySessionDurationsJson).HasColumnName("activity_session_durations_json")
+            .HasColumnType("jsonb").IsRequired();
+        builder.Property(x => x.RequestedActivitySessionsPerWeekJson)
+            .HasColumnName("requested_activity_sessions_per_week_json")
+            .HasColumnType("jsonb").HasDefaultValueSql("'{}'::jsonb").IsRequired();
+        builder.Property(x => x.ExcludedStrengthExerciseIdsJson)
+            .HasColumnName("excluded_strength_exercise_ids_json")
+            .HasColumnType("jsonb").HasDefaultValueSql("'[]'::jsonb").IsRequired();
+        builder.ToTable("user_profiles", "app", table =>
+        {
+            table.HasCheckConstraint("ck_user_profiles_available_workout_weekdays_array",
+                "jsonb_typeof(available_workout_weekdays_json) = 'array'");
+            table.HasCheckConstraint("ck_user_profiles_activity_session_durations_object",
+                "jsonb_typeof(activity_session_durations_json) = 'object'");
+            table.HasCheckConstraint("ck_user_profiles_requested_activity_sessions_per_week_object",
+                "jsonb_typeof(requested_activity_sessions_per_week_json) = 'object'");
+            table.HasCheckConstraint("ck_user_profiles_excluded_strength_exercise_ids_array",
+                "jsonb_typeof(excluded_strength_exercise_ids_json) = 'array'");
+        });
     }
 }
 
@@ -359,7 +402,28 @@ public sealed class DailyReadinessLogConfiguration : IEntityTypeConfiguration<Da
 
 public sealed class WorkoutInjuryLogConfiguration : IEntityTypeConfiguration<WorkoutInjuryLogRecord>
 {
-    public void Configure(EntityTypeBuilder<WorkoutInjuryLogRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "workout_injury_logs");
+    private const int WorseningTriggerMaximumLength = 32;
+
+    public void Configure(EntityTypeBuilder<WorkoutInjuryLogRecord> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_injury_logs");
+        builder.Property(record => record.WorseningTrigger).HasMaxLength(WorseningTriggerMaximumLength);
+    }
+}
+
+public sealed class WorkoutInjuryPrescriptionLinkConfiguration : IEntityTypeConfiguration<WorkoutInjuryPrescriptionLinkRecord>
+{
+    public void Configure(EntityTypeBuilder<WorkoutInjuryPrescriptionLinkRecord> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_injury_prescription_links");
+        builder.HasIndex(x => new { x.UserId, x.WorkoutDayExerciseId, x.InjuryEpisodeId }).IsUnique()
+            .HasDatabaseName("ux_injury_links_prescription_episode");
+        builder.HasIndex(x => new { x.UserId, x.InjuryEpisodeId }).HasDatabaseName("ix_injury_links_episode");
+        builder.HasOne<WorkoutDayExerciseRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.WorkoutDayExerciseId })
+            .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Cascade);
+        builder.HasOne<WorkoutInjuryEpisodeRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.InjuryEpisodeId })
+            .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+    }
 }
 
 public sealed class WorkoutPlanConfiguration : IEntityTypeConfiguration<WorkoutPlanRecord>
@@ -367,11 +431,63 @@ public sealed class WorkoutPlanConfiguration : IEntityTypeConfiguration<WorkoutP
     public void Configure(EntityTypeBuilder<WorkoutPlanRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "workout_plans");
 }
 
+public sealed class WorkoutPlanProposalV02Configuration : IEntityTypeConfiguration<WorkoutPlanProposalV02Record>
+{
+    public void Configure(EntityTypeBuilder<WorkoutPlanProposalV02Record> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_plan_proposals_v02");
+        builder.Property(x => x.Status).HasMaxLength(32).IsRequired();
+        builder.Property(x => x.RulesetVersion).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.TrainingPolicyVersion).HasMaxLength(32).IsRequired();
+        builder.Property(x => x.ConcurrencyVersion).IsConcurrencyToken().HasDefaultValue(1);
+        builder.HasIndex(x => new { x.UserId, x.PlanId, x.CreatedAtUtc })
+            .IsDescending(false, false, true).HasDatabaseName("ix_workout_plan_proposals_v02_owner_plan_created");
+        builder.ToTable("workout_plan_proposals_v02", "app", table =>
+        {
+            table.HasCheckConstraint("ck_workout_plan_proposals_v02_status",
+                "status IN ('Proposed', 'Accepted', 'Rejected', 'Expired')");
+            table.HasCheckConstraint("ck_workout_plan_proposals_v02_decision_pair",
+                "(status = 'Proposed' AND decided_at_utc IS NULL AND accepted_revision_id IS NULL) OR " +
+                "(status = 'Rejected' AND decided_at_utc IS NOT NULL AND accepted_revision_id IS NULL) OR " +
+                "(status = 'Accepted' AND decided_at_utc IS NOT NULL AND accepted_revision_id IS NOT NULL) OR " +
+                "(status = 'Expired' AND decided_at_utc IS NOT NULL AND accepted_revision_id IS NULL)");
+            table.HasCheckConstraint("ck_workout_plan_proposals_v02_concurrency", "concurrency_version > 0");
+        });
+    }
+}
+
+public sealed class WorkoutPlanRevisionV02Configuration : IEntityTypeConfiguration<WorkoutPlanRevisionV02Record>
+{
+    public void Configure(EntityTypeBuilder<WorkoutPlanRevisionV02Record> builder)
+    {
+        AppModelConfiguration.ConfigureTenant(builder, "workout_plan_revisions_v02");
+        builder.Property(x => x.RulesetVersion).HasMaxLength(64).IsRequired();
+        builder.Property(x => x.TrainingPolicyVersion).HasMaxLength(32).IsRequired();
+        builder.HasAlternateKey(x => new { x.UserId, x.PlanId, x.RevisionNumber })
+            .HasName("uq_workout_plan_revisions_v02_owner_plan_number");
+        builder.HasIndex(x => new { x.UserId, x.PlanId, x.AcceptedAtUtc })
+            .IsDescending(false, false, true).HasDatabaseName("ix_workout_plan_revisions_v02_owner_plan_accepted");
+        builder.HasOne<WorkoutPlanProposalV02Record>().WithMany()
+            .HasForeignKey(x => new { x.UserId, x.SourceProposalId })
+            .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Restrict);
+        builder.ToTable("workout_plan_revisions_v02", "app", table =>
+            table.HasCheckConstraint("ck_workout_plan_revisions_v02_number", "revision_number > 0"));
+    }
+}
+
 public sealed class WorkoutDayConfiguration : IEntityTypeConfiguration<WorkoutDayRecord>
 {
     public void Configure(EntityTypeBuilder<WorkoutDayRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_days");
+        builder.Property(x => x.PlannedActivityPrescriptionJson).HasColumnType("jsonb");
+        builder.Property(x => x.IsOptional).HasDefaultValue(false);
+        builder.Property(x => x.IsEasierAlternative).HasDefaultValue(false);
+        builder.Property(x => x.IsRemovedByReadiness).HasDefaultValue(false);
+        builder.Property(x => x.IsRemovedByUserAdjustment).HasDefaultValue(false);
+        builder.ToTable("workout_days", "app", table =>
+            table.HasCheckConstraint("ck_workout_days_planned_main_duration_nonnegative",
+                "planned_main_duration_minutes IS NULL OR planned_main_duration_minutes >= 0"));
         builder.HasOne<WorkoutPlanRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.WorkoutPlanId })
             .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Cascade);
     }
@@ -382,6 +498,12 @@ public sealed class WorkoutDayExerciseConfiguration : IEntityTypeConfiguration<W
     public void Configure(EntityTypeBuilder<WorkoutDayExerciseRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_day_exercises");
+        builder.Property(x => x.OptionalSets).HasDefaultValue(0);
+        builder.Property(x => x.IsOptional).HasDefaultValue(false);
+        builder.Property(x => x.IsRemovedByReadiness).HasDefaultValue(false);
+        builder.ToTable("workout_day_exercises", "app", table =>
+            table.HasCheckConstraint("ck_workout_day_exercises_optional_sets",
+                "optional_sets >= 0 AND (optional_sets = 0 OR optional_sets < sets)"));
         builder.HasOne<WorkoutDayRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.WorkoutDayId })
             .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Cascade);
         builder.HasOne<Exercise>().WithMany().HasForeignKey(x => x.ExerciseId).OnDelete(DeleteBehavior.Restrict);

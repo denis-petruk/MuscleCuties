@@ -1,3 +1,4 @@
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Entities.Quiz;
 using MuscleCuties.Core.Models.Entities.Users;
 using MuscleCuties.Core.Models.Enums.Cycle;
@@ -43,7 +44,8 @@ internal static class QuizSelectionEvaluator
         IReadOnlyDictionary<int, QuizQuestion> questionMap,
         DateTime answeredAt)
     {
-        if (!questionMap.TryGetValue(response.QuizQuestionId, out var question))
+        if (!questionMap.TryGetValue(response.QuizQuestionId, out var question) ||
+            !question.QuestionType.IsAvailableInCurrentOnboarding())
             return null;
 
         var answer = question.Answers.FirstOrDefault(a => a.Id == response.QuizAnswerId);
@@ -61,16 +63,18 @@ internal static class QuizSelectionEvaluator
     public static void ApplyQuizSelectionsToProfile(
         UserProfile profile,
         IReadOnlyList<QuizSelection> selections,
-        IReadOnlyCollection<WorkoutActivityType>? stagedActivities = null,
-        bool preserveStagedWorkoutDays = false,
-        int minWorkoutDays = 0)
+        IReadOnlyCollection<WorkoutActivityType>? stagedActivities = null)
     {
         var dietarySelections = selections
             .Where(selection => selection.Question.QuestionType is QuizQuestionType.DietaryPreference)
             .ToList();
+        var availableWeekdaySelections = selections
+            .Where(selection => selection.Question.QuestionType is QuizQuestionType.AvailableWeekdays)
+            .ToList();
 
         foreach (var selection in selections.Where(selection =>
-                     selection.Question.QuestionType is not QuizQuestionType.DietaryPreference))
+                     selection.Question.QuestionType is not (QuizQuestionType.DietaryPreference or
+                         QuizQuestionType.AvailableWeekdays)))
             switch (selection.Question.QuestionType)
             {
                 case QuizQuestionType.Goal:
@@ -83,12 +87,7 @@ internal static class QuizSelectionEvaluator
                     profile.TrainingExperienceLevel =
                         MapEnum(selection.Answer.MappedValue, TrainingExperienceLevel.Unknown);
                     break;
-                case QuizQuestionType.WorkoutDaysPerWeek:
-                    if (!preserveStagedWorkoutDays)
-                        profile.WorkoutDaysPerWeek = Math.Clamp(selection.Answer.MappedValue, minWorkoutDays, 7);
-                    break;
                 case QuizQuestionType.CurrentCyclePhase:
-                    profile.CycleTrackingMode = CycleTrackingMode.ManualPhaseLogging;
                     profile.CurrentCyclePhase = MapEnum(selection.Answer.MappedValue, CyclePhase.Follicular);
                     break;
                 case QuizQuestionType.SessionDuration:
@@ -99,21 +98,29 @@ internal static class QuizSelectionEvaluator
                     break;
             }
 
+        if (availableWeekdaySelections.Count > 0)
+        {
+            var distinctWeekdays = availableWeekdaySelections
+                .Select(selection => selection.Answer.MappedValue)
+                .Where(day => Enum.IsDefined(typeof(DayOfWeek), day))
+                .Distinct()
+                .Count();
+            if (distinctWeekdays > 0)
+                profile.WorkoutDaysPerWeek = Math.Clamp(
+                    distinctWeekdays,
+                    WorkoutPreferencesRule.MinimumDaysPerWeek,
+                    WorkoutPreferencesRule.MaximumDaysPerWeek);
+        }
+
         if (!selections.Any(selection => selection.Question.QuestionType is QuizQuestionType.GoalPace) ||
             profile.Goal is not (UserGoal.FatLoss or UserGoal.Strength))
             profile.WeightGoalPace = WeightGoalPace.Steady;
-
-        var strengthStyle = profile.SessionDurationMinutes is > 0 and <= 45
-            ? StrengthTrainingStyle.ExpressHard
-            : StrengthTrainingStyle.ComfortableModerate;
 
         var selectedActivities = stagedActivities is { Count: > 0 }
             ? stagedActivities
             : WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes);
 
-        profile.PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(
-            selectedActivities,
-            strengthStyle);
+        profile.PreferredWorkoutActivityTypes = WorkoutActivityPreferences.Serialize(selectedActivities);
 
         if (dietarySelections.Count > 0)
             profile.DietaryTags = BuildDietaryTags(dietarySelections.Select(s => s.Answer.MappedValue));
@@ -121,18 +128,8 @@ internal static class QuizSelectionEvaluator
         profile.PhaseBaselinesJson = BuildPhaseBaselinesJson(selections);
     }
 
-    public static int MapSessionDuration(int mappedValue)
-    {
-        return mappedValue switch
-        {
-            1 => 30,
-            2 => 45,
-            3 => 60,
-            4 => 75,
-            5 => 90,
-            _ => 60
-        };
-    }
+    public static int MapSessionDuration(int mappedValue) =>
+        ActivitySessionDurationRule.ResolveStrengthQuizSessionDurationMinutes(mappedValue);
 
     public static string MapEquipment(int mappedValue)
     {
@@ -193,7 +190,11 @@ internal static class QuizSelectionEvaluator
             .Select(answerGroup => answerGroup.Last())
             .ToList();
 
-        if (selections.First().Question.QuestionType is not QuizQuestionType.DietaryPreference)
+        var questionType = selections.First().Question.QuestionType;
+        if (questionType is QuizQuestionType.AvailableWeekdays)
+            return selections;
+
+        if (questionType is not QuizQuestionType.DietaryPreference)
             return [selections.Last()];
 
         var selectedTags = selections

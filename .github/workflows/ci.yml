@@ -1,0 +1,132 @@
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+      - 'platform/**'
+      - 'product/**'
+      - 'integration/**'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify_source:
+    name: verify_source
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Verify SDK and restore Server
+        run: |
+          dotnet restore services/MuscleCuties.Server/MuscleCuties.Server.csproj
+          dotnet build services/MuscleCuties.Server/MuscleCuties.Server.csproj --configuration Release --no-restore
+
+  verify_plan_generation:
+    name: verify_plan_generation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Install Lambda Tools
+        run: |
+          dotnet tool install Amazon.Lambda.Tools --version 7.0.0 --tool-path .tools
+
+      - name: Run deployment offline tests
+        run: |
+          python3 tests/MuscleCuties.Deployment.Tests/test_package_upload.py
+          bash tests/MuscleCuties.Deployment.Tests/release-fail-closed.sh
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_release_engine.py'
+
+      - name: Run Core tests
+        run: |
+          dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj \
+            --configuration Release \
+            --logger "trx;LogFileName=core-tests.trx" \
+            --results-directory test-results
+
+      - name: Run Mobile Contracts tests
+        run: |
+          dotnet test tests/MuscleCuties.Mobile.Contracts.Tests/MuscleCuties.Mobile.Contracts.Tests.csproj \
+            --configuration Release \
+            --logger "trx;LogFileName=mobile-contracts-tests.trx" \
+            --results-directory test-results
+
+      - name: Run Registration tests
+        run: |
+          dotnet test tests/MuscleCuties.Registration.Tests/MuscleCuties.Registration.Tests.csproj \
+            --configuration Release \
+            --logger "trx;LogFileName=registration-tests.trx" \
+            --results-directory test-results
+
+      - name: Run Server tests (non-latency routes)
+        run: |
+          dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj \
+            --configuration Release \
+            --filter "FullyQualifiedName!~EveryMappedRouteHasMeasuredColdAndWarmP95WithinBudget" \
+            --logger "trx;LogFileName=server-tests.trx" \
+            --results-directory test-results
+
+      - name: Run model catalog integration checks
+        run: |
+          dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj \
+            --configuration Release \
+            --filter 'FullyQualifiedName~WorkoutModelSnapshotTests|FullyQualifiedName~ReviewedExerciseCatalogV020ImportTests' \
+            --logger "trx;LogFileName=model-catalog-tests.trx" \
+            --results-directory test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-test-results
+          path: test-results/
+          retention-days: 30
+
+  postgres_verify:
+    name: postgres_verify
+    uses: ./.github/workflows/db-verify.yml
+
+  required:
+    name: required
+    needs: [verify_source, verify_plan_generation, postgres_verify]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Evaluate required check results
+        run: |
+          if [ "${{ needs.verify_source.result }}" != "success" ]; then
+            echo "verify_source failed: ${{ needs.verify_source.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.verify_plan_generation.result }}" != "success" ]; then
+            echo "verify_plan_generation failed: ${{ needs.verify_plan_generation.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.postgres_verify.result }}" != "success" ]; then
+            echo "postgres_verify failed: ${{ needs.postgres_verify.result }}"
+            exit 1
+          fi
+          echo "All required checks passed successfully."

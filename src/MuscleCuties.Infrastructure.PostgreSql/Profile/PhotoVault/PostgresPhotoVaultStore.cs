@@ -130,7 +130,7 @@ public sealed class PostgresPhotoVaultStore(
         if (intent.State != PhotoUploadIntentState.Pending || intent.ExpiresAtUtc <= nowUtc)
             throw new InvalidOperationException("The photo upload intent is no longer available.");
 
-        var bucket = configuration["Storage:S3:BucketName"] ?? "musclecuties-media";
+        var bucket = S3StorageConfiguration.RequireBucketName(configuration);
         var context = new PhotoUploadObjectContext(userId, intent.PhotoId, bucket, intent.S3Key,
             intent.Sha256Checksum, intent.DeclaredSizeBytes, intent.ContentType);
         S3PhotoObjectInspection inspection;

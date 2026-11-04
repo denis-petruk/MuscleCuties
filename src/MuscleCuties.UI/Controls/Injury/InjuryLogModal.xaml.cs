@@ -2,20 +2,13 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Windows.Input;
 using MuscleCuties.UI.Controls.Shared;
+using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Controls.Injury;
 
 public partial class InjuryLogModal : AnimatedModalView
 {
-    private const double HeaderHeight = 88;
-    private const double ContentPaddingHeight = 24;
-    private const double EmptyCardHeight = 208;
-    private const double ActiveHeadingHeight = 34;
-    private const double InjuryRowHeight = 130;
-    private const double HistoryHeaderHeight = 88;
-    private const double LoadingContentHeight = 120;
-
     public static readonly BindableProperty CloseCommandProperty =
         BindableProperty.Create(nameof(CloseCommand), typeof(ICommand), typeof(InjuryLogModal));
 
@@ -100,17 +93,21 @@ public partial class InjuryLogModal : AnimatedModalView
         if (!_hasContent || BindingContext is not InjuryLogViewModel vm)
             return;
 
+        var headerHeight = AppThemeResources.GetDouble("UiDimension88");
+        var contentPaddingHeight = AppThemeResources.GetDouble("UiDimension24");
+        var rowHeight = AppThemeResources.GetDouble("UiDimension130");
+        var loadingContentHeight = AppThemeResources.GetDouble("UiDimension120");
         var preferredHeight = vm.ShowAddForm
             ? BottomSheetSizing.MaximumSheetHeight
-            : HeaderHeight + ContentPaddingHeight + (vm.IsBusy || vm.IsLoadError
-                ? LoadingContentHeight
+            : headerHeight + contentPaddingHeight + (vm.IsBusy || vm.IsLoadError
+                ? loadingContentHeight
                 : vm.ActiveInjuries.Count == 0
-                    ? EmptyCardHeight
-                    : ActiveHeadingHeight + vm.ActiveInjuries.Count * InjuryRowHeight);
+                    ? AppThemeResources.GetDouble("UiDimension208")
+                    : AppThemeResources.GetDouble("UiDimension34") + vm.ActiveInjuries.Count * rowHeight);
 
         if (vm.HasClearedInjuries)
-            preferredHeight += HistoryHeaderHeight +
-                               (vm.IsHistoryExpanded ? vm.ClearedInjuries.Count * InjuryRowHeight : 0);
+            preferredHeight += headerHeight +
+                               (vm.IsHistoryExpanded ? vm.ClearedInjuries.Count * rowHeight : 0);
 
         BottomSheetSizing.Apply(SheetSurface, Height, preferredHeight);
     }

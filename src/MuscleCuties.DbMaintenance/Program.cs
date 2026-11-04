@@ -1,8 +1,11 @@
-using System.Security.Cryptography;
+using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.DbMaintenance;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using Npgsql;
 
 return await DatabaseMaintenance.RunAsync(args);
@@ -13,11 +16,16 @@ public static class DatabaseMaintenance
     private const string CleanupDispatchConnectionStringEnvironmentVariable = "ConnectionStrings__PhotoCleanupDispatch";
     private const string CleanupProcessorConnectionStringEnvironmentVariable = "ConnectionStrings__PhotoCleanupProcessor";
     private const string LambdaFunctionEnvironmentVariable = "AWS_LAMBDA_FUNCTION_NAME";
-    private const string MigrateCommand = "migrate";
+    private const string DbInitCommand = "dbinit";
+    private const string DbCheckCommand = "dbcheck";
     private const string SeedCommand = "seed";
+    private const string SessionLockRunnerCommand = "session-lock-runner";
     private const string CleanupPhotosCommand = "cleanup-photos";
-    private const string ConfirmationSwitch = "--confirm";
-    private const int Sha256HexLength = 64;
+    private const string CompatibleStatus = "compatible";
+    private const string IncompatibleStatus = "incompatible";
+    private const string ContractVersion = "1.0.0";
+    private const int AdvisoryLockAcquireTimeoutSeconds = 5;
+    private const int AdvisoryLockPollMilliseconds = 100;
     private const int CleanupPageSizeMinimum = 1;
     private const int CleanupPageSizeMaximum = 100;
     private const int CleanupPageCountMinimum = 1;
@@ -30,12 +38,17 @@ public static class DatabaseMaintenance
     private const int CleanupLeaseMinutesArgumentIndex = 4;
     private const int MaximumCleanupLeaseMinutes = 1440;
     private const int InvalidUsageExitCode = 2;
+    private const int LockHealthPollIntervalSeconds = 1;
+    private const int LockHealthCommandTimeoutSeconds = 2;
+    private const int LockChildShutdownTimeoutSeconds = 10;
 
     public static async Task<int> RunAsync(string[] args)
     {
-        if (!TryParse(args, out var command, out var manifestPath, out var expectedSha256))
+        if (!TryParse(args, out var command))
         {
-            Console.Error.WriteLine("Usage: DbMaintenance migrate --confirm | seed <manifest-path> <expected-sha256> --confirm | cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
+            Console.Error.WriteLine(
+                "Usage: DbMaintenance dbinit | dbcheck | seed | session-lock-runner -- <child-command> [args...] | " +
+                "cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
             return InvalidUsageExitCode;
         }
 
@@ -45,17 +58,30 @@ public static class DatabaseMaintenance
             return InvalidUsageExitCode;
         }
 
+        if (command == SessionLockRunnerCommand)
+        {
+            try
+            {
+                return await RunSessionLockRunnerAsync(args);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                Console.Error.WriteLine($"Session lock runner failed ({exception.GetType().Name}).");
+                return 1;
+            }
+        }
+
         var connectionString = Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
-        var isCleanupCommand = args.Length > 0 && args[0] == CleanupPhotosCommand;
+        var isCleanupCommand = command == CleanupPhotosCommand;
         if (!isCleanupCommand && string.IsNullOrWhiteSpace(connectionString))
         {
-            Console.Error.WriteLine("ConnectionStrings__PostgreSql is required in the protected runner environment.");
+            Console.Error.WriteLine($"ConnectionStrings__PostgreSql is required in the protected runner environment.");
             return InvalidUsageExitCode;
         }
 
         try
         {
-            if (command == CleanupPhotosCommand)
+            if (isCleanupCommand)
                 return await RunPhotoCleanupAsync(args);
 
             var connection = new NpgsqlConnectionStringBuilder(connectionString);
@@ -95,38 +121,56 @@ public static class DatabaseMaintenance
                 }
             }
 
-            if (command == SeedCommand)
-            {
-                manifestPath = ResolvePath(manifestPath!);
-                if (!await ManifestMatchesAsync(manifestPath, expectedSha256!))
-                    throw new InvalidOperationException("Canonical manifest SHA-256 does not match the approved checksum.");
-            }
-
             var options = new DbContextOptionsBuilder<PostgresDbContext>()
-                .UseNpgsql(connection.ConnectionString, provider =>
-                    provider.MigrationsAssembly(typeof(PostgresDbContext).Assembly.GetName().Name))
+                .UseNpgsql(connection.ConnectionString)
                 .Options;
             await using var context = new PostgresDbContext(options);
 
-            if (command == MigrateCommand)
+            if (command == DbInitCommand)
             {
-                await EnsureRolesExistAsync(context);
-                await context.Database.MigrateAsync();
-                Console.WriteLine("Schema migration completed.");
+                var result = await PostgresSchemaBootstrap.InitializeAsync(context, seed: true);
+                WriteJson(new
+                {
+                    contract_version = ContractVersion,
+                    status = CompatibleStatus,
+                    created_from_model = result.CreatedFromModel,
+                    security_statements_applied = result.SecurityStatementCount,
+                    schema_fingerprint_sha256 = result.ModelFingerprint,
+                    seeded_rows = result.Seed?.TotalManifestRows ?? 0
+                });
                 return 0;
             }
 
-            if ((await context.Database.GetPendingMigrationsAsync()).Any())
-                throw new InvalidOperationException("Apply schema migrations before canonical seeding.");
+            if (command == SeedCommand)
+            {
+                var summary = await PostgresCanonicalCatalogSeeder.IngestEmbeddedManifestAsync(context);
+                WriteJson(new
+                {
+                    contract_version = ContractVersion,
+                    status = CompatibleStatus,
+                    seeded_rows = summary.TotalManifestRows
+                });
+                return 0;
+            }
 
-            var summary = await PostgresCanonicalCatalogSeeder.IngestFromManifestAsync(context, manifestPath!);
-            Console.WriteLine($"Canonical seed completed: {summary.TotalManifestRows} manifest rows, SHA-256 {summary.ManifestIntegritySha256}.");
-            return 0;
+            var report = await PostgresSchemaDriftInspector.InspectAsync(context);
+            WriteJson(new
+            {
+                contract_version = ContractVersion,
+                status = report.IsCompatible ? CompatibleStatus : IncompatibleStatus,
+                schema_fingerprint_sha256 = report.ModelFingerprint,
+                recorded_fingerprint_sha256 = report.RecordedFingerprint,
+                model_table_count = report.ModelTableCount,
+                policy_count = report.PolicyCount,
+                failure_codes = report.FailureCodes,
+                details = report.Details
+            });
+            return report.IsCompatible ? 0 : 1;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             // Provider exceptions may include connection strings or object names. Keep runner logs secret-free.
-            Console.Error.WriteLine($"Database maintenance failed ({exception.GetType().Name}: {exception.Message}). Check the runner's connection, certificate, role, and manifest settings.");
+            Console.Error.WriteLine($"Database maintenance failed ({exception.GetType().Name}). Check the runner's connection, certificate and role settings.");
             return 1;
         }
     }
@@ -167,19 +211,25 @@ public static class DatabaseMaintenance
         return result.OwnersFailed == 0 ? 0 : 1;
     }
 
-    public static bool TryParse(
-        string[] args,
-        out string? command,
-        out string? manifestPath,
-        out string? expectedSha256)
+    public static bool TryParse(string[] args, out string? command)
     {
         command = null;
-        manifestPath = null;
-        expectedSha256 = null;
 
-        if (args is [MigrateCommand, ConfirmationSwitch])
+        if (args.Length > 0 && args[0] == SessionLockRunnerCommand)
         {
-            command = MigrateCommand;
+            var dashIndex = Array.IndexOf(args, "--");
+            if (dashIndex != -1 && dashIndex + 1 < args.Length)
+            {
+                command = SessionLockRunnerCommand;
+                return true;
+            }
+
+            return false;
+        }
+
+        if (args is [DbInitCommand] or [DbCheckCommand] or [SeedCommand])
+        {
+            command = args[0];
             return true;
         }
 
@@ -194,65 +244,165 @@ public static class DatabaseMaintenance
             return true;
         }
 
-        if (args is not [SeedCommand, var path, var checksum, ConfirmationSwitch] ||
-            string.IsNullOrWhiteSpace(path) ||
-            checksum.Length != Sha256HexLength ||
-            !checksum.All(Uri.IsHexDigit))
-            return false;
-
-        command = SeedCommand;
-        manifestPath = path;
-        expectedSha256 = checksum;
-        return true;
+        return false;
     }
 
-    private static string ResolvePath(string path)
+    private static readonly JsonSerializerOptions ResultJsonOptions = new()
     {
-        if (File.Exists(path))
-            return Path.GetFullPath(path);
+        PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
+    };
 
-        var candidates = new[]
+    private static void WriteJson<T>(T value) =>
+        Console.WriteLine(JsonSerializer.Serialize(value, ResultJsonOptions));
+
+    private static async Task<int> RunSessionLockRunnerAsync(string[] args)
+    {
+        var dashIndex = Array.IndexOf(args, "--");
+        var childCmd = args[dashIndex + 1];
+        var childArgs = args[(dashIndex + 2)..];
+
+        if (Environment.GetEnvironmentVariable("MC_RELEASE_OFFLINE_TEST") == "1")
         {
-            Path.Combine(Directory.GetCurrentDirectory(), path),
-            Path.Combine(AppContext.BaseDirectory, path),
-            Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", path)
+            return await ExecuteChildProcessAsync(childCmd, childArgs);
+        }
+
+        var connectionString = Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            Console.Error.WriteLine($"ConnectionStrings__PostgreSql is required for {SessionLockRunnerCommand}.");
+            return 1;
+        }
+
+        var connection = new NpgsqlConnectionStringBuilder(connectionString);
+        var isLoopback = connection.Host is "127.0.0.1" or "localhost";
+        if (!isLoopback && connection.SslMode != SslMode.VerifyFull)
+            throw new InvalidOperationException("session-lock-runner requires SSL Mode=VerifyFull.");
+
+        await using var npgsqlConnection = new NpgsqlConnection(connection.ConnectionString);
+        await npgsqlConnection.OpenAsync();
+
+        if (!await TryAcquireAdvisoryLockAsync(npgsqlConnection))
+        {
+            Console.Error.WriteLine($"Failed to acquire deployment advisory lock within {AdvisoryLockAcquireTimeoutSeconds} seconds.");
+            return 1;
+        }
+
+        var backendPid = npgsqlConnection.ProcessID;
+        if (!await HasSessionLockAsync(npgsqlConnection, backendPid))
+        {
+            Console.Error.WriteLine("Deployment advisory lock could not be verified before starting the child.");
+            return 1;
+        }
+
+        return await ExecuteChildProcessAsync(childCmd, childArgs, npgsqlConnection, backendPid);
+    }
+
+    private static async Task<bool> TryAcquireAdvisoryLockAsync(NpgsqlConnection connection)
+    {
+        var deadline = DateTime.UtcNow.AddSeconds(AdvisoryLockAcquireTimeoutSeconds);
+        while (DateTime.UtcNow < deadline)
+        {
+            await using var command = new NpgsqlCommand("SELECT pg_try_advisory_lock(@lock_class, @lock_key)", connection);
+            command.Parameters.AddWithValue("lock_class", DeploymentAdvisoryLock.ClassId);
+            command.Parameters.AddWithValue("lock_key", DeploymentAdvisoryLock.KeyId);
+            if (await command.ExecuteScalarAsync() is true)
+                return true;
+
+            await Task.Delay(AdvisoryLockPollMilliseconds);
+        }
+
+        return false;
+    }
+
+    private static async Task<int> ExecuteChildProcessAsync(
+        string childCmd,
+        string[] childArgs,
+        NpgsqlConnection? lockConnection = null,
+        int backendPid = 0)
+    {
+        var psi = new ProcessStartInfo
+        {
+            FileName = childCmd,
+            UseShellExecute = false
         };
-        return candidates.FirstOrDefault(File.Exists) ?? path;
+        foreach (var arg in childArgs)
+            psi.ArgumentList.Add(arg);
+
+        using var process = Process.Start(psi)
+            ?? throw new InvalidOperationException($"Failed to start child command: {childCmd}");
+
+        ConsoleCancelEventHandler cancelHandler = (s, e) =>
+        {
+            try { if (!process.HasExited) process.Kill(true); } catch { }
+        };
+        Console.CancelKeyPress += cancelHandler;
+        try
+        {
+            var childExit = process.WaitForExitAsync();
+            if (lockConnection is not null)
+            {
+                while (!childExit.IsCompleted)
+                {
+                    var completed = await Task.WhenAny(childExit,
+                        Task.Delay(TimeSpan.FromSeconds(LockHealthPollIntervalSeconds)));
+                    if (completed == childExit)
+                        break;
+
+                    if (!await HasSessionLockAsync(lockConnection, backendPid))
+                    {
+                        Console.Error.WriteLine("Deployment advisory lock session lost; terminating the child.");
+                        try { if (!process.HasExited) process.Kill(entireProcessTree: true); }
+                        catch (InvalidOperationException) { }
+                        try { await childExit.WaitAsync(TimeSpan.FromSeconds(LockChildShutdownTimeoutSeconds)); }
+                        catch (TimeoutException) { }
+                        return 1;
+                    }
+                }
+            }
+
+            await childExit;
+            if (lockConnection is not null && !await HasSessionLockAsync(lockConnection, backendPid))
+            {
+                Console.Error.WriteLine("Deployment advisory lock session lost before the child result was accepted.");
+                return 1;
+            }
+            return process.ExitCode;
+        }
+        finally
+        {
+            Console.CancelKeyPress -= cancelHandler;
+        }
     }
 
-    private static async Task<bool> ManifestMatchesAsync(string manifestPath, string expectedSha256)
+    private static async Task<bool> HasSessionLockAsync(NpgsqlConnection connection, int backendPid)
     {
-        if (!File.Exists(manifestPath))
+        try
+        {
+            await using var command = new NpgsqlCommand("""
+                SELECT pg_backend_pid() = @backend_pid
+                   AND EXISTS (
+                       SELECT 1 FROM pg_locks
+                       WHERE pid = pg_backend_pid()
+                         AND locktype = 'advisory'
+                         AND granted
+                         AND classid::bigint = @lock_class
+                         AND objid::bigint = @lock_key
+                         AND objsubid = 2
+                   )
+                """, connection)
+            {
+                CommandTimeout = LockHealthCommandTimeoutSeconds
+            };
+            command.Parameters.AddWithValue("backend_pid", backendPid);
+            command.Parameters.AddWithValue("lock_class", DeploymentAdvisoryLock.ClassId);
+            command.Parameters.AddWithValue("lock_key", DeploymentAdvisoryLock.KeyId);
+            return await command.ExecuteScalarAsync() is true;
+        }
+        catch (Exception)
+        {
+            // A failed or timed-out probe cannot establish continued lock ownership.
             return false;
-
-        var manifest = await File.ReadAllBytesAsync(manifestPath);
-        var actualSha256 = Convert.ToHexStringLower(SHA256.HashData(manifest));
-        return string.Equals(actualSha256, expectedSha256, StringComparison.OrdinalIgnoreCase);
-    }
-
-    private static async Task EnsureRolesExistAsync(PostgresDbContext context)
-    {
-        const string bootstrapRolesSql = """
-            DO $$
-            BEGIN
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_migrator') THEN
-                    CREATE ROLE musclecuties_migrator NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_app') THEN
-                    CREATE ROLE musclecuties_app NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_auth') THEN
-                    CREATE ROLE musclecuties_auth NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_cleanup_dispatch') THEN
-                    CREATE ROLE musclecuties_cleanup_dispatch NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-                END IF;
-                IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_cleanup_discovery_owner') THEN
-                    CREATE ROLE musclecuties_cleanup_discovery_owner NOLOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE;
-                END IF;
-            END $$;
-            """;
-        await context.Database.ExecuteSqlRawAsync(bootstrapRolesSql);
+        }
     }
 }
 

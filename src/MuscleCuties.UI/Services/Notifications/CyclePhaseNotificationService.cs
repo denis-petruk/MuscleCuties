@@ -1,7 +1,7 @@
 using System.Globalization;
-using MuscleCuties.Core.Models.Entities.Cycle;
-using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Core.Services.Cycle.Planning;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 
@@ -11,14 +11,17 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
 {
     private static readonly TimeSpan MorningNotificationTime = new(8, 0, 0);
 
-    private readonly ICycleOverviewUseCase? _cycleOverview;
+    private readonly ICycleOverviewUseCase _cycleOverview;
+    private readonly ICyclePhaseProjectionUseCase _phaseProjection;
     private readonly ILocalNotificationService _localNotificationService;
 
     public CyclePhaseNotificationService(
         ICycleOverviewUseCase cycleOverview,
+        ICyclePhaseProjectionUseCase phaseProjection,
         ILocalNotificationService localNotificationService)
     {
         _cycleOverview = cycleOverview;
+        _phaseProjection = phaseProjection;
         _localNotificationService = localNotificationService;
     }
 
@@ -35,19 +38,13 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         CyclePhase currentPhase;
         CyclePredictionSummary? predictionSummary = null;
 
-        if (_cycleOverview is not null)
-        {
-            var todayDate = DateTime.Today;
-            var overview = await _cycleOverview.LoadAsync(todayDate.AddDays(-35), todayDate.AddDays(35), CancellationToken.None);
-            if (overview is null)
-                return;
-            predictionSummary = overview.Prediction;
-            currentPhase = predictionSummary.CurrentPhase;
-        }
-        else
-        {
+        var todayDate = DateTime.Today;
+        var overview = await _cycleOverview.LoadAsync(
+            todayDate.AddDays(-35), todayDate.AddDays(35), CancellationToken.None);
+        if (overview is null)
             return;
-        }
+        predictionSummary = overview.Prediction;
+        currentPhase = predictionSummary.CurrentPhase;
 
         var lastPhaseKey = BuildLastPhaseKey(userId);
         var previousPhaseValue = await GetSecureMarkerAsync(lastPhaseKey) ?? string.Empty;
@@ -75,8 +72,8 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
             return;
         }
 
-        var title = UiTextCatalog.Translate("Your plan is ready");
-        var body = UiTextCatalog.Translate("Open MuscleCuties to see today's update.");
+        var title = UiTextCatalog.TranslateRuntimeText("Your plan is ready");
+        var body = UiTextCatalog.TranslateRuntimeText("Open MuscleCuties to see today's update.");
         var morning = today.Add(MorningNotificationTime);
         var notificationId = BuildTodayNotificationId(userId);
 
@@ -99,7 +96,7 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
     {
         var reminder = predictionSummary is null
             ? null
-            : FindNextPhaseChangeReminderFromSummary(predictionSummary);
+            : FindNextPhaseChangeReminder(predictionSummary);
 
         if (reminder is null)
             return;
@@ -110,24 +107,37 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
 
         await _localNotificationService.ScheduleAsync(
             BuildNextNotificationId(userId),
-            UiTextCatalog.Translate("Your plan is ready"),
-            UiTextCatalog.Translate("Open MuscleCuties to see today's update."),
+            UiTextCatalog.TranslateRuntimeText("Your plan is ready"),
+            UiTextCatalog.TranslateRuntimeText("Open MuscleCuties to see today's update."),
             scheduledAt);
     }
 
-    private static PhaseChangeReminder? FindNextPhaseChangeReminderFromSummary(CyclePredictionSummary prediction)
+    private PhaseChangeReminder? FindNextPhaseChangeReminder(CyclePredictionSummary prediction)
     {
         if (!prediction.HasActiveCycle || prediction.CurrentDay <= 0)
             return null;
 
-        var cycleLength = CyclePhaseRules.NormalizeCycleLength(prediction.PredictedCycleLength);
         var today = DateTime.Today;
+        var cycleLength = _phaseProjection.Project(new CyclePhaseProjectionInputDto(
+            today,
+            today,
+            prediction.PredictedCycleLength,
+            CycleDayOverride: prediction.CurrentDay,
+            CycleDayOverrideDate: today,
+            CurrentPhase: prediction.CurrentPhase,
+            HasActiveCycle: prediction.HasActiveCycle)).NormalizedCycleLength;
 
         for (var dayOffset = 1; dayOffset <= cycleLength; dayOffset++)
         {
             var date = today.AddDays(dayOffset);
-            var projectedCycleDay = (prediction.CurrentDay - 1 + dayOffset) % cycleLength + 1;
-            var phase = CyclePhaseRules.CalculatePhase(projectedCycleDay, cycleLength);
+            var phase = _phaseProjection.Project(new CyclePhaseProjectionInputDto(
+                date,
+                today,
+                prediction.PredictedCycleLength,
+                CycleDayOverride: prediction.CurrentDay,
+                CycleDayOverrideDate: today,
+                CurrentPhase: prediction.CurrentPhase,
+                HasActiveCycle: prediction.HasActiveCycle)).Phase;
             if (phase != prediction.CurrentPhase)
                 return new PhaseChangeReminder(date, phase);
         }

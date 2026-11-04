@@ -1,19 +1,27 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.UseCases.Features.CheckInAndInjury;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
+
+/// <summary>One selectable answer to the worsening-movement question; the label is a localization key.</summary>
+public sealed record InjuryWorseningOption(
+    MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger Trigger,
+    string Label);
 
 public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 {
     private const string ReloadAfterChangeFailedTextKey = "Injury_Log_ReloadAfterChangeFailed";
+    private const string PlanRefreshFailedTextKey = "Injury_Log_PlanRefreshFailed";
+    private const string PageRefreshFailedTextKey = "Injury_Log_PageRefreshFailed";
     private readonly IWorkoutInjuryUseCase _injuries;
     private readonly Func<Task> _injuriesChangedAsync;
 
@@ -26,16 +34,25 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
     private bool _hasLoaded;
     private bool _pendingChangeRefresh;
+    private bool? _editingClinicianAdvisedAvoid;
+    private bool _clinicianAdvisedAvoidChanged;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isHistoryExpanded;
     [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private bool _isPlanRefreshError;
+    [ObservableProperty] private bool _isPageRefreshError;
     [ObservableProperty] private int _newPainLevel;
 
-    [ObservableProperty] private InjuryFlag _selectedSiteFlag;
-    [ObservableProperty] private InjuryStatus? _selectedStatus;
+    [ObservableProperty] private WorkoutInjurySite _selectedSiteFlag;
+    [ObservableProperty] private WorkoutInjuryStatus? _selectedStatus;
 
     [ObservableProperty] private bool _showAddForm;
+
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowsSafetyGuidance))]
+    private bool _clinicianAdvisedAvoid;
+
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowsSafetyGuidance))]
+    private InjuryWorseningOption? _selectedWorseningOption;
     [ObservableProperty] private DateTime _sinceDateValue = DateTime.Today;
 
     public InjuryLogViewModel(
@@ -48,22 +65,41 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         AvailableSites = new List<InjuryFlagOption>
         {
-            new() { Flag = InjuryFlag.Shoulder, Label = "Shoulder" },
-            new() { Flag = InjuryFlag.Neck, Label = "Neck" },
-            new() { Flag = InjuryFlag.LowBack, Label = "Low back" },
-            new() { Flag = InjuryFlag.Hip, Label = "Hip" },
-            new() { Flag = InjuryFlag.Knee, Label = "Knee" },
-            new() { Flag = InjuryFlag.Ankle, Label = "Ankle" },
-            new() { Flag = InjuryFlag.Metatarsal, Label = "Foot" },
-            new() { Flag = InjuryFlag.Wrist, Label = "Wrist" }
+            new() { Flag = WorkoutInjurySite.Shoulder, Label = UiTextCatalog.Get("Injury_Site_Shoulder") },
+            new() { Flag = WorkoutInjurySite.Neck, Label = UiTextCatalog.Get("Injury_Site_Neck") },
+            new() { Flag = WorkoutInjurySite.LowBack, Label = UiTextCatalog.Get("Injury_Site_LowBack") },
+            new() { Flag = WorkoutInjurySite.Hip, Label = UiTextCatalog.Get("Injury_Site_Hip") },
+            new() { Flag = WorkoutInjurySite.Knee, Label = UiTextCatalog.Get("Injury_Site_Knee") },
+            new() { Flag = WorkoutInjurySite.Ankle, Label = UiTextCatalog.Get("Injury_Site_Ankle") },
+            new() { Flag = WorkoutInjurySite.Foot, Label = UiTextCatalog.Get("Injury_Site_Foot") },
+            new() { Flag = WorkoutInjurySite.Wrist, Label = UiTextCatalog.Get("Injury_Site_Wrist") }
         };
 
         AvailableStatuses = new List<InjuryStatusOption>
         {
-            new() { Status = InjuryStatus.Acute, Label = "Acute" },
-            new() { Status = InjuryStatus.Recovering, Label = "Recovering" },
-            new() { Status = InjuryStatus.Cleared, Label = "Cleared" }
+            new() { Status = WorkoutInjuryStatus.Acute, Label = UiTextCatalog.Get("Injury_Status_Acute") },
+            new() { Status = WorkoutInjuryStatus.Recovering, Label = UiTextCatalog.Get("Injury_Status_Recovering") },
+            new() { Status = WorkoutInjuryStatus.Cleared, Label = UiTextCatalog.Get("Injury_Status_Cleared") }
         };
+
+        WorseningTriggerOptions = new List<InjuryWorseningOption>
+        {
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+                "Injury_Log_WorseningTrigger_NotAnswered"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.None,
+                "Injury_Log_WorseningTrigger_None"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.OverheadReach,
+                "Injury_Log_WorseningTrigger_OverheadReach"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.DeepKneeFlexion,
+                "Injury_Log_WorseningTrigger_DeepKneeFlexion"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.SpinalLoading,
+                "Injury_Log_WorseningTrigger_SpinalLoading"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.ImpactAndGait,
+                "Injury_Log_WorseningTrigger_ImpactAndGait"),
+            new(MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.GripAndWristLoad,
+                "Injury_Log_WorseningTrigger_GripAndWristLoad")
+        };
+        SelectedWorseningOption = WorseningTriggerOptions[0];
 
         LoadCommand = new AsyncRelayCommand(LoadAsync, () => !IsBusy);
         ToggleAddFormCommand = new RelayCommand(BeginAdd, () => !IsBusy);
@@ -77,12 +113,24 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         SelectSiteCommand = new RelayCommand<InjuryFlagOption>(SelectSite);
         SelectStatusCommand = new RelayCommand<InjuryStatusOption>(SelectStatus);
         ToggleHistoryCommand = new RelayCommand(() => IsHistoryExpanded = !IsHistoryExpanded);
-        RetryPlanRefreshCommand = new AsyncRelayCommand(RetryPlanRefreshAsync, () => !IsBusy);
+        RetryPageRefreshCommand = new AsyncRelayCommand(RetryPageRefreshAsync, () => !IsBusy);
     }
 
     public bool IsEditing => EditingInjuryId is not null;
     public string FormTitle => IsEditing ? "Edit injury" : "New injury";
     public string PainLabelText => PainLabelFor(NewPainLevel);
+
+    public IReadOnlyList<InjuryWorseningOption> WorseningTriggerOptions { get; }
+
+    /// <summary>
+    ///     Owner rule: recorded worsening symptoms or a clinician restriction are safety concerns.
+    ///     The stop-and-seek-care guidance appears whenever either answer is affirmative.
+    /// </summary>
+    public bool ShowsSafetyGuidance =>
+        MuscleCuties.Core.Domain.Workout.InjuryObservationRule.IndicatesSafetyConcern(
+            SelectedWorseningOption?.Trigger ??
+            MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+            ClinicianAdvisedAvoid);
     public bool HasClearedInjuries => ClearedInjuries.Count > 0;
     public bool HasActiveInjuries => ActiveInjuries.Count > 0;
 
@@ -100,12 +148,12 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         : "No active injuries";
 
     public string EmptyStateDetail => ClearedInjuries.Count == 0
-        ? "Your plan has no injury restrictions"
+        ? "No active injuries are recorded."
         : "Cleared injuries are saved in History below.";
 
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
 
-    public bool CanSaveInjury => !IsBusy && SelectedSiteFlag != InjuryFlag.None && SelectedStatus is not null &&
+    public bool CanSaveInjury => !IsBusy && SelectedSiteFlag != WorkoutInjurySite.None && SelectedStatus is not null &&
                                  SinceDateValue.Date <= DateTime.Today;
 
     [SuppressMessage("Performance", "CA1822:Mark members as static",
@@ -126,7 +174,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public RelayCommand<InjuryFlagOption> SelectSiteCommand { get; }
     public RelayCommand<InjuryStatusOption> SelectStatusCommand { get; }
     public RelayCommand ToggleHistoryCommand { get; }
-    public AsyncRelayCommand RetryPlanRefreshCommand { get; }
+    public AsyncRelayCommand RetryPageRefreshCommand { get; }
 
     public bool IsPageLoading => IsBusy;
     public AsyncRelayCommand LoadDataCommand => LoadCommand;
@@ -143,17 +191,22 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         DeleteInjuryCommand.NotifyCanExecuteChanged();
         MarkClearedCommand.NotifyCanExecuteChanged();
         EditInjuryCommand.NotifyCanExecuteChanged();
-        RetryPlanRefreshCommand.NotifyCanExecuteChanged();
+        RetryPageRefreshCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnSelectedSiteFlagChanged(InjuryFlag value)
+    partial void OnSelectedSiteFlagChanged(WorkoutInjurySite value)
     {
         RefreshSaveState();
     }
 
-    partial void OnSelectedStatusChanged(InjuryStatus? value)
+    partial void OnSelectedStatusChanged(WorkoutInjuryStatus? value)
     {
         RefreshSaveState();
+    }
+
+    partial void OnClinicianAdvisedAvoidChanged(bool value)
+    {
+        _clinicianAdvisedAvoidChanged = true;
     }
 
     partial void OnSinceDateValueChanged(DateTime value)
@@ -199,7 +252,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         catch (Exception ex)
         {
             IsLoadError = true;
-            ErrorText = "Couldn't load your injury log. Try again.";
+            ErrorText = "Ui_Workout_Error_InjuryLoad";
             Trace.WriteLine($"[InjuryLog] Load failed ({ex.GetType().Name}).");
         }
         finally
@@ -217,8 +270,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         foreach (var log in allLogs)
         {
-            var siteFlag = (InjuryFlag)log.Site;
-            var status = (InjuryStatus)log.Status;
+            var siteFlag = log.Site;
+            var status = log.Status;
             var isActive = log.IsActive;
 
             var item = new InjuryLogItem
@@ -232,7 +285,9 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
                 PainLabel = PainLabelFor(log.Pain),
                 Since = log.Since,
                 SinceText = log.Since.ToString("d", CultureInfo.CurrentCulture),
-                IsActive = isActive
+                IsActive = isActive,
+                WorseningTrigger = log.WorseningTrigger,
+                ClinicianAdvisedAvoid = log.ClinicianAdvisedAvoid
             };
 
             if (isActive)
@@ -265,16 +320,25 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         try
         {
             await _injuries.SaveInjuryAsync(new SaveWorkoutInjuryInput(
-                EditingInjuryId ?? 0, (WorkoutInjurySite)SelectedSiteFlag,
-                (WorkoutInjuryStatus)status.Value, NewPainLevel,
-                DateOnly.FromDateTime(SinceDateValue)));
+                EditingInjuryId ?? 0, SelectedSiteFlag,
+                status.Value, NewPainLevel,
+                DateOnly.FromDateTime(SinceDateValue),
+                SelectedWorseningOption?.Trigger ??
+                    MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
+                !_clinicianAdvisedAvoidChanged
+                    ? _editingClinicianAdvisedAvoid
+                    : ClinicianAdvisedAvoid));
             CancelEdit();
             _pendingChangeRefresh = true;
             await RefreshAfterChangeAsync();
         }
+        catch (ActiveWorkoutPreventsInjuryException)
+        {
+            ErrorText = UiTextCatalog.Get("Injury_Log_ActiveWorkoutPreventsInjury");
+        }
         catch (Exception ex)
         {
-            ErrorText = "Couldn't save this injury. Your changes are still here; try again.";
+            ErrorText = "Ui_Workout_Error_InjurySave";
             Trace.WriteLine($"[InjuryLog] Save failed ({ex.GetType().Name}).");
         }
         finally
@@ -295,6 +359,10 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
                 CancelEdit();
             _pendingChangeRefresh = true;
             await RefreshAfterChangeAsync();
+        }
+        catch (ActiveWorkoutPreventsInjuryException)
+        {
+            ErrorText = UiTextCatalog.Get("Injury_Log_ActiveWorkoutPreventsInjury");
         }
         catch (Exception ex)
         {
@@ -344,6 +412,16 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         NewPainLevel = item.Pain;
         SinceDateValue = item.Since.ToDateTime(TimeOnly.MinValue);
+
+        // Restore the safety answers so editing an injury never silently downgrades them to
+        // "not answered" while the user is only changing the pain level.
+        ClinicianAdvisedAvoid = item.ClinicianAdvisedAvoid ?? false;
+        _editingClinicianAdvisedAvoid = item.ClinicianAdvisedAvoid;
+        _clinicianAdvisedAvoidChanged = false;
+        SelectedWorseningOption =
+            WorseningTriggerOptions.FirstOrDefault(option => option.Trigger == item.WorseningTrigger)
+            ?? WorseningTriggerOptions[0];
+
         ShowAddForm = true;
     }
 
@@ -359,6 +437,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     private void CancelEdit()
     {
         EditingInjuryId = null;
+        _editingClinicianAdvisedAvoid = null;
 
         SelectedSiteFlag = default;
         foreach (var site in AvailableSites)
@@ -370,6 +449,9 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         NewPainLevel = 0;
         SinceDateValue = DateTime.Today;
+        ClinicianAdvisedAvoid = false;
+        _clinicianAdvisedAvoidChanged = false;
+        SelectedWorseningOption = WorseningTriggerOptions.Count > 0 ? WorseningTriggerOptions[0] : null;
 
         ShowAddForm = false;
     }
@@ -397,6 +479,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     private async Task RefreshAfterChangeAsync()
     {
         IsPlanRefreshError = false;
+        IsPageRefreshError = false;
         IsLoadError = false;
         ErrorText = string.Empty;
         try
@@ -422,7 +505,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         catch (Exception ex)
         {
             IsPlanRefreshError = true;
-            ErrorText = "Your injury log was saved, but the plan couldn't refresh. Try again before training.";
+            ErrorText = UiTextCatalog.Get(PlanRefreshFailedTextKey);
             Trace.WriteLine($"[InjuryLog] Plan refresh failed ({ex.GetType().Name}).");
         }
 
@@ -432,22 +515,35 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         }
         catch (Exception ex)
         {
+            IsPageRefreshError = true;
             if (!IsPlanRefreshError)
-                ErrorText = "Your injury log was saved, but the page couldn't refresh. Try again.";
-            IsPlanRefreshError = true;
+                ErrorText = UiTextCatalog.Get(PageRefreshFailedTextKey);
             Trace.WriteLine($"[InjuryLog] Page refresh failed ({ex.GetType().Name}).");
         }
 
-        if (!IsPlanRefreshError)
+        if (!IsPlanRefreshError && !IsPageRefreshError)
             _pendingChangeRefresh = false;
     }
 
-    private async Task RetryPlanRefreshAsync()
+    private async Task RetryPageRefreshAsync()
     {
         IsBusy = true;
         try
         {
-            await RefreshAfterChangeAsync();
+            await _injuriesChangedAsync();
+            IsPageRefreshError = false;
+            if (!IsPlanRefreshError)
+            {
+                ErrorText = string.Empty;
+                _pendingChangeRefresh = false;
+            }
+        }
+        catch (Exception ex)
+        {
+            IsPageRefreshError = true;
+            if (!IsPlanRefreshError)
+                ErrorText = UiTextCatalog.Get(PageRefreshFailedTextKey);
+            Trace.WriteLine($"[InjuryLog] Page refresh retry failed ({ex.GetType().Name}).");
         }
         finally
         {
@@ -469,13 +565,13 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         };
     }
 
-    internal static string DisplayNameFor(InjuryFlag flag)
+    internal static string DisplayNameFor(WorkoutInjurySite site)
     {
-        return flag switch
+        return site switch
         {
-            InjuryFlag.Metatarsal => "Foot",
-            InjuryFlag.LowBack => "Low back",
-            _ => flag.ToString()
+            WorkoutInjurySite.Foot => "Foot",
+            WorkoutInjurySite.LowBack => "Low back",
+            _ => site.ToString()
         };
     }
 }

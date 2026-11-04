@@ -1,4 +1,5 @@
 using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.Core.Domain.Workout;
 
 namespace MuscleCuties.Core.Tests;
 
@@ -46,8 +47,30 @@ public class InjuryLogRegressionTests
 
         var saved = Assert.Single(store.SavedInputs);
         Assert.Equal(42, saved.Id);
-        Assert.Equal(5, saved.Pain);
+        Assert.Equal(WorkoutInjuryEntryRule.MaximumPain, saved.Pain);
         Assert.Equal(today, saved.Since);
+    }
+
+    [Fact]
+    public void Entry_Rule_Rejects_Missing_Site_And_Normalizes_Pain_And_Date()
+    {
+        var today = new DateOnly(2026, 10, 24);
+
+        Assert.False(WorkoutInjuryEntryRule.TryNormalize(
+            WorkoutInjuryEntryRule.NoInjurySite,
+            WorkoutInjuryEntryRule.MinimumPain,
+            today,
+            today,
+            out _));
+        Assert.True(WorkoutInjuryEntryRule.TryNormalize(
+            (int)WorkoutInjurySite.Knee,
+            int.MaxValue,
+            today.AddDays(1),
+            today,
+            out var normalized));
+
+        Assert.Equal(WorkoutInjuryEntryRule.MaximumPain, normalized.Pain);
+        Assert.Equal(today, normalized.Since);
     }
 
     [Fact]

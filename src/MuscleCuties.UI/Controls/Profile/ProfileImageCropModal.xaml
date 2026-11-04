@@ -1,24 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ContentView
+<sharedControls:AnimatedModalView
     x:Class="MuscleCuties.UI.Controls.Profile.ProfileImageCropModal"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:local="clr-namespace:MuscleCuties.UI.Controls.Profile"
-    x:DataType="local:ProfileImageCropModal"
-    IsVisible="False">
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    x:DataType="local:ProfileImageCropModal">
 
     <Grid BackgroundColor="{StaticResource ModalScrim}">
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource AppBottomSheetSurface}"
-            Padding="0"
-            HorizontalOptions="Fill">
+            Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
+            HorizontalOptions="Fill" VerticalOptions="End">
 
-            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="0">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
 
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="8" Padding="16,12">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{DynamicResource PresentationModalHeaderPadding}">
                     <Label
                         Text="{loc:LocalizedText Profile_ImageCrop_CropPhoto}"
                         Style="{StaticResource ModalTitle}"
@@ -34,19 +33,19 @@
                     </Border>
                 </Grid>
 
-                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" Margin="20,0" />
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" Margin="{StaticResource UiInsets20_0}" />
 
                 <ScrollView
                     Grid.Row="2"
                     Orientation="Vertical">
-                    <VerticalStackLayout Padding="20,16,20,0" Spacing="10">
+                    <VerticalStackLayout Padding="{DynamicResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpacing10}">
                         <Border
                             x:Name="CropViewport"
-                            WidthRequest="260"
-                            HeightRequest="260"
-                            StrokeShape="RoundRectangle 130"
-                            StrokeThickness="0"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+                            WidthRequest="{StaticResource UiDimension260}"
+                            HeightRequest="{StaticResource UiDimension260}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius130}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSunkenDark}}"
                             HorizontalOptions="Center">
                             <Grid>
                                 <Grid.GestureRecognizers>
@@ -56,37 +55,33 @@
                                 <Image
                                     x:Name="CropImage"
                                     Aspect="AspectFill"
-                                    WidthRequest="260"
-                                    HeightRequest="260" />
+                                    WidthRequest="{StaticResource UiDimension260}"
+                                    HeightRequest="{StaticResource UiDimension260}" />
                             </Grid>
                         </Border>
 
                         <Label
                             Text="{loc:LocalizedText Profile_ImageCrop_PinchToZoomLabel}"
-                            Style="{StaticResource CaptionLabel}"
-                            HorizontalTextAlignment="Center"
+                            Style="{StaticResource CaptionCentered}"
+                            LineBreakMode="WordWrap"
                             SemanticProperties.Description="{loc:LocalizedText Profile_ImageCrop_PinchToZoomDescription}" />
                     </VerticalStackLayout>
                 </ScrollView>
 
-                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="12" Padding="20,16,20,20">
+                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{DynamicResource PresentationActionFooterPadding}">
                     <Button
                         Grid.Column="0"
+                        Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Common_Cancel}"
-                        Clicked="OnCancelTapped"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                        MinimumHeightRequest="52"
-                        CornerRadius="18" />
+                        Clicked="OnCancelTapped" />
                     <Button
                         Grid.Column="1"
+                        Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Profile_ImageCrop_UsePhoto}"
-                        Clicked="OnUsePhotoTapped"
-                        MinimumHeightRequest="52"
-                        CornerRadius="18" />
+                        Clicked="OnUsePhotoTapped" />
                 </Grid>
 
             </Grid>
         </Border>
     </Grid>
-</ContentView>
+</sharedControls:AnimatedModalView>

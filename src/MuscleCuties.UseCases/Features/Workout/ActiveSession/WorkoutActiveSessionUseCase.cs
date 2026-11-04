@@ -2,6 +2,10 @@ namespace MuscleCuties.UseCases.Features.Workout.ActiveSession;
 
 public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store)
 {
+    public Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken = default) =>
+        store.GetPlannedSessionHistoryAsync(userId, workoutDayId, cancellationToken);
+    public Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken = default) =>
+        store.GetPlannedSessionAsync(userId, workoutDayId, cancellationToken);
     private const int MaximumIdempotencyKeyLength = 128;
     private const int MaximumNameLength = 200;
     private const int MaximumNotesLength = 2000;
@@ -17,6 +21,24 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
     private const int MaximumRestSeconds = 3600;
     private const int MinimumDurationSeconds = 0;
     private const int MaximumDurationSeconds = 86_400;
+
+    public Task<ActiveWorkoutSessionSnapshot?> ResumeTimingAsync(Guid userId, ResumeWorkoutTimingCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ValidateCommon(userId, command.SessionId, command.IdempotencyKey);
+        return store.ResumeTimingAsync(userId, command, cancellationToken);
+    }
+
+    public Task<ActiveWorkoutSessionSnapshot?> CheckpointTimingAsync(Guid userId, CheckpointWorkoutTimingCommand command,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(command);
+        ValidateCommon(userId, command.SessionId, command.IdempotencyKey);
+        if (command.IntervalId == Guid.Empty || command.MeasuredSeconds < MinimumDurationSeconds || command.MeasuredSeconds > MaximumDurationSeconds)
+            throw new ArgumentException("Invalid active interval checkpoint.", nameof(command));
+        return store.CheckpointTimingAsync(userId, command, cancellationToken);
+    }
 
     public Task<ActiveWorkoutSessionSnapshot?> GetSessionAsync(
         Guid userId,

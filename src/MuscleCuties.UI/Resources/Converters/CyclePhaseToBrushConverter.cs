@@ -1,6 +1,8 @@
 using System.Globalization;
 using Microsoft.Maui.Controls;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Resources.Converters;
@@ -18,7 +20,7 @@ public class CyclePhaseToBrushConverter : IValueConverter
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not CyclePhase phase)
-            return new SolidColorBrush(Colors.Transparent);
+            return new SolidColorBrush(AppThemeResources.GetRequired<Color>("Transparent"));
 
         var isDark = AppThemeResources.IsDark;
         var key = (phase, isDark);
@@ -40,7 +42,7 @@ public class CyclePhaseToBrushConverter : IValueConverter
             CyclePhase.Luteal => AppThemeResources.GetColor(
                 "CyclePhaseLutealLight",
                 "CyclePhaseLutealDark"),
-            _ => Colors.Transparent
+            _ => AppThemeResources.GetRequired<Color>("Transparent")
         };
 
         var brush = new SolidColorBrush(color);
