@@ -1,0 +1,59 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  MuscleCuties Observability Alarms for Lambda, SQS, and Error Rate Supervision.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: staging
+    AllowedValues: [staging, beta]
+  NotificationEmail:
+    Type: String
+    Default: dev@musclecuties.app
+    Description: Email endpoint for operational alarms.
+
+Resources:
+  AlarmTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub 'musclecuties-${EnvironmentName}-operational-alarms'
+
+  LambdaErrorRateAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-API-ErrorRate'
+      AlarmDescription: Alarms when Server Lambda error rate exceeds 1% over 5 minutes.
+      Namespace: AWS/Lambda
+      MetricName: Errors
+      Dimensions:
+        - Name: FunctionName
+          Value: !Sub 'MuscleCuties-Server-${EnvironmentName}'
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 5
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref AlarmTopic
+
+  DLQDepthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-Worker-DLQ-Depth'
+      AlarmDescription: Alarms when dead-letter queue contains unprocessed failed messages.
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - Name: QueueName
+          Value: !Sub 'musclecuties-${EnvironmentName}-reconciliation-dlq'
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref AlarmTopic
+
+Outputs:
+  AlarmTopicArn:
+    Value: !Ref AlarmTopic
