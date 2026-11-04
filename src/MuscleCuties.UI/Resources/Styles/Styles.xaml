@@ -1392,19 +1392,4 @@
          distinct from CaptionLabel (12pt bold, a short metadata/caption label) and from BodyLabel
          (15pt, the app's body role). Use it for per-card secondary text only; section titles,
          card/modal titles, page titles and inline status labels remain their existing styles. -->
-    <Style x:Key="WorkoutHistorySecondaryBody" TargetType="Label" BasedOn="{StaticResource BodyLabel}">
-        <Setter Property="FontSize" Value="{StaticResource UiFontSize14}" />
-        <Setter Property="LineBreakMode" Value="WordWrap" />
-        <Setter Property="CharacterSpacing" Value="0" />
-    </Style>
-    <Style x:Key="WorkoutHistorySecondaryBodyStrong" TargetType="Label" BasedOn="{StaticResource WorkoutHistorySecondaryBody}">
-        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
-    </Style>
-    <Style x:Key="WorkoutHistorySecondaryBodyCentered" TargetType="Label" BasedOn="{StaticResource WorkoutHistorySecondaryBody}">
-        <Setter Property="HorizontalTextAlignment" Value="Center" />
-        <Setter Property="HorizontalOptions" Value="Center" />
-    </Style>
-    <Style x:Key="WorkoutHistorySecondaryBodyStrongCentered" TargetType="Label" BasedOn="{StaticResource WorkoutHistorySecondaryBodyCentered}">
-        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
-    </Style>
-    </ResourceDictionary>
+</ResourceDictionary>
