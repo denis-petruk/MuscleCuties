@@ -1,8 +1,10 @@
 using System.Net;
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
+using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
 using SkiaSharp;
 using Xunit;
@@ -20,6 +22,40 @@ public sealed class ServerMediaSafetyTests
     private static readonly Guid Owner = Guid.Parse("11111111-1111-1111-1111-111111111111");
     private static readonly Guid OtherOwner = Guid.Parse("22222222-2222-2222-2222-222222222222");
     private static readonly Guid Photo = Guid.Parse("33333333-3333-3333-3333-333333333333");
+
+    [Fact]
+    public void S3AdaptersRejectMissingBucketOrRegionInsteadOfSelectingAnotherTarget()
+    {
+        var missingBucket = Configuration(includeBucket: false);
+        var bucketException = Assert.Throws<InvalidOperationException>(() => new DefaultS3PresignedUrlService(missingBucket));
+        Assert.Contains("Storage:S3:BucketName", bucketException.Message);
+
+        var missingRegion = Configuration(includeRegion: false);
+        using var http = new HttpClient(new StubHandler(_ => new HttpResponseMessage(HttpStatusCode.OK)));
+        var inspectorException = Assert.Throws<InvalidOperationException>(() => new DefaultS3PhotoObjectInspector(http, missingRegion));
+        Assert.Contains("Storage:S3:Region", inspectorException.Message);
+        var cleanupException = Assert.Throws<InvalidOperationException>(() => new DefaultS3PhotoObjectCleanup(http, missingRegion));
+        Assert.Contains("Storage:S3:Region", cleanupException.Message);
+    }
+
+    [Fact]
+    public async Task CleanupProcessorRequiresBucketBeforeClaimingDatabaseWork()
+    {
+        var options = new DbContextOptionsBuilder<PostgresDbContext>()
+            .UseNpgsql("Host=127.0.0.1;Port=1;Database=unused;Username=test;Password=test;Timeout=1")
+            .Options;
+        await using var dbContext = new PostgresDbContext(options);
+        var processor = new PhotoCleanupProcessor(
+            new PostgresPhotoCleanupStore(dbContext),
+            new StubPhotoObjectCleanup(),
+            Configuration(includeBucket: false),
+            TimeProvider.System);
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            processor.ProcessOwnerAsync(Owner, 1, TimeSpan.FromMinutes(1)));
+
+        Assert.Contains("Storage:S3:BucketName", exception.Message);
+    }
 
     [Fact]
     public async Task ExactVersionReadPinsVersionAndChecksActualBytes()
@@ -335,13 +371,23 @@ public sealed class ServerMediaSafetyTests
 
     private static HttpResponseMessage XmlResponse(string xml) => new(HttpStatusCode.OK) { Content = new StringContent(xml) };
 
-    private static IConfiguration Configuration() => new ConfigurationBuilder().AddInMemoryCollection(new Dictionary<string, string?>
+    private static IConfiguration Configuration(bool includeBucket = true, bool includeRegion = true)
     {
-        ["Storage:S3:BucketName"] = Bucket,
-        ["Storage:S3:Region"] = "us-east-2",
-        ["Storage:S3:AccessKeyId"] = "synthetic-access-key",
-        ["Storage:S3:SecretAccessKey"] = "synthetic-secret-key"
-    }).Build();
+        var values = new Dictionary<string, string?>
+        {
+            ["Storage:S3:AccessKeyId"] = "synthetic-access-key",
+            ["Storage:S3:SecretAccessKey"] = "synthetic-secret-key"
+        };
+        if (includeBucket) values["Storage:S3:BucketName"] = Bucket;
+        if (includeRegion) values["Storage:S3:Region"] = "us-east-2";
+        return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+    }
+
+    private sealed class StubPhotoObjectCleanup : IS3PhotoObjectCleanup
+    {
+        public Task DeleteAllVersionsAsync(PhotoObjectCleanupTarget target, CancellationToken cancellationToken = default) =>
+            throw new InvalidOperationException("The cleanup stub must not be reached.");
+    }
 
     private sealed class StubHandler(Func<HttpRequestMessage, Task<HttpResponseMessage>> respond) : HttpMessageHandler
     {

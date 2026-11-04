@@ -7,4 +7,9 @@ public sealed record CustomFoodInput(
     float Calories,
     float Protein,
     float Carbs,
-    float Fats);
+    float Fats,
+    string? CompanySource = null,
+    float? Iron = null,
+    float? VitaminB12 = null,
+    float? VitaminD = null,
+    float? Calcium = null);

@@ -11,9 +11,14 @@ namespace MuscleCuties.UI.ViewModels.Quiz;
 
 public partial class QuizViewModel : ObservableObject
 {
+    private const int MinimumAvailableWeekdaySelections = 2;
+    private const int MaximumAvailableWeekdaySelections = 7;
+    private const string WeekdayCatalogUnavailableKey = "Onboarding_Quiz_WeekdayCatalogUnavailable";
     private readonly Func<Task> _navigateToDashboardAsync;
     private readonly Func<Task>? _navigateToLoginAsync;
     private readonly Func<Task> _navigateToProfileAsync;
+    private readonly Action? _onAccountCreatedNeedsLogin;
+    private readonly Action<int[]>? _onWeekdaysCommitted;
     private bool _quizCommitted;
     private readonly List<(int QuestionId, int AnswerId)> _selectedAnswers = new();
     private readonly IOnboardingQuizUseCase _useCase;
@@ -30,7 +35,7 @@ public partial class QuizViewModel : ObservableObject
     private string _errorMessage = string.Empty;
 
     [ObservableProperty] private bool _isBusy;
-    [ObservableProperty] private bool _isPreparingDashboard;
+    [ObservableProperty] private bool _isPreparingWorkoutPreferences;
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanRetryQuestionsLoad))]
@@ -53,12 +58,16 @@ public partial class QuizViewModel : ObservableObject
         IOnboardingQuizUseCase useCase,
         Func<Task> navigateToDashboardAsync,
         Func<Task>? navigateToLoginAsync,
-        Func<Task> navigateToProfileAsync)
+        Func<Task> navigateToProfileAsync,
+        Action? onAccountCreatedNeedsLogin = null,
+        Action<int[]>? onWeekdaysCommitted = null)
     {
         _useCase = useCase;
         _navigateToDashboardAsync = navigateToDashboardAsync;
         _navigateToLoginAsync = navigateToLoginAsync;
         _navigateToProfileAsync = navigateToProfileAsync;
+        _onAccountCreatedNeedsLogin = onAccountCreatedNeedsLogin;
+        _onWeekdaysCommitted = onWeekdaysCommitted;
 
         LoadQuestionsCommand = new AsyncRelayCommand(LoadQuestionsAsync);
         RetryLoadQuestionsCommand = new AsyncRelayCommand(RetryLoadQuestionsAsync);
@@ -99,9 +108,16 @@ public partial class QuizViewModel : ObservableObject
     public bool IsLayoutVisible => LoadState is QuizLoadState.Ready;
     public bool IsLoading => LoadState is QuizLoadState.Loading;
     public bool IsLoadingVisible => IsLoading;
-    public bool IsCurrentQuestionMultiAnswer => CurrentQuestion?.QuestionType is QuizQuestionType.DietaryPreference;
+    public bool IsCurrentQuestionMultiAnswer => CurrentQuestion?.QuestionType is
+        QuizQuestionType.DietaryPreference or QuizQuestionType.AvailableWeekdays;
+    public bool IsCurrentQuestionAvailableWeekdays =>
+        CurrentQuestion?.QuestionType == QuizQuestionType.AvailableWeekdays;
     public bool IsCurrentQuestionPhasePair => IsPainQuestion(CurrentQuestion?.QuestionType);
-    public bool IsStandardAnswerListVisible => !IsCurrentQuestionPhasePair;
+    public bool IsStandardAnswerListVisible =>
+        !IsCurrentQuestionPhasePair;
+    public int SelectedWeekdayCount => IsCurrentQuestionAvailableWeekdays
+        ? CurrentAnswers.Count(answer => answer.IsSelected)
+        : 0;
     public bool IsFirstQuestion => FindPreviousVisibleQuestionIndex(CurrentQuestionIndex) < 0;
     public bool ShowQuizBackButton => !IsFirstQuestion && !AccountCreatedNeedsLogin;
     public bool IsLastQuestion => Questions.Count > 0 && FindNextVisibleQuestionIndex(CurrentQuestionIndex) < 0;
@@ -142,8 +158,10 @@ public partial class QuizViewModel : ObservableObject
         QuizQuestionType.Goal => "Target24",
         QuizQuestionType.GoalPace => "Gauge24",
         QuizQuestionType.ExperienceLevel => "Dumbbell24",
-        QuizQuestionType.WorkoutDaysPerWeek => "CalendarWorkWeek24",
+        QuizQuestionType.AvailableWeekdays => "CalendarWorkWeek24",
         QuizQuestionType.DietaryPreference => "Food24",
+        QuizQuestionType.SessionDuration => "Clock24",
+        QuizQuestionType.Equipment => "Dumbbell24",
         QuizQuestionType.CurrentCyclePhase => "HeartCircle24",
         QuizQuestionType.MenstrualPain or
             QuizQuestionType.FollicularPain or
@@ -193,7 +211,7 @@ public partial class QuizViewModel : ObservableObject
         {
             Trace.WriteLine($"[QuizViewModel] Question load failed ({ex.GetType().Name}).");
             ClearQuestionState();
-            ErrorMessage = "Questions could not load. Please reopen this page.";
+            ErrorMessage = "Ui_Quiz_Error_LoadQuestions";
             ShowEmptyState(false);
         }
         finally
@@ -237,7 +255,13 @@ public partial class QuizViewModel : ObservableObject
             var selectedAnswers = SelectedAnswers;
             if (selectedAnswers.Count == 0)
             {
-                ErrorMessage = "Choose an answer to continue.";
+                ErrorMessage = "Ui_Quiz_Error_ChooseAnswer";
+                return;
+            }
+            if (CurrentQuestion.QuestionType == QuizQuestionType.AvailableWeekdays &&
+                selectedAnswers.Count is < MinimumAvailableWeekdaySelections or > MaximumAvailableWeekdaySelections)
+            {
+                ErrorMessage = "Onboarding_Quiz_AvailableWeekdaysMinimum";
                 return;
             }
 
@@ -264,7 +288,7 @@ public partial class QuizViewModel : ObservableObject
     }
 
     private Task EditProfileAsync() =>
-        IsBusy || IsPreparingDashboard || AccountCreatedNeedsLogin
+        IsBusy || IsPreparingWorkoutPreferences || AccountCreatedNeedsLogin
             ? Task.CompletedTask
             : _navigateToProfileAsync();
 
@@ -277,8 +301,26 @@ public partial class QuizViewModel : ObservableObject
 
     private void ApplyQuestions(IEnumerable<QuizQuestionDto> loadedQuestions)
     {
-        Questions = loadedQuestions
+        var allLoaded = loadedQuestions
             .Where(question => question.Answers.Count > 0)
+            .ToList();
+        var hasAvailableWeekdays = allLoaded.Any(question =>
+            question.QuestionType == QuizQuestionType.AvailableWeekdays &&
+            question.Answers.Count == MaximumAvailableWeekdaySelections &&
+            question.Answers.Select(answer => answer.MappedValue).Distinct().Count() ==
+            MaximumAvailableWeekdaySelections &&
+            question.Answers.All(answer => Enum.IsDefined(typeof(DayOfWeek), answer.MappedValue)));
+
+        if (!hasAvailableWeekdays)
+        {
+            ClearQuestionState();
+            ErrorMessage = WeekdayCatalogUnavailableKey;
+            ShowEmptyState(false);
+            return;
+        }
+
+        Questions = allLoaded
+            .Where(question => question.QuestionType.IsAvailableInCurrentOnboarding())
             .OrderBy(question => question.OrderIndex)
             .ThenBy(question => question.Id)
             .ToList();
@@ -347,7 +389,8 @@ public partial class QuizViewModel : ObservableObject
 
     private void ToggleMultiAnswer(SelectableQuizAnswer selectedAnswer)
     {
-        var isNoneAnswer = selectedAnswer.Answer.MappedValue == 0;
+        var isNoneAnswer = selectedAnswer.QuestionType == QuizQuestionType.DietaryPreference &&
+                           selectedAnswer.Answer.MappedValue == 0;
 
         if (isNoneAnswer)
         {
@@ -359,8 +402,11 @@ public partial class QuizViewModel : ObservableObject
         }
 
         selectedAnswer.IsSelected = !selectedAnswer.IsSelected;
-        foreach (var answer in CurrentAnswers.Where(answer => answer.Answer.MappedValue == 0))
-            answer.IsSelected = false;
+        if (selectedAnswer.QuestionType == QuizQuestionType.DietaryPreference)
+        {
+            foreach (var answer in CurrentAnswers.Where(answer => answer.Answer.MappedValue == 0))
+                answer.IsSelected = false;
+        }
     }
 
     private void RecordSelections(int questionId, IEnumerable<int> answerIds)
@@ -374,7 +420,7 @@ public partial class QuizViewModel : ObservableObject
         var energyQuestion = GetPairedEnergyQuestion(painQuestion.QuestionType);
         if (energyQuestion is null)
         {
-            ErrorMessage = "This phase check-in could not be saved. Please try again.";
+            ErrorMessage = "Ui_Quiz_Error_PhaseCheckIn";
             return false;
         }
 
@@ -384,7 +430,7 @@ public partial class QuizViewModel : ObservableObject
         var energyAnswer = energyQuestion.Answers.FirstOrDefault(answer => answer.MappedValue == energyValue);
         if (painAnswer is null || energyAnswer is null)
         {
-            ErrorMessage = "This phase check-in could not be saved. Please try again.";
+            ErrorMessage = "Ui_Quiz_Error_PhaseCheckIn";
             return false;
         }
 
@@ -521,7 +567,7 @@ public partial class QuizViewModel : ObservableObject
 
         try
         {
-            IsPreparingDashboard = true;
+            IsPreparingWorkoutPreferences = true;
 
             if (!_quizCommitted)
             {
@@ -535,8 +581,22 @@ public partial class QuizViewModel : ObservableObject
                     return;
                 }
 
+                var weekdayQuestion = Questions.FirstOrDefault(question =>
+                    question.QuestionType == QuizQuestionType.AvailableWeekdays);
+                if (weekdayQuestion is not null)
+                {
+                    var selectedIds = _selectedAnswers.Where(selection => selection.QuestionId == weekdayQuestion.Id)
+                        .Select(selection => selection.AnswerId).ToHashSet();
+                    var weekdays = weekdayQuestion.Answers.Where(answer => selectedIds.Contains(answer.Id))
+                        .Select(answer => answer.MappedValue)
+                        .Where(day => Enum.IsDefined(typeof(DayOfWeek), day)).Distinct().ToArray();
+                    if (weekdays.Length >= MinimumAvailableWeekdaySelections)
+                        _onWeekdaysCommitted?.Invoke(weekdays);
+                }
+
                 if (commitResult.AccountCreatedNeedsLogin)
                 {
+                    _onAccountCreatedNeedsLogin?.Invoke();
                     AccountCreatedNeedsLogin = true;
                     ErrorMessage = commitResult.ErrorMessage ?? string.Empty;
                     return;
@@ -547,26 +607,25 @@ public partial class QuizViewModel : ObservableObject
                     $"[Performance][Quiz] Answers and profile saved in {totalStopwatch.ElapsedMilliseconds} ms.");
             }
 
-            // The dashboard loads its state after appearing. Finish the quiz overlay
-            // layout before replacing the onboarding shell with the dashboard shell.
-            IsPreparingDashboard = false;
+            // Finish the quiz overlay layout before opening first-plan setup.
+            IsPreparingWorkoutPreferences = false;
             await Task.Delay(50);
-            Trace.WriteLine("[Performance][Quiz] Dashboard navigation starting.");
+            Trace.WriteLine("[Performance][Quiz] First-plan navigation starting.");
             await _navigateToDashboardAsync();
             Trace.WriteLine(
-                $"[Performance][Quiz] Dashboard navigation completed; " +
+                $"[Performance][Quiz] First-plan navigation completed; " +
                 $"total={totalStopwatch.ElapsedMilliseconds} ms.");
         }
         catch (Exception ex)
         {
             ErrorMessage = _quizCommitted
-                ? "Your answers were saved. Tap Finish to open your dashboard."
+                ? "Your answers were saved. Tap Finish to set up your workout plan."
                 : "We could not save your answers. Please try again.";
             Trace.WriteLine($"[ERROR][Quiz] SaveAnswersAsync failed ({ex.GetType().Name}).");
         }
         finally
         {
-            IsPreparingDashboard = false;
+            IsPreparingWorkoutPreferences = false;
             IsBusy = false;
         }
     }
@@ -592,13 +651,16 @@ public partial class QuizViewModel : ObservableObject
         OnPropertyChanged(nameof(FirstSelectedAnswer));
         OnPropertyChanged(nameof(SelectedAnswer));
         OnPropertyChanged(nameof(SelectedAnswers));
+        OnPropertyChanged(nameof(SelectedWeekdayCount));
     }
 
     private void NotifyComputedProperties()
     {
         OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
+        OnPropertyChanged(nameof(IsCurrentQuestionAvailableWeekdays));
         OnPropertyChanged(nameof(IsCurrentQuestionPhasePair));
         OnPropertyChanged(nameof(IsStandardAnswerListVisible));
+        OnPropertyChanged(nameof(SelectedWeekdayCount));
         OnPropertyChanged(nameof(IsFirstQuestion));
         OnPropertyChanged(nameof(ShowQuizBackButton));
         OnPropertyChanged(nameof(IsLastQuestion));

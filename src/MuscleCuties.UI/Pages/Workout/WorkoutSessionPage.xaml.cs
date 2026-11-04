@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.ViewModels.Workout;
 using WorkoutViewModel = MuscleCuties.UI.ViewModels.Workout.WorkoutViewModel;
@@ -9,16 +10,12 @@ namespace MuscleCuties.UI.Pages.Workout;
 
 public partial class WorkoutSessionPage : ContentPage
 {
-    private const uint CompletionGrowMilliseconds = 340;
-    private const uint CompletionSettleMilliseconds = 220;
-    private static readonly TimeSpan CompletionDisplayTime = TimeSpan.FromMilliseconds(1200);
     private readonly INavigationContextService _navigationContext;
     private readonly WorkoutSessionViewModel _viewModel;
     private readonly WorkoutViewModel _workoutViewModel;
     private int? _loadedWorkoutDayId;
     private int _workoutDayId;
     private string? _activityTag;
-    private int _completionRevision;
 
     public WorkoutSessionPage(
         WorkoutSessionViewModel vm,
@@ -37,6 +34,11 @@ public partial class WorkoutSessionPage : ContentPage
 
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+        if (Application.Current is App app)
+        {
+            app.WorkoutTimingSuspending -= OnWorkoutTimingSuspending;
+            app.WorkoutTimingSuspending += OnWorkoutTimingSuspending;
+        }
 
         if (_navigationContext.TryTake<int>("workoutDayId", out var workoutDayId))
             _workoutDayId = workoutDayId;
@@ -53,28 +55,33 @@ public partial class WorkoutSessionPage : ContentPage
 
     protected override void OnNavigatingFrom(NavigatingFromEventArgs args)
     {
-        ++_completionRevision;
+        _ = _viewModel.SuspendTimingAsync();
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        if (Application.Current is App app)
+            app.WorkoutTimingSuspending -= OnWorkoutTimingSuspending;
         _workoutViewModel.Invalidate();
         base.OnNavigatingFrom(args);
     }
+
+    private void OnWorkoutTimingSuspending(object? sender, EventArgs e) =>
+        _ = _viewModel.SuspendForAppBackgroundAsync();
 
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(WorkoutSessionViewModel.CurrentScreen) &&
             _viewModel.IsActivitySummary && _viewModel.IsActivityComplete)
         {
-            var revision = ++_completionRevision;
             try
             {
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    CompletionBadge.Scale = 0.75;
-                    await CompletionBadge.ScaleToAsync(1.12, CompletionGrowMilliseconds, Easing.CubicOut);
-                    await CompletionBadge.ScaleToAsync(1, CompletionSettleMilliseconds, Easing.CubicInOut);
-                    await Task.Delay(CompletionDisplayTime);
-                    if (revision == _completionRevision && _viewModel.IsActivitySummary)
-                        await _viewModel.FinishSessionCommand.ExecuteAsync(null);
+                    CompletionBadge.Scale = AppThemeResources.GetDouble("UiScaleCompletionStart");
+                    await CompletionBadge.ScaleToAsync(
+                        AppThemeResources.GetDouble("UiScaleCelebrationPeak"),
+                        (uint)AppThemeResources.GetDouble("UiMotionDuration340"), Easing.CubicOut);
+                    await CompletionBadge.ScaleToAsync(
+                        AppThemeResources.GetDouble("UiScaleFull"),
+                        (uint)AppThemeResources.GetDouble("UiMotionDuration220"), Easing.CubicInOut);
                 });
             }
             catch (Exception exception)
@@ -103,6 +110,26 @@ public partial class WorkoutSessionPage : ContentPage
     {
         if (sender is Slider { BindingContext: WorkoutExerciseItem exercise } slider)
             exercise.CommitEffortSliderValue(slider.Value);
+    }
+
+    private async void OnOptionalExerciseToggled(object? sender, ToggledEventArgs e)
+    {
+        if (sender is not Microsoft.Maui.Controls.Switch { BindingContext: WorkoutExerciseItem exercise }) return;
+        try { await _viewModel.SaveOptionalExerciseAsync(exercise); }
+        catch (Exception exception)
+        {
+            Trace.WriteLine($"[WorkoutSessionPage] Could not save optional exercise marker ({exception.GetType().Name}).");
+        }
+    }
+
+    private async void OnOptionalSetsChanged(object? sender, ValueChangedEventArgs e)
+    {
+        if (sender is not Stepper { BindingContext: WorkoutExerciseItem exercise }) return;
+        try { await _viewModel.SaveOptionalExerciseAsync(exercise); }
+        catch (Exception exception)
+        {
+            Trace.WriteLine($"[WorkoutSessionPage] Could not save optional set count ({exception.GetType().Name}).");
+        }
     }
 
     protected override bool OnBackButtonPressed()

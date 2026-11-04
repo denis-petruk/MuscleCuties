@@ -8,11 +8,12 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.Server.Workout.ActiveSession;
 using MuscleCuties.Server.Workout.Archive;
 using MuscleCuties.Server.Workout.Injury;
+using MuscleCuties.Server.Workout.Planning;
 using MuscleCuties.Server.Workout.Session;
-using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Archive;
-using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
@@ -21,6 +22,40 @@ namespace MuscleCuties.Registration.Tests;
 public sealed class WorkoutCloudContractTests
 {
     private static readonly DateOnly WorkoutDate = new(2026, 10, 19);
+    private static readonly Guid SessionId = Guid.Parse("11111111-1111-4111-8111-111111111111");
+    private static readonly Guid SetId = Guid.Parse("22222222-2222-4222-8222-222222222222");
+
+    [Xunit.Fact]
+    public async Task CloudReviewedExerciseExclusionStoreReadsOnlyTheReviewedCatalogRoute()
+    {
+        var expected = new[] { new ReviewedExerciseExclusionOptionV020(101, "Barbell Hip Thrust") };
+        var api = new RecordingWorkoutApiClient((_, responseType) =>
+            responseType == typeof(ReviewedExerciseExclusionOptionV020[]) ? expected : null);
+        var store = new CloudReviewedExerciseExclusionCatalogV020Store(api);
+
+        var choices = await store.LoadAsync();
+
+        Xunit.Assert.Equal(expected, choices);
+        var call = Xunit.Assert.Single(api.Calls);
+        Xunit.Assert.Equal("GET", call.Method);
+        Xunit.Assert.Equal("/api/v1/workouts/plan/exercise-exclusions", call.Path);
+    }
+
+    [Xunit.Fact]
+    public async Task CloudInjuryStoreRefreshPostsAuthenticatedReconcileRoute()
+    {
+        var api = new RecordingWorkoutApiClient((_, responseType) =>
+            responseType == typeof(WorkoutReconciliationResponse)
+                ? new WorkoutReconciliationResponse(nameof(WorkoutReconciliationOutcome.Deferred))
+                : null);
+        var store = new CloudWorkoutInjuryStore(api);
+
+        await store.RefreshPlanAfterInjuryChangeAsync(CancellationToken.None);
+
+        var call = Xunit.Assert.Single(api.Calls);
+        Xunit.Assert.Equal("POST", call.Method);
+        Xunit.Assert.Equal("/api/v1/workouts/plan/reconcile", call.Path);
+    }
 
     [Xunit.Fact]
     public async Task CloudStoresPreserveWorkoutRoutesIdsAndMutationBodies()
@@ -30,12 +65,22 @@ public sealed class WorkoutCloudContractTests
             : responseType == typeof(WorkoutSessionDetailDto)
                 ? new WorkoutSessionDetailDto(101, "Workout", "", "", false, [], [])
                 : responseType == typeof(List<WorkoutSwapCandidateDto>)
-                    ? new List<WorkoutSwapCandidateDto> { new(19, "Swap", "match", "Bodyweight", "Glutes") } : responseType == typeof(WorkoutMovementNoteDto)
-                            ? new WorkoutMovementNoteDto(501, "Note")
-                            : null);
+                    ? new List<WorkoutSwapCandidateDto> { new(19, "Swap", "match", "Bodyweight", "Glutes") }
+                    : responseType == typeof(WorkoutMovementNoteDto)
+                        ? new WorkoutMovementNoteDto(501, "Note")
+                        : responseType == typeof(WorkoutArchiveDetailDto)
+                            ? new WorkoutArchiveDetailDto(SessionId, "Workout", DateTime.UnixEpoch, null, 0, 0, null, null, [])
+                            : responseType == typeof(WorkoutHistoryCountDto)
+                                ? new WorkoutHistoryCountDto(1)
+                                : responseType == typeof(List<HistoryMonthOptionDto>)
+                                    ? new List<HistoryMonthOptionDto> { new(2026, 10) }
+                                    : responseType == typeof(List<WorkoutArchiveSummaryDto>)
+                                        ? new List<WorkoutArchiveSummaryDto>()
+                                        : null);
 
         var overview = new CloudWorkoutOverviewStore(api);
         var session = new CloudWorkoutSessionActionStore(api);
+        var archive = new CloudWorkoutArchiveStore(api);
         var reschedule = new RescheduleWorkoutDayRequest(101, WorkoutDate.AddDays(1));
         var log = new LogWorkoutSessionRequest(101, WorkoutDate, [new WorkoutExerciseLogDto(501, 12, 3, 10, 60f)]);
         var swap = new SwapWorkoutExerciseRequest(501, 19, true);
@@ -49,6 +94,14 @@ public sealed class WorkoutCloudContractTests
         await session.SwapAsync(swap, CancellationToken.None);
         await session.GetMovementNoteAsync(501, CancellationToken.None);
         await session.SaveMovementNoteAsync(note, CancellationToken.None);
+        await archive.GetWorkoutHistoryAsync(25, 5);
+        await archive.GetAvailableHistoryMonthsAsync();
+        await archive.GetWorkoutHistoryByMonthAsync(2026, 10, 25, 5);
+        await archive.GetTotalSessionsCountAsync();
+        await archive.GetWorkoutHistoryCountByMonthAsync(2026, 10);
+        await archive.GetWorkoutSessionDetailAsync(SessionId);
+        await archive.UpdateWorkoutSessionNotesAsync(SessionId, "Recovered", 7);
+        await archive.UpdateExerciseSetAsync(SetId, 62.5, 8);
 
         Xunit.Assert.Equal(new (string Method, string Path)[]
         {
@@ -59,12 +112,22 @@ public sealed class WorkoutCloudContractTests
             ("GET", "/api/v1/workouts/day-exercises/501/swaps"),
             ("POST", "/api/v1/workouts/day-exercises/swap"),
             ("GET", "/api/v1/workouts/day-exercises/501/movement-note"),
-            ("PUT", "/api/v1/workouts/day-exercises/movement-note")
+            ("PUT", "/api/v1/workouts/day-exercises/movement-note"),
+            ("GET", "/api/v1/workouts/history?limit=25&offset=5"),
+            ("GET", "/api/v1/workouts/history/months"),
+            ("GET", "/api/v1/workouts/history/month/2026/10?limit=25&offset=5"),
+            ("GET", "/api/v1/workouts/history/count"),
+            ("GET", "/api/v1/workouts/history/month/2026/10/count"),
+            ("GET", $"/api/v1/workouts/history/sessions/{SessionId:D}"),
+            ("PUT", $"/api/v1/workouts/history/sessions/{SessionId:D}/notes"),
+            ("PUT", $"/api/v1/workouts/history/sets/{SetId:D}")
         }, api.Calls.Select(call => (call.Method, call.Path)));
         Xunit.Assert.Same(reschedule, api.Calls[1].Body);
         Xunit.Assert.Same(log, api.Calls[3].Body);
         Xunit.Assert.Same(swap, api.Calls[5].Body);
         Xunit.Assert.Same(note, api.Calls[7].Body);
+        Xunit.Assert.Equal(new UpdateWorkoutSessionNotesRequest("Recovered", 7), api.Calls[14].Body);
+        Xunit.Assert.Equal(new UpdateExerciseSetRequest(62.5, 8), api.Calls[15].Body);
     }
 
     [Xunit.Theory]
@@ -87,12 +150,17 @@ public sealed class WorkoutCloudContractTests
     {
         var builder = WebApplication.CreateBuilder();
         builder.Services.AddAuthorization();
-        builder.Services.AddScoped<GenerateWorkoutPlanUseCase>();
-        builder.Services.AddScoped<PostgresWorkoutPlanAndSessionStore>();
-        builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
-        builder.Services.AddScoped<ServerWorkoutArchiveUseCase>();
-        builder.Services.AddScoped<ServerWorkoutInjuryUseCase>();
+        // This test inspects route metadata without invoking handlers or creating database services.
+        // Factories keep the service types registered for endpoint binding and fail if that changes.
+        const string metadataOnly = "Route metadata test must not resolve workout services.";
+        builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>(_ => throw new InvalidOperationException(metadataOnly));
+        builder.Services.AddScoped<WorkoutPendingRevisionJobHandler>(_ => throw new InvalidOperationException(metadataOnly));
+        builder.Services.AddScoped<PostgresWorkoutPlanAndSessionStore>(_ => throw new InvalidOperationException(metadataOnly));
+        builder.Services.AddScoped<WorkoutActiveSessionUseCase>(_ => throw new InvalidOperationException(metadataOnly));
+        builder.Services.AddScoped<ServerWorkoutArchiveUseCase>(_ => throw new InvalidOperationException(metadataOnly));
+        builder.Services.AddScoped<ServerWorkoutInjuryUseCase>(_ => throw new InvalidOperationException(metadataOnly));
         using var app = builder.Build();
+        app.MapWorkoutPlanningEndpoints();
         app.MapWorkoutPlanAndSessionEndpoints();
         app.MapWorkoutActiveSessionEndpoints();
         app.MapWorkoutArchiveEndpoints();
@@ -106,6 +174,9 @@ public sealed class WorkoutCloudContractTests
 
         foreach (var route in new (string Method, string Path)[]
         {
+            ("GET", "/api/v1/workouts/catalog"),
+            ("POST", "/api/v1/workouts/plan/reconcile"),
+            ("GET", "/api/v1/workouts/plan/exercise-exclusions"),
             ("GET", "/api/v1/workouts/overview"), ("POST", "/api/v1/workouts/reschedule"),
             ("GET", "/api/v1/workouts/day-sessions/{workoutDayId:int}"),
             ("POST", "/api/v1/workouts/day-sessions/log"),
@@ -118,8 +189,14 @@ public sealed class WorkoutCloudContractTests
             ("PUT", "/api/v1/workouts/sessions/{sessionId:guid}/sets"),
             ("POST", "/api/v1/workouts/sessions/{sessionId:guid}/finish"),
             ("POST", "/api/v1/workouts/sessions/{sessionId:guid}/cancel"),
+            ("GET", "/api/v1/workouts/history"), ("GET", "/api/v1/workouts/history/months"),
+            ("GET", "/api/v1/workouts/history/month/{year:int}/{month:int}"),
             ("GET", "/api/v1/workouts/history/count"),
             ("GET", "/api/v1/workouts/history/month/{year:int}/{month:int}/count"),
+            ("GET", "/api/v1/workouts/history/sessions/{sessionId:guid}"),
+            ("PUT", "/api/v1/workouts/history/sessions/{sessionId:guid}/notes"),
+            ("PUT", "/api/v1/workouts/history/sets/{setId:guid}"),
+            ("GET", "/api/v1/workouts/history/personal-records"),
             ("GET", "/api/v1/workouts/injuries/impact"),
             ("GET", "/api/v1/workouts/injuries/exercises/{exerciseDefinitionId:int}/contraindicated"),
             ("GET", "/api/v1/workouts/injuries/exercises/{exerciseDefinitionId:int}/swaps"),
@@ -130,17 +207,36 @@ public sealed class WorkoutCloudContractTests
             Xunit.Assert.NotNull(endpoint!.Metadata.GetMetadata<IAuthorizeData>());
         }
 
+        // Retired mirrors and stubs: each of these must stay unmapped so only the canonical route survives.
         foreach (var route in new (string Method, string Path)[]
         {
+            ("POST", "/api/v1/workouts/plan"), ("GET", "/api/v1/workouts/plan"),
+            ("GET", "/api/v1/workout/history"), ("GET", "/api/v1/workout/history/months"),
+            ("GET", "/api/v1/workout/history/month/{year:int}/{month:int}"),
+            ("GET", "/api/v1/workout/history/count"),
+            ("GET", "/api/v1/workout/history/month/{year:int}/{month:int}/count"),
+            ("GET", "/api/v1/workout/history/sessions/{sessionId:guid}"),
+            ("PUT", "/api/v1/workout/history/sessions/{sessionId:guid}/notes"),
+            ("PUT", "/api/v1/workout/history/sets/{setId:guid}"),
+            ("GET", "/api/v1/workout/history/personal-records"),
             ("GET", "/api/v1/workouts/injuries/contraindicated/{exerciseDefinitionId:int}"),
             ("GET", "/api/v1/workouts/injuries/swaps/{exerciseDefinitionId:int}"),
+            ("GET", "/api/v1/workout/injuries/impact"),
+            ("GET", "/api/v1/workout/injuries/exercises/{exerciseDefinitionId:int}/contraindicated"),
+            ("GET", "/api/v1/workout/injuries/contraindicated/{exerciseDefinitionId:int}"),
+            ("GET", "/api/v1/workout/injuries/exercises/{exerciseDefinitionId:int}/swaps"),
+            ("GET", "/api/v1/workout/injuries/swaps/{exerciseDefinitionId:int}"),
+            ("POST", "/api/v1/workout/injuries/swap"),
             ("GET", "/api/v1/workouts/exercises/{exerciseDefinitionId:int}/contraindicated"),
             ("GET", "/api/v1/workouts/exercises/{exerciseDefinitionId:int}/swaps"),
-            ("POST", "/api/v1/workouts/exercises/swap")
+            ("POST", "/api/v1/workouts/exercises/swap"),
+            ("GET", "/api/v1/workout/exercises/{exerciseDefinitionId:int}/contraindicated"),
+            ("GET", "/api/v1/workout/exercises/{exerciseDefinitionId:int}/swaps"),
+            ("POST", "/api/v1/workout/exercises/swap")
         })
         {
-            Xunit.Assert.True(routes.TryGetValue(route, out var endpoint), $"Missing {route.Method} {route.Path}");
-            Xunit.Assert.NotNull(endpoint!.Metadata.GetMetadata<IAuthorizeData>());
+            Xunit.Assert.False(routes.ContainsKey(route),
+                $"Retired mirror or stub route is still mapped: {route.Method} {route.Path}");
         }
     }
 

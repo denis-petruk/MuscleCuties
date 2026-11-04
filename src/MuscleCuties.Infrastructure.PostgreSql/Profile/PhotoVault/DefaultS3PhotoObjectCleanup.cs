@@ -12,8 +12,6 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 /// <summary>Signed, bounded S3 version-list and exact-version delete adapter.</summary>
 public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
 {
-    private const string DefaultBucket = "musclecuties-media";
-    private const string DefaultRegion = "us-east-1";
     private const string Algorithm = "AWS4-HMAC-SHA256";
     private const string EmptyPayloadHash = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
     private const int MaxAttempts = 3;
@@ -39,12 +37,11 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
     {
         _httpClient = httpClient;
         _timeProvider = timeProvider;
-        _bucket = configuration["Storage:S3:BucketName"] ?? DefaultBucket;
-        _region = configuration["Storage:S3:Region"] ?? DefaultRegion;
+        _bucket = S3StorageConfiguration.RequireBucketName(configuration);
+        _region = S3StorageConfiguration.RequireRegion(configuration);
         _accessKey = ReadCredential(configuration, "Storage:S3:AccessKeyId", "AWS_ACCESS_KEY_ID");
         _secretKey = ReadCredential(configuration, "Storage:S3:SecretAccessKey", "AWS_SECRET_ACCESS_KEY");
         _sessionToken = configuration["Storage:S3:SessionToken"] ?? configuration["AWS_SESSION_TOKEN"];
-        if (_bucket.Length == 0 || _region.Length == 0) throw ConfigurationFailure();
     }
 
     public async Task DeleteAllVersionsAsync(PhotoObjectCleanupTarget target, CancellationToken cancellationToken = default)

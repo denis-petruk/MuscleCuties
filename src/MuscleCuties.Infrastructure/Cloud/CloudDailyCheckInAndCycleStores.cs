@@ -1,34 +1,35 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
-using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
 using MuscleCuties.UseCases.Features.Cycle;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 using MuscleCuties.UseCases.Features.Cycle.History;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
+using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Injury;
-using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
 public sealed class CloudDailyCheckInStore(
     IMuscleCutiesBackendApiClient apiClient,
     MuscleCuties.Core.Services.Health.IHealthSyncService? healthSync = null,
-    MuscleCuties.Core.Services.Auth.IAuthService? authService = null) : IDailyCheckInStore
+    MuscleCuties.Core.Services.Auth.IAuthService? authService = null,
+    TimeProvider? clock = null) : IDailyCheckInStore
 {
     private const string CheckInsRoute = "/api/v1/check-ins";
     private const int MinimumReadinessScore = 0;
     private const int MaximumReadinessScore = 100;
     private const string UnknownScoreText = "—";
-    private const string FallbackCompletedTierText = "Check-in complete";
+    private readonly TimeProvider timeProvider = clock ?? TimeProvider.System;
 
     public async Task<DailyCheckInStatusResponse> GetStatusAsync(DailyCheckInStatusRequest request, CancellationToken ct)
     {
@@ -41,15 +42,26 @@ public sealed class CloudDailyCheckInStore(
             return new DailyCheckInStatusResponse(false, string.Empty, string.Empty);
 
         var latest = records[^1];
-        var score = latest.ReadinessScore is >= MinimumReadinessScore and <= MaximumReadinessScore
-            ? latest.ReadinessScore.ToString(CultureInfo.InvariantCulture)
-            : UnknownScoreText;
-        var tier = FormatReadinessTier(latest.ReadinessTier);
-        return new DailyCheckInStatusResponse(true, score, tier);
+        var readiness = TodayReadinessCheckInMapper.Map(latest.PlanningSleepQuality, latest.Energy,
+            latest.PlanningSoreness, latest.PlanningStress, latest.Date, latest.PlanningTimeZoneId,
+            latest.PlanningRecordedAtUtc, latest.PlanningRevision, timeProvider.GetUtcNow(), request.TimeZoneId);
+        return new DailyCheckInStatusResponse(readiness.Status == "Available",
+            readiness.RawScore?.ToString("0.##", CultureInfo.InvariantCulture) ?? UnknownScoreText,
+            readiness.Band ?? readiness.Status, readiness);
     }
 
     public async Task<SubmitDailyCheckInResponse> SubmitAsync(SubmitDailyCheckInRequest request, CancellationToken ct)
     {
+        if (request.EnergyLevel is < 1 or > 5 || request.PlanningSleepQuality is not (>= 1 and <= 5) ||
+            request.PlanningSoreness is not (>= 1 and <= 5) || request.PlanningStress is not (>= 1 and <= 5) ||
+            !IsValidTimeZoneId(request.PlanningTimeZoneId))
+            throw new ArgumentException("All four planning ratings and a valid local time zone are required.", nameof(request));
+        var localZone = TimeZoneInfo.FindSystemTimeZoneById(request.PlanningTimeZoneId!);
+        var todayInLocalZone = DateOnly.FromDateTime(
+            TimeZoneInfo.ConvertTime(timeProvider.GetUtcNow(), localZone).DateTime);
+        if (request.Date != todayInLocalZone)
+            throw new ArgumentException("Daily check-in must be saved for today in the current local time zone.", nameof(request));
+
         MuscleCuties.Core.Services.Health.HealthWeeklySummary? healthSummary = null;
         if (healthSync is not null && authService is not null)
         {
@@ -101,40 +113,29 @@ public sealed class CloudDailyCheckInStore(
         if (saved.Id != checkInId || saved.Date != request.Date ||
             saved.ReadinessScore is < MinimumReadinessScore or > MaximumReadinessScore)
             throw new InvalidOperationException("Cloud submit daily check-in returned an invalid record.");
-        var tier = FormatReadinessTier(saved.ReadinessTier);
-
-        var workoutResponse = await apiClient.GetAsync<WorkoutOverviewResponse>(
-            $"/api/v1/workouts/overview?startDate={request.Date:yyyy-MM-dd}",
-            ct).ConfigureAwait(false);
-        if (workoutResponse.Status == BackendApiStatus.Success && workoutResponse.Data is not null)
-        {
-            var todaySchedule = workoutResponse.Data.Schedule.FirstOrDefault(s => s.IsToday);
-            var todayWorkout = todaySchedule is not null
-                ? workoutResponse.Data.Workouts.FirstOrDefault(w => w.WorkoutDayId == todaySchedule.WorkoutDayId)
-                : workoutResponse.Data.Workouts.FirstOrDefault();
-            return new SubmitDailyCheckInResponse(
-                saved.ReadinessScore,
-                tier,
-                todaySchedule?.Title ?? todayWorkout?.Title ?? workoutResponse.Data.PlanName ?? string.Empty,
-                false);
-        }
-
-        return new SubmitDailyCheckInResponse(saved.ReadinessScore, tier, string.Empty, true);
+        var readiness = TodayReadinessCheckInMapper.Map(saved.PlanningSleepQuality, saved.Energy,
+            saved.PlanningSoreness, saved.PlanningStress, saved.Date, saved.PlanningTimeZoneId,
+            saved.PlanningRecordedAtUtc, saved.PlanningRevision, timeProvider.GetUtcNow(),
+            request.PlanningTimeZoneId);
+        if (readiness.Status != "Available")
+            throw new InvalidOperationException("The saved check-in did not contain a valid score for today.");
+        return new SubmitDailyCheckInResponse(saved.ReadinessScore,
+            readiness.Band ?? readiness.Status, string.Empty, false, readiness);
     }
 
-    private static string FormatReadinessTier(string? rawTier)
+    private static bool IsValidTimeZoneId(string? timeZoneId)
     {
-        if (string.IsNullOrWhiteSpace(rawTier))
-            return FallbackCompletedTierText;
-
-        if (int.TryParse(rawTier, NumberStyles.Integer, CultureInfo.InvariantCulture, out var numericTier) &&
-            Enum.IsDefined(typeof(ReadinessTier), numericTier))
-            return ((ReadinessTier)numericTier).ToString();
-
-        if (Enum.TryParse<ReadinessTier>(rawTier, true, out var parsedTier) && Enum.IsDefined(parsedTier))
-            return parsedTier.ToString();
-
-        return rawTier;
+        if (string.IsNullOrWhiteSpace(timeZoneId))
+            return false;
+        try
+        {
+            _ = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            return true;
+        }
+        catch (Exception exception) when (exception is TimeZoneNotFoundException or InvalidTimeZoneException)
+        {
+            return false;
+        }
     }
 }
 
@@ -143,9 +144,7 @@ public sealed class CloudWorkoutInjuryStore(
 {
     private const string InjuriesRoute = "/api/v1/injuries";
     private const string InjuryImpactRoute = "/api/v1/workouts/injuries/impact";
-    private const string ProfileRoute = "/api/v1/profile";
-    private const string WorkoutPreferencesRoute = "/api/v1/profile/workout-preferences";
-    private const int DefaultWorkoutDaysPerWeek = 3;
+    private const string ReconcileRoute = "/api/v1/workouts/plan/reconcile";
     private readonly Dictionary<Guid, int> _intIdByGuid = [];
     private readonly Dictionary<int, InjuryObservationRecord> _recordByIntId = [];
     private readonly object _identityLock = new();
@@ -179,7 +178,9 @@ public sealed class CloudWorkoutInjuryStore(
                 record.Pain,
                 record.Since,
                 record.Date,
-                record.IsActive && status != WorkoutInjuryStatus.Cleared));
+                record.IsActive && status != WorkoutInjuryStatus.Cleared,
+                record.WorseningTrigger,
+                record.ClinicianAdvisedAvoid));
         }
 
         return list;
@@ -208,7 +209,9 @@ public sealed class CloudWorkoutInjuryStore(
             status = input.Status.ToString(),
             since = input.Since,
             pain = input.Pain,
-            date = loggedDate
+            date = loggedDate,
+            worseningTrigger = input.WorseningTrigger.ToString(),
+            clinicianAdvisedAvoid = input.ClinicianAdvisedAvoid
         };
 
         var response = await apiClient.SendMutationAsync<object, InjuryObservationRecord>(
@@ -217,6 +220,9 @@ public sealed class CloudWorkoutInjuryStore(
             body,
             idempotencyKey: Guid.NewGuid().ToString("N"),
             ct).ConfigureAwait(false);
+        if (response.Status == BackendApiStatus.Conflict &&
+            response.ErrorCode == "ActiveWorkoutPreventsInjury")
+            throw new ActiveWorkoutPreventsInjuryException();
         var saved = CloudStoreResponse.RequireData(response, "save workout injury");
         CacheRecord(saved);
     }
@@ -224,6 +230,7 @@ public sealed class CloudWorkoutInjuryStore(
     public async Task ClearInjuryAsync(int injuryId, CancellationToken ct = default)
     {
         var existing = await RequireRecordAsync(injuryId, ct).ConfigureAwait(false);
+        // Clearing an injury must not erase the safety answers the user already gave.
         var body = new
         {
             id = existing.Id,
@@ -231,7 +238,9 @@ public sealed class CloudWorkoutInjuryStore(
             status = WorkoutInjuryStatus.Cleared.ToString(),
             since = existing.Since,
             pain = existing.Pain,
-            date = existing.Date
+            date = existing.Date,
+            worseningTrigger = existing.WorseningTrigger.ToString(),
+            clinicianAdvisedAvoid = existing.ClinicianAdvisedAvoid
         };
 
         var response = await apiClient.SendMutationAsync<object, InjuryObservationRecord>(
@@ -259,31 +268,12 @@ public sealed class CloudWorkoutInjuryStore(
 
     public async Task RefreshPlanAfterInjuryChangeAsync(CancellationToken ct = default)
     {
-        var profileResponse = await apiClient.GetAsync<ServerProfileSnapshot>(ProfileRoute, ct).ConfigureAwait(false);
-        if (profileResponse.Status == BackendApiStatus.NotFound || profileResponse.Data is null)
-            return;
-
-        var profile = profileResponse.Data;
-        var activities = WorkoutActivityPreferences.EnsureRequired(
-                WorkoutActivityPreferences.Parse(profile.PreferredWorkoutActivityTypes))
-            .Select(activity => (int)activity)
-            .ToArray();
-        var strengthStyle = (int)WorkoutActivityPreferences.ParseStrengthStyle(profile.PreferredWorkoutActivityTypes);
-        var daysPerWeek = profile.WorkoutDaysPerWeek > 0 ? profile.WorkoutDaysPerWeek : DefaultWorkoutDaysPerWeek;
-
-        var response = await apiClient.SendMutationAsync<object, JsonElement>(
-            HttpMethod.Put,
-            WorkoutPreferencesRoute,
-            new
-            {
-                expectedVersion = profile.Version,
-                activityTypes = activities,
-                strengthStyle,
-                daysPerWeek
-            },
-            idempotencyKey: Guid.NewGuid().ToString("N"),
-            ct).ConfigureAwait(false);
-        CloudStoreResponse.RequireSuccess(response, "refresh workout plan after injury change");
+        var response = await apiClient.SendMutationAsync<object, WorkoutReconciliationResponse>(
+            HttpMethod.Post, ReconcileRoute, new { },
+            idempotencyKey: Guid.NewGuid().ToString("N"), ct).ConfigureAwait(false);
+        var result = CloudStoreResponse.RequireData(response, "refresh workout plan after injury change");
+        if (string.Equals(result.Status, nameof(WorkoutReconciliationOutcome.NeedsReview), StringComparison.Ordinal))
+            throw new InvalidOperationException("The workout plan needs review after the injury change.");
     }
 
     private async Task<InjuryObservationRecord?> TryResolveRecordAsync(int injuryId, CancellationToken ct)
@@ -360,8 +350,8 @@ public sealed class CloudCycleDailyLogStore(
             .LastOrDefault();
         var daySymptoms = overview.History.Symptoms
             .Where(symptom => symptom.Date == dateOnly)
-            .Select(symptom => Enum.TryParse<SymptomType>(symptom.Type, true, out var parsed) && Enum.IsDefined(parsed)
-                ? (SymptomType?)parsed
+            .Select(symptom => Enum.TryParse<SymptomTypeDto>(symptom.Type, true, out var parsed) && Enum.IsDefined(parsed)
+                ? (SymptomTypeDto?)parsed
                 : null)
             .Where(symptom => symptom.HasValue)
             .Select(symptom => symptom!.Value)
@@ -374,9 +364,9 @@ public sealed class CloudCycleDailyLogStore(
         if (phaseLog is null && daySymptoms.Length == 0 && !cycleStartedOnDate && !cycleEndedOnDate)
             return null;
 
-        FlowIntensity? flow = null;
+        FlowIntensityDto? flow = null;
         if (!string.IsNullOrWhiteSpace(phaseLog?.FlowIntensityValue) &&
-            Enum.TryParse<FlowIntensity>(phaseLog.FlowIntensityValue, true, out var parsedFlow) &&
+            Enum.TryParse<FlowIntensityDto>(phaseLog.FlowIntensityValue, true, out var parsedFlow) &&
             Enum.IsDefined(parsedFlow))
         {
             flow = parsedFlow;
@@ -461,7 +451,8 @@ public sealed class CloudCycleDailyLogStore(
         var requestedSymptoms = (request.Symptoms ?? []).Distinct().ToArray();
 
         if (requestedSymptoms.Length > 0 && activeCycle is null)
-            throw new InvalidOperationException("Record a period start before adding symptoms without a known cycle phase.");
+            throw new CycleSymptomsNeedActiveCycleIssue(
+                "Record a period start before adding symptoms without a known cycle phase.");
 
         var requestedNames = requestedSymptoms.Select(symptom => symptom.ToString()).ToHashSet(StringComparer.OrdinalIgnoreCase);
         foreach (var existing in existingDaySymptoms)
@@ -504,25 +495,34 @@ public sealed class CloudCycleDailyLogStore(
         return true;
     }
 
-    private static CyclePhase? ResolveTargetPhase(CycleDailyLogRequest request)
+    private static CyclePhaseDto? ResolveTargetPhase(CycleDailyLogRequest request)
     {
-        if (request.PhaseOverride.HasValue && request.PhaseOverride.Value != CyclePhase.Unknown)
+        if (request.PhaseOverride.HasValue && request.PhaseOverride.Value != CyclePhaseDto.Unknown)
             return request.PhaseOverride.Value;
-        if (request.IsPeriodStart == true || (request.FlowIntensity.HasValue && request.FlowIntensity.Value != FlowIntensity.None))
-            return CyclePhase.Menstrual;
+        if (request.IsPeriodStart == true ||
+            (request.FlowIntensity.HasValue && request.FlowIntensity.Value != FlowIntensityDto.None))
+            return CyclePhaseDto.Menstrual;
         if (request.IsPeriodEnd == true)
-            return CyclePhase.Follicular;
+            return CyclePhaseDto.Follicular;
         return null;
+    }
+
+    internal static bool TryParseSuggestedPhase(string? errorCode, out CyclePhaseDto suggestedPhase)
+    {
+        suggestedPhase = default;
+        if (string.IsNullOrWhiteSpace(errorCode) ||
+            !Enum.TryParse<CyclePhaseDto>(errorCode, true, out var parsed) ||
+            !Enum.IsDefined(parsed) || parsed == CyclePhaseDto.Unknown)
+            return false;
+
+        suggestedPhase = parsed;
+        return true;
     }
 
     internal static void ThrowPhaseOrderOrConflict(string? errorCode)
     {
-        if (!string.IsNullOrWhiteSpace(errorCode) &&
-            Enum.TryParse<CyclePhase>(errorCode, true, out var suggestedPhase) &&
-            Enum.IsDefined(suggestedPhase) && suggestedPhase != CyclePhase.Unknown)
-        {
+        if (TryParseSuggestedPhase(errorCode, out var suggestedPhase))
             throw new CyclePhaseOrderIssue("This phase would skip a step.", suggestedPhase);
-        }
 
         throw new InvalidOperationException("Cycle phase update conflicted with existing cycle records.");
     }
@@ -547,8 +547,9 @@ public sealed class CloudCyclePhaseEditStore(
     IMuscleCutiesBackendApiClient apiClient) : ICyclePhaseEditStore
 {
     private const string CyclePhasesRoute = "/api/v1/cycle/history/phases";
+    private const string SavedOutcome = "Saved";
 
-    public async Task<bool> SaveAsync(CyclePhaseEditRequest request, CancellationToken cancellationToken)
+    public async Task<CyclePhaseEditResult> SaveAsync(CyclePhaseEditRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         var body = new
@@ -566,10 +567,15 @@ public sealed class CloudCyclePhaseEditStore(
             idempotencyKey: Guid.NewGuid().ToString("N"),
             cancellationToken).ConfigureAwait(false);
 
-        if (response.Status == BackendApiStatus.Conflict)
-            CloudCycleDailyLogStore.ThrowPhaseOrderOrConflict(response.ErrorCode);
-
-        CloudCycleDailyLogStore.RequireSavedPhaseLog(response);
-        return true;
+        return response.Status switch
+        {
+            BackendApiStatus.Success when string.Equals(response.Data?.Outcome, SavedOutcome, StringComparison.Ordinal)
+                => CyclePhaseEditResult.Saved,
+            BackendApiStatus.Conflict
+                when CloudCycleDailyLogStore.TryParseSuggestedPhase(response.ErrorCode, out var suggestedPhase)
+                => CyclePhaseEditResult.OrderConflict(suggestedPhase),
+            BackendApiStatus.ValidationFailed => CyclePhaseEditResult.InvalidInput,
+            _ => CyclePhaseEditResult.Unavailable
+        };
     }
 }

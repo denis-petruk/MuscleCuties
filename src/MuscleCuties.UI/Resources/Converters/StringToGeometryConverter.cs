@@ -20,7 +20,17 @@ public class StringToGeometryConverter : IValueConverter
         if (_cache.TryGetValue(pathData, out var cached))
             return cached;
 
-        var geometry = _converter.ConvertFromInvariantString(pathData) as Geometry;
+        Geometry? geometry;
+        try
+        {
+            geometry = _converter.ConvertFromInvariantString(pathData) as Geometry;
+        }
+        catch (Exception ex) when (ex is FormatException or ArgumentException or InvalidOperationException)
+        {
+            // A malformed path constant must leave the icon blank rather than crash the page.
+            geometry = null;
+        }
+
         _cache[pathData] = geometry;
         return geometry;
     }

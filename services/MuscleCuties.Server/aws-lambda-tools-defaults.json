@@ -5,7 +5,7 @@
   "configuration": "Release",
   "framework": "net10.0",
   "function-runtime": "dotnet10",
-  "function-memory-size": 1024,
+  "function-memory-size": 3008,
   "function-timeout": 29,
   "function-handler": "MuscleCuties.Server",
   "function-architecture": "arm64",

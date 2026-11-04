@@ -1,0 +1,749 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentPage
+    x:Class="MuscleCuties.UI.Pages.Workout.StrengthPlanGenerationPage"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    x:DataType="vm:StrengthPlanGenerationViewModel"
+    Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
+    SafeAreaEdges="All"
+    SizeChanged="OnPageSizeChanged">
+
+    <Grid>
+    <Grid RowDefinitions="*,Auto,Auto">
+    <Grid Grid.RowSpan="3" RowDefinitions="*,Auto,Auto"
+          IsVisible="{Binding IsBeforePreview}">
+    <ScrollView Grid.Row="0">
+        <VerticalStackLayout
+            Padding="{DynamicResource PresentationPageContentPadding}"
+            Spacing="{StaticResource UiSpaceControl}"
+            HorizontalOptions="Fill"
+            MaximumWidthRequest="{StaticResource UiDimension640}">
+
+            <sharedControls:PageHeader
+                Title="{loc:LocalizedText Workout_Generation_Title}"
+                BackCommand="{Binding BackCommand}" />
+
+            <!-- CARD 1: Plan Setup & Availability -->
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+
+                    <!-- Title & Intro -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Workout_Generation_PlanSetupBadge}" IconGlyph="Target24" />
+                        <Label Text="{loc:LocalizedText Workout_Generation_Intro}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <!-- Saved Availability Tile -->
+                    <Grid
+                            IsVisible="{Binding HasSavedAvailability}">
+                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                            <Path
+                                Data="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"
+                                Fill="{StaticResource Primary}"
+                                Aspect="Uniform"
+                                WidthRequest="{StaticResource UiDimension16}"
+                                HeightRequest="{StaticResource UiDimension16}"
+                                VerticalOptions="Center" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding SavedAvailabilitySummary}"
+                                   Style="{StaticResource MutedLabel}"
+                                   VerticalOptions="Center"
+                                   LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Grid>
+
+                    <!-- Read-only strength choice from onboarding preferences -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                         IsVisible="{Binding HasSavedStrengthActivity}">
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_StrengthPlanType}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Label LineBreakMode="WordWrap" Text="{Binding SelectedActivity.Label}"
+                               Style="{StaticResource CardTitle}" />
+                        <Label Text="{Binding SelectedActivity.Description}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- CARD 2A: HIIT Evidence (Conditional) -->
+            <Border IsVisible="{Binding ShouldShowHiitUnderlyingCardioChoice}"
+                    IsEnabled="{Binding CanEditInputs}"
+                    Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Workout_Generation_HiitEvidenceTitle}" IconGlyph="Dumbbell24" />
+                        <Label Text="{loc:LocalizedText Workout_Generation_HiitEvidenceHelp}"
+                                Style="{StaticResource MutedLabel}"
+                                LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <!-- Underlying Activity Picker -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_HiitUnderlyingActivityTitle}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Label Text="{loc:LocalizedText Workout_Generation_HiitUnderlyingActivityHelp}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
+                        <Border Style="{StaticResource PickerContainer}">
+                            <Picker ItemsSource="{Binding HiitUnderlyingCardioActivities}"
+                                    SelectedItem="{Binding SelectedHiitUnderlyingCardioActivity}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    Title="{loc:LocalizedText Workout_Generation_ChooseUnderlyingCardio}"
+                                    IsEnabled="{Binding CanEditInputs}"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitUnderlyingActivityTitle}" />
+                        </Border>
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingHiitUnderlyingActivity}" Style="{StaticResource ErrorLabel}" />
+                    </VerticalStackLayout>
+
+                    <!-- Cardio History Fields -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_HiitCardioHistoryTitle}"
+                               Style="{StaticResource CardTitle}" />
+                        <Label Text="{Binding HiitEvidenceCapture.UnderlyingCardioExperienceHelp}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_HiitCardioConsistentWeeks}"
+                                       Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Text="{Binding HiitEvidenceCapture.UnderlyingCardioConsistentWeeks}"
+                                           Keyboard="Numeric"
+                                           IsEnabled="{Binding CanEditInputs}"
+                                           VerticalOptions="Center"
+                                           SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitCardioConsistentWeeks}" />
+                                </Border>
+                                <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding HiitEvidenceCapture.InvalidConsistentWeeks}" Style="{StaticResource ErrorLabel}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceTight}">
+                                <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_HiitCardioAverageSessions}"
+                                       Style="{StaticResource FormFieldLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Text="{Binding HiitEvidenceCapture.UnderlyingCardioAverageSessionsPerWeek}"
+                                           Keyboard="Numeric"
+                                           IsEnabled="{Binding CanEditInputs}"
+                                           VerticalOptions="Center"
+                                           SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitCardioAverageSessions}" />
+                                </Border>
+                                <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding HiitEvidenceCapture.InvalidAverageSessions}" Style="{StaticResource ErrorLabel}" />
+                            </VerticalStackLayout>
+                        </Grid>
+
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_HiitCardioDaysSinceLastSession}"
+                                   Style="{StaticResource FormFieldLabel}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Text="{Binding HiitEvidenceCapture.UnderlyingCardioDaysSinceLastSession}"
+                                       Keyboard="Numeric"
+                                       IsEnabled="{Binding CanEditInputs}"
+                                       VerticalOptions="Center"
+                                       SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitCardioDaysSinceLastSession}" />
+                            </Border>
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding HiitEvidenceCapture.InvalidDaysSinceLastSession}" Style="{StaticResource ErrorLabel}" />
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+
+                    <!-- Aerobic Session Thresholds -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                        <Label Text="{Binding HiitEvidenceCapture.AerobicSessionThresholdHelp}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
+                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding HiitEvidenceCapture.PreviousFourWeeksAerobicEvidence}"
+                                             Spacing="{StaticResource UiSpaceTight}">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:HiitAerobicWeekEvidenceCapture">
+                                    <Grid>
+                                        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                                            <Label LineBreakMode="WordWrap" Text="{Binding WeekLabel}"
+                                                   Style="{StaticResource FormFieldLabel}"
+                                                   VerticalOptions="Center" />
+                                            <Border Grid.Column="1" Style="{StaticResource InputContainer}">
+                                                <Entry Text="{Binding QualifyingManageableSessionCount}"
+                                                       Keyboard="Numeric"
+                                                       Placeholder="{loc:LocalizedText Workout_Generation_HiitSessionCountPlaceholder}"
+                                                       VerticalOptions="Center"
+                                                       SemanticProperties.Description="{Binding SessionCountAccessibilityDescription}" />
+                                            </Border>
+                                            <Label LineBreakMode="WordWrap" Grid.Row="1" Grid.ColumnSpan="2" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding InvalidSessionCount}" Style="{StaticResource ErrorLabel}" />
+                                        </Grid>
+                                    </Grid>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </VerticalStackLayout>
+                    </VerticalStackLayout>
+
+                    <!-- Clearance Confirmation -->
+                    <HorizontalStackLayout>
+                        <CheckBox IsChecked="{Binding HiitEvidenceCapture.ConfirmCurrentWeeks}" IsEnabled="{Binding CanEditInputs}" />
+                        <Label Text="{loc:LocalizedText Workout_Generation_HiitConfirmCurrentWeeks}" LineBreakMode="WordWrap" />
+                    </HorizontalStackLayout>
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                        <Label Text="{loc:LocalizedText Workout_Generation_HiitClearanceConfirmation}"
+                               Style="{StaticResource FormFieldLabel}"
+                               LineBreakMode="WordWrap" />
+                        <Border Style="{StaticResource PickerContainer}">
+                            <Picker ItemsSource="{Binding HiitEvidenceCapture.ClearanceScreeningChoices}"
+                                    SelectedItem="{Binding HiitEvidenceCapture.SelectedClearanceScreeningChoice}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    Title="{loc:LocalizedText Workout_Generation_ChooseEvidence}"
+                                    IsEnabled="{Binding CanEditInputs}"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitClearanceConfirmation}" />
+                        </Border>
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding HiitEvidenceCapture.MissingClearance}" Style="{StaticResource ErrorLabel}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- CARD 2B: Swimming Evidence (Conditional) -->
+            <Border IsVisible="{Binding IsSwimmingSelected}"
+                    Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Workout_Generation_SwimmingEvidenceTitle}" IconGlyph="HeartCircle24" />
+                        <Label Text="{loc:LocalizedText Workout_Generation_SwimmingEvidenceHelp}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_SwimmingFacilityAccess}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Style="{StaticResource PickerContainer}">
+                            <Picker ItemsSource="{Binding EvidenceYesNoChoices}"
+                                    SelectedItem="{Binding SelectedSwimmingFacilityAccessChoice}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    Title="{loc:LocalizedText Workout_Generation_ChooseEvidence}"
+                                    IsEnabled="{Binding CanEditInputs}"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_Generation_SwimmingFacilityAccess}" />
+                        </Border>
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingSwimmingFacility}" Style="{StaticResource ErrorLabel}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_IndependentSwimming}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Style="{StaticResource PickerContainer}">
+                            <Picker ItemsSource="{Binding EvidenceYesNoChoices}"
+                                    SelectedItem="{Binding SelectedIndependentSwimmingChoice}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    Title="{loc:LocalizedText Workout_Generation_ChooseEvidence}"
+                                    IsEnabled="{Binding CanEditInputs}"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_Generation_IndependentSwimming}" />
+                        </Border>
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingSwimmingAbility}" Style="{StaticResource ErrorLabel}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout IsVisible="{Binding CanChooseSwimmingStyle}" Spacing="{StaticResource UiSpaceTight}">
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_SwimmingStyle}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Style="{StaticResource PickerContainer}">
+                            <Picker ItemsSource="{Binding SwimmingStyleChoices}"
+                                    SelectedItem="{Binding SelectedSwimmingStyleChoice}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    Title="{loc:LocalizedText Workout_Generation_ChooseEvidence}"
+                                    IsEnabled="{Binding CanEditInputs}"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_Generation_SwimmingStyle}" />
+                        </Border>
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingSwimmingStyle}" Style="{StaticResource ErrorLabel}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- CARD 2C: Rock Climbing Evidence (Conditional) -->
+            <Border IsVisible="{Binding IsRockClimbingSelected}"
+                    Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Workout_Generation_ClimbingEvidenceTitle}" IconGlyph="Dumbbell24" />
+                        <Label Text="{loc:LocalizedText Workout_Generation_ClimbingEvidenceHelp}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RopeCompetence}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Style="{StaticResource PickerContainer}">
+                            <Picker ItemsSource="{Binding EvidenceYesNoChoices}"
+                                    SelectedItem="{Binding SelectedRopeClimbingCompetenceChoice}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    Title="{loc:LocalizedText Workout_Generation_ChooseEvidence}"
+                                    IsEnabled="{Binding CanEditInputs}"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_Generation_RopeCompetence}" />
+                        </Border>
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingClimbingCompetence}" Style="{StaticResource ErrorLabel}" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout IsVisible="{Binding ShouldAskClimbingInstruction}" Spacing="{StaticResource UiSpaceTight}">
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ClimbingInstructionAvailable}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Style="{StaticResource PickerContainer}">
+                            <Picker ItemsSource="{Binding EvidenceYesNoChoices}"
+                                    SelectedItem="{Binding SelectedClimbingInstructionChoice}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    Title="{loc:LocalizedText Workout_Generation_ChooseEvidence}"
+                                    IsEnabled="{Binding CanEditInputs}"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_Generation_ClimbingInstructionAvailable}" />
+                        </Border>
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingClimbingInstruction}" Style="{StaticResource ErrorLabel}" />
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- CARD 2D: Yoga Evidence (Conditional) -->
+            <Border IsVisible="{Binding IsYogaSelected}"
+                    Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Workout_Generation_YogaEvidenceTitle}" IconGlyph="HeartCircle24" />
+                        <Label Text="{loc:LocalizedText Workout_Generation_YogaEvidenceHelp}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_YogaContentClassification}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Style="{StaticResource PickerContainer}">
+                            <Picker ItemsSource="{Binding YogaContentChoices}"
+                                    SelectedItem="{Binding SelectedYogaContentChoice}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    Title="{loc:LocalizedText Workout_Generation_ChooseEvidence}"
+                                    IsEnabled="{Binding CanEditInputs}"
+                                    VerticalOptions="Center"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_Generation_YogaContentClassification}" />
+                        </Border>
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RequiredAnswer}" IsVisible="{Binding MissingYogaType}" Style="{StaticResource ErrorLabel}" />
+                    </VerticalStackLayout>
+
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Recent history and optional input adjustments -->
+            <Border Style="{StaticResource CardPrimary}">
+                <VerticalStackLayout Style="{StaticResource PlanFormSection}">
+                    <sharedControls:IconSectionHeader
+                        Text="{loc:LocalizedText Workout_Generation_ExperienceTitle}"
+                        IconGlyph="Dumbbell24" />
+                    <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ExperienceHelp}"
+                           Style="{StaticResource MutedLabel}" />
+                    <Label LineBreakMode="WordWrap" Text="{Binding RecentTrainingSummary}"
+                           Style="{StaticResource MutedLabel}" />
+                    <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RecentHistoryPeriodsTitle}"
+                           Style="{StaticResource FormFieldLabel}" />
+                    <HorizontalStackLayout
+                        BindableLayout.ItemsSource="{Binding RecentTrainingWeeks}"
+                        Spacing="{StaticResource UiSpaceTight}"
+                        HorizontalOptions="Start">
+                        <BindableLayout.ItemTemplate>
+                            <DataTemplate x:DataType="vm:StrengthPlanRecentWeekDisplay">
+                                <VerticalStackLayout
+                                    Style="{StaticResource PlanHistoryWeekCell}"
+                                    WidthRequest="{StaticResource UiDimension52}"
+                                    SemanticProperties.Description="{Binding AccessibilityDescription}">
+                                    <Label LineBreakMode="WordWrap" Text="{Binding Label}" Style="{StaticResource CaptionCentered}" />
+                                    <Label LineBreakMode="WordWrap" Text="{Binding SessionCount}" Style="{StaticResource PlanHistoryWeekCount}" />
+                                </VerticalStackLayout>
+                            </DataTemplate>
+                        </BindableLayout.ItemTemplate>
+                    </HorizontalStackLayout>
+
+                    <Button Text="{Binding TrainingDetailsToggleText}"
+                            Command="{Binding ToggleTrainingDetailsCommand}"
+                            IsVisible="{Binding IsBeforePreview}"
+                            Style="{StaticResource ButtonSecondary}"
+                            HorizontalOptions="Start" />
+
+                    <VerticalStackLayout
+                        IsVisible="{Binding IsTrainingDetailsExpanded}"
+                        Spacing="{StaticResource UiSpaceControl}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ConsistentWeeks}"
+                                   Style="{StaticResource FormFieldLabel}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Text="{Binding ConsistentWeeks}"
+                                       Placeholder="{loc:LocalizedText Workout_Generation_WeeksPlaceholder}"
+                                       Keyboard="Numeric"
+                                       IsEnabled="{Binding CanEditInputs}"
+                                       SemanticProperties.Description="{loc:LocalizedText Workout_Generation_ConsistentWeeks}" />
+                            </Border>
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ConsistentWeeksHelp}"
+                                   Style="{StaticResource CaptionLabel}" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_AverageSessions}"
+                                   Style="{StaticResource FormFieldLabel}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Text="{Binding AverageSessionsPerWeek}"
+                                       Placeholder="{loc:LocalizedText Workout_Generation_SessionsPlaceholder}"
+                                       Keyboard="Numeric"
+                                       IsEnabled="{Binding CanEditInputs}"
+                                       SemanticProperties.Description="{loc:LocalizedText Workout_Generation_AverageSessions}" />
+                            </Border>
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_AverageSessionsHelp}"
+                                   Style="{StaticResource CaptionLabel}" />
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_DaysSinceLast}"
+                                   Style="{StaticResource FormFieldLabel}" />
+                            <Border Style="{StaticResource InputContainer}">
+                                <Entry Text="{Binding DaysSinceLastSession}"
+                                       Keyboard="Numeric"
+                                       IsEnabled="{Binding CanEditInputs}"
+                                       SemanticProperties.Description="{loc:LocalizedText Workout_Generation_DaysSinceLast}" />
+                            </Border>
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_DaysSinceLastHelp}"
+                                   Style="{StaticResource CaptionLabel}" />
+                        </VerticalStackLayout>
+
+                        <BoxView Style="{StaticResource PlanStickyActionDivider}" />
+
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_TimingTitle}"
+                                   Style="{StaticResource CardTitle}" />
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_TimingHelp}"
+                                   Style="{StaticResource MutedLabel}" />
+                        </VerticalStackLayout>
+
+                        <Grid Style="{StaticResource PlanMetricRows}" RowDefinitions="Auto,Auto">
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_Warmup}"
+                                   Style="{StaticResource PlanMetricLabel}" />
+                            <Border Grid.Column="1" Style="{StaticResource InputContainer}">
+                                <Entry Text="{Binding WarmupMinutes}"
+                                       Keyboard="Numeric"
+                                       IsEnabled="{Binding CanEditInputs}"
+                                       SemanticProperties.Description="{loc:LocalizedText Workout_Generation_Warmup}" />
+                            </Border>
+
+                            <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{loc:LocalizedText Workout_Generation_Cooldown}"
+                                   Style="{StaticResource PlanMetricLabel}" />
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource InputContainer}">
+                                <Entry Text="{Binding CooldownMinutes}"
+                                       Keyboard="Numeric"
+                                       IsEnabled="{Binding CanEditInputs}"
+                                       SemanticProperties.Description="{loc:LocalizedText Workout_Generation_Cooldown}" />
+                            </Border>
+                        </Grid>
+                    </VerticalStackLayout>
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Bottom Keep Current Plan Button -->
+            <Button Text="{loc:LocalizedText Workout_Generation_KeepCurrentPlan}"
+                    Command="{Binding KeepCurrentPlanCommand}"
+                    IsVisible="{Binding CanKeepCurrentPlan}"
+                    Style="{StaticResource ButtonSecondary}" />
+        </VerticalStackLayout>
+    </ScrollView>
+
+    <Label Grid.Row="1"
+           Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+           IsVisible="{Binding HasStatusMessage}"
+           Style="{StaticResource PlanStatusMessage}"
+           LineBreakMode="WordWrap">
+        <Label.Behaviors>
+            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+        </Label.Behaviors>
+    </Label>
+
+    <Border Grid.Row="2"
+            IsVisible="{Binding IsBeforePreview}"
+            Style="{StaticResource PlanStickyActionSurface}">
+        <VerticalStackLayout Style="{StaticResource PlanStickyActionContent}">
+            <BoxView Style="{StaticResource PlanStickyActionDivider}" />
+            <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}"
+                               HorizontalOptions="Center" />
+            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ChooseFittingStrengthStyle}" IsVisible="{Binding HasFittingStrengthStyleChoices}" Style="{StaticResource FormFieldLabel}" />
+            <Border Style="{StaticResource PickerContainer}" IsVisible="{Binding HasFittingStrengthStyleChoices}">
+                <Picker ItemsSource="{Binding FittingStrengthStyleChoices}"
+                        SelectedItem="{Binding SelectedFittingStrengthStyle}"
+                        ItemDisplayBinding="{Binding Label}"
+                        IsEnabled="{Binding CanEditInputs}"
+                        VerticalOptions="Center" />
+            </Border>
+            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ActivePreviewElsewhere}" IsVisible="{Binding HasActiveOtherPreview}" Style="{StaticResource MutedLabel}" />
+            <Button Text="{loc:LocalizedText Workout_Generation_TakeOverPreview}" Command="{Binding TakeOverPreviewCommand}" IsVisible="{Binding HasActiveOtherPreview}" Style="{StaticResource ButtonSecondary}" />
+            <Button Text="{loc:LocalizedText Workout_Generation_CreatePreview}"
+                    Command="{Binding CreateProposalCommand}"
+                    IsVisible="{Binding IsTrainNavigationPending, Converter={StaticResource InvertedBoolConverter}}"
+                    Style="{StaticResource ButtonPrimary}" />
+            <Button Text="{Binding ExploreOtherFeaturesButtonText}"
+                    Command="{Binding ExploreOtherFeaturesCommand}"
+                    IsVisible="{Binding CanOfferExploreOtherFeatures}"
+                    Style="{StaticResource ButtonSecondary}" />
+            <Button Text="{loc:LocalizedText Workout_Generation_OpenTrainAfterApply}"
+                    Command="{Binding OpenTrainCommand}"
+                    IsVisible="{Binding IsTrainNavigationPending}"
+                    Style="{StaticResource ButtonPrimary}" />
+        </VerticalStackLayout>
+    </Border>
+
+    </Grid>
+
+    <!-- The shared sheet isolates covered content while the preview is open. -->
+    <sharedControls:AnimatedModalView Grid.RowSpan="3"
+          IsOpen="{Binding HasPreview}"
+          BackgroundColor="{StaticResource ModalScrim}"
+          ZIndex="10">
+        <Grid>
+        <Border x:Name="PreviewSheet"
+                Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
+            <Grid RowDefinitions="Auto,*,Auto" Style="{StaticResource ModalBody}">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Workout_Generation_PreviewTitle}" IconGlyph="Target24" />
+                    </VerticalStackLayout>
+                    <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
+                            SemanticProperties.Description="{loc:LocalizedText Common_Close}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ClosePreviewCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path Style="{StaticResource ModalCloseIcon}" />
+                    </Border>
+                </Grid>
+                <ScrollView Grid.Row="1">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                        <!-- Reduced Volume Notice Sub-Section -->
+                        <Border IsVisible="{Binding RequiresReducedVolumeAcknowledgment}"
+                                Style="{StaticResource CardSecondary}">
+                            <Label Text="{Binding ReducedVolumeNoticeText}"
+                                   Style="{StaticResource BodyLabel}"
+                                   LineBreakMode="WordWrap" />
+                        </Border>
+
+                        <!-- Mixed Schedule Sub-Section -->
+                        <VerticalStackLayout IsVisible="{Binding HasMixedSchedule}" Spacing="{StaticResource UiSpaceCompact}">
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_MixedScheduleTitle}"
+                                   Style="{StaticResource SectionTitle}"
+                                   SemanticProperties.HeadingLevel="Level3" />
+                            <Label Text="{Binding ChosenStrengthSummary}"
+                                   IsVisible="{Binding HasChosenStrengthSummary}"
+                                   Style="{StaticResource MutedLabel}"
+                                   LineBreakMode="WordWrap" />
+                            <Label Text="{loc:LocalizedText Workout_Generation_ScheduleEmpty}"
+                                   IsVisible="{Binding HasNoMixedActivitySessions}"
+                                   Style="{StaticResource MutedLabel}"
+                                   LineBreakMode="WordWrap" />
+                            <Border IsVisible="{Binding HasMixedActivitySessions}"
+                                    Style="{StaticResource CardSecondary}">
+                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding MixedActivityDays}"
+                                                     Spacing="{StaticResource UiSpaceCompact}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="vm:MixedActivityDayDisplay">
+                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                                <Label Text="{Binding Day}"
+                                                       Style="{StaticResource CaptionLabel}"
+                                                       VerticalOptions="Start" />
+                                                <VerticalStackLayout Grid.Column="1"
+                                                                     BindableLayout.ItemsSource="{Binding Sessions}"
+                                                                     Spacing="{StaticResource UiSpaceMicro}">
+                                                    <BindableLayout.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:MixedActivitySessionDisplay">
+                                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                                                <Label Text="{Binding Activity}"
+                                                                       Style="{StaticResource BodyLabel}" />
+                                                                <Label Grid.Column="1"
+                                                                       Text="{Binding Duration}"
+                                                                       Style="{StaticResource MutedLabel}"
+                                                                       HorizontalTextAlignment="End"
+                                                                       VerticalOptions="Start" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </BindableLayout.ItemTemplate>
+                                                </VerticalStackLayout>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                                <Label Text="{Binding RestDaysSummary}"
+                                       IsVisible="{Binding HasRestDays}"
+                                       Style="{StaticResource MutedLabel}"
+                                       LineBreakMode="WordWrap" />
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <!-- Consolidated advisory notes: scheduling, omissions and limitations. -->
+                        <VerticalStackLayout IsVisible="{Binding HasPreviewNotes}" Spacing="{StaticResource UiSpaceCompact}">
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_SchedulingNotesTitle}"
+                                   Style="{StaticResource SectionTitle}"
+                                   SemanticProperties.HeadingLevel="Level3" />
+                            <Border Style="{StaticResource CardSecondary}">
+                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding PreviewNotes}"
+                                                     Spacing="{StaticResource UiSpaceTight}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="x:String">
+                                            <Label Text="{Binding .}"
+                                                   Style="{StaticResource MutedLabel}"
+                                                   LineBreakMode="WordWrap" />
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </Border>
+                        </VerticalStackLayout>
+
+                        <VerticalStackLayout IsVisible="{Binding HasDurationChoice}" Spacing="{StaticResource UiSpaceTight}">
+                            <Label Text="{loc:LocalizedText Workout_Generation_DurationChoices}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                            <Button Text="{Binding LongerDurationText}" Command="{Binding UseLongerDurationCommand}" IsVisible="{Binding CanUseLongerDuration}" Style="{StaticResource ButtonSecondary}" />
+                            <Button Text="{loc:LocalizedText Workout_Generation_UseShorterDuration}" Command="{Binding UseShorterDurationCommand}" Style="{StaticResource ButtonSecondary}" />
+                        </VerticalStackLayout>
+
+                        <toolkit:Expander IsVisible="{Binding HasPlanDetails}" IsExpanded="{Binding ExpandActivityDecisions, Mode=OneWay}">
+  <toolkit:Expander.Header>
+    <Grid ColumnDefinitions="*,Auto" Style="{StaticResource DisclosureHeader}">
+      <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_PlanDetailsTitle}" Style="{StaticResource BodyStrong}" />
+      <Label LineBreakMode="WordWrap" Grid.Column="1" Text="⌄" Style="{StaticResource MutedLabel}" />
+    </Grid>
+  </toolkit:Expander.Header>
+  <toolkit:Expander.Content>
+    <!-- Activity decisions and strength sessions live in one details surface. -->
+    <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                        <VerticalStackLayout IsVisible="{Binding HasActivityDecisions}" Spacing="{StaticResource UiSpaceCompact}">
+
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding ActivityDecisions}"
+                                                 Spacing="{StaticResource UiSpaceTight}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:MixedActivityDecisionDisplay">
+                                        <Border Style="{StaticResource CardSecondary}">
+                                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                                    <Label Text="{Binding Activity}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
+                                                    <Label LineBreakMode="WordWrap" Grid.Column="1" Text="{Binding Frequency}"
+                                                           IsVisible="{Binding HasFrequency}" Style="{StaticResource AccentLabel}" />
+                                                </Grid>
+                                                <Label Text="{Binding Status}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                                                <VerticalStackLayout IsVisible="{Binding HasReasons}"
+                                                                     BindableLayout.ItemsSource="{Binding Reasons}"
+                                                                     Spacing="{StaticResource UiSpaceMicro}">
+                                                    <BindableLayout.ItemTemplate>
+                                                         <DataTemplate x:DataType="x:String">
+                                                             <Label Text="{Binding .}"
+                                                                    Style="{StaticResource MutedLabel}"
+                                                                    LineBreakMode="WordWrap" />
+                                                         </DataTemplate>
+                                                    </BindableLayout.ItemTemplate>
+                                                </VerticalStackLayout>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+
+                        <!-- Strength Preview Sessions -->
+
+                        <VerticalStackLayout IsVisible="{Binding HasStrengthPreviewSessions}" Spacing="{StaticResource UiSpaceCompact}">
+
+                            <VerticalStackLayout BindableLayout.ItemsSource="{Binding StrengthPreviewSessions}"
+                                                 Spacing="{StaticResource UiSpaceCompact}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="vm:StrengthPlanSessionDisplay">
+                                        <Border Style="{StaticResource CardSecondary}">
+                                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                                    <Label LineBreakMode="WordWrap" Text="{Binding Title}"
+                                                           Style="{StaticResource FormFieldLabel}" />
+                                                    <Label LineBreakMode="WordWrap" Text="{Binding Duration}"
+                                                           Style="{StaticResource MutedLabel}" />
+                                                </VerticalStackLayout>
+                                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding Slots}" Spacing="{StaticResource UiSpaceTight}">
+                                                    <BindableLayout.ItemTemplate>
+                                                        <DataTemplate x:DataType="vm:StrengthPlanSlotDisplay">
+                                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_4}">
+                                                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                                                    <Label LineBreakMode="WordWrap" Text="{Binding Name}" />
+                                                                    <Label LineBreakMode="WordWrap" Text="{Binding Details}"
+                                                                           Style="{StaticResource MutedLabel}" />
+                                                                </VerticalStackLayout>
+                                                                <Label LineBreakMode="WordWrap" Grid.Column="1"
+                                                                       Text="{loc:LocalizedText Workout_Generation_Required}"
+                                                                       IsVisible="{Binding IsRequired}"
+                                                                       Style="{StaticResource CaptionStrong}"
+                                                                       TextColor="{StaticResource Primary}"
+                                                                       VerticalOptions="Center" />
+                                                            </Grid>
+                                                        </DataTemplate>
+                                                    </BindableLayout.ItemTemplate>
+                                                </VerticalStackLayout>
+                                            </VerticalStackLayout>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
+
+    </VerticalStackLayout>
+  </toolkit:Expander.Content>
+</toolkit:Expander>
+
+                        </VerticalStackLayout>
+                </ScrollView>
+                <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}">
+                    <BoxView Style="{StaticResource PlanStickyActionDivider}" />
+                    <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsBusy}"
+                                       IsVisible="{Binding IsBusy}"
+                                       HorizontalOptions="Center" />
+                    <Label Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                           IsVisible="{Binding HasStatusMessage}"
+                           Style="{StaticResource MutedLabel}"
+                           LineBreakMode="WordWrap">
+                        <Label.Behaviors>
+                            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
+                    <Label Text="{Binding UnavailableApplyReason}"
+                           IsVisible="{Binding HasUnavailableApplyReason}"
+                           Style="{StaticResource MutedLabel}"
+                           LineBreakMode="WordWrap" />
+                    <Button Text="{loc:LocalizedText Workout_Generation_ApplyPlan}"
+                            Command="{Binding AcceptProposalCommand}"
+                            IsVisible="{Binding CanReviewPreview}"
+                            Style="{StaticResource ButtonPrimary}" />
+                    <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
+                            Command="{Binding EditDetailsCommand}"
+                            IsVisible="{Binding CanReviewPreview}"
+                            Style="{StaticResource ButtonSecondary}" />
+                    <Button Text="{Binding ExploreOtherFeaturesButtonText}"
+                            Command="{Binding ExploreOtherFeaturesCommand}"
+                            IsVisible="{Binding CanOfferExploreOtherFeatures}"
+                            Style="{StaticResource ButtonSecondary}" />
+                    <Button Text="{loc:LocalizedText Workout_Generation_OpenTrainAfterApply}"
+                            Command="{Binding OpenTrainCommand}"
+                            IsVisible="{Binding IsTrainNavigationPending}"
+                            Style="{StaticResource ButtonPrimary}" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+        </Grid>
+    </sharedControls:AnimatedModalView>
+    </Grid>
+    <sharedControls:PageLoadingOverlay BackCommand="{Binding BackCommand}" />
+    </Grid>
+</ContentPage>

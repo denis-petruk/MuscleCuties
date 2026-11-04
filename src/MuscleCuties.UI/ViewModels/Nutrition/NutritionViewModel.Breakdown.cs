@@ -1,7 +1,8 @@
 using System.Collections.ObjectModel;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.Core.Models.Nutrition;
+using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Nutrition;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
@@ -11,7 +12,7 @@ public partial class NutritionViewModel
     {
         ApplyBreakdown(
             "Daily nutrition",
-            new MacroNutrients(ConsumedCalories, ConsumedProtein, ConsumedCarbs, ConsumedFats),
+            NutritionPresentationMapper.FromTotals(ConsumedCalories, ConsumedProtein, ConsumedCarbs, ConsumedFats),
             Micronutrients,
             null);
     }
@@ -30,7 +31,7 @@ public partial class NutritionViewModel
 
     private void ApplyBreakdown(
         string title,
-        MacroNutrients macros,
+        NutritionMacros macros,
         IEnumerable<DailyMicronutrientItem> micronutrients,
         MealItem? meal)
     {
@@ -38,13 +39,13 @@ public partial class NutritionViewModel
 
         SelectedBreakdownMeal = meal;
         SelectedBreakdownTitle = title;
-        SelectedBreakdownCaloriesText = $"{macros.Calories:N0} kcal";
-        SelectedBreakdownMacrosText = macros.ToMacroText();
+        SelectedBreakdownCaloriesText = macros.CaloriesText;
+        SelectedBreakdownMacrosText = macros.MacroText;
         SelectedBreakdownFiberText = BuildFiberText(nutrients);
         SelectedBreakdownNutrientSummaryText = BuildMicronutrientSummaryText(nutrients);
-        SelectedBreakdownProteinCalories = macros.Protein * 4f;
-        SelectedBreakdownCarbsCalories = macros.Carbs * 4f;
-        SelectedBreakdownFatsCalories = macros.Fats * 9f;
+        SelectedBreakdownProteinCalories = macros.ProteinCalories;
+        SelectedBreakdownCarbsCalories = macros.CarbsCalories;
+        SelectedBreakdownFatsCalories = macros.FatsCalories;
         SelectedBreakdownMacroItems = new ObservableCollection<MacroBreakdownItem>(BuildMacroBreakdownItems(macros));
         SelectedBreakdownMicronutrients = new ObservableCollection<DailyMicronutrientItem>(nutrients);
         IsBreakdownModalVisible = true;
@@ -65,11 +66,11 @@ public partial class NutritionViewModel
         await EditMealAsync(meal);
     }
 
-    private static IEnumerable<MacroBreakdownItem> BuildMacroBreakdownItems(MacroNutrients macros)
+    private static IEnumerable<MacroBreakdownItem> BuildMacroBreakdownItems(NutritionMacros macros)
     {
-        var proteinCalories = macros.Protein * 4f;
-        var carbsCalories = macros.Carbs * 4f;
-        var fatsCalories = macros.Fats * 9f;
+        var proteinCalories = macros.ProteinCalories;
+        var carbsCalories = macros.CarbsCalories;
+        var fatsCalories = macros.FatsCalories;
         var macroCalories = Math.Max(0f, proteinCalories + carbsCalories + fatsCalories);
 
         return
@@ -80,7 +81,7 @@ public partial class NutritionViewModel
                 Grams = macros.Protein,
                 Calories = proteinCalories,
                 Progress = CalculateMacroShare(proteinCalories, macroCalories),
-                Color = Color.FromArgb("#A65AC8")
+                Color = AppThemeResources.GetColor("ProteinLight", default)
             },
             new MacroBreakdownItem
             {
@@ -88,7 +89,7 @@ public partial class NutritionViewModel
                 Grams = macros.Carbs,
                 Calories = carbsCalories,
                 Progress = CalculateMacroShare(carbsCalories, macroCalories),
-                Color = Color.FromArgb("#E3A13B")
+                Color = AppThemeResources.GetColor("CarbsLight", default)
             },
             new MacroBreakdownItem
             {
@@ -96,7 +97,7 @@ public partial class NutritionViewModel
                 Grams = macros.Fats,
                 Calories = fatsCalories,
                 Progress = CalculateMacroShare(fatsCalories, macroCalories),
-                Color = Color.FromArgb("#6F8E4E")
+                Color = AppThemeResources.GetColor("FatsLight", default)
             }
         ];
     }

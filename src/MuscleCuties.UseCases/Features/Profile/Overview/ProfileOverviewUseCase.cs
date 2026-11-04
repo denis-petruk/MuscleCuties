@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Profile.Overview;
 
@@ -14,7 +15,7 @@ public sealed class ProfileOverviewUseCase(
             : source.StoredPhase is { } stored && stored != CyclePhase.Unknown
                 ? stored
                 : CyclePhase.Unknown;
-        return source.Overview with { CurrentPhase = phase };
+        return source.Overview with { CurrentPhase = CycleContractMapper.ToDto(phase) };
     }
 
     public Task LogoutAsync(CancellationToken cancellationToken = default)

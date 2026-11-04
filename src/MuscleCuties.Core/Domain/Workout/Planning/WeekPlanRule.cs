@@ -22,8 +22,8 @@ public static class WeekPlanRule
     private const double MinimumExposureFraction = 0.5;
     private const double MinimumAccessoryRemainderSets = 0.5;
     private const int MinimumTierAbExposures = 2;
-    private const int FatLossCardioLimit = 2;
-    private const int DefaultCardioLimit = 1;
+    private const int FatLossCardioLimit = 4;
+    private const int DefaultCardioLimit = 3;
     private const int DaysInWeek = 7;
     private const int ConsecutiveDayDifference = 1;
     private const int WrapAroundDayDifference = DaysInWeek - 1;
@@ -536,6 +536,9 @@ public static class WeekPlanRule
         {
             WorkoutActivityType.Cycling,
             WorkoutActivityType.Running,
+            WorkoutActivityType.Walking,
+            WorkoutActivityType.Rowing,
+            WorkoutActivityType.Elliptical,
             WorkoutActivityType.Swimming,
             WorkoutActivityType.Hiit,
             WorkoutActivityType.RockClimbing

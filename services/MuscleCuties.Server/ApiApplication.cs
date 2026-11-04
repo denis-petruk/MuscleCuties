@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -5,70 +6,81 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
-using MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
-using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
-using MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
-using MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
+using MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
+using MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
+using MuscleCuties.Infrastructure.PostgreSql.Account.MigrationClaims;
+using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
+using MuscleCuties.UseCases.Features.Account.Deletion;
+using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
 using MuscleCuties.Infrastructure.PostgreSql.Cycle.History;
 using MuscleCuties.Infrastructure.PostgreSql.Cycle.Overview;
-using MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
-using MuscleCuties.Infrastructure.PostgreSql.Dashboard;
-using MuscleCuties.Infrastructure.PostgreSql.Nutrition.BatchAndCopy;
+using MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.CatalogSearch;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
-using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
-using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Recipes;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Targets;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
-using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
-using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.BatchAndCopy;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Recipes;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.UnitsDisplay;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
+using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Archive;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Injury;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
-using MuscleCuties.Server.Account.Registration;
-using MuscleCuties.Server.CheckInAndInjury;
-using MuscleCuties.Server.Cycle;
+using MuscleCuties.UseCases.Features.Account.Registration;
+using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
+using MuscleCuties.UseCases.Features.Account.Authentication;
+using MuscleCuties.UseCases.Features.Account.EmailChallenge;
+using MuscleCuties.UseCases.Features.Account.MigrationClaims;
+using MuscleCuties.UseCases.Features.Cycle.History;
+using MuscleCuties.UseCases.Features.Cycle.Overview;
+using MuscleCuties.UseCases.Features.CheckInAndInjury;
+using MuscleCuties.UseCases.Features.Nutrition.Barcode;
+using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
+using MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
+using MuscleCuties.UseCases.Features.Nutrition.Diary;
+using MuscleCuties.UseCases.Features.Nutrition.Targets;
+using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes;
+using MuscleCuties.UseCases.Features.Nutrition.Overview;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
+using MuscleCuties.UseCases.Features.Profile.ServerProfile;
+using MuscleCuties.UseCases.Features.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Archive;
+using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.Infrastructure.PostgreSql.Dashboard;
+using MuscleCuties.UseCases.Features.Dashboard.Overview;
 using MuscleCuties.Server.Dashboard;
 using MuscleCuties.Server.Nutrition;
-using MuscleCuties.Server.Profile.PhotoVault;
+using MuscleCuties.Server.Cycle;
+using MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
+using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
+using MuscleCuties.Server.CheckInAndInjury;
+using MuscleCuties.Server.Workout.Planning;
 using MuscleCuties.Server.Workout.ActiveSession;
 using MuscleCuties.Server.Workout.Archive;
 using MuscleCuties.Server.Workout.Injury;
 using MuscleCuties.Server.Workout.Session;
-using MuscleCuties.UseCases.Features.Account.Authentication;
-using MuscleCuties.UseCases.Features.Account.Deletion;
-using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
-using MuscleCuties.UseCases.Features.Account.EmailChallenge;
-using MuscleCuties.UseCases.Features.Account.Registration;
-using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
-using MuscleCuties.UseCases.Features.CheckInAndInjury;
-using MuscleCuties.UseCases.Features.Cycle.History;
-using MuscleCuties.UseCases.Features.Cycle.Overview;
-using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
-using MuscleCuties.UseCases.Features.Dashboard.Overview;
-using MuscleCuties.UseCases.Features.Nutrition.Barcode;
-using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
-using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
-using MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
-using MuscleCuties.UseCases.Features.Nutrition.Diary;
-using MuscleCuties.UseCases.Features.Nutrition.Overview;
-using MuscleCuties.UseCases.Features.Nutrition.Recipes;
-using MuscleCuties.UseCases.Features.Nutrition.Targets;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
-using MuscleCuties.UseCases.Features.Profile.ServerProfile;
-using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
-using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
-using MuscleCuties.UseCases.Features.Workout.ActiveSession;
-using MuscleCuties.UseCases.Features.Workout.Archive;
-using MuscleCuties.UseCases.Features.Workout.Injury;
-using MuscleCuties.UseCases.Features.Workout.Planning;
+using MuscleCuties.Server.Profile.PhotoVault;
+using MuscleCuties.Server.Account.Registration;
+using MuscleCuties.Infrastructure.PostgreSql.Hydration;
+using MuscleCuties.Infrastructure.PostgreSql.Progress;
+using MuscleCuties.Infrastructure.PostgreSql.Fasting;
+using MuscleCuties.UseCases.Features.Hydration;
+using MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
+using MuscleCuties.UseCases.Features.Fasting;
+using MuscleCuties.Server.Hydration;
 
 namespace MuscleCuties.Server;
 
@@ -84,8 +96,14 @@ public static class ApiApplication
     private const int PasswordRecoveryEmailReceiptPurpose = 2;
     private const string ApiVersion = "v1";
     private const string RequestIdHeader = "X-Request-Id";
+    private const string SessionRoute = "/api/v1/session";
     private const string LiveRoute = "/health/live";
     private const string ReadyRoute = "/health/ready";
+    private const string HealthStatusContentType = "text/plain; charset=utf-8";
+    private const string HealthStatusNoStore = "no-store";
+    private const string HealthStatusHealthy = "Healthy";
+    private const string HealthStatusDegraded = "Degraded";
+    private const string HealthStatusUnhealthy = "Unhealthy";
     private const string AuthenticationRoute = "/api/v1/auth";
     private const string EmailChallengeRoute = "/api/v1/email-challenges";
     private const string ProfileUnitsRoute = "/api/v1/profile/units";
@@ -134,6 +152,12 @@ public static class ApiApplication
             });
 
         builder.Services.AddPostgreSqlPersistence(connectionString);
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton<IRegistrationPasswordHasher, Pbkdf2RegistrationPasswordHasher>();
         var emailReceiptPublicKeys = builder.Configuration.GetSection("EmailReceipts:PublicKeys").GetChildren()
@@ -161,6 +185,8 @@ public static class ApiApplication
             serviceProvider.GetRequiredService<IRegistrationPasswordHasher>(),
             serviceProvider.GetRequiredService<IAccountPasswordResetStore>(),
             serviceProvider.GetRequiredService<TimeProvider>()));
+        builder.Services.AddScoped<IAccountMigrationClaimStore, PostgresAccountMigrationClaimStore>();
+        builder.Services.AddScoped<IAccountMigrationClaimUseCase, AccountMigrationClaimUseCase>();
         builder.Services.AddScoped<IServerProfileUnitsStore, PostgresProfileUnitsStore>();
         builder.Services.AddScoped<ServerProfileUnitsUseCase>();
         builder.Services.AddScoped<IServerProfileDataStore, PostgresProfileDataStore>();
@@ -211,8 +237,23 @@ public static class ApiApplication
         builder.Services.AddScoped<IServerNutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
         builder.Services.AddScoped<INutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
         builder.Services.AddScoped<ServerNutritionOverviewUseCase>();
-        builder.Services.AddScoped<IWorkoutPlanningReferenceDataSource, PostgresWorkoutPlanningReferenceDataSource>();
-        builder.Services.AddScoped<GenerateWorkoutPlanUseCase>();
+        builder.Services.AddScoped<IWorkoutPlanningCatalogStore, PostgresWorkoutPlanningCatalogStore>();
+        builder.Services.AddScoped<IWorkoutPlanReconciler, PostgresWorkoutPlanReconciler>();
+        builder.Services.AddScoped<WorkoutPendingRevisionJobHandler>();
+        builder.Services.AddScoped<IWorkoutProgressStore, PostgresWorkoutProgressStore>();
+        builder.Services.AddScoped<GetWorkoutPlanningCatalogUseCase>();
+        builder.Services.AddScoped<IStrengthPlanPreviewSourceV020, PostgresStrengthPlanPreviewSourceV020>();
+        builder.Services.AddScoped<IReviewedExerciseExclusionCatalogV020Store,
+            PostgresReviewedExerciseExclusionCatalogV020Store>();
+        builder.Services.AddScoped<GetReviewedExerciseExclusionCatalogV020UseCase>();
+        builder.Services.AddScoped<PreviewStrengthPlanV020UseCase>();
+        builder.Services.AddScoped<IStrengthPlanProposalStoreV020, PostgresStrengthPlanProposalStoreV020>();
+        builder.Services.AddScoped<IHiitEvidenceCaptureStore, PostgresHiitEvidenceCaptureStore>();
+        builder.Services.AddScoped<IStrengthStyleOfferStore, PostgresStrengthStyleOfferStore>();
+        builder.Services.AddScoped<IAcceptStrengthPlanProposalStoreV020,
+            PostgresAcceptStrengthPlanProposalStoreV020>();
+        builder.Services.AddScoped<CreateStrengthPlanProposalV020UseCase>();
+        builder.Services.AddScoped<AcceptStrengthPlanProposalV020UseCase>();
         builder.Services.AddScoped<IWorkoutActiveSessionStore, PostgresWorkoutActiveSessionStore>();
         builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
         builder.Services.AddScoped<IServerWorkoutArchiveStore, PostgresWorkoutArchiveStore>();
@@ -223,6 +264,30 @@ public static class ApiApplication
         builder.Services.AddScoped<IServerDashboardOverviewStore, PostgresDashboardOverviewStore>();
         builder.Services.AddScoped<ServerDashboardOverviewUseCase>();
         builder.Services.AddHttpContextAccessor();
+        builder.Services.AddScoped<PostgresHydrationStore>();
+        builder.Services.AddScoped<IWaterPresetInitializationStore>(sp => sp.GetRequiredService<PostgresHydrationStore>());
+        builder.Services.AddScoped<IWaterPresetStore>(sp => sp.GetRequiredService<PostgresHydrationStore>());
+        builder.Services.AddScoped<IWaterIntakeStore>(sp => sp.GetRequiredService<PostgresHydrationStore>());
+        builder.Services.AddScoped<IWaterReminderConfigurationStore>(sp => sp.GetRequiredService<PostgresHydrationStore>());
+        builder.Services.AddScoped<InitializeWaterPresetsUseCase>();
+        builder.Services.AddScoped<GetWaterPresetsUseCase>();
+        builder.Services.AddScoped<CreateWaterPresetUseCase>();
+        builder.Services.AddScoped<UpdateWaterPresetUseCase>();
+        builder.Services.AddScoped<DeleteWaterPresetUseCase>();
+        builder.Services.AddScoped<ReorderWaterPresetsUseCase>();
+        builder.Services.AddScoped<GetWaterIntakeUseCase>();
+        builder.Services.AddScoped<ChangeWaterIntakeUseCase>();
+        builder.Services.AddScoped<GetWaterReminderConfigurationUseCase>();
+        builder.Services.AddScoped<SaveWaterReminderConfigurationUseCase>();
+        builder.Services.AddScoped<PreviewWaterReminderUseCase>();
+        builder.Services.AddScoped<IBodyMeasurementSession, HttpContextBodyMeasurementSession>();
+        builder.Services.AddScoped<IBodyMeasurementStore, PostgresBodyMeasurementStore>();
+        builder.Services.AddScoped<CreateBodyMeasurementUseCase>();
+        builder.Services.AddScoped<CorrectBodyMeasurementUseCase>();
+        builder.Services.AddScoped<DeleteBodyMeasurementUseCase>();
+        builder.Services.AddScoped<ReadBodyMeasurementHistoryUseCase>();
+        builder.Services.AddScoped<IFastingSessionStore, PostgresFastingStore>();
+        builder.Services.AddScoped<FastingSessionUseCase>();
         builder.Services.AddSingleton<IS3PresignedUrlService, DefaultS3PresignedUrlService>();
         builder.Services.AddScoped<IPhotoUploadIntentStore, PostgresPhotoUploadIntentStore>();
         builder.Services.AddHttpClient<IS3PhotoObjectInspector, DefaultS3PhotoObjectInspector>();
@@ -305,7 +370,9 @@ public static class ApiApplication
             serviceProvider.GetRequiredService<TimeProvider>(),
             emailChallengeHmacKeys,
             builder.Configuration["EmailChallenges:ActiveHmacKeyId"] ?? string.Empty));
-        builder.Services.AddHealthChecks().AddCheck<PostgreSqlReadinessCheck>("postgresql");
+        builder.Services.AddHealthChecks()
+            .AddCheck<PostgreSqlReadinessCheck>("postgresql")
+            .AddCheck<PostgreSqlSchemaCompatibilityCheck>("postgresql-schema");
         builder.Services
             .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
@@ -352,6 +419,8 @@ public static class ApiApplication
 
         configureServices?.Invoke(builder.Services);
         var app = builder.Build();
+        app.UseRequestTimingTelemetry();
+        app.UseResponseCompression();
         app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
         {
             var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();
@@ -364,7 +433,11 @@ public static class ApiApplication
             {
                 Status = StatusCodes.Status500InternalServerError,
                 Title = "An unexpected server error occurred.",
-                Extensions = { ["requestId"] = context.TraceIdentifier }
+                Extensions =
+                {
+                    ["requestId"] = context.TraceIdentifier,
+                    ["code"] = ApiFailureClassifier.Classify(exceptionFeature.Error)
+                }
             }, options: (JsonSerializerOptions?)null, contentType: "application/problem+json");
         }));
         app.Use(async (context, next) =>
@@ -383,7 +456,34 @@ public static class ApiApplication
 
         app.MapGet(LiveRoute, () => Results.Ok(new HealthResponse("live", ApiVersion)))
             .AllowAnonymous();
-        app.MapHealthChecks(ReadyRoute).AllowAnonymous();
+        static Task WriteHealthStatusAsync(
+            HttpContext healthContext,
+            Microsoft.Extensions.Diagnostics.HealthChecks.HealthReport report)
+        {
+            // Status word only. Health entries, descriptions, exception objects and check data are never
+            // written: the probe is anonymous and must not disclose schema, identifiers or user data.
+            healthContext.Response.ContentType = HealthStatusContentType;
+            healthContext.Response.Headers.CacheControl = HealthStatusNoStore;
+            var body = report.Status switch
+            {
+                Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Healthy => HealthStatusHealthy,
+                Microsoft.Extensions.Diagnostics.HealthChecks.HealthStatus.Degraded => HealthStatusDegraded,
+                _ => HealthStatusUnhealthy
+            };
+            return healthContext.Response.WriteAsync(body);
+        }
+
+        app.MapHealthChecks(ReadyRoute, new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
+            {
+                ResponseWriter = WriteHealthStatusAsync,
+                AllowCachingResponses = false
+            })
+            .AllowAnonymous();
+        app.MapGet(SessionRoute, (HttpContext context) => Results.Ok(new SessionResponse(
+            IsAuthenticated: context.User.Identity?.IsAuthenticated == true,
+            UserId: context.User.FindFirst("sub")?.Value,
+            ApiVersion: ApiVersion)))
+            .RequireAuthorization();
         app.MapGet(ProfileUnitsRoute, async (
                 HttpContext context,
                 ServerProfileUnitsUseCase profileUnits,
@@ -437,10 +537,29 @@ public static class ApiApplication
             if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
             var result = await profile.UpdateProfileAsync(new UpdateServerProfileRequest(userId, request.ExpectedVersion,
                 request.Name, request.DateOfBirth, request.SetDateOfBirth, request.Height, request.Weight, request.Goal,
-                request.WeightGoalPace, request.TrainingExperienceLevel, request.CycleTrackingMode, request.WorkoutDaysPerWeek,
-                request.CycleLength, request.DietaryTags, request.SessionDurationMinutes, request.EquipmentLevel,
+                request.WeightGoalPace, request.TrainingExperienceLevel,
+                request.CycleLength, request.DietaryTags, request.EquipmentLevel,
                 request.ReproductiveContextJson, request.ProfileImagePath), cancellationToken).ConfigureAwait(false);
             return MapProfileWrite(result);
+        }).RequireAuthorization();
+        app.MapGet("/api/v1/profile/history", async (
+            HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
+            return Results.Ok(await profile.LoadHistoryAsync(userId, cancellationToken).ConfigureAwait(false));
+        }).RequireAuthorization();
+        app.MapGet("/api/v1/profile/quiz-responses", async (
+            HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
+            return Results.Ok(await profile.LoadQuizResponsesAsync(userId, cancellationToken).ConfigureAwait(false));
+        }).RequireAuthorization();
+        app.MapPut("/api/v1/profile/quiz-responses/{questionId:int}", async (
+            int questionId, CorrectServerQuizResponseBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
+            return MapProfileWrite(await profile.CorrectQuizResponseAsync(new CorrectServerQuizResponseRequest(
+                userId, request.ExpectedVersion, questionId, request.AnswerId), cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
         app.MapPut("/api/v1/profile/nutrition-preferences", async (
             UpdateServerNutritionPreferencesBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
@@ -455,14 +574,6 @@ public static class ApiApplication
             if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
             return MapProfileWrite(await profile.UpdateNutritionPreferencesAsync(new UpdateServerNutritionPreferencesRequest(
                 userId, request.ExpectedVersion, request.Goal, request.WeightGoalPace, request.DietaryTags), cancellationToken).ConfigureAwait(false));
-        }).RequireAuthorization();
-        app.MapPut("/api/v1/profile/workout-preferences", async (
-            UpdateServerWorkoutPreferencesBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
-        {
-            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
-            return MapProfileWrite(await profile.UpdateWorkoutPreferencesAsync(new UpdateServerWorkoutPreferencesRequest(
-                userId, request.ExpectedVersion, request.ActivityTypes, request.StrengthStyle, request.DaysPerWeek,
-                request.EquipmentLevel), cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
         app.MapPut("/api/v1/profile/nutrition-targets", async (
             UpdateServerNutritionTargetsBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
@@ -590,15 +701,45 @@ public static class ApiApplication
                 CancellationToken cancellationToken) =>
             Results.Ok(await authentication.UsernameExistsAsync(username ?? string.Empty, cancellationToken).ConfigureAwait(false)))
             .AllowAnonymous();
+        app.MapPost("/api/v1/accounts/migration-claims", async (
+                CreateMigrationClaimRequest request,
+                HttpContext context,
+                IAccountMigrationClaimUseCase migrationClaims,
+                CancellationToken cancellationToken) =>
+            {
+                if (!TryGetAuthenticatedUserId(context, out var destinationUserId))
+                    return Results.Forbid();
+                var claim = await migrationClaims.CreateAsync(destinationUserId, request, cancellationToken)
+                    .ConfigureAwait(false);
+                return claim is null
+                    ? Results.BadRequest(new AccountRegistrationError("invalidMigrationClaim"))
+                    : Results.Ok(claim);
+            })
+            .RequireAuthorization();
+        app.MapPost("/api/v1/accounts/migration-claims/redeem", async (
+                RedeemMigrationClaimRequest request,
+                HttpContext context,
+                IAccountMigrationClaimUseCase migrationClaims,
+                CancellationToken cancellationToken) =>
+            {
+                if (!TryGetAuthenticatedUserId(context, out var destinationUserId))
+                    return Results.Forbid();
+                var result = await migrationClaims.RedeemAsync(destinationUserId, request, cancellationToken)
+                    .ConfigureAwait(false);
+                return result.Succeeded
+                    ? Results.Ok(result)
+                    : Results.Conflict(new AccountRegistrationError("migrationClaimConflict"));
+            })
+            .RequireAuthorization();
         app.MapDelete("/api/v1/accounts/me", async (
+                [FromBody] AccountDeletionRequest request,
                 HttpContext context,
                 ServerAccountDeletionUseCase accountDeletion,
                 CancellationToken cancellationToken) =>
             {
                 if (!TryGetAuthenticatedUserId(context, out var userId))
                     return Results.Forbid();
-                var authorizationCode = context.Request.Query["authorizationCode"].FirstOrDefault();
-                var result = await accountDeletion.DeleteAccountAsync(userId, cancellationToken, authorizationCode)
+                var result = await accountDeletion.DeleteAccountAsync(userId, cancellationToken, request.AuthorizationCode)
                     .ConfigureAwait(false);
                 return Results.Ok(result);
             })
@@ -647,6 +788,8 @@ public static class ApiApplication
         app.MapNutritionDiaryEndpoints();
         app.MapNutritionBatchAndCopyEndpoints();
         app.MapRecipeEndpoints();
+        app.MapWorkoutPlanningEndpoints();
+        app.MapWorkoutProgressEndpoints();
         app.MapWorkoutActiveSessionEndpoints();
         app.MapWorkoutArchiveEndpoints();
         app.MapWorkoutInjuryEndpoints();
@@ -657,6 +800,7 @@ public static class ApiApplication
         app.MapCheckInAndInjuryEndpoints();
         app.MapDashboardEndpoints();
         app.MapPhotoVaultEndpoints();
+        app.MapHydrationProgressAndFastingEndpoints();
 
         return app;
     }
@@ -674,6 +818,7 @@ public static class ApiApplication
         }
     }
 
+    private sealed record SessionResponse(bool IsAuthenticated, string? UserId, string ApiVersion);
     private sealed record ChangePasswordBody(string CurrentPassword, string NewPassword);
     private sealed record AccountRegistrationResponse(Guid UserId, bool OnboardingComplete);
     private sealed record AccountRegistrationError(string Code);
@@ -689,12 +834,16 @@ public static class ApiApplication
         string? EnergyUnit);
     private sealed record UpdateServerProfileBody(
         int ExpectedVersion, string? Name, DateOnly? DateOfBirth, bool SetDateOfBirth, decimal? Height, decimal? Weight,
-        string? Goal, string? WeightGoalPace, string? TrainingExperienceLevel, string? CycleTrackingMode,
-        int? WorkoutDaysPerWeek, int? CycleLength, string? DietaryTags, int? SessionDurationMinutes, string? EquipmentLevel,
+        string? Goal, string? WeightGoalPace, string? TrainingExperienceLevel,
+        int? CycleLength, string? DietaryTags, string? EquipmentLevel,
         string? ReproductiveContextJson = null, string? ProfileImagePath = null);
+    private sealed record CorrectServerQuizResponseBody(int ExpectedVersion, int AnswerId);
     private sealed record UpdateServerNutritionPreferencesBody(int ExpectedVersion, string Goal, string WeightGoalPace, string DietaryTags);
     private sealed record UpdateServerWorkoutPreferencesBody(int ExpectedVersion, IReadOnlyList<int> ActivityTypes,
-        int StrengthStyle, int DaysPerWeek, string? EquipmentLevel = null);
+        IReadOnlyList<int> AvailableWeekdays, IReadOnlyDictionary<int, int> ActivitySessionDurationsMinutes,
+        string? EquipmentLevel = null,
+        IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek = null,
+        HashSet<int>? ExcludedExerciseIds = null);
     private sealed record UpdateServerNutritionTargetsBody(int ExpectedVersion, IReadOnlyDictionary<string, JsonElement> Targets);
 
     private static readonly JsonSerializerOptions ChallengeJsonOptions = new() { PropertyNamingPolicy = null };
@@ -764,3 +913,69 @@ internal sealed class PostgreSqlReadinessCheck(PostgresDbContext dbContext) : Mi
         }
     }
 }
+
+/// <summary>
+/// Deployment-order guard. Connectivity alone reported Healthy while dashboard and injuries returned
+/// HTTP 500 for a missing column, so readiness now compares the deployed EF model with the schema the
+/// database was initialized from, and confirms the security script's objects are present. The
+/// description names no schema objects.
+/// </summary>
+internal sealed class PostgreSqlSchemaCompatibilityCheck(PostgresDbContext dbContext) : Microsoft.Extensions.Diagnostics.HealthChecks.IHealthCheck
+{
+    // Fixed descriptions only: no object names, identifiers, counts or user data may leave this check.
+    private const string CompatibleDescription = "Database schema matches the deployed model.";
+    private const string IncompatibleDescription = "Database schema does not match the deployed model.";
+    private const string UnreadableDescription = "Database schema is unreadable.";
+
+    public async Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult> CheckHealthAsync(
+        Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext context,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var report = await PostgresSchemaDriftInspector.InspectAsync(dbContext, cancellationToken)
+                .ConfigureAwait(false);
+            return report.IsCompatible
+                ? Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Healthy(CompatibleDescription)
+                : Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(IncompatibleDescription);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            // The exception is deliberately not attached: provider exceptions can carry connection strings,
+            // object names and SQL text, and health results are serialised and logged by hosting.
+            return Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult.Unhealthy(UnreadableDescription);
+        }
+    }
+}
+
+/// <summary>
+/// Maps a server failure to a stable, non-sensitive code. The code names the failure class only:
+/// no SQL text, table or column names and no user data, so it is safe to return to the client.
+/// </summary>
+internal static class ApiFailureClassifier
+{
+    private const string MissingTableSqlState = "42P01";
+    private const string MissingColumnSqlState = "42703";
+    private const string PermissionDeniedSqlState = "42501";
+    private const string DatabaseMissingTableCode = "databaseMissingTable";
+    private const string DatabaseMissingColumnCode = "databaseMissingColumn";
+    private const string DatabasePermissionDeniedCode = "databasePermissionDenied";
+    private const string DatabaseErrorCode = "databaseError";
+    private const string DatabaseUnavailableCode = "databaseUnavailable";
+    private const string RequestTimeoutCode = "requestTimeout";
+    private const string RequestCancelledCode = "requestCancelled";
+    private const string InternalErrorCode = "internalError";
+
+    public static string Classify(Exception exception) => exception switch
+    {
+        Npgsql.PostgresException { SqlState: MissingTableSqlState } => DatabaseMissingTableCode,
+        Npgsql.PostgresException { SqlState: MissingColumnSqlState } => DatabaseMissingColumnCode,
+        Npgsql.PostgresException { SqlState: PermissionDeniedSqlState } => DatabasePermissionDeniedCode,
+        Npgsql.PostgresException => DatabaseErrorCode,
+        Npgsql.NpgsqlException => DatabaseUnavailableCode,
+        TimeoutException => RequestTimeoutCode,
+        OperationCanceledException => RequestCancelledCode,
+        _ => InternalErrorCode
+    };
+}
+

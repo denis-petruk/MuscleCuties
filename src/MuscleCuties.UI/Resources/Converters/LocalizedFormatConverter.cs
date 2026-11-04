@@ -10,7 +10,7 @@ public sealed class LocalizedFormatConverter : IValueConverter, IMarkupExtension
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         var format = UiTextCatalog.Get(parameter as string ?? string.Empty);
-        var displayValue = value is string text ? UiTextCatalog.Translate(text) : value;
+        var displayValue = value is string text ? UiTextCatalog.TranslateRuntimeText(text) : value;
         return string.Format(culture, format, displayValue);
     }
 

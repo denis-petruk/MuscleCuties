@@ -15,10 +15,13 @@ using MuscleCuties.UI.Services.Notifications;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Security;
 using MuscleCuties.UI.Services.Workout;
+using MuscleCuties.UI.Services.Navigation;
+using MuscleCuties.UI.ViewModels.Profile;
+using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 
 namespace MuscleCuties.UI;
 
-public partial class App : Application
+public partial class App : Application, IDisposable
 {
     private readonly IServiceProvider _services;
     private bool _startupFailed;
@@ -27,6 +30,9 @@ public partial class App : Application
     private int _startupStarted;
     private Task? _startupTask;
     private DateTime _lastDashboardRefreshDate = DateTime.MinValue;
+    private bool _isForeground;
+    private CancellationTokenSource? _foregroundCancellation;
+    internal event EventHandler? WorkoutTimingSuspending;
 
     public App(IServiceProvider services)
     {
@@ -34,6 +40,14 @@ public partial class App : Application
         InitializeComponent();
         SyncActivityTheme();
         RequestedThemeChanged += (_, e) => SyncActivityTheme(e.RequestedTheme);
+    }
+
+    public void Dispose()
+    {
+        _foregroundCancellation?.Cancel();
+        _foregroundCancellation?.Dispose();
+        _foregroundCancellation = null;
+        GC.SuppressFinalize(this);
     }
 
     private static void SyncActivityTheme(AppTheme? theme = null)
@@ -57,6 +71,8 @@ public partial class App : Application
 
     private void OnWindowCreated(object? sender, EventArgs e)
     {
+        _isForeground = true;
+        _foregroundCancellation = new CancellationTokenSource();
         BeginStartup();
     }
 
@@ -137,6 +153,21 @@ public partial class App : Application
                     return;
                 }
 
+                var initialRoute = Environment.GetEnvironmentVariable("MUSCLECUTIES_INITIAL_ROUTE");
+                if (!string.IsNullOrWhiteSpace(initialRoute))
+                {
+                    try
+                    {
+                        await shell.GoToAsync(initialRoute, false);
+                        _ = ScheduleNotificationsAsync(currentUser.UserId);
+                        return;
+                    }
+                    catch (Exception ex)
+                    {
+                        Trace.WriteLine($"[Startup] Failed to navigate to initial route {initialRoute}: {ex.Message}");
+                    }
+                }
+
                 await NavigateToDashboardAsync(currentUser.UserId);
                 return;
             }
@@ -177,6 +208,9 @@ public partial class App : Application
         Justification = "Exposed as an application navigation operation to page coordinators.")]
     internal async Task ActivateRootAsync(string route)
     {
+        if (route == "LoginPage")
+            _services.GetRequiredService<INavigationContextService>()
+                .TryTake<WorkoutPreferencesDto>(ProfileWorkoutPreferencesViewModel.DraftPreferencesContextKey, out _);
         await MainThread.InvokeOnMainThreadAsync(async () =>
         {
             var shell = Shell.Current as AppShell
@@ -188,6 +222,8 @@ public partial class App : Application
                 _lastDashboardRefreshDate = DateTime.Today;
         });
         Trace.WriteLine($"[Navigation] {route} selected as the app root.");
+        if (_isForeground && route != "LoginPage")
+            _ = UpdateForegroundCalendarAsync();
     }
 
     internal static async Task<DashboardPage?> WaitForDashboardPageAsync()
@@ -223,11 +259,35 @@ public partial class App : Application
 
     private void OnWindowResumed(object? sender, EventArgs e)
     {
+        _isForeground = true;
+        _foregroundCancellation?.Cancel();
+        _foregroundCancellation = new CancellationTokenSource();
+        _ = UpdateForegroundCalendarAsync();
         _ = HandleDayChangeAsync();
     }
 
     private void OnWindowStopped(object? sender, EventArgs e)
     {
+        _isForeground = false;
+        _foregroundCancellation?.Cancel();
+        WorkoutTimingSuspending?.Invoke(this, EventArgs.Empty);
+    }
+
+    private async Task UpdateForegroundCalendarAsync()
+    {
+        try
+        {
+            var cancellationToken = _foregroundCancellation?.Token ?? CancellationToken.None;
+            var tokenStore = _services.GetRequiredService<IBackendSessionTokenStore>();
+            var tokens = await tokenStore.ReadTokensAsync(cancellationToken);
+            if (!_isForeground || tokens is null)
+                return;
+            await _services.GetRequiredService<IWorkoutAccountCalendarClient>().UpdateForegroundTimeZoneAsync(cancellationToken);
+        }
+        catch (Exception exception)
+        {
+            Trace.WriteLine($"[WorkoutCalendar] Foreground update failed ({exception.GetType().Name}).");
+        }
     }
 
     private async Task HandleDayChangeAsync()

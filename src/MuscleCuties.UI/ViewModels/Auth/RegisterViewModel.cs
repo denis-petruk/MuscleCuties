@@ -98,7 +98,7 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
 
         if (!HasAcceptedPrivacyNotice)
         {
-            ErrorMessage = "Accept the privacy notice before creating an account.";
+            ErrorMessage = "Ui_Auth_Error_PrivacyRequired";
             return;
         }
 
@@ -145,7 +145,7 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
             _ownedAttemptId = attemptId;
             if (_navigateToOtpVerificationAsync is null)
             {
-                ErrorMessage = "Email verification is unavailable. Please try again later.";
+                ErrorMessage = "Ui_Auth_Error_VerificationUnavailable";
                 return;
             }
 
@@ -161,7 +161,7 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         {
             Trace.WriteLine($"[RegisterViewModel] Registration failed ({ex.GetType().Name}).");
             if (IsCurrent())
-                ErrorMessage = "We couldn't finish creating your account securely. Please try again.";
+                ErrorMessage = "Ui_Auth_Error_CreateAccount";
         }
         finally
         {
@@ -196,7 +196,7 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         ConfirmPassword = string.Empty;
         if (_navigateToExistingLoginAsync is null)
         {
-            ErrorMessage = "You already have an account. Log in with your password.";
+            ErrorMessage = "Ui_Auth_Error_AccountExists";
             return;
         }
 
@@ -210,7 +210,7 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
 
         if (!HasAcceptedPrivacyNotice)
         {
-            ErrorMessage = "Accept the privacy notice before creating an account.";
+            ErrorMessage = "Ui_Auth_Error_PrivacyRequired";
             return;
         }
 

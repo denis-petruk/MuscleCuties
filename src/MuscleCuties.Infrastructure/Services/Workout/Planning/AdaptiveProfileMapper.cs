@@ -37,7 +37,6 @@ public static class AdaptiveProfileMapper
                 ? DefaultDaysPerWeek : profile.WorkoutDaysPerWeek),
             sessionMinutes,
             selectedActivities,
-            WorkoutActivityPreferences.ParseStrengthStyle(profile.PreferredWorkoutActivityTypes),
             equipment,
             MapInjuries(injuryLogs),
             8000,

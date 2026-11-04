@@ -2,7 +2,9 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UseCases.Features.Cycle;
 using MuscleCuties.UseCases.Features.Cycle.DailyLog;
@@ -19,6 +21,9 @@ public partial class CycleViewModel
     [ObservableProperty] private string _quickLogDateText = string.Empty;
     private int _quickLogLoadVersion;
     [ObservableProperty] private string _quickLogStatusText = string.Empty;
+
+    /// <summary>True when the last save was rejected because symptoms had no active cycle to attach to.</summary>
+    [ObservableProperty] private bool _isQuickLogPeriodStartNeeded;
     [ObservableProperty] private FlowIntensity? _selectedFlowIntensity;
     [ObservableProperty] private ObservableCollection<SymptomOptionItem> _symptomOptions = new();
 
@@ -26,6 +31,7 @@ public partial class CycleViewModel
     public RelayCommand CloseQuickLogSheetCommand { get; private set; } = null!;
     public RelayCommand TogglePeriodStartedCommand { get; private set; } = null!;
     public RelayCommand TogglePeriodEndedCommand { get; private set; } = null!;
+    public RelayCommand StartPeriodFromQuickLogCommand { get; private set; } = null!;
     public RelayCommand<FlowOptionItem> SelectFlowCommand { get; private set; } = null!;
     public RelayCommand<SymptomOptionItem> ToggleSymptomCommand { get; private set; } = null!;
     public AsyncRelayCommand SaveQuickLogCommand { get; private set; } = null!;
@@ -36,6 +42,7 @@ public partial class CycleViewModel
         CloseQuickLogSheetCommand = new RelayCommand(CloseQuickLogSheet);
         TogglePeriodStartedCommand = new RelayCommand(TogglePeriodStarted);
         TogglePeriodEndedCommand = new RelayCommand(TogglePeriodEnded);
+        StartPeriodFromQuickLogCommand = new RelayCommand(StartPeriodFromQuickLog);
         SelectFlowCommand = new RelayCommand<FlowOptionItem>(SelectFlow);
         ToggleSymptomCommand = new RelayCommand<SymptomOptionItem>(ToggleSymptom);
         SaveQuickLogCommand = new AsyncRelayCommand(SaveQuickLogCoreAsync, () => !IsQuickLogLoading && !IsBusy);
@@ -53,6 +60,7 @@ public partial class CycleViewModel
                            (day?.HasRecordedObservation == true ? " · Recorded" :
                                day?.IsPredictedFuture == true ? " · Predicted" : string.Empty);
         QuickLogStatusText = string.Empty;
+        IsQuickLogPeriodStartNeeded = false;
 
         // An estimated menstrual phase is not evidence that a period started.
         IsPeriodStarted = false;
@@ -90,7 +98,7 @@ public partial class CycleViewModel
         {
             Trace.WriteLine($"[Cycle] Could not load symptoms for date ({ex.GetType().Name})");
             if (loadVersion == Volatile.Read(ref _quickLogLoadVersion))
-                QuickLogStatusText = "Could not load the saved entry. Close and try again.";
+                QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_LoadFailed");
         }
         finally
         {
@@ -105,8 +113,24 @@ public partial class CycleViewModel
     private void CloseQuickLogSheet()
     {
         IsQuickLogSheetVisible = false;
+        IsQuickLogPeriodStartNeeded = false;
         Interlocked.Increment(ref _quickLogLoadVersion);
         IsQuickLogLoading = false;
+    }
+
+    /// <summary>
+    /// Recovery action for the "symptoms without an active cycle" rejection: turn the visible period-start
+    /// toggle on for the selected day, so the next save creates the cycle the symptoms attach to.
+    /// </summary>
+    private void StartPeriodFromQuickLog()
+    {
+        if (IsQuickLogLoading) return;
+
+        if (!IsPeriodStarted)
+            TogglePeriodStarted();
+
+        IsQuickLogPeriodStartNeeded = false;
+        QuickLogStatusText = string.Empty;
     }
 
     private void TogglePeriodStarted()
@@ -173,7 +197,7 @@ public partial class CycleViewModel
         if (!IsPeriodStarted && !IsPeriodEnded && SelectedFlowIntensity is null &&
             SymptomOptions.All(symptom => !symptom.IsSelected))
         {
-            QuickLogStatusText = "Choose a period update, flow, or symptom before saving.";
+            QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_ChooseEntry");
             return;
         }
 
@@ -190,24 +214,30 @@ public partial class CycleViewModel
             if (!await _dailyLog.SaveAsync(new CycleDailyLogRequest(
                     SelectedDate, IsPeriodStarted, IsPeriodEnded, flow,
                     selectedSymptoms)))
-                throw new InvalidOperationException("Active cycle account unavailable.");
+            {
+                QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_AccountUnavailable");
+                return;
+            }
 
             IsQuickLogSheetVisible = false;
             await RefreshCycleDataAsync();
             NotifyCycleMutated();
         }
+        catch (CycleSymptomsNeedActiveCycleIssue)
+        {
+            IsQuickLogPeriodStartNeeded = true;
+            QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_PeriodStartNeeded");
+        }
         catch (CyclePhaseOrderIssue ex)
         {
-            QuickLogStatusText = $"This phase would skip a step. Log {ex.SuggestedPhase} first.";
-        }
-        catch (InvalidOperationException)
-        {
-            QuickLogStatusText = "Record a period start before adding symptoms without a known cycle phase.";
+            QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+                "Cycle_QuickLog_PhaseOrderFormat",
+                ex.SuggestedPhase);
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[Cycle] Quick log save failed ({ex.GetType().Name}).");
-            QuickLogStatusText = "Could not save log. Please try again.";
+            QuickLogStatusText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_SaveFailed");
         }
         finally
         {

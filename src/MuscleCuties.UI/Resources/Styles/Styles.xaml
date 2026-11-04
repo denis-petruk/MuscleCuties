@@ -3,20 +3,372 @@
 <ResourceDictionary
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared">
 
-    <x:Int32 x:Key="AuthCodeLength">6</x:Int32>
-    <x:Double x:Key="AuthCodeFieldSpacing">6</x:Double>
-    <x:Double x:Key="AuthCodeSectionSpacing">18</x:Double>
-    <x:Double x:Key="AuthCodeEntryFontSize">22</x:Double>
-    <x:Double x:Key="AuthCodeVerifyButtonHeight">52</x:Double>
-    <x:Double x:Key="AuthCodeSecondaryButtonHeight">44</x:Double>
-    <x:Double x:Key="AuthCodeActionSpacing">12</x:Double>
-    <Thickness x:Key="AuthCodeInstructionSpacing">0,0,0,4</Thickness>
-    <Thickness x:Key="AuthCodeRecipientSpacing">0,0,0,24</Thickness>
-    <Thickness x:Key="AuthCodeActionsTopSpacing">0,12,0,0</Thickness>
-    <Thickness x:Key="AuthCodeCountdownTopSpacing">0,8,0,0</Thickness>
-    <Thickness x:Key="AuthOtpCountdownTopSpacing">0,16,0,0</Thickness>
+    <!-- Layout and content roles remain separate from the two permitted card surfaces. -->
+    <!-- Semantic presentation roles; values retain the current iOS geometry. -->
+    <Thickness x:Key="PresentationPageHeaderPadding">20,36,20,12</Thickness>
+    <Thickness x:Key="PresentationPageContentPadding">20,8,20,32</Thickness>
+    <Thickness x:Key="PresentationFormPagePadding">20,12,20,32</Thickness>
+    <Thickness x:Key="PresentationAuthPagePadding">20,8,20,32</Thickness>
+    <Thickness x:Key="PresentationModalHeaderPadding">20,18,20,12</Thickness>
+    <Thickness x:Key="PresentationModalPagePadding">20,16,20,32</Thickness>
+    <Thickness x:Key="PresentationActionFooterPadding">20,12,20,36</Thickness>
+    <Thickness x:Key="PresentationInputHorizontalPadding">16,0</Thickness>
+    <x:Double x:Key="PresentationFieldSpacing">4</x:Double>
+    <x:Double x:Key="PresentationFormSpacing">16</x:Double>
+    <x:Double x:Key="PresentationDecorativeIconSize">40</x:Double>
+    <x:Double x:Key="PresentationMinimumTouchSize">44</x:Double>
+    <x:Double x:Key="PresentationInputMinimumHeight">52</x:Double>
+    <x:Double x:Key="PresentationInputCornerRadius">12</x:Double>
+
+    <!-- One adaptive page frame: every page centers its header, body and footer within this width. -->
+    <x:Double x:Key="PageContentMaxWidth">640</x:Double>
+    <Thickness x:Key="PresentationCollectionItemMargin">0,0,0,8</Thickness>
+    <!-- A virtualized list insets its content once, on the container, so header cards and item
+         cards share one left and right edge. Item margin stays vertical rhythm only. -->
+    <Thickness x:Key="PresentationCollectionHorizontalInset">20,0,20,0</Thickness>
+    <Thickness x:Key="PresentationCollectionHeaderPadding">0,8,0,32</Thickness>
+    <Thickness x:Key="UiInsets0_8">0,8</Thickness>
+    <x:Double x:Key="UiSpaceSection">32</x:Double>
+    <x:Double x:Key="UiSpacePage">40</x:Double>
+
+    <x:Int32 x:Key="WorkoutOverlayRowSpan">2</x:Int32>
+
+    <!-- Shared layout and code-behind presentation tokens -->
+
+    <Thickness x:Key="UiInsets12_8">12,8</Thickness>
+    <RoundRectangle x:Key="UiRoundRectangleRadius4" CornerRadius="4" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius5" CornerRadius="5" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius6" CornerRadius="6" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius7" CornerRadius="7" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius8" CornerRadius="8" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius10" CornerRadius="10" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius11" CornerRadius="11" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius13" CornerRadius="13" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius17" CornerRadius="17" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius18" CornerRadius="18" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius20" CornerRadius="20" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius24" CornerRadius="24" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius32" CornerRadius="32" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius36" CornerRadius="36" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius40" CornerRadius="40" />
+    <RoundRectangle x:Key="UiRoundRectangleRadius130" CornerRadius="130" />
+    <x:Double x:Key="UiDimension104">104</x:Double>
+    <x:Double x:Key="UiDimension110">110</x:Double>
+    <x:Double x:Key="UiDimension118">118</x:Double>
+    <x:Double x:Key="UiDimension120">120</x:Double>
+    <x:Double x:Key="UiDimension124">124</x:Double>
+    <x:Double x:Key="UiDimension132">132</x:Double>
+    <x:Double x:Key="UiDimension148">148</x:Double>
+    <x:Double x:Key="UiDimension150">150</x:Double>
+    <x:Double x:Key="UiDimension152">152</x:Double>
+    <x:Double x:Key="UiDimension156">156</x:Double>
+    <x:Double x:Key="UiDimension21">21</x:Double>
+    <x:Double x:Key="UiDimension220">220</x:Double>
+    <x:Double x:Key="UiDimension240">240</x:Double>
+    <x:Double x:Key="UiDimension26">26</x:Double>
+    <x:Double x:Key="UiDimension260">260</x:Double>
+    <x:Double x:Key="UiDimension30">30</x:Double>
+    <x:Double x:Key="UiDimension32">32</x:Double>
+    <x:Double x:Key="UiDimension34">34</x:Double>
+    <x:Double x:Key="UiDimension36">36</x:Double>
+    <x:Double x:Key="UiDimension38">38</x:Double>
+    <x:Double x:Key="UiDimension40">40</x:Double>
+    <x:Double x:Key="UiDimension400">400</x:Double>
+    <x:Double x:Key="UiDimension42">42</x:Double>
+    <x:Double x:Key="UiDimension46">46</x:Double>
+    <x:Double x:Key="UiDimension50">50</x:Double>
+    <x:Double x:Key="UiDimension64">64</x:Double>
+    <x:Double x:Key="UiDimension68">68</x:Double>
+    <x:Double x:Key="UiDimension7">7</x:Double>
+    <x:Double x:Key="UiDimension72">72</x:Double>
+    <x:Double x:Key="UiDimension76">76</x:Double>
+    <x:Double x:Key="UiDimension80">80</x:Double>
+    <x:Double x:Key="UiDimension82">82</x:Double>
+    <x:Double x:Key="UiDimension84">84</x:Double>
+    <x:Double x:Key="UiDimension88">88</x:Double>
+    <x:Double x:Key="UiDimension9">9</x:Double>
+    <x:Double x:Key="UiDimension90">90</x:Double>
+    <x:Double x:Key="UiDimension92">92</x:Double>
+    <x:Double x:Key="UiDimensionMinus1">-1</x:Double>
+    <Thickness x:Key="UiInsets0_0_0_10">0,0,0,10</Thickness>
+    <Thickness x:Key="UiInsets0_0_0_12">0,0,0,12</Thickness>
+    <Thickness x:Key="UiInsets0_0_0_16">0,0,0,16</Thickness>
+    <Thickness x:Key="UiInsets0_0_0_2">0,0,0,2</Thickness>
+    <Thickness x:Key="UiInsets0_0_0_28">0,0,0,28</Thickness>
+    <Thickness x:Key="UiInsets0_0_0_3">0,0,0,3</Thickness>
+    <Thickness x:Key="UiInsets0_0_0_32">0,0,0,32</Thickness>
+    <Thickness x:Key="UiInsets0_0_6_4">0,0,6,4</Thickness>
+    <Thickness x:Key="UiInsets0_0_6_6">0,0,6,6</Thickness>
+    <Thickness x:Key="UiInsets0_0_7_0">0,0,7,0</Thickness>
+    <Thickness x:Key="UiInsets0_0_8_0">0,0,8,0</Thickness>
+    <Thickness x:Key="UiInsets0_0_Minus34_0">0,0,-34,0</Thickness>
+    <Thickness x:Key="UiInsets0_0_Minus8_0">0,0,-8,0</Thickness>
+    <Thickness x:Key="UiInsets0_10">0,10</Thickness>
+    <Thickness x:Key="UiInsets0_104_24_0">0,104,24,0</Thickness>
+    <Thickness x:Key="UiInsets0_10_0_0">0,10,0,0</Thickness>
+    <Thickness x:Key="UiInsets0_10_0_10">0,10,0,10</Thickness>
+    <Thickness x:Key="UiInsets0_10_12_10">0,10,12,10</Thickness>
+    <Thickness x:Key="UiInsets0_12">0,12</Thickness>
+    <Thickness x:Key="UiInsets0_12_0_8">0,12,0,8</Thickness>
+    <Thickness x:Key="UiInsets0_16">0,16</Thickness>
+    <Thickness x:Key="UiInsets0_16_0_8">0,16,0,8</Thickness>
+    <Thickness x:Key="UiInsets0_2">0,2</Thickness>
+    <Thickness x:Key="UiInsets0_20_0_12">0,20,0,12</Thickness>
+    <Thickness x:Key="UiInsets0_20_0_8">0,20,0,8</Thickness>
+    <Thickness x:Key="UiInsets0_24">0,24</Thickness>
+    <Thickness x:Key="UiInsets0_24_0_0">0,24,0,0</Thickness>
+    <Thickness x:Key="UiInsets0_24_0_8">0,24,0,8</Thickness>
+    <Thickness x:Key="UiInsets0_2_0_0">0,2,0,0</Thickness>
+    <Thickness x:Key="UiInsets0_2_0_10">0,2,0,10</Thickness>
+    <Thickness x:Key="UiInsets0_2_0_2">0,2,0,2</Thickness>
+    <Thickness x:Key="UiInsets0_2_0_4">0,2,0,4</Thickness>
+    <Thickness x:Key="UiInsets0_4">0,4</Thickness>
+    <Thickness x:Key="UiInsets0_4_0_0">0,4,0,0</Thickness>
+    <Thickness x:Key="UiInsets0_4_0_20">0,4,0,20</Thickness>
+    <Thickness x:Key="UiInsets0_6_0_0">0,6,0,0</Thickness>
+    <Thickness x:Key="UiInsets0_6_6_0">0,6,6,0</Thickness>
+    <Thickness x:Key="UiInsets0_8_0_12">0,8,0,12</Thickness>
+    <Thickness x:Key="UiInsets0_8_0_16">0,8,0,16</Thickness>
+    <Thickness x:Key="UiInsets0_Minus120_54_0">0,-120,54,0</Thickness>
+    <Thickness x:Key="UiInsets0_Minus2_0_0">0,-2,0,0</Thickness>
+    <Thickness x:Key="UiInsets0_Minus4_0_0">0,-4,0,0</Thickness>
+    <Thickness x:Key="UiInsets10_0">10,0</Thickness>
+    <Thickness x:Key="UiInsets10_2">10,2</Thickness>
+    <Thickness x:Key="UiInsets10_4">10,4</Thickness>
+    <Thickness x:Key="UiInsets10_6">10,6</Thickness>
+    <Thickness x:Key="UiInsets10_7">10,7</Thickness>
+    <Thickness x:Key="UiInsets12_0">12,0</Thickness>
+    <Thickness x:Key="UiInsets12_0_0_0">12,0,0,0</Thickness>
+    <Thickness x:Key="UiInsets12_14">12,14</Thickness>
+    <Thickness x:Key="UiInsets12_9">12,9</Thickness>
+    <Thickness x:Key="UiInsets14_0">14,0</Thickness>
+    <Thickness x:Key="UiInsets14_14">14,14</Thickness>
+    <Thickness x:Key="UiInsets14_7">14,7</Thickness>
+    <Thickness x:Key="UiInsets16_0">16,0</Thickness>
+    <Thickness x:Key="UiInsets16_0_16_12">16,0,16,12</Thickness>
+    <Thickness x:Key="UiInsets16_6_16_10">16,6,16,10</Thickness>
+    <Thickness x:Key="UiInsets16_8">16,8</Thickness>
+    <Thickness x:Key="UiInsets16_8_16_16">16,8,16,16</Thickness>
+    <Thickness x:Key="UiInsets18_0_18_12">18,0,18,12</Thickness>
+    <Thickness x:Key="UiInsets18_0_18_16">18,0,18,16</Thickness>
+    <Thickness x:Key="UiInsets18_14">18,14</Thickness>
+    <Thickness x:Key="UiInsets18_16">18,16</Thickness>
+    <Thickness x:Key="UiInsets2">2</Thickness>
+    <Thickness x:Key="UiInsets20_0">20,0</Thickness>
+    <Thickness x:Key="UiInsets20_0_20_12">20,0,20,12</Thickness>
+    <Thickness x:Key="UiInsets20_0_20_14">20,0,20,14</Thickness>
+    <Thickness x:Key="UiInsets20_0_20_16">20,0,20,16</Thickness>
+    <Thickness x:Key="UiInsets20_0_20_20">20,0,20,20</Thickness>
+    <Thickness x:Key="UiInsets20_0_20_24">20,0,20,24</Thickness>
+    <Thickness x:Key="UiInsets20_0_20_32">20,0,20,32</Thickness>
+    <Thickness x:Key="UiInsets20_12_20_20">20,12,20,20</Thickness>
+    <Thickness x:Key="UiInsets20_12_20_24">20,12,20,24</Thickness>
+    <Thickness x:Key="UiInsets20_16_20_0">20,16,20,0</Thickness>
+    <Thickness x:Key="UiInsets20_16_20_16">20,16,20,16</Thickness>
+    <Thickness x:Key="UiInsets20_16_20_20">20,16,20,20</Thickness>
+    <Thickness x:Key="UiInsets20_18_20_24">20,18,20,24</Thickness>
+    <Thickness x:Key="UiInsets20_20">20,20</Thickness>
+    <Thickness x:Key="UiInsets20_20_20_24">20,20,20,24</Thickness>
+    <Thickness x:Key="UiInsets20_24">20,24</Thickness>
+    <Thickness x:Key="UiInsets20_4_20_16">20,4,20,16</Thickness>
+    <Thickness x:Key="UiInsets20_4_20_20">20,4,20,20</Thickness>
+    <Thickness x:Key="UiInsets20_8">20,8</Thickness>
+    <Thickness x:Key="UiInsets20_8_20_16">20,8,20,16</Thickness>
+    <Thickness x:Key="UiInsets20_8_20_20">20,8,20,20</Thickness>
+    <Thickness x:Key="UiInsets22_20">22,20</Thickness>
+    <Thickness x:Key="UiInsets22_Minus108_0_0">22,-108,0,0</Thickness>
+    <Thickness x:Key="UiInsets24_0">24,0</Thickness>
+    <Thickness x:Key="UiInsets24_0_0_0">24,0,0,0</Thickness>
+    <Thickness x:Key="UiInsets24_12_24_6">24,12,24,6</Thickness>
+    <Thickness x:Key="UiInsets24_16_24_6">24,16,24,6</Thickness>
+    <Thickness x:Key="UiInsets24_32">24,32</Thickness>
+    <Thickness x:Key="UiInsets24_36">24,36</Thickness>
+    <Thickness x:Key="UiInsets24_4_24_20">24,4,24,20</Thickness>
+    <Thickness x:Key="UiInsets28_32">28,32</Thickness>
+    <Thickness x:Key="UiInsets2_0">2,0</Thickness>
+    <Thickness x:Key="UiInsets2_4_2_0">2,4,2,0</Thickness>
+    <Thickness x:Key="UiInsets2_8_2_0">2,8,2,0</Thickness>
+    <Thickness x:Key="UiInsets4">4</Thickness>
+    <Thickness x:Key="UiInsets4_0">4,0</Thickness>
+    <Thickness x:Key="UiInsets4_1">4,1</Thickness>
+    <Thickness x:Key="UiInsets4_2">4,2</Thickness>
+    <Thickness x:Key="UiInsets4_4_0_0">4,4,0,0</Thickness>
+    <Thickness x:Key="UiInsets4_6">4,6</Thickness>
+    <Thickness x:Key="UiInsets4_6_4_0">4,6,4,0</Thickness>
+    <Thickness x:Key="UiInsets56_0_0_0">56,0,0,0</Thickness>
+    <Thickness x:Key="UiInsets6">6</Thickness>
+    <Thickness x:Key="UiInsets60_118_0_0">60,118,0,0</Thickness>
+    <Thickness x:Key="UiInsets6_0">6,0</Thickness>
+    <Thickness x:Key="UiInsets6_2">6,2</Thickness>
+    <Thickness x:Key="UiInsets6_3">6,3</Thickness>
+    <Thickness x:Key="UiInsets6_9">6,9</Thickness>
+    <Thickness x:Key="UiInsets8">8</Thickness>
+    <Thickness x:Key="UiInsets8_0">8,0</Thickness>
+    <Thickness x:Key="UiInsets8_2">8,2</Thickness>
+    <Thickness x:Key="UiInsets8_3">8,3</Thickness>
+    <Thickness x:Key="UiInsets8_4">8,4</Thickness>
+    <Thickness x:Key="UiInsetsMinus20_Minus8_Minus20_Minus16">-20,-8,-20,-16</Thickness>
+    <Thickness x:Key="UiInsetsMinus34_0_0_0">-34,0,0,0</Thickness>
+    <x:Double x:Key="UiSpacing3">3</x:Double>
+    <x:Double x:Key="UiSpacing7">7</x:Double>
+    <x:Double x:Key="UiSpacing9">9</x:Double>
+    <x:Double x:Key="UiCornerRadius14">14</x:Double>
+    <x:Double x:Key="UiCornerRadius2">2</x:Double>
+    <x:Double x:Key="UiCornerRadius3">3</x:Double>
+    <x:Double x:Key="UiCornerRadius4">4</x:Double>
+    <x:Double x:Key="UiCornerRadius5">5</x:Double>
+    <x:Double x:Key="UiCornerRadius6">6</x:Double>
+    <x:Double x:Key="UiCornerRadius7">7</x:Double>
+    <x:Double x:Key="UiDimension1">1</x:Double>
+    <x:Double x:Key="UiDimension10">10</x:Double>
+    <x:Double x:Key="UiDimension11">11</x:Double>
+    <x:Double x:Key="UiDimension12">12</x:Double>
+    <x:Double x:Key="UiDimension13">13</x:Double>
+    <x:Double x:Key="UiDimension14">14</x:Double>
+    <x:Double x:Key="UiDimension15">15</x:Double>
+    <x:Double x:Key="UiDimension16">16</x:Double>
+    <x:Double x:Key="UiDimension17">17</x:Double>
+    <x:Double x:Key="UiDimension18">18</x:Double>
+    <x:Double x:Key="UiDimension20">20</x:Double>
+    <x:Double x:Key="UiDimension28">28</x:Double>
+    <x:Double x:Key="UiDimension360">360</x:Double>
+    <x:Double x:Key="UiDimension4">4</x:Double>
+    <x:Double x:Key="UiDimension44">44</x:Double>
+    <x:Double x:Key="UiDimension5">5</x:Double>
+    <x:Double x:Key="UiDimension52">52</x:Double>
+    <x:Double x:Key="UiDimension520">520</x:Double>
+    <x:Double x:Key="UiDimension6">6</x:Double>
+    <x:Double x:Key="UiDimension60">60</x:Double>
+    <x:Double x:Key="UiDimension640">640</x:Double>
+    <x:Double x:Key="ModalSheetBodyMaximumHeight">520</x:Double>
+    <x:Double x:Key="ModalSheetMaximumHeight">640</x:Double>
+    <x:Double x:Key="UiDimension720">720</x:Double>
+    <x:Double x:Key="UiDimension8">8</x:Double>
+    <x:Double x:Key="UiDimension96">96</x:Double>
+    <x:Double x:Key="UiFontSize15">15</x:Double>
+    <x:Double x:Key="UiFontSize16">16</x:Double>
+    <x:Double x:Key="UiFontSize17">17</x:Double>
+    <x:Double x:Key="UiFontSize18">18</x:Double>
+    <x:Double x:Key="UiFontSize20">20</x:Double>
+    <x:Double x:Key="UiFontSize22">22</x:Double>
+    <x:Double x:Key="UiFontSize24">24</x:Double>
+    <x:Double x:Key="UiFontSize26">26</x:Double>
+    <x:Double x:Key="UiFontSize27">27</x:Double>
+    <x:Double x:Key="UiFontSize28">28</x:Double>
+    <Thickness x:Key="UiInsets0_0_0_24">0,0,0,24</Thickness>
+    <Thickness x:Key="UiInsets0_0_0_4">0,0,0,4</Thickness>
+    <Thickness x:Key="UiInsets0_0_0_8">0,0,0,8</Thickness>
+    <Thickness x:Key="UiInsets0_0_8_8">0,0,8,8</Thickness>
+    <Thickness x:Key="UiInsets0_12_0_0">0,12,0,0</Thickness>
+    <Thickness x:Key="UiInsets0_12_0_4">0,12,0,4</Thickness>
+    <Thickness x:Key="UiInsets0_16_0_0">0,16,0,0</Thickness>
+    <Thickness x:Key="UiInsets0_18_0_0">0,18,0,0</Thickness>
+    <Thickness x:Key="UiInsets0_8_0_0">0,8,0,0</Thickness>
+    <Thickness x:Key="UiInsets16_12">16,12</Thickness>
+    <Thickness x:Key="UiInsets24_8_24_12">24,8,24,12</Thickness>
+    <Thickness x:Key="UiInsets2_8">2,8</Thickness>
+    <Thickness x:Key="UiInsets8_0_0_0">8,0,0,0</Thickness>
+    <Thickness x:Key="UiInsets8_6">8,6</Thickness>
+    <x:Double x:Key="UiSpacing0">0</x:Double>
+    <x:Double x:Key="UiSpacing1">1</x:Double>
+    <x:Double x:Key="UiSpacing10">10</x:Double>
+    <x:Double x:Key="UiSpacing14">14</x:Double>
+    <x:Double x:Key="UiSpacing18">18</x:Double>
+    <x:Double x:Key="UiSpacing2">2</x:Double>
+    <x:Double x:Key="UiSpacing20">20</x:Double>
+    <x:Double x:Key="UiSpacing5">5</x:Double>
+    <x:Double x:Key="UiSpacing6">6</x:Double>
+    <x:Double x:Key="UiStrokeWidth0_5">0.5</x:Double>
+    <x:Double x:Key="UiStrokeWidth1_4">1.4</x:Double>
+    <x:Double x:Key="UiStrokeWidth1_6">1.6</x:Double>
+    <x:Double x:Key="UiStrokeWidth1_7">1.7</x:Double>
+    <x:Double x:Key="UiStrokeWidth1_75">1.75</x:Double>
+    <x:Double x:Key="UiStrokeWidth1_8">1.8</x:Double>
+    <x:Double x:Key="UiStrokeWidth2">2</x:Double>
+    <x:Double x:Key="UiStrokeWidth2_2">2.2</x:Double>
+    <x:Double x:Key="UiStrokeWidth2_5">2.5</x:Double>
+    <x:Double x:Key="UiStrokeWidth3">3</x:Double>
+    <!-- Shared code-behind presentation tokens -->
+    <x:Double x:Key="UiDimension130">130</x:Double>
+    <x:Double x:Key="UiDimension208">208</x:Double>
+    <x:Double x:Key="UiDimension760">760</x:Double>
+    <x:Double x:Key="UiStrokeWidth1_15">1.15</x:Double>
+    <x:Double x:Key="UiStrokeWidth1_25">1.25</x:Double>
+    <x:Double x:Key="UiStrokeWidth2_8">2.8</x:Double>
+    <x:Double x:Key="UiStrokeWidth5">5</x:Double>
+    <x:Double x:Key="UiStrokeWidth6">6</x:Double>
+    <x:Double x:Key="UiCornerRadius2_5">2.5</x:Double>
+    <x:Double x:Key="UiOpacityHidden">0</x:Double>
+    <x:Double x:Key="UiOpacityFull">1</x:Double>
+    <x:Double x:Key="UiOpacitySubtle">0.6</x:Double>
+    <x:Double x:Key="UiOpacityBackdrop">0.7</x:Double>
+    <x:Double x:Key="UiOpacityEstimatedDay">0.72</x:Double>
+    <x:Double x:Key="UiLineHeightLongForm">1.5</x:Double>
+    <x:Double x:Key="UiCharacterSpacingWide">1.1</x:Double>
+    <x:Double x:Key="UiScaleModalStart">0.97</x:Double>
+    <x:Double x:Key="UiScaleCelebrationStart">0.64</x:Double>
+    <x:Double x:Key="UiScaleCelebrationPeak">1.12</x:Double>
+    <x:Double x:Key="UiScaleCelebrationSettle">0.98</x:Double>
+    <x:Double x:Key="UiScaleSparkSmall">0.5</x:Double>
+    <x:Double x:Key="UiScaleSparkMedium">0.6</x:Double>
+    <x:Double x:Key="UiScaleSparkLarge">0.62</x:Double>
+    <x:Double x:Key="UiScaleSparkTall">0.58</x:Double>
+    <x:Double x:Key="UiScaleSparkPeak">1.35</x:Double>
+    <x:Double x:Key="UiMotionOffsetModalShow">40</x:Double>
+    <x:Double x:Key="UiMotionOffsetModalHide">20</x:Double>
+    <x:Double x:Key="UiMotionOffsetCelebrationEntry">150</x:Double>
+    <x:Double x:Key="UiMotionOffsetCelebrationExit">110</x:Double>
+    <x:Double x:Key="UiMotionRotationCelebrationStart">24</x:Double>
+    <x:Double x:Key="UiMotionRotationCelebrationSettle">10</x:Double>
+    <x:Double x:Key="UiMotionRotationCelebrationSpark">18</x:Double>
+    <x:Double x:Key="UiMotionSparkLeftTopStartX">-90</x:Double>
+    <x:Double x:Key="UiMotionSparkLeftTopStartY">-32</x:Double>
+    <x:Double x:Key="UiMotionSparkLeftBottomStartX">-76</x:Double>
+    <x:Double x:Key="UiMotionSparkLeftBottomStartY">34</x:Double>
+    <x:Double x:Key="UiMotionSparkRightTopStartX">88</x:Double>
+    <x:Double x:Key="UiMotionSparkRightTopStartY">-38</x:Double>
+    <x:Double x:Key="UiMotionSparkRightBottomStartX">74</x:Double>
+    <x:Double x:Key="UiMotionSparkRightBottomStartY">30</x:Double>
+    <x:Double x:Key="UiMotionSparkLeftTopEndX">36</x:Double>
+    <x:Double x:Key="UiMotionSparkLeftTopEndY">-78</x:Double>
+    <x:Double x:Key="UiMotionSparkLeftBottomEndX">42</x:Double>
+    <x:Double x:Key="UiMotionSparkLeftBottomEndY">76</x:Double>
+    <x:Double x:Key="UiMotionSparkRightTopEndX">-38</x:Double>
+    <x:Double x:Key="UiMotionSparkRightTopEndY">-84</x:Double>
+    <x:Double x:Key="UiMotionSparkRightBottomEndX">-44</x:Double>
+    <x:Double x:Key="UiMotionSparkRightBottomEndY">72</x:Double>
+    <x:Double x:Key="UiMotionDuration70">70</x:Double>
+    <x:Double x:Key="UiMotionDuration90">90</x:Double>
+    <x:Double x:Key="UiMotionDuration120">120</x:Double>
+    <x:Double x:Key="UiMotionDuration160">160</x:Double>
+    <x:Double x:Key="UiMotionDuration170">170</x:Double>
+    <x:Double x:Key="UiMotionDuration200">200</x:Double>
+    <x:Double x:Key="UiMotionDuration220">220</x:Double>
+    <x:Double x:Key="UiMotionDuration240">240</x:Double>
+    <x:Double x:Key="UiMotionDuration250">250</x:Double>
+    <x:Double x:Key="UiMotionDuration260">260</x:Double>
+    <x:Double x:Key="UiMotionDuration280">280</x:Double>
+    <x:Double x:Key="UiMotionDuration300">300</x:Double>
+    <x:Double x:Key="UiMotionDuration330">330</x:Double>
+    <x:Double x:Key="UiMotionDuration360">360</x:Double>
+    <Thickness x:Key="UiInsets10">10</Thickness>
+    <x:Double x:Key="UiDimension3_5">3.5</x:Double>
+    <x:Double x:Key="UiDimension280">280</x:Double>
+    <x:Double x:Key="UiOpacityCelebration">0.98</x:Double>
+    <x:Double x:Key="UiOpacitySparkPeak">0.9</x:Double>
+    <x:Double x:Key="UiScaleFull">1</x:Double>
+    <x:Double x:Key="UiScaleCropMinimum">1</x:Double>
+    <x:Double x:Key="UiScaleCropMaximum">5</x:Double>
+    <x:Double x:Key="UiMotionOffsetZero">0</x:Double>
+    <x:Double x:Key="UiMotionOffsetCelebrationSettle">24</x:Double>
+    <x:Double x:Key="UiMotionDuration340">340</x:Double>
+    <x:Double x:Key="UiMotionDuration1200">1200</x:Double>
+    <x:Double x:Key="UiScaleCompletionStart">0.75</x:Double>
+    <x:Double x:Key="PhaseVisualWaterlineStrokeScale">0.09</x:Double>
+
 
     <Style TargetType="Page" ApplyToDerivedTypes="True">
         <Setter Property="Padding" Value="0" />
@@ -28,16 +380,7 @@
     <Style TargetType="ActivityIndicator">
         <Setter Property="Color"
                 Value="{AppThemeBinding Light={StaticResource Primary},
-                                        Dark={StaticResource White}}" />
-    </Style>
-
-    <Style x:Key="BrandLogoImage" TargetType="sharedControls:ThemeAwareBrandLogoImage">
-        <Setter Property="Aspect" Value="AspectFit" />
-        <Setter Property="WidthRequest" Value="188" />
-        <Setter Property="HeightRequest" Value="104" />
-        <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="VerticalOptions" Value="Center" />
-        <Setter Property="BackgroundColor" Value="Transparent" />
+                                        Dark={StaticResource ContrastInk}}" />
     </Style>
 
     <Style TargetType="Label">
@@ -45,8 +388,8 @@
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
         <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize15}" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
@@ -62,6 +405,15 @@
                 </VisualStateGroup>
             </VisualStateGroupList>
         </Setter>
+    </Style>
+
+    <Style TargetType="Span">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+    </Style>
+
+    <Style TargetType="RadioButton">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize15}" />
     </Style>
 
     <Style TargetType="Border">
@@ -80,43 +432,42 @@
 
     <Style TargetType="BoxView">
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource Gray300},
-                                        Dark={StaticResource Gray600}}" />
+                Value="{AppThemeBinding Light={StaticResource SurfaceSubtleLight},
+                                        Dark={StaticResource SurfaceSubtleDark}}" />
         <Setter Property="HeightRequest" Value="1" />
         <Setter Property="HorizontalOptions" Value="Fill" />
     </Style>
 
     <Style TargetType="Shadow">
-        <Setter Property="Radius" Value="16" />
-        <Setter Property="Opacity" Value="0.08" />
+        <Setter Property="Radius" Value="14" />
+        <Setter Property="Opacity" Value="0.04" />
         <Setter Property="Brush" Value="{StaticResource ShadowBrush}" />
-        <Setter Property="Offset" Value="0,4" />
-    </Style>
-
-    <Style x:Key="Headline" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="30" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CharacterSpacing" Value="0" />
-        <Setter Property="TextColor"
-                Value="{AppThemeBinding Light={StaticResource DeepMauve},
-                                        Dark={StaticResource White}}" />
+        <Setter Property="Offset" Value="0,2" />
     </Style>
 
     <Style x:Key="SubHeadline" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="26" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CharacterSpacing" Value="0" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize24}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+        <Setter Property="CharacterSpacing" Value="-0.2" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
     </Style>
 
+    <!-- Approved scale: page 27 semibold, section 18, card 16, body 15, support 13, caption 12. -->
+    <Style x:Key="PageTitle" TargetType="Label" BasedOn="{StaticResource SubHeadline}">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontSemibold}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize27}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesNone}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+    </Style>
+
     <Style x:Key="SectionTitle" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="18" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontSemibold}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize18}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesNone}" />
         <Setter Property="CharacterSpacing" Value="0" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
@@ -124,27 +475,27 @@
     </Style>
 
     <Style x:Key="CardTitle" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="18" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontSemibold}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize16}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesNone}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
     </Style>
 
     <Style x:Key="EyebrowLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="12" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CharacterSpacing" Value="0.8" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize11}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+        <Setter Property="CharacterSpacing" Value="0.6" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource PrimaryDark},
                                         Dark={StaticResource SecondaryDarkText}}" />
     </Style>
 
     <Style x:Key="BodyLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize15}" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
@@ -152,8 +503,8 @@
     </Style>
 
     <Style x:Key="MutedLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize13}" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextSecondary},
@@ -161,34 +512,38 @@
     </Style>
 
     <Style x:Key="CaptionLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize12}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextSecondary},
                                         Dark={StaticResource TextSecondaryDark}}" />
     </Style>
 
     <Style x:Key="FormFieldLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize13}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
     </Style>
 
     <Style x:Key="AccentLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize13}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource PrimaryDark},
                                         Dark={StaticResource SecondaryDarkText}}" />
     </Style>
 
     <Style x:Key="ErrorLabel" TargetType="Label">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize13}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource ErrorLight},
                                         Dark={StaticResource ErrorDark}}" />
@@ -199,37 +554,203 @@
                 Value="{AppThemeBinding Light={StaticResource CardSurface},
                                         Dark={StaticResource CardSurfaceDark}}" />
         <Setter Property="Stroke" Value="Transparent" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="Padding" Value="16" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="16" />
-            </Setter.Value>
-        </Setter>
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
+        <Setter Property="Padding" Value="{StaticResource UiInsets19}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius16}" />
         <Setter Property="Shadow">
             <Setter.Value>
-                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,3" Radius="12" Opacity="0.07" />
+                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,2" Radius="14" Opacity="0.04" />
             </Setter.Value>
         </Setter>
     </Style>
+    <Style x:Key="PlanFormSection" TargetType="VerticalStackLayout">
+        <Setter Property="Spacing" Value="{StaticResource UiSpaceCompact}" />
+    </Style>
 
+    <Style x:Key="PlanMetricRows" TargetType="Grid">
+        <Setter Property="ColumnDefinitions" Value="{StaticResource PlanMetricColumnWidths}" />
+        <Setter Property="ColumnSpacing" Value="{StaticResource UiSpaceCompact}" />
+        <Setter Property="RowSpacing" Value="{StaticResource UiSpaceCompact}" />
+    </Style>
+
+    <Style x:Key="PlanMetricLabel" TargetType="Label" BasedOn="{StaticResource FormFieldLabel}">
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+    </Style>
+
+    <!-- Secondary tonal card. Selected is a state of this permitted style, never a separate card design. -->
     <Style x:Key="CardSecondary" TargetType="Border">
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource CardSurface},
-                                        Dark={StaticResource CardSurfaceDark}}" />
+                Value="{AppThemeBinding Light={StaticResource CardSurfaceSecondary},
+                                        Dark={StaticResource CardSurfaceSecondaryDark}}" />
         <Setter Property="Stroke" Value="Transparent" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="Padding" Value="14" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
+        <Setter Property="Padding" Value="{StaticResource UiInsets19}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius16}" />
         <Setter Property="Shadow">
             <Setter.Value>
-                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,2" Radius="10" Opacity="0.05" />
+                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,1" Radius="8" Opacity="0.03" />
             </Setter.Value>
         </Setter>
+        <Style.Triggers>
+            <!-- Selection is a state of this permitted card, so its accessible semantics live here
+                 rather than being restated by every choice surface. Surfaces whose choice state is
+                 not exposed as IsSelected must project it through a local trigger and reuse the
+                 same Common_Selected / Common_NotSelected catalog keys. -->
+            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                <Setter Property="Stroke"
+                        Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- The status family's single default surface. Transient confirmations sit on this accent
+         surface so their on-accent text stays readable in both appearances. -->
+    <Style x:Key="StatusToastSurface" TargetType="Border">
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource PrimaryDark},
+                                        Dark={StaticResource ActionSurfaceDark}}" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
+        <Setter Property="Padding" Value="{StaticResource UiInsets12_8}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius16}" />
+    </Style>
+
+    <Style x:Key="PillBadge" TargetType="Border">
+        <Setter Property="HorizontalOptions" Value="Start" />
+        <Setter Property="Padding" Value="10,5" />
+        <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeShape">
+            <Setter.Value>
+                <RoundRectangle CornerRadius="999" />
+            </Setter.Value>
+        </Setter>
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource AccentSurface},
+                                        Dark={StaticResource AccentSurfaceDeepDark}}" />
+    </Style>
+
+
+
+    <!-- Busy states are a family with two roles: a page waiting for its data, and an inline
+         indicator sitting in a footer or beside a button. Every ActivityIndicator takes one,
+         so colour and size are no longer authored per call site. -->
+    <!-- Empty states are a message pair: a title and one line of explanation, in whatever surface
+         that screen uses. The pair is shared so the copy roles cannot drift apart. -->
+    <Style x:Key="StateEmptyTitle" TargetType="Label" BasedOn="{StaticResource CardTitle}">
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+    </Style>
+
+    <Style x:Key="StateEmptyBody" TargetType="Label" BasedOn="{StaticResource MutedLabel}">
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+    </Style>
+
+    <Style x:Key="StateBusyPage" TargetType="ActivityIndicator">
+        <Setter Property="Color" Value="{StaticResource Primary}" />
+        <Setter Property="HeightRequest" Value="{StaticResource UiDimension24}" />
+        <Setter Property="WidthRequest" Value="{StaticResource UiDimension24}" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="Margin" Value="{StaticResource UiInsets0_24}" />
+    </Style>
+
+    <Style x:Key="StateBusyInline" TargetType="ActivityIndicator">
+        <Setter Property="Color" Value="{StaticResource Primary}" />
+        <Setter Property="HeightRequest" Value="{StaticResource UiDimension18}" />
+        <Setter Property="WidthRequest" Value="{StaticResource UiDimension18}" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="ModalBackdrop" TargetType="BoxView">
+        <Setter Property="HeightRequest" Value="-1" />
+        <Setter Property="HorizontalOptions" Value="Fill" />
+        <Setter Property="VerticalOptions" Value="Fill" />
+        <Setter Property="BackgroundColor" Value="{StaticResource ModalScrim}" />
+    </Style>
+
+    <Style x:Key="ModalDismissTarget" TargetType="BoxView" BasedOn="{StaticResource ModalBackdrop}">
+        <Setter Property="BackgroundColor" Value="{StaticResource Transparent}" />
+    </Style>
+
+    <!-- A sheet is as tall as its content and no taller than the sheet ceiling: a body row
+         marked Auto with this cap, never a star row, which would stretch a two-line sheet to
+         the full ceiling. -->
+    <Style x:Key="ModalSheetBody" TargetType="ScrollView">
+        <Setter Property="MaximumHeightRequest" Value="{StaticResource ModalSheetBodyMaximumHeight}" />
+        <Setter Property="VerticalScrollBarVisibility" Value="Default" />
+    </Style>
+
+    <Style x:Key="ModalBody" TargetType="Grid">
+        <Setter Property="Padding" Value="{StaticResource UiInsets18}" />
+        <Setter Property="RowSpacing" Value="{StaticResource UiSpaceControl}" />
+    </Style>
+
+    <Style x:Key="DisclosureHeader" TargetType="Grid">
+        <Setter Property="Padding" Value="0,8" />
+        <Setter Property="ColumnSpacing" Value="{StaticResource UiSpaceTight}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+    </Style>
+
+    <Style x:Key="MetricValue" TargetType="Label" BasedOn="{StaticResource AccentLabel}">
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize24}" />
+        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="PlanSelectedIndicator" TargetType="Border">
+        <Setter Property="WidthRequest" Value="{StaticResource UiDimension24}" />
+        <Setter Property="HeightRequest" Value="{StaticResource UiDimension24}" />
+        <Setter Property="BackgroundColor" Value="{StaticResource Primary}" />
+        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius999}" />
+        <Setter Property="HorizontalOptions" Value="End" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="PlanChoiceCheckmark" TargetType="Path">
+        <Setter Property="WidthRequest" Value="{StaticResource UiDimensionPlanCheckmark}" />
+        <Setter Property="HeightRequest" Value="{StaticResource UiDimensionPlanCheckmark}" />
+        <Setter Property="Stroke" Value="{StaticResource ContrastInk}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidthPlanCheckmark}" />
+        <Setter Property="Aspect" Value="Uniform" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="PlanHistoryWeekCount" TargetType="Label" BasedOn="{StaticResource FormFieldLabel}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+    </Style>
+
+    <Style x:Key="PlanHistoryWeekCell" TargetType="VerticalStackLayout">
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+
+    <Style x:Key="PlanStatusMessage" TargetType="Label" BasedOn="{StaticResource MutedLabel}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="VerticalTextAlignment" Value="Center" />
+        <Setter Property="Margin" Value="{StaticResource UiInsets14}" />
+    </Style>
+
+    <Style x:Key="PlanStickyActionContent" TargetType="VerticalStackLayout">
+        <Setter Property="Spacing" Value="{StaticResource UiSpaceTight}" />
+    </Style>
+
+    <Style x:Key="PlanStickyActionSurface" TargetType="Border">
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
+        <Setter Property="Padding" Value="{StaticResource PresentationActionFooterPadding}" />
+    </Style>
+
+    <Style x:Key="PlanStickyActionDivider" TargetType="BoxView">
+        <Setter Property="HeightRequest" Value="{StaticResource UiStrokeWidth1}" />
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource BorderSubtleDark}}" />
     </Style>
 
     <Style x:Key="ModalSurface" TargetType="Border" BasedOn="{StaticResource CardPrimary}">
@@ -237,10 +758,8 @@
         <Setter Property="MaximumWidthRequest" Value="560" />
         <Setter Property="HorizontalOptions" Value="Fill" />
         <Setter Property="VerticalOptions" Value="Center" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource InputStroke},
-                                        Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="StrokeThickness" Value="1" />
+        <Setter Property="Stroke" Value="Transparent" />
+        <Setter Property="StrokeThickness" Value="0" />
         <Setter Property="StrokeShape">
             <Setter.Value>
                 <RoundRectangle CornerRadius="22" />
@@ -248,68 +767,50 @@
         </Setter>
         <Setter Property="Shadow">
             <Setter.Value>
-                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,8" Radius="24" Opacity="0.14" />
+                <Shadow Brush="{StaticResource ShadowBrush}" Offset="0,8" Radius="24" Opacity="0.12" />
             </Setter.Value>
         </Setter>
     </Style>
 
-    <CornerRadius x:Key="BottomSheetTopCornerRadius">24,24,0,0</CornerRadius>
-
-    <Style x:Key="AppBottomSheetSurface" TargetType="Border" BasedOn="{StaticResource ModalSurface}">
-        <Setter Property="VerticalOptions" Value="End" />
-        <Setter Property="Margin" Value="0" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="{StaticResource BottomSheetTopCornerRadius}" />
-            </Setter.Value>
-        </Setter>
-    </Style>
 
     <Style x:Key="ModalTitle" TargetType="Label" BasedOn="{StaticResource SubHeadline}">
-        <Setter Property="FontSize" Value="22" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize20}" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
+        <Setter Property="SemanticProperties.HeadingLevel" Value="Level2" />
     </Style>
 
     <Style x:Key="ModalSubtitle" TargetType="Label" BasedOn="{StaticResource MutedLabel}">
     </Style>
 
-    <Style x:Key="ModalIconButton" TargetType="Border">
-        <Setter Property="WidthRequest" Value="44" />
-        <Setter Property="HeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
+    <Style x:Key="HeaderIconButton" TargetType="Border">
+        <Setter Property="WidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="HeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="MinimumWidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
         <Setter Property="Padding" Value="0" />
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource AccentSurface},
-                                        Dark={StaticResource Gray900}}" />
+                Value="{AppThemeBinding Light={StaticResource SurfaceSubtleLight},
+                                        Dark={StaticResource CardSurfaceDark}}" />
         <Setter Property="StrokeThickness" Value="0" />
+        <Setter Property="VerticalOptions" Value="Center" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="22" />
+                <RoundRectangle CornerRadius="21" />
             </Setter.Value>
         </Setter>
     </Style>
 
-    <Style x:Key="CircleIconButton" TargetType="Border">
-        <Setter Property="WidthRequest" Value="44" />
-        <Setter Property="HeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="Padding" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="22" />
-            </Setter.Value>
-        </Setter>
+    <Style x:Key="ModalIconButton" TargetType="Border" BasedOn="{StaticResource HeaderIconButton}">
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource Gray200},
-                                        Dark={StaticResource Gray900}}" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource Gray300},
-                                        Dark={StaticResource Gray800}}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="VerticalOptions" Value="Center" />
+                Value="{AppThemeBinding Light={StaticResource AccentSurface},
+                                        Dark={StaticResource AccentSurfaceDeepDark}}" />
+    </Style>
+
+    <Style x:Key="DecorativeIconSurface" TargetType="Border" BasedOn="{StaticResource ModalIconButton}">
+        <Setter Property="WidthRequest" Value="{StaticResource PresentationDecorativeIconSize}" />
+        <Setter Property="HeightRequest" Value="{StaticResource PresentationDecorativeIconSize}" />
+        <Setter Property="MinimumWidthRequest" Value="{StaticResource PresentationDecorativeIconSize}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationDecorativeIconSize}" />
     </Style>
 
     <Style x:Key="ModalCloseIcon" TargetType="Path">
@@ -342,219 +843,77 @@
         <Setter Property="HeightRequest" Value="1" />
         <Setter Property="Margin" Value="20,0" />
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource Gray200},
-                                        Dark={StaticResource Gray800}}" />
-    </Style>
-
-    <Style x:Key="ModalListItem" TargetType="Border">
-        <Setter Property="Padding" Value="14" />
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource Gray100},
-                                        Dark={StaticResource Gray900}}" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource Gray300},
-                                        Dark={StaticResource Gray700}}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="ModalAccentPanel" TargetType="Border">
-        <Setter Property="Padding" Value="14" />
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource AccentSurface},
-                                        Dark={StaticResource Gray900}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="ModalFooter" TargetType="Border">
-        <Setter Property="Padding" Value="20,12,20,18" />
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource CardSurface},
-                                        Dark={StaticResource CardSurfaceDark}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="0" />
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="FormSection" TargetType="Border">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource CardSurface},
-                                        Dark={StaticResource CardSurfaceDark}}" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource InputStroke},
-                                        Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Padding" Value="16" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="16" />
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="WorkoutMetricTile" TargetType="Border">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource AccentSurface},
-                                        Dark={StaticResource Gray900}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
-        <Setter Property="Padding" Value="8,10" />
+                Value="{AppThemeBinding Light={StaticResource SurfaceSubtleLight},
+                                        Dark={StaticResource SurfaceSubtleDark}}" />
     </Style>
 
     <Style x:Key="WorkoutMetricValue" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
-        <Setter Property="FontSize" Value="17" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize17}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
     </Style>
 
     <Style x:Key="WorkoutMetricLabel" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextSecondary},
                                         Dark={StaticResource TextSecondaryDark}}" />
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize13}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
         <Setter Property="CharacterSpacing" Value="0" />
         <Setter Property="HorizontalOptions" Value="Center" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
     </Style>
 
-    <Style x:Key="WorkoutPill" TargetType="Border">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource AccentSurface},
-                                        Dark={StaticResource Gray900}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="999" />
-            </Setter.Value>
-        </Setter>
-        <Setter Property="Padding" Value="14,8" />
-        <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="VerticalOptions" Value="Center" />
-    </Style>
 
-    <Style x:Key="WorkoutPillText" TargetType="Label">
+    <!-- Workout numbers keep value, unit and completion together on one tabular line. -->
+    <Style x:Key="WorkoutNumber" TargetType="Label">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontSemibold}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize24}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesNone}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
-        <Setter Property="FontSize" Value="13" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="LineBreakMode" Value="WordWrap" />
-        <Setter Property="VerticalOptions" Value="Center" />
-        <Setter Property="VerticalTextAlignment" Value="Center" />
-        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="HorizontalTextAlignment" Value="End" />
+        <Setter Property="LineBreakMode" Value="NoWrap" />
+        <Setter Property="CharacterSpacing" Value="0" />
+    </Style>
+
+    <Style x:Key="WorkoutNumberEntry" TargetType="Entry">
+        <Setter Property="FontFamily" Value="{StaticResource AppFontSemibold}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize24}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesNone}" />
+        <Setter Property="TextColor"
+                Value="{AppThemeBinding Light={StaticResource TextPrimary},
+                                        Dark={StaticResource TextPrimaryDark}}" />
+        <Setter Property="PlaceholderColor"
+                Value="{AppThemeBinding Light={StaticResource TextSecondary},
+                                        Dark={StaticResource TextSecondaryDark}}" />
+        <Setter Property="BackgroundColor" Value="Transparent" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource UiControlHeight}" />
         <Setter Property="HorizontalTextAlignment" Value="Center" />
-    </Style>
-
-
-    <Style x:Key="WorkoutInfoTile" TargetType="Border">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource CardSurface},
-                                        Dark={StaticResource CardSurfaceDark}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
-            </Setter.Value>
-        </Setter>
-        <Setter Property="Padding" Value="10,8" />
-    </Style>
-
-    <Style x:Key="WorkoutInfoValue" TargetType="Label">
-        <Setter Property="TextColor"
-                Value="{AppThemeBinding Light={StaticResource TextPrimary},
-                                        Dark={StaticResource TextPrimaryDark}}" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontAttributes" Value="Bold" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="Fill" />
     </Style>
 
     <!-- Readiness & Recovery Dashboard / Profile Styles -->
-    <Style x:Key="ReadinessScoreBadge" TargetType="Border">
-        <Setter Property="WidthRequest" Value="36" />
-        <Setter Property="HeightRequest" Value="36" />
+    <Style x:Key="ButtonPrimary" TargetType="Button">
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource Gray200},
-                                        Dark={StaticResource Gray800}}" />
-        <Setter Property="StrokeThickness" Value="0" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="12" />
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style x:Key="ReadinessScoreIcon" TargetType="Path">
-        <Setter Property="StrokeThickness" Value="1.8" />
-        <Setter Property="StrokeLineJoin" Value="Round" />
-        <Setter Property="Aspect" Value="Uniform" />
-        <Setter Property="WidthRequest" Value="18" />
-        <Setter Property="HeightRequest" Value="18" />
-        <Setter Property="HorizontalOptions" Value="Center" />
-        <Setter Property="VerticalOptions" Value="Center" />
-    </Style>
-
-    <Style x:Key="ReadinessScoreValue" TargetType="Label">
-        <Setter Property="FontSize" Value="27" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="VerticalOptions" Value="Center" />
-    </Style>
-
-    <Style x:Key="ReadinessScoreMetricTitle" TargetType="Label">
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="TextColor"
-                Value="{AppThemeBinding Light={StaticResource TextPrimary},
-                                        Dark={StaticResource TextPrimaryDark}}" />
-    </Style>
-
-    <Style x:Key="ReadinessStatusTile" TargetType="Border">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource AccentSurface},
-                                        Dark={StaticResource Gray900}}" />
-        <Setter Property="Stroke"
-                Value="{AppThemeBinding Light={StaticResource InputStroke},
-                                        Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Padding" Value="14,12" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="16" />
-            </Setter.Value>
-        </Setter>
-    </Style>
-
-    <Style TargetType="Button">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource PrimaryDark},
+                Value="{AppThemeBinding Light={StaticResource ActionPrimaryLight},
                                         Dark={StaticResource ActionSurfaceDark}}" />
         <Setter Property="TextColor"
-                Value="{AppThemeBinding Light={StaticResource White},
-                                        Dark={StaticResource TextPrimary}}" />
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="CornerRadius" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="52" />
+                Value="{AppThemeBinding Light={StaticResource TextOnAccentLight},
+                                        Dark={StaticResource TextOnAccentDark}}" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontSemibold}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesNone}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize14}" />
+        <Setter Property="CornerRadius" Value="{StaticResource UiRadiusButton}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource UiControlHeight}" />
         <Setter Property="HorizontalOptions" Value="Fill" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
@@ -571,8 +930,8 @@
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light={StaticResource Gray300},
-                                                            Dark={StaticResource Gray800}}" />
+                                    Value="{AppThemeBinding Light={StaticResource DisabledSurfaceLight},
+                                                            Dark={StaticResource DisabledSurfaceDark}}" />
                             <Setter Property="TextColor"
                                     Value="{AppThemeBinding Light={StaticResource DisabledTextLight},
                                                             Dark={StaticResource DisabledTextDark}}" />
@@ -582,60 +941,25 @@
             </VisualStateGroupList>
         </Setter>
     </Style>
-
-    <Style x:Key="ButtonLink" TargetType="Button">
-        <Setter Property="BackgroundColor" Value="Transparent" />
-        <Setter Property="TextColor"
-                Value="{AppThemeBinding Light={StaticResource PrimaryDark},
-                                        Dark={StaticResource SecondaryDarkText}}" />
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="14" />
-        <Setter Property="BorderWidth" Value="0" />
-        <Setter Property="MinimumHeightRequest" Value="44" />
-        <Setter Property="MinimumWidthRequest" Value="44" />
-        <Setter Property="VisualStateManager.VisualStateGroups">
-            <VisualStateGroupList>
-                <VisualStateGroup x:Name="CommonStates">
-                    <VisualState x:Name="Normal" />
-                    <VisualState x:Name="Pressed">
-                        <VisualState.Setters>
-                            <Setter Property="TextColor"
-                                    Value="{AppThemeBinding Light={StaticResource ActionPressedLight},
-                                                            Dark={StaticResource TextPrimaryDark}}" />
-                        </VisualState.Setters>
-                    </VisualState>
-                    <VisualState x:Name="Disabled">
-                        <VisualState.Setters>
-                            <Setter Property="TextColor"
-                                    Value="{AppThemeBinding Light={StaticResource DisabledTextLight},
-                                                            Dark={StaticResource DisabledTextDark}}" />
-                        </VisualState.Setters>
-                    </VisualState>
-                </VisualStateGroup>
-            </VisualStateGroupList>
-        </Setter>
-    </Style>
-
-    <Style x:Key="TextActionButton" TargetType="Button" BasedOn="{StaticResource ButtonLink}" />
-
-    <Style x:Key="Button" TargetType="Button" />
-
     <Style x:Key="ButtonSecondary" TargetType="Button">
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource CardSurface},
+                Value="{AppThemeBinding Light={StaticResource AccentSurface},
                                         Dark={StaticResource CardSurfaceDark}}" />
         <Setter Property="TextColor"
-                Value="{AppThemeBinding Light={StaticResource TextPrimary},
-                                        Dark={StaticResource TextPrimaryDark}}" />
+                Value="{AppThemeBinding Light={StaticResource ActionSecondaryLight},
+                                        Dark={StaticResource SecondaryDarkText}}" />
         <Setter Property="BorderColor"
-                Value="{AppThemeBinding Light={StaticResource InputStroke},
-                                        Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CornerRadius" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="52" />
+                Value="{AppThemeBinding Light={StaticResource ControlBoundaryLight},
+                                        Dark={StaticResource ControlBoundaryDark}}" />
+        <Setter Property="BorderWidth" Value="{StaticResource UiStrokeWidth1}" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontSemibold}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize14}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesNone}" />
+        <Setter Property="CornerRadius" Value="{StaticResource UiRadiusButton}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource UiControlHeight}" />
+        <Setter Property="MinimumWidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="HeightRequest" Value="{StaticResource UiDimensionMinus1}" />
+        <Setter Property="Padding" Value="{StaticResource UiInsets12_0}" />
         <Setter Property="HorizontalOptions" Value="Fill" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
@@ -644,47 +968,51 @@
                     <VisualState x:Name="Pressed">
                         <VisualState.Setters>
                             <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light={StaticResource AccentSurface},
-                                                            Dark={StaticResource Gray900}}" />
+                                    Value="{AppThemeBinding Light={StaticResource SurfaceSubtleLight},
+                                                            Dark={StaticResource SurfaceSubtleDark}}" />
+                            <Setter Property="Scale" Value="0.98" />
                         </VisualState.Setters>
                     </VisualState>
                     <VisualState x:Name="Disabled">
                         <VisualState.Setters>
                             <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light={StaticResource Gray200},
-                                                            Dark={StaticResource Gray800}}" />
+                                    Value="{AppThemeBinding Light={StaticResource SurfaceSubtleLight},
+                                                            Dark={StaticResource SurfaceSubtleDark}}" />
                             <Setter Property="TextColor"
                                     Value="{AppThemeBinding Light={StaticResource DisabledTextLight},
                                                             Dark={StaticResource DisabledTextDark}}" />
                         </VisualState.Setters>
                     </VisualState>
                 </VisualStateGroup>
+                <VisualStateGroup x:Name="SelectionStates">
+                    <VisualState x:Name="Unselected">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor"
+                                    Value="{AppThemeBinding Light={StaticResource SurfaceSunkenLight}, Dark={StaticResource SurfaceSunkenDark}}" />
+                            <Setter Property="BorderColor"
+                                    Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource BorderSubtleDark}}" />
+                            <Setter Property="TextColor"
+                                    Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                    <VisualState x:Name="Selected">
+                        <VisualState.Setters>
+                            <Setter Property="BackgroundColor"
+                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                            <Setter Property="BorderColor"
+                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                            <Setter Property="TextColor"
+                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
             </VisualStateGroupList>
         </Setter>
-    </Style>
-
-    <Style x:Key="PlatformAuthButton" TargetType="Button">
-        <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource Black},
-                                        Dark={StaticResource White}}" />
-        <Setter Property="TextColor"
-                Value="{AppThemeBinding Light={StaticResource White},
-                                        Dark={StaticResource Black}}" />
-        <Setter Property="BorderColor"
-                Value="{AppThemeBinding Light={StaticResource Black},
-                                        Dark={StaticResource White}}" />
-        <Setter Property="BorderWidth" Value="1" />
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
-        <Setter Property="FontAttributes" Value="Bold" />
-        <Setter Property="CornerRadius" Value="14" />
-        <Setter Property="MinimumHeightRequest" Value="52" />
-        <Setter Property="HorizontalOptions" Value="Fill" />
     </Style>
 
     <Style TargetType="Entry">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize16}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
@@ -725,29 +1053,27 @@
         <Setter Property="Stroke"
                 Value="{AppThemeBinding Light={StaticResource InputStroke},
                                         Dark={StaticResource InputStrokeDark}}" />
-        <Setter Property="StrokeThickness" Value="1" />
-        <Setter Property="Padding" Value="14,4" />
-        <Setter Property="MinimumHeightRequest" Value="56" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
+        <Setter Property="Padding" Value="{StaticResource PresentationInputHorizontalPadding}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationInputMinimumHeight}" />
         <Setter Property="StrokeShape">
             <Setter.Value>
-                <RoundRectangle CornerRadius="14" />
+                <RoundRectangle CornerRadius="{StaticResource PresentationInputCornerRadius}" />
             </Setter.Value>
         </Setter>
     </Style>
 
-    <Style x:Key="WorkoutMetricInput" TargetType="Border" BasedOn="{StaticResource InputContainer}">
-        <Setter Property="Padding" Value="10,0" />
-        <Setter Property="MinimumHeightRequest" Value="48" />
-        <Setter Property="StrokeShape">
-            <Setter.Value>
-                <RoundRectangle CornerRadius="12" />
-            </Setter.Value>
-        </Setter>
+    <Style x:Key="PickerContainer" TargetType="Border" BasedOn="{StaticResource InputContainer}" />
+
+    <Style x:Key="EditorContainer" TargetType="Border" BasedOn="{StaticResource InputContainer}">
+        <Setter Property="HeightRequest" Value="-1" />
+        <Setter Property="MinimumHeightRequest" Value="96" />
+        <Setter Property="Padding" Value="16,12" />
     </Style>
 
     <Style TargetType="Picker">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize16}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
@@ -761,8 +1087,8 @@
     </Style>
 
     <Style TargetType="DatePicker">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize16}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
@@ -773,8 +1099,8 @@
     </Style>
 
     <Style TargetType="TimePicker">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize16}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
@@ -785,8 +1111,8 @@
     </Style>
 
     <Style TargetType="Editor">
-        <Setter Property="FontFamily" Value="Inter" />
-        <Setter Property="FontSize" Value="16" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize16}" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
                                         Dark={StaticResource TextPrimaryDark}}" />
@@ -841,4 +1167,244 @@
         <Setter Property="IconImageSource" Value="{x:Null}" />
     </Style>
 
-</ResourceDictionary>
+
+    <!-- Profile menu rows, selection affordances and the calendar day cell. Cards remain
+         CardPrimary/CardSecondary only. -->
+    <Style x:Key="ProfileMenuRow" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Transparent}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius16}" />
+        <Setter Property="Padding" Value="{StaticResource UiInsets16_14}" />
+    </Style>
+    <Style x:Key="SelectionRadioRing" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Transparent}" />
+        <Setter Property="Stroke"
+                Value="{AppThemeBinding Light={StaticResource BorderNeutralLight}, Dark={StaticResource BorderNeutralDark}}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiEllipseShape}" />
+        <Setter Property="WidthRequest" Value="{StaticResource UiDimension22}" />
+        <Setter Property="HeightRequest" Value="{StaticResource UiDimension22}" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+                <Setter Property="Stroke"
+                        Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="SelectionCheckbox" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Transparent}" />
+        <Setter Property="Stroke"
+                Value="{AppThemeBinding Light={StaticResource BorderNeutralLight}, Dark={StaticResource BorderNeutralDark}}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius8}" />
+        <Setter Property="WidthRequest" Value="{StaticResource UiDimension28}" />
+        <Setter Property="HeightRequest" Value="{StaticResource UiDimension28}" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource Primary}}" />
+                <Setter Property="Stroke"
+                        Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource Primary}}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="SelectionCheckmark" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Transparent}" />
+        <Setter Property="Stroke"
+                Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource BorderSubtleDark}}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius13}" />
+        <Setter Property="WidthRequest" Value="{StaticResource UiDimension26}" />
+        <Setter Property="HeightRequest" Value="{StaticResource UiDimension26}" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource Primary}}" />
+                <Setter Property="Stroke"
+                        Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource Primary}}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="SelectionCheckmarkText" TargetType="Label">
+        <Setter Property="TextColor" Value="{StaticResource ContrastInk}" />
+        <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize13}" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+    </Style>
+    <Style x:Key="CalendarDayCellSurface" TargetType="Border">
+        <Setter Property="BackgroundColor" Value="{StaticResource Transparent}" />
+        <Setter Property="Stroke" Value="{StaticResource Transparent}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius12}" />
+        <Setter Property="Padding" Value="{StaticResource UiInsets0}" />
+        <Setter Property="Margin" Value="{StaticResource UiInsets2}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="MinimumWidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="VisualStateManager.VisualStateGroups">
+            <VisualStateGroupList>
+                <VisualStateGroup x:Name="SelectionStates">
+                    <VisualState x:Name="Unselected" />
+                    <VisualState x:Name="Selected">
+                        <VisualState.Setters>
+                            <Setter Property="Stroke"
+                                    Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2_8}" />
+                        </VisualState.Setters>
+                    </VisualState>
+                </VisualStateGroup>
+            </VisualStateGroupList>
+        </Setter>
+    </Style>
+    <!-- Shared type variants replace repeated page-level font and alignment overrides. -->
+    <Style x:Key="CaptionSmall" TargetType="Label" BasedOn="{StaticResource CaptionLabel}">
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize12}" />
+    </Style>
+    <Style x:Key="CaptionTiny" TargetType="Label" BasedOn="{StaticResource CaptionLabel}">
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize11}" />
+    </Style>
+    <Style x:Key="CaptionStrong" TargetType="Label" BasedOn="{StaticResource CaptionLabel}">
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+    </Style>
+    <Style x:Key="CaptionCentered" TargetType="Label" BasedOn="{StaticResource CaptionLabel}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="CaptionSmallCentered" TargetType="Label" BasedOn="{StaticResource CaptionSmall}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="CaptionTinyCentered" TargetType="Label" BasedOn="{StaticResource CaptionTiny}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="CaptionSmallStrong" TargetType="Label" BasedOn="{StaticResource CaptionSmall}">
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+    </Style>
+
+    <!-- The single chip/segment style. A chip is not a card: a card's 19pt inset turns a 44pt
+         target into an 86pt block, so selection cells own a compact anatomy of their own and
+         every chip row (workout weeks, workout filters, logged days) uses this one definition
+         instead of restating surface, stroke and radius per page. -->
+    <Style x:Key="ChoiceCell" TargetType="Border">
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource AccentSurface},
+                                        Dark={StaticResource CardSurfaceSecondaryDark}}" />
+        <Setter Property="Stroke"
+                Value="{AppThemeBinding Light={StaticResource ControlBoundaryLight},
+                                        Dark={StaticResource ControlBoundaryDark}}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius999}" />
+        <Setter Property="Padding" Value="{StaticResource UiInsets10_6}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="HorizontalOptions" Value="Fill" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight},
+                                                Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                <Setter Property="Stroke"
+                        Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight},
+                                                Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            </DataTrigger>
+            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_NotSelected}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- The compact source switch is the second choice-cell variant: same selected
+         surface, stroke and touch target, with a squarer shape that reads as one
+         segmented control rather than three floating pills. -->
+    <Style x:Key="ChoiceCellCompact" TargetType="Border" BasedOn="{StaticResource ChoiceCell}">
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius8}" />
+    </Style>
+
+    <Style x:Key="ChoiceCellLabel" TargetType="Label" BasedOn="{StaticResource CaptionSmallStrong}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="VerticalOptions" Value="Center" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+        <Setter Property="TextColor"
+                Value="{AppThemeBinding Light={StaticResource TextSecondary},
+                                        Dark={StaticResource TextSecondaryDark}}" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
+                <Setter Property="TextColor"
+                        Value="{AppThemeBinding Light={StaticResource TextPrimary},
+                                                Dark={StaticResource TextPrimaryDark}}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- The day strip is its own family with one style: a compact dated cell, not a chip and
+         not a card. Seven fit one row, so it owns the 14pt shape and the hairline boundary. -->
+    <Style x:Key="DayStripCell" TargetType="Border">
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
+        <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius14}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
+        <Setter Property="Stroke"
+                Value="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}" />
+        <Setter Property="BackgroundColor"
+                Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
+        <Setter Property="Padding" Value="{StaticResource UiInsets4_6}" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                <Setter Property="BackgroundColor"
+                        Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                <Setter Property="Stroke"
+                        Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
+                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+    <Style x:Key="CaptionTinyStrong" TargetType="Label" BasedOn="{StaticResource CaptionTiny}">
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+    </Style>
+    <Style x:Key="MutedMedium" TargetType="Label" BasedOn="{StaticResource MutedLabel}">
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize14}" />
+    </Style>
+    <Style x:Key="MutedCentered" TargetType="Label" BasedOn="{StaticResource MutedLabel}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="BodyStrong" TargetType="Label" BasedOn="{StaticResource BodyLabel}">
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+    </Style>
+    <Style x:Key="BodyMedium" TargetType="Label" BasedOn="{StaticResource BodyLabel}">
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize14}" />
+    </Style>
+    <Style x:Key="BodyMediumStrong" TargetType="Label" BasedOn="{StaticResource BodyMedium}">
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+    </Style>
+    <Style x:Key="BodyCentered" TargetType="Label" BasedOn="{StaticResource BodyLabel}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+    </Style>
+    <Style x:Key="BodyCompact" TargetType="Label" BasedOn="{StaticResource BodyLabel}">
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize13}" />
+    </Style>
+
+    <!-- Workout-history summary card: the controlled secondary body tier.
+         A single compact line role for the rapid records inside each session summary card, so the
+         detail caption, the exercise pill row and the metric values all reconcile to one size band.
+         It is a presentation tier for this card's secondary lines, not a shared app role: it is
+         distinct from CaptionLabel (12pt bold, a short metadata/caption label) and from BodyLabel
+         (15pt, the app's body role). Use it for per-card secondary text only; section titles,
+         card/modal titles, page titles and inline status labels remain their existing styles. -->
+    <Style x:Key="WorkoutHistorySecondaryBody" TargetType="Label" BasedOn="{StaticResource BodyLabel}">
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize14}" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
+        <Setter Property="CharacterSpacing" Value="0" />
+    </Style>
+    <Style x:Key="WorkoutHistorySecondaryBodyStrong" TargetType="Label" BasedOn="{StaticResource WorkoutHistorySecondaryBody}">
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+    </Style>
+    <Style x:Key="WorkoutHistorySecondaryBodyCentered" TargetType="Label" BasedOn="{StaticResource WorkoutHistorySecondaryBody}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="HorizontalOptions" Value="Center" />
+    </Style>
+    <Style x:Key="WorkoutHistorySecondaryBodyStrongCentered" TargetType="Label" BasedOn="{StaticResource WorkoutHistorySecondaryBodyCentered}">
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
+    </Style>
+    </ResourceDictionary>

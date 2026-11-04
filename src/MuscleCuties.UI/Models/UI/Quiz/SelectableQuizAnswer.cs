@@ -1,5 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using MuscleCuties.Core.Models.Enums.Cycle;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UseCases.Features.Onboarding.Quiz;
@@ -19,8 +21,10 @@ public partial class SelectableQuizAnswer : ObservableObject
             ? "Flash24"
             : "Gauge24",
         QuizQuestionType.ExperienceLevel => BuildExperienceIcon(),
-        QuizQuestionType.WorkoutDaysPerWeek => "CalendarWorkWeek24",
+        QuizQuestionType.AvailableWeekdays => "CalendarWorkWeek24",
         QuizQuestionType.DietaryPreference => BuildDietIcon(),
+        QuizQuestionType.SessionDuration => "Clock24",
+        QuizQuestionType.Equipment => "Dumbbell24",
         QuizQuestionType.CurrentCyclePhase => BuildPhaseIcon(),
         _ when QuestionType.ToString().Contains("Pain", StringComparison.OrdinalIgnoreCase) => BuildPainIcon(),
         _ when QuestionType.ToString().Contains("Energy", StringComparison.OrdinalIgnoreCase) => BuildEnergyIcon(),

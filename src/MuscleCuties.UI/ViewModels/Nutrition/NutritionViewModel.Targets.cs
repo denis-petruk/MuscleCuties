@@ -1,6 +1,6 @@
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
-using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
+using MuscleCuties.UI.Models.UI.Nutrition;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
@@ -25,7 +25,7 @@ public partial class NutritionViewModel
     [ObservableProperty] private string _calculatedTargetText = string.Empty;
     [ObservableProperty] private string _savedCalorieRequestText = string.Empty;
 
-    private void ApplyTargetBreakdown(NutritionTargetBreakdownDto? breakdown)
+    private void ApplyTargetBreakdown(NutritionTargetBreakdown? breakdown)
     {
         HasStartingEnergy = breakdown?.StartingEnergyCalories is { } starting && float.IsFinite(starting);
         StartingEnergyText = HasStartingEnergy

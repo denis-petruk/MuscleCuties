@@ -22,9 +22,6 @@ public interface INutritionDailyLogStore
     Task ReLogFoodAsync(DateOnly date, MealType mealType, QuickFoodItemSnapshot quickItem, LoggedFoodItemDto draft,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<DailyNutritionSummarySnapshot>> GetDateRangeSummariesAsync(DateOnly start, DateOnly end,
-        CancellationToken cancellationToken = default);
-
     Task UpdateWaterIntakeAsync(DateOnly date, int waterIntakeMl, CancellationToken cancellationToken = default);
     Task UpdateNotesAsync(DateOnly date, string? notes, CancellationToken cancellationToken = default);
 

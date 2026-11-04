@@ -4,6 +4,8 @@ using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 
+public sealed record GenericFoodSearchQueryValidationDto(bool IsAccepted, string NormalizedQuery);
+
 public interface INutritionDailyLogUseCase
 {
     Task<DailyNutritionLogSnapshot> GetLogForDateAsync(DateOnly date, CancellationToken cancellationToken = default);
@@ -26,9 +28,6 @@ public interface INutritionDailyLogUseCase
     Task ReLogFoodAsync(DateOnly date, MealType mealType, QuickFoodItemSnapshot quickItem, LoggedFoodItemDto draft,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<DailyNutritionSummarySnapshot>> GetDateRangeSummariesAsync(DateOnly start, DateOnly end,
-        CancellationToken cancellationToken = default);
-
     Task UpdateWaterIntakeAsync(DateOnly date, int waterIntakeMl, CancellationToken cancellationToken = default);
     Task UpdateNotesAsync(DateOnly date, string? notes, CancellationToken cancellationToken = default);
 
@@ -45,6 +44,8 @@ public interface INutritionDailyLogUseCase
 
     Task<IReadOnlyList<FastLookupFoodItemDto>> SearchOnlineFoodsAsync(string query, int maxResults = 12,
         CancellationToken cancellationToken = default);
+
+    GenericFoodSearchQueryValidationDto ValidateOnlineFoodSearchQuery(string? query);
 }
 
 public sealed class NutritionDailyLogUseCase(INutritionDailyLogStore store) : INutritionDailyLogUseCase
@@ -115,14 +116,6 @@ public sealed class NutritionDailyLogUseCase(INutritionDailyLogStore store) : IN
         return store.ReLogFoodAsync(date, mealType, quickItem, draft, cancellationToken);
     }
 
-    public Task<IReadOnlyList<DailyNutritionSummarySnapshot>> GetDateRangeSummariesAsync(DateOnly start, DateOnly end,
-        CancellationToken cancellationToken = default)
-    {
-        if (end < start)
-            throw new ArgumentOutOfRangeException(nameof(end), "End date cannot precede start date.");
-        return store.GetDateRangeSummariesAsync(start, end, cancellationToken);
-    }
-
     public Task UpdateWaterIntakeAsync(DateOnly date, int waterIntakeMl, CancellationToken cancellationToken = default)
     {
         var clampedWater = Math.Max(0, waterIntakeMl);
@@ -162,8 +155,15 @@ public sealed class NutritionDailyLogUseCase(INutritionDailyLogStore store) : IN
     public Task<IReadOnlyList<FastLookupFoodItemDto>> SearchOnlineFoodsAsync(string query, int maxResults = 12,
         CancellationToken cancellationToken = default)
     {
-        return string.IsNullOrWhiteSpace(query)
+        var validation = ValidateOnlineFoodSearchQuery(query);
+        return !validation.IsAccepted
             ? Task.FromResult<IReadOnlyList<FastLookupFoodItemDto>>([])
-            : store.SearchOnlineFoodsAsync(query.Trim(), Math.Clamp(maxResults, 1, 50), cancellationToken);
+            : store.SearchOnlineFoodsAsync(validation.NormalizedQuery, Math.Clamp(maxResults, 1, 50), cancellationToken);
+    }
+
+    public GenericFoodSearchQueryValidationDto ValidateOnlineFoodSearchQuery(string? query)
+    {
+        var normalized = GenericFoodQueryRule.NormalizeOrEmpty(query);
+        return new GenericFoodSearchQueryValidationDto(!string.IsNullOrEmpty(normalized), normalized);
     }
 }

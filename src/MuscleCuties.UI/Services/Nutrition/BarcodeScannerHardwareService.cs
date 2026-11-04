@@ -1,4 +1,4 @@
-using MuscleCuties.UseCases.Features.Nutrition.Barcode.Contracts;
+using MuscleCuties.UI.Models.UI.Nutrition;
 #if IOS
 using AVFoundation;
 using CoreFoundation;
@@ -47,7 +47,7 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
         }
     }
 
-    public async Task<BarcodeCameraCaptureResultDto> CaptureBarcodeAsync(CancellationToken cancellationToken = default)
+    public async Task<BarcodeCameraCaptureResult> CaptureBarcodeAsync(CancellationToken cancellationToken = default)
     {
         CancelActiveCapture();
         using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
@@ -61,22 +61,22 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
             var granted = await HasCameraPermissionAsync().ConfigureAwait(false)
                           || await RequestCameraPermissionAsync().ConfigureAwait(false);
             if (!granted)
-                return new BarcodeCameraCaptureResultDto(BarcodeCaptureOutcomeDto.PermissionDenied);
+                return new BarcodeCameraCaptureResult(BarcodeCaptureOutcome.PermissionDenied);
 
             linkedCts.Token.ThrowIfCancellationRequested();
 #if IOS
             return await CaptureOnIosCameraAsync(linkedCts.Token).ConfigureAwait(false);
 #else
-            return new BarcodeCameraCaptureResultDto(BarcodeCaptureOutcomeDto.CameraUnavailable);
+            return new BarcodeCameraCaptureResult(BarcodeCaptureOutcome.CameraUnavailable);
 #endif
         }
         catch (OperationCanceledException)
         {
-            return new BarcodeCameraCaptureResultDto(BarcodeCaptureOutcomeDto.Cancelled);
+            return new BarcodeCameraCaptureResult(BarcodeCaptureOutcome.Cancelled);
         }
         catch (Exception ex)
         {
-            return new BarcodeCameraCaptureResultDto(BarcodeCaptureOutcomeDto.CameraUnavailable, ErrorMessage: ex.Message);
+            return new BarcodeCameraCaptureResult(BarcodeCaptureOutcome.CameraUnavailable, ErrorMessage: ex.Message);
         }
         finally
         {
@@ -89,22 +89,22 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
     }
 
 #if IOS
-    private static async Task<BarcodeCameraCaptureResultDto> CaptureOnIosCameraAsync(CancellationToken cancellationToken)
+    private static async Task<BarcodeCameraCaptureResult> CaptureOnIosCameraAsync(CancellationToken cancellationToken)
     {
-        var tcs = new TaskCompletionSource<BarcodeCameraCaptureResultDto>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var tcs = new TaskCompletionSource<BarcodeCameraCaptureResult>(TaskCreationOptions.RunContinuationsAsynchronously);
         using var session = new AVCaptureSession();
         var device = AVCaptureDevice.GetDefaultDevice(AVMediaTypes.Video);
         if (device is null)
-            return new BarcodeCameraCaptureResultDto(BarcodeCaptureOutcomeDto.CameraUnavailable);
+            return new BarcodeCameraCaptureResult(BarcodeCaptureOutcome.CameraUnavailable);
 
         var input = AVCaptureDeviceInput.FromDevice(device, out var error);
         if (input is null || error is not null || !session.CanAddInput(input))
-            return new BarcodeCameraCaptureResultDto(BarcodeCaptureOutcomeDto.CameraUnavailable);
+            return new BarcodeCameraCaptureResult(BarcodeCaptureOutcome.CameraUnavailable);
 
         session.AddInput(input);
         using var metadataOutput = new AVCaptureMetadataOutput();
         if (!session.CanAddOutput(metadataOutput))
-            return new BarcodeCameraCaptureResultDto(BarcodeCaptureOutcomeDto.CameraUnavailable);
+            return new BarcodeCameraCaptureResult(BarcodeCaptureOutcome.CameraUnavailable);
 
         session.AddOutput(metadataOutput);
         using var queue = new DispatchQueue("com.musclecuties.barcodescanner");
@@ -118,14 +118,14 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
                       | AVMetadataObjectType.Code128Code;
         var activeTypes = supported & desired;
         if (activeTypes == 0)
-            return new BarcodeCameraCaptureResultDto(BarcodeCaptureOutcomeDto.UnsupportedSymbology);
+            return new BarcodeCameraCaptureResult(BarcodeCaptureOutcome.UnsupportedSymbology);
 
         metadataOutput.MetadataObjectTypes = activeTypes;
         using var registration = cancellationToken.Register(() =>
         {
             if (session.Running)
                 session.StopRunning();
-            tcs.TrySetResult(new BarcodeCameraCaptureResultDto(BarcodeCaptureOutcomeDto.Cancelled));
+            tcs.TrySetResult(new BarcodeCameraCaptureResult(BarcodeCaptureOutcome.Cancelled));
         });
 
         session.StartRunning();
@@ -142,7 +142,7 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
 
     private sealed class OneShotMetadataDelegate(
         AVCaptureSession session,
-        TaskCompletionSource<BarcodeCameraCaptureResultDto> completion) : AVCaptureMetadataOutputObjectsDelegate
+        TaskCompletionSource<BarcodeCameraCaptureResult> completion) : AVCaptureMetadataOutputObjectsDelegate
     {
         private int _completed;
 
@@ -168,15 +168,15 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
 
                 var symbology = readable.Type switch
                 {
-                    AVMetadataObjectType.EAN13Code => BarcodeSymbologyDto.Ean13,
-                    AVMetadataObjectType.EAN8Code => BarcodeSymbologyDto.Ean8,
-                    AVMetadataObjectType.UPCECode => BarcodeSymbologyDto.UpcE,
-                    AVMetadataObjectType.Code128Code => BarcodeSymbologyDto.Code128,
-                    _ => BarcodeSymbologyDto.Auto
+                    AVMetadataObjectType.EAN13Code => BarcodeSymbology.Ean13,
+                    AVMetadataObjectType.EAN8Code => BarcodeSymbology.Ean8,
+                    AVMetadataObjectType.UPCECode => BarcodeSymbology.UpcE,
+                    AVMetadataObjectType.Code128Code => BarcodeSymbology.Code128,
+                    _ => BarcodeSymbology.Auto
                 };
 
-                completion.TrySetResult(new BarcodeCameraCaptureResultDto(
-                    BarcodeCaptureOutcomeDto.Decoded,
+                completion.TrySetResult(new BarcodeCameraCaptureResult(
+                    BarcodeCaptureOutcome.Decoded,
                     readable.StringValue.Trim(),
                     symbology));
                 return;

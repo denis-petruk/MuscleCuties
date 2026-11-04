@@ -25,7 +25,7 @@ public sealed class NutritionDiaryUseCase(INutritionDiaryStore store)
         ArgumentNullException.ThrowIfNull(entry);
         if (!entry.IsDeleted)
         {
-            _ = DailyFoodEntry.Create(ToCoreMealType(entry.MealType), entry.Name, (double)entry.ServingSize, entry.ServingUnit,
+            _ = DailyFoodEntry.Create(NutritionMealTypeMapper.ToDomain(entry.MealType), entry.Name, (double)entry.ServingSize, entry.ServingUnit,
                 (double)entry.ServingsCount, (double)entry.Calories, (double)entry.Protein, (double)entry.Carbs,
                 (double)entry.Fat);
         }
@@ -65,7 +65,7 @@ public sealed class NutritionDiaryUseCase(INutritionDiaryStore store)
             else
             {
                 var domainFood = DailyFoodEntry.Create(
-                    ToCoreMealType(entry.MealType), entry.Name, (double)entry.ServingSize, entry.ServingUnit,
+                    NutritionMealTypeMapper.ToDomain(entry.MealType), entry.Name, (double)entry.ServingSize, entry.ServingUnit,
                     (double)entry.ServingsCount, (double)entry.Calories, (double)entry.Protein,
                     (double)entry.Carbs, (double)entry.Fat);
                 activeEntries.Add(domainFood);
@@ -84,7 +84,7 @@ public sealed class NutritionDiaryUseCase(INutritionDiaryStore store)
             throw new ArgumentException("A non-empty request ID is required.", nameof(command));
         DailyFoodEntry.RequireDifferentDates(command.SourceDate, command.TargetDate);
         if (command.MealType.HasValue)
-            DailyFoodEntry.RequireMealType(ToCoreMealType(command.MealType.Value));
+            DailyFoodEntry.RequireMealType(NutritionMealTypeMapper.ToDomain(command.MealType.Value));
 
         return store.CopyEntriesAsync(userId, command, cancellationToken);
     }
@@ -105,13 +105,11 @@ public sealed class NutritionDiaryUseCase(INutritionDiaryStore store)
         var name = string.IsNullOrWhiteSpace(command.Name) ? NutritionDiaryDefaults.DefaultQuickAddTitle : command.Name.Trim();
 
         _ = DailyFoodEntry.Create(
-            ToCoreMealType(command.MealType), name, (double)servingSize, servingUnit,
+            NutritionMealTypeMapper.ToDomain(command.MealType), name, (double)servingSize, servingUnit,
             (double)servingsCount, (double)command.Calories, (double)protein,
             (double)carbs, (double)fat);
 
         return store.QuickAddEntryAsync(userId, command, cancellationToken);
     }
 
-    private static MuscleCuties.Core.Models.Enums.Nutrition.MealType ToCoreMealType(MealType mealType) =>
-        (MuscleCuties.Core.Models.Enums.Nutrition.MealType)(int)mealType;
 }

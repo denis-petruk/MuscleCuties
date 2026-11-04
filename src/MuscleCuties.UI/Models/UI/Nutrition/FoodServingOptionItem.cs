@@ -9,7 +9,7 @@ public class FoodServingOptionItem
     public float Grams { get; set; }
     public string Source { get; set; } = string.Empty;
 
-    public string DisplayText => UiTextCatalog.Translate(Label);
+    public string DisplayText => UiTextCatalog.TranslateRuntimeText(Label);
 
     public override string ToString()
     {

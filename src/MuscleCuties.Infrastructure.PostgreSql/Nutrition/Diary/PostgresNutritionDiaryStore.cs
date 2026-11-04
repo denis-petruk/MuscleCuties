@@ -464,7 +464,8 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         return new NutritionDiaryEntry(MealPrefix + meal.Id.ToString("N"), meal.Date,
             Enum.Parse<MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType>(meal.MealType), meal.AcceptedSuggestionName ?? string.Join(", ", foods.Select(x => x.Name)),
             total, "g", 1, calories, protein, carbs, fat, DateTime.SpecifyKind(meal.LoggedAt, DateTimeKind.Utc), false,
-            meal.AcceptedSuggestionName, meal.AcceptedSuggestionPhase);
+            meal.AcceptedSuggestionName, meal.AcceptedSuggestionPhase,
+            LoggedMealId: global::MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview.PostgresNutritionOverviewStore.ToStableLoggedMealIntId(meal.Id));
     }
 
     private static decimal Scale(decimal? per100, decimal grams) => per100.GetValueOrDefault() * grams / 100m;

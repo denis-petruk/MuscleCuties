@@ -1,5 +1,4 @@
 using CommunityToolkit.Mvvm.ComponentModel;
-using MuscleCuties.Core.Models.Nutrition;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
@@ -10,13 +9,13 @@ public partial class QuickFoodItemUiModel : ObservableObject
     [ObservableProperty]
     private bool _isSelected;
 
-    public QuickFoodItemUiModel(QuickFoodItemDto item, Action<QuickFoodItemUiModel>? onSelectionChanged = null)
+    public QuickFoodItemUiModel(QuickFood item, Action<QuickFoodItemUiModel>? onSelectionChanged = null)
     {
         Item = item;
         _onSelectionChanged = onSelectionChanged;
     }
 
-    public QuickFoodItemDto Item { get; }
+    public QuickFood Item { get; }
 
     public string Name => Item.Name;
     public double ServingSize => Item.ServingSize;
@@ -29,7 +28,7 @@ public partial class QuickFoodItemUiModel : ObservableObject
     public string Detail => Item.Detail;
     public Guid? SourceId => Item.SourceId;
     public int? IngredientFoodItemId => Item.IngredientFoodItemId;
-    public IReadOnlyList<HistoryIngredientDto> Ingredients => Item.Ingredients;
+    public IReadOnlyList<FoodHistoryIngredient> Ingredients => Item.Ingredients;
 
     partial void OnIsSelectedChanged(bool value)
     {

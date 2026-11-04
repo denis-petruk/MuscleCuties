@@ -1,6 +1,6 @@
 using MuscleCuties.Core.Domain.Nutrition;
-using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
+using DiaryMealType = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType;
 using Xunit;
 
 namespace MuscleCuties.Core.Tests;
@@ -30,7 +30,7 @@ public sealed class DiaryCopyDateTests
         var store = new RecordingStore();
         var notifier = new RecordingNotifier();
         var useCase = new NutritionBatchAndCopyUseCase(store, notifier);
-        MealType? requestedMeal = copyMeal ? MealType.Breakfast : null;
+        DiaryMealType? requestedMeal = copyMeal ? DiaryMealType.Breakfast : null;
 
         await useCase.CopyAsync(OwnerId,
             new CopyNutritionDiaryRequest(CopyCommandKey, AlternateSourceDate, TargetDate, requestedMeal));

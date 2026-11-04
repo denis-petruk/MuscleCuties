@@ -13,176 +13,115 @@
              Title="{loc:LocalizedText Workout_Session_HeaderTitle}" Shell.NavBarIsVisible="False" Shell.TabBarIsVisible="False"
              SafeAreaEdges="All"
              BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
-    <ContentPage.Resources>
-        <Style x:Key="SessionCard" TargetType="Border">
-            <Setter Property="StrokeThickness" Value="0" />
-            <Setter Property="StrokeShape" Value="RoundRectangle 14" />
-            <Setter Property="Padding" Value="12,14" />
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-        </Style>
-        <Style x:Key="SessionAccent" TargetType="Border" BasedOn="{StaticResource SessionCard}">
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}" />
-        </Style>
-        <Style x:Key="QuietButton" TargetType="Button">
-            <Setter Property="BackgroundColor" Value="Transparent" />
-            <Setter Property="TextColor"
-                    Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-            <Setter Property="MinimumHeightRequest" Value="48" />
-            <Setter Property="MinimumWidthRequest" Value="48" />
-            <Setter Property="Padding" Value="12,8" />
-            <Setter Property="FontSize" Value="14" />
-        </Style>
-    </ContentPage.Resources>
     <Grid>
-        <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="20,8,20,16" RowSpacing="12"
+        <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="{DynamicResource PresentationPageContentPadding}" RowSpacing="{StaticResource UiSpaceCompact}"
               IsEnabled="{Binding CanInteract}">
             <!-- Header row: back + day title -->
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8"
-                  IsVisible="{Binding IsDayOverview, Converter={StaticResource InvertedBoolConverter}}">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                 <Button Text="{loc:LocalizedText Workout_Session_BackButton}" Command="{Binding BackCommand}"
-                        Style="{StaticResource QuietButton}"
+                        Style="{StaticResource ButtonSecondary}"
                         SemanticProperties.Hint="{loc:LocalizedText Workout_Session_NavigateBackAccessibility}" />
-                <Label Grid.Column="1" Text="{Binding DayTitle, Converter={StaticResource LocalizedStringConverter}}"
+                <Label LineBreakMode="WordWrap" Grid.Column="1" Text="{Binding DayTitle, Converter={StaticResource LocalizedStringConverter}}"
                        Style="{StaticResource CaptionLabel}"
                        VerticalOptions="Center" HorizontalTextAlignment="End"
                        SemanticProperties.HeadingLevel="Level1" />
             </Grid>
 
             <!-- Validation and load feedback -->
-            <Border Grid.Row="2" Style="{StaticResource SessionAccent}" IsVisible="{Binding HasError}"
+            <Border Grid.Row="2" Style="{StaticResource CardSecondary}" IsVisible="{Binding HasError}"
                     SemanticProperties.Description="{loc:LocalizedText Workout_Session_ErrorMessageAccessibility}">
-                <Grid RowDefinitions="Auto,Auto" RowSpacing="8">
-                    <Label Text="{Binding ErrorText, Converter={StaticResource LocalizedStringConverter}}"
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
+                    <Label LineBreakMode="WordWrap" Text="{Binding ErrorText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource BodyLabel}" />
-                    <Button Grid.Row="1" Text="{loc:LocalizedText Workout_Session_TryAgainButton}" Command="{Binding RetryLoadCommand}"
-                            IsVisible="{Binding IsDayOverview}" MinimumHeightRequest="48"
+                    <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{Binding ErrorReference}"
+                           Style="{StaticResource CaptionLabel}"
+                           IsVisible="{Binding HasErrorReference}"
+                           SemanticProperties.Description="{loc:LocalizedText Workout_Session_ErrorReferenceAccessibility}" />
+                    <Button Style="{StaticResource ButtonSecondary}" Grid.Row="2" Text="{loc:LocalizedText Workout_Session_TryAgainButton}" Command="{Binding RetryLoadCommand}"
                             SemanticProperties.Hint="{loc:LocalizedText Workout_Session_RetryLoadingAccessibility}" />
                 </Grid>
             </Border>
 
             <!-- Milestone feedback -->
-            <Border Grid.Row="1" Style="{StaticResource SessionAccent}" IsVisible="{Binding HasCelebration}"
+            <Border Grid.Row="1" Style="{StaticResource CardSecondary}" IsVisible="{Binding HasCelebration}"
                     SemanticProperties.Description="{loc:LocalizedText Workout_Session_CelebrationTitle}">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="8">
-                    <Label Text="{Binding CelebrationText, Converter={StaticResource LocalizedStringConverter}}"
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                    <Label LineBreakMode="WordWrap" Text="{Binding CelebrationText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
                     <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_OkButton}"
                             Command="{Binding DismissCelebrationCommand}"
-                            Style="{StaticResource QuietButton}"
+                            Style="{StaticResource ButtonSecondary}"
                             SemanticProperties.Hint="{loc:LocalizedText Workout_Session_DismissCelebrationAccessibility}" />
                 </Grid>
             </Border>
 
             <Grid Grid.Row="3">
-                <!-- ========== Day overview ========== -->
-                <Grid IsVisible="{Binding IsDayOverview}" Margin="-20,-8,-20,-16">
-                    <BoxView BackgroundColor="{StaticResource ModalScrim}" />
-                    <Border Style="{StaticResource AppBottomSheetSurface}" VerticalOptions="Fill">
-                    <Grid RowDefinitions="Auto,*,Auto" RowSpacing="16" Padding="20,20,20,24">
-                        <Label Text="{loc:LocalizedText Workout_Session_ActivitiesTitle}"
-                               Style="{StaticResource ModalTitle}" SemanticProperties.HeadingLevel="Level1" />
-                    <ScrollView Grid.Row="1">
-                        <VerticalStackLayout Spacing="16">
-                            <Label Text="{loc:LocalizedText Workout_Session_NoActivitiesPlanned}"
-                                   Style="{StaticResource BodyLabel}" IsVisible="{Binding HasNoActivities}" />
-                            <VerticalStackLayout Spacing="10" BindableLayout.ItemsSource="{Binding ActivityCards}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate x:DataType="models:WorkoutActivitySectionItem">
-                                        <Border Style="{StaticResource SessionCard}"
-                                                SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
-                                            <Border.GestureRecognizers>
-                                                <TapGestureRecognizer
-                                                    Command="{Binding SelectActivityCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutSessionViewModel}}, x:DataType=vm:WorkoutSessionViewModel}"
-                                                    CommandParameter="{Binding .}" />
-                                            </Border.GestureRecognizers>
-                                            <Grid ColumnDefinitions="5,*,Auto,16" ColumnSpacing="12"
-                                                  MinimumHeightRequest="56">
-                                                <BoxView Color="{Binding ActivityBackground}" CornerRadius="2"
-                                                         HeightRequest="-1" VerticalOptions="Fill" />
-                                                <VerticalStackLayout Grid.Column="1" Spacing="4"
-                                                                     VerticalOptions="Center">
-                                                    <Label
-                                                        Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
-                                                        Style="{StaticResource BodyLabel}" FontSize="15"
-                                                        FontAttributes="Bold" />
-                                                    <Label
-                                                        Text="{Binding SummaryText, Converter={StaticResource LocalizedStringConverter}}"
-                                                        Style="{StaticResource CaptionLabel}" />
-                                                </VerticalStackLayout>
-                                                <Label Grid.Column="2"
-                                                       Text="{Binding MetricText, Converter={StaticResource LocalizedStringConverter}}"
-                                                       Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
-                                                <Path Grid.Column="3" Data="M1 1 L6 6 L1 11"
-                                                      Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                                      StrokeThickness="1.5" Aspect="Uniform" WidthRequest="6"
-                                                      HeightRequest="12" VerticalOptions="Center" />
-                                            </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </VerticalStackLayout>
-                        </VerticalStackLayout>
-                    </ScrollView>
-                    <Button Grid.Row="2" Text="{loc:LocalizedText Workout_Session_FinishSessionButton}"
-                            Command="{Binding FinishSessionCommand}"
-                            MinimumHeightRequest="52"
-                            SemanticProperties.Hint="{loc:LocalizedText Workout_Session_EndSessionAccessibility}" />
-                    </Grid>
-                    </Border>
-                </Grid>
-
                 <!-- ========== Activity intro ========== -->
-                <Grid RowDefinitions="*,Auto" RowSpacing="16" IsVisible="{Binding IsActivityIntro}">
+                <Grid RowDefinitions="*,Auto" RowSpacing="{StaticResource UiSpaceControl}" IsVisible="{Binding IsActivityIntro}">
                     <ScrollView>
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="20" Padding="0,16,0,8">
-                            <Label
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing20}" Padding="{StaticResource UiInsets0_16_0_8}">
+                            <Label LineBreakMode="WordWrap"
                                 Text="{Binding SelectedActivity.Title, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource SectionTitle}" FontSize="22"
+                                Style="{StaticResource SectionTitle}"
                                 HorizontalTextAlignment="Center"
                                 SemanticProperties.HeadingLevel="Level2" />
-                            <Label Grid.Row="1"
+                            <Label LineBreakMode="WordWrap" Grid.Row="1"
                                    Text="{Binding SelectedActivity.MetricText, Converter={StaticResource LocalizedStringConverter}}"
-                                   Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
-                            <Label Grid.Row="2"
+                                   Style="{StaticResource CaptionCentered}" />
+                            <Label LineBreakMode="WordWrap" Grid.Row="2"
                                    Text="{Binding ActivityIntroIntensity, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_IntensityFormat}"
-                                   Style="{StaticResource BodyLabel}" HorizontalTextAlignment="Center" />
-                            <VerticalStackLayout Grid.Row="3" Spacing="14"
+                                   IsVisible="{Binding HasNoActivityPrescription}"
+                                   Style="{StaticResource BodyCentered}" />
+                            <Label Grid.Row="3" Text="{Binding ActivityPrescriptionText}" Style="{StaticResource BodyCentered}" LineBreakMode="WordWrap" />
+                            <VerticalStackLayout Grid.Row="4" Spacing="{StaticResource UiSpaceCompact}"
                                                  BindableLayout.ItemsSource="{Binding ExercisePreviewNames}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="x:String">
-                                        <Label Text="{Binding .}" Style="{StaticResource BodyLabel}" />
+                                        <Label LineBreakMode="WordWrap" Text="{Binding .}" Style="{StaticResource BodyLabel}" />
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
-                            <Border Grid.Row="4" Style="{StaticResource SessionAccent}">
-                                <Label
-                                    Text="{Binding CyclePhaseNote, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource BodyLabel}" />
+                            <Border Grid.Row="5" Style="{StaticResource CardSecondary}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                    <Label LineBreakMode="WordWrap"
+                                           Text="{Binding DoseAdjustmentNote}"
+                                           IsVisible="{Binding HasDoseAdjustmentNote}"
+                                           Style="{StaticResource BodyLabel}" />
+                                    <Label LineBreakMode="WordWrap"
+                                           Text="{loc:LocalizedText Workout_Session_NoActivitiesPlanned}"
+                                           IsVisible="{Binding HasNoActivities}"
+                                           Style="{StaticResource BodyLabel}" />
+                                    <Label LineBreakMode="WordWrap"
+                                        Text="{Binding CyclePhaseNote, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource BodyLabel}" />
+                                </VerticalStackLayout>
                             </Border>
                         </Grid>
                     </ScrollView>
-                    <Button Grid.Row="1" Text="{loc:LocalizedText Workout_Session_StartButton}"
-                            Command="{Binding StartActivityCommand}"
-                            IsEnabled="{Binding SelectedActivity.HasExercises}"
-                            CornerRadius="14" MinimumHeightRequest="52"
-                            SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}" />
+                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}">
+                        <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_StartButton}"
+                                Command="{Binding StartActivityCommand}" IsEnabled="{Binding CanStartActivity}" IsVisible="{Binding IsTimedActivityRunning, Converter={StaticResource InvertedBoolConverter}}"
+                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}" />
+                        <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_FinishTimedActivity}"
+                                Command="{Binding FinishTimedActivityCommand}" IsVisible="{Binding IsTimedActivityRunning}" />
+                        <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Workout_Session_AbandonActivity}"
+                                Command="{Binding AbandonPlannedSessionCommand}" IsVisible="{Binding CanAbandonPlannedSession}" />
+                    </VerticalStackLayout>
                 </Grid>
 
                 <!-- ========== One exercise at a time ========== -->
-                <Grid RowDefinitions="Auto,*,Auto,Auto" RowSpacing="12" IsVisible="{Binding IsExerciseFlow}">
+                <Grid RowDefinitions="Auto,*,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}" IsVisible="{Binding IsExerciseFlow}">
                     <!-- Progress bar and navigation dots -->
-                    <VerticalStackLayout Spacing="4">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
                         <Grid ColumnDefinitions="*,Auto">
-                            <Label
+                            <Label LineBreakMode="WordWrap"
                                 Text="{Binding ExercisePositionText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource CaptionLabel}" VerticalOptions="Center"
                                 SemanticProperties.HeadingLevel="Level2"
                                 SemanticProperties.Description="{Binding ExercisePositionText, Converter={StaticResource LocalizedStringConverter}}" />
                             <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_PreviousExerciseButton}"
                                     Command="{Binding PreviousExerciseCommand}"
-                                    Style="{StaticResource QuietButton}"
+                                    Style="{StaticResource ButtonSecondary}"
                                     SemanticProperties.Hint="{loc:LocalizedText Workout_Session_GoToPrevExerciseAccessibility}">
                                 <Button.Triggers>
                                     <DataTrigger TargetType="Button" Binding="{Binding CurrentExerciseIndex}" Value="0">
@@ -196,15 +135,15 @@
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="vm:SessionExerciseProgress">
                                         <!-- Small dots sit inside full-size touch targets. -->
-                                        <Grid WidthRequest="48" HeightRequest="48"
+                                        <Grid WidthRequest="{StaticResource UiDimension48}" HeightRequest="{StaticResource UiDimension48}"
                                               SemanticProperties.Description="{Binding AccessibilityText, Converter={StaticResource LocalizedStringConverter}}">
                                             <Grid.GestureRecognizers>
                                                 <TapGestureRecognizer
                                                     Command="{Binding JumpToExerciseCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutSessionViewModel}}, x:DataType=vm:WorkoutSessionViewModel}"
                                                     CommandParameter="{Binding Index}" />
                                             </Grid.GestureRecognizers>
-                                            <Border WidthRequest="10" HeightRequest="10" StrokeShape="RoundRectangle 5"
-                                                    StrokeThickness="0" HorizontalOptions="Center"
+                                            <Border WidthRequest="{StaticResource UiDimension10}" HeightRequest="{StaticResource UiDimension10}" StrokeShape="{StaticResource UiRoundRectangleRadius5}"
+                                                    StrokeThickness="{StaticResource UiStrokeWidth0}" HorizontalOptions="Center"
                                                     VerticalOptions="Center"
                                                     BackgroundColor="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}">
                                                 <Border.Triggers>
@@ -222,10 +161,10 @@
                                                     </DataTrigger>
                                                     <DataTrigger TargetType="Border" Binding="{Binding IsSkipped}"
                                                                  Value="True">
-                                                        <Setter Property="BackgroundColor" Value="Transparent" />
+                                                        <Setter Property="BackgroundColor" Value="{StaticResource Transparent}" />
                                                         <Setter Property="Stroke"
                                                                 Value="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                                        <Setter Property="StrokeThickness" Value="1" />
+                                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
                                                     </DataTrigger>
                                                 </Border.Triggers>
                                             </Border>
@@ -238,101 +177,71 @@
 
                     <!-- Exercise detail + logging inputs -->
                     <ScrollView Grid.Row="1">
-                        <VerticalStackLayout Spacing="16" Padding="0,0,0,12">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="10">
-                                <mi:MauiIcon Icon="{mi:Fluent Dumbbell24}" IconSize="24"
-                                             IconColor="{StaticResource Primary}" WidthRequest="28" HeightRequest="28"
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_0_0_12}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                <mi:MauiIcon Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension24}"
+                                             IconColor="{StaticResource Primary}" WidthRequest="{StaticResource UiDimension28}" HeightRequest="{StaticResource UiDimension28}"
                                              VerticalOptions="Center" />
-                                <Label Grid.Column="1" Text="{Binding CurrentExercise.Name}"
-                                       Style="{StaticResource SectionTitle}" FontSize="22"
+                                <Label LineBreakMode="WordWrap" Grid.Column="1" Text="{Binding CurrentExercise.Name}"
+                                       Style="{StaticResource SectionTitle}"
                                        SemanticProperties.HeadingLevel="Level3"
                                        SemanticProperties.Description="{Binding CurrentExercise.Name}" />
                             </Grid>
-                            <Border StrokeShape="RoundRectangle 14" StrokeThickness="1"
-                                    Stroke="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"
-                                    HeightRequest="156">
-                                <Grid>
-                                    <mi:MauiIcon Icon="{mi:Fluent Dumbbell24}" IconSize="48"
-                                                 IconColor="{StaticResource Primary}" WidthRequest="52" HeightRequest="52"
-                                                 HorizontalOptions="Center" VerticalOptions="Center" />
-                                </Grid>
-                            </Border>
-                            <Label
+                            <Label LineBreakMode="WordWrap"
                                 Text="{Binding CurrentExercise.TargetText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource BodyLabel}"
                                 SemanticProperties.Description="{Binding CurrentExercise.TargetText, Converter={StaticResource LocalizedStringConverter}}" />
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="8" HorizontalOptions="Start">
-                                <Path Data="M2 4 L8 10 L14 4" Stroke="{StaticResource Primary}"
-                                      StrokeThickness="2" WidthRequest="16" HeightRequest="16"
-                                      VerticalOptions="Center" />
-                                <Button Grid.Column="1"
-                                        Text="{Binding TipsButtonText, Converter={StaticResource LocalizedStringConverter}}"
-                                        Command="{Binding ToggleTipsCommand}" Style="{StaticResource QuietButton}"
-                                        SemanticProperties.Hint="{loc:LocalizedText Workout_Session_ToggleTipsAccessibility}" />
-                            </Grid>
-                            <Border Style="{StaticResource SessionAccent}" IsVisible="{Binding IsTipsExpanded}">
-                                <VerticalStackLayout Spacing="12">
-                                    <Label
-                                        Text="{Binding CurrentExercise.WhyText, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource BodyLabel}" />
-                                    <Label Text="{Binding CurrentExercise.CuesText}" Style="{StaticResource BodyLabel}" />
-                                    <Label Text="{Binding CurrentExercise.QuickTipsText}"
-                                           IsVisible="{Binding CurrentExercise.HasQuickTips}"
-                                           Style="{StaticResource BodyLabel}" />
-                                </VerticalStackLayout>
-                            </Border>
-                            <Label
+                            <Label LineBreakMode="WordWrap"
                                 Text="{Binding CurrentExercise.PreviousText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_PreviousWeightFormat}"
                                 Style="{StaticResource BodyLabel}"
                                 SemanticProperties.Description="{Binding CurrentExercise.PreviousText, Converter={StaticResource LocalizedStringConverter}}" />
-                            <Label
+                            <Label LineBreakMode="WordWrap"
                                 Text="{Binding CurrentExercise.RecommendationText, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource CaptionLabel}"
+                                Style="{StaticResource MutedLabel}"
                                 SemanticProperties.Description="{Binding CurrentExercise.RecommendationText, Converter={StaticResource LocalizedStringConverter}}" />
                             <VerticalStackLayout BindingContext="{Binding CurrentExercise}"
-                                                 x:DataType="models:WorkoutExerciseItem" Spacing="12">
+                                                 x:DataType="models:WorkoutExerciseItem" Spacing="{StaticResource UiSpaceCompact}">
                                 <!-- Strength inputs -->
-                                <Grid ColumnDefinitions="*, *, *" ColumnSpacing="8" RowDefinitions="Auto, Auto"
-                                      RowSpacing="4" IsVisible="{Binding UsesStrengthMetrics}">
-                                    <Label Grid.Row="0" Grid.Column="0" Text="{loc:LocalizedText Workout_Session_SetsHeader}"
+                                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}" RowDefinitions="Auto, Auto"
+                                      RowSpacing="{StaticResource UiSpaceMicro}" IsVisible="{Binding UsesStrengthMetrics}">
+                                    <Label LineBreakMode="WordWrap" Grid.Row="0" Grid.Column="0" Text="{loc:LocalizedText Workout_Session_SetsHeader}"
                                            Style="{StaticResource CaptionLabel}" />
-                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource WorkoutMetricInput}">
-                                        <Entry SemanticProperties.Description="{loc:LocalizedText Workout_Session_SetsCompletedAccessibility}"
+                                    <Border Grid.Row="1" Grid.Column="0" Style="{StaticResource InputContainer}">
+                                        <Entry Style="{StaticResource WorkoutNumberEntry}" SemanticProperties.Description="{loc:LocalizedText Workout_Session_SetsCompletedAccessibility}"
                                                Text="{Binding LoggedSetsText, Mode=TwoWay}"
-                                               Keyboard="Numeric" FontSize="15" Placeholder="0"
+                                               Keyboard="Numeric" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                                ReturnType="Next" />
                                     </Border>
 
-                                    <Label Grid.Row="0" Grid.Column="1" Text="{loc:LocalizedText Workout_Session_RepsHeader}"
+                                    <Label LineBreakMode="WordWrap" Grid.Row="0" Grid.Column="1" Text="{loc:LocalizedText Workout_Session_RepsHeader}"
                                            Style="{StaticResource CaptionLabel}" />
-                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource WorkoutMetricInput}">
-                                        <Entry SemanticProperties.Description="{loc:LocalizedText Workout_Session_RepsPerSetAccessibility}"
+                                    <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource InputContainer}">
+                                        <Entry Style="{StaticResource WorkoutNumberEntry}" SemanticProperties.Description="{loc:LocalizedText Workout_Session_RepsPerSetAccessibility}"
                                                Text="{Binding LoggedRepsText, Mode=TwoWay}"
-                                               Keyboard="Numeric" FontSize="15" Placeholder="0"
+                                               Keyboard="Numeric" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                                ReturnType="Next" />
                                     </Border>
 
-                                    <Label Grid.Row="0" Grid.Column="2" Text="{loc:LocalizedText Workout_Session_KgUnit}"
+                                    <Label LineBreakMode="WordWrap" Grid.Row="0" Grid.Column="2" Text="{loc:LocalizedText Workout_Session_KgUnit}"
                                            Style="{StaticResource CaptionLabel}" IsVisible="{Binding UsesWeight}" />
-                                    <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource WorkoutMetricInput}"
+                                    <Border Grid.Row="1" Grid.Column="2" Style="{StaticResource InputContainer}"
                                             IsVisible="{Binding UsesWeight}">
-                                        <Entry SemanticProperties.Description="{loc:LocalizedText Workout_Session_WeightInKgAccessibility}"
+                                        <Entry Style="{StaticResource WorkoutNumberEntry}" SemanticProperties.Description="{loc:LocalizedText Workout_Session_WeightInKgAccessibility}"
                                                Text="{Binding LoggedWeightText, Mode=TwoWay}"
-                                               Placeholder="0" Keyboard="Numeric" FontSize="15"
+                                               Placeholder="{loc:LocalizedText Common_Placeholder_Zero}" Keyboard="Numeric"
                                                ReturnType="Done" />
                                     </Border>
                                 </Grid>
 
                                 <!-- Duration input -->
-                                <VerticalStackLayout Spacing="4" IsVisible="{Binding UsesDurationOnlyMetric}">
-                                    <Label
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" IsVisible="{Binding UsesDurationOnlyMetric}">
+                                    <Label LineBreakMode="WordWrap"
                                         Text="{Binding DurationLabel, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource CaptionLabel}" />
-                                    <Border Style="{StaticResource WorkoutMetricInput}">
-                                        <Entry SemanticProperties.Description="{loc:LocalizedText Workout_Session_DurationInMinutesAccessibility}"
+                                    <Border Style="{StaticResource InputContainer}">
+                                        <Entry Style="{StaticResource WorkoutNumberEntry}" SemanticProperties.Description="{loc:LocalizedText Workout_Session_DurationInMinutesAccessibility}"
                                                Text="{Binding LoggedDurationMinutesText, Mode=TwoWay}"
-                                               Keyboard="Numeric" FontSize="15" Placeholder="0"
+                                               Keyboard="Numeric" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                                ReturnType="Done" />
                                     </Border>
                                 </VerticalStackLayout>
@@ -340,100 +249,99 @@
                                 <!-- Cardio inputs -->
                                 <Grid
                                     RowDefinitions="Auto, Auto, Auto, Auto"
-                                    ColumnDefinitions="*, *"
-                                    RowSpacing="6"
-                                    ColumnSpacing="8"
+                                    ColumnDefinitions="*,*"
+                                    RowSpacing="{StaticResource UiSpaceTight}"
+                                    ColumnSpacing="{StaticResource UiSpaceTight}"
                                     IsVisible="{Binding UsesCardioMetricGrid}">
-                                    <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="4"
+                                    <VerticalStackLayout Grid.Row="0" Grid.Column="0" Spacing="{StaticResource UiSpaceMicro}"
                                                          IsVisible="{Binding UsesDurationMetric}">
-                                        <Label
+                                        <Label LineBreakMode="WordWrap"
                                             Text="{Binding DurationLabel, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}" />
-                                        <Border Style="{StaticResource WorkoutMetricInput}">
-                                            <Entry SemanticProperties.Description="{loc:LocalizedText Workout_Session_DurationInMinutesAccessibility}"
+                                        <Border Style="{StaticResource InputContainer}">
+                                            <Entry Style="{StaticResource WorkoutNumberEntry}" SemanticProperties.Description="{loc:LocalizedText Workout_Session_DurationInMinutesAccessibility}"
                                                    Text="{Binding LoggedDurationMinutesText, Mode=TwoWay}"
-                                                   Keyboard="Numeric" FontSize="15" Placeholder="0"
+                                                   Keyboard="Numeric" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                                    ReturnType="Next" />
                                         </Border>
                                     </VerticalStackLayout>
 
-                                    <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="4"
+                                    <VerticalStackLayout Grid.Row="0" Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}"
                                                          IsVisible="{Binding UsesDistanceMetric}">
-                                        <Label
+                                        <Label LineBreakMode="WordWrap"
                                             Text="{Binding DistanceLabel, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}" />
-                                        <Border Style="{StaticResource WorkoutMetricInput}">
-                                            <Entry
+                                        <Border Style="{StaticResource InputContainer}">
+                                            <Entry Style="{StaticResource WorkoutNumberEntry}"
                                                 SemanticProperties.Description="{Binding DistanceLabel, Converter={StaticResource LocalizedStringConverter}}"
                                                 Text="{Binding LoggedDistanceKmText, Mode=TwoWay}"
-                                                Keyboard="Numeric" FontSize="15" Placeholder="0"
+                                                Keyboard="Numeric" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                                 ReturnType="Next" />
                                         </Border>
                                     </VerticalStackLayout>
 
-                                    <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="4"
+                                    <VerticalStackLayout Grid.Row="1" Grid.Column="0" Spacing="{StaticResource UiSpaceMicro}"
                                                          IsVisible="{Binding UsesPaceMetric}">
-                                        <Label
+                                        <Label LineBreakMode="WordWrap"
                                             Text="{Binding PaceLabel, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}" />
-                                        <Border Style="{StaticResource WorkoutMetricInput}">
+                                        <Border Style="{StaticResource InputContainer}">
                                             <Entry
                                                 SemanticProperties.Description="{Binding PaceLabel, Converter={StaticResource LocalizedStringConverter}}"
                                                 Text="{Binding LoggedPaceText, Mode=TwoWay}"
-                                                Placeholder="6:30" FontSize="15"
+                                                Placeholder="{loc:LocalizedText Common_Placeholder_TimeExample}"
                                                 ReturnType="Next" />
                                         </Border>
                                     </VerticalStackLayout>
 
-                                    <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="4"
+                                    <VerticalStackLayout Grid.Row="1" Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}"
                                                          IsVisible="{Binding UsesHeartRateMetric}">
-                                        <Label
+                                        <Label LineBreakMode="WordWrap"
                                             Text="{Binding HeartRateLabel, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}" />
-                                        <Border Style="{StaticResource WorkoutMetricInput}">
-                                            <Entry SemanticProperties.Description="{loc:LocalizedText Workout_Session_HeartRateAccessibility}"
+                                        <Border Style="{StaticResource InputContainer}">
+                                            <Entry Style="{StaticResource WorkoutNumberEntry}" SemanticProperties.Description="{loc:LocalizedText Workout_Session_HeartRateAccessibility}"
                                                    Text="{Binding LoggedHeartRateText, Mode=TwoWay}"
-                                                   Keyboard="Numeric" FontSize="15" Placeholder="0"
+                                                   Keyboard="Numeric" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                                    ReturnType="Next" />
                                         </Border>
                                     </VerticalStackLayout>
 
-                                    <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="4"
+                                    <VerticalStackLayout Grid.Row="2" Grid.Column="0" Spacing="{StaticResource UiSpaceMicro}"
                                                          IsVisible="{Binding UsesPowerMetric}">
-                                        <Label
+                                        <Label LineBreakMode="WordWrap"
                                             Text="{Binding PowerLabel, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}" />
-                                        <Border Style="{StaticResource WorkoutMetricInput}">
-                                            <Entry SemanticProperties.Description="{loc:LocalizedText Workout_Session_WattsAccessibility}"
+                                        <Border Style="{StaticResource InputContainer}">
+                                            <Entry Style="{StaticResource WorkoutNumberEntry}" SemanticProperties.Description="{loc:LocalizedText Workout_Session_WattsAccessibility}"
                                                    Text="{Binding LoggedPowerWattsText, Mode=TwoWay}"
-                                                   Keyboard="Numeric" FontSize="15" Placeholder="0"
+                                                   Keyboard="Numeric" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                                    ReturnType="Next" />
                                         </Border>
                                     </VerticalStackLayout>
 
-                                    <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="4"
+                                    <VerticalStackLayout Grid.Row="2" Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}"
                                                          IsVisible="{Binding UsesCadenceMetric}">
-                                        <Label
+                                        <Label LineBreakMode="WordWrap"
                                             Text="{Binding CadenceLabel, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}" />
-                                        <Border Style="{StaticResource WorkoutMetricInput}">
-                                            <Entry SemanticProperties.Description="{loc:LocalizedText Workout_Session_CadenceAccessibility}"
+                                        <Border Style="{StaticResource InputContainer}">
+                                            <Entry Style="{StaticResource WorkoutNumberEntry}" SemanticProperties.Description="{loc:LocalizedText Workout_Session_CadenceAccessibility}"
                                                    Text="{Binding LoggedCadenceRpmText, Mode=TwoWay}"
-                                                   Keyboard="Numeric" FontSize="15" Placeholder="0"
+                                                   Keyboard="Numeric" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                                    ReturnType="Next" />
                                         </Border>
                                     </VerticalStackLayout>
 
-                                    <VerticalStackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="4"
+                                    <VerticalStackLayout Grid.Row="3" Grid.Column="0" Grid.ColumnSpan="2" Spacing="{StaticResource UiSpaceMicro}"
                                                          IsVisible="{Binding UsesEffortMetric}">
-                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
-                                            <Label
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                            <Label LineBreakMode="WordWrap"
                                                 Text="{Binding EffortLabel, Converter={StaticResource LocalizedStringConverter}}"
                                                 Style="{StaticResource CaptionLabel}" />
-                                            <Label Grid.Column="1"
+                                            <Label LineBreakMode="WordWrap" Grid.Column="1"
                                                    Text="{Binding EffortDisplayText, Converter={StaticResource LocalizedStringConverter}}"
-                                                   Style="{StaticResource BodyLabel}"
-                                                   FontAttributes="Bold" />
+                                                   Style="{StaticResource BodyStrong}" />
                                         </Grid>
                                         <Slider Minimum="1" Maximum="10"
                                                 Value="{Binding EffortSliderValue, Mode=TwoWay}"
@@ -444,20 +352,66 @@
                                                 SemanticProperties.Description="{loc:LocalizedText Workout_Session_EffortRatingAccessibility}"
                                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_AdjustWholeNumberAccessibility}" />
                                         <Grid ColumnDefinitions="*,Auto">
-                                            <Label Text="{loc:LocalizedText Workout_Session_RpeLightLabel}"
+                                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_RpeLightLabel}"
                                                    Style="{StaticResource CaptionLabel}" />
-                                            <Label Grid.Column="1" Text="{loc:LocalizedText Workout_Session_RpeVeryHardLabel}"
+                                            <Label LineBreakMode="WordWrap" Grid.Column="1" Text="{loc:LocalizedText Workout_Session_RpeVeryHardLabel}"
                                                    Style="{StaticResource CaptionLabel}" />
                                         </Grid>
                                     </VerticalStackLayout>
                                 </Grid>
 
-
+                                <Border Style="{StaticResource CardSecondary}">
+                                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Readiness_OptionalExercise}"
+                                                   Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
+                                            <Switch Grid.Column="1" IsToggled="{Binding IsOptional, Mode=TwoWay}"
+                                                    IsEnabled="{Binding CanMarkOptional}"
+                                                    OnColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
+                                                    ThumbColor="{StaticResource ControlThumbLight}"
+                                                    Toggled="OnOptionalExerciseToggled" />
+                                        </Grid>
+                                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                                              IsVisible="{Binding IsOptional}">
+                                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Readiness_OptionalSets}"
+                                                   Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
+                                            <Stepper Grid.Column="1" Minimum="0" Maximum="{Binding MaxOptionalSets}"
+                                                     Increment="1" Value="{Binding OptionalSets, Mode=TwoWay}"
+                                                     IsEnabled="{Binding CanMarkOptional}"
+                                                     ValueChanged="OnOptionalSetsChanged" />
+                                            <Label Grid.Column="2" Text="{Binding OptionalSets}" Style="{StaticResource BodyLabel}"
+                                                   VerticalOptions="Center" />
+                                        </Grid>
+                                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Readiness_OneRequiredSetHint}"
+                                               Style="{StaticResource CaptionLabel}" IsVisible="{Binding IsOptional}" />
+                                    </VerticalStackLayout>
+                                </Border>
                             </VerticalStackLayout>
+
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}" HorizontalOptions="Start">
+                                <Path Data="M2 4 L8 10 L14 4" Stroke="{StaticResource Primary}"
+                                      StrokeThickness="{StaticResource UiStrokeWidth2}" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
+                                      VerticalOptions="Center" />
+                                <Button Grid.Column="1"
+                                        Text="{Binding TipsButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                                        Command="{Binding ToggleTipsCommand}" Style="{StaticResource ButtonSecondary}"
+                                        SemanticProperties.Hint="{loc:LocalizedText Workout_Session_ToggleTipsAccessibility}" />
+                            </Grid>
+                            <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding IsTipsExpanded}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                                    <Label LineBreakMode="WordWrap"
+                                        Text="{Binding CurrentExercise.WhyText, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource BodyLabel}" />
+                                    <Label LineBreakMode="WordWrap" Text="{Binding CurrentExercise.CuesText}" Style="{StaticResource BodyLabel}" />
+                                    <Label LineBreakMode="WordWrap" Text="{Binding CurrentExercise.QuickTipsText}"
+                                           IsVisible="{Binding CurrentExercise.HasQuickTips}"
+                                           Style="{StaticResource BodyLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
                         </VerticalStackLayout>
                     </ScrollView>
 
-                    <VerticalStackLayout Grid.Row="2" Spacing="6">
+                    <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}">
                         <Button Text="{loc:LocalizedText Workout_Session_Start60SecRestAccessibility}" Command="{Binding StartRestTimerCommand}"
                                 IsVisible="{Binding IsRestTimerVisible, Converter={StaticResource InvertedBoolConverter}}"
                                 Style="{StaticResource ButtonSecondary}">
@@ -465,116 +419,115 @@
                                 <x:Int32>60</x:Int32>
                             </Button.CommandParameter>
                         </Button>
-                        <VerticalStackLayout Spacing="6" IsVisible="{Binding IsRestTimerVisible}">
-                            <Label
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" IsVisible="{Binding IsRestTimerVisible}">
+                            <Label LineBreakMode="WordWrap"
                                 Text="{Binding RestTimerDisplay, Converter={StaticResource LocalizedStringConverter}}"
+                                Style="{StaticResource WorkoutNumber}"
                                 HorizontalTextAlignment="Center"
                                 SemanticProperties.Description="{loc:LocalizedText Workout_Session_RestTimerCountdownAccessibility}" />
                             <ProgressBar Progress="{Binding RestTimerProgress}" />
-                            <HorizontalStackLayout Spacing="8" HorizontalOptions="Center">
+                            <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="Center" AlignItems="Start">
                                 <Button Text="{loc:LocalizedText Workout_Session_PauseButton}"
                                         Command="{Binding PauseRestTimerCommand}"
-                                        IsVisible="{Binding IsRestTimerRunning}" Style="{StaticResource QuietButton}" />
+                                        IsVisible="{Binding IsRestTimerRunning}" Style="{StaticResource ButtonSecondary}" />
                                 <Button Text="{loc:LocalizedText Workout_Session_ResumeButton}"
                                         Command="{Binding ResumeRestTimerCommand}"
                                         IsVisible="{Binding IsRestTimerRunning, Converter={StaticResource InvertedBoolConverter}}"
-                                        Style="{StaticResource QuietButton}" />
+                                        Style="{StaticResource ButtonSecondary}" />
                                 <Button Text="{loc:LocalizedText Workout_Session_Plus30SecButton}"
                                         Command="{Binding AddRestTimerSecondsCommand}"
-                                        Style="{StaticResource QuietButton}">
+                                        Style="{StaticResource ButtonSecondary}">
                                     <Button.CommandParameter>
                                         <x:Int32>30</x:Int32>
                                     </Button.CommandParameter>
                                 </Button>
                                 <Button Text="{loc:LocalizedText Workout_Session_DoneButton}" Command="{Binding StopRestTimerCommand}"
-                                        Style="{StaticResource QuietButton}" />
-                            </HorizontalStackLayout>
+                                        Style="{StaticResource ButtonSecondary}" />
+                            </FlexLayout>
                         </VerticalStackLayout>
                     </VerticalStackLayout>
 
                     <!-- Bottom action bar: Swap / Skip / Next -->
-                    <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="8">
+                    <Grid Grid.Row="3" RowDefinitions="Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
                         <Button Text="{loc:LocalizedText Workout_Session_SwapButton}" Command="{Binding OpenSwapPanelCommand}"
                                 Style="{StaticResource ButtonSecondary}"
                                 IsVisible="{Binding CurrentExercise.UsesStrengthMetrics}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SwapExerciseAccessibility}" />
                         <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_SkipButton}"
-                                Command="{Binding SkipExerciseCommand}" Style="{StaticResource QuietButton}"
-                                HorizontalOptions="Center"
+                                Command="{Binding SkipExerciseCommand}" Style="{StaticResource ButtonSecondary}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SkipExerciseAccessibility}" />
-                        <Button Grid.Column="2" Text="{loc:LocalizedText Workout_Session_NextExerciseButton}"
-                                Command="{Binding NextExerciseCommand}" MinimumHeightRequest="52" Padding="20,8"
+                        <Button Style="{StaticResource ButtonPrimary}" Grid.Row="1" Grid.ColumnSpan="2" Text="{loc:LocalizedText Workout_Session_NextExerciseButton}"
+                                Command="{Binding NextExerciseCommand}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SaveAndNextAccessibility}" />
                     </Grid>
                 </Grid>
 
                 <!-- ========== Activity summary ========== -->
-                <Grid RowDefinitions="*,Auto" RowSpacing="16" IsVisible="{Binding IsActivitySummary}">
+                <Grid RowDefinitions="*,Auto" RowSpacing="{StaticResource UiSpaceControl}" IsVisible="{Binding IsActivitySummary}">
                     <ScrollView>
-                        <VerticalStackLayout Spacing="24" Padding="0,24">
-                            <Border x:Name="CompletionBadge" WidthRequest="64" HeightRequest="64"
-                                    StrokeShape="RoundRectangle 32" StrokeThickness="0"
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceContent}" Padding="{StaticResource UiInsets0_24}">
+                            <Border x:Name="CompletionBadge" WidthRequest="{StaticResource UiDimension64}" HeightRequest="{StaticResource UiDimension64}"
+                                    StrokeShape="{StaticResource UiRoundRectangleRadius32}" StrokeThickness="{StaticResource UiStrokeWidth0}"
                                     BackgroundColor="{StaticResource Primary}" HorizontalOptions="Center">
-                                <Path Data="M2 12 L8 18 L22 3" Stroke="White" StrokeThickness="3"
+                                <Path Data="M2 12 L8 18 L22 3" Stroke="{StaticResource ContrastInk}" StrokeThickness="{StaticResource UiStrokeWidth3}"
                                       StrokeLineCap="Round" StrokeLineJoin="Round" Aspect="Uniform"
-                                      HeightRequest="32" WidthRequest="32" HorizontalOptions="Center"
+                                      HeightRequest="{StaticResource UiDimension32}" WidthRequest="{StaticResource UiDimension32}" HorizontalOptions="Center"
                                       VerticalOptions="Center"
                                       SemanticProperties.Description="{loc:LocalizedText Workout_Session_CheckmarkAccessibility}" />
                             </Border>
-                            <VerticalStackLayout Spacing="8">
-                                <Label
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                <Label LineBreakMode="WordWrap"
                                     Text="{Binding SummaryTitle, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource SectionTitle}" FontSize="24"
+                                    Style="{StaticResource SectionTitle}"
                                     HorizontalTextAlignment="Center"
                                     SemanticProperties.HeadingLevel="Level2" />
-                                <Label
+                                <Label LineBreakMode="WordWrap"
                                     Text="{Binding SelectedActivity.Title, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource BodyLabel}" HorizontalTextAlignment="Center" />
-                                <Label
+                                    Style="{StaticResource BodyCentered}" />
+                                <Label LineBreakMode="WordWrap"
                                     Text="{Binding SummaryStatusText, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center"
+                                    Style="{StaticResource CaptionCentered}"
                                     SemanticProperties.Description="{Binding SummaryStatusText, Converter={StaticResource LocalizedStringConverter}}" />
                             </VerticalStackLayout>
-                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="8">
-                                <Border Style="{StaticResource SessionAccent}"
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                <Border Style="{StaticResource CardSecondary}"
                                         SemanticProperties.Description="{Binding SummaryTotalVolume, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TotalVolumeFormat}">
-                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
-                                        <Label
+                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
+                                        <Label LineBreakMode="WordWrap"
                                             Text="{Binding SummaryTotalVolume, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
-                                        <Label Grid.Row="1" Text="{loc:LocalizedText Workout_Session_VolumeHeader}"
-                                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                            Style="{StaticResource WorkoutMetricValue}" />
+                                        <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{loc:LocalizedText Workout_Session_VolumeHeader}"
+                                               Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                                <Border Grid.Column="1" Style="{StaticResource SessionAccent}"
+                                <Border Grid.Column="1" Style="{StaticResource CardSecondary}"
                                         SemanticProperties.Description="{Binding SummaryPrCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_WeightPrsFormat}">
-                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
-                                        <Label
+                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
+                                        <Label LineBreakMode="WordWrap"
                                             Text="{Binding SummaryPrCount, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
-                                        <Label Grid.Row="1" Text="{loc:LocalizedText Workout_Session_WeightPrsTitle}"
-                                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                            Style="{StaticResource WorkoutMetricValue}" />
+                                        <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{loc:LocalizedText Workout_Session_WeightPrsTitle}"
+                                               Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                                <Border Grid.Column="2" Style="{StaticResource SessionAccent}"
+                                <Border Grid.Column="2" Style="{StaticResource CardSecondary}"
                                         SemanticProperties.Description="{Binding SummaryDuration, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TimeFormat}">
-                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="4">
-                                        <Label
+                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
+                                        <Label LineBreakMode="WordWrap"
                                             Text="{Binding SummaryDuration, Converter={StaticResource LocalizedStringConverter}}"
-                                            Style="{StaticResource SectionTitle}" HorizontalTextAlignment="Center" />
-                                        <Label Grid.Row="1" Text="{loc:LocalizedText Workout_Session_TimeLabel}"
-                                               Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="Center" />
+                                            Style="{StaticResource WorkoutMetricValue}" />
+                                        <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{loc:LocalizedText Workout_Session_TimeLabel}"
+                                               Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
                             </Grid>
                         </VerticalStackLayout>
                     </ScrollView>
-                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="8">
-                        <Button Text="{loc:LocalizedText Workout_Session_ContinueButton}" Command="{Binding FinishActivityCommand}"
-                                MinimumHeightRequest="52"
+                    <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
+                        <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_ContinueButton}" Command="{Binding FinishActivityCommand}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_ReturnToActivitiesAccessibility}" />
                         <Button Grid.Row="1" Text="{loc:LocalizedText Workout_Session_FinishSessionButton}"
-                                Command="{Binding FinishSessionCommand}" Style="{StaticResource QuietButton}"
+                                Command="{Binding CompleteSessionCommand}" Style="{StaticResource ButtonSecondary}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_EndSessionAccessibility}" />
                     </Grid>
                 </Grid>
@@ -584,10 +537,11 @@
             x:Name="SwapPanelLazy"
             x:TypeArguments="workoutControls:WorkoutSwapPanel"
             InputTransparent="{Binding IsSwapPanelVisible, Converter={StaticResource InvertedBoolConverter}}" />
-        <Grid IsVisible="{Binding IsBusy}" BackgroundColor="#40000000"
+        <Grid IsVisible="{Binding IsBusy}" BackgroundColor="{StaticResource WorkoutBusyScrim}"
               SemanticProperties.Description="{loc:LocalizedText Workout_Session_LoadingOverlayAccessibility}">
-            <ActivityIndicator IsRunning="{Binding IsBusy}" Color="{StaticResource Primary}" WidthRequest="48"
-                               HeightRequest="48"
+            <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsBusy}" WidthRequest="{StaticResource UiDimension48}"
+                               HeightRequest="{StaticResource UiDimension48}"
                                HorizontalOptions="Center" VerticalOptions="Center"
                                SemanticProperties.Description="{loc:LocalizedText Workout_Session_SavingLoadingAccessibility}" />
         </Grid>

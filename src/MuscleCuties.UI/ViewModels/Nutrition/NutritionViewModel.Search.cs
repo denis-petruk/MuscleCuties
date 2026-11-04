@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
@@ -36,7 +37,7 @@ public partial class NutritionViewModel
         {
             Trace.TraceError($"[Nutrition] Food search failed: {exception.GetType().Name}");
             if (version == _foodSearchVersion)
-                AddFoodMessage = "Couldn't load foods. Check your connection and search again.";
+                AddFoodMessage = "Ui_Nutrition_Error_LoadFoods";
         }
         finally
         {
@@ -62,7 +63,7 @@ public partial class NutritionViewModel
         {
             Trace.TraceError($"[Nutrition] More foods failed: {exception.GetType().Name}");
             if (version == _foodSearchVersion)
-                AddFoodMessage = "Couldn't load more foods. Your current results are still available.";
+                AddFoodMessage = "Ui_Nutrition_Error_LoadMoreFoods";
         }
         finally
         {
@@ -78,7 +79,8 @@ public partial class NutritionViewModel
         if (version != _foodSearchVersion || !string.Equals(query, SearchQuery.Trim(), StringComparison.Ordinal))
             return;
 
-        var items = response.Items.Select(CreateFoodSearchResultItem).ToList();
+        var items = response.Items.Select(i => CreateFoodSearchResultItem(
+            NutritionPresentationMapper.FromCatalogItem(i))).ToList();
 
         if (replaceResults)
         {

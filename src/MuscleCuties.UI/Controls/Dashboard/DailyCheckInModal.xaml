@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sharedControls:AnimatedModalView
+    x:Class="MuscleCuties.UI.Controls.Dashboard.DailyCheckInModal"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:dashboardControls="clr-namespace:MuscleCuties.UI.Controls.Dashboard"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
+    x:DataType="vm:DailyCheckInViewModel">
+    <Grid>
+        <BoxView Style="{StaticResource ModalBackdrop}">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer
+                    Command="{Binding CloseCommand, Source={x:Reference Root}, x:DataType=dashboardControls:DailyCheckInModal}" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+        <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End"
+                MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}">
+            <Grid RowDefinitions="Auto,Auto,*,Auto">
+                <Grid ColumnDefinitions="*,Auto" Padding="{DynamicResource PresentationModalHeaderPadding}">
+                    <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Dashboard_CheckIn_PageTitle}"
+                           Style="{StaticResource ModalTitle}" VerticalOptions="Center" />
+                    <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
+                            SemanticProperties.Description="{loc:LocalizedText Common_Close}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding CloseCommand, Source={x:Reference Root}, x:DataType=dashboardControls:DailyCheckInModal}" />
+                        </Border.GestureRecognizers>
+                        <Path Style="{StaticResource ModalCloseIcon}" />
+                    </Border>
+                </Grid>
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+                <dashboardControls:DailyCheckInContent Grid.Row="2" />
+                <!-- Actions stay on the sheet edge instead of riding the end of the scroll. -->
+                <Grid Grid.Row="3"
+                      RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*"
+                      ColumnSpacing="{StaticResource UiSpaceTight}"
+                      Padding="{DynamicResource PresentationActionFooterPadding}"
+                      IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}"
+                      BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
+                    <BoxView Grid.ColumnSpan="2" Style="{StaticResource ModalDivider}" />
+                    <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" Grid.Row="1" Grid.ColumnSpan="2"
+                        IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
+                        SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_SavingA11y}" />
+                    <Button Style="{StaticResource ButtonSecondary}" Grid.Row="2" Grid.Column="0"
+                            Text="{loc:LocalizedText Dashboard_CheckIn_SkipButton}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                            Command="{Binding SkipCommand}"
+                            SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_SkipHint}" />
+                    <Button Style="{StaticResource ButtonPrimary}" Grid.Row="2" Grid.Column="1"
+                            Text="{loc:LocalizedText Dashboard_CheckIn_SubmitButton}"
+                            Command="{Binding SubmitCommand}"
+                            SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_SubmitHint}" />
+                </Grid>
+            </Grid>
+        </Border>
+    </Grid>
+</sharedControls:AnimatedModalView>

@@ -66,7 +66,7 @@ public partial class LoginViewModel : ObservableObject
         Email = email;
         Password = string.Empty;
         ErrorMessage = string.Empty;
-        InfoMessage = "You're already with us. Enter your password to log in.";
+        InfoMessage = "Ui_Auth_Info_ExistingAccount";
     }
 
     private async Task HandleRecoveryNavigationAsync()
@@ -74,7 +74,7 @@ public partial class LoginViewModel : ObservableObject
         if (_navigateToRecoveryAsync is not null)
             await _navigateToRecoveryAsync();
         else
-            ErrorMessage = "Password recovery is currently unavailable.";
+            ErrorMessage = "Ui_Auth_Error_RecoveryUnavailable";
     }
 
     private async Task LoginAsync()
@@ -87,7 +87,7 @@ public partial class LoginViewModel : ObservableObject
                 new PasswordSignInRequest(Email, Password)));
             if (!result.Succeeded)
             {
-                ErrorMessage = "Invalid email or password";
+                ErrorMessage = "Ui_Auth_Error_InvalidCredentials";
                 return;
             }
 
@@ -96,7 +96,7 @@ public partial class LoginViewModel : ObservableObject
         catch (Exception ex)
         {
             Trace.WriteLine($"[LoginViewModel] Sign in failed ({ex.GetType().Name}).");
-            ErrorMessage = "We couldn't sign you in securely. Please try again.";
+            ErrorMessage = "Ui_Auth_Error_SignIn";
         }
         finally
         {

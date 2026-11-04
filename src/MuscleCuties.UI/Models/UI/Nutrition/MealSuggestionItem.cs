@@ -1,6 +1,4 @@
 using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.Core.Models.Nutrition;
-using MuscleCuties.Core.Models.Nutrition.Planning;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
@@ -11,7 +9,7 @@ public class MealSuggestionItem
     public IReadOnlyList<SpiceBlendDetail> SpiceBlends { get; set; } = [];
     public IReadOnlyList<MealSuggestionComponentItem> Components { get; set; } = [];
     public IReadOnlyList<MealSuggestionComponentGroup> ComponentGroups { get; set; } = [];
-    public MacroNutrients Macros { get; set; }
+    public NutritionMacros Macros { get; set; }
     public float Score { get; set; }
     public MealStyle Style { get; set; }
     public string IconGlyph { get; set; } = "Food24";
@@ -186,16 +184,7 @@ public record MealSuggestionComponentGroup(
     string IconGlyph,
     IReadOnlyList<MealSuggestionComponentItem> Items)
 {
-    public string TotalText
-    {
-        get
-        {
-            var totalGrams = Items.Sum(i => i.Grams);
-            var macros = MacroNutrients.Sum(Items.Select(i =>
-                MacroNutrients.FromPer100g(i.Calories, i.Protein, i.Carbs, i.Fats, i.Grams)));
-            return $"{totalGrams:N0}g · {macros.Calories:N0} kcal";
-        }
-    }
+    public string TotalText => $"{Items.Sum(i => i.Grams):N0}g · {Items.Sum(i => i.CaloriesForAmount):N0} kcal";
 }
 
 public class MealSuggestionComponentItem
@@ -210,6 +199,8 @@ public class MealSuggestionComponentItem
     public float Protein { get; set; }
     public float Carbs { get; set; }
     public float Fats { get; set; }
+    public float CaloriesForAmount { get; set; }
+    public string NutritionForAmountText { get; set; } = string.Empty;
 
     public string TypeLabel => ComponentType.ToString();
 
@@ -227,16 +218,14 @@ public class MealSuggestionComponentItem
 
     public string PortionText => $"{Grams:N0}g";
 
-    public string CaloriesText =>
-        $"{MacroNutrients.FromPer100g(Calories, Protein, Carbs, Fats, Grams).Calories:N0} kcal";
+    public string CaloriesText => $"{CaloriesForAmount:N0} kcal";
 
-    public string DetailText =>
-        $"{Grams:N0}g · {MacroNutrients.FromPer100g(Calories, Protein, Carbs, Fats, Grams).ToNutritionText()}";
+    public string DetailText => $"{Grams:N0}g · {NutritionForAmountText}";
 }
 
 public sealed record DayMealPlanItem(
     MealType MealType,
-    MealNutritionTarget Target,
+    NutritionMealTarget Target,
     float DailyCaloriesTarget,
     bool IsAlreadyLogged,
     bool IsRefreshing,
@@ -257,7 +246,7 @@ public sealed record DayMealPlanItem(
         MealType.Breakfast => "M17 18a5 5 0 0 0 0-10H5a5 5 0 0 0 0 10zM2 21h20M12 3v2",
         MealType.Lunch =>
             "M12 2a8.5 8.5 0 0 1 8.5 8.5c0 3.7-2.4 6.8-5.7 8H9.2c-3.3-1.2-5.7-4.3-5.7-8A8.5 8.5 0 0 1 12 2zM12 2v4M4.93 10h14.14",
-        MealType.Dinner => "M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z",
+        MealType.Dinner => "M3 16h18M5 14a7 7 0 0 1 14 0M12 7V5M2 19h20",
         MealType.Snack => "M12 2a10 10 0 0 0-6.88 2.77A4 4 0 0 1 8 8a4 4 0 0 1-3.54 3.97A10 10 0 1 0 12 2z",
         _ => "M12 2a10 10 0 0 0 0 20 10 10 0 0 0 0-20z"
     };
