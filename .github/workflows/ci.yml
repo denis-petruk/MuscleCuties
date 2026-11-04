@@ -45,16 +45,20 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Install Lambda Tools
+        run: |
+          dotnet tool install Amazon.Lambda.Tools --version 7.0.0 --tool-path .tools
+
       - name: Run deployment offline tests
         run: |
           python3 tests/MuscleCuties.Deployment.Tests/test_package_upload.py
           bash tests/MuscleCuties.Deployment.Tests/release-fail-closed.sh
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_release_engine.py'
-
-      - name: Set up .NET SDK
-        uses: actions/setup-dotnet@v4
-        with:
-          global-json-file: global.json
 
       - name: Run Core tests
         run: |
