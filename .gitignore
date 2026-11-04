@@ -11,15 +11,19 @@ obj/
 # Generated analysis output (local only; regenerate with the graph tool)
 graphify-out/
 
-# Throwaway database-reset helper (see its README; delete it when finished)
-temp-db-reset/
+# Local database-reset marker (development helper source stays versioned)
 .temp-db-reset
 
 # Local secrets, signing material and machine-specific settings
 .env
 .env.*
 !.env.example
-/certs/
+!.env.*.example
+!.env.template
+!.env.*.template
+# Keep signing/private certificates local, but version the public RDS trust bundle.
+/certs/*
+!/certs/global-bundle.pem
 /lambda-environment.json
 /services/postgresql/docker-compose.yml
 **/docker-compose.override.yml
@@ -28,6 +32,7 @@ appsettings.*.local.json
 *.p8
 *.p12
 *.pfx
+*.key
 *.mobileprovision
 *.user
 
@@ -43,22 +48,26 @@ coverage/
 _ReSharper*/
 /artifacts/
 
-# Local agent context and profiles stay outside Git
-.agents/
-.codex/
-**/.codex/
-.claude
-.impeccable/
-PRODUCT.md
-DESIGN.md
-# Shared app-wide design entry point is versioned; local agent machinery stays ignored.
-!/DESIGN.md
-CLAUDE.md
+# Shared development instructions, skills, reports, templates and run configurations
+# are versioned by default, including AGENTS.md, DESIGN.md, PRODUCT.md, CLAUDE.md,
+# .agents/, .codex/, .claude/, .impeccable/critique/ and .run/.
+# Ignore only private imported context and per-machine agent state.
+/.cloud-attachments/
+/.freebuff/
+**/.codex/hooks.json
+**/.codex/auth.json
+**/.codex/*.local.*
+**/.codex/sessions/
+**/.codex/cache/
+**/.codex/logs/
+**/.claude/settings.local.json
+**/.impeccable/config.local.json
+**/.impeccable/hook.cache.json
+**/.impeccable/hook.pending.json
 
 # Rider / Visual Studio
 .idea/
 .vs/
-.run/
 riderModule.iml
 /_ReSharper.Caches/
 *.sln.iml

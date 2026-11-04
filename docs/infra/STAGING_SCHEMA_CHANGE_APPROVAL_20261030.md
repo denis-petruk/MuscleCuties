@@ -4,8 +4,10 @@ Date: 2026-10-30 (America/Toronto). Branch: `infra/aws-lambda-postgres`.
 Status: **APPLIED AND VERIFIED 2026-10-30** (owner approval
 `OWNER-APPROVAL-STAGING-SCHEMA-20261030`). Execution record in section 7.
 
-This document is the complete, reviewed change needed to make the merged backend
-deployable against `musclecuties_staging`.
+**Historical/current-checkout boundary (2026-11-04):** This records the migration-era source tree and the exact staging target reviewed on 2026-10-30. Its approval and execution status apply only to that dated change; they do not authorize a later operation. The current checkout is model-first, has no EF migration chain, and uses `dbcheck`, `dbinit`, and `seed`. Do not run the migration, `schema-preflight`, or `schema-reconcile` commands below against the current checkout. Reverify the current source, target, and authorization; use the [current schema runbook](POSTGRES_SCHEMA_COMPATIBILITY_RUNBOOK.md).
+
+This was the complete, reviewed change for the merged backend and
+`musclecuties_staging` as observed on 2026-10-30.
 
 ## 1. Verified target
 

@@ -1,6 +1,6 @@
 # MuscleCuties — Pre-First-Build Audit
 
-Current owner-facing report for the unreleased iOS app. `STATUS.md` and `ROADMAP.md` remain the historical record; this file is the single current state, remaining work and first-build order.
+This audit preserves readiness findings, owner actions, and evidence from the recorded implementation pass. For the concise current checkpoint, see STATUS.md and ROADMAP.md; for current UI/style gate results, see docs/design/GATE_REGISTER.md. Detailed release and database procedures remain in docs/infra/.
 
 - **Baseline commit:** `fbbfb9767ab24a01de97b26e99c12e557f921aed`.
 - **Working tree at start:** an existing uncommitted worktree (planning rules, nutrition, server mappings, localization and tests, including three untracked planning/rule files and one untracked test file) was preserved. Nothing pre-existing was reverted, committed, pushed or deployed.
