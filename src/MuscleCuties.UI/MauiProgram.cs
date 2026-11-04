@@ -102,11 +102,12 @@ using UIKit;
 #endif
 using INutritionChangeNotifier = MuscleCuties.Core.Services.Nutrition.INutritionChangeNotifier;
 
+using MuscleCuties.UI.Services.Configuration;
+
 namespace MuscleCuties.UI;
 
 public static class MauiProgram
 {
-    private const string DefaultBackendBaseUrl = "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com";
     private const string WorkoutPreferencesAfterOnboardingContextKey = "workout-preferences-after-onboarding";
 #if DEBUG
     private const string DebugBackendBaseUrlPreferenceKey = "backend_api_base_url";
@@ -328,10 +329,11 @@ public static class MauiProgram
         services.AddSingleton<ICloudAuthorityGate>(_ => new VersionedCloudAuthorityGate());
         services.AddHttpClient<IMuscleCutiesBackendApiClient, MuscleCutiesBackendApiClient>(client =>
         {
-            var configuredUrl = DefaultBackendBaseUrl;
+            string? overrideUrl = null;
 #if DEBUG
-            configuredUrl = Preferences.Get(DebugBackendBaseUrlPreferenceKey, DefaultBackendBaseUrl);
+            overrideUrl = Preferences.Get(DebugBackendBaseUrlPreferenceKey, (string?)null);
 #endif
+            var configuredUrl = AppEndpointConfiguration.ResolveBackendBaseUrl(overrideUrl);
             client.BaseAddress = new Uri(configuredUrl);
             client.Timeout = TimeSpan.FromSeconds(BackendRequestTimeoutSeconds);
         });
