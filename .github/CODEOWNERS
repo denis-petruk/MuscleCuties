@@ -1,0 +1,29 @@
+# ---------------------------------------------------------------------------
+# MuscleCuties — Repository Code Owners
+# ---------------------------------------------------------------------------
+# Order is significant; the last matching pattern takes highest precedence.
+
+# Default owner for entire repository
+* @denis-petruk
+
+# Platform, CI/CD, Workflows & Tooling
+/.github/ @denis-petruk
+/tools/ @denis-petruk
+
+# Governance & Canonical Architecture
+/AGENTS.md @denis-petruk
+/STATUS.md @denis-petruk
+/ROADMAP.md @denis-petruk
+/docs/ @denis-petruk
+
+# Infrastructure, IAM & CloudFormation
+/infra/ @denis-petruk
+
+# Database Schema & Migrations
+/src/MuscleCuties.Infrastructure.PostgreSql/Schema/ @denis-petruk
+/src/MuscleCuties.Infrastructure.PostgreSql/Persistence/Migrations/ @denis-petruk
+/src/MuscleCuties.DbMaintenance/ @denis-petruk
+
+# Core Domain Policy & Shared Contracts
+/src/MuscleCuties.Core/ @denis-petruk
+/src/MuscleCuties.UseCases/ @denis-petruk
