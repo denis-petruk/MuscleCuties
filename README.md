@@ -1,81 +1,67 @@
 # MuscleCuties
 
-iOS-first fitness, nutrition and cycle-tracking app. The mobile client is .NET MAUI; the backend is an ASP.NET Core API packaged for AWS Lambda and backed by PostgreSQL. Domain logic is pure C# — no SQLite, no Python, and no health data leaves first-party services.
+iOS-first fitness, nutrition, and cycle-tracking app. The mobile client is .NET MAUI; the backend is an ASP.NET Core API hosted on AWS Lambda and backed by PostgreSQL. Application logic is C# and health data stays within approved first-party services.
 
 ## Architecture
 
-Dependencies point inward only: `UI / Server → Infrastructure → UseCases → Core`.
-
-| Project | Layer | Responsibility |
-| --- | --- | --- |
-| `src/MuscleCuties.Core` | 1 | Domain entities, rules and deterministic math. No ORM, JSON, ASP.NET or MAUI references. |
-| `src/MuscleCuties.UseCases` | 2 | Single-purpose interactors (`ExecuteAsync(input) → output`). Orchestrates stores and delegates every rule to Core. |
-| `src/MuscleCuties.Infrastructure` | 3 | Client adapters: backend API client, encrypted snapshot cache, notifications, localization. |
-| `src/MuscleCuties.Infrastructure.PostgreSql` | 3 | Server persistence. `PostgresDbContext` is the sole schema authority; reviewed SQL lives under `Persistence/Schema`. |
-| `services/MuscleCuties.Server` | 4 | ASP.NET Core composition root and HTTP surface, deployed to AWS Lambda. |
-| `services/MuscleCuties.WorkoutReconciliation` | 4 | Scheduled ARM64 Lambda worker for pending workout revisions; uses separate discovery and tenant database logins. |
-| `src/MuscleCuties.UI` | 4 | .NET MAUI client, iOS-first; no Android target exists. |
-| `src/MuscleCuties.DbMaintenance` | — | Operator CLI for `dbinit`/`dbcheck`, seeding and catalog maintenance. |
+See [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the verified project map, dependency direction, API/client boundaries, and current model-first database setup.
 
 ## Layout
 
-```
-src/                 Production libraries, the maintenance CLI and the MAUI client
-services/            Lambda API and scheduled reconciliation worker, static site and local PostgreSQL tooling
-tests/               xUnit suites
-docs/                Delivery, migration and release documentation
-artifacts/           Local packaging output (ignored)
-MuscleCuties.sln     Solution over the production and test projects
-Directory.Build.*    Shared nullable/implicit-using settings, analyzers and test-dependency copy
-```
+- src/ — production libraries, database maintenance CLI, and MAUI client.
+- services/ — Lambda API, workout reconciliation worker, static site, and local PostgreSQL tooling.
+- tests/ — xUnit suites.
+- docs/ — canonical architecture, product, safety, verification, design, and operational references.
+- artifacts/ — local packaging output, ignored by Git.
+- MuscleCuties.sln — solution over production and test projects.
 
 ## Build and test
 
-The SDK is pinned by `global.json`; install the pinned .NET 10 SDK before building.
+The SDK is pinned by global.json. Install a compatible .NET 10 SDK before building.
 
-```bash
-dotnet restore MuscleCuties.sln
-dotnet build MuscleCuties.sln -c Release
-dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj -c Release
-```
+    dotnet restore MuscleCuties.sln
+    dotnet build MuscleCuties.sln -c Release
+    dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj -c Release
 
 | Suite | Covers |
 | --- | --- |
-| `MuscleCuties.Core.Tests` | Domain rules, use cases and architecture constraints; in memory, no database. |
-| `MuscleCuties.Server.Tests` | Server route parity and HTTP contracts. |
-| `MuscleCuties.Registration.Tests` | Registration and onboarding contracts. |
-| `MuscleCuties.Registration.Integration.Tests` | Database-backed flows; needs a disposable PostgreSQL instance. |
-| `MuscleCuties.Mobile.Contracts.Tests` | Client and backend contract shapes. |
+| MuscleCuties.Core.Tests | Domain rules, use cases, and architecture constraints; in memory, no database. |
+| MuscleCuties.Server.Tests | Server route parity and HTTP contracts. |
+| MuscleCuties.Registration.Tests | Registration and onboarding contracts. |
+| MuscleCuties.Registration.Integration.Tests | Database-backed flows; requires disposable PostgreSQL. |
+| MuscleCuties.Mobile.Contracts.Tests | Client and backend contract shapes. |
 
-The backend needs a PostgreSQL connection string and JWT signing settings from configuration or environment variables. No credential, signing file or database connection belongs in the repository.
+The backend needs PostgreSQL connection and JWT signing settings from configuration or environment variables. Keep credentials, signing files, and database connections out of the repository. Start the local API with:
 
-```bash
-dotnet run --project services/MuscleCuties.Server
-```
+    dotnet run --project services/MuscleCuties.Server
 
-The MAUI client is iOS-first; no Android target exists. The agent must not build or run it. The owner verifies it on macOS with Xcode and the .NET iOS workload.
-
-```bash
-dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -f net10.0-ios
-```
-
-GitLab CI runs the suites, packages the Lambda archive, and exposes deployment as a manual job.
+The MAUI client is iOS-only. Agents do not build, run, or screenshot it unless the user authorizes that check for the task; see [docs/VERIFICATION_GATES.md](docs/VERIFICATION_GATES.md).
 
 ## Documentation
 
-- [AUDIT.md](AUDIT.md): current pre-first-build state, remaining work and owner actions.
-- [DESIGN.md](DESIGN.md): design entry point, source ownership and warm wellness direction.
-- [docs/UI_PRESENTATION_DESIGN_SPEC.md](docs/UI_PRESENTATION_DESIGN_SPEC.md): UI implementation contract.
-- [docs/design/AUDIT_2026-11-02.md](docs/design/AUDIT_2026-11-02.md): source-based UI critique and phased rollout; [reference sources](docs/design/REFERENCES.md).
-- [STATUS.md](STATUS.md): dated delivery history and verification evidence.
-- [ROADMAP.md](ROADMAP.md): delivered foundations and development roadmap.
-- [AGENTS.md](AGENTS.md): engineering directive — layer boundaries, privacy invariants and the pre-commit gate.
+### Canonical instructions
 
-`docs/infra/` keeps the operational runbooks that the first-build sequence still depends on (release infrastructure, schema compatibility, backup/restore drill).
+- [AGENTS.md](AGENTS.md) — compact operating directive and links to on-demand references.
+- [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) — project and dependency boundaries, API and persistence authority.
+- [docs/PRODUCT_WORKFLOWS.md](docs/PRODUCT_WORKFLOWS.md) — the six approved workout-planning rules.
+- [docs/SAFETY.md](docs/SAFETY.md) — health, privacy, security, and fail-safe constraints.
+- [docs/VERIFICATION_GATES.md](docs/VERIFICATION_GATES.md) — risk-based G0–G9 gates and evidence states.
+- [DESIGN.md](DESIGN.md) and [docs/UI_PRESENTATION_DESIGN_SPEC.md](docs/UI_PRESENTATION_DESIGN_SPEC.md) — design entry point and app-wide presentation contract.
 
-## Conventions
+### Current state and detailed references
 
-- Every threshold, offset and dimension is a named constant; bare numeric literals are rejected in review.
-- The schema is model-first: `PostgresDbContext` plus reviewed SQL under `Persistence/Schema`; there are no EF migrations. `DbMaintenance dbinit` creates, secures and seeds, and `dbcheck` detects drift.
-- User and health data stays in first-party PostgreSQL and private object storage. External APIs receive generic queries only.
-- Failed network or server operations surface a specific outcome to the user rather than a generic message.
+- [ROADMAP.md](ROADMAP.md) — short delivery sequence.
+- [GitHub transition and incremental refactoring proposal](docs/architecture/github-transition/07-executive-summary.md) — 2026-11-04 audit, two-orchestrator ownership, governance changes and gated implementation packages; planning only.
+- [STATUS.md](STATUS.md) — current checkpoint and gate status.
+- [AUDIT.md](AUDIT.md) — owner actions and broader release evidence.
+- [docs/design/](docs/design/) — references, design decisions, implementation evidence, and current UI gate register.
+- [docs/infra/](docs/infra/) — database/release investigations, approval records, compatibility and backup/restore runbooks.
+- [docs/performance/README.md](docs/performance/README.md) — reproducible server-latency measurement procedure and reports.
+
+Canonical rule owners are linked above. Dated reports preserve evidence; verify their source date and current checkout before treating them as live instructions.
+
+## Shared development files
+
+Development instructions, design/product documents, repository skills, review reports and shared run configurations are versioned by default. `.gitignore` excludes credentials/signing keys, imported conversations, per-machine IDE/agent state and generated build/test output. Keep environment examples free of real credentials.
+
+The worker requires the public RDS CA bundle at `certs/global-bundle.pem`; it is versioned while other local certificate material remains excluded. `.codex/hooks.example.json` is a portable example of the optional installed Impeccable hooks; copy it to the ignored `.codex/hooks.json` only for local use. The hook example contains no required build or release dependency.

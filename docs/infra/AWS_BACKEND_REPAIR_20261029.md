@@ -1,5 +1,8 @@
 # AWS backend repair — clean migration chain and readiness
 
+**Current-checkout note (2026-11-04):** This dated document records a migration-era source tree and target investigation. The current checkout is model-first and has no EF migration chain; its database commands are dbinit, dbcheck, and seed. Treat migration, schema-preflight, schema-verify, schema-reconcile, and migration-prerequisite instructions here as historical evidence, not executable instructions for this checkout. Revalidate the current source, target, and authorization before any database operation. See [the current schema runbook](POSTGRES_SCHEMA_COMPATIBILITY_RUNBOOK.md).
+
+
 Date: 2026-10-29. Branch: `infra/aws-lambda-postgres`. Scope: local repair and verification only.
 
 This record follows the read-only diagnosis in

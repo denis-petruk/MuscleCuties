@@ -43,7 +43,7 @@ These principles do not authorize feature deletion, new platforms, live health i
 
 ## Soft Minimal prototype handoff
 
-The owner's later [Soft Minimal specification](SOFT_MINIMAL_PROPOSAL.md) is retained separately with the exact proposed light tokens, typography and geometry, plus source-color contrast calculations. It preserves the one-page/two-style limits. The handoff explicitly requires design approval before implementation; browser selection is not permission to edit production. Two candidate combinations need resolution: Success text and an essential ControlBoundary on CardSurfaceSecondary.
+The owner's later [Soft Minimal specification](SOFT_MINIMAL_PROPOSAL.md) preserves the selected visual values, typography, geometry, and contrast findings. The handoff was initially recorded as a candidate requiring approval; the owner approved it on 2026-11-02. [DESIGN.md](../../DESIGN.md) and [implementation evidence](SOFT_MINIMAL_IMPLEMENTATION_EVIDENCE.md) now record the active authority and its resolved contrast corrections. The original reference material remains inspiration, not a source of product requirements.
 
 ## Review boundary
 

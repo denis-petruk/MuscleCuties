@@ -1,6 +1,6 @@
 # Current UI gate register — 2026-11-03
 
-This is the current gate checklist for the UI/style/navigation mission. It supersedes historical “open” wording in `STATUS.md` and `ROADMAP.md`; those entries remain provenance, not current certification. Local automated gates are green. **2026-11-04:** the owner explicitly authorized an agent UI build/run pass; UI build **0 warnings / 0 errors**, Core **1055/1055**, Mobile Contracts **16/16**, Server build **0/0**. Deployed staging latency is measured and **failing**; production is undeployed, so production p99 is unavailable. The remaining acceptance work is **owner device verification** and **deployed performance/release**.
+This register owns current UI/style and deployed-latency evidence. STATUS.md and ROADMAP.md provide concise checkpoints and link here rather than duplicating this evidence. Local automated gates are green. **2026-11-04:** the owner explicitly authorized an agent UI build/run pass; UI build **0 warnings / 0 errors**, Core **1055/1055**, Mobile Contracts **16/16**, Server build **0/0**. Deployed staging latency is measured and **failing**; production is undeployed, so production p99 is unavailable. The remaining acceptance work is **owner device verification** and **deployed performance/release**.
 
 | Gate or rule | Proof run on the current tree | Result |
 | --- | --- | --- |

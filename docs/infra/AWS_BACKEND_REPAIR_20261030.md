@@ -1,5 +1,8 @@
 # AWS backend repair follow-up — local verification
 
+**Current-checkout note (2026-11-04):** This dated document records a migration-era source tree and target investigation. The current checkout is model-first and has no EF migration chain; its database commands are dbinit, dbcheck, and seed. Treat migration, schema-preflight, schema-verify, schema-reconcile, and migration-prerequisite instructions here as historical evidence, not executable instructions for this checkout. Revalidate the current source, target, and authorization before any database operation. See [the current schema runbook](POSTGRES_SCHEMA_COMPATIBILITY_RUNBOOK.md).
+
+
 Date: 2026-10-30. Branch: `infra/aws-lambda-postgres`.
 
 This follow-up records work in the current local checkout and disposable PostgreSQL 17 databases. No AWS database, Lambda, deployment, alias, or pipeline was changed. The prior read-only audit recorded 31 of 59 source migrations applied in the AWS database; that state was not rechecked during this local run.

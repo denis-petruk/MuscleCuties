@@ -4,13 +4,17 @@ App-wide design and interaction authority, revised 2026-11-02 using the Impeccab
 
 This revision establishes conventions and an implementation sequence. It does not claim that current screens implement every convention. The [source audit](design/AUDIT_2026-11-02.md) records gaps. No UI build, execution or screenshots were performed in this pass.
 
-The later [Soft Minimal proposal](design/SOFT_MINIMAL_PROPOSAL.md) records candidate replacement visual values as a prototype specification only. It is not production approval and does not replace this document's current implementation baseline. If explicitly approved, its type/geometry values supersede the earlier pending typography suggestion; dark/state assignments and two measured contrast issues must also be resolved.
+The owner approved the [Soft Minimal proposal](design/SOFT_MINIMAL_PROPOSAL.md) on 2026-11-02. It records the selected visual values; [DESIGN.md](../DESIGN.md) is the design entry point, and the [implementation evidence](design/SOFT_MINIMAL_IMPLEMENTATION_EVIDENCE.md) records the source changes and resolved contrast findings. This presentation specification remains the app-wide contract for interaction, accessibility, component, and implementation conventions.
 
 ## 1. Authority and source ownership
 
 | Concern | Owning source | Contract |
 | --- | --- | --- |
-| Architecture, privacy, execution limits | [AGENTS.md](../AGENTS.md) | Owner instructions govern every layer. |
+| Operating directive and context routing | [AGENTS.md](../AGENTS.md) | Compact always-on rules and on-demand references. |
+| Architecture and data boundaries | [Architecture](ARCHITECTURE.md) | Verified project map and API, client, and persistence boundaries. |
+| Health and sensitive-data constraints | [Safety](SAFETY.md) | Fail-safe behavior, privacy, and security. |
+| Approved product flows | [Product workflows](PRODUCT_WORKFLOWS.md) | Exact approved workout-planning rules. |
+| Risk-based evidence and gate closure | [Verification gates](VERIFICATION_GATES.md) | G0–G9 definitions and evidence states. |
 | Design discovery and direction | [DESIGN.md](../DESIGN.md) | Entry point linking to this specification. |
 | App-wide UX/component conventions | This specification | Normative behavior and patterns, distinguished from implementation evidence. |
 | Palette and initialization dependencies | [Colors.xaml](../src/MuscleCuties.UI/Resources/Styles/Colors.xaml) | Sole executable color authority and light/dark pairs; some shared font/geometry resources already live here for initialization order. |

@@ -1,5 +1,8 @@
 # PostgreSQL privilege separation plan
 
+**Current-checkout note (2026-11-04):** This dated document records a migration-era source tree and target investigation. The current checkout is model-first and has no EF migration chain; its database commands are dbinit, dbcheck, and seed. Treat migration, schema-preflight, schema-verify, schema-reconcile, and migration-prerequisite instructions here as historical evidence, not executable instructions for this checkout. Revalidate the current source, target, and authorization before any database operation. See [the current schema runbook](POSTGRES_SCHEMA_COMPATIBILITY_RUNBOOK.md).
+
+
 Status: staging migration-runner membership was applied on 2026-10-30 under
 `OWNER-APPROVAL-STAGING-SCHEMA-20261030`. The serving Lambda still authenticates as
 `mc_admin`; the runtime-principal cutover is not executed. No production role, grant,
