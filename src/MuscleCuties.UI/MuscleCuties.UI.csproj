@@ -37,6 +37,13 @@
         <MauiStrictXamlCompilation>true</MauiStrictXamlCompilation>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(AppTargetEnvironment)' == 'Staging'">
+        <DefineConstants>$(DefineConstants);APP_ENV_STAGING</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(AppTargetEnvironment)' == 'Beta'">
+        <DefineConstants>$(DefineConstants);APP_ENV_BETA</DefineConstants>
+    </PropertyGroup>
+
     <ItemGroup>
         <Compile Remove="Platforms/**/*.cs" />
     </ItemGroup>
