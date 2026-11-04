@@ -1,0 +1,60 @@
+name: Mobile iOS Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'Target environment (staging or beta)'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - beta
+      build_configuration:
+        description: 'Build configuration'
+        required: true
+        default: 'Release'
+        type: choice
+        options:
+          - Release
+          - Debug
+
+permissions:
+  contents: read
+
+jobs:
+  build_ios:
+    name: build_ios_${{ inputs.target_environment }}
+    runs-on: macos-15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Install MAUI iOS workload
+        run: |
+          dotnet workload install maui-ios
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode.app
+
+      - name: Build MAUI iOS Client
+        run: |
+          dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj \
+            -f net10.0-ios \
+            -c ${{ inputs.build_configuration }} \
+            -p:AppTargetEnvironment=${{ inputs.target_environment }} \
+            -p:RuntimeIdentifier=iossimulator-arm64
+
+      - name: Archive build output
+        uses: actions/upload-artifact@v4
+        with:
+          name: musclecuties-ios-${{ inputs.target_environment }}-${{ github.sha }}
+          path: src/MuscleCuties.UI/bin/${{ inputs.build_configuration }}/net10.0-ios/iossimulator-arm64/
+          retention-days: 30
