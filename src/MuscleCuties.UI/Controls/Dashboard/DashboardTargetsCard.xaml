@@ -12,7 +12,7 @@
             SemanticProperties.Description="{loc:LocalizedText Dashboard_Targets_CardA11y}">
         <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing0}">
             <!-- Row 0: section heading -->
-            <Label Text="{loc:LocalizedText Dashboard_Targets_Title}" Style="{StaticResource SectionTitle}" FontSize="{StaticResource UiFontSize17}"
+            <Label Text="{loc:LocalizedText Dashboard_Targets_Title}" Style="{StaticResource SectionTitle}"
                    Margin="{StaticResource UiInsets0_0_0_8}" />
 
             <!-- Row 1: hydration target row -->
@@ -43,16 +43,15 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Text="{loc:LocalizedText Dashboard_Targets_HydrationEstimate}"
-                    FontSize="{StaticResource UiFontSize13}"
-                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                    Style="{StaticResource MutedLabel}"
                     LineBreakMode="WordWrap"
                     TextColor="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}" />
                 <Label
                     Grid.Row="1"
                     Grid.Column="1"
                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    FontSize="{StaticResource UiFontSize17}"
-                    FontAttributes="{StaticResource UiFontAttributesBold}">
+                    Style="{StaticResource SectionTitle}"
+                   >
                     <Label.FormattedText>
                         <FormattedString>
                             <Span
@@ -70,7 +69,7 @@
 
             <!-- Row 2: divider -->
             <BoxView Grid.Row="2" HeightRequest="{StaticResource UiDimension1}"
-                     BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                     BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
                      Opacity="{StaticResource UiOpacitySubtle}" Margin="{StaticResource UiInsets0_4}" />
 
             <!-- Row 3: sleep target row -->
@@ -101,16 +100,15 @@
                     Grid.Row="0"
                     Grid.Column="1"
                     Text="{loc:LocalizedText Dashboard_Targets_SleepEstimate}"
-                    FontSize="{StaticResource UiFontSize13}"
-                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                    Style="{StaticResource MutedLabel}"
                     LineBreakMode="WordWrap"
                     TextColor="{AppThemeBinding Light={StaticResource SleepLight}, Dark={StaticResource SleepDark}}" />
                 <Label
                     Grid.Row="1"
                     Grid.Column="1"
                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    FontSize="{StaticResource UiFontSize17}"
-                    FontAttributes="{StaticResource UiFontAttributesBold}">
+                    Style="{StaticResource SectionTitle}"
+                   >
                     <Label.FormattedText>
                         <FormattedString>
                             <Span Text="{Binding SleepGoal, Converter={StaticResource LocalizedStringConverter}}" />

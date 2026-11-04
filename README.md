@@ -64,7 +64,9 @@ GitLab CI runs the suites, packages the Lambda archive, and exposes deployment a
 ## Documentation
 
 - [AUDIT.md](AUDIT.md): current pre-first-build state, remaining work and owner actions.
+- [DESIGN.md](DESIGN.md): design entry point, source ownership and warm wellness direction.
 - [docs/UI_PRESENTATION_DESIGN_SPEC.md](docs/UI_PRESENTATION_DESIGN_SPEC.md): UI implementation contract.
+- [docs/design/AUDIT_2026-11-02.md](docs/design/AUDIT_2026-11-02.md): source-based UI critique and phased rollout; [reference sources](docs/design/REFERENCES.md).
 - [STATUS.md](STATUS.md): dated delivery history and verification evidence.
 - [ROADMAP.md](ROADMAP.md): delivered foundations and development roadmap.
 - [AGENTS.md](AGENTS.md): engineering directive — layer boundaries, privacy invariants and the pre-commit gate.

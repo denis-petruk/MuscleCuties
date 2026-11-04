@@ -14,9 +14,9 @@ internal static partial class RussianUiText
         Values["Workout_StyleOffer_Keep"] = "Сохранить текущий стиль";
         Values["Workout_StyleOffer_ActionFailed"] = "Не удалось обновить предложение. Попробуйте ещё раз.";
         Values["Workout_Generation_AnswersRefreshedReview"] = "Сохранённые ответы обновлены после прерванного или конфликтующего сохранения. Проверьте ответы и повторите попытку.";
-        Values["Workout_Generation_DurationChoices"] = "В выбранное время не помещаются все обязательные движения. Выберите более длительное занятие или оставьте короткое и проверьте пропущенные движения.";
+        Values["Workout_Generation_DurationChoices"] = "Не хватает времени на все движения.";
         Values["Workout_Generation_UseLongerDuration"] = "Выбрать {0} мин";
-        Values["Workout_Generation_UseShorterDuration"] = "Оставить короткое время и проверить пропуски";
+        Values["Workout_Generation_UseShorterDuration"] = "Оставить короткое время";
         Values["Workout_Generation_DurationMovementOmitted"] = "Чтобы уложиться в выбранное время: {0}.";
         Values["Workout_Generation_PlanSetupBadge"] = "НАСТРОЙКА ПЛАНА";
         Values["Workout_Generation_TimingBadge"] = "ВРЕМЯ ТРЕНИРОВКИ";
@@ -104,8 +104,6 @@ internal static partial class RussianUiText
         Values["Workout_Generation_ExercisePending"] = "Описание упражнения недоступно";
         Values["Workout_Generation_PrescriptionPending"] = "Параметры упражнения недоступны";
         Values["Workout_Generation_SlotDetailsFormat"] = "{0} подходов · {1}–{2} повторений";
-        Values["Workout_Generation_ExerciseConditionsTitle"] = "Условия выполнения упражнений";
-        Values["Workout_Generation_ExerciseConditionsHelp"] = "Перед продолжением проверьте условия выполнения, диапазон движений и технику для этих упражнений.";
         Values["Workout_Generation_LimitationGeneric"] = "Нужны дополнительные сведения или план не соответствует текущим правилам.";
         Values["Workout_Generation_Required"] = "Обязательно";
         Values["Workout_Generation_LimitationTiming"] = "Сохранённая длительность занятия или параметры разминки и заминки не подходят этому плану.";
@@ -138,22 +136,21 @@ internal static partial class RussianUiText
         Values["Workout_Generation_ReplacementSummary"] = "Ваш текущий план будет заменён этим расписанием:";
         Values["Workout_Generation_ReplacementCancel"] = "Отмена";
         Values["Workout_Generation_KeepCurrentPlan"] = "Оставить текущий план";
-        Values["Workout_Generation_EditDetails"] = "Изменить данные и попробовать снова";
+        Values["Workout_Generation_EditDetails"] = "Изменить данные";
         Values["Workout_Generation_Loading"] = "Загрузка предпочтений тренировок";
         Values["Workout_Generation_MissingPreferences"] = "Сначала сохраните предпочтения активности.";
         Values["Workout_Generation_StrengthPreferenceRequired"] = "Выберите силовую активность в разделе «Предпочтения активности».";
         Values["Workout_Generation_LoadFailed"] = "Не удалось загрузить предпочтения тренировок. Попробуйте ещё раз.";
         Values["Workout_Generation_AvailableDaysMissing"] = "Сохраните от 2 до 7 доступных дней в предпочтениях тренировок перед созданием плана.";
         Values["Workout_Generation_SavedAvailabilityFormat"] = "Будут учтены сохранённые дни для тренировок: {0}.";
-        Values["Workout_Generation_MixedScheduleTitle"] = "Расписание активностей на неделю";
-        Values["Workout_Generation_PlannedRestDay"] = "Отдых · тренировка не запланирована";
+        Values["Workout_Generation_MixedScheduleTitle"] = "План недели";
+        Values["Workout_Generation_RestDaysSummaryFormat"] = "Дни отдыха · {0}";
         Values["Workout_Generation_Reason_YogaInconsistent"] = "Описание указывает на интенсивную йогу. Выберите интенсивную практику или исправьте описание.";
         Values["Workout_Generation_Reason_NoSafeStrengthContentRemaining"] = "Безопасных силовых упражнений не осталось. В каждом плане нужна силовая тренировка; измените ограничения или оборудование и повторите предпросмотр.";
         Values["Workout_Generation_Reason_NoSafeActivity"] = "В план не удалось включить безопасные активности. Измените данные или изучите другие возможности.";
         Values["Workout_Generation_MixedScheduleExplanation"] = "Выбранные активности распределяются по доступным дням недели.";
-        Values["Workout_Generation_ScheduleEmpty"] = "Не удалось разместить занятия в сохранённые доступные дни недели.";
+        Values["Workout_Generation_ScheduleEmpty"] = "Занятия не помещаются в доступные дни.";
         Values["Workout_Generation_MixedSessionTitleFormat"] = "{0} · {1}";
-        Values["Workout_Generation_OrderedActivityFormat"] = "{0}. {1}";
         Values["Workout_Generation_MixedSessionDurationFormat"] = "{0} мин";
         Values["Workout_Generation_MixedSessionDetailsFormat"] = "{0} · {1}";
         Values["Workout_Generation_HigherEffortSession"] = "Тренировка с повышенной нагрузкой";
@@ -294,7 +291,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_PromptNoPlanTitle"] = "Нет активного плана тренировок";
         Values["Workout_Generation_PromptNoPlanSubtitle"] = "Настройте параметры тренировок и создайте персональный план силовых тренировок.";
         Values["Workout_Generation_PromptGeneratePlanButton"] = "Создать план";
-        Values["Workout_Generation_ReducedVolumeNotice"] = "В этом плане уменьшен объём тренировок, чтобы уложиться в выбранную длительность и расписание.";
+        Values["Workout_Generation_ReducedVolumeNotice"] = "Объём плана снижен под ваше расписание.";
     }
 }
 

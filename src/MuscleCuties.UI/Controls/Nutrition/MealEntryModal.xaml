@@ -8,7 +8,9 @@
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition"
     xmlns:nutritionEnums="clr-namespace:MuscleCuties.Core.Models.Enums.Nutrition;assembly=MuscleCuties.Core"
+    xmlns:uiModels="clr-namespace:MuscleCuties.UI.Models.UI.Nutrition"
     x:DataType="vm:NutritionViewModel"
+    IsOpen="{Binding IsMealEntryModalVisible}"
     Padding="{StaticResource UiInsets0}">
 
     <Grid>
@@ -19,17 +21,21 @@
         </BoxView>
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource ModalSurface}" VerticalOptions="End">
+            Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
 
             <Grid RowDefinitions="Auto, *">
-                <!-- Header -->
                 <Grid
-                    Padding="{StaticResource PresentationModalHeaderPadding}"
+                    Padding="{DynamicResource PresentationModalHeaderPadding}"
                     ColumnDefinitions="*,Auto"
                     ColumnSpacing="{StaticResource UiSpaceCompact}">
-                    <Label
-                        Text="{loc:LocalizedText Nutrition_LogAMeal}"
-                        Style="{StaticResource ModalTitle}" />
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                        <Label
+                            Text="{loc:LocalizedText Nutrition_MealEntry_Title}"
+                            Style="{StaticResource ModalTitle}" />
+                        <Label
+                            Text="{loc:LocalizedText Nutrition_MealEntry_Subtitle}"
+                            Style="{StaticResource ModalSubtitle}" />
+                    </VerticalStackLayout>
                     <Border
                         Grid.Column="1"
                         Style="{StaticResource ModalIconButton}"
@@ -42,33 +48,30 @@
                     </Border>
                 </Grid>
 
-                <!-- Content -->
                 <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
-                    <VerticalStackLayout Spacing="{StaticResource UiSpacing14}" Padding="{StaticResource PresentationModalPagePadding}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpacing14}" Padding="{DynamicResource PresentationModalPagePadding}">
 
                         <Label
                             Text="{loc:LocalizedText Nutrition_MealEntry_MealTypeChangeIfNeeded}"
                             Style="{StaticResource SectionTitle}"
-                            FontSize="{StaticResource UiFontSize17}"
                             LineBreakMode="WordWrap" />
 
-                        <!-- Meal type picker: 2x2 grid -->
                         <Grid
                             ColumnDefinitions="*,*"
                             RowDefinitions="Auto,Auto"
                             ColumnSpacing="{StaticResource UiSpacing10}"
                             RowSpacing="{StaticResource UiSpacing10}">
 
-                            <!-- Breakfast -->
-                            <Border Style="{StaticResource CardSecondary}" MinimumHeightRequest="{StaticResource UiDimension92}"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_BreakfastMealType}">
+                            <Border Style="{StaticResource CardSecondary}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_BreakfastMealType}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsEntryBreakfastSelected}"
                                                  Value="True">
                                         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
                                         <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
                                         <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                                        <Setter Property="SemanticProperties.Hint" Value="Selected" />
+                                        <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -76,30 +79,22 @@
                                         Command="{Binding SelectEntryMealTypeCommand}"
                                         CommandParameter="{x:Static nutritionEnums:MealType.Breakfast}" />
                                 </Border.GestureRecognizers>
-                                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                                    <Path
-                                        Data="M12 3c-3 0-7 6-7 11a7 7 0 0 0 14 0c0-5-4-11-7-11ZM12 11a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"
-                                        Style="{StaticResource NutritionLineIcon}"
-                                        Stroke="{StaticResource Primary}"
-                                        WidthRequest="{StaticResource UiDimension22}"
-                                        HeightRequest="{StaticResource UiDimension22}"
-                                        HorizontalOptions="Start" />
-                                    <Label Grid.Row="1" Text="{loc:LocalizedText Nutrition_MealType_Breakfast}"
-                                           Style="{StaticResource CardTitle}" FontSize="{StaticResource UiFontSize15}" LineBreakMode="WordWrap" />
-                                </Grid>
+                                <Label Text="{loc:LocalizedText Nutrition_MealType_Breakfast}"
+                                       Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
 
-                            <!-- Lunch -->
                             <Border Grid.Column="1" Style="{StaticResource CardSecondary}"
-                                    MinimumHeightRequest="{StaticResource UiDimension92}"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_LunchMealType}">
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_LunchMealType}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsEntryLunchSelected}"
                                                  Value="True">
                                         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
                                         <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
                                         <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                                        <Setter Property="SemanticProperties.Hint" Value="Selected" />
+                                        <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -107,30 +102,22 @@
                                         Command="{Binding SelectEntryMealTypeCommand}"
                                         CommandParameter="{x:Static nutritionEnums:MealType.Lunch}" />
                                 </Border.GestureRecognizers>
-                                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                                    <Path
-                                        Data="M3 11h18c0 5-4 9-9 9s-9-4-9-9ZM7 11c0-3 2-5 5-5s5 2 5 5M12 3v3"
-                                        Style="{StaticResource NutritionLineIcon}"
-                                        Stroke="{StaticResource Primary}"
-                                        WidthRequest="{StaticResource UiDimension22}"
-                                        HeightRequest="{StaticResource UiDimension22}"
-                                        HorizontalOptions="Start" />
-                                    <Label Grid.Row="1" Text="{loc:LocalizedText Nutrition_MealType_Lunch}"
-                                           Style="{StaticResource CardTitle}" FontSize="{StaticResource UiFontSize15}" LineBreakMode="WordWrap" />
-                                </Grid>
+                                <Label Text="{loc:LocalizedText Nutrition_MealType_Lunch}"
+                                       Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
 
-                            <!-- Dinner -->
                             <Border Grid.Row="1" Style="{StaticResource CardSecondary}"
-                                    MinimumHeightRequest="{StaticResource UiDimension92}"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_DinnerMealType}">
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_DinnerMealType}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsEntryDinnerSelected}"
                                                  Value="True">
                                         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
                                         <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
                                         <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                                        <Setter Property="SemanticProperties.Hint" Value="Selected" />
+                                        <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -138,30 +125,22 @@
                                         Command="{Binding SelectEntryMealTypeCommand}"
                                         CommandParameter="{x:Static nutritionEnums:MealType.Dinner}" />
                                 </Border.GestureRecognizers>
-                                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                                    <Path
-                                        Data="M3 16h18M5 14a7 7 0 0 1 14 0M12 7V5M2 19h20"
-                                        Style="{StaticResource NutritionLineIcon}"
-                                        Stroke="{StaticResource Primary}"
-                                        WidthRequest="{StaticResource UiDimension22}"
-                                        HeightRequest="{StaticResource UiDimension22}"
-                                        HorizontalOptions="Start" />
-                                    <Label Grid.Row="1" Text="{loc:LocalizedText Nutrition_MealType_Dinner}"
-                                           Style="{StaticResource CardTitle}" FontSize="{StaticResource UiFontSize15}" LineBreakMode="WordWrap" />
-                                </Grid>
+                                <Label Text="{loc:LocalizedText Nutrition_MealType_Dinner}"
+                                       Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
 
-                            <!-- Snack -->
                             <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardSecondary}"
-                                    MinimumHeightRequest="{StaticResource UiDimension92}"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_SnackMealType}">
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_SnackMealType}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
                                 <Border.Triggers>
                                     <DataTrigger TargetType="Border" Binding="{Binding IsEntrySnackSelected}"
                                                  Value="True">
                                         <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
                                         <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
                                         <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                                        <Setter Property="SemanticProperties.Hint" Value="Selected" />
+                                        <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
                                     </DataTrigger>
                                 </Border.Triggers>
                                 <Border.GestureRecognizers>
@@ -169,17 +148,9 @@
                                         Command="{Binding SelectEntryMealTypeCommand}"
                                         CommandParameter="{x:Static nutritionEnums:MealType.Snack}" />
                                 </Border.GestureRecognizers>
-                                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                                    <Path
-                                        Data="M12 21V8M12 11c-3 0-5-2-5-5 3 0 5 2 5 5ZM12 15c3 0 5-2 5-5-3 0-5 2-5 5ZM12 19c-3 0-5-2-5-5 3 0 5 2 5 5"
-                                        Style="{StaticResource NutritionLineIcon}"
-                                        Stroke="{StaticResource Primary}"
-                                        WidthRequest="{StaticResource UiDimension22}"
-                                        HeightRequest="{StaticResource UiDimension22}"
-                                        HorizontalOptions="Start" />
-                                    <Label Grid.Row="1" Text="{loc:LocalizedText Nutrition_MealType_Snack}"
-                                           Style="{StaticResource CardTitle}" FontSize="{StaticResource UiFontSize15}" LineBreakMode="WordWrap" />
-                                </Grid>
+                                <Label Text="{loc:LocalizedText Nutrition_MealType_Snack}"
+                                       Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
+                                       HorizontalOptions="Center" VerticalOptions="Center" />
                             </Border>
                         </Grid>
 
@@ -190,34 +161,95 @@
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_MealTime}" />
                         </Border>
 
-                        <!-- Action buttons -->
                         <Button
                             Style="{StaticResource ButtonPrimary}"
-                            Text="{loc:LocalizedText Nutrition_AddFood}"
+                            Text="{loc:LocalizedText Nutrition_Page_AddMeal}"
                             Command="{Binding StartManualMealCommand}"
                             IsEnabled="{Binding HasEntryMealTypeSelected}"
                             LineBreakMode="WordWrap"
                             Margin="{StaticResource UiInsets0}"
-                            SemanticProperties.Description="{loc:LocalizedText Nutrition_AddFood}"
+                            SemanticProperties.Description="{loc:LocalizedText Nutrition_Page_AddMeal}"
                             SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_OpensFoodSearchToLogFoods}" />
 
                         <Button
-                            Text="{loc:LocalizedText Nutrition_MealEntry_GetASuggestion}"
+                            Text="{loc:LocalizedText Nutrition_MealEntry_SuggestMeal}"
                             Command="{Binding StartSuggestedMealCommand}"
                             Style="{StaticResource ButtonSecondary}"
                             LineBreakMode="WordWrap"
                             Margin="{StaticResource UiInsets0}"
-                            SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_GetAMealSuggestion}"
+                            SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_SuggestMeal}"
                             SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_OpensMealSuggestionsTailoredToYour}" />
 
                         <Button
-                            Text="{loc:LocalizedText Nutrition_PlanMyDay}"
-                            Command="{Binding StartDayPlanCommand}"
+                            Text="{loc:LocalizedText Nutrition_MealEntry_UseFromTemplate}"
+                            Command="{Binding ToggleTemplatePickerCommand}"
                             Style="{StaticResource ButtonSecondary}"
                             LineBreakMode="WordWrap"
-                            Margin="{StaticResource UiInsets0_0_0_2}"
-                            SemanticProperties.Description="{loc:LocalizedText Nutrition_PlanMyDay}"
-                            SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_BuildsAFullDayMealPlan}" />
+                            Margin="{StaticResource UiInsets0}"
+                            SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_UseFromTemplate}"
+                            SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_UseFromTemplateHint}" />
+
+                        <VerticalStackLayout
+                            IsVisible="{Binding IsTemplatePickerVisible}"
+                            Spacing="{StaticResource UiSpaceTight}"
+                            IsEnabled="{Binding IsWritingMealEntry, Converter={StaticResource InvertedBoolConverter}}">
+                            <Label Text="{loc:LocalizedText Nutrition_MealEntry_TemplatePickerTitle}"
+                                   Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
+
+                            <ActivityIndicator
+                                Style="{StaticResource StateBusyInline}"
+                                IsRunning="{Binding IsLoadingMealTemplates}"
+                                IsVisible="{Binding IsLoadingMealTemplates}" />
+
+                            <Label
+                                Text="{Binding MealTemplateStatus}"
+                                IsVisible="{Binding HasMealTemplateStatus}"
+                                Style="{StaticResource MutedLabel}"
+                                LineBreakMode="WordWrap" />
+
+                            <VerticalStackLayout
+                                BindableLayout.ItemsSource="{Binding MealTemplates}"
+                                Spacing="{StaticResource UiSpaceTight}">
+                                <BindableLayout.ItemTemplate>
+                                    <DataTemplate x:DataType="uiModels:MealTemplate">
+                                        <Border Style="{StaticResource CardSecondary}">
+                                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                                                  MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" VerticalOptions="Center">
+                                                    <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" LineBreakMode="WordWrap" />
+                                                    <Label Text="{Binding TotalCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_CaloriesValueKcal}"
+                                                           Style="{StaticResource MutedLabel}" />
+                                                    <Label Text="{Binding ItemCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Template_ItemCountFormat}"
+                                                           Style="{StaticResource CaptionLabel}" />
+                                                </VerticalStackLayout>
+                                                <Button Grid.Column="1"
+                                                        Text="{loc:LocalizedText Nutrition_Template_Log}"
+                                                        Style="{StaticResource ButtonSecondary}"
+                                                        Command="{Binding LogMealTemplateCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}"
+                                                        CommandParameter="{Binding .}"
+                                                        VerticalOptions="Center"
+                                                        SemanticProperties.Description="{Binding Name}"
+                                                        SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_LogTemplateHint}" />
+                                                <Border Grid.Column="2"
+                                                        Style="{StaticResource ModalIconButton}"
+                                                        VerticalOptions="Center"
+                                                        SemanticProperties.Description="{loc:LocalizedText Common_Delete}">
+                                                    <Border.GestureRecognizers>
+                                                        <TapGestureRecognizer
+                                                            Command="{Binding DeleteMealTemplateCommand, Source={RelativeSource AncestorType={x:Type vm:NutritionViewModel}}, x:DataType=vm:NutritionViewModel}"
+                                                            CommandParameter="{Binding .}" />
+                                                    </Border.GestureRecognizers>
+                                                    <Path Data="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14M10 10v6M14 10v6"
+                                                          Style="{StaticResource NutritionLineIcon}"
+                                                          WidthRequest="{StaticResource UiDimension16}"
+                                                          HeightRequest="{StaticResource UiDimension16}" />
+                                                </Border>
+                                            </Grid>
+                                        </Border>
+                                    </DataTemplate>
+                                </BindableLayout.ItemTemplate>
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
 
                     </VerticalStackLayout>
                 </ScrollView>

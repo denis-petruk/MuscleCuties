@@ -28,8 +28,7 @@
                     Grid.Column="1"
                     Text="{Binding PeriodCountdownText, Converter={StaticResource LocalizedStringConverter}}"
                     TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                    FontSize="{StaticResource UiFontSize13}"
-                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                    Style="{StaticResource MutedLabel}"
                     VerticalOptions="Center"
                     IsVisible="{Binding HasActiveCycle}"
                     LineBreakMode="WordWrap"
@@ -43,7 +42,7 @@
                     WidthRequest="{StaticResource UiDimension40}"
                     HeightRequest="{StaticResource UiDimension40}"
                     StrokeShape="{StaticResource UiRoundRectangleRadius20}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDeepDark}}"
                     StrokeThickness="{StaticResource UiStrokeWidth0}"
                     Padding="{StaticResource UiInsets6}"
                     VerticalOptions="Center"
@@ -61,8 +60,7 @@
                 <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
                     <Label
                         Text="{Binding PhaseLabel, Converter={StaticResource LocalizedStringConverter}}"
-                        FontSize="{StaticResource UiFontSize17}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                        Style="{StaticResource SectionTitle}"
                         TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                         VerticalOptions="Center"
                         LineBreakMode="WordWrap"
@@ -70,7 +68,7 @@
                     <Label
                         Text="{Binding LastPhaseLogText, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                        FontSize="{StaticResource UiFontSize13}"
+                        Style="{StaticResource MutedLabel}"
                         LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
 
@@ -133,15 +131,13 @@
                                   VerticalOptions="Center">
                                 <Label
                                     Text="{Binding DayOfWeekShort, Converter={StaticResource LocalizedStringConverter}}"
-                                    FontSize="{StaticResource UiFontSize11}"
-                                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                                    Style="{StaticResource CaptionLabel}"
                                     TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                     HorizontalOptions="Center" />
                                 <Label
                                     Grid.Row="1"
                                     Text="{Binding DisplayDayLabel, Converter={StaticResource LocalizedStringConverter}}"
-                                    FontSize="{StaticResource UiFontSize15}"
-                                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                                    Style="{StaticResource BodyStrong}"
                                     TextColor="{Binding TextColor}"
                                     HorizontalOptions="Center" />
                                 <Ellipse
@@ -204,8 +200,7 @@
                     </Border.GestureRecognizers>
                     <Label
                         Text="{loc:LocalizedText Cycle_Calendar_TodayAccessibility}"
-                        FontSize="{StaticResource UiFontSize11}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                        Style="{StaticResource CaptionLabel}"
                         TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                         HorizontalOptions="Center"
                         VerticalOptions="Center"
@@ -247,7 +242,7 @@
                 HeightRequest="{StaticResource PresentationMinimumTouchSize}"
                 MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                 StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
+                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDeepDark}}"
                 StrokeThickness="{StaticResource UiStrokeWidth0}"
                 SemanticProperties.Description="{Binding MonthExpandButtonText, Converter={StaticResource LocalizedStringConverter}}">
                 <Border.GestureRecognizers>
@@ -256,8 +251,7 @@
                 <Label
                     Text="{Binding MonthExpandButtonText, Converter={StaticResource LocalizedStringConverter}}"
                     TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    FontSize="{StaticResource UiFontSize13}"
-                    FontAttributes="{StaticResource UiFontAttributesBold}"
+                    Style="{StaticResource MutedLabel}"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
                     LineBreakMode="WordWrap" />

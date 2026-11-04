@@ -33,7 +33,6 @@
                     Grid.Column="1"
                     Text="{Binding PhaseStatusText, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource FormFieldLabel}"
-                    FontSize="{StaticResource UiFontSize13}"
                     LineBreakMode="WordWrap"
                     VerticalOptions="Center" />
                 <Path Grid.Column="2"
@@ -48,14 +47,13 @@
                 Grid.Row="1"
                 Text="{Binding PhaseCardTitle, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource SectionTitle}"
-                FontSize="{StaticResource UiFontSize20}"
                 LineBreakMode="WordWrap" />
 
             <Label
                 Grid.Row="2"
                 Text="{Binding PhaseShortAdvice, Converter={StaticResource LocalizedStringConverter}}"
                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                FontSize="{StaticResource UiFontSize13}"
+                Style="{StaticResource MutedLabel}"
                 LineBreakMode="WordWrap"
                 Margin="{StaticResource UiInsets0_Minus4_0_0}" />
 
@@ -69,25 +67,24 @@
                     Text="{loc:LocalizedText Dashboard_Phase_Menstrual}"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseMenstrualTextLight}, Dark={StaticResource CyclePhaseMenstrualTextDark}}"
-                    FontSize="{StaticResource UiFontSize12}" />
+                    />
                 <Label
                     Grid.Column="1"
                     Text="{loc:LocalizedText Dashboard_Phase_Follicular}"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseFollicularTextLight}, Dark={StaticResource CyclePhaseFollicularTextDark}}"
-                    FontSize="{StaticResource UiFontSize12}" />
+                    />
                 <Label
                     Grid.Column="2"
                     Text="{loc:LocalizedText Dashboard_Phase_Ovulatory}"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseOvulatoryTextLight}, Dark={StaticResource CyclePhaseOvulatoryTextDark}}"
-                    FontSize="{StaticResource UiFontSize12}" />
+                    />
                 <Label
                     Grid.Column="3"
                     Text="{loc:LocalizedText Dashboard_Phase_Luteal}"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{AppThemeBinding Light={StaticResource CyclePhaseLutealTextLight}, Dark={StaticResource CyclePhaseLutealTextDark}}"
-                    FontSize="{StaticResource UiFontSize12}"
                     HorizontalTextAlignment="End" />
 
                 <BoxView
@@ -133,7 +130,7 @@
                     Grid.RowSpan="2"
                     Grid.ColumnSpan="5"
                     HeightRequest="{StaticResource UiDimension1}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
                     Opacity="{StaticResource UiOpacitySubtle}"
                     VerticalOptions="Start" />
 
@@ -142,13 +139,13 @@
                     Grid.Column="0"
                     Text="{Binding PhaseTimeLeftValue, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource SectionTitle}"
-                    FontSize="{StaticResource UiFontSize17}" />
+                    />
                 <Label
                     Grid.Row="1"
                     Grid.Column="0"
                     Text="{Binding PhaseTimeLeftLabel, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource CaptionLabel}"
-                    FontSize="{StaticResource UiFontSize13}" />
+                    />
 
                 <BoxView
                     Grid.Row="0"
@@ -156,7 +153,7 @@
                     Grid.Column="1"
                     WidthRequest="{StaticResource UiDimension1}"
                     HeightRequest="{StaticResource UiDimension38}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
                     Opacity="{StaticResource UiOpacitySubtle}"
                     VerticalOptions="End" />
 
@@ -165,14 +162,12 @@
                     Grid.Column="2"
                     Text="{Binding NextPeriodValue, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource SectionTitle}"
-                    FontSize="{StaticResource UiFontSize17}"
                     Margin="{StaticResource UiInsets12_0_0_0}" />
                 <Label
                     Grid.Row="1"
                     Grid.Column="2"
                     Text="{loc:LocalizedText Dashboard_Phase_NextPeriod}"
                     Style="{StaticResource CaptionLabel}"
-                    FontSize="{StaticResource UiFontSize13}"
                     Margin="{StaticResource UiInsets12_0_0_0}" />
 
                 <BoxView
@@ -181,7 +176,7 @@
                     Grid.Column="3"
                     WidthRequest="{StaticResource UiDimension1}"
                     HeightRequest="{StaticResource UiDimension38}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
                     Opacity="{StaticResource UiOpacitySubtle}"
                     VerticalOptions="End" />
 
@@ -190,14 +185,12 @@
                     Grid.Column="4"
                     Text="{Binding LoadAdjustmentText, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource SectionTitle}"
-                    FontSize="{StaticResource UiFontSize17}"
                     Margin="{StaticResource UiInsets12_0_0_0}" />
                 <Label
                     Grid.Row="1"
                     Grid.Column="4"
                     Text="{loc:LocalizedText Dashboard_Phase_Load}"
                     Style="{StaticResource CaptionLabel}"
-                    FontSize="{StaticResource UiFontSize13}"
                     Margin="{StaticResource UiInsets12_0_0_0}" />
             </Grid>
         </Grid>

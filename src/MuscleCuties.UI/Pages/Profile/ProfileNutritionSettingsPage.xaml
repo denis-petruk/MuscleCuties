@@ -13,24 +13,21 @@
     Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
-    <ScrollView>
-        <VerticalStackLayout
-            Padding="{StaticResource PresentationFormPagePadding}"
-            Spacing="{StaticResource UiSpaceControl}"
-            HorizontalOptions="Fill"
-            MaximumWidthRequest="{StaticResource UiDimension640}">
-            <sharedControls:PageHeader
-                Title="{loc:LocalizedText Profile_NutritionSettings_NutritionSettings}"
-                Subtitle="Goal, dietary preferences, and nutrient targets"
-                BackCommand="{Binding BackCommand}" />
-
-            <!-- Section 1: Goal and dietary preferences (consolidated) -->
+    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <sharedControls:PageHeader
+            Title="{loc:LocalizedText Profile_NutritionSettings_NutritionSettings}"
+            Subtitle="{loc:LocalizedText Profile_NutritionSettings_Subtitle}"
+            BackCommand="{Binding BackCommand}" />
+    </Grid>
+    <ScrollView Grid.Row="1">
+        <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceContent}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
             <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpacing14}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
                     <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_NutritionSettings_GoalAndPreferences}" IconGlyph="Target24" />
-
+            
                     <!-- Nutrition goal picker -->
-                    <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+                    <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                         <Label Text="{loc:LocalizedText Profile_NutritionSettings_NutritionGoal}" Style="{StaticResource FormFieldLabel}" />
                         <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
                             <Picker
@@ -40,11 +37,11 @@
                                 SelectedItem="{Binding SelectedGoalOption}" />
                         </Border>
                     </Grid>
-
+            
                     <!-- Goal pace (conditionally visible) -->
                     <Grid
                         RowDefinitions="Auto,Auto"
-                        RowSpacing="{StaticResource UiSpacing5}"
+                        RowSpacing="{StaticResource PresentationFieldSpacing}"
                         IsVisible="{Binding IsGoalPaceVisible}">
                         <Label Text="{loc:LocalizedText Profile_NutritionSettings_GoalPace}" Style="{StaticResource FormFieldLabel}" />
                         <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
@@ -55,257 +52,236 @@
                                 SelectedItem="{Binding SelectedWeightGoalPaceOption}" />
                         </Border>
                     </Grid>
-
+            
                     <!-- Divider between goal and dietary prefs -->
                     <BoxView HeightRequest="{StaticResource UiDimension1}"
-                             Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                             Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}"
                              Opacity="{StaticResource UiOpacitySubtle}" />
-
-                    <!-- Dietary preferences (SelectableCard styling) -->
+            
+                    <!-- Dietary preferences: selection is a state of the secondary card -->
                     <Label
                         Text="{loc:LocalizedText Profile_NutritionSettings_DietaryPreferences}"
                         Style="{StaticResource FormFieldLabel}" />
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}" RowSpacing="{StaticResource UiSpacing10}">
                         <!-- Vegetarian -->
                         <Border
-                            Grid.Row="0" Grid.Column="0"
-                            Style="{StaticResource SelectableCard}"
-                            SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_Vegetarian}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleVegetarianCommand}" />
-                            </Border.GestureRecognizers>
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsVegetarian}" Value="True">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                    <Setter Property="Stroke"
-                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsVegetarian}" Value="False">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-                                    <Setter Property="Stroke"
-                                            Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
-                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Grid ColumnDefinitions="*,22" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
-                                <Label
-                                    Text="{loc:LocalizedText Profile_NutritionSettings_Vegetarian}"
-                                    Style="{StaticResource BodyMediumStrong}"
-                                    VerticalOptions="Center" />
-                                <Border
-                                    Grid.Column="1"
-                                    Style="{StaticResource SelectionRadioRing}"
-                                    VerticalOptions="Center"
-                                    InputTransparent="True">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsVegetarian}" Value="True">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                            <Setter Property="Stroke"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsVegetarian}" Value="False">
-                                            <Setter Property="Stroke"
-                                                    Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray500}}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Path
-                                        Data="M5 11L9 15L17 6"
-                                        Stroke="{StaticResource White}"
-                                        StrokeThickness="{StaticResource UiStrokeWidth2}"
-                                        StrokeLineCap="Round"
-                                        StrokeLineJoin="Round"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"
-                                        IsVisible="{Binding IsVegetarian}" />
-                                </Border>
-                            </Grid>
-                        </Border>
-
+    Grid.Row="0" Grid.Column="0"
+    Style="{StaticResource CardSecondary}"
+    SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_Vegetarian}" SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+    <Border.GestureRecognizers>
+        <TapGestureRecognizer Command="{Binding ToggleVegetarianCommand}" />
+    </Border.GestureRecognizers>
+    <Border.Triggers>
+        <DataTrigger TargetType="Border" Binding="{Binding IsVegetarian}" Value="True">
+            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            <Setter Property="BackgroundColor"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+            <Setter Property="Stroke"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+        </DataTrigger>
+        
+    </Border.Triggers>
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
+        <Label
+            Text="{loc:LocalizedText Profile_NutritionSettings_Vegetarian}"
+            Style="{StaticResource BodyMediumStrong}"
+            VerticalOptions="Center" />
+        <Border
+            Grid.Column="1"
+            Style="{StaticResource SelectionRadioRing}"
+            VerticalOptions="Center"
+            InputTransparent="True">
+            <Border.Triggers>
+                <DataTrigger TargetType="Border" Binding="{Binding IsVegetarian}" Value="True">
+                    <Setter Property="BackgroundColor"
+                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                    <Setter Property="Stroke"
+                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Border" Binding="{Binding IsVegetarian}" Value="False">
+                    <Setter Property="Stroke"
+                            Value="{AppThemeBinding Light={StaticResource BorderNeutralLight}, Dark={StaticResource BorderNeutralDark}}" />
+                </DataTrigger>
+            </Border.Triggers>
+            <Path
+                Data="M5 11L9 15L17 6"
+                Stroke="{StaticResource ContrastInk}"
+                StrokeThickness="{StaticResource UiStrokeWidth2}"
+                StrokeLineCap="Round"
+                StrokeLineJoin="Round"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                IsVisible="{Binding IsVegetarian}" />
+        </Border>
+    </Grid>
+</Border>
+            
                         <!-- Vegan -->
                         <Border
-                            Grid.Row="0" Grid.Column="1"
-                            Style="{StaticResource SelectableCard}"
-                            SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_Vegan}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleVeganCommand}" />
-                            </Border.GestureRecognizers>
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsVegan}" Value="True">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                    <Setter Property="Stroke"
-                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsVegan}" Value="False">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-                                    <Setter Property="Stroke"
-                                            Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
-                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Grid ColumnDefinitions="*,22" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
-                                <Label
-                                    Text="{loc:LocalizedText Profile_NutritionSettings_Vegan}"
-                                    Style="{StaticResource BodyMediumStrong}"
-                                    VerticalOptions="Center" />
-                                <Border
-                                    Grid.Column="1"
-                                    Style="{StaticResource SelectionRadioRing}"
-                                    VerticalOptions="Center"
-                                    InputTransparent="True">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsVegan}" Value="True">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                            <Setter Property="Stroke"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsVegan}" Value="False">
-                                            <Setter Property="Stroke"
-                                                    Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray500}}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Path
-                                        Data="M5 11L9 15L17 6"
-                                        Stroke="{StaticResource White}"
-                                        StrokeThickness="{StaticResource UiStrokeWidth2}"
-                                        StrokeLineCap="Round"
-                                        StrokeLineJoin="Round"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"
-                                        IsVisible="{Binding IsVegan}" />
-                                </Border>
-                            </Grid>
-                        </Border>
-
+    Grid.Row="0" Grid.Column="1"
+    Style="{StaticResource CardSecondary}"
+    SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_Vegan}" SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+    <Border.GestureRecognizers>
+        <TapGestureRecognizer Command="{Binding ToggleVeganCommand}" />
+    </Border.GestureRecognizers>
+    <Border.Triggers>
+        <DataTrigger TargetType="Border" Binding="{Binding IsVegan}" Value="True">
+            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            <Setter Property="BackgroundColor"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+            <Setter Property="Stroke"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+        </DataTrigger>
+        
+    </Border.Triggers>
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
+        <Label
+            Text="{loc:LocalizedText Profile_NutritionSettings_Vegan}"
+            Style="{StaticResource BodyMediumStrong}"
+            VerticalOptions="Center" />
+        <Border
+            Grid.Column="1"
+            Style="{StaticResource SelectionRadioRing}"
+            VerticalOptions="Center"
+            InputTransparent="True">
+            <Border.Triggers>
+                <DataTrigger TargetType="Border" Binding="{Binding IsVegan}" Value="True">
+                    <Setter Property="BackgroundColor"
+                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                    <Setter Property="Stroke"
+                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Border" Binding="{Binding IsVegan}" Value="False">
+                    <Setter Property="Stroke"
+                            Value="{AppThemeBinding Light={StaticResource BorderNeutralLight}, Dark={StaticResource BorderNeutralDark}}" />
+                </DataTrigger>
+            </Border.Triggers>
+            <Path
+                Data="M5 11L9 15L17 6"
+                Stroke="{StaticResource ContrastInk}"
+                StrokeThickness="{StaticResource UiStrokeWidth2}"
+                StrokeLineCap="Round"
+                StrokeLineJoin="Round"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                IsVisible="{Binding IsVegan}" />
+        </Border>
+    </Grid>
+</Border>
+            
                         <!-- Gluten-free -->
                         <Border
-                            Grid.Row="1" Grid.Column="0"
-                            Style="{StaticResource SelectableCard}"
-                            SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_GlutenFree}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleGlutenFreeCommand}" />
-                            </Border.GestureRecognizers>
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsGlutenFree}" Value="True">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                    <Setter Property="Stroke"
-                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsGlutenFree}" Value="False">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-                                    <Setter Property="Stroke"
-                                            Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
-                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Grid ColumnDefinitions="*,22" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
-                                <Label
-                                    Text="{loc:LocalizedText Profile_NutritionSettings_GlutenFree}"
-                                    Style="{StaticResource BodyMediumStrong}"
-                                    VerticalOptions="Center" />
-                                <Border
-                                    Grid.Column="1"
-                                    Style="{StaticResource SelectionRadioRing}"
-                                    VerticalOptions="Center"
-                                    InputTransparent="True">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsGlutenFree}" Value="True">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                            <Setter Property="Stroke"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsGlutenFree}" Value="False">
-                                            <Setter Property="Stroke"
-                                                    Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray500}}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Path
-                                        Data="M5 11L9 15L17 6"
-                                        Stroke="{StaticResource White}"
-                                        StrokeThickness="{StaticResource UiStrokeWidth2}"
-                                        StrokeLineCap="Round"
-                                        StrokeLineJoin="Round"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"
-                                        IsVisible="{Binding IsGlutenFree}" />
-                                </Border>
-                            </Grid>
-                        </Border>
-
+    Grid.Row="1" Grid.Column="0"
+    Style="{StaticResource CardSecondary}"
+    SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_GlutenFree}" SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+    <Border.GestureRecognizers>
+        <TapGestureRecognizer Command="{Binding ToggleGlutenFreeCommand}" />
+    </Border.GestureRecognizers>
+    <Border.Triggers>
+        <DataTrigger TargetType="Border" Binding="{Binding IsGlutenFree}" Value="True">
+            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            <Setter Property="BackgroundColor"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+            <Setter Property="Stroke"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+        </DataTrigger>
+        
+    </Border.Triggers>
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
+        <Label
+            Text="{loc:LocalizedText Profile_NutritionSettings_GlutenFree}"
+            Style="{StaticResource BodyMediumStrong}"
+            VerticalOptions="Center" />
+        <Border
+            Grid.Column="1"
+            Style="{StaticResource SelectionRadioRing}"
+            VerticalOptions="Center"
+            InputTransparent="True">
+            <Border.Triggers>
+                <DataTrigger TargetType="Border" Binding="{Binding IsGlutenFree}" Value="True">
+                    <Setter Property="BackgroundColor"
+                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                    <Setter Property="Stroke"
+                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Border" Binding="{Binding IsGlutenFree}" Value="False">
+                    <Setter Property="Stroke"
+                            Value="{AppThemeBinding Light={StaticResource BorderNeutralLight}, Dark={StaticResource BorderNeutralDark}}" />
+                </DataTrigger>
+            </Border.Triggers>
+            <Path
+                Data="M5 11L9 15L17 6"
+                Stroke="{StaticResource ContrastInk}"
+                StrokeThickness="{StaticResource UiStrokeWidth2}"
+                StrokeLineCap="Round"
+                StrokeLineJoin="Round"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                IsVisible="{Binding IsGlutenFree}" />
+        </Border>
+    </Grid>
+</Border>
+            
                         <!-- Lactose-free -->
                         <Border
-                            Grid.Row="1" Grid.Column="1"
-                            Style="{StaticResource SelectableCard}"
-                            SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_LactoseFree}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleLactoseFreeCommand}" />
-                            </Border.GestureRecognizers>
-                            <Border.Triggers>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsLactoseFree}" Value="True">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                    <Setter Property="Stroke"
-                                            Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-                                </DataTrigger>
-                                <DataTrigger TargetType="Border" Binding="{Binding IsLactoseFree}" Value="False">
-                                    <Setter Property="BackgroundColor"
-                                            Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
-                                    <Setter Property="Stroke"
-                                            Value="{AppThemeBinding Light={StaticResource ActivityUnselectedStrokeLight}, Dark={StaticResource Gray800}}" />
-                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
-                                </DataTrigger>
-                            </Border.Triggers>
-                            <Grid ColumnDefinitions="*,22" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
-                                <Label
-                                    Text="{loc:LocalizedText Profile_NutritionSettings_LactoseFree}"
-                                    Style="{StaticResource BodyMediumStrong}"
-                                    VerticalOptions="Center" />
-                                <Border
-                                    Grid.Column="1"
-                                    Style="{StaticResource SelectionRadioRing}"
-                                    VerticalOptions="Center"
-                                    InputTransparent="True">
-                                    <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsLactoseFree}" Value="True">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                            <Setter Property="Stroke"
-                                                    Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                        </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsLactoseFree}" Value="False">
-                                            <Setter Property="Stroke"
-                                                    Value="{AppThemeBinding Light={StaticResource Gray600}, Dark={StaticResource Gray500}}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
-                                    <Path
-                                        Data="M5 11L9 15L17 6"
-                                        Stroke="{StaticResource White}"
-                                        StrokeThickness="{StaticResource UiStrokeWidth2}"
-                                        StrokeLineCap="Round"
-                                        StrokeLineJoin="Round"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"
-                                        IsVisible="{Binding IsLactoseFree}" />
-                                </Border>
-                            </Grid>
-                        </Border>
+    Grid.Row="1" Grid.Column="1"
+    Style="{StaticResource CardSecondary}"
+    SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_LactoseFree}" SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+    <Border.GestureRecognizers>
+        <TapGestureRecognizer Command="{Binding ToggleLactoseFreeCommand}" />
+    </Border.GestureRecognizers>
+    <Border.Triggers>
+        <DataTrigger TargetType="Border" Binding="{Binding IsLactoseFree}" Value="True">
+            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            <Setter Property="BackgroundColor"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+            <Setter Property="Stroke"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+        </DataTrigger>
+        
+    </Border.Triggers>
+    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
+        <Label
+            Text="{loc:LocalizedText Profile_NutritionSettings_LactoseFree}"
+            Style="{StaticResource BodyMediumStrong}"
+            VerticalOptions="Center" />
+        <Border
+            Grid.Column="1"
+            Style="{StaticResource SelectionRadioRing}"
+            VerticalOptions="Center"
+            InputTransparent="True">
+            <Border.Triggers>
+                <DataTrigger TargetType="Border" Binding="{Binding IsLactoseFree}" Value="True">
+                    <Setter Property="BackgroundColor"
+                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                    <Setter Property="Stroke"
+                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                </DataTrigger>
+                <DataTrigger TargetType="Border" Binding="{Binding IsLactoseFree}" Value="False">
+                    <Setter Property="Stroke"
+                            Value="{AppThemeBinding Light={StaticResource BorderNeutralLight}, Dark={StaticResource BorderNeutralDark}}" />
+                </DataTrigger>
+            </Border.Triggers>
+            <Path
+                Data="M5 11L9 15L17 6"
+                Stroke="{StaticResource ContrastInk}"
+                StrokeThickness="{StaticResource UiStrokeWidth2}"
+                StrokeLineCap="Round"
+                StrokeLineJoin="Round"
+                HorizontalOptions="Center"
+                VerticalOptions="Center"
+                IsVisible="{Binding IsLactoseFree}" />
+        </Border>
+    </Grid>
+</Border>
                     </Grid>
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Primary daily targets stay visible for direct editing with expandable micronutrients under this block. -->
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
                     <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource UiInsets0_4}" MinimumHeightRequest="{StaticResource UiDimension44}">
@@ -319,15 +295,15 @@
                             VerticalOptions="Center"
                             SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_ToggleMacroTargetFields}" />
                     </Grid>
-
+            
                     <Label
                         Text="{loc:LocalizedText Profile_NutritionSettings_OverrideCalculatedTargetsWithYourOwn}"
                         Style="{StaticResource CaptionLabel}" />
-
+            
                     <!-- Macro targets -->
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
                           RowSpacing="{StaticResource UiSpacing10}">
-                        <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+                        <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                             <Label Text="{loc:LocalizedText Profile_NutritionSettings_DailyCalories}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
@@ -335,8 +311,8 @@
                                        Text="{Binding CaloriesGoal}" Keyboard="Numeric" />
                             </Border>
                         </Grid>
-
-                        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                             <Label Text="{loc:LocalizedText Nutrition_Macro_Protein}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
@@ -344,8 +320,8 @@
                                        Text="{Binding ProteinGoal}" Keyboard="Numeric" />
                             </Border>
                         </Grid>
-
-                        <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                        <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                             <Label Text="{loc:LocalizedText Nutrition_Macro_Carbs}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
@@ -353,8 +329,8 @@
                                        Keyboard="Numeric" />
                             </Border>
                         </Grid>
-
-                        <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                        <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                             <Label Text="{loc:LocalizedText Profile_NutritionSettings_Fats}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
@@ -362,8 +338,8 @@
                                        Keyboard="Numeric" />
                             </Border>
                         </Grid>
-
-                        <Grid Grid.Row="2" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                        <Grid Grid.Row="2" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                             <Label Text="{loc:LocalizedText Profile_NutritionSettings_Fiber}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
@@ -371,8 +347,8 @@
                                        Keyboard="Numeric" />
                             </Border>
                         </Grid>
-
-                        <Grid Grid.Row="2" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                        <Grid Grid.Row="2" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                             <Label Text="{loc:LocalizedText Profile_NutritionSettings_Water}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
@@ -381,10 +357,10 @@
                             </Border>
                         </Grid>
                     </Grid>
-
+            
                     <!-- Advanced Micronutrient targets expandable under this block -->
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}" IsVisible="{Binding AreAdvancedSettingsVisible}">
-                        <BoxView HeightRequest="{StaticResource UiDimension1}" Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
+                        <BoxView HeightRequest="{StaticResource UiDimension1}" Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
                         <Label Text="{loc:LocalizedText Profile_NutritionSettings_MicronutrientTargets}"
                                Style="{StaticResource SectionTitle}" />
                         <Grid
@@ -393,88 +369,88 @@
                             ColumnSpacing="{StaticResource UiSpacing10}"
                             RowSpacing="{StaticResource UiSpacing10}"
                             Padding="{StaticResource UiInsets0}">
-                            <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+                            <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_Iron}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding IronGoal}"
                                            Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-
-                            <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                            <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_VitaminBTwelve}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mcg}"
                                            Text="{Binding VitaminB12Goal}" Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-
-                            <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                            <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_VitaminC}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding VitaminCGoal}"
                                            Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-
-                            <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                            <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_VitaminD}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mcg}" Text="{Binding VitaminDGoal}"
                                            Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-
-                            <Grid Grid.Row="2" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                            <Grid Grid.Row="2" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_VitaminA}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mcg}" Text="{Binding VitaminAGoal}"
                                            Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-
-                            <Grid Grid.Row="2" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                            <Grid Grid.Row="2" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_VitaminBSix}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding VitaminB6Goal}"
                                            Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-
-                            <Grid Grid.Row="3" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                            <Grid Grid.Row="3" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_Folate}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mcg}" Text="{Binding FolateGoal}"
                                            Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-
-                            <Grid Grid.Row="3" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                            <Grid Grid.Row="3" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_Calcium}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding CalciumGoal}"
                                            Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-
-                            <Grid Grid.Row="4" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                            <Grid Grid.Row="4" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_Magnesium}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding MagnesiumGoal}"
                                            Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-
-                            <Grid Grid.Row="4" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing5}">
+            
+                            <Grid Grid.Row="4" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_Zinc}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding ZincGoal}"
                                            Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-
+            
                             <Grid Grid.Row="5" Grid.Column="0" Grid.ColumnSpan="2" RowDefinitions="Auto,Auto"
-                                  RowSpacing="{StaticResource UiSpacing5}">
+                                  RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Profile_NutritionSettings_Potassium}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                     <Entry Placeholder="{loc:LocalizedText Common_Unit_Mg}" Text="{Binding PotassiumGoal}"
@@ -485,17 +461,19 @@
                     </VerticalStackLayout>
                 </VerticalStackLayout>
             </Border>
-
-            <Label
-                Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
-                Style="{StaticResource CaptionLabel}"
-                LineBreakMode="WordWrap"
-                IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
-
-            <Button
-                Style="{StaticResource ButtonPrimary}"
-                Text="{loc:LocalizedText Profile_NutritionSettings_SaveNutritionSettings}"
-                Command="{Binding SaveCommand}" />
         </VerticalStackLayout>
     </ScrollView>
+    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <Label
+            Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+            Style="{StaticResource CaptionLabel}"
+            LineBreakMode="WordWrap"
+            IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+        <Button
+            Style="{StaticResource ButtonPrimary}"
+            Text="{loc:LocalizedText Profile_NutritionSettings_SaveNutritionSettings}"
+            Command="{Binding SaveCommand}" />
+    </VerticalStackLayout>
+
+</Grid>
 </ContentPage>

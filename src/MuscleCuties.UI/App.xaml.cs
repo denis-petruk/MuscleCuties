@@ -21,7 +21,7 @@ using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 
 namespace MuscleCuties.UI;
 
-public partial class App : Application
+public partial class App : Application, IDisposable
 {
     private readonly IServiceProvider _services;
     private bool _startupFailed;
@@ -40,6 +40,14 @@ public partial class App : Application
         InitializeComponent();
         SyncActivityTheme();
         RequestedThemeChanged += (_, e) => SyncActivityTheme(e.RequestedTheme);
+    }
+
+    public void Dispose()
+    {
+        _foregroundCancellation?.Cancel();
+        _foregroundCancellation?.Dispose();
+        _foregroundCancellation = null;
+        GC.SuppressFinalize(this);
     }
 
     private static void SyncActivityTheme(AppTheme? theme = null)

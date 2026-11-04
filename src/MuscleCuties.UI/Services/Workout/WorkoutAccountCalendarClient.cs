@@ -9,12 +9,14 @@ public interface IWorkoutAccountCalendarClient
 }
 
 public sealed class WorkoutAccountCalendarClient(IMuscleCutiesBackendApiClient apiClient)
-    : IWorkoutAccountCalendarClient
+    : IWorkoutAccountCalendarClient, IDisposable
 {
     private const string ProgressRoute = "/api/v1/workouts/progress";
     private const string ForegroundTimeZoneRoute = "/api/v1/workouts/foreground-timezone";
     private const string ReadyStatus = "Ready";
     private readonly SemaphoreSlim _updateGate = new(1, 1);
+
+    public void Dispose() => _updateGate.Dispose();
 
     public async Task UpdateForegroundTimeZoneAsync(CancellationToken cancellationToken = default)
     {

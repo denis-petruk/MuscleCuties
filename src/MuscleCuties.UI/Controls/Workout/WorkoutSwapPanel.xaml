@@ -1,27 +1,30 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ContentView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+<sharedControls:AnimatedModalView xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+             xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
              xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
              xmlns:models="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
              x:Class="MuscleCuties.UI.Controls.Workout.WorkoutSwapPanel"
              x:Name="SwapRoot"
-             x:DataType="vm:WorkoutSessionViewModel">
+             x:DataType="vm:WorkoutSessionViewModel"
+             IsOpen="{Binding IsSwapPanelVisible}">
     <Grid BackgroundColor="{StaticResource ModalScrim}">
         <Grid BackgroundColor="{StaticResource Transparent}">
             <Grid.GestureRecognizers>
                 <TapGestureRecognizer Command="{Binding CloseSwapPanelCommand}" />
             </Grid.GestureRecognizers>
         </Grid>
-        <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}"
-                Padding="{StaticResource PresentationModalPagePadding}"
+        <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
+                Padding="{DynamicResource PresentationModalPagePadding}"
                 VerticalOptions="End">
-            <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing14}" IsEnabled="{Binding CanInteract}">
+            <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpaceCompact}" IsEnabled="{Binding CanInteract}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                        <Label Text="{loc:LocalizedText Workout_Swap_Title}" Style="{StaticResource SectionTitle}" />
-                        <Label
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Swap_Title}" Style="{StaticResource SectionTitle}"
+                               SemanticProperties.HeadingLevel="Level2" />
+                        <Label LineBreakMode="WordWrap"
                             Text="{Binding SwapTargetName, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Swap_ReplaceFormat}"
                             Style="{StaticResource CaptionLabel}" />
                     </VerticalStackLayout>
@@ -29,12 +32,13 @@
                             Command="{Binding CloseSwapPanelCommand}" IsVisible="{Binding CanDismissSwap}"
                             Style="{StaticResource ButtonSecondary}" />
                 </Grid>
-                <ActivityIndicator Grid.Row="1" IsVisible="{Binding IsSwapLoading}" IsRunning="{Binding IsSwapLoading}"
-                                   Color="{StaticResource Primary}" />
+                <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" Grid.Row="1" IsVisible="{Binding IsSwapLoading}" IsRunning="{Binding IsSwapLoading}"
+                                   />
                 <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}">
-                    <Label Text="{Binding SwapErrorText, Converter={StaticResource LocalizedStringConverter}}"
+                    <Label LineBreakMode="WordWrap" Text="{Binding SwapErrorText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource ErrorLabel}" IsVisible="{Binding HasSwapError}" />
-                    <Label Text="{loc:LocalizedText Workout_Swap_NoAlternativesAvailable}"
+                    <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Swap_NoAlternativesAvailable}"
                            Style="{StaticResource BodyLabel}" IsVisible="{Binding ShowNoSwapCandidates}" />
                 </VerticalStackLayout>
                 <CollectionView Grid.Row="3" ItemsSource="{Binding SwapCandidates}"
@@ -42,22 +46,10 @@
                                 SelectionMode="None">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:ExerciseSwapOption">
-                            <Border Style="{StaticResource SelectableCard}"
+                            <Border Style="{StaticResource CardSecondary}"
                                     Margin="{StaticResource UiInsets0_0_0_8}"
                                     SemanticProperties.Description="{Binding Name}">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                                        <Setter Property="SemanticProperties.Hint"
-                                                Value="Selected swap option, double-tap to confirm" />
-
-
-
-                                    </DataTrigger>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
-                                        <Setter Property="SemanticProperties.Hint"
-                                                Value="Not selected, double-tap to select" />
-                                    </DataTrigger>
-                                </Border.Triggers>
+                                <!-- Selected semantics come from the shared CardSecondary style. -->
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding SelectSwapCandidateCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutSessionViewModel}}, x:DataType=vm:WorkoutSessionViewModel}"
@@ -79,7 +71,7 @@
                                             Style="{StaticResource CaptionLabel}"
                                             LineBreakMode="WordWrap" />
                                     </VerticalStackLayout>
-                                    <Label Grid.Column="1" Text="{loc:LocalizedText Workout_Swap_SelectedBadge}"
+                                    <Label LineBreakMode="WordWrap" Grid.Column="1" Text="{loc:LocalizedText Workout_Swap_SelectedBadge}"
                                            IsVisible="{Binding IsSelected}" Style="{StaticResource AccentLabel}"
                                            VerticalOptions="Center" />
                                 </Grid>
@@ -97,4 +89,4 @@
             </Grid>
         </Border>
     </Grid>
-</ContentView>
+</sharedControls:AnimatedModalView>

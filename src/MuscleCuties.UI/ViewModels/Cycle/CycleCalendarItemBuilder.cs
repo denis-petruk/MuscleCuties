@@ -214,8 +214,8 @@ public static class CycleCalendarItemBuilder
     public static Color GetNeutralDayBackground(bool isToday, bool useDarkTheme)
     {
         return isToday
-            ? AppThemeResources.GetColor(useDarkTheme ? "Gray500" : "CycleNeutralTextLight", default)
-            : AppThemeResources.GetColor(useDarkTheme ? "Gray900" : "CycleNeutralSurfaceLight", default);
+            ? AppThemeResources.GetColor("CycleNeutralTodaySurface", default)
+            : AppThemeResources.GetColor(useDarkTheme ? "SurfaceSunkenDark" : "CycleNeutralSurfaceLight", default);
     }
 
     public static Color GetNeutralDayTextColor(bool useDarkTheme)
@@ -225,7 +225,7 @@ public static class CycleCalendarItemBuilder
 
     public static Color GetTodayDayTextColor(bool useDarkTheme)
     {
-        return AppThemeResources.GetColor("White", default);
+        return AppThemeResources.GetColor("ContrastInk", default);
     }
 
     public static Color GetPredictedDayStrokeColor(CyclePhase phase, bool useDarkTheme)

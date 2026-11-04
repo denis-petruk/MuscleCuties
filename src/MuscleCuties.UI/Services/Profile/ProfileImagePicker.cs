@@ -25,12 +25,15 @@ internal static class ProfileImagePicker
     {
         cancellationToken.ThrowIfCancellationRequested();
         // Every caller keeps a single photo, so ask the platform for exactly one. The
-        // multi-select picker returns no results at all on some iOS versions, which reads
-        // as a button that does nothing.
+        // multi-select replacement returns no results at all on some iOS versions, which reads
+        // as a button that does nothing, so the deprecated single-photo picker is retained
+        // deliberately rather than reintroducing that dead-button defect.
+#pragma warning disable CS0618 // Type or member is obsolete
         var result = await MediaPicker.Default.PickPhotoAsync(new MediaPickerOptions
         {
             Title = uniqueFileName ? "Choose progress photo" : "Choose profile image"
         }).WaitAsync(cancellationToken);
+#pragma warning restore CS0618
         cancellationToken.ThrowIfCancellationRequested();
 
         if (result is null)

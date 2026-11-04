@@ -20,7 +20,7 @@
         </BoxView>
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource ModalSurface}" VerticalOptions="End">
+            Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
 
             <Grid RowDefinitions="Auto, *, Auto">
                 <!-- Header: flattened from 3-deep Grid nesting into single Grid -->
@@ -30,7 +30,7 @@
                     ColumnDefinitions="*, Auto"
                     ColumnSpacing="{StaticResource UiSpaceCompact}"
                     RowSpacing="{StaticResource UiSpacing6}"
-                    Padding="{StaticResource PresentationModalHeaderPadding}">
+                    Padding="{DynamicResource PresentationModalHeaderPadding}">
 
                     <Label
                         Text="{Binding SelectedCalendarDateText, Converter={StaticResource LocalizedStringConverter}}"
@@ -65,7 +65,7 @@
                         Grid.ColumnSpan="2"
                         HeightRequest="{StaticResource UiDimension1}"
                         Margin="{StaticResource UiInsets0_6_0_0}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
                         Opacity="{StaticResource UiOpacityBackdrop}" />
                 </Grid>
 
@@ -100,7 +100,7 @@
                             BindableLayout.ItemsSource="{Binding PhaseEditOptions}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="cycleModels:CyclePhaseOptionItem">
-                                <Border Style="{StaticResource SelectableCard}"
+                                <Border Style="{StaticResource CardSecondary}"
                                     MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                     SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_DatePhaseModal_SelectPhaseFormat}">
                                     <Border.GestureRecognizers>
@@ -125,15 +125,14 @@
                                             Grid.Column="1"
                                             Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
                                             TextColor="{Binding TextColor}"
-                                            FontSize="{StaticResource UiFontSize15}"
-                                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                                            Style="{StaticResource BodyStrong}"
                                             LineBreakMode="WordWrap" />
                                         <Label
                                             Grid.Row="1"
                                             Grid.Column="1"
                                             Text="{Binding Description, Converter={StaticResource LocalizedStringConverter}}"
                                             TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                            FontSize="{StaticResource UiFontSize13}"
+                                            Style="{StaticResource MutedLabel}"
                                             LineBreakMode="WordWrap" />
 
                                         <Border Style="{StaticResource SelectionCheckmark}"
@@ -156,7 +155,7 @@
 
                 <Grid
                     Grid.Row="2"
-                    Padding="{StaticResource PresentationActionFooterPadding}">
+                    Padding="{DynamicResource PresentationActionFooterPadding}">
                     <Grid
                         IsVisible="{Binding HasPhaseJumpWarning}"
                         ColumnDefinitions="*, *"

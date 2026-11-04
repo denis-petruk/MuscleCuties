@@ -7,9 +7,23 @@ internal static class ModalTransition
     internal static void PlayShow(ContentView modal, double? slideDistance = null)
     {
         modal.CancelAnimations();
-        modal.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
-
         var card = FindCard(modal);
+
+        if (MotionSettings.ReduceMotion)
+        {
+            // Reduce Motion keeps the same end state without translation, scale or fade.
+            modal.Opacity = AppThemeResources.GetDouble("UiOpacityFull");
+            if (card != null)
+            {
+                card.CancelAnimations();
+                card.TranslationY = AppThemeResources.GetDouble("UiMotionOffsetZero");
+                card.Scale = AppThemeResources.GetDouble("UiScaleFull");
+            }
+
+            return;
+        }
+
+        modal.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
         if (card != null)
         {
             card.CancelAnimations();
@@ -50,6 +64,16 @@ internal static class ModalTransition
 
     internal static void PlayHide(ContentView modal, Action? onComplete = null)
     {
+        modal.CancelAnimations();
+        FindCard(modal)?.CancelAnimations();
+
+        if (MotionSettings.ReduceMotion)
+        {
+            modal.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
+            onComplete?.Invoke();
+            return;
+        }
+
         modal.Dispatcher.Dispatch(async () =>
         {
             try

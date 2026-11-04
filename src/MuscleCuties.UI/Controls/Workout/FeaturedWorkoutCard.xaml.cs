@@ -199,7 +199,7 @@ public partial class FeaturedWorkoutCard : ContentView
     public string PreviewChevron => IsPreviewExpanded ? "▲ Hide" : "▼ Preview";
 
     public ImageSource ActionIcon => (IsEditAction ? FluentIcons.Edit24 : FluentIcons.Play24)
-        .ToImageSource(AppThemeResources.GetColor("Black"), AppThemeResources.GetDouble("UiDimension15"));
+        .ToImageSource(AppThemeResources.GetColor("IconContrastDark"), AppThemeResources.GetDouble("UiDimension15"));
 
     public string PrimaryActivityTitle { get; private set; } = string.Empty;
     public string PrimaryActivityCount { get; private set; } = string.Empty;

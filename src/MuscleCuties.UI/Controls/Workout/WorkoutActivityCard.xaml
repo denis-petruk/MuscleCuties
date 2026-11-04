@@ -27,21 +27,19 @@
                 CommandParameter="{Binding CommandParameter, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}" />
         </Border.GestureRecognizers>
 
-        <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" RowSpacing="{StaticResource UiSpacing6}">
+        <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" RowSpacing="{StaticResource UiSpaceCompact}">
 
             <Border
                 Grid.Column="0"
-                WidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                HeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                WidthRequest="{StaticResource UiDimension36}"
+                HeightRequest="{StaticResource UiDimension36}"
                 StrokeShape="{StaticResource UiRoundRectangleRadius12}"
                 BackgroundColor="{Binding ActivityBackground}"
                 StrokeThickness="{StaticResource UiStrokeWidth0}"
                 VerticalOptions="Center">
-                <Label
+                <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionSmallStrong}"
                     Text="{Binding DayLabel, Converter={StaticResource LocalizedStringConverter}}"
                     TextColor="{Binding ActivityTextColor}"
-                    FontSize="{StaticResource UiFontSize14}"
-                    FontAttributes="{StaticResource UiFontAttributesBold}"
                     HorizontalOptions="Center"
                     VerticalOptions="Center"
                     SemanticProperties.Description="{Binding DayLabel, Converter={StaticResource LocalizedStringConverter}}" />
@@ -50,8 +48,7 @@
             <Label
                 Grid.Column="1"
                 Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
-                Style="{StaticResource CardTitle}"
-                FontSize="{StaticResource UiFontSize16}"
+                Style="{StaticResource BodyStrong}"
                 LineBreakMode="WordWrap"
                 VerticalOptions="Center" />
 
@@ -59,7 +56,7 @@
                 Grid.Column="2"
                 StrokeThickness="{StaticResource UiStrokeWidth0}"
                 StrokeShape="{StaticResource UiRoundRectangleRadius999}"
-                Padding="{StaticResource UiInsets10_6}"
+                Padding="{StaticResource UiInsets8_2}"
                 VerticalOptions="Center">
                 <Border.Triggers>
                     <DataTrigger TargetType="Border" Binding="{Binding IsCompleted}" Value="True">
@@ -70,14 +67,12 @@
                         <Setter Property="BackgroundColor" Value="{Binding ActivityBackground}" />
                     </DataTrigger>
                 </Border.Triggers>
-                <Label
-                    Text="{Binding SessionProgressText, Converter={StaticResource LocalizedStringConverter}}"
-                    FontSize="{StaticResource UiFontSize14}"
-                    FontAttributes="{StaticResource UiFontAttributesBold}">
+                <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionSmallStrong}"
+                    Text="{Binding SessionProgressText, Converter={StaticResource LocalizedStringConverter}}">
                     <Label.Triggers>
                         <DataTrigger TargetType="Label" Binding="{Binding IsCompleted}" Value="True">
                             <Setter Property="TextColor"
-                                    Value="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource TextPrimary}}" />
+                                    Value="{AppThemeBinding Light={StaticResource ContrastInk}, Dark={StaticResource TextPrimary}}" />
                         </DataTrigger>
                         <DataTrigger TargetType="Label" Binding="{Binding IsCompleted}" Value="False">
                             <Setter Property="TextColor" Value="{Binding ActivityTextColor}" />
@@ -86,24 +81,24 @@
                 </Label>
             </Border>
 
-            <Button Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
-                    Text="{Binding OptionalStatusText, Converter={StaticResource LocalizedStringConverter}}"
-                    Command="{Binding ToggleOptionalCommand, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
-                    CommandParameter="{Binding CommandParameter, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
-                    IsEnabled="{Binding CanMarkOptional}"
-                    IsVisible="{Binding CanMarkOptional}"
-                    Style="{StaticResource ButtonSecondary}"
-                    HorizontalOptions="Start"
-                    SemanticProperties.Hint="{loc:LocalizedText Workout_Readiness_OptionalSessionHint}" />
-            <Button Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2"
-                    Text="{Binding EasierAlternativeStatusText, Converter={StaticResource LocalizedStringConverter}}"
-                    Command="{Binding ToggleEasierAlternativeCommand, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
-                    CommandParameter="{Binding CommandParameter, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
-                    IsEnabled="{Binding CanMarkEasierAlternative}"
-                    IsVisible="{Binding IsOptional}"
-                    Style="{StaticResource ButtonSecondary}"
-                    HorizontalOptions="Start"
-                    SemanticProperties.Hint="{loc:LocalizedText Workout_Readiness_EasierAlternativeHint}" />
+            <!-- Both session adjustments share one row so a card with either or both keeps a stable height. -->
+            <HorizontalStackLayout Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                   Spacing="{StaticResource UiSpaceTight}">
+                <Button Text="{Binding OptionalStatusText, Converter={StaticResource LocalizedStringConverter}}"
+                        Command="{Binding ToggleOptionalCommand, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
+                        CommandParameter="{Binding CommandParameter, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
+                        IsEnabled="{Binding CanMarkOptional}"
+                        IsVisible="{Binding CanMarkOptional}"
+                        Style="{StaticResource ButtonSecondary}"
+                        SemanticProperties.Hint="{loc:LocalizedText Workout_Readiness_OptionalSessionHint}" />
+                <Button Text="{Binding EasierAlternativeStatusText, Converter={StaticResource LocalizedStringConverter}}"
+                        Command="{Binding ToggleEasierAlternativeCommand, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
+                        CommandParameter="{Binding CommandParameter, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"
+                        IsEnabled="{Binding CanMarkEasierAlternative}"
+                        IsVisible="{Binding IsOptional}"
+                        Style="{StaticResource ButtonSecondary}"
+                        SemanticProperties.Hint="{loc:LocalizedText Workout_Readiness_EasierAlternativeHint}" />
+            </HorizontalStackLayout>
         </Grid>
     </Border>
 </ContentView>

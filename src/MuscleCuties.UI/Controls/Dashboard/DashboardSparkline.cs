@@ -48,7 +48,7 @@ public sealed class DashboardSparkline : GraphicsView, IDrawable
             return;
 
         var isDark = Application.Current?.RequestedTheme == AppTheme.Dark;
-        var ink = AppThemeResources.GetColor(IsWeight ? "DashboardAccentPink" : "DashboardReadinessBlue", default);
+        var ink = AppThemeResources.GetColor(IsWeight ? "DashboardWeightAccent" : "DashboardReadinessAccent", default);
         canvas.StrokeColor = AppThemeResources.GetColor(isDark ? "DashboardChartTrackDark" : "DashboardChartTrackLight", default);
         var chartInset = (float)AppThemeResources.GetDouble("UiSpaceTight");
         var chartWidthInset = (float)AppThemeResources.GetDouble("UiSpaceControl");

@@ -28,7 +28,7 @@
                     <Label
                         Text="{loc:LocalizedText Cycle_Hero_HeaderTitle}"
                         Style="{StaticResource CaptionStrong}"
-                        TextColor="{StaticResource Primary}"
+                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                         VerticalOptions="Center"
                         LineBreakMode="WordWrap"
                         SemanticProperties.HeadingLevel="Level2" />
@@ -42,13 +42,12 @@
                     <Label
                         Text="{Binding PhaseLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_Hero_PhaseFormat}"
                         Style="{StaticResource SectionTitle}"
-                        FontSize="{StaticResource UiFontSize24}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
+
                         LineBreakMode="WordWrap" />
                     <Label
                         Text="{Binding CycleDaySummary, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource CaptionStrong}"
-                        TextColor="{StaticResource Primary}"
+                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                         LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
 
@@ -81,56 +80,12 @@
             </Grid>
 
             <!-- Bottom Row: Quick-log action button -->
-            <Border
+            <Button
                 Grid.Row="2"
-                BackgroundColor="{AppThemeBinding Light={StaticResource Gray100}, Dark={StaticResource Gray900}}"
-                StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                StrokeThickness="{StaticResource UiStrokeWidth0}"
-                Padding="{StaticResource UiInsets12_10}"
-                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                SemanticProperties.Description="{loc:LocalizedText Cycle_Hero_LogActionAccessibility}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding OpenQuickLogCommand}" />
-                </Border.GestureRecognizers>
-                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpacing10}" VerticalOptions="Center">
-                    <Border
-                        WidthRequest="{StaticResource UiDimension28}"
-                        HeightRequest="{StaticResource UiDimension28}"
-                        StrokeShape="{StaticResource UiRoundRectangleRadius14}"
-                        BackgroundColor="{StaticResource Primary}"
-                        StrokeThickness="{StaticResource UiStrokeWidth0}"
-                        VerticalOptions="Center">
-                        <Path
-                            Data="M12 5v14M5 12h14"
-                            Stroke="{StaticResource White}"
-                            StrokeThickness="{StaticResource UiStrokeWidth2}"
-                            StrokeLineCap="Round"
-                            Aspect="Uniform"
-                            WidthRequest="{StaticResource UiDimension14}"
-                            HeightRequest="{StaticResource UiDimension14}"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
-                    </Border>
-                    <Label
-                        Grid.Column="1"
-                        Text="{loc:LocalizedText Cycle_Hero_LogActionAccessibility}"
-                        FontSize="{StaticResource UiFontSize13}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
-                        VerticalOptions="Center"
-                        LineBreakMode="WordWrap" />
-                    <Path
-                        Grid.Column="2"
-                        Data="M9 18l6-6-6-6"
-                        Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                        StrokeThickness="{StaticResource UiStrokeWidth2}"
-                        StrokeLineCap="Round"
-                        StrokeLineJoin="Round"
-                        Aspect="Uniform"
-                        WidthRequest="{StaticResource UiDimension12}"
-                        HeightRequest="{StaticResource UiDimension12}"
-                        VerticalOptions="Center" />
-                </Grid>
-            </Border>
+                Style="{StaticResource ButtonPrimary}"
+                Text="{loc:LocalizedText Cycle_Hero_LogActionAccessibility}"
+                Command="{Binding OpenQuickLogCommand}"
+                SemanticProperties.Description="{loc:LocalizedText Cycle_Hero_LogActionAccessibility}" />
 
             <cycleControls:CycleDailyTipsCard Grid.Row="3" />
         </Grid>

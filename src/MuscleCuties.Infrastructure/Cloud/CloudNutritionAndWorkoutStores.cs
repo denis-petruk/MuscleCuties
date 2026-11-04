@@ -293,7 +293,8 @@ public sealed class CloudNutritionDailyLogStore(
             (double)entry.ServingSize, entry.ServingUnit, (double)entry.ServingsCount,
             (double)entry.Calories, (double)entry.Protein, (double)entry.Carbs, (double)entry.Fat,
             entry.LoggedAtUtc, [], entry.AcceptedSuggestionName,
-            Enum.TryParse<CyclePhase>(entry.AcceptedSuggestionPhase, true, out var phase) ? phase : null);
+            Enum.TryParse<CyclePhase>(entry.AcceptedSuggestionPhase, true, out var phase) ? phase : null,
+            entry.LoggedMealId);
     }
 
     private sealed record DiarySaveResponse(string Identity);

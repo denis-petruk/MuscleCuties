@@ -18,7 +18,7 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
-public enum SessionScreen { DayOverview, ActivityIntro, ExerciseFlow, ActivitySummary }
+public enum SessionScreen { ActivityIntro, ExerciseFlow, ActivitySummary }
 
 public enum CelebrationType { None, SmallCheckmark, MediumFirstTime, BigPR }
 public enum HiitConfirmationChoice { Cancel, Confirm, Update }
@@ -30,7 +30,7 @@ public sealed record SessionExerciseProgress(int Index, string Name, bool IsLogg
                                        (IsLogged ? "logged" : IsSkipped ? "skipped" : "pending");
 }
 
-public partial class WorkoutSessionViewModel : ObservableObject
+public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 {
     private const int TimingCheckpointIntervalSeconds = 15;
     private const int SingleConcurrentOperation = 1;
@@ -63,7 +63,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private int _currentExerciseIndex;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(IsDayOverview), nameof(IsActivityIntro), nameof(IsExerciseFlow),
+    [NotifyPropertyChangedFor(nameof(IsActivityIntro), nameof(IsExerciseFlow),
         nameof(IsActivitySummary))]
     private SessionScreen _currentScreen;
 
@@ -72,7 +72,6 @@ public partial class WorkoutSessionViewModel : ObservableObject
     private string _doseAdjustmentNote = string.Empty;
     public bool HasDoseAdjustmentNote => !string.IsNullOrWhiteSpace(DoseAdjustmentNote);
     [ObservableProperty] private string _dayTitle = "Workout";
-    [ObservableProperty] private ObservableCollection<string> _sessionHistory = [];
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(HasNoActivities),
         nameof(HasActivityChoices))]
@@ -105,7 +104,8 @@ public partial class WorkoutSessionViewModel : ObservableObject
 
     [ObservableProperty] private int _restTimerTotalSeconds;
     private int _restTimerVersion;
-    [ObservableProperty] private WorkoutActivitySectionItem? _selectedActivity;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanStartActivity))]
+    private WorkoutActivitySectionItem? _selectedActivity;
     [ObservableProperty] private string _summaryDuration = "<1 min";
     [ObservableProperty] private int _summaryPrCount;
     [ObservableProperty] private string _summaryStatusText = string.Empty;
@@ -164,13 +164,22 @@ public partial class WorkoutSessionViewModel : ObservableObject
         _updateHiitAsync = updateHiitAsync;
     }
 
-    public bool IsDayOverview => CurrentScreen == SessionScreen.DayOverview;
+    public void Dispose()
+    {
+        _timingLoopCancellation?.Cancel();
+        _timingLoopCancellation?.Dispose();
+        _timingLoopCancellation = null;
+        _timingGate.Dispose();
+        _completionGate.Dispose();
+        GC.SuppressFinalize(this);
+    }
+
     public int WorkoutDayId => _workoutDayId;
     public bool IsActivityIntro => CurrentScreen == SessionScreen.ActivityIntro;
     public bool IsExerciseFlow => CurrentScreen == SessionScreen.ExerciseFlow;
     public bool IsActivitySummary => CurrentScreen == SessionScreen.ActivitySummary;
     public bool CanAbandonPlannedSession => _sessionCreated && _plannedSessionId.HasValue && !IsBusy && _pendingCompletionAtUtc is null;
-    public bool CanStartActivity => !IsActivityUnsafe;
+    public bool CanStartActivity => !IsActivityUnsafe && SelectedActivity is not null;
     public bool HasNoActivityPrescription => string.IsNullOrEmpty(ActivityPrescriptionText);
     public bool CanInteract => !IsBusy;
 
@@ -185,7 +194,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ErrorText = ex.Message;
+            ApplyFailure(ApiFailurePresenter.FromException(ex, "Ui_Workout_Error_SaveExercise"));
             try
             {
                 var detail = await _session.GetDetailAsync(_workoutDayId);
@@ -317,7 +326,6 @@ public partial class WorkoutSessionViewModel : ObservableObject
         ExerciseProgress = [];
         ExercisePreviewNames = [];
         DayTitle = "Workout";
-        SessionHistory = [];
         CyclePhaseNote = string.Empty;
         _skippedIds.Clear();
         _prIds.Clear();
@@ -325,7 +333,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         _activityTimers.Clear();
         Celebration = CelebrationType.None;
         IsActivityComplete = false;
-        CurrentScreen = SessionScreen.DayOverview;
+        CurrentScreen = SessionScreen.ActivityIntro;
         ErrorText = string.Empty;
         IsBusy = true;
         try
@@ -335,13 +343,6 @@ public partial class WorkoutSessionViewModel : ObservableObject
 
             var detail = await _session.GetDetailAsync(workoutDayId);
             var existingSession = await _session.GetPlannedSessionAsync(workoutDayId);
-            var history = await _session.GetPlannedSessionHistoryAsync(workoutDayId);
-            if (version != _loadVersion) return;
-            SessionHistory = new ObservableCollection<string>(history.Select(entry => string.Format(
-                UiTextCatalog.Get(entry.CompletedAtUtc.HasValue
-                    ? "Workout_Session_HistoryCompletedFormat" : "Workout_Session_HistoryActiveFormat"),
-                entry.StartedAtUtc.ToLocalTime().ToString("g"),
-                entry.CompletedAtUtc?.ToLocalTime().ToString("g") ?? string.Empty, entry.SessionId)));
             _isRestDay = detail.IsRestDay;
             _plannedSessionId = existingSession is { IsCompleted: false, IsCanceled: false } ? existingSession.SessionId : null;
             _sessionCreated = _plannedSessionId.HasValue;
@@ -383,13 +384,11 @@ public partial class WorkoutSessionViewModel : ObservableObject
             RefreshActivityCards();
             CyclePhaseNote = phaseNote;
             IsBusy = false;
-            if (!string.IsNullOrWhiteSpace(activityTag))
-            {
-                var activity = ActivityCards.FirstOrDefault(item =>
-                    string.Equals(item.Tag, activityTag, StringComparison.OrdinalIgnoreCase));
-                if (activity is not null)
-                    SelectActivity(activity);
-            }
+            var requestedActivity = !string.IsNullOrWhiteSpace(activityTag)
+                ? ActivityCards.FirstOrDefault(item =>
+                    string.Equals(item.Tag, activityTag, StringComparison.OrdinalIgnoreCase))
+                : null;
+            SelectActivity(requestedActivity ?? ActivityCards.FirstOrDefault());
         }
         catch (Exception exception)
         {
@@ -411,7 +410,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
     [RelayCommand]
     private void SelectActivity(WorkoutActivitySectionItem? activity)
     {
-        if (IsBusy || !IsDayOverview || activity is null || !ActivityCards.Contains(activity)) return;
+        if (IsBusy || activity is null || !ActivityCards.Contains(activity)) return;
         SelectedActivity = activity;
         TotalExercisesInActivity = activity.Exercises.Count;
         RefreshActivityIntro();
@@ -449,7 +448,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         void AddValue(string key, decimal? value)
         {
             if (value is not null)
-                lines.Add(string.Format(System.Globalization.CultureInfo.CurrentCulture, UiTextCatalog.Get(key), value));
+                lines.Add(UiTextCatalog.Format(key, value));
         }
         AddValue("Workout_Session_PrescriptionWarmup", prescription.WarmupMinutes);
         AddValue("Workout_Session_PrescriptionMain", prescription.MainMinutes);
@@ -463,12 +462,10 @@ public partial class WorkoutSessionViewModel : ObservableObject
         };
         if (intensityKey is not null) lines.Add(UiTextCatalog.Get(intensityKey));
         if (prescription.IntervalWorkCount is not null && prescription.IntervalWorkSeconds is not null)
-            lines.Add(string.Format(System.Globalization.CultureInfo.CurrentCulture,
-                UiTextCatalog.Get("Workout_Session_PrescriptionWorkIntervals"),
+            lines.Add(UiTextCatalog.Format("Workout_Session_PrescriptionWorkIntervals",
                 prescription.IntervalWorkCount, prescription.IntervalWorkSeconds));
         if (prescription.IntervalRecoveryCount is not null && prescription.IntervalRecoverySeconds is not null)
-            lines.Add(string.Format(System.Globalization.CultureInfo.CurrentCulture,
-                UiTextCatalog.Get("Workout_Session_PrescriptionRecoveryIntervals"),
+            lines.Add(UiTextCatalog.Format("Workout_Session_PrescriptionRecoveryIntervals",
                 prescription.IntervalRecoveryCount, prescription.IntervalRecoverySeconds));
         return string.Join(Environment.NewLine, lines);
     }
@@ -761,7 +758,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         CurrentExercise = null;
         Celebration = CelebrationType.None;
         ErrorText = string.Empty;
-        CurrentScreen = SessionScreen.DayOverview;
+        await _navigateAsync("..");
     }
 
     [RelayCommand]
@@ -923,12 +920,6 @@ public partial class WorkoutSessionViewModel : ObservableObject
             return;
         }
 
-        if (IsDayOverview)
-        {
-            await FinishSessionAsync();
-            return;
-        }
-
         if (IsExerciseFlow)
         {
             if (!await SuspendTimingAsync()) return;
@@ -942,7 +933,7 @@ public partial class WorkoutSessionViewModel : ObservableObject
         IsTimedActivityRunning = false;
         SelectedActivity = null;
         CurrentExercise = null;
-        CurrentScreen = SessionScreen.DayOverview;
+        await _navigateAsync("..");
     }
 
     private async Task ResumeTimingAsync(Guid sessionId)

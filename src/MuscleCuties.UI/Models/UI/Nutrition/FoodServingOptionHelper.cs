@@ -1,6 +1,5 @@
 using System.Text.Json;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes;
-using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
@@ -10,7 +9,7 @@ public static class FoodServingOptionHelper
 
     public static List<FoodServingOptionItem> BuildServingOptionItems(
         FoodSearchResultItem food,
-        FoodPortionCatalogOutputDto catalog,
+        FoodPortionCatalog catalog,
         IRecipePortionUseCase portionUseCase)
     {
         var options = ReadOptions(food.ServingOptionsJson, catalog.GramUnit);

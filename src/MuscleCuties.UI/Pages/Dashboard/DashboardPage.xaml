@@ -13,17 +13,17 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="vm:DashboardViewModel"
     Shell.NavBarIsVisible="False"
-    Shell.TabBarIsVisible="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}"
+    Shell.TabBarIsVisible="{Binding IsAnyModalVisible, Converter={StaticResource InvertedBoolConverter}}"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 
     <Grid RowDefinitions="Auto,*">
-        <Grid Padding="{StaticResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource UiDimension640}"
-              RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}" HorizontalOptions="Fill">
+        <Grid Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource UiDimension640}"
+              RowDefinitions="Auto" RowSpacing="{StaticResource UiSpaceCompact}" HorizontalOptions="Fill">
             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpacing2}">
                     <Label Text="{Binding Greetings, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource SubHeadline}"
+                           Style="{StaticResource PageTitle}"
                            LineBreakMode="WordWrap" />
                     <Label
                         Text="{Binding DashboardPhaseHeaderText, Converter={StaticResource LocalizedStringConverter}}"
@@ -47,8 +47,48 @@
                     </Grid>
                 </Border>
             </Grid>
-            <Border Grid.Row="1"
-                    Style="{StaticResource CardPrimary}"
+
+        </Grid>
+        <RefreshView Grid.Row="1"
+                     Command="{Binding RefreshCommand}"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     RefreshColor="{StaticResource Primary}">
+            <ScrollView>
+                <Grid
+                    Padding="{DynamicResource PresentationPageContentPadding}"
+                    HorizontalOptions="Fill"
+                    MaximumWidthRequest="{StaticResource UiDimension640}"
+                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto"
+                    RowSpacing="{StaticResource UiSpaceContent}">
+
+                    <!-- The next useful action leads Today. -->
+                    <toolkit:LazyView
+                        x:Name="WorkoutCardLazy"
+                        Grid.Row="0"
+                        x:TypeArguments="dashboardControls:DashboardWorkoutCard" />
+
+                    <toolkit:LazyView
+                        x:Name="ReadinessLazy"
+                        Grid.Row="1"
+                        x:TypeArguments="dashboardControls:ReadinessRecoveryCard" />
+
+                    <toolkit:LazyView
+                        x:Name="NutritionLazy"
+                        Grid.Row="2"
+                        x:TypeArguments="dashboardControls:DashboardNutritionCard" />
+
+                    <toolkit:LazyView
+                        x:Name="PhaseCardLazy"
+                        Grid.Row="3"
+                        x:TypeArguments="dashboardControls:DashboardPhaseCard" />
+
+                    <toolkit:LazyView
+                        x:Name="TargetsLazy"
+                        Grid.Row="4"
+                        x:TypeArguments="dashboardControls:DashboardTargetsCard" />
+
+            <Border Grid.Row="5"
+                    Style="{StaticResource CardSecondary}"
                     HorizontalOptions="Fill"
                     SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_StreaksA11y}">
                 <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
@@ -64,8 +104,8 @@
                                VerticalOptions="Center" />
                         <Label Grid.Column="1"
                                Text="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedStringConverter}}"
-                               FontSize="{StaticResource UiFontSize22}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                               TextColor="{StaticResource Primary}" VerticalOptions="Center" />
+                               Style="{StaticResource MetricValue}"
+                               VerticalOptions="Center" />
                     </Grid>
                     <Label Grid.Row="1" Grid.Column="0"
                            Text="{loc:LocalizedText Dashboard_Page_WorkoutStreak}"
@@ -82,8 +122,8 @@
                                VerticalOptions="Center" />
                         <Label Grid.Column="1"
                                Text="{Binding NutritionStreakDays, Converter={StaticResource LocalizedStringConverter}}"
-                               FontSize="{StaticResource UiFontSize22}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                               TextColor="{StaticResource Primary}" VerticalOptions="Center" />
+                               Style="{StaticResource MetricValue}"
+                               VerticalOptions="Center" />
                     </Grid>
                     <Label Grid.Row="1" Grid.Column="1"
                            Text="{loc:LocalizedText Dashboard_Page_FoodLogStreak}"
@@ -100,8 +140,8 @@
                                VerticalOptions="Center" />
                         <Label Grid.Column="1"
                                Text="{Binding CycleCount, Converter={StaticResource LocalizedStringConverter}}"
-                               FontSize="{StaticResource UiFontSize22}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                               TextColor="{StaticResource Primary}" VerticalOptions="Center" />
+                               Style="{StaticResource MetricValue}"
+                               VerticalOptions="Center" />
                     </Grid>
                     <Label Grid.Row="1" Grid.Column="2"
                            Text="{loc:LocalizedText Dashboard_Page_CyclesLogged}"
@@ -109,56 +149,14 @@
                            VerticalOptions="Start" LineBreakMode="WordWrap" />
                 </Grid>
             </Border>
-        </Grid>
-        <RefreshView Grid.Row="1"
-                     Command="{Binding RefreshCommand}"
-                     IsRefreshing="{Binding IsRefreshing}"
-                     RefreshColor="{StaticResource Primary}">
-            <ScrollView>
-                <Grid
-                    Padding="{StaticResource PresentationPageContentPadding}"
-                    HorizontalOptions="Fill"
-                    MaximumWidthRequest="{StaticResource UiDimension640}"
-                    RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto"
-                    RowSpacing="{StaticResource UiSpaceControl}">
 
                     <toolkit:LazyView
                         x:Name="TrendCardLazy"
-                        Grid.Row="5"
+                        Grid.Row="6"
                         x:TypeArguments="dashboardControls:DashboardTrendCard" />
 
-                    <!-- Cycle context -->
-                    <toolkit:LazyView
-                        x:Name="PhaseCardLazy"
-                        Grid.Row="0"
-                        x:TypeArguments="dashboardControls:DashboardPhaseCard" />
-
-                    <!-- Today's primary action -->
-                    <toolkit:LazyView
-                        x:Name="WorkoutCardLazy"
-                        Grid.Row="1"
-                        x:TypeArguments="dashboardControls:DashboardWorkoutCard" />
-
-                    <!-- Readiness and recovery -->
-                    <toolkit:LazyView
-                        x:Name="ReadinessLazy"
-                        Grid.Row="2"
-                        x:TypeArguments="dashboardControls:ReadinessRecoveryCard" />
-
-                    <!-- Food progress -->
-                    <toolkit:LazyView
-                        x:Name="NutritionLazy"
-                        Grid.Row="3"
-                        x:TypeArguments="dashboardControls:DashboardNutritionCard" />
-
-                    <!-- Daily targets -->
-                    <toolkit:LazyView
-                        x:Name="TargetsLazy"
-                        Grid.Row="4"
-                        x:TypeArguments="dashboardControls:DashboardTargetsCard" />
-
                     <!-- Progress Photo Check-In -->
-                    <Border Grid.Row="6"
+                    <Border Grid.Row="7"
                             Style="{StaticResource CardPrimary}"
                             SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_PhotoCheckInA11y}">
                         <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
@@ -194,5 +192,10 @@
             Grid.RowSpan="2"
             x:TypeArguments="injuryControls:InjuryLogModal"
             InputTransparent="{Binding IsInjuryModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
+        <toolkit:LazyView
+            x:Name="CheckInModalLazy"
+            Grid.RowSpan="2"
+            x:TypeArguments="dashboardControls:DailyCheckInModal"
+            InputTransparent="{Binding IsCheckInModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
     </Grid>
 </ContentPage>

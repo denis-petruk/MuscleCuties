@@ -2,7 +2,7 @@ using MuscleCuties.UI.Controls.Shared;
 
 namespace MuscleCuties.UI.Controls.Workout;
 
-public partial class WorkoutSwapPanel : ContentView
+public partial class WorkoutSwapPanel : AnimatedModalView
 {
     public WorkoutSwapPanel()
     {

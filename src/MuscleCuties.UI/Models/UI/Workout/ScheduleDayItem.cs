@@ -40,6 +40,14 @@ public sealed class ScheduleDayItem
     /// <summary>True for rest days (no workout).</summary>
     public bool IsRestDay { get; init; }
 
+    private const int DaysPerWeek = 7;
+
+    /// <summary>Sunday is day zero in <see cref="DayOfWeek"/>; a Monday-first bar shifts it to the end.</summary>
+    private const int MondayOffsetFromSunday = 6;
+
+    /// <summary>Monday-first column (0..6) this day occupies in the seven-column week bar.</summary>
+    public int Column => ((int)Date.DayOfWeek + MondayOffsetFromSunday) % DaysPerWeek;
+
     /// <summary>Accent color matching the workout type.</summary>
     public Color AccentColor { get; init; } = AppThemeResources.GetRequired<Color>("Transparent");
 

@@ -65,14 +65,12 @@
                 <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
                     <Label
                         Text="{Binding WorkoutBadgeText, Converter={StaticResource LocalizedStringConverter}}"
-                        TextColor="{StaticResource Primary}"
-                        FontSize="{StaticResource UiFontSize13}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                        Style="{StaticResource MutedLabel}"
                         VerticalOptions="Center" />
                     <Label
                         Text="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource SectionTitle}"
-                        FontSize="{StaticResource UiFontSize17}"
                         LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
 
@@ -95,8 +93,7 @@
                     </Border.Triggers>
 
                     <Label
-                        FontSize="{StaticResource UiFontSize11}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
+                        Style="{StaticResource CaptionLabel}"
                         VerticalOptions="Center">
                         <Label.Triggers>
                             <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="True">
@@ -130,8 +127,7 @@
                             <Label
                                 Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                 TextColor="{Binding TextColor}"
-                                FontSize="{StaticResource UiFontSize11}"
-                                FontAttributes="{StaticResource UiFontAttributesBold}"
+                                Style="{StaticResource CaptionLabel}"
                                 VerticalOptions="Center" />
                         </Border>
                     </DataTemplate>
@@ -149,8 +145,8 @@
             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
                   IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}">
                 <!-- Tile 1: Duration -->
-                <Border
-                    Style="{StaticResource CardAccent}">
+                <Grid
+                    Padding="{StaticResource UiInsets0_8}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -169,16 +165,15 @@
                         <Label
                             Text="{Binding WorkoutDurationText, Converter={StaticResource LocalizedStringConverter}}"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                            FontSize="{StaticResource UiFontSize13}"
-                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                            Style="{StaticResource MutedLabel}"
                             HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
-                </Border>
+                </Grid>
 
                 <!-- Tile 2: Exercises -->
-                <Border
+                <Grid
                     Grid.Column="1"
-                    Style="{StaticResource CardAccent}">
+                    Padding="{StaticResource UiInsets0_8}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -197,16 +192,15 @@
                         <Label
                             Text="{Binding WorkoutCountValue, Converter={StaticResource LocalizedStringConverter}}"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                            FontSize="{StaticResource UiFontSize13}"
-                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                            Style="{StaticResource MutedLabel}"
                             HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
-                </Border>
+                </Grid>
 
                 <!-- Tile 3: Intensity -->
-                <Border
+                <Grid
                     Grid.Column="2"
-                    Style="{StaticResource CardAccent}">
+                    Padding="{StaticResource UiInsets0_8}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -218,27 +212,21 @@
                                 HeightRequest="{StaticResource UiDimension12}"
                                 VerticalOptions="Center" />
                             <Label
-                                Text="Intensity"
+                                Text="{loc:LocalizedText Dashboard_Workout_Intensity}"
                                 Style="{StaticResource CaptionTinyStrong}"
                                 VerticalOptions="Center" />
                         </HorizontalStackLayout>
                         <Label
                             Text="{Binding WorkoutIntensity, Converter={StaticResource LocalizedStringConverter}}"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                            FontSize="{StaticResource UiFontSize13}"
-                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                            Style="{StaticResource MutedLabel}"
                             HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
-                </Border>
+                </Grid>
             </Grid>
 
             <!-- Rest Day Recovery Tip / Guidance (Only on Rest Day) -->
-            <Border
-                IsVisible="{Binding IsRestDay}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource Gray900}}"
-                StrokeThickness="{StaticResource UiStrokeWidth0}"
-                StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                Padding="{StaticResource UiInsets12_9}">
+            <Border IsVisible="{Binding IsRestDay}" Style="{StaticResource CardSecondary}">
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing9}" VerticalOptions="Center">
                     <Path
                         Data="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4L2 9.4h7.6z"
@@ -249,7 +237,7 @@
                         VerticalOptions="Center" />
                     <Label
                         Grid.Column="1"
-                        Text="Muscle fibers rebuild &amp; glycogen replenishes during rest. Prioritize sleep and hydration."
+                        Text="{loc:LocalizedText Dashboard_Workout_RestGuidance}"
                         Style="{StaticResource CaptionSmall}"
                         LineBreakMode="WordWrap"
                         VerticalOptions="Center" />
@@ -257,57 +245,17 @@
             </Border>
 
             <!-- Action Button -->
-            <Border
-                BackgroundColor="{StaticResource Primary}"
-                StrokeThickness="{StaticResource UiStrokeWidth0}"
-                StrokeShape="{StaticResource UiRoundRectangleRadius14}"
-                HeightRequest="{StaticResource UiDimension48}"
-                MinimumHeightRequest="{StaticResource UiDimension48}"
+            <Button
+                Style="{StaticResource ButtonPrimary}"
+                Text="{loc:LocalizedText Dashboard_Workout_StartWorkout}"
+                Command="{Binding StartWorkoutCommand}"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Workout_OpenTodayPlanA11y}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding StartWorkoutCommand}" />
-                </Border.GestureRecognizers>
-                <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center"
-                      VerticalOptions="Center">
-                    <!-- Rest Day Icon -->
-                    <Path
-                        Data="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z"
-                        Stroke="{StaticResource White}"
-                        StrokeThickness="{StaticResource UiStrokeWidth1_8}"
-                        Fill="{StaticResource Transparent}"
-                        Aspect="Uniform"
-                        WidthRequest="{StaticResource UiDimension16}"
-                        HeightRequest="{StaticResource UiDimension16}"
-                        VerticalOptions="Center"
-                        IsVisible="{Binding IsRestDay}" />
-
-                    <!-- Workout Play Arrow -->
-                    <Path
-                        Data="M8 5v14l11-7z"
-                        Fill="{StaticResource White}"
-                        Aspect="Uniform"
-                        WidthRequest="{StaticResource UiDimension16}"
-                        HeightRequest="{StaticResource UiDimension16}"
-                        VerticalOptions="Center"
-                        IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}" />
-
-                    <Label
-                        Grid.Column="1"
-                        TextColor="{StaticResource White}"
-                        FontSize="{StaticResource UiFontSize15}"
-                        FontAttributes="{StaticResource UiFontAttributesBold}"
-                        VerticalOptions="Center">
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="True">
-                                <Setter Property="Text" Value="View rest day" />
-                            </DataTrigger>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="False">
-                                <Setter Property="Text" Value="{loc:LocalizedText Dashboard_Workout_StartWorkout}" />
-                            </DataTrigger>
-                        </Label.Triggers>
-                    </Label>
-                </Grid>
-            </Border>
+                <Button.Triggers>
+                    <DataTrigger TargetType="Button" Binding="{Binding IsRestDay}" Value="True">
+                        <Setter Property="Text" Value="{loc:LocalizedText Dashboard_Workout_ViewRestDay}" />
+                    </DataTrigger>
+                </Button.Triggers>
+            </Button>
 
         </VerticalStackLayout>
     </Border>

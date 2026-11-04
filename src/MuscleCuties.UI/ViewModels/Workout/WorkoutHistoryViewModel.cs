@@ -2,6 +2,8 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UI.Services.Api;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Workout.Archive;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
@@ -9,10 +11,13 @@ namespace MuscleCuties.UI.ViewModels.Workout;
 public partial class WorkoutHistoryViewModel : ObservableObject
 {
     private const int PageSize = 25;
+    private const double SecondsPerMinute = 60.0;
+    private const double KilogramRoundingThreshold = 1000.0;
+    private const int StatusMessageVisibilityMilliseconds = 3000;
     private readonly Func<Task>? _navigateBackAsync;
     private readonly IWorkoutArchiveUseCase _workoutArchiveUseCase;
 
-    [ObservableProperty] private string _currentFilterTitle = "All Months";
+    [ObservableProperty] private string _currentFilterTitle = UiTextCatalog.Get("Workout_History_AllMonths");
 
     private int _currentOffset;
 
@@ -31,6 +36,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
     [ObservableProperty] private string _errorMessage = string.Empty;
 
     private int _filterRequestId;
+    private int _statusVersion;
 
     [ObservableProperty] private bool _hasMoreSessions;
 
@@ -51,7 +57,8 @@ public partial class WorkoutHistoryViewModel : ObservableObject
 
     [ObservableProperty] private bool _isStatusVisible;
 
-    [ObservableProperty] private string _lifetimeVolumeFormatted = "0 kg";
+    [ObservableProperty] private string _lifetimeVolumeFormatted =
+        UiTextCatalog.Format("Workout_History_ValueKgFormat", "0");
 
     [ObservableProperty] private double _lifetimeVolumeKg;
 
@@ -73,7 +80,9 @@ public partial class WorkoutHistoryViewModel : ObservableObject
 
     public ObservableCollection<WorkoutArchiveSummaryDto> Sessions { get; } = [];
 
-    public string DetailRpeFormatted => EditingRpe is { } rpe ? $"{rpe}/10" : "Not recorded";
+    public string DetailRpeFormatted => EditingRpe is { } rpe
+        ? UiTextCatalog.Format("Workout_History_RpeValueFormat", rpe)
+        : UiTextCatalog.Get("Workout_History_NotRecorded");
 
     public ObservableCollection<MonthFilterItem> AvailableMonths { get; } = [];
 
@@ -102,7 +111,8 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             // Populate monthly filter items from available dates
             if (AvailableMonths.Count == 0)
             {
-                var allItem = new MonthFilterItem(0, 0, "All Months", true) { IsSelected = true };
+                var allItem = new MonthFilterItem(
+                    0, 0, UiTextCatalog.Get("Workout_History_AllMonths"), true) { IsSelected = true };
                 AvailableMonths.Add(allItem);
                 SelectedMonth = allItem;
 
@@ -144,9 +154,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         {
             if (requestId == _filterRequestId)
             {
-                IsError = true;
-                ErrorMessage = ex.Message;
-                ShowStatus($"Error loading workouts: {ex.Message}");
+                ShowFailure(ex, "Workout_History_Error_Load", markLoadError: true);
             }
         }
         finally
@@ -216,9 +224,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         {
             if (requestId == _filterRequestId)
             {
-                IsError = true;
-                ErrorMessage = ex.Message;
-                ShowStatus($"Error filtering workouts: {ex.Message}");
+                ShowFailure(ex, "Workout_History_Error_Filter", markLoadError: true);
             }
         }
         finally
@@ -257,9 +263,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         {
             if (requestId == _filterRequestId)
             {
-                IsError = true;
-                ErrorMessage = ex.Message;
-                ShowStatus($"Error loading more workouts: {ex.Message}");
+                ShowFailure(ex, "Workout_History_Error_LoadMore", markLoadError: true);
             }
         }
         finally
@@ -281,9 +285,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             }
 
         LifetimeVolumeKg = Math.Round(currentTotal, 0);
-        LifetimeVolumeFormatted = LifetimeVolumeKg > 1000
-            ? $"{LifetimeVolumeKg:N0} kg"
-            : $"{LifetimeVolumeKg:F0} kg";
+        LifetimeVolumeFormatted = FormatKilograms(LifetimeVolumeKg);
 
         HasNoSessions = Sessions.Count == 0;
     }
@@ -298,21 +300,25 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             SelectedSessionDetail = detail;
 
             DetailDurationFormatted = detail.TotalDurationSeconds > 0
-                ? $"{Math.Round(detail.TotalDurationSeconds / 60.0):N0} min"
-                : "Not recorded";
+                ? UiTextCatalog.Format(
+                    "Workout_History_DurationMinutesFormat",
+                    Math.Round(detail.TotalDurationSeconds / SecondsPerMinute))
+                : UiTextCatalog.Get("Workout_History_NotRecorded");
+            var startedText = detail.StartedAt.ToString(
+                detail.StartedAt.TimeOfDay == TimeSpan.Zero ? "D" : "f",
+                CultureInfo.CurrentCulture);
             DetailStartedFormatted = detail.TimePrecision == "legacyUnknown"
-                ? detail.StartedAt.TimeOfDay == TimeSpan.Zero
-                    ? detail.StartedAt.ToString("D", CultureInfo.CurrentCulture)
-                    : detail.StartedAt.ToString("f", CultureInfo.CurrentCulture) + " · time zone unknown"
-                : detail.StartedAt.ToString("f", CultureInfo.CurrentCulture);
+                ? UiTextCatalog.Format("Workout_History_TimeZoneUnknownFormat", startedText)
+                : startedText;
             DetailVolumeFormatted = detail.DetailKind == "aggregateOnly" && detail.TotalVolumeKg <= 0
-                ? "Not recorded"
-                : $"{detail.TotalVolumeKg:N0} kg";
-            DetailKindLabel = detail.DetailKind == "aggregateOnly"
-                ? "Historical aggregate: individual sets were not recorded."
-                : detail.DetailKind == "noSetDetails"
-                    ? "Set details were not recorded."
-                    : string.Empty;
+                ? UiTextCatalog.Get("Workout_History_NotRecorded")
+                : FormatKilograms(detail.TotalVolumeKg);
+            DetailKindLabel = detail.DetailKind switch
+            {
+                "aggregateOnly" => UiTextCatalog.Get("Workout_History_AggregateOnlyNote"),
+                "noSetDetails" => UiTextCatalog.Get("Workout_History_NoSetDetailsNote"),
+                _ => string.Empty
+            };
             EditingNotes = detail.Notes ?? string.Empty;
             EditingRpe = detail.RpeRating;
 
@@ -345,7 +351,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         }
         catch (Exception ex)
         {
-            ShowStatus($"Error opening detail: {ex.Message}");
+            ShowFailure(ex, "Workout_History_Error_Detail");
         }
         finally
         {
@@ -384,7 +390,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             var totalVol = ExerciseGroups.SelectMany(g => g.EditableSets)
                 .Where(s => !s.IsWarmup)
                 .Sum(s => s.WeightKg * s.RepsCompleted);
-            DetailVolumeFormatted = $"{totalVol:N0} kg";
+            DetailVolumeFormatted = FormatKilograms(totalVol);
 
             // Update in-memory session summary item in Sessions feed
             var match = Sessions.FirstOrDefault(s => s.Id == SelectedSessionDetail.Id);
@@ -393,9 +399,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
                 var diff = Math.Round(totalVol, 1) - match.TotalVolumeKg;
                 var updatedVolume = Math.Max(0, Math.Round(LifetimeVolumeKg + diff, 0));
                 LifetimeVolumeKg = updatedVolume;
-                LifetimeVolumeFormatted = LifetimeVolumeKg > 1000
-                    ? $"{LifetimeVolumeKg:N0} kg"
-                    : $"{LifetimeVolumeKg:F0} kg";
+                LifetimeVolumeFormatted = FormatKilograms(LifetimeVolumeKg);
 
                 var updatedSummary = match with
                 {
@@ -405,11 +409,15 @@ public partial class WorkoutHistoryViewModel : ObservableObject
                 Sessions[idx] = updatedSummary;
             }
 
-            ShowStatus($"Set #{item.SetNumber} updated ({item.WeightKg:F1}kg × {item.RepsCompleted} reps)");
+            ShowStatus(UiTextCatalog.Format(
+                "Workout_History_SetUpdatedFormat",
+                item.SetNumber,
+                item.WeightKg,
+                item.RepsCompleted));
         }
         catch (Exception ex)
         {
-            ShowStatus($"Failed to update set: {ex.Message}");
+            ShowFailure(ex, "Workout_History_Error_UpdateSet");
         }
         finally
         {
@@ -444,11 +452,11 @@ public partial class WorkoutHistoryViewModel : ObservableObject
                 Sessions[idx] = updatedSummary;
             }
 
-            ShowStatus("Notes and RPE updated.");
+            ShowStatus(UiTextCatalog.Get("Workout_History_NotesUpdatedMessage"));
         }
         catch (Exception ex)
         {
-            ShowStatus($"Failed to save: {ex.Message}");
+            ShowFailure(ex, "Workout_History_Error_Save");
         }
         finally
         {
@@ -463,14 +471,39 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             await _navigateBackAsync();
     }
 
+    private void ShowFailure(Exception exception, string fallbackKey, bool markLoadError = false)
+    {
+        var notice = ApiFailurePresenter.FromException(exception, fallbackKey);
+        if (markLoadError)
+        {
+            IsError = true;
+            ErrorMessage = notice.MessageText;
+        }
+
+        ShowStatus(notice.MessageText);
+    }
+
+    private static string FormatKilograms(double kilograms) =>
+        UiTextCatalog.Format(
+            "Workout_History_ValueKgFormat",
+            kilograms.ToString(
+                kilograms > KilogramRoundingThreshold ? "N0" : "F0",
+                CultureInfo.CurrentCulture));
+
     private void ShowStatus(string message)
     {
         StatusMessage = message;
         IsStatusVisible = true;
-        _ = Task.Run(async () =>
-        {
-            await Task.Delay(3000);
-            IsStatusVisible = false;
-        });
+        var version = ++_statusVersion;
+        _ = HideStatusAsync(version);
+    }
+
+    private async Task HideStatusAsync(int version)
+    {
+        await Task.Delay(TimeSpan.FromMilliseconds(StatusMessageVisibilityMilliseconds));
+        if (version != _statusVersion)
+            return;
+
+        await MainThread.InvokeOnMainThreadAsync(() => IsStatusVisible = false);
     }
 }

@@ -527,7 +527,7 @@ public static class StrengthPlanPreviewRule
     private static bool IsPositiveIdentifier(int value) => value >= FirstPositiveIdentifier;
 
     /// <summary>Coverage gaps outrank goal tier priorities so an under-hit muscle gets the accessory slot.</summary>
-    private static IReadOnlyDictionary<int, int> MergeCoveragePriority(
+    private static Dictionary<int, int> MergeCoveragePriority(
         IReadOnlyDictionary<int, int>? goalPriorities,
         IReadOnlyCollection<int> coveragePriorityExerciseIds)
     {

@@ -23,7 +23,8 @@ public sealed record NutritionDiaryEntry(
     DateTime LoggedAtUtc,
     bool IsEditable,
     string? AcceptedSuggestionName = null,
-    string? AcceptedSuggestionPhase = null);
+    string? AcceptedSuggestionPhase = null,
+    int? LoggedMealId = null);
 
 public sealed record NutritionDiaryDay(
     Guid LogId,

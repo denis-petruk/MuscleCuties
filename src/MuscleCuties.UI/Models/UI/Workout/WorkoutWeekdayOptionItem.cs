@@ -11,11 +11,14 @@ public partial class WorkoutWeekdayOptionItem(DayOfWeek dayOfWeek) : ObservableO
         DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday
     ];
 
+    // Four cells per row: the shared card inset (19pt per side) leaves too little width for a
+    // localized day token in a seven-across strip, so the chooser wraps instead of stacking
+    // characters. The label grows downward at large text sizes.
     [ObservableProperty] private bool _isSelected;
 
     public DayOfWeek DayOfWeek { get; } = dayOfWeek;
-    public int CalendarColumn => Array.IndexOf(CalendarOrder, DayOfWeek);
 
+    private int CalendarIndex => Array.IndexOf(CalendarOrder, DayOfWeek);
     public string ShortLabel { get; } = UiTextCatalog.Get(dayOfWeek switch
     {
         DayOfWeek.Monday => "Workout_Generation_DayMonday",

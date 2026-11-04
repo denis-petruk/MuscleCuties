@@ -72,8 +72,8 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
             return;
         }
 
-        var title = UiTextCatalog.Translate("Your plan is ready");
-        var body = UiTextCatalog.Translate("Open MuscleCuties to see today's update.");
+        var title = UiTextCatalog.TranslateRuntimeText("Your plan is ready");
+        var body = UiTextCatalog.TranslateRuntimeText("Open MuscleCuties to see today's update.");
         var morning = today.Add(MorningNotificationTime);
         var notificationId = BuildTodayNotificationId(userId);
 
@@ -107,8 +107,8 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
 
         await _localNotificationService.ScheduleAsync(
             BuildNextNotificationId(userId),
-            UiTextCatalog.Translate("Your plan is ready"),
-            UiTextCatalog.Translate("Open MuscleCuties to see today's update."),
+            UiTextCatalog.TranslateRuntimeText("Your plan is ready"),
+            UiTextCatalog.TranslateRuntimeText("Open MuscleCuties to see today's update."),
             scheduledAt);
     }
 

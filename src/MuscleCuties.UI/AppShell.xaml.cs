@@ -48,7 +48,6 @@ public partial class AppShell : Shell
             if (_routesRegistered)
                 return;
 
-            Routing.RegisterRoute(nameof(DailyCheckInPage), typeof(DailyCheckInPage));
             Routing.RegisterRoute(nameof(RegisterPage), typeof(RegisterPage));
             Routing.RegisterRoute(nameof(OtpVerificationPage), typeof(OtpVerificationPage));
             Routing.RegisterRoute(nameof(CyclePhaseDetailPage), typeof(CyclePhaseDetailPage));
@@ -129,7 +128,9 @@ public partial class AppShell : Shell
         {
             try
             {
-                await GoToAsync("//MainTab/YouTab/ProfilePage", false);
+                // Built from the shell's own declared routes, so this page never re-states a
+                // route literal that the XAML already owns.
+                await GoToAsync($"//{MainTab.Route}/{YouTab.Route}/{ProfileContent.Route}", false);
             }
             catch (Exception ex)
             {
@@ -188,15 +189,11 @@ public partial class AppShell : Shell
 
     private void ApplyLocalizedTitles()
     {
-        var localization = _services.GetService<ILocalizationService>();
-        if (localization is null)
-            return;
-
-        TodayTab.Title = localization["Tab_Today"];
-        CycleTab.Title = localization["Tab_Cycle"];
-        TrainTab.Title = localization["Tab_Train"];
-        NutritionTab.Title = localization["Tab_Nutrition"];
-        YouTab.Title = localization["Tab_You"];
+        TodayTab.Title = UiTextCatalog.Get("Tab_Today");
+        CycleTab.Title = UiTextCatalog.Get("Tab_Cycle");
+        TrainTab.Title = UiTextCatalog.Get("Tab_Train");
+        NutritionTab.Title = UiTextCatalog.Get("Tab_Nutrition");
+        YouTab.Title = UiTextCatalog.Get("Tab_You");
     }
 
     private static AppTheme ResolveTheme(AppTheme theme)
@@ -319,8 +316,7 @@ public partial class AppShell : Shell
                 return false;
         }
 
-        return ContainsRoute(route, "DailyCheckIn") ||
-               ContainsRoute(route, "DashboardPage") ||
+        return ContainsRoute(route, "DashboardPage") ||
                ContainsRoute(route, "QuizPage") ||
                ContainsRoute(route, "ProfileSetupPage") ||
                ContainsRoute(route, "Cycle") ||

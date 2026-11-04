@@ -44,7 +44,6 @@
     <TabBar x:Name="MainTab" Route="MainTab">
         <Tab
             x:Name="TodayTab"
-            Title="Today"
             Icon="tab_today.png">
             <ShellContent
                 x:Name="DashboardContent"
@@ -54,7 +53,6 @@
         </Tab>
         <Tab
             x:Name="CycleTab"
-            Title="Cycle"
             Icon="tab_cycle.png">
             <ShellContent
                 x:Name="CycleContent"
@@ -64,7 +62,6 @@
         </Tab>
         <Tab
             x:Name="TrainTab"
-            Title="Train"
             Icon="tab_train.png">
             <ShellContent
                 x:Name="WorkoutContent"
@@ -74,7 +71,6 @@
         </Tab>
         <Tab
             x:Name="NutritionTab"
-            Title="Nutrition"
             Icon="tab_nutrition.png">
             <ShellContent
                 x:Name="NutritionContent"
@@ -85,7 +81,6 @@
         <Tab
             x:Name="YouTab"
             Route="YouTab"
-            Title="You"
             Icon="tab_you.png">
             <ShellContent
                 x:Name="ProfileContent"

@@ -106,7 +106,7 @@ namespace MuscleCuties.UI;
 
 public static class MauiProgram
 {
-    private const string ProductionBackendBaseUrl = "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com";
+    private const string DefaultBackendBaseUrl = "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com";
     private const string WorkoutPreferencesAfterOnboardingContextKey = "workout-preferences-after-onboarding";
 #if DEBUG
     private const string DebugBackendBaseUrlPreferenceKey = "backend_api_base_url";
@@ -126,6 +126,7 @@ public static class MauiProgram
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "Inter");
+                fonts.AddFont("OpenSans-Semibold.ttf", "InterSemibold");
             });
 
         var services = builder.Services;
@@ -327,9 +328,9 @@ public static class MauiProgram
         services.AddSingleton<ICloudAuthorityGate>(_ => new VersionedCloudAuthorityGate());
         services.AddHttpClient<IMuscleCutiesBackendApiClient, MuscleCutiesBackendApiClient>(client =>
         {
-            var configuredUrl = ProductionBackendBaseUrl;
+            var configuredUrl = DefaultBackendBaseUrl;
 #if DEBUG
-            configuredUrl = Preferences.Get(DebugBackendBaseUrlPreferenceKey, ProductionBackendBaseUrl);
+            configuredUrl = Preferences.Get(DebugBackendBaseUrlPreferenceKey, DefaultBackendBaseUrl);
 #endif
             client.BaseAddress = new Uri(configuredUrl);
             client.Timeout = TimeSpan.FromSeconds(BackendRequestTimeoutSeconds);
@@ -516,14 +517,9 @@ public static class MauiProgram
             () => NavigateToAsync("//WorkoutPage"),
             workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId),
             () => NavigateToAsync("//NutritionPage"),
-            () => NavigateToAsync(nameof(DailyCheckInPage)),
+            () => sp.GetRequiredService<IAppPreloadService>().InvalidateDashboard(),
             sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>(),
             () => NavigateToAsync(nameof(PhotoJourneyVaultPage))));
-
-        services.AddTransient<DailyCheckInViewModel>(sp => new DailyCheckInViewModel(
-            sp.GetRequiredService<IDailyCheckInUseCase>(),
-            () => sp.GetRequiredService<IAppPreloadService>().InvalidateDashboard(),
-            () => NavigateToAsync("//DashboardPage")));
 
         services.AddSingleton<CycleViewModel>(sp => new CycleViewModel(
             sp.GetRequiredService<ICycleOverviewUseCase>(),
@@ -544,7 +540,11 @@ public static class MauiProgram
             sp.GetRequiredService<IFoodCatalogSearchUseCase>(),
             sp.GetRequiredService<IRecipePortionUseCase>(),
             NavigateToAsync,
-            sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>()));
+            sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>(),
+            sp.GetRequiredService<ILookupBarcodeUseCase>(),
+            sp.GetRequiredService<IBarcodeScannerHardwareService>(),
+            sp.GetRequiredService<ISaveMealTemplateUseCase>(),
+            sp.GetRequiredService<IGetRecipesAndTemplatesUseCase>()));
 
         services.AddSingleton<WorkoutViewModel>(sp => new WorkoutViewModel(
             sp.GetRequiredService<IWorkoutOverviewUseCase>(),
@@ -603,14 +603,16 @@ public static class MauiProgram
         services.AddTransient<FoodLogViewModel>(sp => new FoodLogViewModel(
             sp.GetRequiredService<INutritionDailyLogUseCase>(),
             sp.GetRequiredService<IRecipePortionUseCase>(),
-            sp.GetRequiredService<IGetWaterQuickAddDefaultsUseCase>().Execute(),
+            MuscleCuties.UI.Services.Nutrition.NutritionPresentationMapper.FromWaterQuickAddDefaults(
+                sp.GetRequiredService<IGetWaterQuickAddDefaultsUseCase>().Execute()),
             () => NavigateToAsync(".."),
             sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>(),
             sp.GetRequiredService<ILookupBarcodeUseCase>(),
             sp.GetRequiredService<IBarcodeScannerHardwareService>(),
             sp.GetRequiredService<ISaveMealTemplateUseCase>(),
             sp.GetRequiredService<IGetRecipesAndTemplatesUseCase>(),
-            sp.GetRequiredService<ICreateRecipeUseCase>()));
+            sp.GetRequiredService<ICreateRecipeUseCase>(),
+            sp.GetRequiredService<INutritionOverviewUseCase>()));
 
         services.AddTransient<WorkoutHistoryViewModel>(sp => new WorkoutHistoryViewModel(
             sp.GetRequiredService<IWorkoutArchiveUseCase>(),
@@ -676,7 +678,6 @@ public static class MauiProgram
                 vm => new ProfileSetupPage(vm)));
         services.AddSingleton(sp => PageLoadExtensions.CreateWithTiming<DashboardPage, DashboardViewModel>(sp,
             vm => new DashboardPage(vm)));
-        services.AddTransient<DailyCheckInPage>();
         services.AddSingleton(sp =>
             PageLoadExtensions.CreateWithTiming<CyclePage, CycleViewModel>(sp, vm => new CyclePage(vm)));
         services.AddTransient<CyclePhaseDetailPage>();
@@ -782,8 +783,7 @@ public static class MauiProgram
             evidence?.ExistingClearanceScreeningSatisfied is null)
             return HiitConfirmationChoice.Update;
 
-        var summary = string.Format(System.Globalization.CultureInfo.CurrentCulture,
-            UiTextCatalog.Get("Workout_Session_HiitConfirmationSummary"),
+        var summary = UiTextCatalog.Format("Workout_Session_HiitConfirmationSummary",
             saved.HiitUnderlyingCardioActivity, history.ConsistentParticipationWeeks,
             history.AverageSessionsPerWeekInRecentFourWeeks, history.LastCompletedSessionDate,
             string.Join(", ", weeks.OrderBy(week => week.WeekOffsetFromCurrent)

@@ -29,6 +29,11 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_Energy4A11y"] = "Энергия 4 из 5";
         Values["Dashboard_CheckIn_Energy4Hint"] = "Высокая энергия";
         Values["Dashboard_CheckIn_Energy5A11y"] = "Энергия 5 из 5";
+        Values["Dashboard_CheckIn_SleepQuality1A11y"] = "Качество сна 1 из 5";
+        Values["Dashboard_CheckIn_SleepQuality2A11y"] = "Качество сна 2 из 5";
+        Values["Dashboard_CheckIn_SleepQuality3A11y"] = "Качество сна 3 из 5";
+        Values["Dashboard_CheckIn_SleepQuality4A11y"] = "Качество сна 4 из 5";
+        Values["Dashboard_CheckIn_SleepQuality5A11y"] = "Качество сна 5 из 5";
         Values["Dashboard_CheckIn_Energy5Hint"] = "Очень высокая энергия";
         Values["Dashboard_CheckIn_EnergyTitle"] = "Энергия";
         Values["Dashboard_CheckIn_EnergySectionTitle"] = "ЭНЕРГИЯ";
@@ -38,7 +43,6 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_PlanningSleepQuality"] = "Качество сна";
         Values["Dashboard_CheckIn_PlanningSoreness"] = "Болезненность мышц";
         Values["Dashboard_CheckIn_PlanningStress"] = "Стресс";
-        Values["Dashboard_CheckIn_IncompleteAllFourRatings"] = "Выберите оценки сна, энергии, болезненности мышц и стресса, чтобы рассчитать сегодняшнюю отметку.";
         Values["Dashboard_CheckIn_PlanningSelectRating"] = "Выберите оценку";
         Values["Dashboard_CheckIn_PageTitle"] = "Ежедневная проверка";
         Values["Dashboard_CheckIn_PainMild"] = "Лёгкая";
@@ -196,5 +200,12 @@ internal static partial class RussianUiText
         Values["Dashboard_Prompt_NoPlanBody"] = "Тренировки появятся после создания плана.";
         Values["Dashboard_Readiness_TrendEmpty"] = "Отметьтесь, чтобы увидеть историю готовности";
         Values["Dashboard_Weight_TrendEmpty"] = "Добавьте вес на трёх отметках, чтобы увидеть динамику";
+        Values["Common_Selected"] = "Выбрано";
+        Values["Common_NotSelected"] = "Не выбрано";
+        Values["Common_SelectedFilter"] = "Выбранный фильтр";
+        Values["Dashboard_Workout_Intensity"] = "Интенсивность";
+        Values["Dashboard_Workout_RestGuidance"] =
+            "День отдыха: двигайтесь легко, а сон и вода помогут восстановиться.";
+        Values["Dashboard_Workout_ViewRestDay"] = "Открыть день отдыха";
     }
 }

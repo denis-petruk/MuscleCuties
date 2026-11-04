@@ -19,10 +19,10 @@
         </BoxView>
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource ModalSurface}"
+            Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
             VerticalOptions="End">
             <Grid RowDefinitions="Auto, *, Auto" RowSpacing="{StaticResource UiSpacing0}">
-                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource PresentationModalHeaderPadding}">
+                <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{DynamicResource PresentationModalHeaderPadding}">
                     <Border
                         WidthRequest="{StaticResource UiDimension34}"
                         HeightRequest="{StaticResource UiDimension34}"
@@ -32,9 +32,8 @@
                         VerticalOptions="Start">
                         <Label
                             Text="!"
-                            TextColor="{StaticResource Primary}"
-                            FontSize="{StaticResource UiFontSize17}"
-                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                            Style="{StaticResource SectionTitle}"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>
@@ -74,7 +73,7 @@
 
                 <VerticalStackLayout
                     Grid.Row="2"
-                    Padding="{StaticResource PresentationActionFooterPadding}"
+                    Padding="{DynamicResource PresentationActionFooterPadding}"
                     Spacing="{StaticResource UiSpacing10}">
                     <VerticalStackLayout
                         Spacing="{StaticResource UiSpacing10}"

@@ -1286,7 +1286,7 @@ public sealed class WorkoutPlanningSyntheticReviewTests
             ReferenceDate
         };
 
-        Assert.Equal(OneDay, distinctDates.Count);
+        Assert.Single(distinctDates);
         var resolved = WorkoutExperiencePromotionRule.Resolve(TrainingExperienceLevel.Beginner, distinctDates.Count);
         Assert.Equal(TrainingExperienceLevel.Beginner, resolved);
     }

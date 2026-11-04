@@ -34,8 +34,8 @@ public sealed class DailyCheckInNotificationService : IDailyCheckInNotificationS
 
         await _notifications.ScheduleAsync(
             CheckInReminderId,
-            UiTextCatalog.Translate("Time for your daily check-in"),
-            UiTextCatalog.Translate("Log how you slept and how you feel to get your personalized plan."),
+            UiTextCatalog.TranslateRuntimeText("Time for your daily check-in"),
+            UiTextCatalog.TranslateRuntimeText("Log how you slept and how you feel to get your personalized plan."),
             scheduledTime).ConfigureAwait(false);
     }
 }

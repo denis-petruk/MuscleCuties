@@ -64,7 +64,7 @@ public class MacroProgressGrid : ContentView
         for (var i = 0; i < 3; i++)
         {
             var macroColor = AppThemeResources.GetColor(LightKeys[i], DarkKeys[i]);
-            var trackColor = AppThemeResources.GetColor("Gray200", "Gray800");
+            var trackColor = AppThemeResources.GetColor("TrackSubtleLight", "TrackSubtleDark");
 
             var icon = new Path
             {
@@ -97,7 +97,7 @@ public class MacroProgressGrid : ContentView
 
             var valueLabel = new Label
             {
-                Style = (Style)Application.Current!.Resources["MacroProgressValueLabel"]
+                Style = (Style)Application.Current!.Resources["BodyStrong"]
             };
             _valueLabels[i] = valueLabel;
             Grid.SetRow(valueLabel, 1);
@@ -217,7 +217,7 @@ public class MacroProgressGrid : ContentView
             _fillBars[i].Color = macroColor;
         }
 
-        var trackColor = AppThemeResources.GetColor(e.RequestedTheme, "Gray300", "Gray800");
+        var trackColor = AppThemeResources.GetColor(e.RequestedTheme, "TrackMutedLight", "TrackMutedDark");
         if (Content is Grid grid)
             foreach (var child in grid.Children)
                 if (child is Grid barContainer && barContainer.Children.Count == 2 &&

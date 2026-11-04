@@ -6,9 +6,9 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
-    xmlns:dtos="clr-namespace:MuscleCuties.Core.Models.Nutrition;assembly=MuscleCuties.Core"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:nutritionControls="clr-namespace:MuscleCuties.UI.Controls.Nutrition"
-    xmlns:recipeDtos="clr-namespace:MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;assembly=MuscleCuties.UseCases"
+    xmlns:dashboard="clr-namespace:MuscleCuties.UI.Controls.Dashboard"
     xmlns:uiModels="clr-namespace:MuscleCuties.UI.Models.UI.Nutrition"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition"
     x:DataType="vm:FoodLogViewModel"
@@ -21,14 +21,14 @@
         <!-- Top Navigation Bar -->
         <Grid
             Grid.Row="0"
-            Padding="{StaticResource PresentationPageHeaderPadding}"
+            Padding="{DynamicResource PresentationPageHeaderPadding}"
             ColumnDefinitions="Auto,*,Auto,Auto"
             ColumnSpacing="{StaticResource UiSpacing10}"
             MaximumWidthRequest="{StaticResource UiDimension640}"
             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
             <Border
-                Style="{StaticResource CircleIconButton}"
+                Style="{StaticResource HeaderIconButton}"
                 SemanticProperties.Description="{loc:LocalizedText Common_Back}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding NavigateBackCommand}" />
@@ -49,8 +49,7 @@
             <Label
                 Grid.Column="1"
                 Text="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
-                Style="{StaticResource SubHeadline}"
-                FontSize="{StaticResource UiFontSize20}"
+                Style="{StaticResource PageTitle}"
                 VerticalOptions="Center" />
 
             <Button
@@ -63,7 +62,7 @@
 
             <Border
                 Grid.Column="3"
-                Style="{StaticResource CircleIconButton}"
+                Style="{StaticResource HeaderIconButton}"
                 SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_OpenDatePicker}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding ToggleDatePickerCommand}" />
@@ -85,6 +84,7 @@
         <!-- Main Virtualized Scroll Container (CollectionView, zero nested ScrollViews) -->
         <CollectionView
             Grid.Row="1"
+            Margin="{DynamicResource PresentationCollectionHorizontalInset}"
             ItemsSource="{Binding MealSections}"
             ItemSizingStrategy="MeasureAllItems"
             MaximumWidthRequest="{StaticResource UiDimension640}"
@@ -94,7 +94,7 @@
             </CollectionView.ItemsLayout>
 
             <CollectionView.Header>
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Padding="{StaticResource UiInsets20_8_20_16}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Padding="{DynamicResource PresentationCollectionHeaderPadding}">
 
                     <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_FoodLog_RetryLoadingThisDay}" Command="{Binding RetryLoadCommand}"
                             IsVisible="{Binding IsLoadError}" />
@@ -102,7 +102,7 @@
                     <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto"
                           ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
                         <Border
-                            Style="{StaticResource CircleIconButton}">
+                            Style="{StaticResource HeaderIconButton}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding PreviousDayCommand}" />
                             </Border.GestureRecognizers>
@@ -119,29 +119,21 @@
 
                         <Label Grid.Column="1"
                                Text="{Binding FormattedSelectedDate, Converter={StaticResource LocalizedStringConverter}}"
-                               FontSize="{StaticResource UiFontSize16}" FontAttributes="{StaticResource UiFontAttributesBold}" HorizontalTextAlignment="Center"
+                               Style="{StaticResource CardTitle}" HorizontalTextAlignment="Center"
                                VerticalOptions="Center" />
 
-                        <CollectionView
+                        <Grid
                             Grid.Row="1"
                             Grid.ColumnSpan="3"
-                            ItemsSource="{Binding DateStripDays}"
-                            ItemSizingStrategy="MeasureFirstItem"
-                            HeightRequest="{StaticResource UiDimension68}"
-                            SelectionMode="None">
-                            <CollectionView.ItemsLayout>
-                                <LinearItemsLayout Orientation="Horizontal" ItemSpacing="{StaticResource UiSpaceTight}" />
-                            </CollectionView.ItemsLayout>
-                            <CollectionView.ItemTemplate>
+                            ColumnDefinitions="*,*,*,*,*,*,*"
+                            ColumnSpacing="{StaticResource UiSpacing2}"
+                            BindableLayout.ItemsSource="{Binding DateStripDays}">
+                            <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="uiModels:DateStripDayItem">
                                     <Border
-                                        WidthRequest="{StaticResource UiDimension52}"
-                                        HeightRequest="{StaticResource UiDimension64}"
-                                        StrokeShape="{StaticResource UiRoundRectangleRadius14}"
-                                        StrokeThickness="{StaticResource UiStrokeWidth1}"
-                                        Stroke="{Binding IsSelected, Converter={StaticResource BoolToSelectionStrokeConverter}, FallbackValue=Transparent}"
-                                        BackgroundColor="{Binding IsSelected, Converter={StaticResource BoolToSelectionBgConverter}, FallbackValue=Transparent}"
-                                        Padding="{StaticResource UiInsets4_6}">
+                                        Grid.Column="{Binding Position}"
+                                        Style="{StaticResource DayStripCell}">
+
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer
                                                 Command="{Binding SelectDateCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
@@ -152,17 +144,13 @@
                                             <Label
                                                 Grid.Row="0"
                                                 Text="{Binding DayName, Converter={StaticResource LocalizedStringConverter}}"
-                                                FontSize="{StaticResource UiFontSize11}"
-                                                FontAttributes="{StaticResource UiFontAttributesBold}"
-                                                HorizontalTextAlignment="Center"
-                                                TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
+                                                Style="{StaticResource CaptionLabel}"
+                                                HorizontalTextAlignment="Center" />
                                             <Label
                                                 Grid.Row="1"
                                                 Text="{Binding DayNumber, Converter={StaticResource LocalizedStringConverter}}"
-                                                FontSize="{StaticResource UiFontSize17}"
-                                                FontAttributes="{StaticResource UiFontAttributesBold}"
-                                                HorizontalTextAlignment="Center"
-                                                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                                Style="{StaticResource SectionTitle}"
+                                                HorizontalTextAlignment="Center" />
                                             <BoxView
                                                 Grid.Row="2"
                                                 WidthRequest="{StaticResource UiDimension4}"
@@ -174,12 +162,12 @@
                                         </Grid>
                                     </Border>
                                 </DataTemplate>
-                            </CollectionView.ItemTemplate>
-                        </CollectionView>
+                            </BindableLayout.ItemTemplate>
+                        </Grid>
 
                         <Border
                             Grid.Column="2"
-                            Style="{StaticResource CircleIconButton}">
+                            Style="{StaticResource HeaderIconButton}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding NextDayCommand}" />
                             </Border.GestureRecognizers>
@@ -213,142 +201,138 @@
                         </Grid>
                     </Border>
 
-                    <ActivityIndicator IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"
-                                       Color="{StaticResource Primary}" HeightRequest="{StaticResource UiDimension24}" />
+                    <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsLoading}" IsVisible="{Binding IsLoading}"
+                                       />
 
-                    <!-- Selected Day Headline & Macro Vectors Card -->
-                    <Border
-                        Style="{StaticResource CardPrimary}">
-                        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing14}">
-                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label
-                                        Grid.Row="0"
-                                        Text="{Binding FormattedSelectedDate, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource SubHeadline}"
-                                        FontSize="{StaticResource UiFontSize17}" />
-                                    <Label
-                                        Grid.Row="1"
-                                        Text="{Binding CalorieRemainingText, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource MutedLabel}" />
+                    <!-- Day summary mirrors the dashboard nutrition card: the calorie ring is the
+                         headline and the three macro rings read the same way on both screens, so the
+                         food log no longer invents a second summary design for the same numbers. -->
+                    <Border Style="{StaticResource CardPrimary}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
+                                <Label Text="{Binding FormattedSelectedDate, Converter={StaticResource LocalizedStringConverter}}"
+                                       Style="{StaticResource SubHeadline}" />
+                                <Label Grid.Row="1"
+                                       Text="{Binding CalorieRemainingText, Converter={StaticResource LocalizedStringConverter}}"
+                                       Style="{StaticResource MutedLabel}" />
+                            </Grid>
+
+                            <Grid ColumnDefinitions="76,*" ColumnSpacing="{StaticResource UiSpaceControl}">
+                                <Grid WidthRequest="{StaticResource UiDimension76}" HeightRequest="{StaticResource UiDimension76}">
+                                    <dashboard:DashboardProgressRing Progress="{Binding CalorieProgressRatio}"
+                                                                     RingColor="{StaticResource Primary}"
+                                                                     WidthRequest="{StaticResource UiDimension76}"
+                                                                     HeightRequest="{StaticResource UiDimension76}" />
+                                    <Image Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                                           WidthRequest="{StaticResource UiDimension26}"
+                                           HeightRequest="{StaticResource UiDimension26}"
+                                           Aspect="AspectFit"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           InputTransparent="True" />
                                 </Grid>
-
-                                <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}" VerticalOptions="Center">
-                                    <Label
-                                        Text="{Binding TotalCalories, StringFormat='{0:F0}'}"
-                                        FontSize="{StaticResource UiFontSize24}"
-                                        FontAttributes="{StaticResource UiFontAttributesBold}"
-                                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                                    <Label
-                                        Text="{Binding TargetCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_TargetCaloriesValueKcal}"
-                                        FontSize="{StaticResource UiFontSize13}"
-                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                                        VerticalOptions="End"
-                                        Margin="{StaticResource UiInsets0_0_0_3}" />
-                                </HorizontalStackLayout>
+                                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing3}" VerticalOptions="Center">
+                                    <Label Text="{loc:LocalizedText Dashboard_Nutrition_Calories}"
+                                           Style="{StaticResource MutedLabel}"
+                                           TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                    <Label Text="{Binding TotalCalories, StringFormat='{0:F0}'}"
+                                           Style="{StaticResource MetricValue}" />
+                                    <Label Text="{Binding TargetCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_TargetCaloriesValueKcal}"
+                                           Style="{StaticResource MutedLabel}" />
+                                </VerticalStackLayout>
                             </Grid>
 
-                            <!-- Pure Vector Calorie Bar -->
-                            <Grid Grid.Row="1" HeightRequest="{StaticResource UiDimension8}">
-                                <Border
-                                    StrokeShape="{StaticResource UiRoundRectangleRadius4}"
-                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
-                                    HorizontalOptions="Fill" />
-                                <ProgressBar
-                                    Progress="{Binding CalorieProgressRatio}"
-                                    ProgressColor="{StaticResource Primary}"
-                                    HorizontalOptions="Fill" />
-                            </Grid>
-
-                            <!-- Macronutrient Split Bars -->
-                            <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpacing14}" Margin="{StaticResource UiInsets0_4_0_0}">
+                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpacing6}">
                                 <!-- Protein -->
-                                <Grid RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
-                                    <Label Grid.Row="0" Grid.Column="0" Text="{loc:LocalizedText Nutrition_Macro_Protein}"
-                                           FontSize="{StaticResource UiFontSize12}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                    <Label Grid.Row="0" Grid.Column="1"
-                                           Text="{Binding TotalProtein, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueG}"
-                                           FontSize="{StaticResource UiFontSize12}"
-                                           FontAttributes="{StaticResource UiFontAttributesBold}" TextColor="{StaticResource PrimaryDark}" />
-                                    <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                                                 Progress="{Binding ProteinProgressRatio}"
-                                                 ProgressColor="{StaticResource PrimaryDark}" HeightRequest="{StaticResource UiDimension4}" />
-                                    <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
-                                           Text="{Binding TargetProtein, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_TargetValueG}"
-                                           FontSize="{StaticResource UiFontSize11}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                </Grid>
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                                    <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
+                                        <dashboard:DashboardProgressRing Progress="{Binding ProteinProgressRatio}"
+                                                                         RingColor="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}"
+                                                                         WidthRequest="{StaticResource UiDimension60}"
+                                                                         HeightRequest="{StaticResource UiDimension60}" />
+                                        <Path Data="M4 9v6M7 8v8M17 9v6M14 8v8M7 12h7"
+                                              Style="{StaticResource NutritionLineIcon}"
+                                              Stroke="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}"
+                                              WidthRequest="{StaticResource UiDimension18}"
+                                              HeightRequest="{StaticResource UiDimension18}"
+                                              InputTransparent="True" />
+                                    </Grid>
+                                    <Label Text="{loc:LocalizedText Nutrition_Macro_Protein}" Style="{StaticResource MutedLabel}"
+                                           HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding TotalProtein, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueG}"
+                                           Style="{StaticResource CaptionSmallStrong}"
+                                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                                           HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding TargetProtein, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_TargetValueG}"
+                                           Style="{StaticResource CaptionTinyCentered}" />
+                                </VerticalStackLayout>
 
                                 <!-- Carbs -->
-                                <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto"
-                                      RowSpacing="{StaticResource UiSpaceMicro}">
-                                    <Label Grid.Row="0" Grid.Column="0" Text="{loc:LocalizedText Nutrition_Macro_Carbs}"
-                                           FontSize="{StaticResource UiFontSize12}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                    <Label Grid.Row="0" Grid.Column="1"
-                                           Text="{Binding TotalCarbs, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueG}"
-                                           FontSize="{StaticResource UiFontSize12}"
-                                           FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}" />
-                                    <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                                                 Progress="{Binding CarbsProgressRatio}"
-                                                 ProgressColor="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}"
-                                                 HeightRequest="{StaticResource UiDimension4}" />
-                                    <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
-                                           Text="{Binding TargetCarbs, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_TargetValueG}"
-                                           FontSize="{StaticResource UiFontSize11}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                </Grid>
+                                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                                    <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
+                                        <dashboard:DashboardProgressRing Progress="{Binding CarbsProgressRatio}"
+                                                                         RingColor="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}"
+                                                                         WidthRequest="{StaticResource UiDimension60}"
+                                                                         HeightRequest="{StaticResource UiDimension60}" />
+                                        <Path Data="M9 18V5M9 7C6.5 7 5 5.8 5 4M9 10C6.5 10 5 8.8 5 7M9 13C6.5 13 5 11.8 5 10M9 7c2.5 0 4-1.2 4-3M9 10c2.5 0 4-1.2 4-3M9 13c2.5 0 4-1.2 4-3"
+                                              Style="{StaticResource NutritionLineIcon}"
+                                              Stroke="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}"
+                                              StrokeThickness="{StaticResource UiStrokeWidth1_5}"
+                                              WidthRequest="{StaticResource UiDimension18}"
+                                              HeightRequest="{StaticResource UiDimension18}"
+                                              InputTransparent="True" />
+                                    </Grid>
+                                    <Label Text="{loc:LocalizedText Nutrition_Macro_Carbs}" Style="{StaticResource MutedLabel}"
+                                           HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding TotalCarbs, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueG}"
+                                           Style="{StaticResource CaptionSmallStrong}"
+                                           TextColor="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}"
+                                           HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding TargetCarbs, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_TargetValueG}"
+                                           Style="{StaticResource CaptionTinyCentered}" />
+                                </VerticalStackLayout>
 
                                 <!-- Fat -->
-                                <Grid Grid.Column="2" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,Auto"
-                                      RowSpacing="{StaticResource UiSpaceMicro}">
-                                    <Label Grid.Row="0" Grid.Column="0" Text="{loc:LocalizedText Nutrition_Macro_Fat}"
-                                           FontSize="{StaticResource UiFontSize12}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                    <Label Grid.Row="0" Grid.Column="1"
-                                           Text="{Binding TotalFat, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueG}"
-                                           FontSize="{StaticResource UiFontSize12}"
-                                           FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{AppThemeBinding Light={StaticResource SuccessLight}, Dark={StaticResource SuccessDark}}" />
-                                    <ProgressBar Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
-                                                 Progress="{Binding FatProgressRatio}"
-                                                 ProgressColor="{AppThemeBinding Light={StaticResource SuccessLight}, Dark={StaticResource SuccessDark}}"
-                                                 HeightRequest="{StaticResource UiDimension4}" />
-                                    <Label Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
-                                           Text="{Binding TargetFat, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_TargetValueG}"
-                                           FontSize="{StaticResource UiFontSize11}"
-                                           TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                </Grid>
+                                <VerticalStackLayout Grid.Column="2" Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                                    <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
+                                        <dashboard:DashboardProgressRing Progress="{Binding FatProgressRatio}"
+                                                                         RingColor="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}"
+                                                                         WidthRequest="{StaticResource UiDimension60}"
+                                                                         HeightRequest="{StaticResource UiDimension60}" />
+                                        <Path Data="M10 3C7 7 5 10 5 13a5 5 0 0 0 10 0c0-3-2-6-5-10z"
+                                              Style="{StaticResource NutritionLineIcon}"
+                                              Stroke="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}"
+                                              StrokeThickness="{StaticResource UiStrokeWidth1_6}"
+                                              WidthRequest="{StaticResource UiDimension18}"
+                                              HeightRequest="{StaticResource UiDimension18}"
+                                              InputTransparent="True" />
+                                    </Grid>
+                                    <Label Text="{loc:LocalizedText Nutrition_Macro_Fat}" Style="{StaticResource MutedLabel}"
+                                           HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding TotalFat, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueG}"
+                                           Style="{StaticResource CaptionSmallStrong}"
+                                           TextColor="{AppThemeBinding Light={StaticResource SuccessLight}, Dark={StaticResource SuccessDark}}"
+                                           HorizontalTextAlignment="Center" />
+                                    <Label Text="{Binding TargetFat, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_TargetValueG}"
+                                           Style="{StaticResource CaptionTinyCentered}" />
+                                </VerticalStackLayout>
                             </Grid>
+                        </VerticalStackLayout>
+                    </Border>
 
-                            <!-- Diary Notes -->
-                            <VerticalStackLayout Grid.Row="5" Spacing="{StaticResource UiSpacing6}">
-                                <Label Text="{loc:LocalizedText Nutrition_FoodLog_Notes}"
-                                       Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
-                                <Border Style="{StaticResource InputContainer}">
-                                    <Editor Text="{Binding NotesText}"
-                                            AutoSize="TextChanges"
-                                            Placeholder="{loc:LocalizedText Nutrition_FoodLog_NotesPlaceholder}"
-                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_Notes}" />
-                                </Border>
-                                <Button Text="{loc:LocalizedText Nutrition_FoodLog_SaveNotes}"
-                                        Style="{StaticResource ButtonSecondary}"
-                                        Command="{Binding SaveNotesCommand}"
-                                        IsEnabled="{Binding IsWriting, Converter={StaticResource InvertedBoolConverter}}" />
-                            </VerticalStackLayout>
-
+                    <!-- Water and the diary shortcut act on the day, so they get their own card
+                         instead of trailing the numbers inside the summary. -->
+                    <Border Style="{StaticResource CardPrimary}">
+                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing14}">
                             <!-- Water Tracker Row -->
-                            <Grid Grid.Row="3" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}" Margin="{StaticResource UiInsets0_4_0_0}"
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
                                   VerticalOptions="Center">
-                                <Label Text="{loc:LocalizedText Nutrition_FoodLog_Water}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
+                                <Label Text="{loc:LocalizedText Nutrition_FoodLog_Water}" Style="{StaticResource MutedLabel}"
                                        VerticalOptions="Center" />
                                 <Label Grid.Column="1"
                                        Text="{Binding WaterIntakeMl, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueMl}"
-                                       FontSize="{StaticResource UiFontSize13}"
-                                       TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                       Style="{StaticResource MutedLabel}"
                                        VerticalOptions="Center" />
                                 <Button Grid.Column="2"
                                         Style="{StaticResource ButtonSecondary}"
@@ -363,28 +347,33 @@
                             </Grid>
 
                             <!-- Quick Diary Actions Row -->
-                            <Grid Grid.Row="4" ColumnDefinitions="*,Auto" Margin="{StaticResource UiInsets0_2_0_0}">
+                            <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
                                 <Label
-                                    Text="Yesterday's diary"
+                                    Text="{loc:LocalizedText Nutrition_FoodLog_YesterdayDiary}"
                                     Style="{StaticResource MutedLabel}"
                                     VerticalOptions="Center" />
-                                <Border
-                                    Grid.Column="1"
-                                    Style="{StaticResource PillBadge}"
-                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    VerticalOptions="Center">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding CopyYesterdayDiaryCommand}" />
-                                    </Border.GestureRecognizers>
-                                    <Label
-                                        Text="Copy yesterday"
-                                        FontSize="{StaticResource UiFontSize11}"
-                                        FontAttributes="{StaticResource UiFontAttributesBold}"
-                                        TextColor="{StaticResource PrimaryDark}"
-                                        VerticalOptions="Center" />
-                                </Border>
+                                <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_FoodLog_CopyYesterday}"
+                                    Command="{Binding CopyYesterdayDiaryCommand}" Grid.Column="1" />
                             </Grid>
                         </Grid>
+                    </Border>
+
+                    <Border Style="{StaticResource CardPrimary}">
+                            <!-- Diary Notes -->
+                            <VerticalStackLayout Spacing="{StaticResource UiSpacing6}">
+                                <Label Text="{loc:LocalizedText Nutrition_FoodLog_Notes}"
+                                       Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Editor Text="{Binding NotesText}"
+                                            AutoSize="TextChanges"
+                                            Placeholder="{loc:LocalizedText Nutrition_FoodLog_NotesPlaceholder}"
+                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_Notes}" />
+                                </Border>
+                                <Button Text="{loc:LocalizedText Nutrition_FoodLog_SaveNotes}"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        Command="{Binding SaveNotesCommand}"
+                                        IsEnabled="{Binding IsWriting, Converter={StaticResource InvertedBoolConverter}}" />
+                            </VerticalStackLayout>
                     </Border>
                 </VerticalStackLayout>
             </CollectionView.Header>
@@ -392,157 +381,79 @@
             <!-- Meal Section ItemTemplate (Breakfast, Lunch, Dinner, Snacks) -->
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="uiModels:MealSectionUiGroup">
-                    <Border
-                        Style="{StaticResource CardPrimary}"
-                        Margin="{StaticResource UiInsets20_0}">
-                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
-                            <!-- Section Header Row -->
-                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}">
-                                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label
-                                        Grid.Row="0"
-                                        Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource SectionTitle}"
-                                        LineBreakMode="WordWrap" />
-                                    <Label
-                                        Grid.Row="1"
-                                        Text="{Binding SummaryText, Converter={StaticResource LocalizedStringConverter}}"
-                                        Style="{StaticResource MutedLabel}"
-                                        LineBreakMode="WordWrap" />
-                                </Grid>
-
-                                <Border
-                                    Grid.Column="1"
-                                    Style="{StaticResource ModalIconButton}"
-                                    VerticalOptions="Center"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_AddFoodToMeal}">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding OpenAddFoodCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
-                                            CommandParameter="{Binding MealType}" />
-                                    </Border.GestureRecognizers>
-                                    <Label Text="+" FontSize="{StaticResource UiFontSize18}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                           TextColor="{StaticResource PrimaryDark}"
-                                           HorizontalOptions="Center" VerticalOptions="Center" Margin="{StaticResource UiInsets0_Minus2_0_0}" />
-                                </Border>
-
-                                <Border
-                                    Grid.Column="2"
-                                    Style="{StaticResource ModalIconButton}"
-                                    VerticalOptions="Center"
-                                    IsVisible="{Binding HasItems}"
-                                    SemanticProperties.Description="Save meal as template">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding SaveMealAsTemplateCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
-                                            CommandParameter="{Binding MealType}" />
-                                    </Border.GestureRecognizers>
-                                    <Label Text="★" FontSize="{StaticResource UiFontSize15}"
-                                           TextColor="{StaticResource PrimaryDark}"
-                                           HorizontalOptions="Center" VerticalOptions="Center" />
-                                </Border>
-
-                                <Border
-                                    Grid.Column="3"
-                                    WidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    HeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    StrokeShape="{StaticResource UiRoundRectangleRadius16}"
-                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                                    BackgroundColor="{StaticResource Transparent}"
-                                    VerticalOptions="Center">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding ToggleMealSectionCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
-                                            CommandParameter="{Binding .}" />
-                                    </Border.GestureRecognizers>
-                                    <Label
-                                        Text="{Binding IsExpanded, Converter={StaticResource BoolToChevronConverter}}"
-                                        FontSize="{StaticResource UiFontSize17}"
-                                        FontAttributes="{StaticResource UiFontAttributesBold}"
-                                        HorizontalOptions="Center"
-                                        VerticalOptions="Center"
-                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
-                                </Border>
-                            </Grid>
-
-                            <!-- Items in Meal -->
-                            <VerticalStackLayout
-                                Grid.Row="1"
-                                IsVisible="{Binding IsExpanded}"
-                                Spacing="{StaticResource UiSpacing6}"
-                                Margin="{StaticResource UiInsets0_4_0_0}"
-                                BindableLayout.ItemsSource="{Binding Items}">
-                                <BindableLayout.ItemTemplate>
-                                    <DataTemplate x:DataType="dtos:FoodItemEntryDto">
-                                        <Border
-                                            Style="{StaticResource CardAccent}">
-                                            <Border.GestureRecognizers>
-                                                <TapGestureRecognizer
-                                                    Command="{Binding OpenEditFoodCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
-                                                    CommandParameter="{Binding .}" />
-                                            </Border.GestureRecognizers>
-                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                                <Label
-                                                    Text="{Binding Name}"
-                                                    Style="{StaticResource CardTitle}"
-                                                    FontSize="{StaticResource UiFontSize15}"
-                                                    LineBreakMode="WordWrap" />
-                                                <Label
-                                                    Grid.Row="1"
-                                                    Text="{Binding ServingsCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueServ}"
-                                                    Style="{StaticResource MutedLabel}"
-                                                    LineBreakMode="WordWrap" />
-                                                <Label
-                                                    Grid.Column="1"
-                                                    Text="{Binding Calories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_CaloriesValueKcal}"
-                                                    Style="{StaticResource BodyStrong}"
-                                                    FontSize="{StaticResource UiFontSize15}"
-                                                    HorizontalTextAlignment="End"
-                                                    TextColor="{StaticResource PrimaryDark}" />
-                                                <Label
-                                                    Grid.Row="1"
-                                                    Grid.Column="1"
-                                                    Text="{Binding Protein, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueGP}"
-                                                    Style="{StaticResource CaptionLabel}"
-                                                    HorizontalTextAlignment="End" />
+                    <nutritionControls:MealCardView
+                        Margin="{DynamicResource PresentationCollectionItemMargin}"
+                        Heading="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
+                        CaloriesText="{Binding CaloriesText, Converter={StaticResource LocalizedStringConverter}}"
+                        TargetShareText="{Binding TargetShareText}"
+                        MealName="{Binding CardName}"
+                        IngredientsText="{Binding IngredientsText}"
+                        MacrosText="{Binding MacrosText, Converter={StaticResource LocalizedStringConverter}}"
+                        MealTypeIconData="{Binding MealTypeIconData}"
+                        SemanticDescription="{Binding CardName}"
+                        ShowEdit="{Binding CanEditMeal}"
+                        ShowTemplate="{Binding HasItems}"
+                        EditCommand="{Binding EditMealCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
+                        EditCommandParameter="{Binding .}"
+                        TemplateCommand="{Binding SaveMealAsTemplateCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
+                        TemplateCommandParameter="{Binding MealType}">
+                        <nutritionControls:MealCardView.BelowContent>
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" Margin="{StaticResource UiInsets0_4_0_0}">
+                                <VerticalStackLayout
+                                    IsVisible="{Binding ShowItemRows}"
+                                    Spacing="{StaticResource UiSpacing6}"
+                                    BindableLayout.ItemsSource="{Binding Items}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="uiModels:FoodLogEntry">
+                                            <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
+                                                <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                                         Opacity="{StaticResource UiOpacitySubtle}"
+                                                         Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
+                                                <Grid Grid.Row="1" ColumnDefinitions="*,Auto,Auto" RowDefinitions="Auto,Auto"
+                                                      RowSpacing="{StaticResource UiSpacing2}"
+                                                      MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                                    <Grid.GestureRecognizers>
+                                                        <TapGestureRecognizer
+                                                            Command="{Binding OpenEditFoodCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
+                                                            CommandParameter="{Binding .}" />
+                                                    </Grid.GestureRecognizers>
+                                                    <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" LineBreakMode="WordWrap" />
+                                                    <Label Grid.Row="1"
+                                                           Text="{Binding ServingsCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueServ}"
+                                                           Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                                                    <Label Grid.Column="1"
+                                                           Text="{Binding Calories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_CaloriesValueKcal}"
+                                                           Style="{StaticResource BodyStrong}" HorizontalTextAlignment="End"
+                                                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+                                                    <Label Grid.Row="1" Grid.Column="1"
+                                                           Text="{Binding Protein, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueGP}"
+                                                           Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" />
+                                                    <Border Grid.Column="2" Grid.RowSpan="2" Style="{StaticResource ModalIconButton}" VerticalOptions="Center"
+                                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_EditMeal}">
+                                                        <Border.GestureRecognizers>
+                                                            <TapGestureRecognizer
+                                                                Command="{Binding OpenEditFoodCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
+                                                                CommandParameter="{Binding .}" />
+                                                        </Border.GestureRecognizers>
+                                                        <Path Data="M17 3a2.8 2.8 0 014 4L7 21H3v-4L17 3z"
+                                                              Style="{StaticResource NutritionLineIcon}"
+                                                              WidthRequest="{StaticResource UiDimension14}"
+                                                              HeightRequest="{StaticResource UiDimension14}" />
+                                                    </Border>
+                                                </Grid>
                                             </Grid>
-                                        </Border>
-                                    </DataTemplate>
-                                </BindableLayout.ItemTemplate>
-                            </VerticalStackLayout>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
 
-                            <!-- Empty State for Section with Copy Yesterday -->
-                            <Grid
-                                Grid.Row="2"
-                                ColumnDefinitions="*,Auto"
-                                ColumnSpacing="{StaticResource UiSpaceTight}"
-                                Margin="{StaticResource UiInsets4_2}"
-                                IsVisible="{Binding HasItems, Converter={StaticResource InvertedBoolConverter}}">
-                                <Label
-                                    Text="{loc:LocalizedText Nutrition_FoodLog_NoFoodsLoggedYetTapTo}"
-                                    Style="{StaticResource MutedLabel}"
-                                    FontAttributes="{StaticResource UiFontAttributesItalic}"
-                                    LineBreakMode="WordWrap"
-                                    VerticalOptions="Center" />
-                                <Border
-                                    Style="{StaticResource PillBadge}"
-                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    VerticalOptions="Center">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding CopyYesterdayMealCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
-                                            CommandParameter="{Binding MealType}" />
-                                    </Border.GestureRecognizers>
-                                    <Label
-                                        Text="Copy yesterday"
-                                        FontSize="{StaticResource UiFontSize11}"
-                                        FontAttributes="{StaticResource UiFontAttributesBold}"
-                                        TextColor="{StaticResource PrimaryDark}"
-                                        VerticalOptions="Center" />
-                                </Border>
-                            </Grid>
-                        </Grid>
-                    </Border>
+                                <Label Text="{loc:LocalizedText Nutrition_FoodLog_NoFoodsLoggedYet}"
+                                       Style="{StaticResource MutedLabel}"
+                                       FontAttributes="{StaticResource UiFontAttributesItalic}"
+                                       LineBreakMode="WordWrap"
+                                       IsVisible="{Binding HasItems, Converter={StaticResource InvertedBoolConverter}}" />
+                            </VerticalStackLayout>
+                        </nutritionControls:MealCardView.BelowContent>
+                    </nutritionControls:MealCardView>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
 
@@ -552,9 +463,10 @@
         </CollectionView>
 
         <!-- Inline Tap-To-Edit Modal Sheet (Optimistic UI) -->
-        <Grid
+        <sharedControls:AnimatedModalView
             Grid.RowSpan="2"
-            IsVisible="{Binding IsEditModalVisible}">
+            IsOpen="{Binding IsEditModalVisible}">
+            <Grid>
             <BoxView Style="{StaticResource ModalBackdrop}">
                 <BoxView.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding CloseEditModalCommand}" />
@@ -563,15 +475,15 @@
 
             <Border
                 x:Name="EditSheetSurface"
-                Style="{StaticResource ModalSurface}" VerticalOptions="End">
+                Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer /> <!-- Absorb tap inside dialog -->
                 </Border.GestureRecognizers>
 
-                <Grid RowDefinitions="Auto,*">
-                    <Grid Padding="{StaticResource PresentationModalHeaderPadding}" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                <Grid RowDefinitions="Auto,*,Auto">
+                    <Grid Padding="{DynamicResource PresentationModalHeaderPadding}" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                             <Label
-                                Text="{Binding IsEditingExisting, Converter={StaticResource BoolToEditTitleConverter}}"
+                                Text="{Binding EditModalTitle, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource ModalTitle}"
                                 VerticalOptions="Center" />
                             <Border
@@ -586,13 +498,15 @@
                     </Grid>
 
                     <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
-                        <VerticalStackLayout Padding="{StaticResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpaceCompact}">
+                        <VerticalStackLayout Padding="{DynamicResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpaceCompact}">
 
                         <!-- Fast logging: local history first, then an explicit catalog lookup. -->
                         <Label Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                                IsVisible="{Binding IsStatusVisible}" Style="{StaticResource BodyLabel}" LineBreakMode="WordWrap" />
-                        <ActivityIndicator IsRunning="{Binding IsWriting}" IsVisible="{Binding IsWriting}" />
-                        <ActivityIndicator IsRunning="{Binding IsLoadingFastLogging}"
+                        <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsWriting}" IsVisible="{Binding IsWriting}" />
+                        <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsLoadingFastLogging}"
                                            IsVisible="{Binding IsLoadingFastLogging}" />
                         <VerticalStackLayout IsVisible="{Binding IsFastLoggingVisible}" Spacing="{StaticResource UiSpaceCompact}"
                                              IsEnabled="{Binding IsWriting, Converter={StaticResource InvertedBoolConverter}}">
@@ -622,71 +536,35 @@
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>
 
-                            <!-- Saved Meal Templates Shelf -->
-                            <VerticalStackLayout IsVisible="{Binding HasSavedTemplates}" Spacing="{StaticResource UiSpacing6}">
-                                <Label Text="Saved Meal Templates" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
-                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding SavedMealTemplates}" Spacing="{StaticResource UiSpaceMicro}">
-                                    <BindableLayout.ItemTemplate>
-                                        <DataTemplate x:DataType="recipeDtos:MealTemplateDto">
-                                            <Border Style="{StaticResource CardAccent}">
-                                                <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
-                                                    <VerticalStackLayout Spacing="{StaticResource UiSpacing2}">
-                                                        <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="{StaticResource UiFontSize15}"
-                                                               LineBreakMode="WordWrap" />
-                                                        <Label Text="{Binding ItemCount, StringFormat='{0} items'}" Style="{StaticResource MutedLabel}"
-                                                               LineBreakMode="WordWrap" />
-                                                    </VerticalStackLayout>
-                                                    <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
-                                                        <Label Text="{Binding TotalCalories, StringFormat='{0:F0} kcal'}" FontSize="{StaticResource UiFontSize13}" FontAttributes="{StaticResource UiFontAttributesBold}"
-                                                               TextColor="{StaticResource PrimaryDark}" VerticalOptions="Center" />
-                                                        <Button Text="{loc:LocalizedText Nutrition_Template_Log}"
-                                                                Style="{StaticResource ButtonSecondary}"
-                                                                Command="{Binding LogMealTemplateCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
-                                                                CommandParameter="{Binding .}" />
-                                                        <Button Text="{loc:LocalizedText Common_Edit}"
-                                                                Style="{StaticResource ButtonSecondary}"
-                                                                Command="{Binding EditTemplateCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
-                                                                CommandParameter="{Binding .}" />
-                                                        <Button Text="{loc:LocalizedText Common_Delete}"
-                                                                Style="{StaticResource ButtonSecondary}"
-                                                                Command="{Binding DeleteTemplateCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
-                                                                CommandParameter="{Binding .}" />
-                                                    </HorizontalStackLayout>
-                                                </Grid>
-                                            </Border>
-                                        </DataTemplate>
-                                    </BindableLayout.ItemTemplate>
-                                </VerticalStackLayout>
-                            </VerticalStackLayout>
-
                             <!-- Saved Recipes Shelf -->
                             <VerticalStackLayout IsVisible="{Binding HasSavedRecipes}" Spacing="{StaticResource UiSpacing6}">
-                                <Label Text="Saved Recipes" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
+                                <Label Text="{loc:LocalizedText Nutrition_FoodLog_SavedRecipes}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding SavedRecipes}" Spacing="{StaticResource UiSpaceMicro}">
                                     <BindableLayout.ItemTemplate>
-                                        <DataTemplate x:DataType="recipeDtos:RecipeSummaryDto">
-                                            <Border Style="{StaticResource CardAccent}">
-                                                <Grid ColumnDefinitions="*,Auto" VerticalOptions="Center">
+                                        <DataTemplate x:DataType="uiModels:RecipeSummaryItem">
+                                            <Border Style="{StaticResource CardSecondary}">
+                                                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                                                     <VerticalStackLayout Spacing="{StaticResource UiSpacing2}">
-                                                        <Label Text="{Binding Name}" Style="{StaticResource CardTitle}" FontSize="{StaticResource UiFontSize15}"
+                                                        <Label Text="{Binding Name}" Style="{StaticResource CardTitle}"
                                                                LineBreakMode="WordWrap" />
-                                                        <Label Text="{Binding PerServingCalories, StringFormat='Per serving • {0:F0} kcal'}" Style="{StaticResource MutedLabel}"
+                                                        <Label Text="{Binding PerServingCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Recipe_PerServingFormat}"
+                                                               Style="{StaticResource MutedLabel}"
                                                                LineBreakMode="WordWrap" />
                                                     </VerticalStackLayout>
-                                                    <HorizontalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
+                                                    <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                                                         <Button Text="{loc:LocalizedText Nutrition_Recipe_Log}"
                                                                 Style="{StaticResource ButtonSecondary}"
                                                                 Command="{Binding LogRecipeCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
                                                                 CommandParameter="{Binding .}" />
-                                                        <Button Text="{loc:LocalizedText Common_Edit}"
+                                                        <Button Grid.Column="1" Text="{loc:LocalizedText Common_Edit}"
                                                                 Style="{StaticResource ButtonSecondary}"
                                                                 Command="{Binding EditRecipeCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
                                                                 CommandParameter="{Binding .}" />
-                                                        <Button Text="{loc:LocalizedText Common_Delete}"
+                                                        <Button Grid.Column="2" Text="{loc:LocalizedText Common_Delete}"
                                                                 Style="{StaticResource ButtonSecondary}"
                                                                 Command="{Binding DeleteRecipeCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
                                                                 CommandParameter="{Binding .}" />
-                                                    </HorizontalStackLayout>
+                                                    </Grid>
                                                 </Grid>
                                             </Border>
                                         </DataTemplate>
@@ -695,33 +573,24 @@
                             </VerticalStackLayout>
 
                             <Label Text="{loc:LocalizedText Nutrition_SearchFoods}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                                <Border Style="{StaticResource SearchContainer}">
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                <Border Style="{StaticResource PickerContainer}">
                                     <Entry Text="{Binding FoodSearchQuery}" Placeholder="{loc:LocalizedText Nutrition_FoodLog_SearchFoodsYouHaveLogged}"
                                            ReturnType="Search" VerticalOptions="Center" />
                                 </Border>
-                                <Border Grid.Column="1" Padding="{StaticResource UiInsets12_0}" MinimumHeightRequest="{StaticResource PresentationInputMinimumHeight}"
-                                        StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                                        Stroke="{StaticResource Primary}"
-                                        StrokeThickness="{StaticResource UiStrokeWidth1}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource CardSurfaceDark}}"
-                                        VerticalOptions="Center">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding OpenBarcodeScannerCommand}" />
-                                    </Border.GestureRecognizers>
-                                    <HorizontalStackLayout Spacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
-                                        <Label Text="{loc:LocalizedText Nutrition_FoodLog_ManualBarcodeLookup}" FontSize="{StaticResource UiFontSize12}"
-                                               FontAttributes="{StaticResource UiFontAttributesBold}" TextColor="{StaticResource PrimaryDark}" VerticalOptions="Center" />
-                                    </HorizontalStackLayout>
-                                </Border>
-                            </Grid>
+                                <Button Text="{loc:LocalizedText Nutrition_Barcode_ScanWithCamera}"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        Command="{Binding OpenBarcodeScannerCommand}"
+                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_Barcode_ScanWithCameraDescription}" />
+                            </VerticalStackLayout>
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                                 <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_FoodLog_SearchSavedFoods}" Command="{Binding SearchFoodCommand}" />
                                 <Button Grid.Column="1" Text="{loc:LocalizedText Nutrition_FoodLog_SearchUsda}"
                                         Command="{Binding SearchUsdaCommand}"
                                         Style="{StaticResource ButtonSecondary}" />
                             </Grid>
-                            <ActivityIndicator IsRunning="{Binding IsSearchingFood}"
+                            <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsSearchingFood}"
                                                IsVisible="{Binding IsSearchingFood}" />
                             <Label
                                 Text="{Binding FoodSearchStatus, Converter={StaticResource LocalizedStringConverter}}"
@@ -752,7 +621,7 @@
                             </Border>
 
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
-                                <Button Text="⚡ Quick Add" Command="{Binding OpenQuickAddCaloriesCommand}"
+                                <Button Text="{loc:LocalizedText Nutrition_FoodLog_QuickAdd}" Command="{Binding OpenQuickAddCaloriesCommand}"
                                         Style="{StaticResource ButtonSecondary}" />
                                 <Button Style="{StaticResource ButtonSecondary}" Grid.Column="1" Text="{loc:LocalizedText Nutrition_FoodLog_AddFoodManually}" Command="{Binding UseManualFoodCommand}" />
                             </Grid>
@@ -860,52 +729,52 @@
                         <!-- Quick Add Calories View -->
                         <VerticalStackLayout IsVisible="{Binding IsQuickAddCaloriesVisible}" Spacing="{StaticResource UiSpacing14}"
                                              IsEnabled="{Binding IsWriting, Converter={StaticResource InvertedBoolConverter}}">
-                            <Label Text="Quick Calorie &amp; Macro Add" Style="{StaticResource CardTitle}" FontSize="{StaticResource UiFontSize15}" LineBreakMode="WordWrap" />
-                            <Label Text="Quickly log calories and macros without searching the database." Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                            <Label Text="{loc:LocalizedText Nutrition_QuickAdd_Title}" Style="{StaticResource CardTitle}" LineBreakMode="WordWrap" />
+                            <Label Text="{loc:LocalizedText Nutrition_QuickAdd_Description}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
 
                             <!-- Quick Calories -->
                             <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
-                                <Label Text="Calories (kcal) *" Style="{StaticResource FormFieldLabel}" />
+                                <Label Text="{loc:LocalizedText Nutrition_QuickAdd_Calories}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Style="{StaticResource InputContainer}">
-                                    <Entry Text="{Binding QuickCaloriesValue}" Placeholder="200" Keyboard="Numeric" />
+                                    <Entry Text="{Binding QuickCaloriesValue}" Placeholder="{loc:LocalizedText Nutrition_QuickAdd_Calories}" Keyboard="Numeric" />
                                 </Border>
                             </VerticalStackLayout>
 
                             <!-- Optional Description -->
                             <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
-                                <Label Text="Description (Optional)" Style="{StaticResource FormFieldLabel}" />
+                                <Label Text="{loc:LocalizedText Nutrition_QuickAdd_Name}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Style="{StaticResource InputContainer}">
-                                    <Entry Text="{Binding QuickCaloriesName}" Placeholder="Quick Calorie Add" />
+                                    <Entry Text="{Binding QuickCaloriesName}" Placeholder="{loc:LocalizedText Nutrition_QuickAdd_NamePlaceholder}" />
                                 </Border>
                             </VerticalStackLayout>
 
                             <!-- Optional Macros Split -->
                             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpacing10}">
                                 <VerticalStackLayout Grid.Column="0" Spacing="{StaticResource PresentationFieldSpacing}">
-                                    <Label Text="Protein (g)" Style="{StaticResource FormFieldLabel}" />
+                                    <Label Text="{loc:LocalizedText Nutrition_QuickAdd_Protein}" Style="{StaticResource FormFieldLabel}" />
                                     <Border Style="{StaticResource InputContainer}">
-                                        <Entry Text="{Binding QuickProteinValue}" Placeholder="0" Keyboard="Numeric" />
+                                        <Entry Text="{Binding QuickProteinValue}" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}" Keyboard="Numeric" />
                                     </Border>
                                 </VerticalStackLayout>
                                 <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource PresentationFieldSpacing}">
-                                    <Label Text="Carbs (g)" Style="{StaticResource FormFieldLabel}" />
+                                    <Label Text="{loc:LocalizedText Nutrition_QuickAdd_Carbs}" Style="{StaticResource FormFieldLabel}" />
                                     <Border Style="{StaticResource InputContainer}">
-                                        <Entry Text="{Binding QuickCarbsValue}" Placeholder="0" Keyboard="Numeric" />
+                                        <Entry Text="{Binding QuickCarbsValue}" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}" Keyboard="Numeric" />
                                     </Border>
                                 </VerticalStackLayout>
                                 <VerticalStackLayout Grid.Column="2" Spacing="{StaticResource PresentationFieldSpacing}">
-                                    <Label Text="Fat (g)" Style="{StaticResource FormFieldLabel}" />
+                                    <Label Text="{loc:LocalizedText Nutrition_QuickAdd_Fat}" Style="{StaticResource FormFieldLabel}" />
                                     <Border Style="{StaticResource InputContainer}">
-                                        <Entry Text="{Binding QuickFatValue}" Placeholder="0" Keyboard="Numeric" />
+                                        <Entry Text="{Binding QuickFatValue}" Placeholder="{loc:LocalizedText Common_Placeholder_Zero}" Keyboard="Numeric" />
                                     </Border>
                                 </VerticalStackLayout>
                             </Grid>
 
                             <!-- Actions -->
                             <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}" Margin="{StaticResource UiInsets0_8_0_0}">
-                                <Button Text="Cancel" Command="{Binding CancelQuickAddCaloriesCommand}"
+                                <Button Text="{loc:LocalizedText Common_Cancel}" Command="{Binding CancelQuickAddCaloriesCommand}"
                                         Style="{StaticResource ButtonSecondary}" />
-                                <Button Style="{StaticResource ButtonSecondary}" Grid.Column="1" Text="Log Calories" Command="{Binding SaveQuickCaloriesCommand}" />
+                                <Button Style="{StaticResource ButtonPrimary}" Grid.Column="1" Text="{loc:LocalizedText Nutrition_QuickAdd_Save}" Command="{Binding SaveQuickCaloriesCommand}" />
                             </Grid>
                         </VerticalStackLayout>
 
@@ -931,9 +800,10 @@
 
                             <Label Text="{Binding BarcodeScanStatus, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
-                                   HorizontalOptions="Center" TextColor="{StaticResource PrimaryDark}" />
+                                   HorizontalOptions="Center" TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
 
-                            <ActivityIndicator IsRunning="{Binding IsProcessingBarcode}" IsVisible="{Binding IsProcessingBarcode}" />
+                            <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsProcessingBarcode}" IsVisible="{Binding IsProcessingBarcode}" />
 
                             <Button Text="{loc:LocalizedText Nutrition_Barcode_ScanWithCamera}"
                                     Command="{Binding ScanBarcodeWithCameraCommand}"
@@ -959,8 +829,12 @@
                         <VerticalStackLayout IsVisible="{Binding IsManualEditorVisible}" Spacing="{StaticResource UiSpaceCompact}"
                                              IsEnabled="{Binding IsWriting, Converter={StaticResource InvertedBoolConverter}}">
 
-                            <Label Text="{loc:LocalizedText Nutrition_FoodLog_Category}" Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource PickerContainer}">
+                            <Label Text="{Binding MealContextSummary}" Style="{StaticResource FormFieldLabel}"
+                                   IsVisible="{Binding IsMealContextLocked}" />
+                            <Label Text="{loc:LocalizedText Nutrition_FoodLog_Category}" Style="{StaticResource FormFieldLabel}"
+                                   IsVisible="{Binding IsMealContextLocked, Converter={StaticResource InvertedBoolConverter}}" />
+                            <Border Style="{StaticResource PickerContainer}"
+                                    IsVisible="{Binding IsMealContextLocked, Converter={StaticResource InvertedBoolConverter}}">
                                 <Picker ItemsSource="{Binding MealCategories}" SelectedItem="{Binding EditingMealType}"
                                         ItemDisplayBinding="{Binding ., Converter={StaticResource LocalizedStringConverter}}" />
                             </Border>
@@ -1002,14 +876,14 @@
                                 <Border Grid.Row="3" Grid.Column="0" Style="{StaticResource InputContainer}" Margin="{StaticResource UiInsets0_0_0_8}">
                                     <Entry
                                         Text="{Binding EditingServingsCount}"
-                                        Placeholder="1"
+                                        Placeholder="{loc:LocalizedText Common_Placeholder_One}"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_ServingsCount}"
                                         Keyboard="Numeric" />
                                 </Border>
                                 <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource InputContainer}" Margin="{StaticResource UiInsets0_0_0_8}">
                                     <Entry
                                         Text="{Binding EditingServingSize}"
-                                        Placeholder="100"
+                                        Placeholder="{loc:LocalizedText Common_Placeholder_Hundred}"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_PortionSizeDescription}"
                                         Keyboard="Numeric" />
                                 </Border>
@@ -1022,14 +896,14 @@
                                 <Border Grid.Row="5" Grid.Column="0" Style="{StaticResource InputContainer}" Margin="{StaticResource UiInsets0_0_0_8}">
                                     <Entry
                                         Text="{Binding EditingCalories}"
-                                        Placeholder="0"
+                                        Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_CaloriesInKilocalories}"
                                         Keyboard="Numeric" />
                                 </Border>
                                 <Border Grid.Row="5" Grid.Column="1" Style="{StaticResource InputContainer}" Margin="{StaticResource UiInsets0_0_0_8}">
                                     <Entry
                                         Text="{Binding EditingProtein}"
-                                        Placeholder="0"
+                                        Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_ProteinInGrams}"
                                         Keyboard="Numeric" />
                                 </Border>
@@ -1042,57 +916,61 @@
                                 <Border Grid.Row="7" Grid.Column="0" Style="{StaticResource InputContainer}">
                                     <Entry
                                         Text="{Binding EditingCarbs}"
-                                        Placeholder="0"
+                                        Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_CarbohydratesInGrams}"
                                         Keyboard="Numeric" />
                                 </Border>
                                 <Border Grid.Row="7" Grid.Column="1" Style="{StaticResource InputContainer}">
                                     <Entry
                                         Text="{Binding EditingFat}"
-                                        Placeholder="0"
+                                        Placeholder="{loc:LocalizedText Common_Placeholder_Zero}"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_FatInGrams}"
                                         Keyboard="Numeric" />
                                 </Border>
                             </Grid>
-                            <!-- Action Buttons -->
-                            <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpacing10}" Margin="{StaticResource UiInsets0_8_0_0}">
-                                <Button Style="{StaticResource ButtonSecondary}"
-                                    Text="{loc:LocalizedText Common_Save}"
-                                    Command="{Binding SaveFoodItemCommand}" />
-
-                                <Button
-                                    Grid.Column="1"
-                                    Style="{StaticResource ButtonSecondary}"
-                                    Text="{loc:LocalizedText Common_Delete}"
-                                    Command="{Binding DeleteFoodItemCommand}"
-                                    IsVisible="{Binding IsEditingExisting}"
-                                    SemanticProperties.Description="{loc:LocalizedText Common_Delete}" />
-
-                                <Button
-                                    Grid.Column="1"
-                                    Text="{loc:LocalizedText Common_Cancel}"
-                                    Command="{Binding CloseEditModalCommand}"
-                                    Style="{StaticResource ButtonSecondary}"
-                                    IsVisible="{Binding IsEditingExisting, Converter={StaticResource InvertedBoolConverter}}" />
-                            </Grid>
                         </VerticalStackLayout>
                         </VerticalStackLayout>
                     </ScrollView>
+                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpacing10}"
+                          Padding="{DynamicResource PresentationActionFooterPadding}">
+                        <Button Style="{StaticResource ButtonSecondary}"
+                            Text="{loc:LocalizedText Common_Save}"
+                            Command="{Binding SaveFoodItemCommand}" />
+
+                        <Button
+                            Grid.Column="1"
+                            Style="{StaticResource ButtonSecondary}"
+                            Text="{loc:LocalizedText Common_Delete}"
+                            Command="{Binding DeleteFoodItemCommand}"
+                            IsVisible="{Binding CanDeleteEditingFood}"
+                            SemanticProperties.Description="{loc:LocalizedText Common_Delete}" />
+
+                        <Button
+                            Grid.Column="1"
+                            Text="{loc:LocalizedText Common_Cancel}"
+                            Command="{Binding CloseEditModalCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            IsVisible="{Binding IsEditingExisting, Converter={StaticResource InvertedBoolConverter}}" />
+                    </Grid>
                 </Grid>
             </Border>
-        </Grid>
+            </Grid>
+        </sharedControls:AnimatedModalView>
 
         <Border
             Grid.RowSpan="2"
             HorizontalOptions="Center"
-            Style="{StaticResource CardSecondary}"
+            VerticalOptions="End"
+            Margin="{StaticResource UiInsets20_0_20_20}"
+            MaximumWidthRequest="{StaticResource UiDimension640}"
+            Style="{StaticResource StatusToastSurface}"
             IsVisible="{Binding IsStatusVisible}"
             InputTransparent="True">
             <Label
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionLabel}"
                 LineBreakMode="WordWrap"
-                TextColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource Gray950}}" />
+                TextColor="{AppThemeBinding Light={StaticResource TextOnAccentLight}, Dark={StaticResource TextOnAccentDark}}" />
         </Border>
 
     </Grid>

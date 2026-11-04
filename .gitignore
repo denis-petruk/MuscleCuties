@@ -51,6 +51,8 @@ _ReSharper*/
 .impeccable/
 PRODUCT.md
 DESIGN.md
+# Shared app-wide design entry point is versioned; local agent machinery stays ignored.
+!/DESIGN.md
 CLAUDE.md
 
 # Rider / Visual Studio

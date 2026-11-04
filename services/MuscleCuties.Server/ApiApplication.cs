@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Text.Json;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.ResponseCompression;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
@@ -150,6 +152,12 @@ public static class ApiApplication
             });
 
         builder.Services.AddPostgreSqlPersistence(connectionString);
+        builder.Services.AddResponseCompression(options =>
+        {
+            options.EnableForHttps = true;
+            options.Providers.Add<BrotliCompressionProvider>();
+            options.Providers.Add<GzipCompressionProvider>();
+        });
         builder.Services.AddSingleton(TimeProvider.System);
         builder.Services.AddSingleton<IRegistrationPasswordHasher, Pbkdf2RegistrationPasswordHasher>();
         var emailReceiptPublicKeys = builder.Configuration.GetSection("EmailReceipts:PublicKeys").GetChildren()
@@ -411,6 +419,8 @@ public static class ApiApplication
 
         configureServices?.Invoke(builder.Services);
         var app = builder.Build();
+        app.UseRequestTimingTelemetry();
+        app.UseResponseCompression();
         app.UseExceptionHandler(errorApp => errorApp.Run(async context =>
         {
             var exceptionFeature = context.Features.Get<IExceptionHandlerFeature>();

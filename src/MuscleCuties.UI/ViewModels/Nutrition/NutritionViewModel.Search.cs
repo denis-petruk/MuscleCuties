@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
@@ -78,7 +79,8 @@ public partial class NutritionViewModel
         if (version != _foodSearchVersion || !string.Equals(query, SearchQuery.Trim(), StringComparison.Ordinal))
             return;
 
-        var items = response.Items.Select(CreateFoodSearchResultItem).ToList();
+        var items = response.Items.Select(i => CreateFoodSearchResultItem(
+            NutritionPresentationMapper.FromCatalogItem(i))).ToList();
 
         if (replaceResults)
         {

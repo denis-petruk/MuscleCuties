@@ -127,7 +127,7 @@ public sealed class CycleReadinessSessionPersistenceTests
                 PlannedWorkoutDayId: PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId));
             var sessions = new PostgresWorkoutActiveSessionStore(db, new PostgresIdempotencyExecutor(), TimeProvider.System);
             await checkInStore.SaveCheckInAsync(checkIn with { Pain = ReportedPain }, CancellationToken.None);
-            await Assert.ThrowsAsync<InvalidOperationException>(() => sessions.StartSessionAsync(userId, command, CancellationToken.None));
+            await AssertStartBlockedForSafetyReviewAsync(() => sessions.StartSessionAsync(userId, command, CancellationToken.None));
             await checkInStore.SaveCheckInAsync(checkIn with { Pain = NoPain }, CancellationToken.None);
             var symptomId = Guid.NewGuid();
             var cycleId = await db.CycleLogs.AsNoTracking().Where(x => x.UserId == userId && x.StartDate == today)
@@ -140,7 +140,7 @@ public sealed class CycleReadinessSessionPersistenceTests
                 new DateTimeOffset(now), cardio, CancellationToken.None);
             Assert.Equal(MuscleCuties.Core.Domain.Workout.Planning.CycleReadinessPrescriptionRule.SafetyReviewRequired,
                 cardioResult.DoseAdjustmentReasonCode);
-            await Assert.ThrowsAsync<InvalidOperationException>(() => sessions.StartSessionAsync(userId, command, CancellationToken.None));
+            await AssertStartBlockedForSafetyReviewAsync(() => sessions.StartSessionAsync(userId, command, CancellationToken.None));
             var symptom = await db.SymptomLogs.SingleAsync(x => x.UserId == userId && x.Id == symptomId);
             db.SymptomLogs.Remove(symptom);
             db.WorkoutInjuryLogs.Add(new WorkoutInjuryLogRecord { Id = Guid.NewGuid(), UserId = userId,
@@ -284,5 +284,11 @@ public sealed class CycleReadinessSessionPersistenceTests
         Assert.True(await PostgresCycleReadinessReconciler.ReconcileAsync(db, userId, new DateTimeOffset(now), CancellationToken.None));
         Assert.False(state.CycleReadinessPending);
         await transaction.RollbackAsync();
+    }
+
+    private static async Task AssertStartBlockedForSafetyReviewAsync(Func<Task> start)
+    {
+        var blocked = await Assert.ThrowsAsync<WorkoutSessionStartBlockedException>(start);
+        Assert.Equal(WorkoutSessionStartBlockCode.SafetyReviewRequired, blocked.Code);
     }
 }

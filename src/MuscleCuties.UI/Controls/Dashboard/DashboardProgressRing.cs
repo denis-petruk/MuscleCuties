@@ -11,7 +11,7 @@ public sealed class DashboardProgressRing : GraphicsView, IDrawable
         propertyChanged: (view, _, _) => ((DashboardProgressRing)view).Invalidate());
 
     public static readonly BindableProperty RingColorProperty = BindableProperty.Create(
-        nameof(RingColor), typeof(Color), typeof(DashboardProgressRing), AppThemeResources.GetColor("DashboardAccentPink", default),
+        nameof(RingColor), typeof(Color), typeof(DashboardProgressRing), AppThemeResources.GetColor("DashboardWeightAccent", default),
         propertyChanged: (view, _, _) => ((DashboardProgressRing)view).Invalidate());
 
     public DashboardProgressRing()

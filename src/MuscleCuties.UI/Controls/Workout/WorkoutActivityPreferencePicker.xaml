@@ -16,7 +16,7 @@
         <BindableLayout.ItemTemplate>
             <DataTemplate x:DataType="workoutModels:WorkoutActivityGroupSection">
                 <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
-                    <Grid Grid.Row="0" ColumnDefinitions="24,*" ColumnSpacing="{StaticResource UiSpaceTight}" Margin="{StaticResource UiInsets2_4_2_0}">
+                    <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}" Margin="{StaticResource UiInsets2_4_2_0}">
                         <Image
                             Source="{Binding GroupIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                             WidthRequest="{StaticResource UiDimension20}"
@@ -24,24 +24,23 @@
                             Aspect="AspectFit"
                             VerticalOptions="Center"
                             InputTransparent="True" />
-                        <Label
+                        <Label LineBreakMode="WordWrap"
                             Grid.Column="1"
                             Text="{Binding GroupTitle, Converter={StaticResource LocalizedStringConverter}}"
                             Style="{StaticResource FormFieldLabel}"
-                            FontSize="{StaticResource UiFontSize16}"
                             VerticalOptions="Center"
                             SemanticProperties.HeadingLevel="Level3" />
                     </Grid>
 
                     <VerticalStackLayout
                         Grid.Row="1"
-                        Spacing="{StaticResource UiSpacing10}"
+                        Spacing="{StaticResource UiSpaceCompact}"
                         BindableLayout.ItemsSource="{Binding Items}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:WorkoutActivityOptionItem">
-                                <VerticalStackLayout Spacing="{StaticResource UiSpacing6}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                                 <Border
-                                    Style="{StaticResource SelectableCard}"
+                                    Style="{StaticResource CardSecondary}"
                                     HorizontalOptions="Fill"
                                     Margin="{StaticResource UiInsets0}"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
@@ -61,7 +60,7 @@
                                             CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
 
-                                    <Grid ColumnDefinitions="40,*,24" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                         <Border
                                             Grid.Column="0"
                                             WidthRequest="{StaticResource UiDimension40}"
@@ -80,7 +79,7 @@
                                                 VerticalOptions="Center" />
                                         </Border>
 
-                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing3}"
+                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}"
                                               VerticalOptions="Center">
                                             <Label
                                                 Grid.Row="0"
@@ -92,7 +91,7 @@
                                                 Grid.Row="1"
                                                 Text="{Binding Subtitle, Converter={StaticResource LocalizedStringConverter}}"
                                                 Style="{StaticResource MutedMedium}"
-                                                TextColor="{AppThemeBinding Light={StaticResource DeepMauve}, Dark={StaticResource ActivityDescriptionDark}}"
+                                                TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource ActivityDescriptionDark}}"
                                                 LineBreakMode="WordWrap">
                                                 <Label.Triggers>
                                                     <DataTrigger TargetType="Label" Binding="{Binding IsSelected}"
@@ -107,7 +106,7 @@
                                         <Border Style="{StaticResource SelectionRadioRing}"
                                             Grid.Column="2"
                                             VerticalOptions="Center">
-                                            <Path Data="M5 12L10 17L19 7" Stroke="{StaticResource White}" StrokeThickness="{StaticResource UiStrokeWidth2_5}"
+                                            <Path Data="M5 12L10 17L19 7" Stroke="{StaticResource ContrastInk}" StrokeThickness="{StaticResource UiStrokeWidth2_5}"
                                                   StrokeLineCap="Round" StrokeLineJoin="Round"
                                                   WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}" Aspect="Uniform"
                                                   HorizontalOptions="Center" VerticalOptions="Center"

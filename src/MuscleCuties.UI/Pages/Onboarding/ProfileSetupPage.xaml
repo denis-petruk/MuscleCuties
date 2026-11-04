@@ -8,38 +8,34 @@
     xmlns:workoutControls="clr-namespace:MuscleCuties.UI.Controls.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileSetupViewModel"
-    Shell.NavBarIsVisible="False">
+    Shell.NavBarIsVisible="False"
+    BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 
-    <ScrollView>
-        <VerticalStackLayout
-            Padding="{StaticResource PresentationAuthSecondaryPagePadding}"
-            Spacing="{StaticResource PresentationFormSpacing}"
-            HorizontalOptions="Fill"
-            MaximumWidthRequest="{StaticResource UiDimension640}">
-
-            <!-- Step indicator -->
-            <Border Style="{StaticResource PillBadge}">
-                <Label
-                    Text="{loc:LocalizedText Onboarding_ProfileSetup_StepOneOfTwo}"
-                    Style="{StaticResource EyebrowLabel}"
-                    LineBreakMode="WordWrap"
-                    VerticalOptions="Center"
-                    SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_StepOneOfTwoProfileSetup}" />
-            </Border>
-
-            <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
-                <Label
-                    Text="{loc:LocalizedText Onboarding_ProfileSetup_TellUsAboutYourself}"
-                    Style="{StaticResource Headline}"
-                    LineBreakMode="WordWrap"
-                    SemanticProperties.HeadingLevel="Level1" />
-                <Label
-                    Text="{loc:LocalizedText Onboarding_ProfileSetup_ThisShapesYourFirstTrainingAnd}"
-                    Style="{StaticResource MutedLabel}"
-                    LineBreakMode="WordWrap" />
-            </VerticalStackLayout>
-
+    <Grid RowDefinitions="Auto,*,Auto">
+    <VerticalStackLayout Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <Border Style="{StaticResource PillBadge}">
+            <Label
+                Text="{loc:LocalizedText Onboarding_ProfileSetup_StepOneOfTwo}"
+                Style="{StaticResource EyebrowLabel}"
+                LineBreakMode="WordWrap"
+                VerticalOptions="Center"
+                SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_StepOneOfTwoProfileSetup}" />
+        </Border>
+        <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
+            <Label
+                Text="{loc:LocalizedText Onboarding_ProfileSetup_TellUsAboutYourself}"
+                Style="{StaticResource PageTitle}"
+                LineBreakMode="WordWrap"
+                SemanticProperties.HeadingLevel="Level1" />
+            <Label
+                Text="{loc:LocalizedText Onboarding_ProfileSetup_ThisShapesYourFirstTrainingAnd}"
+                Style="{StaticResource MutedLabel}"
+                LineBreakMode="WordWrap" />
+        </VerticalStackLayout>
+    </VerticalStackLayout>
+    <ScrollView Grid.Row="1">
+        <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceContent}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
             <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                 <Label
                     Text="{loc:LocalizedText Onboarding_ProfileSetup_PersonalDetails}"
@@ -52,7 +48,7 @@
                             WidthRequest="{StaticResource UiDimension80}"
                             HeightRequest="{StaticResource UiDimension80}"
                             StrokeShape="{StaticResource UiRoundRectangleRadius40}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource White}, Dark={StaticResource CardSurfaceDark}}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceContrastLight}, Dark={StaticResource CardSurfaceDark}}"
                             StrokeThickness="{StaticResource UiStrokeWidth0}"
                             SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ProfilePhotoOptionalDoubleTapTo}">
                             <Border.GestureRecognizers>
@@ -68,7 +64,7 @@
                                     Margin="{StaticResource UiInsets8}" />
                             </Grid>
                         </Border>
-
+            
                         <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
                             <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_ProfilePhoto}" Style="{StaticResource CardTitle}" LineBreakMode="WordWrap" />
@@ -84,7 +80,7 @@
                                 SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ChooseAProfilePhotoFromPhotos}" />
                         </Grid>
                     </Grid>
-
+            
                     <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                         <Label Text="{loc:LocalizedText Profile_PersonalInfo_DisplayName}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                         <Border Grid.Row="1" Style="{StaticResource InputContainer}">
@@ -98,7 +94,7 @@
                                 SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_ThisFieldIsOptionalEnterA}" />
                         </Border>
                     </Grid>
-
+            
                     <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                         <Label Text="{loc:LocalizedText Profile_PersonalInfo_Birthday}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                         <Border Grid.Row="1" Style="{StaticResource InputContainer}">
@@ -113,62 +109,64 @@
                                 SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_SelectYourDateOfBirth}" />
                         </Border>
                     </Grid>
-
+            
                     <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                         <BoxView HeightRequest="{StaticResource UiDimension1}"
                                  Opacity="{StaticResource UiOpacitySubtle}"
-                                 Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
+                                 Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
                         <Label Grid.Row="1"
                                Text="{loc:LocalizedText Onboarding_ProfileSetup_Measurements}"
                                Style="{StaticResource SectionTitle}"
                                LineBreakMode="WordWrap"
                                SemanticProperties.HeadingLevel="Level2" />
                     </Grid>
-
+            
                     <Grid Grid.Row="4" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                         <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_Units}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                             <Border
-                                Style="{StaticResource SelectableCard}"
-                                SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ImperialUnits}"
-                                SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_DoubleTapToSelectImperialUnits}">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
-                                </Border.GestureRecognizers>
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
-                                        <Setter Property="BackgroundColor"
-                                                Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                        <Setter Property="Stroke"
-                                                Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Label Text="{loc:LocalizedText Common_Unit_Imperial}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
-                            </Border>
-
+    Style="{StaticResource CardSecondary}"
+    SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ImperialUnits}"
+    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+    <Border.GestureRecognizers>
+        <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
+    </Border.GestureRecognizers>
+    <Border.Triggers>
+        <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
+            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            <Setter Property="BackgroundColor"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+            <Setter Property="Stroke"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+        </DataTrigger>
+    </Border.Triggers>
+    <Label Text="{loc:LocalizedText Common_Unit_Imperial}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
+</Border>
+            
                             <Border
-                                Grid.Column="1"
-                                Style="{StaticResource SelectableCard}"
-                                SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_MetricUnits}"
-                                SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_DoubleTapToSelectMetricUnits}">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
-                                </Border.GestureRecognizers>
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
-                                        <Setter Property="BackgroundColor"
-                                                Value="{AppThemeBinding Light={StaticResource ActivitySelectedSurfaceLight}, Dark={StaticResource CardSurfaceDark}}" />
-                                        <Setter Property="Stroke"
-                                                Value="{AppThemeBinding Light={StaticResource ActivitySelectedStrokeLight}, Dark={StaticResource Primary}}" />
-                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
-                                <Label Text="{loc:LocalizedText Common_Unit_Metric}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
-                            </Border>
+    Grid.Column="1"
+    Style="{StaticResource CardSecondary}"
+    SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_MetricUnits}"
+    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+    <Border.GestureRecognizers>
+        <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
+    </Border.GestureRecognizers>
+    <Border.Triggers>
+        <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
+            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            <Setter Property="BackgroundColor"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+            <Setter Property="Stroke"
+                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+        </DataTrigger>
+    </Border.Triggers>
+    <Label Text="{loc:LocalizedText Common_Unit_Metric}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
+</Border>
                         </Grid>
                     </Grid>
-
+            
                     <Grid Grid.Row="5" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}" IsVisible="{Binding UseMetricSystem}">
                         <Label Text="{loc:LocalizedText Common_Height}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}">
@@ -184,7 +182,7 @@
                                    Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
                         </Grid>
                     </Grid>
-
+            
                     <Grid Grid.Row="6" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}"
                           IsVisible="{Binding UseMetricSystem, Converter={StaticResource InvertedBoolConverter}}">
                         <Label Text="{loc:LocalizedText Common_Height}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
@@ -211,7 +209,7 @@
                                    Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
                         </Grid>
                     </Grid>
-
+            
                     <Grid Grid.Row="7" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                         <Label Text="{loc:LocalizedText Common_Weight}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}">
@@ -237,7 +235,7 @@
                                    Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
                         </Grid>
                     </Grid>
-
+            
                 </Grid>
             </Grid>
 
@@ -245,7 +243,7 @@
                 <BoxView HeightRequest="{StaticResource UiDimension1}"
                          Margin="{StaticResource UiInsets0_12_0_4}"
                          Opacity="{StaticResource UiOpacitySubtle}"
-                         Color="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}" />
+                         Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
                 <Label
                     Text="{loc:LocalizedText Onboarding_ProfileSetup_ChooseYourActivity}"
                     Style="{StaticResource SectionTitle}"
@@ -268,12 +266,6 @@
                 SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                 SemanticProperties.HeadingLevel="Level3" />
 
-            <ActivityIndicator
-                IsRunning="{Binding IsBusy}"
-                IsVisible="{Binding IsBusy}"
-                HorizontalOptions="Center"
-                SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_SavingProfilePleaseWait}" />
-
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing10}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
                 <CheckBox
                     x:Name="WellnessAcknowledgment"
@@ -289,19 +281,28 @@
                     LineBreakMode="WordWrap"
                     VerticalOptions="Center" />
             </Grid>
+
             <Label
                 x:Name="AcknowledgmentError"
                 IsVisible="False"
                 Text="{loc:LocalizedText Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo}"
                 Style="{StaticResource ErrorLabel}"
                 LineBreakMode="WordWrap" />
-
-            <Button Style="{StaticResource ButtonPrimary}"
-                Text="{loc:LocalizedText Common_Continue}"
-                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                Clicked="OnContinueClicked"
-                SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ContinueToPersonalizedQuestions}"
-                SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_DoubleTapToSaveYourProfile}" />
         </VerticalStackLayout>
     </ScrollView>
+    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <ActivityIndicator
+                        Style="{StaticResource StateBusyInline}"
+            IsRunning="{Binding IsBusy}"
+            IsVisible="{Binding IsBusy}"
+            HorizontalOptions="Center"
+            SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_SavingProfilePleaseWait}" />
+        <Button Style="{StaticResource ButtonPrimary}"
+            Text="{loc:LocalizedText Common_Continue}"
+            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+            Clicked="OnContinueClicked"
+            SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ContinueToPersonalizedQuestions}"
+            SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_DoubleTapToSaveYourProfile}" />
+    </VerticalStackLayout>
+</Grid>
 </ContentPage>

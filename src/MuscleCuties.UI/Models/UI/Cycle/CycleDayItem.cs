@@ -38,7 +38,7 @@ public class CycleDayItem
     {
         get
         {
-            if (LocalizationService.ActiveLanguage == "ru")
+            if (LocalizationService.ActiveLanguage == LocalizationService.RussianLanguageCode)
             {
                 var russianDate = Date?.ToString("d MMMM yyyy", CultureInfo.GetCultureInfo("ru-RU")) ?? $"День {Day}";
                 var russianPhase = Phase switch

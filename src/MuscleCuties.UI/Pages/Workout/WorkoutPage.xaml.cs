@@ -65,7 +65,7 @@ public partial class WorkoutPage : ContentPage
             _viewModel.IsSessionActivitiesVisible = true;
             SessionActivitiesOverlay.BindingContext = _sessionViewModel;
             SessionActivitiesOverlay.IsEnabled = false;
-            SessionActivitiesOverlay.IsVisible = true;
+            SessionActivitiesOverlay.IsOpen = true;
         });
 
         await _sessionViewModel.LoadSession(workoutDayId);
@@ -73,13 +73,13 @@ public partial class WorkoutPage : ContentPage
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
             SessionActivitiesOverlay.IsEnabled = true;
-            SessionActivitiesOverlay.IsVisible = true;
+            SessionActivitiesOverlay.IsOpen = true;
         });
     }
 
     private void CloseSessionActivities()
     {
-        SessionActivitiesOverlay.IsVisible = false;
+        SessionActivitiesOverlay.IsOpen = false;
         _viewModel.IsSessionActivitiesVisible = false;
     }
 
@@ -141,7 +141,7 @@ public partial class WorkoutPage : ContentPage
 
     protected override bool OnBackButtonPressed()
     {
-        if (SessionActivitiesOverlay.IsVisible || _viewModel.IsSessionActivitiesVisible)
+        if (SessionActivitiesOverlay.IsOpen || _viewModel.IsSessionActivitiesVisible)
         {
             CloseSessionActivities();
             return true;

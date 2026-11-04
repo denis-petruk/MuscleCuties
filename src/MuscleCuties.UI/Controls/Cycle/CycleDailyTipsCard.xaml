@@ -15,13 +15,13 @@
             <!-- Row 0: Training Micro-Tip -->
             <Border
                 Grid.Row="0"
-                Style="{StaticResource CardAccent}">
+                Style="{StaticResource CardSecondary}">
                 <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                     <Border
                         WidthRequest="{StaticResource UiDimension34}"
                         HeightRequest="{StaticResource UiDimension34}"
                         StrokeShape="{StaticResource UiRoundRectangleRadius10}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
                         StrokeThickness="{StaticResource UiStrokeWidth0}"
                         VerticalOptions="Start">
                         <Path
@@ -39,13 +39,12 @@
                     <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing3}" VerticalOptions="Center">
                         <Label
                             Text="{loc:LocalizedText Cycle_DailyTips_TrainingFocusTitle}"
-                            FontSize="{StaticResource UiFontSize11}"
-                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                            Style="{StaticResource CaptionLabel}"
                             TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                             LineBreakMode="WordWrap" />
                         <Label
                             Text="{Binding DailyTrainingTipText, Converter={StaticResource LocalizedStringConverter}}"
-                            FontSize="{StaticResource UiFontSize13}"
+                            Style="{StaticResource MutedLabel}"
                             LineBreakMode="WordWrap"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                     </VerticalStackLayout>
@@ -55,13 +54,13 @@
             <!-- Row 1: Nutrition Micro-Tip -->
             <Border
                 Grid.Row="1"
-                Style="{StaticResource CardAccent}">
+                Style="{StaticResource CardSecondary}">
                 <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                     <Border
                         WidthRequest="{StaticResource UiDimension34}"
                         HeightRequest="{StaticResource UiDimension34}"
                         StrokeShape="{StaticResource UiRoundRectangleRadius10}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray800}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
                         StrokeThickness="{StaticResource UiStrokeWidth0}"
                         VerticalOptions="Start">
                         <Path
@@ -79,13 +78,12 @@
                     <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing3}" VerticalOptions="Center">
                         <Label
                             Text="{loc:LocalizedText Cycle_DailyTips_NutritionFocusTitle}"
-                            FontSize="{StaticResource UiFontSize11}"
-                            FontAttributes="{StaticResource UiFontAttributesBold}"
+                            Style="{StaticResource CaptionLabel}"
                             TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                             LineBreakMode="WordWrap" />
                         <Label
                             Text="{Binding DailyNutritionTipText, Converter={StaticResource LocalizedStringConverter}}"
-                            FontSize="{StaticResource UiFontSize13}"
+                            Style="{StaticResource MutedLabel}"
                             LineBreakMode="WordWrap"
                             TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
                     </VerticalStackLayout>

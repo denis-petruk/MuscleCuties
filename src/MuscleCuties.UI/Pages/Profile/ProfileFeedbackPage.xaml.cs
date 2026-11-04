@@ -23,7 +23,7 @@ public partial class ProfileFeedbackPage : ContentPage
         {
             var result = await FilePicker.Default.PickAsync(new PickOptions
             {
-                PickerTitle = UiTextCatalog.Translate("Attach feedback context")
+                PickerTitle = UiTextCatalog.TranslateRuntimeText("Attach feedback context")
             });
 
             if (result is null)

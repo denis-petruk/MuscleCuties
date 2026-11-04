@@ -13,7 +13,7 @@
 
 
     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
-        <VerticalStackLayout Spacing="{StaticResource UiSpacing5}">
+        <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
             <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableEquipment}"
                    Style="{StaticResource FormFieldLabel}" />
             <Border Style="{StaticResource PickerContainer}">
@@ -34,7 +34,7 @@
                     Style="{StaticResource SectionTitle}"
                     LineBreakMode="WordWrap"
                     SemanticProperties.HeadingLevel="Level2" />
-            <Border Style="{StaticResource SearchContainer}">
+            <Border Style="{StaticResource PickerContainer}">
                 <Entry Placeholder="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
                        Text="{Binding ExerciseExclusionSearchText, Mode=TwoWay}"
                        ReturnType="Search" VerticalOptions="Center" />
@@ -43,7 +43,7 @@
                         Wrap="Wrap" JustifyContent="Start">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
-                        <Border Style="{StaticResource SelectableCard}" Margin="{StaticResource UiInsets0_0_8_8}"
+                        <Border Style="{StaticResource CardSecondary}" Margin="{StaticResource UiInsets0_0_8_8}"
                                 SemanticProperties.Description="{Binding Name}"
                                 SemanticProperties.Hint="{loc:LocalizedText Profile_WorkoutPrefs_RemoveAvoidedExercise}">
                             <Border.GestureRecognizers>
@@ -66,7 +66,7 @@
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
                         <Border
-                            Style="{StaticResource SelectableCard}"
+                            Style="{StaticResource CardSecondary}"
                             SemanticProperties.Description="{Binding Name}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding ToggleCommand}" />

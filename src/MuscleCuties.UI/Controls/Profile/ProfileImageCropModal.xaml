@@ -1,23 +1,23 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ContentView
+<sharedControls:AnimatedModalView
     x:Class="MuscleCuties.UI.Controls.Profile.ProfileImageCropModal"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:local="clr-namespace:MuscleCuties.UI.Controls.Profile"
-    x:DataType="local:ProfileImageCropModal"
-    IsVisible="False">
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    x:DataType="local:ProfileImageCropModal">
 
     <Grid BackgroundColor="{StaticResource ModalScrim}">
         <Border
             x:Name="SheetSurface"
-            Style="{StaticResource ModalSurface}"
+            Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
             HorizontalOptions="Fill" VerticalOptions="End">
 
             <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
 
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource PresentationModalHeaderPadding}">
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{DynamicResource PresentationModalHeaderPadding}">
                     <Label
                         Text="{loc:LocalizedText Profile_ImageCrop_CropPhoto}"
                         Style="{StaticResource ModalTitle}"
@@ -38,14 +38,14 @@
                 <ScrollView
                     Grid.Row="2"
                     Orientation="Vertical">
-                    <VerticalStackLayout Padding="{StaticResource UiInsets20_16_20_0}" Spacing="{StaticResource UiSpacing10}">
+                    <VerticalStackLayout Padding="{DynamicResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpacing10}">
                         <Border
                             x:Name="CropViewport"
                             WidthRequest="{StaticResource UiDimension260}"
                             HeightRequest="{StaticResource UiDimension260}"
                             StrokeShape="{StaticResource UiRoundRectangleRadius130}"
                             StrokeThickness="{StaticResource UiStrokeWidth0}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource Gray900}}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSunkenDark}}"
                             HorizontalOptions="Center">
                             <Grid>
                                 <Grid.GestureRecognizers>
@@ -68,7 +68,7 @@
                     </VerticalStackLayout>
                 </ScrollView>
 
-                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource PresentationActionFooterPadding}">
+                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{DynamicResource PresentationActionFooterPadding}">
                     <Button
                         Grid.Column="0"
                         Style="{StaticResource ButtonSecondary}"
@@ -84,4 +84,4 @@
             </Grid>
         </Border>
     </Grid>
-</ContentView>
+</sharedControls:AnimatedModalView>

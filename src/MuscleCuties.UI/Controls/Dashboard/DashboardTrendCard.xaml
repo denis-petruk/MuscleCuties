@@ -18,7 +18,7 @@
                     HeightRequest="{StaticResource UiDimension44}"
                     StrokeThickness="{StaticResource UiStrokeWidth0}"
                     StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource CardSurfaceDark}}"
                     SemanticProperties.Description="{loc:LocalizedText Dashboard_Trend_PreviousView}">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding PreviousTrendCommand}" />
@@ -41,7 +41,7 @@
                         HeightRequest="{StaticResource UiDimension44}"
                         StrokeThickness="{StaticResource UiStrokeWidth0}"
                         StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Gray200}, Dark={StaticResource CardSurfaceDark}}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource CardSurfaceDark}}"
                         SemanticProperties.Description="{loc:LocalizedText Dashboard_Trend_NextView}">
                     <Border.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding NextTrendCommand}" />
@@ -87,7 +87,7 @@
                         <Label Grid.Column="1" Text="{Binding WeeklyFatText}" Style="{StaticResource BodyLabel}" />
                         <ProgressBar Grid.Row="1" Grid.ColumnSpan="2" Progress="{Binding WeeklyFatShare}"
                                      HeightRequest="{StaticResource UiDimension8}"
-                                     ProgressColor="{StaticResource DeepMauve}" />
+                                     ProgressColor="{StaticResource ProgressAccent}" />
                     </Grid>
                 </VerticalStackLayout>
             </VerticalStackLayout>
