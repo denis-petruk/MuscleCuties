@@ -56,6 +56,16 @@ PostgresSchemas.Operations
         Xunit.Assert.Contains("CREATE OR REPLACE FUNCTION", script, StringComparison.Ordinal);
     }
 
+    [Xunit.Fact]
+    public async Task MigrationChain_ContainsBaseSchemaFingerprintAndScheduleSeam()
+    {
+        var rehearsal = await PostgresSchemaMigrations.RehearseChainAsync();
+        Xunit.Assert.Equal(3, rehearsal.Count);
+        Xunit.Assert.Equal("001_base_schema.sql", rehearsal[0].ScriptName);
+        Xunit.Assert.Equal("002_schema_fingerprint.sql", rehearsal[1].ScriptName);
+        Xunit.Assert.Equal("003_schedule_seam.sql", rehearsal[2].ScriptName);
+    }
+
     private static PostgresDbContext CreateContext() =>
         new(new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(UnusedLocalConnection)

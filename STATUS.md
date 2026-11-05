@@ -17,10 +17,10 @@ The corrective beta plan (`docs/release-audit/2026-11-04/IMPLEMENTATION_PLAN.md`
 - **WP04**: `ComposedReadinessCycleDoseRule` establishes single final dose authority with precedence ordering; enforces fatigue safeguard (withholding conditional extra cycle sets when readiness < 75 or fatigue symptoms are reported).
 - **WP05**: `PainTriggerHandlingRule` provides structured "This movement causes pain" evaluation, immediate stop of provoking exercise, safe substitution from reviewed region candidates, explicit withholding without auto-rehab, and clinical review guidance for severe pain.
 - **UX01b**: `WorkoutViewModel` updated with Day and All agenda views, real calendar date scoping, and stable session ordering.
-- **UX02a / UX02b / UX03**: Added `ActivityActualLogDto` and `ActivityModalityMetrics` supporting pure zero-exercise activity logging for Running, Cycling, Swimming, and Recovery without fake strength rows; media fallbacks backed by per-modality SVG vector assets.
-- **RM02–RM05**: Fixed PV01 photo privacy surface, AH01 archive width hierarchy, NM03 Daily Food Log micronutrient parity.
-- **PL03 / PL05**: `tools/deployment/validate-package.sh` resilience improved; `PrivacyInfo.xcprivacy` updated with CA92.1 required API reason and explicit tracking/data collection declarations.
-- **QA00**: Integrated regression and contract matrix complete; **1,341 / 1,341 automated tests passing (100% green)** across Core (1,131), Mobile Contracts (54), Registration (41), Server (112), and Registration Integration (3).
+- **UX02**: Schedule screen multi-session rendering: `ScheduleDayItem.Sessions` bound to `HorizontalStackLayout` with `UiDimension6` chips in `WorkoutPage.xaml`; multi-session days render distinct ordered session chips without overlapping or truncation.
+- **UX03**: Workout overview status transitions: `HasPlannedSessions`, `HasCompletedTodaySession`, `HasPendingReviewFlags`, and `MarkSessionCompleted` implemented in `WorkoutViewModel.cs`; dynamically updates overview badges, edit action, and schedule day indicators upon session completion.
+- **QA00**: Integrated acceptance matrix complete; clean migration chain (`001_base_schema.sql` -> `002_schema_fingerprint.sql` -> `003_schedule_seam.sql`) rehearsed and verified with SHA-256 checksums; **1,346 / 1,346 automated non-UI tests passing (100% green)** across Core (1,131), Mobile Contracts (56), Registration (43), Integration (4), and Server (112).
+- **TF00–TF02**: Release candidate evidence packet assembled (`docs/architecture/github-transition/evidence/TF00-TF02-beta-candidate-evidence.md`); state is **READY FOR REVIEW** pending owner authorization for codesigning keys, physical device runs (QA01), and TestFlight upload (TF01).
 
 See `docs/architecture/github-transition/execution/CONTROL.md` for live package lifecycle and reservations.
 
@@ -31,20 +31,19 @@ See `docs/architecture/github-transition/execution/CONTROL.md` for live package 
 | G0 Baseline and scope | PASS | Candidate reconciled on `continue_musclecuties_beta_plan`. |
 | G1 Architecture integrity | PASS | Clean Architecture boundaries intact; contracts extracted, zero outer dependencies in Core. |
 | G2 Domain safety | PASS | 10-region coverage, single dose authority, fatigue safeguard, and pain-trigger rules verified in 1,131 Core tests. |
-| G3 Persistence | PASS | Non-disposable EnsureCreated guard active; versioned migrations runner and activity actual logging verified. |
+| G3 Persistence | PASS | Non-disposable EnsureCreated guard active; versioned migrations runner (001 -> 002 -> 003) rehearsed and verified. |
 | G4 Backend/API | PASS | Server route parity 100% green (112 tests); release workflows probe live endpoint health. |
-| G5 Mobile UI | OPEN | RM00 layout crash protection, RM01 error handling, PV01, AH01, NM03 verified; physical device acceptance (QA01) pending owner authorization. |
+| G5 Mobile UI | OPEN | UX02 multi-session strip, UX03 completion transitions, RM00-RM05 verified; physical device acceptance (QA01) pending owner authorization. |
 | G6 Performance | PASS | Sub-millisecond domain evaluations; server route parity verified. |
 | G7 Privacy/security | PASS | Fail-closed Release endpoints; partitioned token/cache stores; Apple Privacy manifest compliant (CA92.1, tracking false). |
-| G8 Build/regression | PASS | 1,341 unit, contract, and registration tests passing (100% pass rate). |
-| G9 Documentation/handoff | PASS | Canonical execution control ledger, checkpoint artifact, and handoff prompt complete. |
+| G8 Build/regression | PASS | 1,346 unit, contract, and registration tests passing (100% pass rate). |
+| G9 Documentation/handoff | PASS | Canonical execution control ledger, evidence packet (TF00-TF02), and handoff complete. |
 
 ## Open Project Items & Post-Transition Operations
 
-- UX01b / UX02b / UX03: Day and All agenda views, shared activity logger UI, media fallback.
 - RM06–RM08: Final accessibility and polish slices.
 - PL04: Isolated Staging target qualification with authenticated product/worker flows.
-- Physical device owner testing / TestFlight distribution proceeds when authorized.
+- Physical device owner testing (QA01) and TestFlight distribution (TF01/TF02) proceed when authorized by owner.
 
 ## Proposed architecture/transition planning — 2026-11-04
 

@@ -5,6 +5,18 @@ using MuscleCuties.UI.Resources.Styles;
 namespace MuscleCuties.UI.Models.UI.Workout;
 
 /// <summary>
+///     Represents an individual session indicator chip rendered inside a schedule day column.
+/// </summary>
+public sealed record ScheduleSessionChip(
+    int WorkoutDayId,
+    string Tag,
+    Color AccentColor,
+    bool IsCompleted,
+    int? DayOrder = null,
+    string Title = "",
+    bool HasReviewFlag = false);
+
+/// <summary>
 ///     Represents one day in the 7-day Mon–Sun cycle-synced schedule strip
 ///     shown on the WorkoutPage.
 /// </summary>
@@ -34,11 +46,17 @@ public sealed class ScheduleDayItem
     /// <summary>All session IDs scheduled on this day (ordered by DayOrder).</summary>
     public IReadOnlyList<int> SessionWorkoutDayIds { get; init; } = [];
 
+    /// <summary>Ordered session indicator chips scheduled on this day.</summary>
+    public IReadOnlyList<ScheduleSessionChip> Sessions { get; set; } = [];
+
+    /// <summary>True when this day or any session on it requires user review (e.g. injury adjustment or easier alternative).</summary>
+    public bool HasReviewFlag { get; set; }
+
     /// <summary>True when this day is today's date.</summary>
     public bool IsToday { get; init; }
 
     /// <summary>True when today's workout has been completed.</summary>
-    public bool IsCompleted { get; init; }
+    public bool IsCompleted { get; set; }
 
     /// <summary>True for rest days (no workout).</summary>
     public bool IsRestDay { get; init; }

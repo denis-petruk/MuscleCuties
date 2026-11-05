@@ -61,14 +61,48 @@ public static class PostgresSchemaMigrations
         GRANT SELECT ON ops.schema_metadata TO musclecuties_app, musclecuties_auth;
         """;
 
+    public const string BaseSchemaResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.001_base_schema.sql";
+
+    public const string SchemaFingerprintResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.002_schema_fingerprint.sql";
+
+    public const string ScheduleSeamResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.003_schedule_seam.sql";
+
     private static readonly IReadOnlyList<MigrationScriptDefinition> OrderedScripts =
     [
-        new(1, "001_schema_supplement_and_metadata", PostgresSchemaBootstrap.SchemaSupplementResourceName),
-        new(2, "002_security_policies_and_grants", PostgresSchemaBootstrap.SecurityScriptResourceName),
-        new(3, "003_all_session_schedule_data_seam", "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.003_schedule_seam.sql")
+        new(1, "001_base_schema.sql", BaseSchemaResourceName),
+        new(2, "002_schema_fingerprint.sql", SchemaFingerprintResourceName),
+        new(3, "003_schedule_seam.sql", ScheduleSeamResourceName)
     ];
 
     public static IReadOnlyList<MigrationScriptDefinition> Scripts => OrderedScripts;
+
+    /// <summary>
+    /// Rehearses and verifies the complete migration chain offline, validating that all
+    /// embedded scripts exist, are non-empty, follow strict monotonic ordering, and yield valid SHA-256 checksums.
+    /// </summary>
+    public static async Task<IReadOnlyList<MigrationExecutionResult>> RehearseChainAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var results = new List<MigrationExecutionResult>();
+        for (var i = 0; i < OrderedScripts.Count; i++)
+        {
+            var script = OrderedScripts[i];
+            if (script.Version != i + 1)
+                throw new InvalidOperationException($"Migration script {script.ScriptName} has non-monotonic version {script.Version}. Expected {i + 1}.");
+
+            var sqlContent = await ReadScriptAsync(script.ResourceName, cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(sqlContent))
+                throw new InvalidOperationException($"Migration script {script.ScriptName} is empty or whitespace.");
+
+            var checksum = ComputeSha256Hex(sqlContent);
+            results.Add(new MigrationExecutionResult(script.Version, script.ScriptName, checksum, AlreadyApplied: false));
+        }
+
+        return results;
+    }
 
     public static async Task<SchemaMigrationSummary> ApplyMigrationsAsync(
         PostgresDbContext context,
