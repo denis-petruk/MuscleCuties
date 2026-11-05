@@ -30,6 +30,10 @@ if command('git', 'rev-parse', 'HEAD') != commit and command('git', 'rev-parse',
 sdk = command('dotnet', '--version')
 if not sdk.startswith('10.0.'): fail(f'unexpected SDK version: {sdk}')
 
+tools = command('./.tools/dotnet-lambda', 'help') if os.path.exists('./.tools/dotnet-lambda') else ''
+if tools and 'Amazon Lambda Tools for .NET Core applications (7.0.0)' not in tools:
+    fail('unexpected Lambda Tools version')
+
 tools = command('./.tools/dotnet-lambda', 'help')
 if tools.splitlines()[:1] != ['Amazon Lambda Tools for .NET Core applications (7.0.0)']:
     fail('unexpected Lambda Tools version')
