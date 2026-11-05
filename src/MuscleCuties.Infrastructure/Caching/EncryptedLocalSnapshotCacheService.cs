@@ -9,14 +9,15 @@ public sealed class EncryptedLocalSnapshotCacheService(
     string appDataDirectory,
     ISnapshotCacheKeyStore keyStore,
     Action<string>? protectPath = null,
-    TimeSpan? defaultStaleWindow = null) : ILocalCacheService, IDisposable
+    TimeSpan? defaultStaleWindow = null,
+    string? environmentName = null) : ILocalCacheService, IDisposable
 {
     private const int AesKeySizeBytes = 32;
     private const int NonceSizeBytes = 12;
     private const int AuthenticationTagSizeBytes = 16;
     private const int MaximumSnapshotBytes = 2 * 1024 * 1024;
     private const int DefaultStaleHours = 12;
-    private const string CacheDirectoryName = "snapshot-cache";
+    private const string DefaultCacheDirectoryName = "snapshot-cache";
     private const string SnapshotFileExtension = ".mcsnap";
     private const string ActiveWorkoutKind = "active-workout";
     private const string CycleStateKind = "cycle-state";
@@ -25,6 +26,13 @@ public sealed class EncryptedLocalSnapshotCacheService(
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
     private readonly SemaphoreSlim _gate = new(1, 1);
     private readonly TimeSpan _staleWindow = defaultStaleWindow ?? TimeSpan.FromHours(DefaultStaleHours);
+    private readonly string _environmentName = string.IsNullOrWhiteSpace(environmentName)
+        ? "default"
+        : environmentName.Trim().ToLowerInvariant();
+    private readonly string _cacheDirectoryName = string.IsNullOrWhiteSpace(environmentName) ||
+                                                 string.Equals(environmentName, "default", StringComparison.OrdinalIgnoreCase)
+        ? DefaultCacheDirectoryName
+        : $"snapshot-cache_{environmentName.Trim().ToLowerInvariant()}";
     private Guid? _activeAccountId;
 
     public async Task ActivateAccountAsync(Guid accountId, CancellationToken cancellationToken = default)
@@ -40,7 +48,7 @@ public sealed class EncryptedLocalSnapshotCacheService(
 
             // A new process has no active account in memory. Keep its encrypted snapshots
             // only when every persisted file belongs to the authenticated account.
-            var directory = Path.Combine(appDataDirectory, CacheDirectoryName);
+            var directory = Path.Combine(appDataDirectory, _cacheDirectoryName);
             var accountFilePrefix = $"{accountId:N}_";
             var hasOtherAccountFiles = Directory.Exists(directory) &&
                                        Directory.EnumerateFiles(directory).Any(path =>
@@ -163,7 +171,7 @@ public sealed class EncryptedLocalSnapshotCacheService(
             var tag = new byte[AuthenticationTagSizeBytes];
             using (var aes = new AesGcm(key, AuthenticationTagSizeBytes))
             {
-                aes.Encrypt(nonce, plaintext, ciphertext, tag, AssociatedData(accountId, snapshotKind));
+                aes.Encrypt(nonce, plaintext, ciphertext, tag, AssociatedData(accountId, snapshotKind, _environmentName));
             }
 
             var payload = new byte[NonceSizeBytes + AuthenticationTagSizeBytes + ciphertext.Length];
@@ -171,7 +179,7 @@ public sealed class EncryptedLocalSnapshotCacheService(
             tag.CopyTo(payload, NonceSizeBytes);
             ciphertext.CopyTo(payload, NonceSizeBytes + AuthenticationTagSizeBytes);
 
-            var directory = Path.Combine(appDataDirectory, CacheDirectoryName);
+            var directory = Path.Combine(appDataDirectory, _cacheDirectoryName);
             Directory.CreateDirectory(directory);
             protectPath?.Invoke(directory);
             var target = SnapshotPath(directory, accountId, snapshotKind);
@@ -207,9 +215,17 @@ public sealed class EncryptedLocalSnapshotCacheService(
         try
         {
             EnsureActiveAccount(accountId);
-            var path = SnapshotPath(Path.Combine(appDataDirectory, CacheDirectoryName), accountId, snapshotKind);
+            var directory = Path.Combine(appDataDirectory, _cacheDirectoryName);
+            var path = SnapshotPath(directory, accountId, snapshotKind);
             if (!File.Exists(path))
-                return null;
+            {
+                var legacyDirectory = Path.Combine(appDataDirectory, DefaultCacheDirectoryName);
+                var legacyPath = SnapshotPath(legacyDirectory, accountId, snapshotKind);
+                if (File.Exists(legacyPath))
+                    path = legacyPath;
+                else
+                    return null;
+            }
 
             var key = await keyStore.ReadAsync(cancellationToken).ConfigureAwait(false);
             if (key is not { Length: AesKeySizeBytes })
@@ -224,12 +240,24 @@ public sealed class EncryptedLocalSnapshotCacheService(
             try
             {
                 using var aes = new AesGcm(key, AuthenticationTagSizeBytes);
-                aes.Decrypt(
-                    payload.AsSpan(0, NonceSizeBytes),
-                    payload.AsSpan(NonceSizeBytes + AuthenticationTagSizeBytes),
-                    payload.AsSpan(NonceSizeBytes, AuthenticationTagSizeBytes),
-                    plaintext,
-                    AssociatedData(accountId, snapshotKind));
+                try
+                {
+                    aes.Decrypt(
+                        payload.AsSpan(0, NonceSizeBytes),
+                        payload.AsSpan(NonceSizeBytes + AuthenticationTagSizeBytes),
+                        payload.AsSpan(NonceSizeBytes, AuthenticationTagSizeBytes),
+                        plaintext,
+                        AssociatedData(accountId, snapshotKind, _environmentName));
+                }
+                catch (CryptographicException)
+                {
+                    aes.Decrypt(
+                        payload.AsSpan(0, NonceSizeBytes),
+                        payload.AsSpan(NonceSizeBytes + AuthenticationTagSizeBytes),
+                        payload.AsSpan(NonceSizeBytes, AuthenticationTagSizeBytes),
+                        plaintext,
+                        LegacyAssociatedData(accountId, snapshotKind));
+                }
                 return JsonSerializer.Deserialize<CachedSnapshotEnvelope<T>>(plaintext, SerializerOptions);
             }
             catch (CryptographicException)
@@ -265,9 +293,15 @@ public sealed class EncryptedLocalSnapshotCacheService(
     private async Task ClearCoreAsync(CancellationToken cancellationToken)
     {
         await keyStore.RemoveAsync(cancellationToken).ConfigureAwait(false);
-        var directory = Path.Combine(appDataDirectory, CacheDirectoryName);
+        var directory = Path.Combine(appDataDirectory, _cacheDirectoryName);
         if (Directory.Exists(directory))
             Directory.Delete(directory, recursive: true);
+        var legacyDirectory = Path.Combine(appDataDirectory, DefaultCacheDirectoryName);
+        if (!string.Equals(_cacheDirectoryName, DefaultCacheDirectoryName, StringComparison.Ordinal) &&
+            Directory.Exists(legacyDirectory))
+        {
+            Directory.Delete(legacyDirectory, recursive: true);
+        }
     }
 
     private void EnsureActiveAccount(Guid accountId)
@@ -279,7 +313,10 @@ public sealed class EncryptedLocalSnapshotCacheService(
     private static string SnapshotPath(string directory, Guid accountId, string snapshotKind) =>
         Path.Combine(directory, $"{accountId:N}_{snapshotKind}{SnapshotFileExtension}");
 
-    private static byte[] AssociatedData(Guid accountId, string snapshotKind) =>
+    private static byte[] AssociatedData(Guid accountId, string snapshotKind, string environment) =>
+        Encoding.ASCII.GetBytes($"{accountId:N}:{snapshotKind}:{environment}:v2");
+
+    private static byte[] LegacyAssociatedData(Guid accountId, string snapshotKind) =>
         Encoding.ASCII.GetBytes($"{accountId:N}:{snapshotKind}:v1");
 
     public void Dispose() => _gate.Dispose();
