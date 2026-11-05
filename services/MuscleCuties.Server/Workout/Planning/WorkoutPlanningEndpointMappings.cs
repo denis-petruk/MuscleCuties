@@ -53,9 +53,9 @@ public static class WorkoutPlanningEndpointMappings
             return Results.Ok(new StrengthStyleOfferDismissResult(await store.DismissAsync(userId, offerId, cancellationToken).ConfigureAwait(false)));
         }).RequireAuthorization();
         endpoints.MapGet(CatalogRoute, async (
-                [FromServices] GetWorkoutPlanningCatalogUseCase catalog,
+                [FromServices] IWorkoutPlanningApplicationService planningService,
                 CancellationToken cancellationToken) =>
-            Results.Ok(await catalog.ExecuteAsync(cancellationToken).ConfigureAwait(false)))
+            Results.Ok(await planningService.GetCatalogAsync(cancellationToken).ConfigureAwait(false)))
             .RequireAuthorization();
 
         endpoints.MapGet(ExerciseExclusionCatalogRoute, async (
@@ -84,12 +84,12 @@ public static class WorkoutPlanningEndpointMappings
         endpoints.MapPost(StrengthPreviewRoute, async (
                 StrengthPlanPreviewRequestV020 request,
                 ClaimsPrincipal principal,
-                [FromServices] PreviewStrengthPlanV020UseCase preview,
+                [FromServices] IWorkoutPlanningApplicationService planningService,
                 CancellationToken cancellationToken) =>
             {
                 if (!TryGetUserId(principal, out var ownerUserId))
                     return Results.Unauthorized();
-                var result = await preview.ExecuteAsync(ownerUserId, request, cancellationToken)
+                var result = await planningService.PreviewPlanAsync(ownerUserId, request, cancellationToken)
                     .ConfigureAwait(false);
                 return result.Status == StatusInvalidInput
                     ? Results.BadRequest(result)
@@ -100,7 +100,7 @@ public static class WorkoutPlanningEndpointMappings
         endpoints.MapPost(StrengthProposalsRoute, async (
                 StrengthPlanPreviewRequestV020 request,
                 ClaimsPrincipal principal,
-                [FromServices] CreateStrengthPlanProposalV020UseCase proposals,
+                [FromServices] IWorkoutPlanningApplicationService planningService,
                 CancellationToken cancellationToken) =>
             {
                 if (!TryGetUserId(principal, out var ownerUserId))
@@ -115,7 +115,7 @@ public static class WorkoutPlanningEndpointMappings
 
                 try
                 {
-                    var result = await proposals.ExecuteAsync(ownerUserId, request, cancellationToken)
+                    var result = await planningService.CreateProposalAsync(ownerUserId, request, cancellationToken)
                         .ConfigureAwait(false);
                     return Results.Ok(result);
                 }
@@ -134,7 +134,7 @@ public static class WorkoutPlanningEndpointMappings
                 Guid proposalId,
                 AcceptStrengthPlanProposalRequestV020 request,
                 ClaimsPrincipal principal,
-                [FromServices] AcceptStrengthPlanProposalV020UseCase proposals,
+                [FromServices] IWorkoutPlanningApplicationService planningService,
                 CancellationToken cancellationToken) =>
             {
                 if (!TryGetUserId(principal, out var ownerUserId))
@@ -142,7 +142,7 @@ public static class WorkoutPlanningEndpointMappings
 
                 if (request.ProposalId != proposalId)
                     return Results.BadRequest();
-                var result = await proposals.ExecuteAsync(ownerUserId, request, cancellationToken)
+                var result = await planningService.AcceptProposalAsync(ownerUserId, request, cancellationToken)
                     .ConfigureAwait(false);
                 return result.Status switch
                 {
