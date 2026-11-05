@@ -173,4 +173,42 @@ public sealed class StrengthProgressionRuleTests
         Assert.Equal(StrengthProgressionRule.StatusBlockedByTierCap, decisions[1].ProgressionStatus);
         Assert.Equal(StrengthProgressionRule.ConcurrentProgressionCapExceeded, decisions[1].ReasonCode);
     }
+
+    [Fact]
+    public void DoubleProgression_IncompleteReps_MaintainsLoadWithoutProgression()
+    {
+        var week1 = new DoubleProgressionWeekPerformance(1, [new CompletedWorkingSet(12, StartingLoad, 2)]);
+        var week2 = new DoubleProgressionWeekPerformance(2, [new CompletedWorkingSet(10, StartingLoad, 2)]); // target is 12, only 10 completed
+
+        var candidate = new MuscleProgressionCandidate(
+            MajorMuscleGroup.Chest, 101, StartingLoad, Increment, ExerciseMovementCategory.Compound,
+            [week1, week2], 8, 8);
+
+        var decisions = StrengthProgressionRule.ResolveDoubleProgression(
+            EffectiveExperienceTier.Tier1BeginnerOrNew, [candidate]);
+
+        var decision = Assert.Single(decisions);
+        Assert.False(decision.LoadIncreased);
+        Assert.Equal(StartingLoad, decision.PrescribedLoad);
+        Assert.Equal(StrengthProgressionRule.StatusMaintained, decision.ProgressionStatus);
+    }
+
+    [Fact]
+    public void DoubleProgression_ZeroCompletedWorkingSets_MaintainsLoad()
+    {
+        var week1 = new DoubleProgressionWeekPerformance(1, []);
+        var week2 = new DoubleProgressionWeekPerformance(2, []);
+
+        var candidate = new MuscleProgressionCandidate(
+            MajorMuscleGroup.Chest, 101, StartingLoad, Increment, ExerciseMovementCategory.Compound,
+            [week1, week2], 8, 8);
+
+        var decisions = StrengthProgressionRule.ResolveDoubleProgression(
+            EffectiveExperienceTier.Tier1BeginnerOrNew, [candidate]);
+
+        var decision = Assert.Single(decisions);
+        Assert.False(decision.LoadIncreased);
+        Assert.Equal(StartingLoad, decision.PrescribedLoad);
+        Assert.Equal(StrengthProgressionRule.StatusMaintained, decision.ProgressionStatus);
+    }
 }
