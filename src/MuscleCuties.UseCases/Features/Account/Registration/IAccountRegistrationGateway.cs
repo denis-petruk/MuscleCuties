@@ -1,3 +1,4 @@
+using MuscleCuties.Contracts.Account;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Account.Registration;
