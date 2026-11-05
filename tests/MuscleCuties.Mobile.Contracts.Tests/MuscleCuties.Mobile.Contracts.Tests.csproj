@@ -28,5 +28,6 @@
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/ILocalPhotoCacheService.cs" Link="Mobile/ILocalPhotoCacheService.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/MobilePhotoVaultStore.cs" Link="Mobile/MobilePhotoVaultStore.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Configuration/AppEndpointConfiguration.cs" Link="Mobile/AppEndpointConfiguration.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Services/Api/ApiFailurePresenter.cs" Link="Mobile/ApiFailurePresenter.cs" />
   </ItemGroup>
 </Project>
