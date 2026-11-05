@@ -61,7 +61,6 @@ public static class ApplicationCompositionExtensions
         services.AddScoped<ICyclePhaseCalculator, CyclePhaseCalculator>();
         services.AddScoped<ICyclePredictionPlanner, CyclePredictionPlanner>();
         services.AddScoped<IDashboardPlanner, DashboardPlanner>();
-        services.AddScoped<IWorkoutPlanner, WorkoutPlanner>();
 
         services.AddScoped<CloudDailyCheckInStore>();
         services.AddSingleton<IDailyCheckInStore, ScopedCloudDailyCheckInStore>();
