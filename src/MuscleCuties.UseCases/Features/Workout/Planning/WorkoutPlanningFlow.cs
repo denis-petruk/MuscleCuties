@@ -5,6 +5,32 @@ namespace MuscleCuties.UseCases.Features.Workout.Planning;
 public enum WorkoutPlanningBackActionDto { ClosePreview, ResumeAfterApply, Leave }
 public enum WorkoutPlanningSuccessDestinationDto { Dashboard, Workout }
 
+public enum WorkoutPlanningStateDto
+{
+    Initial,
+    PreviewReady,
+    Accepting,
+    UncertainAcceptance,
+    Accepted,
+    NavigationPending,
+    Invalidated,
+    Completed
+}
+
+public enum WorkoutPlanningEventDto
+{
+    PreviewLoaded,
+    StartAccepting,
+    AcceptSucceeded,
+    AcceptTimedOutOrNetworkFailed,
+    AcceptConflictOrStale,
+    AcceptValidationFailed,
+    NavigateStarted,
+    NavigateCompleted,
+    InvalidateInputs,
+    ClosePreview
+}
+
 /// <summary>Presentation-facing adapter for the domain's planning-flow decisions.</summary>
 public static class WorkoutPlanningFlow
 {
@@ -34,4 +60,15 @@ public static class WorkoutPlanningFlow
         bool reducedVolumeRequired, IEnumerable<int> exerciseConditionIds) =>
         WorkoutPlanningFlowRule.AcceptanceAcknowledgments(replacesExistingPlan, reducedVolumeRequired,
             exerciseConditionIds);
+
+    public static WorkoutPlanningStateDto Transition(WorkoutPlanningStateDto current, WorkoutPlanningEventDto trigger) =>
+        (WorkoutPlanningStateDto)WorkoutPlanningFlowRule.Transition(
+            (WorkoutPlanningState)current,
+            (WorkoutPlanningEvent)trigger);
+
+    public static bool CanAcceptInState(WorkoutPlanningStateDto state, bool hasLease, bool feasible) =>
+        WorkoutPlanningFlowRule.CanAcceptInState((WorkoutPlanningState)state, hasLease, feasible);
+
+    public static bool RequiresReplacementConsentPrompt(WorkoutPlanningStateDto state, bool replacesExistingPlan) =>
+        WorkoutPlanningFlowRule.RequiresReplacementConsentPrompt((WorkoutPlanningState)state, replacesExistingPlan);
 }
