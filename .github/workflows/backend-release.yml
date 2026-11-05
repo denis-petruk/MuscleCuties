@@ -95,7 +95,9 @@ jobs:
         run: |
           echo "Promoting verified release ${{ github.sha }} to Staging"
           mkdir -p artifacts
-          echo '{ "status": "verified", "contract_version": 1, "environment": "staging", "source_sha": "${{ github.sha }}" }' > artifacts/deployment-report.json
+          HTTP_LIVE=$(curl -s -o /dev/null -w "%{http_code}" https://staging-api.musclecuties.app/health/live || echo "000")
+          HTTP_READY=$(curl -s -o /dev/null -w "%{http_code}" https://staging-api.musclecuties.app/health/ready || echo "000")
+          echo "{\"status\": \"verified\", \"contract_version\": 1, \"environment\": \"staging\", \"source_sha\": \"${{ github.sha }}\", \"http_live\": \"$HTTP_LIVE\", \"http_ready\": \"$HTTP_READY\"}" > artifacts/deployment-report.json
 
       - name: Upload deployment report
         uses: actions/upload-artifact@v4
@@ -136,7 +138,9 @@ jobs:
         run: |
           echo "Promoting verified release ${{ github.sha }} to Beta"
           mkdir -p artifacts
-          echo '{ "status": "verified", "contract_version": 1, "environment": "beta", "source_sha": "${{ github.sha }}" }' > artifacts/deployment-report.json
+          HTTP_LIVE=$(curl -s -o /dev/null -w "%{http_code}" https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com/health/live || echo "000")
+          HTTP_READY=$(curl -s -o /dev/null -w "%{http_code}" https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com/health/ready || echo "000")
+          echo "{\"status\": \"verified\", \"contract_version\": 1, \"environment\": \"beta\", \"source_sha\": \"${{ github.sha }}\", \"http_live\": \"$HTTP_LIVE\", \"http_ready\": \"$HTTP_READY\"}" > artifacts/deployment-report.json
 
       - name: Upload deployment report
         uses: actions/upload-artifact@v4

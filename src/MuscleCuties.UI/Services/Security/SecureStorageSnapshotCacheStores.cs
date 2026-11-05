@@ -30,19 +30,28 @@ public sealed class SecureStorageSnapshotCacheKeyStore : ISnapshotCacheKeyStore
     }
 }
 
-public sealed class SecureStorageBackendSessionTokenStore(string? sessionKeyName = null) : IBackendSessionTokenStore
+public sealed class SecureStorageBackendSessionTokenStore(
+    string? sessionKeyName = null,
+    bool allowLegacyMigration = false) : IBackendSessionTokenStore
 {
     private const string LegacySessionKeyName = "mc_backend_session_tokens_v1";
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
     private readonly string _sessionKeyName = string.IsNullOrWhiteSpace(sessionKeyName) ? LegacySessionKeyName : sessionKeyName;
+    private readonly bool _allowLegacyMigration = allowLegacyMigration;
 
     public async Task<BackendSessionTokens?> ReadTokensAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         var raw = await SecureStorage.Default.GetAsync(_sessionKeyName).ConfigureAwait(false);
-        if (string.IsNullOrWhiteSpace(raw) && !string.Equals(_sessionKeyName, LegacySessionKeyName, StringComparison.Ordinal))
+        if (string.IsNullOrWhiteSpace(raw) && _allowLegacyMigration && !string.Equals(_sessionKeyName, LegacySessionKeyName, StringComparison.Ordinal))
         {
             raw = await SecureStorage.Default.GetAsync(LegacySessionKeyName).ConfigureAwait(false);
+            if (!string.IsNullOrWhiteSpace(raw))
+            {
+                // Safely migrate to partitioned key and remove legacy token to prevent cross-environment contamination
+                await SecureStorage.Default.SetAsync(_sessionKeyName, raw).ConfigureAwait(false);
+                SecureStorage.Default.Remove(LegacySessionKeyName);
+            }
         }
         return string.IsNullOrWhiteSpace(raw)
             ? null

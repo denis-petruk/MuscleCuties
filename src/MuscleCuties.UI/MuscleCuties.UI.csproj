@@ -37,10 +37,10 @@
         <MauiStrictXamlCompilation>true</MauiStrictXamlCompilation>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(AppTargetEnvironment)' == 'Staging'">
+    <PropertyGroup Condition="'$(AppTargetEnvironment)' == 'Staging' or '$(AppTargetEnvironment)' == 'staging'">
         <DefineConstants>$(DefineConstants);APP_ENV_STAGING</DefineConstants>
     </PropertyGroup>
-    <PropertyGroup Condition="'$(AppTargetEnvironment)' == 'Beta'">
+    <PropertyGroup Condition="'$(AppTargetEnvironment)' == 'Beta' or '$(AppTargetEnvironment)' == 'beta'">
         <DefineConstants>$(DefineConstants);APP_ENV_BETA</DefineConstants>
     </PropertyGroup>
 

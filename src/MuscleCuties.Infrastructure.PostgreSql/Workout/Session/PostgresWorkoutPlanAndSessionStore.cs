@@ -1244,6 +1244,20 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             var isCompleted = activeDays.All(day => completedDayIds.Contains(day.Id));
             var title = string.Join(" + ", activeDays.Select(day => day.Name)
                 .Distinct(StringComparer.Ordinal));
+            var sessionItems = activeDays.Select(day =>
+            {
+                var dayExercises = exercisesByDayId.GetValueOrDefault(day.Id, []);
+                var dayTag = BuildPrimaryTag(day, dayExercises, exercisesById);
+                return new WorkoutScheduleSessionItem(
+                    ToStableWorkoutIntId(day.Id),
+                    dayTag,
+                    day.Name,
+                    day.DayOrder,
+                    completedDayIds.Contains(day.Id),
+                    day.IsOptional,
+                    day.IsEasierAlternative);
+            }).ToList();
+
             result.Add(new WorkoutScheduleEntry(
                 date,
                 weekIndex,
@@ -1259,7 +1273,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 IsEasierAlternative = activeDays.All(day => day.IsEasierAlternative),
                 CompanionWorkoutDayId = activeDays.Skip(1).FirstOrDefault() is { } companionDay
                     ? ToStableWorkoutIntId(companionDay.Id)
-                    : null
+                    : null,
+                Sessions = sessionItems
             });
         }
 

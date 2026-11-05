@@ -31,8 +31,11 @@ public static class AppEndpointConfiguration
             return AppTargetEnvironment.Local;
 #elif APP_ENV_STAGING
             return AppTargetEnvironment.Staging;
-#else
+#elif APP_ENV_BETA
             return AppTargetEnvironment.Beta;
+#else
+            throw new InvalidOperationException(
+                "Release builds must explicitly define either APP_ENV_STAGING or APP_ENV_BETA. Implicit fallback to Beta is disabled for release safety.");
 #endif
         }
     }

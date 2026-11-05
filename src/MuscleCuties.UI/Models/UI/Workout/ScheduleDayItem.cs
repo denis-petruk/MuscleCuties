@@ -31,6 +31,9 @@ public sealed class ScheduleDayItem
     /// <summary>Second session on a safely paired strength day, when present.</summary>
     public int? CompanionWorkoutDayId { get; init; }
 
+    /// <summary>All session IDs scheduled on this day (ordered by DayOrder).</summary>
+    public IReadOnlyList<int> SessionWorkoutDayIds { get; init; } = [];
+
     /// <summary>True when this day is today's date.</summary>
     public bool IsToday { get; init; }
 
