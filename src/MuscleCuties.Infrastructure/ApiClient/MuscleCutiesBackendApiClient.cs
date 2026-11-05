@@ -44,7 +44,9 @@ public enum BackendApiStatus
     NotFound = 4,
     OfflineRejected = 5,
     OfflineStaleCacheHit = 6,
-    ServerError = 7
+    ServerError = 7,
+    RateLimited = 8,
+    Timeout = 9
 }
 
 public sealed record BackendApiResponse<T>(
