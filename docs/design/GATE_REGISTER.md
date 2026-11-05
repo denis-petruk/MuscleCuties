@@ -2,6 +2,8 @@
 
 This register owns current UI/style and deployed-latency evidence. STATUS.md and ROADMAP.md provide concise checkpoints and link here rather than duplicating this evidence. Local automated gates are green. **2026-11-04:** the owner explicitly authorized an agent UI build/run pass; UI build **0 warnings / 0 errors**, Core **1055/1055**, Mobile Contracts **16/16**, Server build **0/0**. Deployed staging latency is measured and **failing**; production is undeployed, so production p99 is unavailable. The remaining acceptance work is **owner device verification** and **deployed performance/release**.
 
+**Later owner follow-up, 2026-11-04: G5 reopened.** Six supplied screenshots show privacy-cover, archive-width and meal-editor defects; the owner also reports blocked scrolling, missing Daily Food Log nutrient detail, plan recovery failure and a native Button.LayoutButton crash. See the [remediation plan and evidence distinctions](UI_UX_BACKEND_REMEDIATION_PLAN_2026-11-04.md). The historical passes below are not proof that these scenarios work; the failing installed binary's source/runtime identity remains unknown. No new build, test suite, app run or screenshot capture was performed during the documentation follow-up.
+
 | Gate or rule | Proof run on the current tree | Result |
 | --- | --- | --- |
 | Pinned backend toolchain | `global.json` requests SDK `10.0.200` with `latestFeature`; local run resolved installed `10.0.203`, while CI can still take `10.0.403` | Pass |
@@ -37,6 +39,12 @@ This register owns current UI/style and deployed-latency evidence. STATUS.md and
 | No whitespace defects | `git diff --check` | Pass |
 
 ## Open items
+
+### Owner-reported UI, recovery and wiring defects — pending implementation
+
+The [remediation plan](UI_UX_BACKEND_REMEDIATION_PLAN_2026-11-04.md) tracks PV01/AH01 privacy/archive composition, NM01/NM02 meal scrolling/editing, NM03 selected-date nutrient parity/coverage, PG01 plan error/recovery and CR01 native crash investigation. CR01 is a reported P0 blocker with root cause/reproduction unverified. The [earlier app-wide audit](APP_WIDE_CONSISTENCY_AUDIT_2026-11-04.md) remains open, including injury tri-state, failed hydration saves, cached cycle uncertainty and accessible custom controls.
+
+Current source pins MAUI 10.0.60, but its comment claiming inclusion of the native fix is contradicted by the primary upstream comparison linked in the plan. Establish actual installed package provenance and a controlled compatible candidate before attributing the crash to framework or generator. Record source/non-UI behavior evidence separately from native visual, touch, keyboard and lifecycle acceptance. Drafted [UI](orchestration/01-ui-ux-remediation-orchestrator.md) / [API](orchestration/02-backend-wiring-orchestrator.md) prompts do not activate any previous execution authorization.
 
 ### Deployed performance — instrumentation landed, gate re-measurement pending
 
