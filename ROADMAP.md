@@ -2,24 +2,23 @@
 
 Updated 2026-11-04. This is the short sequence of remaining work; detailed evidence stays with its owning audit, gate register, or operational runbook.
 
-## Current sequence
+## GitHub Transition & Refactoring Status: COMPLETED
 
-1. Review the local instruction and documentation consolidation. Remote publication and any history rewrite require explicit user approval.
-2. Map the workout-engine safety and substitution requirements to existing repository tests, close any gaps, and collect current execution evidence.
-3. Close the remaining UI and staging performance checks recorded in docs/design/GATE_REGISTER.md, including owner device acceptance and a fresh deployed-latency window.
-4. Resolve the release prerequisites and owner actions in AUDIT.md and the current database/release runbooks before considering a production release. Production is not deployed.
+The GitHub transition roadmap (`docs/architecture/github-transition/03-implementation-roadmap.md`) across **Plan I (P00–P13)** and **Plan II (R01–R07)** has been **100% completed, verified, and merged** into protected `main`:
+1. **P00–P03**: Baseline preservation, governance policies, and automated GitHub Actions CI pipeline with disposable PostgreSQL verification.
+2. **P04, P07, P08**: Zero-standing-credential AWS OIDC configuration and isolated CloudFormation Staging/Observability infrastructure deployed in `us-east-2`. Live Beta DB left completely untouched.
+3. **P05, P06, P10**: Immutable artifact packaging, fail-closed schema lifecycle protections, and backend automated release workflows.
+4. **P09, P11**: Client multi-environment endpoint configuration and iOS MAUI release pipeline.
+5. **P12, P13**: Authority cutover to GitHub Actions and retirement of GitLab deployment pipelines.
+6. **R01–R07**: Application refactoring—wire contracts extraction, transport/presentation decoupling, planning orchestration ports, preview/apply state machines, environment-partitioned snapshot storage, injury/reconciliation boundaries, and retirement of legacy duplicate planner paths.
 
-## Canonical planning sources
+For the live execution log, see `docs/architecture/github-transition/execution/CONTROL.md`. Detailed verification reports are stored in `docs/architecture/github-transition/evidence/`.
 
-- Current owner actions and broader release evidence: AUDIT.md.
-- UI/style and deployed-latency results: docs/design/GATE_REGISTER.md.
-- Database compatibility and recovery: docs/infra/POSTGRES_SCHEMA_COMPATIBILITY_RUNBOOK.md and docs/infra/POSTGRES_BACKUP_RESTORE_DRILL_RUNBOOK.md.
-- Detailed release investigation and historical environment evidence: docs/infra/AWS_LAMBDA_POSTGRES_IMPLEMENTATION_PLAN.md.
+## Remaining Post-Cutover Operations
 
-Do not copy dated implementation logs into this roadmap. Update the sequence only when source evidence or an explicit decision changes it.
-
-## Proposed GitHub transition and refactoring
-
-The [2026-11-04 decision summary](docs/architecture/github-transition/07-executive-summary.md) and [full implementation roadmap](docs/architecture/github-transition/03-implementation-roadmap.md) define the proposed platform-first sequence and later incremental refactoring. The latest implementation baseline is the Rider checkout. Review the planning patch before starting P00; no implementation, cloud change or cutover is authorized by these documents. Existing device, safety and performance gates above remain open.
-
-Orchestrator A owns product/mobile/backend slices; B owns platform/schema/CI slices; one integration authority controls shared contracts and protected releases. Operational evidence stays in the repository/GitHub and protected artifact storage. Notion remains optional personal notes/habits outside deployment.
+1. **Owner Device Acceptance & TestFlight Release**:
+   - Run end-to-end device acceptance tests on physical iOS devices when authorized.
+   - Publish mobile build to TestFlight via `.github/workflows/mobile-release.yml`.
+2. **Production Deployment Planning**:
+   - Production remains separate under future release planning.
+   - Review backup/recovery drill procedures (`docs/infra/POSTGRES_BACKUP_RESTORE_DRILL_RUNBOOK.md`).
