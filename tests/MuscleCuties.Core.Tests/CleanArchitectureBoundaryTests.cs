@@ -307,6 +307,46 @@ public class CleanArchitectureBoundaryTests
             $"Found {violations.Count} migrated ViewModel(s) importing MuscleCuties.Core directly:\n" + string.Join("\n", violations));
     }
 
+    [Fact]
+    public void Zero_unauthorized_or_duplicate_workout_planners_or_fallback_generators()
+    {
+        // Enforce AGENTS.md invariant and R07 resolution:
+        // 1. No competing or duplicate IWorkoutPlanner / WorkoutPlanner classes exist.
+        // 2. MauiProgram / Composition has zero registrations for IWorkoutPlanner or WorkoutPlanner.
+        // 3. Keep one authoritative workout planning client in UI (IStrengthPlanProposalClientV020) and application service (IWorkoutPlanningApplicationService).
+
+        var allCsFiles = Directory.EnumerateFiles(RepoRoot, "*.cs", SearchOption.AllDirectories)
+            .Where(f => !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar) &&
+                        !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar) &&
+                        !f.Contains(Path.DirectorySeparatorChar + ".git" + Path.DirectorySeparatorChar) &&
+                        !f.EndsWith("CleanArchitectureBoundaryTests.cs", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var forbiddenTypeNames = new[] { "IWorkoutPlanner", "WorkoutPlanner" };
+        var violations = new List<string>();
+
+        foreach (var file in allCsFiles)
+        {
+            var content = File.ReadAllText(file);
+            foreach (var typeName in forbiddenTypeNames)
+            {
+                if (Regex.IsMatch(content, $@"\b(?:class|interface)\s+{typeName}\b"))
+                {
+                    violations.Add($"{Path.GetRelativePath(RepoRoot, file)} defines forbidden legacy duplicate planner type: '{typeName}'");
+                }
+
+                if (content.Contains($"<{typeName}>") || content.Contains($"<{typeName},") || content.Contains($", {typeName}>"))
+                {
+                    violations.Add($"{Path.GetRelativePath(RepoRoot, file)} contains forbidden DI registration or generic usage of '{typeName}'");
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} forbidden duplicate workout planner occurrences:\n" + string.Join("\n", violations));
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = AppContext.BaseDirectory;
