@@ -21,11 +21,12 @@ Owner baseline source: `/Users/denispetruk/RiderProjects/MuscleCuties` (commit `
 | **P07** | B/O | MERGED | `01906ab9` | `289afa61` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p07_staging_iac` | `platform/p07-staging-iac` / [PR #21](https://github.com/denis-petruk/MuscleCuties/pull/21) | Staging and observability CloudFormation templates validated; merged to main |
 | **P08** | B/O | DEPLOYED | `76fbd553` | - | - | CloudFormation Stacks | `MuscleCuties-Staging` & `MuscleCuties-Observability` deployed in us-east-2; S3 release bucket created with versioning; Beta DB untouched |
 | **P09** | A/I | MERGED | `289afa61` | `b5d66a3b` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_p09_client_endpoints` | `product/p09-client-endpoints` / [PR #22](https://github.com/denis-petruk/MuscleCuties/pull/22) | Explicit endpoint allowlist, safe Local debug default, partitioned cache/token keys, unit tests passing (25/25); merged to main |
-| **P10** | I/A/B/O | READY FOR REVIEW | `76fbd553` | `1b7e728e` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p10_backend_release` | `platform/p10-backend-release` / [PR #24](https://github.com/denis-petruk/MuscleCuties/pull/24) | \`.github/workflows/backend-release.yml\` created; \`validate-package.sh\` fixed (24/24 tests OK); live API health verified |
+| **P10** | I/A/B/O | MERGED | `76fbd553` | `1b7e728e` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p10_backend_release` | `platform/p10-backend-release` / [PR #24](https://github.com/denis-petruk/MuscleCuties/pull/24) | \`.github/workflows/backend-release.yml\` created; \`validate-package.sh\` fixed (24/24 tests OK); live API health verified; merged to main |
 | **P11** | A/O | MERGED | `b5d66a3b` | `7bdcb71a` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_p11_ios_release` | `product/p11-ios-release` / [PR #23](https://github.com/denis-petruk/MuscleCuties/pull/23) | iOS compilation targets, \`mobile-release.yml\` created, simulator build verified clean (0 errors, 0 warnings); merged to main |
-| **P12** | I/O | READY FOR REVIEW | `76fbd553` | `26c4100a` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p12_p13_cutover` | `platform/p12-p13-cutover` / [PR #25](https://github.com/denis-petruk/MuscleCuties/pull/25) | Beta authority transfer & preservation ledger documented |
-| **P13** | B/I/O | READY FOR REVIEW | `76fbd553` | `26c4100a` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p12_p13_cutover` | `platform/p12-p13-cutover` / [PR #25](https://github.com/denis-petruk/MuscleCuties/pull/25) | GitLab retired with rules: - when: never; README updated to GitHub Actions |
-| **R01-R07** | A/I | READY FOR EXECUTION | `76fbd553` | - | - | `product/r01-wire-contracts` | Application architecture refactoring |
+| **P12** | I/O | MERGED | `76fbd553` | `26c4100a` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p12_p13_cutover` | `platform/p12-p13-cutover` / [PR #25](https://github.com/denis-petruk/MuscleCuties/pull/25) | Beta authority transfer & preservation ledger documented; merged to main |
+| **P13** | B/I/O | MERGED | `76fbd553` | `26c4100a` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p12_p13_cutover` | `platform/p12-p13-cutover` / [PR #25](https://github.com/denis-petruk/MuscleCuties/pull/25) | GitLab retired with rules: - when: never; README updated to GitHub Actions; merged to main |
+| **R01** | A/I | READY FOR REVIEW | `e00d5752` | `2bf58938` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r01_wire_contracts` | `product/r01-wire-contracts` / [PR #26](https://github.com/denis-petruk/MuscleCuties/pull/26) | \`MuscleCuties.Contracts\` wire-only project created; Account & Onboarding DTOs extracted; 1,232 unit/contract tests passed |
+| **R02-R07** | A/I | PENDING R01 | `e00d5752` | - | - | - | Sequential Plan II refactoring packages |
 
 ---
 
@@ -60,7 +61,5 @@ Owner baseline source: `/Users/denispetruk/RiderProjects/MuscleCuties` (commit `
 
 ## 4. Next Checkpoint
 
-- Awaiting Owner Review & Merge for:
-  - [PR #24 (P10)](https://github.com/denis-petruk/MuscleCuties/pull/24)
-  - [PR #25 (P12 & P13)](https://github.com/denis-petruk/MuscleCuties/pull/25)
-- Following owner merge of PRs #24 and #25, begin Plan II Package R01 (`src/MuscleCuties.Contracts` wire contract extraction).
+- Awaiting CI pipeline completion and Owner Review & Merge for [PR #26 (R01)](https://github.com/denis-petruk/MuscleCuties/pull/26).
+- Follow with Plan II Package R02 (Presentation & Transport Adapters).
