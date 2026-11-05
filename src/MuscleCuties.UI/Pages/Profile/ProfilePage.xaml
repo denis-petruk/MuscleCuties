@@ -16,7 +16,8 @@
 
     <Grid RowDefinitions="Auto,*" BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
     <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
-        <Label Text="{loc:LocalizedText Profile_Page_You}" Style="{StaticResource PageTitle}" />
+        <Label Text="{loc:LocalizedText Profile_Page_You}" Style="{StaticResource PageTitle}"
+               SemanticProperties.HeadingLevel="Level1" />
     </Grid>
     <ScrollView Grid.Row="1">
         <VerticalStackLayout Padding="{DynamicResource PresentationPageContentPadding}" Spacing="{StaticResource UiSpaceContent}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">

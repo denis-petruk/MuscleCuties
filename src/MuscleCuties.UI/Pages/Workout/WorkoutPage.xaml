@@ -29,6 +29,7 @@
                 <Label
                     Text="{Binding WeekTitle, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource PageTitle}"
+                    SemanticProperties.HeadingLevel="Level1"
                     LineBreakMode="WordWrap" />
                 <Border
                     Style="{StaticResource PillBadge}"

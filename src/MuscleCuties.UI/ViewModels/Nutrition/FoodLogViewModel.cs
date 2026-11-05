@@ -29,6 +29,12 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     private readonly INutritionDailyLogUseCase _dailyLogUseCase;
     private readonly INutritionOverviewUseCase? _overviewUseCase;
     private readonly SemaphoreSlim _dateLoadLock = new(1, 1);
+    // F02: hydration writes are serialized and only the confirmed total is trusted. A failed
+    // write rolls the visible total back and keeps a retry target instead of silently claiming
+    // the amount was saved.
+    private readonly SemaphoreSlim _waterWriteLock = new(1, 1);
+    private int _confirmedWaterIntakeMl;
+    private int? _pendingWaterIntakeMl;
     private readonly Func<Task>? _navigateBackAsync;
     private Guid _currentLogId;
     private int _dateLoadVersion;
@@ -118,6 +124,13 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private int _waterIntakeMl;
 
+    [ObservableProperty] private bool _isSavingWater;
+
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasWaterSaveError))]
+    private string _waterSaveError = string.Empty;
+
+    public bool HasWaterSaveError => !string.IsNullOrWhiteSpace(WaterSaveError);
+
     public FoodLogViewModel(
         INutritionDailyLogUseCase dailyLogUseCase,
         IRecipePortionUseCase recipePortionUseCase,
@@ -142,7 +155,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         _getRecipesAndTemplatesUseCase = getRecipesAndTemplatesUseCase;
         _createRecipeUseCase = createRecipeUseCase;
         _overviewUseCase = overviewUseCase;
-
+        Breakdown = new NutritionBreakdownPresenter();
 
         MealSections.Add(BreakfastSection);
         MealSections.Add(LunchSection);
@@ -155,6 +168,9 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
         PopulateDateStrip(today);
     }
+
+    /// <summary>RM05: the same breakdown presentation the Nutrition page uses, loaded for this page's day.</summary>
+    public NutritionBreakdownPresenter Breakdown { get; }
 
     public bool IsPlainFoodEditor => !IsGroupedEditor;
     public bool CanDeleteEditingFood => IsEditingExisting && !IsMealContextLocked;
@@ -219,6 +235,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        Breakdown.Clear();
         _dateLoadLock.Dispose();
         GC.SuppressFinalize(this);
     }
@@ -240,6 +257,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     public void Deactivate()
     {
         _isActive = false;
+        Breakdown.Clear();
         CloseEditModal();
         if (_changeNotifier is not null) _changeNotifier.NutritionChanged -= OnNutritionChanged;
         CancelFoodSearch();
@@ -251,8 +269,52 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         return LoadLogForDateAsync(SelectedDate);
     }
 
+    /// <summary>
+    /// RM05: opens the shared breakdown for the day this page is showing. The captured load version
+    /// and date keep a slower response for a previous day from replacing the sheet.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenBreakdownAsync()
+    {
+        var date = SelectedDate;
+        var version = Volatile.Read(ref _dateLoadVersion);
+        var title = UiTextCatalog.Get("Nutrition_Breakdown_DailyTitle");
+        Breakdown.ShowLoading(title);
+
+        if (_overviewUseCase is null)
+        {
+            Breakdown.ShowError(title, UiTextCatalog.Get("Nutrition_Breakdown_LoadFailed"));
+            return;
+        }
+
+        try
+        {
+            var response = await _overviewUseCase.GetOverviewAsync(
+                new NutritionOverviewRequest(date, "Savoury"));
+            if (version != Volatile.Read(ref _dateLoadVersion) || date != SelectedDate)
+                return;
+
+            Breakdown.Show(
+                $"{title} · {date:MMM d}",
+                NutritionPresentationMapper.FromTotals(
+                    response.Consumed.Calories, response.Consumed.Protein,
+                    response.Consumed.Carbs, response.Consumed.Fats),
+                response.Micronutrients.Select(NutritionPresentationMapper.FromMicronutrientItem),
+                null,
+                NutritionBreakdownPresenter.DescribeCoverage(
+                    NutritionPresentationMapper.FromMicronutrientCoverage(response.MicronutrientCoverage)));
+        }
+        catch
+        {
+            if (version == Volatile.Read(ref _dateLoadVersion) && date == SelectedDate)
+                Breakdown.ShowError(title, UiTextCatalog.Get("Nutrition_Breakdown_LoadFailed"));
+        }
+    }
+
     partial void OnSelectedDateChanged(DateOnly value)
     {
+        // The sheet belongs to one day; moving the date closes it before any old response can land.
+        Breakdown.Clear();
         CloseEditModal();
         foreach (var section in MealSections)
         {
@@ -566,6 +628,19 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         IsGroupedEditor = ingredients.Count > 0;
     }
 
+    /// <summary>
+    /// NM02: an incomplete or invalid amount draft blocks the commit instead of quietly resending
+    /// the previous value for that ingredient.
+    /// </summary>
+    private bool ValidateEditingIngredients()
+    {
+        if (EditingIngredients.All(ingredient => ingredient.TryGetGrams(out _)))
+            return true;
+
+        ShowStatus(UiTextCatalog.Get("Nutrition_FoodLog_AmountError"));
+        return false;
+    }
+
     private FoodLogEntry BuildDraft()
     {
         return new(EditingItemId, _currentLogId, EditingMealType,
@@ -588,11 +663,34 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             return;
         }
 
+        if (!ValidateEditingIngredients())
+            return;
+
         var draft = BuildDraft();
         var date = _draftDate;
         var editing = IsEditingExisting;
         var quick = _quickDraft;
         var mealId = _editingLoggedMealId;
+
+        // NM02: snapshot the validated portions and the meal context before the awaited write. Rows are
+        // matched by row identity, so two occurrences of one food keep their own amounts, and an
+        // untouched row keeps its original record instead of being resaved from a display value.
+        var resolvedGrams = GroupedMealEditProjection.ResolveAmounts(
+            _editingMealIngredients.Select(ingredient => ingredient.Grams).ToArray(),
+            _editingMealIngredients.Select(ingredient => ingredient.FoodItemId).ToArray(),
+            EditingIngredients
+                .Select((row, index) => row.IsUnchanged
+                    ? (IngredientPortionEdit?)null
+                    : new IngredientPortionEdit(index, row.FoodItemId, row.Grams))
+                .ToArray());
+        var ingredientSnapshot = _editingMealIngredients
+            .Select((original, index) => resolvedGrams[index] == original.Grams
+                ? original
+                : original with { Grams = resolvedGrams[index], Amount = resolvedGrams[index] })
+            .ToArray();
+        var mealType = EditingMealType;
+        var mealTime = _draftTimestamp.TimeOfDay;
+
         await CommitFoodAsync(date, async () =>
         {
             var loggedItem = NutritionPresentationMapper.ToLoggedFood(draft);
@@ -601,16 +699,9 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
                 if (_overviewUseCase is null)
                     throw new InvalidOperationException("Meal editing is unavailable.");
 
-                var ingredientDtos = NutritionPresentationMapper.ToMealIngredients(
-                    _editingMealIngredients.Select(original =>
-                    {
-                        var amended = EditingIngredients.FirstOrDefault(i => i.FoodItemId == original.FoodItemId);
-                        return amended is null
-                            ? original
-                            : original with { Grams = amended.Grams, Amount = amended.Grams };
-                    }));
+                var ingredientDtos = NutritionPresentationMapper.ToMealIngredients(ingredientSnapshot);
                 await _overviewUseCase.UpdateMealAsync(new UpdateMealRequest(
-                    mealId.Value, date, EditingMealType.ToString(), _draftTimestamp.TimeOfDay, ingredientDtos));
+                    mealId.Value, date, mealType.ToString(), mealTime, ingredientDtos));
             }
             else if (editing) await _dailyLogUseCase.SaveFoodItemAsync(date, loggedItem, true);
             else if (quick is not null)
@@ -663,6 +754,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         if (committed)
         {
             await LoadLogForDateAsync(SelectedDate);
+            if (Breakdown.IsVisible)
+                await OpenBreakdownAsync();
             var success = successMessageProvider();
             if (!string.IsNullOrWhiteSpace(success))
             {
@@ -752,42 +845,89 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    public async Task AddWaterAsync(int amountMl)
+    public Task AddWaterAsync(int amountMl) => ChangeWaterAsync(amountMl);
+
+    [RelayCommand]
+    public Task RemoveWaterAsync(int amountMl) => ChangeWaterAsync(-amountMl);
+
+    [RelayCommand]
+    public async Task RetryWaterSaveAsync()
     {
-        WaterIntakeMl = Math.Max(0, WaterIntakeMl + amountMl);
+        var date = SelectedDate;
+        var target = _pendingWaterIntakeMl ?? WaterIntakeMl;
+        await WriteWaterAsync(date, target);
+    }
+
+    private async Task ChangeWaterAsync(int deltaMl)
+    {
+        var date = SelectedDate;
+        await _waterWriteLock.WaitAsync();
         try
         {
-            await _dailyLogUseCase.UpdateWaterIntakeAsync(SelectedDate, WaterIntakeMl);
+            if (date != SelectedDate)
+                return;
+
+            var target = Math.Max(0, WaterIntakeMl + deltaMl);
+            if (target == WaterIntakeMl)
+                return;
+
+            await PersistWaterAsync(date, target);
         }
-        catch
+        finally
         {
-            // Silent fallback
+            _waterWriteLock.Release();
         }
     }
 
-    [RelayCommand]
-    public async Task RemoveWaterAsync(int amountMl)
+    private async Task WriteWaterAsync(DateOnly date, int target)
     {
-        WaterIntakeMl = Math.Max(0, WaterIntakeMl - amountMl);
+        await _waterWriteLock.WaitAsync();
         try
         {
-            await _dailyLogUseCase.UpdateWaterIntakeAsync(SelectedDate, WaterIntakeMl);
+            if (date != SelectedDate)
+                return;
+
+            await PersistWaterAsync(date, target);
+        }
+        finally
+        {
+            _waterWriteLock.Release();
+        }
+    }
+
+    private async Task PersistWaterAsync(DateOnly date, int target)
+    {
+        var previous = _confirmedWaterIntakeMl;
+        WaterIntakeMl = target;
+        WaterSaveError = string.Empty;
+        IsSavingWater = true;
+        try
+        {
+            await _dailyLogUseCase.UpdateWaterIntakeAsync(date, target);
+            if (date != SelectedDate)
+                return;
+
+            _confirmedWaterIntakeMl = target;
+            _pendingWaterIntakeMl = null;
+            WaterIntakeMl = target;
         }
         catch
         {
-            // Silent fallback
+            if (date != SelectedDate)
+                return;
+
+            WaterIntakeMl = previous;
+            _pendingWaterIntakeMl = target;
+            WaterSaveError = UiTextCatalog.Get("Nutrition_FoodLog_WaterSaveFailed");
+        }
+        finally
+        {
+            IsSavingWater = false;
         }
     }
 
     [RelayCommand]
     public async Task NavigateBackAsync()
-    {
-        if (_navigateBackAsync is not null)
-            await _navigateBackAsync();
-    }
-
-    [RelayCommand]
-    public async Task ViewDailyBreakdownAsync()
     {
         if (_navigateBackAsync is not null)
             await _navigateBackAsync();
@@ -813,6 +953,9 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             TargetCarbs = log.TargetCarbs > 0 ? log.TargetCarbs : 220;
             TargetFat = log.TargetFat > 0 ? log.TargetFat : 65;
             WaterIntakeMl = log.WaterIntakeMl;
+            _confirmedWaterIntakeMl = log.WaterIntakeMl;
+            _pendingWaterIntakeMl = null;
+            WaterSaveError = string.Empty;
             NotesText = log.Notes ?? string.Empty;
 
             BreakfastSection.Items.Clear();

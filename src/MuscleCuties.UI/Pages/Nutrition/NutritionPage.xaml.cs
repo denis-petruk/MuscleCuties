@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Diagnostics;
 using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Nutrition;
 
@@ -52,6 +53,7 @@ public partial class NutritionPage : ContentPage
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is not (nameof(NutritionViewModel.IsMealEditorVisible) or
+            nameof(NutritionViewModel.IsMealEntryModalVisible) or
             nameof(NutritionViewModel.IsBreakdownModalVisible) or
             nameof(NutritionViewModel.IsSuggestionModalVisible) or
             nameof(NutritionViewModel.IsMealDetailVisible) or
@@ -77,10 +79,39 @@ public partial class NutritionPage : ContentPage
         await Breakdown.LoadIfNeededAsync(_viewModel.IsBreakdownModalVisible);
         await Suggestions.LoadIfNeededAsync(_viewModel.IsSuggestionModalVisible);
         await MealDetail.LoadIfNeededAsync(_viewModel.IsMealDetailVisible);
+        await LoadMealEntryViewAsync();
+    }
+
+    /// <summary>
+    /// NM01: Add meal used to request a full-page sheet host that never initialized, leaving an
+    /// invisible layer intercepting input and making Nutrition unusable. The host is loaded before it
+    /// can be shown, and a sheet that fails to load is released back to an interactive page.
+    /// </summary>
+    private async Task LoadMealEntryViewAsync()
+    {
+        if (!_viewModel.IsMealEntryModalVisible)
+            return;
+
+        try
+        {
+            await MealEntry.LoadIfNeededAsync(true);
+        }
+        catch (Exception exception)
+        {
+            Trace.WriteLine(
+                $"[NutritionPage] Meal entry sheet could not load ({exception.GetType().Name}).");
+            _viewModel.CloseMealEntryCommand.Execute(null);
+        }
     }
 
     protected override bool OnBackButtonPressed()
     {
+        if (_viewModel.IsMealEntryModalVisible)
+        {
+            _viewModel.CloseMealEntryCommand.Execute(null);
+            return true;
+        }
+
         if (!_viewModel.IsMealEditorVisible)
             return base.OnBackButtonPressed();
 

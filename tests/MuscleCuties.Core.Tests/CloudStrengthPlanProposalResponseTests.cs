@@ -46,7 +46,7 @@ public sealed class CloudStrengthPlanProposalResponseTests
     }
 
     [Fact]
-    public async Task ApplyServerFailureIsReportedAsConnectionFailure()
+    public async Task ApplyServerFailurePreservesStatusForRecovery()
     {
         using var httpClient = new HttpClient(new ServerFailureHandler())
         {
@@ -57,11 +57,16 @@ public sealed class CloudStrengthPlanProposalResponseTests
         var store = new CloudStrengthPlanProposalStoreV020(apiClient);
         var request = new AcceptStrengthPlanProposalRequestV020(Guid.NewGuid());
 
-        await Assert.ThrowsAsync<HttpRequestException>(() => store.AcceptAsync(request, CancellationToken.None));
+        // PG01: a server fault stays distinguishable from a lost connection so the screen can offer
+        // the retry that matches it instead of one generic connection message.
+        var failure = await Assert.ThrowsAsync<PlanningRequestFailedException>(
+            () => store.AcceptAsync(request, CancellationToken.None));
+
+        Assert.Equal(BackendApiStatus.ServerError, failure.Status);
     }
 
     [Fact]
-    public async Task OfflineApplyIsReportedAsConnectionFailure()
+    public async Task OfflineApplyIsReportedAsOfflineFailure()
     {
         using var httpClient = new HttpClient(new ServerFailureHandler())
         {
@@ -72,7 +77,11 @@ public sealed class CloudStrengthPlanProposalResponseTests
         var store = new CloudStrengthPlanProposalStoreV020(apiClient);
         var request = new AcceptStrengthPlanProposalRequestV020(Guid.NewGuid());
 
-        await Assert.ThrowsAsync<HttpRequestException>(() => store.AcceptAsync(request, CancellationToken.None));
+        // PG01: a device that never reached the network must not be reported as a server fault.
+        var failure = await Assert.ThrowsAsync<PlanningRequestFailedException>(
+            () => store.AcceptAsync(request, CancellationToken.None));
+
+        Assert.Equal(BackendApiStatus.OfflineRejected, failure.Status);
     }
 
     private sealed class ServerFailureHandler : HttpMessageHandler

@@ -41,12 +41,13 @@
                     Text="{loc:LocalizedText Dashboard_Shared_SomethingWentWrong}"
                     Style="{StaticResource SectionTitle}"
                     HorizontalTextAlignment="Center" />
-                <Label
-                    Text="{loc:LocalizedText Dashboard_Shared_CouldNotLoadData}"
+                <Label x:DataType="shared:PageLoadingOverlay"
+                    Text="{Binding ErrorMessage, Source={x:Reference OverlayRoot}}"
                     Style="{StaticResource MutedCentered}" />
-                <Button
+                <Button x:DataType="shared:PageLoadingOverlay"
                     Text="{loc:LocalizedText Dashboard_Shared_Retry}"
-                    Command="{Binding LoadDataCommand}"
+                    Command="{Binding EffectiveRetryCommand, Source={x:Reference OverlayRoot}}"
+                    IsVisible="{Binding HasRetryCommand, Source={x:Reference OverlayRoot}}"
                     Style="{StaticResource ButtonPrimary}"
                     SemanticProperties.Description="{loc:LocalizedText Dashboard_Shared_RetryLoadingDataA11y}" />
                 <Button x:DataType="shared:PageLoadingOverlay"

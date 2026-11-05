@@ -128,10 +128,15 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     public string PhaseLogActionText => HasActiveCycle ? "Next phase" : "Log menstrual phase";
 
+    public bool IsPredictionCached => _cachedPrediction?.CachedAsOfDate is not null;
+
     public string PredictionSummary => HasActiveCycle
-        ? _cachedPrediction?.PredictionSource == "default"
-            ? $"Estimate using a {CycleLength}-day baseline; personal cycle length unavailable"
-            : $"Prediction from {CycleLength}d cycle"
+        ? IsPredictionCached
+            ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Format("Ui_Cycle_CachedEstimateFormat",
+                _cachedPrediction!.CachedAsOfDate!.Value.ToString("d", CultureInfo.CurrentCulture))
+            : _cachedPrediction?.PredictionSource == "default"
+                ? $"Estimate using a {CycleLength}-day baseline; personal cycle length unavailable"
+                : $"Prediction from {CycleLength}d cycle"
         : "No active cycle yet";
 
     public string CurrentPhaseIconSource => CyclePhaseAssets.GetIconSource(CurrentPhase);
@@ -268,6 +273,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         var prediction = overview.Prediction;
         _cachedPrediction = prediction;
         OnPropertyChanged(nameof(CycleDaySummary));
+        OnPropertyChanged(nameof(IsPredictionCached));
         OnPropertyChanged(nameof(PredictionSummary));
 
         var resolvedPhase = await ResolveCurrentPhaseAsync(prediction.CurrentPhase, today);

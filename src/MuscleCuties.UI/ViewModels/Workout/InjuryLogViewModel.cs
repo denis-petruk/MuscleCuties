@@ -35,7 +35,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     private bool _hasLoaded;
     private bool _pendingChangeRefresh;
     private bool? _editingClinicianAdvisedAvoid;
-    private bool _clinicianAdvisedAvoidChanged;
+    private bool _clinicianAdviceTouched;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isHistoryExpanded;
     [ObservableProperty] private bool _isLoadError;
@@ -48,8 +48,13 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
     [ObservableProperty] private bool _showAddForm;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowsSafetyGuidance))]
-    private bool _clinicianAdvisedAvoid;
+    // F01: unanswered, yes and no are three distinct answers. Unanswered is preserved as null; it
+    // is never downgraded to an explicit "no" just because the old switch could only show two states.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ClinicianAdvisedAvoid), nameof(HasClinicianAdviceAnswer),
+        nameof(IsClinicianAdviceYes), nameof(IsClinicianAdviceNo), nameof(IsClinicianAdviceUnanswered),
+        nameof(ShowsSafetyGuidance))]
+    private bool? _selectedClinicianAdvice;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowsSafetyGuidance))]
     private InjuryWorseningOption? _selectedWorseningOption;
@@ -112,6 +117,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         CancelEditCommand = new RelayCommand(CancelEdit);
         SelectSiteCommand = new RelayCommand<InjuryFlagOption>(SelectSite);
         SelectStatusCommand = new RelayCommand<InjuryStatusOption>(SelectStatus);
+        SelectClinicianAdviceCommand = new RelayCommand<string>(SelectClinicianAdvice);
         ToggleHistoryCommand = new RelayCommand(() => IsHistoryExpanded = !IsHistoryExpanded);
         RetryPageRefreshCommand = new AsyncRelayCommand(RetryPageRefreshAsync, () => !IsBusy);
     }
@@ -152,6 +158,19 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         : "Cleared injuries are saved in History below.";
 
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
+    public bool ClinicianAdvisedAvoid
+    {
+        get => SelectedClinicianAdvice == true;
+        set
+        {
+            SelectedClinicianAdvice = value;
+            _clinicianAdviceTouched = true;
+        }
+    }
+    public bool HasClinicianAdviceAnswer => SelectedClinicianAdvice is not null;
+    public bool IsClinicianAdviceYes => SelectedClinicianAdvice == true;
+    public bool IsClinicianAdviceNo => SelectedClinicianAdvice == false;
+    public bool IsClinicianAdviceUnanswered => SelectedClinicianAdvice is null;
 
     public bool CanSaveInjury => !IsBusy && SelectedSiteFlag != WorkoutInjurySite.None && SelectedStatus is not null &&
                                  SinceDateValue.Date <= DateTime.Today;
@@ -173,6 +192,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public RelayCommand CancelEditCommand { get; }
     public RelayCommand<InjuryFlagOption> SelectSiteCommand { get; }
     public RelayCommand<InjuryStatusOption> SelectStatusCommand { get; }
+    public RelayCommand<string> SelectClinicianAdviceCommand { get; }
     public RelayCommand ToggleHistoryCommand { get; }
     public AsyncRelayCommand RetryPageRefreshCommand { get; }
 
@@ -204,9 +224,15 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         RefreshSaveState();
     }
 
-    partial void OnClinicianAdvisedAvoidChanged(bool value)
+    private void SelectClinicianAdvice(string? answer)
     {
-        _clinicianAdvisedAvoidChanged = true;
+        SelectedClinicianAdvice = answer switch
+        {
+            "Yes" => true,
+            "No" => false,
+            _ => null
+        };
+        _clinicianAdviceTouched = true;
     }
 
     partial void OnSinceDateValueChanged(DateTime value)
@@ -325,9 +351,9 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
                 DateOnly.FromDateTime(SinceDateValue),
                 SelectedWorseningOption?.Trigger ??
                     MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
-                !_clinicianAdvisedAvoidChanged
-                    ? _editingClinicianAdvisedAvoid
-                    : ClinicianAdvisedAvoid));
+                _clinicianAdviceTouched
+                    ? SelectedClinicianAdvice
+                    : _editingClinicianAdvisedAvoid));
             CancelEdit();
             _pendingChangeRefresh = true;
             await RefreshAfterChangeAsync();
@@ -415,9 +441,9 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         // Restore the safety answers so editing an injury never silently downgrades them to
         // "not answered" while the user is only changing the pain level.
-        ClinicianAdvisedAvoid = item.ClinicianAdvisedAvoid ?? false;
+        SelectedClinicianAdvice = item.ClinicianAdvisedAvoid;
         _editingClinicianAdvisedAvoid = item.ClinicianAdvisedAvoid;
-        _clinicianAdvisedAvoidChanged = false;
+        _clinicianAdviceTouched = false;
         SelectedWorseningOption =
             WorseningTriggerOptions.FirstOrDefault(option => option.Trigger == item.WorseningTrigger)
             ?? WorseningTriggerOptions[0];
@@ -449,8 +475,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
         NewPainLevel = 0;
         SinceDateValue = DateTime.Today;
-        ClinicianAdvisedAvoid = false;
-        _clinicianAdvisedAvoidChanged = false;
+        SelectedClinicianAdvice = null;
+        _clinicianAdviceTouched = false;
         SelectedWorseningOption = WorseningTriggerOptions.Count > 0 ? WorseningTriggerOptions[0] : null;
 
         ShowAddForm = false;

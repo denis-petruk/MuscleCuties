@@ -1,28 +1,22 @@
-using System.Diagnostics;
 using MuscleCuties.UI.Controls.Shared;
 
 namespace MuscleCuties.UI.Controls.Nutrition;
 
 public partial class MealEntryModal : AnimatedModalView
 {
-    private bool _hasContent;
-
-    protected override void PrepareForOpen()
+    /// <summary>
+    /// NM01: the sheet initializes with its host. It used to initialize from an open callback, so the
+    /// XAML that supplies its open binding did not exist when the host was shown and Add meal became an
+    /// uninitialized full-page layer.
+    /// </summary>
+    public MealEntryModal()
     {
-        if (_hasContent) return;
-
-        var started = Stopwatch.GetTimestamp();
         InitializeComponent();
-        _hasContent = true;
-        BottomSheetSizing.Apply(SheetSurface, Height);
-        Trace.WriteLine(
-            $"[Performance][MealEntryModal] Deferred view initialized in {Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1} ms.");
     }
 
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
-        if (_hasContent)
-            BottomSheetSizing.Apply(SheetSurface, height);
+        BottomSheetSizing.Apply(SheetSurface, height);
     }
 }

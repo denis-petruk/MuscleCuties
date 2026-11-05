@@ -49,6 +49,47 @@ public static class WorkoutPlanningFlowRule
         !replacesExistingPlan && feasible && persisted && !missingRequiredAnswers && !styleChoiceRequired &&
         !hasOmissions;
 
+    /// <summary>
+    /// PG01: a foreground Generate or Regenerate action is one intent to generate and activate. The
+    /// consequence of replacing the active plan is disclosed on that initiating action, so an
+    /// eligible replacement activates without a second confirmation. Everything that cannot be
+    /// activated safely stays in the draft and returns the person to editable details instead.
+    /// </summary>
+    public static bool CanAutoActivateRequestedPlan(bool userRequested, bool replacementDisclosed,
+        bool replacesExistingPlan, bool feasible, bool persisted, bool hasLease, bool missingRequiredAnswers,
+        bool styleChoiceRequired, bool acknowledgmentUnavailable) =>
+        userRequested && feasible && persisted && hasLease && !missingRequiredAnswers &&
+        !styleChoiceRequired && !acknowledgmentUnavailable && (!replacesExistingPlan || replacementDisclosed);
+
+    /// <summary>
+    /// PG01: an injury-excluded exercise is the only permitted workout adaptation and the only extra
+    /// decision. Any other required acknowledgment is an unresolved contract outcome: it may not be
+    /// accepted on the person's behalf.
+    /// </summary>
+    public static bool RequiresInjuryAcknowledgment(int exerciseReviewConditionCount,
+        int acknowledgedConditionCount) =>
+        exerciseReviewConditionCount > 0 && acknowledgedConditionCount == 0;
+
+    /// <summary>
+    /// A revalidated adaptation that no longer matches the acknowledged exercise set must be
+    /// disclosed again rather than accepted.
+    /// </summary>
+    public static bool AdaptationChanged(IEnumerable<int> acknowledgedConditionIds,
+        IEnumerable<int> returnedConditionIds)
+    {
+        var acknowledged = acknowledgedConditionIds.Where(id => id > 0).ToHashSet();
+        var returned = returnedConditionIds.Where(id => id > 0).ToHashSet();
+        return !acknowledged.SetEquals(returned);
+    }
+
+    /// <summary>
+    /// CR01/PG01: an in-flight generation may only publish its result, start a lease or accept a plan
+    /// while it is still the current appearance's current request.
+    /// </summary>
+    public static bool IsCurrentGeneration(bool appearanceIsCurrent, long requestVersion,
+        long activeRequestVersion) =>
+        appearanceIsCurrent && requestVersion == activeRequestVersion;
+
     public static PlanAcceptanceAcknowledgments AcceptanceAcknowledgments(bool replacesExistingPlan,
         bool reducedVolumeRequired, IEnumerable<int> exerciseConditionIds) =>
         new(replacesExistingPlan, reducedVolumeRequired,

@@ -21,7 +21,8 @@
               VerticalOptions="Center">
             <Border
                 Style="{StaticResource HeaderIconButton}"
-                HorizontalOptions="Start">
+                HorizontalOptions="Start"
+                SemanticProperties.Description="{loc:LocalizedText Common_Back}">
                 <Border.GestureRecognizers>
                     <TapGestureRecognizer Command="{Binding NavigateBackCommand}" />
                 </Border.GestureRecognizers>
@@ -34,7 +35,8 @@
             </Border>
 
             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" VerticalOptions="Center">
-                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource PageTitle}" />
+                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource PageTitle}"
+                       SemanticProperties.HeadingLevel="Level1" />
                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}" Style="{StaticResource CaptionSmall}"
                        LineBreakMode="WordWrap" />
             </Grid>
@@ -158,21 +160,19 @@
                                         HeightRequest="{StaticResource UiDimension240}"
                                         HorizontalOptions="Fill" />
 
-                                    <!-- Blurred Privacy Overlay -->
+                                    <!-- Privacy cover: the rounded card surface is the only background so
+                                         hidden photos never show a rectangular patch inside it. -->
                                     <Grid
                                         IsVisible="{Binding IsImageHidden}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource TranslucentPageSurfaceLight}, Dark={StaticResource TranslucentPageSurfaceDark}}"
                                         RowDefinitions="Auto,Auto,Auto"
                                         RowSpacing="{StaticResource UiSpacing6}"
-                                        VerticalOptions="Fill"
-                                        HorizontalOptions="Fill"
-                                        Padding="{StaticResource UiInsets20}">
+                                        VerticalOptions="Center"
+                                        HorizontalOptions="Fill">
                                         <mi:MauiIcon
                                             Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension32}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                             WidthRequest="{StaticResource UiDimension32}"
                                             HeightRequest="{StaticResource UiDimension32}"
-                                            HorizontalOptions="Center"
-                                            VerticalOptions="Center" />
+                                            HorizontalOptions="Center" />
                                         <Label
                                             Grid.Row="1"
                                             Text="{loc:LocalizedText Profile_PhotoJourney_PhotoHiddenForPrivacy}"

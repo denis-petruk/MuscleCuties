@@ -327,6 +327,7 @@ public partial class NutritionViewModel
         _editingMealId = meal.LoggedMealId;
         IsEditingMeal = true;
         IsMealChoiceLocked = true;
+        IsMealContextExpanded = false;
         SelectedMealType = Enum.TryParse<MealType>(meal.MealType, true, out var mt) ? mt : MealType.Snack;
         SelectedMealTime = DateTime.TryParse(meal.Time, out var t) ? t.TimeOfDay : DateTime.Now.TimeOfDay;
         IsMealEditorVisible = true;
@@ -343,6 +344,7 @@ public partial class NutritionViewModel
         _editingIngredient = null;
         _editingMealId = 0;
         IsEditingMeal = false;
+        IsMealContextExpanded = false;
         ResetFoodSearchAndSelection();
         IsCustomFoodPanelVisible = false;
         MealIngredients.Clear();

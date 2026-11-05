@@ -9,7 +9,7 @@ public enum AppTargetEnvironment
 
 public static class AppEndpointConfiguration
 {
-    public const string LocalBaseUrl = "http://127.0.0.1:5000";
+    public const string LocalBaseUrl = "http://127.0.0.1:5080";
     public const string StagingBaseUrl = "https://staging-api.musclecuties.app";
     public const string BetaBaseUrl = "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com";
 

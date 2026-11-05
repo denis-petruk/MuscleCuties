@@ -82,7 +82,16 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private bool _isFoodFinderExpanded;
     [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private bool _isMealEditorVisible;
-    [ObservableProperty] private bool _isMealChoiceLocked;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsMealContextEditorVisible), nameof(IsMealContextSummaryVisible),
+        nameof(CanChangeMealContext))]
+    private bool _isMealChoiceLocked;
+
+    // RM03/NM01: disclosure is independent of the contractual meal-context lock. A new or manual
+    // meal starts compact; expanding is an explicit action, and a locked context never expands.
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsMealContextEditorVisible), nameof(IsMealContextSummaryVisible))]
+    private bool _isMealContextExpanded;
     [ObservableProperty] private ObservableCollection<MealIngredientItem> _mealIngredients = new();
     [ObservableProperty] private ObservableCollection<MealItem> _meals = new();
     [ObservableProperty] private ObservableCollection<DailyMicronutrientItem> _micronutrients = new();
@@ -91,21 +100,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _phaseAvailability = string.Empty;
     [ObservableProperty] private string _targetSource = string.Empty;
     [ObservableProperty] private string _searchQuery = string.Empty;
-    [ObservableProperty] private string _selectedBreakdownCaloriesText =
-        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_ZeroCalories");
-    [ObservableProperty] private float _selectedBreakdownCarbsCalories;
-    [ObservableProperty] private float _selectedBreakdownFatsCalories;
-    [ObservableProperty] private string _selectedBreakdownFiberText =
-        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_ZeroFiber");
-    [ObservableProperty] private ObservableCollection<MacroBreakdownItem> _selectedBreakdownMacroItems = new();
-    [ObservableProperty] private string _selectedBreakdownMacrosText =
-        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_ZeroMacros");
-    private MealItem? _selectedBreakdownMeal;
-    [ObservableProperty] private ObservableCollection<DailyMicronutrientItem> _selectedBreakdownMicronutrients = new();
-    [ObservableProperty] private string _selectedBreakdownNutrientSummaryText =
-        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Ui_Nutrition_NoMicronutrients");
-    [ObservableProperty] private float _selectedBreakdownProteinCalories;
-    [ObservableProperty] private string _selectedBreakdownTitle = "Daily nutrition";
+    [ObservableProperty] private string _selectedBreakdownCoverageText = string.Empty;
     [ObservableProperty] private string _selectedCustomFoodServingUnit = "g";
     [ObservableProperty] private FoodSearchResultItem? _selectedFoodResult;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(MealChoiceSummary))]
@@ -146,6 +141,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
         RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         ToggleMealEditorCommand = new RelayCommand(ToggleMealEditor);
+        ToggleMealContextCommand = new RelayCommand(ToggleMealContext);
         OpenMealEditorCommand = new RelayCommand(OpenMealEditor);
         SelectFoodResultCommand = new RelayCommand<FoodSearchResultItem>(SelectFoodResult);
         SearchFoodCommand = new AsyncRelayCommand(SearchFoodAsync, CanSearchFood);
@@ -160,13 +156,14 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         SetBreakfastPreferenceCommand = new AsyncRelayCommand<string>(SetBreakfastPreferenceAsync, AsyncRelayCommandOptions.AllowConcurrentExecutions);
         ToggleCustomFoodPanelCommand = new RelayCommand(ToggleCustomFoodPanel);
         CreateCustomFoodCommand = new AsyncRelayCommand(CreateCustomFoodAsync, () => !IsBusy);
+        Breakdown = new NutritionBreakdownPresenter(
+            () => IsBreakdownModalVisible = false,
+            EditBreakdownMealAsync);
         OpenMicronutrientsModalCommand = new RelayCommand(OpenDailyBreakdown);
         CloseMicronutrientsModalCommand = new RelayCommand(CloseBreakdownModal);
         OpenMealBreakdownCommand = new RelayCommand<MealItem>(OpenMealBreakdown);
         EditMealCommand = new AsyncRelayCommand<MealItem>(meal => EditMealAsync(meal));
         SelectMealTypeCommand = new RelayCommand<MealType>(SelectMealType);
-        EditSelectedBreakdownMealCommand =
-            new AsyncRelayCommand(EditSelectedBreakdownMealAsync, () => CanEditSelectedBreakdown);
         OpenSuggestMealCommand = new RelayCommand(OpenSuggestMeal);
         CloseSuggestionModalCommand = new RelayCommand(CloseSuggestionModal);
         RefreshSuggestionsCommand = new RelayCommand(RefreshSuggestions);
@@ -291,20 +288,6 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public string MealDraftCarbsText => $"{MealIngredients.Sum(i => i.CarbsForAmount):N1} g";
     public string MealDraftFatsText => $"{MealIngredients.Sum(i => i.FatsForAmount):N1} g";
 
-    public MealItem? SelectedBreakdownMeal
-    {
-        get => _selectedBreakdownMeal;
-        set
-        {
-            if (!SetProperty(ref _selectedBreakdownMeal, value))
-                return;
-
-            OnPropertyChanged(nameof(CanEditSelectedBreakdown));
-            EditSelectedBreakdownMealCommand.NotifyCanExecuteChanged();
-        }
-    }
-
-    public bool CanEditSelectedBreakdown => SelectedBreakdownMeal is not null;
     public string CustomFoodToggleText => IsCustomFoodPanelVisible ? "Hide custom food" : "Create custom food";
     public string BrowseMoreFoodsButtonText => IsBrowsingMoreFoods ? "Browsing..." : "Browse more";
 
@@ -326,6 +309,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     }
 
     public string LogMealButtonText => IsEditingMeal ? "Save meal" : "Log meal";
+    public bool IsMealContextEditorVisible => !IsMealChoiceLocked && IsMealContextExpanded;
+    public bool IsMealContextSummaryVisible => IsMealChoiceLocked || !IsMealContextExpanded;
+    public bool CanChangeMealContext => !IsMealChoiceLocked;
     public string MealChoiceSummary =>
         $"{UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}")} · {DateTime.Today.Add(SelectedMealTime):t}";
 
@@ -355,8 +341,12 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         }
     }
 
+    /// <summary>RM05: one presenter shared with the Daily Food Log; each caller supplies its own date's values.</summary>
+    public NutritionBreakdownPresenter Breakdown { get; }
+
     public AsyncRelayCommand RefreshCommand { get; }
     public RelayCommand ToggleMealEditorCommand { get; }
+    public RelayCommand ToggleMealContextCommand { get; }
     public RelayCommand OpenMealEditorCommand { get; }
     public RelayCommand<FoodSearchResultItem> SelectFoodResultCommand { get; }
     public AsyncRelayCommand SearchFoodCommand { get; }
@@ -376,7 +366,6 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public RelayCommand<MealItem> OpenMealBreakdownCommand { get; }
     public AsyncRelayCommand<MealItem> EditMealCommand { get; }
     public RelayCommand<MealType> SelectMealTypeCommand { get; }
-    public AsyncRelayCommand EditSelectedBreakdownMealCommand { get; }
     public RelayCommand OpenSuggestMealCommand { get; }
     public RelayCommand CloseSuggestionModalCommand { get; }
     public RelayCommand RefreshSuggestionsCommand { get; }
@@ -447,6 +436,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             RefreshMealTargetShares();
             Micronutrients = new ObservableCollection<DailyMicronutrientItem>(
                 response.Micronutrients.Select(m => MapMicroDtoToItem(NutritionPresentationMapper.FromMicronutrient(m))));
+            SelectedBreakdownCoverageText = DescribeMicronutrientCoverage(
+                NutritionPresentationMapper.FromMicronutrientCoverage(response.MicronutrientCoverage));
 
             _isBulkLoading = false;
             NotifyDisplayProperties();
@@ -460,6 +451,16 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     private string FormatMealTarget(string mealName, float? share) => share is { } value
         ? $"{mealName} ({(int)(TargetCalories * value)} kcal)"
         : $"{mealName} (— kcal)";
+
+    private void ToggleMealContext()
+    {
+        // A locked context (for example an existing meal or a fixed suggestion time) cannot be
+        // changed from the editor; the lock is a contract, not a presentation preference.
+        if (IsMealChoiceLocked)
+            return;
+
+        IsMealContextExpanded = !IsMealContextExpanded;
+    }
 
     private void ToggleMealEditor()
     {

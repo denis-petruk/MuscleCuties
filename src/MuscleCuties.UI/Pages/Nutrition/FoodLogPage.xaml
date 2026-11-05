@@ -50,6 +50,7 @@
                 Grid.Column="1"
                 Text="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
                 Style="{StaticResource PageTitle}"
+                SemanticProperties.HeadingLevel="Level1"
                 VerticalOptions="Center" />
 
             <Button
@@ -102,7 +103,8 @@
                     <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto"
                           ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
                         <Border
-                            Style="{StaticResource HeaderIconButton}">
+                            Style="{StaticResource HeaderIconButton}"
+                            SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_PreviousDay}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding PreviousDayCommand}" />
                             </Border.GestureRecognizers>
@@ -167,7 +169,8 @@
 
                         <Border
                             Grid.Column="2"
-                            Style="{StaticResource HeaderIconButton}">
+                            Style="{StaticResource HeaderIconButton}"
+                            SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_NextDay}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding NextDayCommand}" />
                             </Border.GestureRecognizers>
@@ -318,12 +321,6 @@
                                            Style="{StaticResource CaptionTinyCentered}" />
                                 </VerticalStackLayout>
                             </Grid>
-
-                            <Button
-                                Text="{loc:LocalizedText Nutrition_Breakdown_Micronutrients}"
-                                Command="{Binding ViewDailyBreakdownCommand}"
-                                Style="{StaticResource ButtonSecondary}"
-                                HorizontalOptions="Fill" />
                         </VerticalStackLayout>
                     </Border>
 
@@ -332,34 +329,59 @@
                     <Border Style="{StaticResource CardPrimary}">
                         <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing14}">
                             <!-- Water Tracker Row -->
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
-                                  VerticalOptions="Center">
-                                <Label Text="{loc:LocalizedText Nutrition_FoodLog_Water}" Style="{StaticResource MutedLabel}"
-                                       VerticalOptions="Center" />
-                                <Label Grid.Column="1"
-                                       Text="{Binding WaterIntakeMl, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueMl}"
-                                       Style="{StaticResource MutedLabel}"
-                                       VerticalOptions="Center" />
-                                <Button Grid.Column="2"
-                                        Style="{StaticResource ButtonSecondary}"
-                                        Text="{loc:LocalizedText Nutrition_FoodLog_SubtractWaterTwoFiftyMl}"
-                                        Command="{Binding RemoveWaterCommand}"
-                                        CommandParameter="{x:Int32 250}" />
-                                <Button Grid.Column="3"
-                                        Style="{StaticResource ButtonSecondary}"
-                                        Text="{loc:LocalizedText Nutrition_FoodLog_AddWaterTwoFiftyMl}"
-                                        Command="{Binding AddWaterCommand}"
-                                        CommandParameter="{x:Int32 250}" />
-                            </Grid>
+                            <VerticalStackLayout Grid.Row="0" Spacing="{StaticResource UiSpaceMicro}">
+                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
+                                      VerticalOptions="Center">
+                                    <Label Text="{loc:LocalizedText Nutrition_FoodLog_Water}" Style="{StaticResource MutedLabel}"
+                                           VerticalOptions="Center" />
+                                    <Label Grid.Column="1"
+                                           Text="{Binding WaterIntakeMl, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueMl}"
+                                           Style="{StaticResource MutedLabel}"
+                                           VerticalOptions="Center" />
+                                    <Button Grid.Column="2"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            Text="{loc:LocalizedText Nutrition_FoodLog_SubtractWaterTwoFiftyMl}"
+                                            Command="{Binding RemoveWaterCommand}"
+                                            CommandParameter="{x:Int32 250}" />
+                                    <Button Grid.Column="3"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            Text="{loc:LocalizedText Nutrition_FoodLog_AddWaterTwoFiftyMl}"
+                                            Command="{Binding AddWaterCommand}"
+                                            CommandParameter="{x:Int32 250}" />
+                                </Grid>
+                                <ActivityIndicator Style="{StaticResource StateBusyInline}"
+                                                   IsRunning="{Binding IsSavingWater}"
+                                                   IsVisible="{Binding IsSavingWater}"
+                                                   SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_WaterSaving}" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                                      IsVisible="{Binding HasWaterSaveError}">
+                                    <Label Text="{Binding WaterSaveError, Converter={StaticResource LocalizedStringConverter}}"
+                                           Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
+                                           VerticalOptions="Center" />
+                                    <Button Grid.Column="1"
+                                            Text="{loc:LocalizedText Nutrition_FoodLog_RetryWater}"
+                                            Command="{Binding RetryWaterSaveCommand}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_RetryWater}" />
+                                </Grid>
+                            </VerticalStackLayout>
 
                             <!-- Quick Diary Actions Row -->
-                            <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
-                                <Label
-                                    Text="{loc:LocalizedText Nutrition_FoodLog_YesterdayDiary}"
-                                    Style="{StaticResource MutedLabel}"
-                                    VerticalOptions="Center" />
-                                <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_FoodLog_CopyYesterday}"
-                                    Command="{Binding CopyYesterdayDiaryCommand}" Grid.Column="1" />
+                            <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label
+                                        Text="{loc:LocalizedText Nutrition_FoodLog_YesterdayDiary}"
+                                        Style="{StaticResource MutedLabel}"
+                                        VerticalOptions="Center" />
+                                    <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_FoodLog_CopyYesterday}"
+                                        Command="{Binding CopyYesterdayDiaryCommand}" Grid.Column="1" />
+                                </Grid>
+                                <Button Grid.Row="1"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        HorizontalOptions="Start"
+                                        Text="{loc:LocalizedText Nutrition_FoodLog_OpenBreakdown}"
+                                        Command="{Binding OpenBreakdownCommand}"
+                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_OpenBreakdown}" />
                             </Grid>
                         </Grid>
                     </Border>
@@ -850,13 +872,18 @@
                                                      Spacing="{StaticResource UiSpaceTight}">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="uiModels:HistoryIngredientEditor">
-                                            <Grid ColumnDefinitions="*,100" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                                                <Label Text="{Binding Name}" Style="{StaticResource BodyLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
-                                                <Border Grid.Column="1" Style="{StaticResource InputContainer}">
-                                                    <Entry Text="{Binding Grams}" Keyboard="Numeric"
+                                            <!-- NM02: a stacked row keeps the whole editable number full width at
+                                                 any text size, so a long name or the largest text cannot squeeze
+                                                 or clip the amount. -->
+                                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                                <Label Text="{Binding Name}" Style="{StaticResource BodyLabel}" LineBreakMode="WordWrap" />
+                                                <Border Style="{StaticResource InputContainer}">
+                                                    <Entry Text="{Binding GramsText}" Keyboard="Numeric"
                                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_IngredientPortionInGrams}" />
                                                 </Border>
-                                            </Grid>
+                                                <Label Text="{Binding AmountErrorText}" IsVisible="{Binding HasAmountError}"
+                                                       Style="{StaticResource CaptionSmallCentered}" LineBreakMode="WordWrap" />
+                                            </VerticalStackLayout>
                                         </DataTemplate>
                                     </BindableLayout.ItemTemplate>
                                 </VerticalStackLayout>
@@ -937,9 +964,11 @@
                         </VerticalStackLayout>
                         </VerticalStackLayout>
                     </ScrollView>
-                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpacing10}"
+                    <!-- NM02: the trailing action column collapses when no second action applies, so a
+                         sole Save fills the footer instead of leaving an empty half. -->
+                    <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
                           Padding="{DynamicResource PresentationActionFooterPadding}">
-                        <Button Style="{StaticResource ButtonSecondary}"
+                        <Button Style="{StaticResource ButtonPrimary}"
                             Text="{loc:LocalizedText Common_Save}"
                             Command="{Binding SaveFoodItemCommand}" />
 
@@ -962,6 +991,11 @@
             </Border>
             </Grid>
         </sharedControls:AnimatedModalView>
+
+        <!-- RM05: the shared breakdown sheet, mounted on this page's own day rather than today. -->
+        <nutritionControls:NutritionBreakdownModal
+            Grid.RowSpan="2"
+            BindingContext="{Binding Breakdown}" />
 
         <Border
             Grid.RowSpan="2"

@@ -32,7 +32,8 @@ public sealed record CyclePredictionSummary(
     DateTime? PredictedOvulationDate,
     DateTime? FertileWindowStartDate,
     DateTime? FertileWindowEndDate,
-    string PredictionSource);
+    string PredictionSource,
+    DateTime? CachedAsOfDate = null);
 
 public sealed record CycleOverviewSnapshot(
     CyclePredictionSummary Prediction,

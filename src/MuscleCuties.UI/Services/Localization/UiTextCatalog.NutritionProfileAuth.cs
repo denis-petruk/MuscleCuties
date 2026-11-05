@@ -5,6 +5,8 @@ public static partial class UiTextCatalog
     static partial void RegisterNutritionProfileAuthStrings()
     {
         English["Ui_Common_Error_ConnectionRetry"] = "Something went wrong. Check your connection and try again.";
+        English["Ui_Common_Error_Online"] = "The server answered but could not complete this request. Change the details and try again.";
+        English["Nutrition_FoodLog_AmountError"] = "Enter a portion above 0 grams. Use a dot or comma for decimals.";
         English["Ui_Common_Error_Offline"] = "You're offline. Reconnect and try again.";
         English["Ui_Common_Error_Timeout"] = "The request took too long. Check your connection and try again.";
         English["Ui_Common_Error_RateLimited"] = "Too many requests right now. Wait a moment, then try again.";
@@ -175,7 +177,30 @@ public static partial class UiTextCatalog
         English["Common_Close"] = "Close";
         English["Common_Continue"] = "Continue";
         English["Common_Delete"] = "Delete";
+        English["Common_Change"] = "Change";
         English["Common_Done"] = "Done";
+        English["Nutrition_FoodLog_PreviousDay"] = "Previous day";
+        English["Nutrition_FoodLog_NextDay"] = "Next day";
+        English["Nutrition_MealEditor_ChangeMealContext"] = "Change meal and time";
+        English["Nutrition_QuickFood_Selected"] = "Selected";
+        English["Nutrition_QuickFood_NotSelected"] = "Not selected";
+        English["Nutrition_FoodLog_OpenBreakdown"] = "Nutrient breakdown";
+        English["Nutrition_Breakdown_DailyTitle"] = "Daily nutrition";
+        English["Nutrition_Breakdown_Loading"] = "Loading nutrition breakdown…";
+        English["Nutrition_Breakdown_LoadFailed"] = "Could not load this day's breakdown. Check your connection and try again.";
+        English["Nutrition_Breakdown_TargetsReachedFormat"] = "{0} of {1} micronutrient targets reached";
+        English["Nutrition_FoodLog_WaterSaveFailed"] = "Water intake was not saved. Try again.";
+        English["Nutrition_FoodLog_WaterSaving"] = "Saving water intake…";
+        English["Nutrition_FoodLog_RetryWater"] = "Retry water save";
+        English["Nutrition_Breakdown_CoverageComplete"] = "Micronutrients cover every logged item for this day.";
+        English["Nutrition_Breakdown_CoveragePartial"] = "Micronutrients cover {0} of {1} logged items; some items only contribute macros.";
+        English["Nutrition_Breakdown_CoverageUnavailable"] = "Micronutrient values are unavailable for the logged items on this day.";
+        English["Nutrition_Breakdown_CoverageKnownZero"] = "No food was logged for this day.";
+        English["Nutrition_Breakdown_CoverageNames"] = "Not available for: {0}";
+        English["Injury_Log_ClinicianAdvice_Unanswered"] = "Not answered";
+        English["Injury_Log_ClinicianAdvice_Yes"] = "Yes";
+        English["Injury_Log_ClinicianAdvice_No"] = "No";
+        English["Ui_Cycle_CachedEstimateFormat"] = "Cached estimate from {0}; reconnect to refresh";
         English["Common_Edit"] = "Edit";
         English["Common_Height"] = "Height";
         English["Common_MuscleCutiesLogo"] = "MuscleCuties logo";
