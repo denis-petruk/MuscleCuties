@@ -5,6 +5,7 @@ using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Contracts.Account;
+using MuscleCuties.Contracts.Onboarding;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
