@@ -2,33 +2,39 @@
 
 Updated 2026-11-04. This is the compact continuation checkpoint; it does not replace source evidence in the linked audits and gate register.
 
-## Roadmap Transition Completion (Plan I & Plan II)
+## Active Corrective Beta Implementation
 
-The full-roadmap assignment defined in `docs/architecture/github-transition/09-gemini-cli-execution-prompt.md` and `docs/architecture/github-transition/03-implementation-roadmap.md` is **100% complete**:
-- **Plan I (P00–P13)**: Platform, CI/CD, OIDC IAM, schema lifecycle, staging IaC, multi-environment isolation, and GitLab retirement are fully implemented, verified, and merged. CloudFormation stacks `MuscleCuties-Identity`, `MuscleCuties-Staging`, and `MuscleCuties-Observability` are active in `us-east-2`. S3 release bucket is configured with object versioning. Live Beta DB remains untouched.
-- **Plan II (R01–R07)**: Application refactoring, wire contracts extraction, transport/presentation decoupling, planning orchestration ports, preview/apply/navigation state machines, environment-partitioned snapshot storage, injury/reconciliation boundaries, and duplicate planner retirement are fully implemented, verified with 1,293 passing unit/contract tests, and merged into `main`.
-- All changes were reviewed and integrated via PRs (#15 through #32) against protected GitHub `main`, with 100% passing GitHub Actions CI checks on every merge.
+The corrective beta plan (`docs/release-audit/2026-11-04/IMPLEMENTATION_PLAN.md`) is actively executing under the Integration Authority:
+- **BA00**: Candidate reconciled with GitHub `origin/main` (`d840d627`), Rider planning package tracked and committed under `docs/release-audit/2026-11-04/`.
+- **WP00**: Active generation and acceptance paths mapped; disconnected Core helpers (`WeeklyWorkoutPlanGeneratorRule`, `ResolveDoubleProgression`) identified and characterized.
+- **PD00**: Versioned policy proposal adopted with 10 main muscle regions, $\ge 2$ exposures/week minimum (prefer 3), compact 35–45 min sessions, readiness load calibration, and cycle mode with fatigue safeguard (extra sets withheld when readiness $< 75$); 6 before/after test-backed scenarios verified in Core.
+- **DS00 / UX01a**: All-session schedule data seam added to `WorkoutScheduleEntry` via `Sessions` collection, preserving legacy `WorkoutDayId` and `CompanionWorkoutDayId` for backward compatibility. 1..N daily sessions projected in `DayOrder` across Postgres store, UI model, and viewmodel.
+- **PL01**: `AppEndpointConfiguration.cs` fail-closed in Release; `SecureStorageSnapshotCacheStores.cs` safely isolates legacy token migration to Beta only; `backend-release.yml` probes live `/health/live` and `/health/ready`; `mobile-release.yml` supports `device` (`ios-arm64`) target runtime.
+- **Current Test Suite**: **1,303 / 1,303 automated unit/contract tests passing (100% green)**.
 
-See `docs/architecture/github-transition/execution/CONTROL.md` for the canonical package ledger and `docs/architecture/github-transition/evidence/` for detailed per-package verification reports.
+See `docs/architecture/github-transition/execution/CONTROL.md` for live package lifecycle and reservations.
 
 ## Gate ledger
 
 | Gate | Status | Evidence or open item |
 | --- | --- | --- |
-| G0 Baseline and scope | PASS | Rider implementation baseline preserved; true 2-parent history merge completed in PR #15. |
-| G1 Architecture integrity | PASS | Clean Architecture boundaries enforced; zero outer dependencies in Core, zero SQLite references, no direct Domain imports in ViewModels. |
-| G2 Domain safety | PASS | Tri-state injury questions, pain thresholds, worsening movements, double progression invariants verified in 1,104 Core tests. |
-| G3 Persistence | PASS | Model-first PostgreSQL schema lifecycle guarded against non-disposable DBs; automated ephemeral CI PostgreSQL verification active on all PRs. |
-| G4 Backend/API | PASS | Server endpoints parity verified across all routes; immutable packaging validated via `validate-package.sh`. |
-| G5 Mobile UI | PASS | iOS MAUI client (`net10.0-ios`, `iossimulator-arm64`) compiles cleanly with 0 warnings and 0 errors. |
+| G0 Baseline and scope | PASS | Candidate reconciled to `d840d627` (PRs #15–#32 merged) and release audit package tracked. |
+| G1 Architecture integrity | PASS | Clean Architecture boundaries intact; contracts extracted, zero outer dependencies in Core. |
+| G2 Domain safety | PASS | Tri-state injury questions, double progression invariants, and policy proposals verified in 1,109 Core tests. |
+| G3 Persistence | PASS | Non-disposable EnsureCreated guard active; all-session schedule projection supported. |
+| G4 Backend/API | PASS | Server route parity 100% green (112 tests); release workflows probe live endpoint health. |
+| G5 Mobile UI | OPEN | G5 reopened for native Button.LayoutButton crash and physical device acceptance. |
 | G6 Performance | PASS | Sub-millisecond domain evaluations; server route parity verified. |
-| G7 Privacy/security | PASS | OIDC AWS auth; zero standing credentials; environment-partitioned snapshot cache and secure token store with v2 Associated Data and v1 fallback reader. |
-| G8 Build/regression | PASS | 1,293 unit, contract, and registration tests passing (100% pass rate); GitHub Actions CI 8/8 checks green. |
-| G9 Documentation/handoff | PASS | Canonical execution control ledger, per-package evidence documents, and architecture transition docs complete. |
+| G7 Privacy/security | PASS | Fail-closed Release endpoints; partitioned token/cache stores; legacy token leakage removed; OIDC AWS auth. |
+| G8 Build/regression | PASS | 1,303 unit, contract, and registration tests passing (100% pass rate). |
+| G9 Documentation/handoff | PASS | Canonical execution control ledger, checkpoint artifact, and handoff prompt complete. |
 
 ## Open Project Items & Post-Transition Operations
 
-- Production deployment remains separate under future release planning.
+- WP01 / WP02a: Catalog variation metadata and 2–3 exposure coverage rule in `StrengthPlanPreviewRule`.
+- WP03a / WP03b: Connect observed set capture to active progression evaluation.
+- RM00–RM08: Native crash diagnostics (CR01/PG01), photo/archive, meal scrolling, micronutrient parity.
+- PL02–PL05: Versioned PostgreSQL schema migration lifecycle, immutable packaging qualification, Apple privacy manifest.
 - Physical device owner testing / TestFlight distribution proceeds when authorized.
 
 ## Proposed architecture/transition planning — 2026-11-04
