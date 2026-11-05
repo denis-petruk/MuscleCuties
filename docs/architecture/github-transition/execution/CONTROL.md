@@ -27,8 +27,9 @@ Owner baseline source: `/Users/denispetruk/RiderProjects/MuscleCuties` (commit `
 | **P13** | B/I/O | MERGED | `76fbd553` | `26c4100a` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p12_p13_cutover` | `platform/p12-p13-cutover` / [PR #25](https://github.com/denis-petruk/MuscleCuties/pull/25) | GitLab retired with rules: - when: never; README updated to GitHub Actions; merged to main |
 | **R01** | A/I | MERGED | `e00d5752` | `571ee942` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r01_wire_contracts` | `product/r01-wire-contracts` / [PR #26](https://github.com/denis-petruk/MuscleCuties/pull/26) | \`MuscleCuties.Contracts\` wire-only project created; Account & Onboarding DTOs extracted; 1,235 unit/contract tests passed; CI 8/8 green; merged to main |
 | **R02** | A | MERGED | `571ee942` | `d83136b5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r02_transport_presentation` | `product/r02-transport-presentation` / [PR #27](https://github.com/denis-petruk/MuscleCuties/pull/27) | Isolate mobile configuration, transport and presentation adapters; 1,245 unit/contract tests passed; CI 8/8 green; merged to main |
-| **R03** | A | IN PROGRESS | `d83136b5` | pending | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r03_planning_orchestration` | `product/r03-planning-orchestration` | Separate planning application orchestration from pure domain policy |
-| **R04-R07** | A/I | PENDING | `d83136b5` | - | - | - | Sequential Plan II refactoring packages |
+| **R03** | A | MERGED | `d83136b5` | `991c98ff` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r03_planning_orchestration` | `product/r03-planning-orchestration` / [PR #28](https://github.com/denis-petruk/MuscleCuties/pull/28) | Planning ports extracted (Clock, Catalog, Safety); \`IWorkoutPlanningApplicationService\` introduced; 1,259 tests green; CI 8/8 green; merged to main |
+| **R04** | A | IN PROGRESS | `089c3c8b` | pending | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r04_preview_apply_transitions` | `product/r04-preview-apply-transitions` | Refactor preview/Apply/navigation as explicit state transitions |
+| **R05-R07** | A/I | PENDING | `089c3c8b` | - | - | - | Sequential Plan II refactoring packages |
 
 ---
 
@@ -63,5 +64,5 @@ Owner baseline source: `/Users/denispetruk/RiderProjects/MuscleCuties` (commit `
 
 ## 4. Next Checkpoint
 
-- Awaiting CI pipeline completion and Owner Review & Merge for [PR #26 (R01)](https://github.com/denis-petruk/MuscleCuties/pull/26).
-- Follow with Plan II Package R02 (Presentation & Transport Adapters).
+- Completed Plan II Package R03 (Merged into main via PR #28).
+- Proceeding to Plan II Package R04 (Refactor preview/Apply/navigation as explicit state transitions).
