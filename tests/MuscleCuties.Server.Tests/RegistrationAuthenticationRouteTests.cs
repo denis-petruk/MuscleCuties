@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using MuscleCuties.Contracts.Account;
 using MuscleCuties.Server;
 using MuscleCuties.UseCases.Features.Account.Authentication;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;

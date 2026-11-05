@@ -14,6 +14,7 @@
     <NoWarn>$(NoWarn);NU1202;NU1701</NoWarn>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/MuscleCuties.Contracts/MuscleCuties.Contracts.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure.PostgreSql/MuscleCuties.Infrastructure.PostgreSql.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.UseCases/MuscleCuties.UseCases.csproj" />
   </ItemGroup>
