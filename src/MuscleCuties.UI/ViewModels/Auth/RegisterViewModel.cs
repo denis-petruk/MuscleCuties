@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MuscleCuties.Contracts.Account;
 using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;

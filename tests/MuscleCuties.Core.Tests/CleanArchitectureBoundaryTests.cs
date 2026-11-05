@@ -99,8 +99,9 @@ public class CleanArchitectureBoundaryTests
             if (name.StartsWith("MuscleCuties.", StringComparison.OrdinalIgnoreCase))
             {
                 Assert.True(
-                    string.Equals(name, "MuscleCuties.Core", StringComparison.OrdinalIgnoreCase),
-                    $"MuscleCuties.UseCases can only reference MuscleCuties.Core, but references '{name}'.");
+                    string.Equals(name, "MuscleCuties.Core", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(name, "MuscleCuties.Contracts", StringComparison.OrdinalIgnoreCase),
+                    $"MuscleCuties.UseCases can only reference MuscleCuties.Core and MuscleCuties.Contracts, but references '{name}'.");
             }
 
             foreach (var prohibited in ProhibitedUseCasesOuterTokens)
@@ -120,8 +121,9 @@ public class CleanArchitectureBoundaryTests
         {
             var include = proj.Attribute("Include")?.Value ?? string.Empty;
             Assert.True(
-                include.EndsWith("MuscleCuties.Core.csproj", StringComparison.OrdinalIgnoreCase),
-                $"MuscleCuties.UseCases.csproj can only reference MuscleCuties.Core, but found '{include}'.");
+                include.EndsWith("MuscleCuties.Core.csproj", StringComparison.OrdinalIgnoreCase) ||
+                include.EndsWith("MuscleCuties.Contracts.csproj", StringComparison.OrdinalIgnoreCase),
+                $"MuscleCuties.UseCases.csproj can only reference MuscleCuties.Core and MuscleCuties.Contracts, but found '{include}'.");
         }
 
         var packageReferences = doc.Descendants("PackageReference").ToList();
@@ -134,6 +136,25 @@ public class CleanArchitectureBoundaryTests
                     include.Contains(prohibited, StringComparison.OrdinalIgnoreCase),
                     $"MuscleCuties.UseCases.csproj must not reference package '{include}' (matched prohibited token '{prohibited}').");
             }
+        }
+    }
+
+    [Fact]
+    public void Contracts_has_zero_dependencies_on_Core_Infrastructure_or_Frameworks()
+    {
+        var contractsAssembly = typeof(MuscleCuties.Contracts.Account.StartAccountRegistrationRequest).Assembly;
+        var referencedAssemblies = contractsAssembly.GetReferencedAssemblies();
+
+        foreach (var referenced in referencedAssemblies)
+        {
+            var name = referenced.Name ?? string.Empty;
+            Assert.False(
+                name.StartsWith("MuscleCuties.Core", StringComparison.OrdinalIgnoreCase) ||
+                name.StartsWith("MuscleCuties.Infrastructure", StringComparison.OrdinalIgnoreCase) ||
+                name.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase) ||
+                name.StartsWith("Microsoft.AspNetCore", StringComparison.OrdinalIgnoreCase) ||
+                name.StartsWith("Microsoft.Maui", StringComparison.OrdinalIgnoreCase),
+                $"MuscleCuties.Contracts must not reference '{name}'.");
         }
     }
 

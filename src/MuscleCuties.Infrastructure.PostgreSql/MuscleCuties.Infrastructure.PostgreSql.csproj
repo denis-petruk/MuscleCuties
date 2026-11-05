@@ -9,6 +9,7 @@
         <NoWarn>$(NoWarn);NU1202;NU1701</NoWarn>
     </PropertyGroup>
     <ItemGroup>
+        <ProjectReference Include="../MuscleCuties.Contracts/MuscleCuties.Contracts.csproj" />
         <ProjectReference Include="../MuscleCuties.Core/MuscleCuties.Core.csproj" />
         <ProjectReference Include="../MuscleCuties.UseCases/MuscleCuties.UseCases.csproj" />
     </ItemGroup>
