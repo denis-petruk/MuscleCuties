@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using MuscleCuties.Contracts.Account;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
 using MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
@@ -255,6 +256,10 @@ public static class ApiApplication
             PostgresAcceptStrengthPlanProposalStoreV020>();
         builder.Services.AddScoped<CreateStrengthPlanProposalV020UseCase>();
         builder.Services.AddScoped<AcceptStrengthPlanProposalV020UseCase>();
+        builder.Services.AddSingleton<IPlanningClockPort, SystemPlanningClockPort>();
+        builder.Services.AddSingleton<IPlanningCatalogPort, DefaultPlanningCatalogPort>();
+        builder.Services.AddSingleton<IPlanningSafetyPort, DefaultPlanningSafetyPort>();
+        builder.Services.AddScoped<IWorkoutPlanningApplicationService, WorkoutPlanningApplicationService>();
         builder.Services.AddScoped<IWorkoutActiveSessionStore, PostgresWorkoutActiveSessionStore>();
         builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
         builder.Services.AddScoped<IServerWorkoutArchiveStore, PostgresWorkoutArchiveStore>();

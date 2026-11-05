@@ -1,3 +1,4 @@
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Notifications;
@@ -28,6 +29,10 @@ public static class WorkoutPlanningCompositionExtensions
     public static IServiceCollection RegisterWorkoutPlanningServices(this IServiceCollection services)
     {
         services.AddSingleton(WorkoutPlanningConfig.CreateDefault());
+
+        services.AddSingleton<IPlanningClockPort, SystemPlanningClockPort>();
+        services.AddSingleton<IPlanningCatalogPort, DefaultPlanningCatalogPort>();
+        services.AddSingleton<IPlanningSafetyPort, DefaultPlanningSafetyPort>();
 
         services.AddSingleton<IReadinessEngine, DailyReadinessEngine>();
         services.AddSingleton<IGatingEngine, GatingEngine>();
