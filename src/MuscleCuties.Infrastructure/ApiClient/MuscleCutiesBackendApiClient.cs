@@ -3,6 +3,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.CompilerServices;
 using System.Text.Json;
+using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.UseCases.Features.Caching;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
@@ -771,6 +772,7 @@ public sealed class MobileJourneyCloudGateway(
     {
         var sessionState = BackendSessionLocks.For(tokenStore);
         sessionState.Invalidate();
+        AccountSessionGate.Shared.MarkChanged();
         var logoutVersion = sessionState.Version;
         var tokens = await tokenStore.ReadTokensAsync(CancellationToken.None).ConfigureAwait(false);
         try

@@ -71,11 +71,13 @@ public static class TransportCompositionExtensions
             ProfileMediaProtection.Apply));
 
         services.AddSingleton<ISnapshotCacheKeyStore, SecureStorageSnapshotCacheKeyStore>();
-        services.AddSingleton<IBackendSessionTokenStore, SecureStorageBackendSessionTokenStore>();
+        services.AddSingleton<IBackendSessionTokenStore>(_ => new SecureStorageBackendSessionTokenStore(
+            AppEndpointConfiguration.GetSessionTokenKey(AppEndpointConfiguration.ActiveEnvironment)));
         services.AddSingleton<ILocalCacheService>(sp => new EncryptedLocalSnapshotCacheService(
             FileSystem.AppDataDirectory,
             sp.GetRequiredService<ISnapshotCacheKeyStore>(),
-            ProfileMediaProtection.Apply));
+            ProfileMediaProtection.Apply,
+            environmentName: AppEndpointConfiguration.ActiveEnvironment.ToString().ToLowerInvariant()));
 
         services.AddSingleton<ICloudAuthorityGate>(_ => new VersionedCloudAuthorityGate());
 

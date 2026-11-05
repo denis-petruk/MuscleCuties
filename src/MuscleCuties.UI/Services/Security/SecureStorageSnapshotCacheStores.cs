@@ -30,15 +30,20 @@ public sealed class SecureStorageSnapshotCacheKeyStore : ISnapshotCacheKeyStore
     }
 }
 
-public sealed class SecureStorageBackendSessionTokenStore : IBackendSessionTokenStore
+public sealed class SecureStorageBackendSessionTokenStore(string? sessionKeyName = null) : IBackendSessionTokenStore
 {
-    private const string SessionKeyName = "mc_backend_session_tokens_v1";
+    private const string LegacySessionKeyName = "mc_backend_session_tokens_v1";
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
+    private readonly string _sessionKeyName = string.IsNullOrWhiteSpace(sessionKeyName) ? LegacySessionKeyName : sessionKeyName;
 
     public async Task<BackendSessionTokens?> ReadTokensAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        var raw = await SecureStorage.Default.GetAsync(SessionKeyName).ConfigureAwait(false);
+        var raw = await SecureStorage.Default.GetAsync(_sessionKeyName).ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(raw) && !string.Equals(_sessionKeyName, LegacySessionKeyName, StringComparison.Ordinal))
+        {
+            raw = await SecureStorage.Default.GetAsync(LegacySessionKeyName).ConfigureAwait(false);
+        }
         return string.IsNullOrWhiteSpace(raw)
             ? null
             : JsonSerializer.Deserialize<BackendSessionTokens>(raw, SerializerOptions);
@@ -49,13 +54,17 @@ public sealed class SecureStorageBackendSessionTokenStore : IBackendSessionToken
         ArgumentNullException.ThrowIfNull(tokens);
         cancellationToken.ThrowIfCancellationRequested();
         var serialized = JsonSerializer.Serialize(tokens, SerializerOptions);
-        await SecureStorage.Default.SetAsync(SessionKeyName, serialized).ConfigureAwait(false);
+        await SecureStorage.Default.SetAsync(_sessionKeyName, serialized).ConfigureAwait(false);
     }
 
     public Task ClearTokensAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-        SecureStorage.Default.Remove(SessionKeyName);
+        SecureStorage.Default.Remove(_sessionKeyName);
+        if (!string.Equals(_sessionKeyName, LegacySessionKeyName, StringComparison.Ordinal))
+        {
+            SecureStorage.Default.Remove(LegacySessionKeyName);
+        }
         return Task.CompletedTask;
     }
 }
