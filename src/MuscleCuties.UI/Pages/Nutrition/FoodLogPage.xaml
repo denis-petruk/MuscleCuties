@@ -318,6 +318,12 @@
                                            Style="{StaticResource CaptionTinyCentered}" />
                                 </VerticalStackLayout>
                             </Grid>
+
+                            <Button
+                                Text="{loc:LocalizedText Nutrition_Breakdown_Micronutrients}"
+                                Command="{Binding ViewDailyBreakdownCommand}"
+                                Style="{StaticResource ButtonSecondary}"
+                                HorizontalOptions="Fill" />
                         </VerticalStackLayout>
                     </Border>
 

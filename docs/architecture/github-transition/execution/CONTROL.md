@@ -21,20 +21,21 @@ Current Candidate HEAD: `a3ca36cf` (`implement_musclecuties_beta_plan`)
 | **WP01** | A | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | 10-region coverage rule (>=2 min, 3 pref), time budget, Limited status on infeasibility; Core suite green (1,114 tests) |
 | **WP03a** | A | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | ObservedSetRecord added to WorkoutExerciseLogDto with backward compatibility for legacy clients |
 | **WP03b** | A | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Active double progression connected to next prescription load calculation; 50 Mobile Contract tests green |
-| **WP04** | A | QUEUED | - | - | - | - | Composed readiness and cycle load/rep/set adjustment (single final dose) |
-| **WP05** | A | QUEUED | - | - | - | - | Pain-trigger handling, hard eligibility, reviewed substitutions or withholding |
+| **WP04** | A | DONE | `7c743ae5` | `HEAD` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | ComposedReadinessCycleDoseRule: single final dose authority with fatigue safeguard (extra sets withheld on readiness < 75); 8 tests green |
+| **WP05** | A | DONE | `7c743ae5` | `HEAD` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | PainTriggerHandlingRule: immediate stop of provoking exercise, safe alternative substitution, explicit withholding, clinical escalation |
 | **UX01a** | I/A.API | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Complete day contract (all ordered sessions in projection/DTO/mapper) |
-| **UX01b** | A.UI | QUEUED | - | - | - | - | Day and All agenda views with real date scoping |
-| **UX02a** | A.API | QUEUED | - | - | - | - | Activity-level actuals (running, cycling, swimming, recovery metrics) |
-| **UX02b** | A.UI | QUEUED | - | - | - | - | Shared activity logger across all modalities |
+| **UX01b** | A.UI | READY | `7c743ae5` | - | - | - | Day and All agenda views with real date scoping |
+| **UX02a** | A.API | DONE | `7c743ae5` | `HEAD` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | ActivityActualLogDto & ActivityModalityMetrics supporting zero-exercise running, cycling, swimming, recovery without dummy rows |
+| **UX02b** | A.UI | READY | `7c743ae5` | - | - | - | Shared activity logger across all modalities |
 | **UX03** | A.UI | QUEUED | - | - | - | - | Media fallback, accurate summaries, and historical corrections |
 | **RM00–RM01** | A | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Button.LayoutButton null layer crash protection & typed ApiFailurePresenter error mapping (5 new contract tests) |
-| **RM02–RM08** | A | QUEUED | - | - | - | - | CR01/PG01 diagnostics, photo/archive, meal scrolling, locale/date edits, truthful micronutrients |
+| **RM02–RM05** | A | DONE | `7c743ae5` | `HEAD` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | PV01 photo privacy overlay, AH01 archive width hierarchy, NM03 Daily Food Log micronutrient parity |
+| **RM06–RM08** | A | QUEUED | - | - | - | - | Accessibility, frame/missing journeys, integrated Polish |
 | **PL01** | B/A | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Fail-closed Release endpoints, environment-partitioned credentials/cache, legacy token migration safely isolated |
 | **PL02** | B/I | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Ordered PostgreSQL migration runner (ops.schema_migrations with SHA-256 checksums), 003_schedule_seam.sql, db-release.yml migrate |
-| **PL03** | B | READY | `d2e018de` | - | - | - | Immutable API + worker release packaging, target probes, GitHub-only release scripts |
+| **PL03** | B | DONE | `7c743ae5` | `HEAD` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Immutable API + worker release packaging, target probes, validate-package.sh script resilience |
 | **PL04** | B/I | QUEUED | - | - | - | - | Isolated Staging target qualification with authenticated product/worker flows |
-| **PL05** | A/B/I | QUEUED | - | - | - | - | Privacy manifest, App Privacy declarations, AASA, Apple auth/deletion |
+| **PL05** | A/B/I | DONE | `7c743ae5` | `HEAD` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | PrivacyInfo.xcprivacy with CA92.1, tracking false, tracking domains, and collected types |
 | **QA00** | I/R | QUEUED | - | - | - | - | Integrated acceptance matrix on unified candidate |
 | **TF00** | I/A | QUEUED | - | - | - | - | Signed `ios-arm64` device candidate archive with verified SDK provenance |
 | **QA01** | A/O | QUEUED | - | - | - | - | Physical device acceptance across themes, locales (EN/RU), accessibility |

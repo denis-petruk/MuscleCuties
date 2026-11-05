@@ -164,13 +164,15 @@
                                         BackgroundColor="{AppThemeBinding Light={StaticResource TranslucentPageSurfaceLight}, Dark={StaticResource TranslucentPageSurfaceDark}}"
                                         RowDefinitions="Auto,Auto,Auto"
                                         RowSpacing="{StaticResource UiSpacing6}"
-                                        VerticalOptions="Center"
-                                        HorizontalOptions="Center">
+                                        VerticalOptions="Fill"
+                                        HorizontalOptions="Fill"
+                                        Padding="{StaticResource UiInsets20}">
                                         <mi:MauiIcon
                                             Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension32}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                             WidthRequest="{StaticResource UiDimension32}"
                                             HeightRequest="{StaticResource UiDimension32}"
-                                            HorizontalOptions="Center" />
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center" />
                                         <Label
                                             Grid.Row="1"
                                             Text="{loc:LocalizedText Profile_PhotoJourney_PhotoHiddenForPrivacy}"

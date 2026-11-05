@@ -84,8 +84,9 @@
             </CollectionView.ItemsLayout>
 
             <CollectionView.Header>
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}"                                      Padding="{DynamicResource PresentationCollectionHeaderPadding}"
-                                      MaximumWidthRequest="{StaticResource UiDimension640}"
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}"
+                      Margin="{DynamicResource PresentationCollectionItemMargin}"
+                      MaximumWidthRequest="{StaticResource UiDimension640}"
                       HorizontalOptions="Center">
                     <!-- Lifetime summary: both values start on the same edge and wrap rather than clip. -->
                     <Border

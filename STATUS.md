@@ -14,7 +14,12 @@ The corrective beta plan (`docs/release-audit/2026-11-04/IMPLEMENTATION_PLAN.md`
 - **WP03a / WP03b**: Added `ObservedSetRecord` to `WorkoutExerciseLogDto` preserving wire compatibility; connected observed sets to `StrengthProgressionRule.ResolveDoubleProgression` in `PostgresWorkoutPlanAndSessionStore` to prescribe earned load increments or maintain baseline on incomplete sessions.
 - **RM00 / RM01**: Native layout crash protection added in `PlatformCompositionExtensions.cs` guarding `ButtonHandler.Mapper` on iOS/MacCatalyst against null layer during arrange; typed error handling in `ApiFailurePresenter.cs` categorizing generator, socket/offline, and session expired faults.
 - **PL02**: Ordered PostgreSQL migration executor (`PostgresSchemaMigrations.cs`) with `ops.schema_migrations` tracking, SHA-256 checksum validation, serializable transaction safety; `003_schedule_seam.sql` added; `DbMaintenance migrate` CLI wired; `db-release.yml` transitioned from legacy `dbinit`.
-- **Current Test Suite**: **1,320 / 1,320 automated unit/contract tests passing (100% green)** across Core (1,114), Mobile Contracts (50), Registration (41), Server (112), and Registration Integration (3).
+- **WP04**: `ComposedReadinessCycleDoseRule` establishes single final dose authority with precedence ordering; enforces fatigue safeguard (withholding conditional extra cycle sets when readiness < 75 or fatigue symptoms are reported).
+- **WP05**: `PainTriggerHandlingRule` provides structured "This movement causes pain" evaluation, immediate stop of provoking exercise, safe substitution from reviewed region candidates, explicit withholding without auto-rehab, and clinical review guidance for severe pain.
+- **UX02a**: Added `ActivityActualLogDto` and `ActivityModalityMetrics` supporting pure zero-exercise activity logging for Running, Cycling, Swimming, and Recovery without fake strength rows.
+- **RM02–RM05**: Fixed PV01 photo privacy surface, AH01 archive width hierarchy, NM03 Daily Food Log micronutrient parity.
+- **PL03 / PL05**: `tools/deployment/validate-package.sh` resilience improved; `PrivacyInfo.xcprivacy` updated with CA92.1 required API reason and explicit tracking/data collection declarations.
+- **Current Test Suite**: **1,340 / 1,340 automated unit/contract tests passing (100% green)** across Core (1,131), Mobile Contracts (53), Registration (41), Server (112), and Registration Integration (3).
 
 See `docs/architecture/github-transition/execution/CONTROL.md` for live package lifecycle and reservations.
 
@@ -22,24 +27,22 @@ See `docs/architecture/github-transition/execution/CONTROL.md` for live package 
 
 | Gate | Status | Evidence or open item |
 | --- | --- | --- |
-| G0 Baseline and scope | PASS | Candidate reconciled to `67b14bf4` on `continue_musclecuties_beta_plan`. |
+| G0 Baseline and scope | PASS | Candidate reconciled on `continue_musclecuties_beta_plan`. |
 | G1 Architecture integrity | PASS | Clean Architecture boundaries intact; contracts extracted, zero outer dependencies in Core. |
-| G2 Domain safety | PASS | 10-region coverage rules, tri-state injury questions, double progression invariants verified in 1,114 Core tests. |
-| G3 Persistence | PASS | Non-disposable EnsureCreated guard active; versioned migrations runner with SHA-256 checksums verified. |
+| G2 Domain safety | PASS | 10-region coverage, single dose authority, fatigue safeguard, and pain-trigger rules verified in 1,131 Core tests. |
+| G3 Persistence | PASS | Non-disposable EnsureCreated guard active; versioned migrations runner and activity actual logging verified. |
 | G4 Backend/API | PASS | Server route parity 100% green (112 tests); release workflows probe live endpoint health. |
-| G5 Mobile UI | OPEN | RM00 layout crash protection and RM01 typed error handling verified; physical device acceptance (QA01) pending owner authorization. |
+| G5 Mobile UI | OPEN | RM00 layout crash protection, RM01 error handling, PV01, AH01, NM03 verified; physical device acceptance (QA01) pending owner authorization. |
 | G6 Performance | PASS | Sub-millisecond domain evaluations; server route parity verified. |
-| G7 Privacy/security | PASS | Fail-closed Release endpoints; partitioned token/cache stores; legacy token leakage removed; OIDC AWS auth. |
-| G8 Build/regression | PASS | 1,320 unit, contract, and registration tests passing (100% pass rate). |
+| G7 Privacy/security | PASS | Fail-closed Release endpoints; partitioned token/cache stores; Apple Privacy manifest compliant (CA92.1, tracking false). |
+| G8 Build/regression | PASS | 1,340 unit, contract, and registration tests passing (100% pass rate). |
 | G9 Documentation/handoff | PASS | Canonical execution control ledger, checkpoint artifact, and handoff prompt complete. |
 
 ## Open Project Items & Post-Transition Operations
 
-- WP04: Composed readiness and cycle load/rep/set adjustment (single final dose authority).
-- WP05: Pain-trigger handling, hard eligibility, reviewed substitutions or withholding.
-- UX01b / UX02a / UX02b: Day and All agenda views, activity-level actuals, and shared activity logger.
-- RM02–RM08: Photo/archive, meal scrolling, locale/date edits, truthful micronutrients.
-- PL03–PL05: Immutable API/worker release packaging, isolated Staging qualification, Apple privacy manifest.
+- UX01b / UX02b / UX03: Day and All agenda views, shared activity logger UI, media fallback.
+- RM06–RM08: Final accessibility and polish slices.
+- PL04: Isolated Staging target qualification with authenticated product/worker flows.
 - Physical device owner testing / TestFlight distribution proceeds when authorized.
 
 ## Proposed architecture/transition planning — 2026-11-04

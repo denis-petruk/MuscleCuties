@@ -552,8 +552,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 }
             }
 
-            if (validInputs.Count == 0)
-                throw new InvalidOperationException("Log at least one exercise before saving this workout.");
+            var hasActivityActuals = request.ActivityActuals is { Count: > 0 } acts && acts.Any(a => a.DurationSeconds > 0);
+            if (validInputs.Count == 0 && !hasActivityActuals)
+                throw new InvalidOperationException("Log at least one exercise or activity before saving this workout.");
 
             var exerciseIds = dayExercises.Select(e => e.ExerciseId).Distinct().ToArray();
             var catalogExercises = await dbContext.Exercises.AsNoTracking()
@@ -661,7 +662,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 var catEx = catalogExercises.GetValueOrDefault(dayEx.ExerciseId);
                 return IsExerciseLogComplete(log, dayEx, catEx?.Name ?? string.Empty);
             });
-            primaryLog.CompletionPercent = dayExercises.Count == 0
+            primaryLog.CompletionPercent = (dayExercises.Count == 0 || (hasActivityActuals && validInputs.Count == 0))
                 ? 100
                 : Math.Clamp((int)Math.Round(completedCount * 100.0 / dayExercises.Count), 0, 100);
 

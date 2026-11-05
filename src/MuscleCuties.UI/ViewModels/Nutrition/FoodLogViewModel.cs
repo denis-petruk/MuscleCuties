@@ -786,6 +786,13 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             await _navigateBackAsync();
     }
 
+    [RelayCommand]
+    public async Task ViewDailyBreakdownAsync()
+    {
+        if (_navigateBackAsync is not null)
+            await _navigateBackAsync();
+    }
+
     private async Task LoadLogForDateAsync(DateOnly date)
     {
         var version = Interlocked.Increment(ref _dateLoadVersion);

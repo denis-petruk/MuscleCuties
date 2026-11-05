@@ -22,11 +22,27 @@ public sealed record WorkoutExerciseLogDto(
     int? EffortRating = null,
     IReadOnlyList<ObservedSetRecord>? ObservedSets = null);
 
+public sealed record ActivityActualLogDto(
+    int? WorkoutDayActivityId,
+    MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto ActivityType,
+    int DurationSeconds,
+    decimal? DistanceKm = null,
+    int? DistanceMeters = null,
+    int? PaceSecondsPerKm = null,
+    int? PaceSecondsPer100m = null,
+    int? AverageHeartRateBpm = null,
+    int? PowerWatts = null,
+    int? Cadence = null,
+    int? StrokeCount = null,
+    int? EffortRpe = null,
+    string? Notes = null);
+
 public sealed record LogWorkoutSessionRequest(
     int WorkoutDayId,
     DateOnly Date,
-    IReadOnlyList<WorkoutExerciseLogDto> Exercises,
-    Guid? PlannedSessionId = null);
+    IReadOnlyList<WorkoutExerciseLogDto>? Exercises = null,
+    Guid? PlannedSessionId = null,
+    IReadOnlyList<ActivityActualLogDto>? ActivityActuals = null);
 
 public sealed record SwapWorkoutExerciseRequest(
     int WorkoutDayExerciseId,
