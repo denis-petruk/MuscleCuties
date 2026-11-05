@@ -1,3 +1,4 @@
+using MuscleCuties.Contracts.Account;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.UseCases.Features.Account.Registration;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;

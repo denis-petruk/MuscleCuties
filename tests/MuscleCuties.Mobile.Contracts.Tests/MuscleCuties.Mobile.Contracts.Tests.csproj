@@ -15,6 +15,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/MuscleCuties.Contracts/MuscleCuties.Contracts.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/AppPageLoadGate.cs" Link="Mobile/AppPageLoadGate.cs" />
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Common/IPageLoadAware.cs" Link="Mobile/IPageLoadAware.cs" />

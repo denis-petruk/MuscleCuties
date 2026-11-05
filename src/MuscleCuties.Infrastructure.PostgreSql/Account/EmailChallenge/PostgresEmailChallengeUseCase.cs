@@ -229,7 +229,7 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
     }
 
     private async Task<EmailChallengeOperationResult> CreateAndSendAsync(
-        string normalizedEmail, int purpose, MuscleCuties.UseCases.Features.Account.Registration.Contracts.RegistrationPrivacyConsent? privacyConsent, CancellationToken cancellationToken)
+        string normalizedEmail, int purpose, MuscleCuties.Contracts.Account.RegistrationPrivacyConsent? privacyConsent, CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var preparation = await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -284,9 +284,9 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
     }
 
     private bool IsValidPrivacyConsent(
-        MuscleCuties.UseCases.Features.Account.Registration.Contracts.RegistrationPrivacyConsent? consent) =>
+        MuscleCuties.Contracts.Account.RegistrationPrivacyConsent? consent) =>
         consent is not null && consent.Accepted &&
-        consent.NoticeVersion == MuscleCuties.UseCases.Features.Account.Registration.Contracts.PrivacyNotice.CurrentVersion;
+        consent.NoticeVersion == MuscleCuties.Contracts.Account.PrivacyNotice.CurrentVersion;
 
     private async Task<EmailChallengeStatus> CheckRateLimitsAsync(
         string normalizedEmail, DateTime nowUtc, CancellationToken cancellationToken)

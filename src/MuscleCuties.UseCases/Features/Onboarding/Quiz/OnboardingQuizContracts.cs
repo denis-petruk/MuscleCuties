@@ -1,3 +1,4 @@
+global using QuizSelectionDto = MuscleCuties.Contracts.Onboarding.QuizSelectionDto;
 using MuscleCuties.Core.Models.Enums.Quiz;
 
 namespace MuscleCuties.UseCases.Features.Onboarding.Quiz;
@@ -11,7 +12,6 @@ public sealed record QuizQuestionDto(
     QuizQuestionType QuestionType,
     IReadOnlyList<QuizAnswerDto> Answers);
 
-public sealed record QuizSelectionDto(int QuestionId, int AnswerId);
 
 public sealed record QuizCommitResult(bool Succeeded, bool AccountCreatedNeedsLogin, string? ErrorMessage);
 

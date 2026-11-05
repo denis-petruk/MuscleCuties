@@ -1,4 +1,4 @@
-using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
+using MuscleCuties.Contracts.Account;
 
 namespace MuscleCuties.Core.Services.Auth;
 

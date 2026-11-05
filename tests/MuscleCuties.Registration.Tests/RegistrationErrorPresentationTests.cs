@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
+using MuscleCuties.Contracts.Account;
+using MuscleCuties.Contracts.Onboarding;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Infrastructure.ApiClient;
