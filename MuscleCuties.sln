@@ -35,6 +35,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MuscleCuties.Registration.I
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MuscleCuties.WorkoutReconciliation", "services\MuscleCuties.WorkoutReconciliation\MuscleCuties.WorkoutReconciliation.csproj", "{FAEDF1D2-729C-4062-AEA3-044B97DCD69D}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MuscleCuties.Contracts", "src\MuscleCuties.Contracts\MuscleCuties.Contracts.csproj", "{184B68D6-D94D-4190-AD42-A51EAA009AC0}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -201,6 +203,18 @@ Global
 		{FAEDF1D2-729C-4062-AEA3-044B97DCD69D}.Release|x64.Build.0 = Release|Any CPU
 		{FAEDF1D2-729C-4062-AEA3-044B97DCD69D}.Release|x86.ActiveCfg = Release|Any CPU
 		{FAEDF1D2-729C-4062-AEA3-044B97DCD69D}.Release|x86.Build.0 = Release|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Debug|x64.Build.0 = Debug|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Debug|x86.Build.0 = Debug|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Release|x64.ActiveCfg = Release|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Release|x64.Build.0 = Release|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Release|x86.ActiveCfg = Release|Any CPU
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -219,6 +233,7 @@ Global
 		{CA835F2E-6308-410C-BBCC-0A96AE1340FE} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{908A7231-5A6E-4521-B0C4-691A8935A865} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{FAEDF1D2-729C-4062-AEA3-044B97DCD69D} = {D27E0CD3-B72D-47B6-A68D-7590B98EB39C}
+		{184B68D6-D94D-4190-AD42-A51EAA009AC0} = {827E0CD3-B72D-47B6-A68D-7590B98EB39B}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {C59321BA-9031-49FD-9543-A1BF5A307E5C}

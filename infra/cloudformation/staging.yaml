@@ -1,0 +1,88 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >-
+  MuscleCuties Isolated Staging Infrastructure.
+  Provisions private storage, messaging queues, and compute boundaries without touching Beta.
+
+Parameters:
+  EnvironmentName:
+    Type: String
+    Default: staging
+    AllowedValues: [staging]
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+    Description: VPC ID where Staging Lambda and RDS reside.
+  SubnetIds:
+    Type: List<AWS::EC2::Subnet::Id>
+    Description: Private subnet IDs for Lambda functions.
+
+Resources:
+  # Isolated Media Storage for Staging
+  StagingMediaBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Delete
+    Properties:
+      BucketName: !Sub 'musclecuties-${EnvironmentName}-media-${AWS::AccountId}'
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireOldUploads
+            Status: Enabled
+            ExpirationInDays: 30
+
+  # Worker SQS Queue & Dead Letter Queue
+  StagingReconciliationDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub 'musclecuties-${EnvironmentName}-reconciliation-dlq'
+      MessageRetentionPeriod: 1209600 # 14 days
+
+  StagingReconciliationQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub 'musclecuties-${EnvironmentName}-reconciliation-queue'
+      VisibilityTimeout: 300
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt StagingReconciliationDLQ.Arn
+        maxReceiveCount: 5
+
+  # Security Group for Staging Lambdas
+  StagingLambdaSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for Staging Lambda functions
+      VpcId: !Ref VpcId
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+          Description: Allow outbound traffic to RDS and AWS services
+
+  # CloudWatch Log Groups with retention
+  StagingServerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/MuscleCuties-Server-${EnvironmentName}'
+      RetentionInDays: 14
+
+  StagingWorkerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub '/aws/lambda/MuscleCuties-Reconciliation-${EnvironmentName}'
+      RetentionInDays: 14
+
+Outputs:
+  MediaBucketArn:
+    Value: !GetAtt StagingMediaBucket.Arn
+  QueueArn:
+    Value: !GetAtt StagingReconciliationQueue.Arn
+  DLQArn:
+    Value: !GetAtt StagingReconciliationDLQ.Arn
+  LambdaSecurityGroupId:
+    Value: !GetAtt StagingLambdaSecurityGroup.GroupId

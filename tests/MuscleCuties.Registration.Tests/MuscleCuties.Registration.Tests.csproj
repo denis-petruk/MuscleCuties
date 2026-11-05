@@ -15,6 +15,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../src/MuscleCuties.Contracts/MuscleCuties.Contracts.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.UseCases/MuscleCuties.UseCases.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj" />
     <ProjectReference Include="../../services/MuscleCuties.Server/MuscleCuties.Server.csproj" />

@@ -21,7 +21,7 @@ public enum ApiFailureAction
 /// <summary>
 /// One failure, already reduced to a localized message key, the next action and the server reference.
 /// The reference is only displayed when the server actually sent one, so a support conversation can
-/// name the exact request.
+/// name the exact request without leaking credentials, tokens, or PII.
 /// </summary>
 public sealed class ApiFailureNotice
 {
@@ -29,11 +29,11 @@ public sealed class ApiFailureNotice
     {
         MessageKey = messageKey;
         Action = action;
-        RequestId = requestId;
+        RequestId = SanitizeRequestId(requestId);
         MessageText = UiTextCatalog.Get(messageKey);
-        ReferenceText = string.IsNullOrWhiteSpace(requestId)
+        ReferenceText = string.IsNullOrWhiteSpace(RequestId)
             ? string.Empty
-            : UiTextCatalog.Format(ApiFailurePresenter.ReferenceFormatKey, requestId);
+            : UiTextCatalog.Format(ApiFailurePresenter.ReferenceFormatKey, RequestId);
     }
 
     public string MessageKey { get; }
@@ -48,6 +48,23 @@ public sealed class ApiFailureNotice
 
     public bool IsRetryable =>
         Action is ApiFailureAction.Retry or ApiFailureAction.WaitAndRetry or ApiFailureAction.Offline;
+
+    private static string? SanitizeRequestId(string? raw)
+    {
+        if (string.IsNullOrWhiteSpace(raw))
+            return null;
+
+        var trimmed = raw.Trim();
+        // Prevent credentials, emails, or excessively long payloads from leaking as request references
+        if (trimmed.Contains('@') ||
+            trimmed.Contains("Bearer", StringComparison.OrdinalIgnoreCase) ||
+            trimmed.Length > 128)
+        {
+            return null;
+        }
+
+        return trimmed;
+    }
 }
 
 /// <summary>
@@ -87,6 +104,12 @@ public static class ApiFailurePresenter
                 new ApiFailureNotice(SessionExpiredKey, ApiFailureAction.SignInAgain, response.RequestId),
             BackendApiStatus.OfflineRejected =>
                 new ApiFailureNotice(OfflineKey, ApiFailureAction.Offline, null),
+            BackendApiStatus.RateLimited =>
+                new ApiFailureNotice(RateLimitedKey, ApiFailureAction.WaitAndRetry, response.RequestId),
+            BackendApiStatus.Timeout =>
+                new ApiFailureNotice(TimeoutKey, ApiFailureAction.Retry, response.RequestId),
+            BackendApiStatus.Conflict =>
+                new ApiFailureNotice(fallbackKey, ApiFailureAction.Retry, response.RequestId),
             BackendApiStatus.ServerError =>
                 FromStatusCode(
                     response.ResponseStatusCode,

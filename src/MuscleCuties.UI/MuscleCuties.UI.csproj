@@ -37,6 +37,13 @@
         <MauiStrictXamlCompilation>true</MauiStrictXamlCompilation>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(AppTargetEnvironment)' == 'Staging'">
+        <DefineConstants>$(DefineConstants);APP_ENV_STAGING</DefineConstants>
+    </PropertyGroup>
+    <PropertyGroup Condition="'$(AppTargetEnvironment)' == 'Beta'">
+        <DefineConstants>$(DefineConstants);APP_ENV_BETA</DefineConstants>
+    </PropertyGroup>
+
     <ItemGroup>
         <Compile Remove="Platforms/**/*.cs" />
     </ItemGroup>
@@ -161,6 +168,7 @@
     </ItemGroup>
 
     <ItemGroup>
+        <ProjectReference Include="../MuscleCuties.Contracts/MuscleCuties.Contracts.csproj"/>
         <ProjectReference Include="../MuscleCuties.UseCases/MuscleCuties.UseCases.csproj"/>
         <ProjectReference Include="../MuscleCuties.Core/MuscleCuties.Core.csproj"/>
         <ProjectReference Include="../MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj"/>

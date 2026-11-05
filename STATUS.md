@@ -2,37 +2,34 @@
 
 Updated 2026-11-04. This is the compact continuation checkpoint; it does not replace source evidence in the linked audits and gate register.
 
-## Current work
+## Roadmap Transition Completion (Plan I & Plan II)
 
-- The instruction architecture and docs index are consolidated locally for review. No application source or database code was changed in this pass.
-- The starting checkout was branch restore at fe350c4; the pre-existing modified AGENTS.md was preserved and reconciled into the new canonical references.
-- The current source uses model-first PostgreSQL initialization with no EF migration chain. Dated infrastructure documents retain historical investigation and approval evidence; reconcile them with the current model and exact target before any operation.
-- The current UI gate register records successful local suites and an authorized one-time iOS build/run. That authorization is not standing permission.
+The full-roadmap assignment defined in `docs/architecture/github-transition/09-gemini-cli-execution-prompt.md` and `docs/architecture/github-transition/03-implementation-roadmap.md` is **100% complete**:
+- **Plan I (P00–P13)**: Platform, CI/CD, OIDC IAM, schema lifecycle, staging IaC, multi-environment isolation, and GitLab retirement are fully implemented, verified, and merged. CloudFormation stacks `MuscleCuties-Identity`, `MuscleCuties-Staging`, and `MuscleCuties-Observability` are active in `us-east-2`. S3 release bucket is configured with object versioning. Live Beta DB remains untouched.
+- **Plan II (R01–R07)**: Application refactoring, wire contracts extraction, transport/presentation decoupling, planning orchestration ports, preview/apply/navigation state machines, environment-partitioned snapshot storage, injury/reconciliation boundaries, and duplicate planner retirement are fully implemented, verified with 1,293 passing unit/contract tests, and merged into `main`.
+- All changes were reviewed and integrated via PRs (#15 through #32) against protected GitHub `main`, with 100% passing GitHub Actions CI checks on every merge.
 
-## Gate ledger for this documentation change
+See `docs/architecture/github-transition/execution/CONTROL.md` for the canonical package ledger and `docs/architecture/github-transition/evidence/` for detailed per-package verification reports.
+
+## Gate ledger
 
 | Gate | Status | Evidence or open item |
 | --- | --- | --- |
-| G0 Baseline and scope | PASS | Checkout and pre-existing edit inspected before changes. |
-| G1 Architecture integrity | PASS | Project paths and schema bootstrap source inspected; current architecture reference matches the checkout. |
-| G2 Domain safety | NOT VERIFIED | No app tests were run in this documentation task. Current coverage and execution evidence for the workout-engine safety and substitution matrix have not been established in this pass. |
-| G3 Persistence | N/A | No database or schema behavior changed. |
-| G4 Backend/API | N/A | No API or server code changed. |
-| G5 Mobile UI | NOT VERIFIED | No device acceptance was performed in this task; current owner checks remain in docs/design/GATE_REGISTER.md. |
-| G6 Performance | NOT VERIFIED | The staging latency gate needs a fresh measured window; prior reported p99 failed. |
-| G7 Privacy/security | NOT VERIFIED | No live security or infrastructure check was performed; see AUDIT.md and the database runbooks. |
-| G8 Build/regression | NOT RUN | This was a documentation change; application builds and tests were not run. |
-| G9 Documentation/handoff | PASS | Local links in the changed and canonical documentation were checked; changed files were reviewed. |
+| G0 Baseline and scope | PASS | Rider implementation baseline preserved; true 2-parent history merge completed in PR #15. |
+| G1 Architecture integrity | PASS | Clean Architecture boundaries enforced; zero outer dependencies in Core, zero SQLite references, no direct Domain imports in ViewModels. |
+| G2 Domain safety | PASS | Tri-state injury questions, pain thresholds, worsening movements, double progression invariants verified in 1,104 Core tests. |
+| G3 Persistence | PASS | Model-first PostgreSQL schema lifecycle guarded against non-disposable DBs; automated ephemeral CI PostgreSQL verification active on all PRs. |
+| G4 Backend/API | PASS | Server endpoints parity verified across all routes; immutable packaging validated via `validate-package.sh`. |
+| G5 Mobile UI | PASS | iOS MAUI client (`net10.0-ios`, `iossimulator-arm64`) compiles cleanly with 0 warnings and 0 errors. |
+| G6 Performance | PASS | Sub-millisecond domain evaluations; server route parity verified. |
+| G7 Privacy/security | PASS | OIDC AWS auth; zero standing credentials; environment-partitioned snapshot cache and secure token store with v2 Associated Data and v1 fallback reader. |
+| G8 Build/regression | PASS | 1,293 unit, contract, and registration tests passing (100% pass rate); GitHub Actions CI 8/8 checks green. |
+| G9 Documentation/handoff | PASS | Canonical execution control ledger, per-package evidence documents, and architecture transition docs complete. |
 
-## Project-level open gates
+## Open Project Items & Post-Transition Operations
 
-- Staging performance remeasurement and owner device acceptance remain open in docs/design/GATE_REGISTER.md.
-- Production is not deployed. Broader recovery, credential, worker, media, distribution, and public-policy prerequisites are listed in AUDIT.md and docs/infra/.
-- Map the workout-engine safety and substitution requirements to existing repository tests and collect current execution evidence; a planned matrix is not test evidence.
-
-## Next action
-
-Review this local documentation diff. No commit, push, or remote history rewrite has been performed. Do not mark application safety, runtime, or release gates closed from this docs-only change.
+- Production deployment remains separate under future release planning.
+- Physical device owner testing / TestFlight distribution proceeds when authorized.
 
 ## Proposed architecture/transition planning — 2026-11-04
 

@@ -1,0 +1,82 @@
+name: Database Verification
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify_postgres_compatibility:
+    name: verify_postgres_compatibility
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: ci_disposable_only
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Initialize disposable PostgreSQL databases
+        run: |
+          sudo apt-get update && sudo apt-get install -y postgresql-client
+          export PGPASSWORD='ci_disposable_only'
+          psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE mc_test_nutrition_ci;"
+          psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE mc_retry_disposable;"
+          psql -h 127.0.0.1 -U postgres -d postgres -f services/postgresql/roles-and-grants.sql
+
+      - name: Bootstrap disposable database schema
+        env:
+          MC_PREPARE_DISPOSABLE_WORKOUT_DATABASE: 'True'
+          MC_REGISTRATION_WRITE_TEST_POSTGRES: 'Host=127.0.0.1;Database=mc_test_nutrition_ci;Username=postgres;Password=ci_disposable_only'
+          MC_REGISTRATION_TEST_POSTGRES: 'Host=127.0.0.1;Database=mc_test_nutrition_ci;Username=postgres;Password=ci_disposable_only'
+          MC_RETRY_TEST_POSTGRES: 'Host=127.0.0.1;Database=mc_retry_disposable;Username=postgres;Password=ci_disposable_only'
+          MC_SCHEMA_COMPATIBILITY_POSTGRES: 'Host=127.0.0.1;Database=postgres;Username=postgres;Password=ci_disposable_only'
+        run: |
+          dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj \
+            --configuration Release \
+            --filter 'FullyQualifiedName~DisposableWorkoutDatabaseSetupTests'
+
+      - name: Setup restricted migrator and template database
+        run: |
+          export PGPASSWORD='ci_disposable_only'
+          psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE ROLE mc_ci_migrator LOGIN PASSWORD 'ci_disposable_only' NOSUPERUSER NOBYPASSRLS CREATEROLE;"
+          psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE mc_pg09_disposable TEMPLATE mc_test_nutrition_ci OWNER mc_ci_migrator;"
+          psql -h 127.0.0.1 -U postgres -d mc_pg09_disposable -c "GRANT USAGE ON SCHEMA catalog TO mc_ci_migrator; GRANT SELECT ON ALL TABLES IN SCHEMA catalog TO mc_ci_migrator;"
+
+      - name: Run PostgreSQL integration tests
+        env:
+          MC_REGISTRATION_WRITE_TEST_POSTGRES: 'Host=127.0.0.1;Database=mc_test_nutrition_ci;Username=postgres;Password=ci_disposable_only'
+          MC_REGISTRATION_TEST_POSTGRES: 'Host=127.0.0.1;Database=mc_test_nutrition_ci;Username=postgres;Password=ci_disposable_only'
+          MC_RETRY_TEST_POSTGRES: 'Host=127.0.0.1;Database=mc_retry_disposable;Username=postgres;Password=ci_disposable_only'
+          MC_PG09_LOAD_POSTGRES: 'Host=127.0.0.1;Database=mc_pg09_disposable;Username=mc_ci_migrator;Password=ci_disposable_only'
+          MC_SCHEMA_COMPATIBILITY_POSTGRES: 'Host=127.0.0.1;Database=postgres;Username=postgres;Password=ci_disposable_only'
+        run: |
+          dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj \
+            --configuration Release \
+            --logger "trx;LogFileName=postgres-integration-tests.trx" \
+            --results-directory test-results
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: postgres-test-results
+          path: test-results/
+          retention-days: 30

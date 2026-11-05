@@ -1,36 +1,13 @@
 using System.Diagnostics;
-using System.Security.Authentication;
 using CommunityToolkit.Maui;
 using MauiIcons.Fluent;
-using Microsoft.Extensions.Logging;
-using Microsoft.Maui.Handlers;
+using MuscleCuties.Contracts.Account;
+using MuscleCuties.Contracts.Onboarding;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Core.Services;
-using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.Cycle;
-using MuscleCuties.Core.Services.Cycle.Planning;
-using MuscleCuties.Core.Services.Dashboard;
-using MuscleCuties.Core.Services.Dashboard.Planning;
-using MuscleCuties.Core.Services.ExerciseMedia;
-using MuscleCuties.Core.Services.Health;
-using MuscleCuties.Core.Services.Notifications;
-using MuscleCuties.Core.Services.Nutrition;
-using MuscleCuties.Core.Services.Nutrition.Planning;
-using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.Services.Quiz;
-using MuscleCuties.Core.Services.Workout;
-using MuscleCuties.Core.Services.Workout.Planning;
-using MuscleCuties.Infrastructure.Account.SignIn;
-using MuscleCuties.Infrastructure.ApiClient;
-using MuscleCuties.Infrastructure.Caching;
-using MuscleCuties.UseCases.Features.Caching;
-using MuscleCuties.Infrastructure.Cycle.Overview;
-using MuscleCuties.Infrastructure.Dashboard.Overview;
-using MuscleCuties.Infrastructure.Nutrition.DailyLog;
-using MuscleCuties.Infrastructure.Workout.Media;
-using MuscleCuties.Infrastructure.Cloud;
-using MuscleCuties.UI.Infrastructure.Network;
+using MuscleCuties.UI.Composition;
 using MuscleCuties.UI.Pages;
 using MuscleCuties.UI.Pages.Auth;
 using MuscleCuties.UI.Pages.Cycle;
@@ -43,12 +20,10 @@ using MuscleCuties.UI.Pages.Workout;
 using MuscleCuties.UI.Services;
 using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UI.Services.Localization;
-using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Navigation;
-using MuscleCuties.UI.Services.Notifications;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UI.Services.Profile;
-using MuscleCuties.UI.Services.Security;
+using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.ViewModels.Auth;
 using MuscleCuties.UI.ViewModels.Cycle;
 using MuscleCuties.UI.ViewModels.Dashboard;
@@ -64,6 +39,7 @@ using MuscleCuties.UseCases.Features.Account.Registration;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 using MuscleCuties.UseCases.Features.Account.SignIn;
 using MuscleCuties.UseCases.Features.Account.SignIn.Contracts;
+using MuscleCuties.UseCases.Features.Caching;
 using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
@@ -72,7 +48,6 @@ using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Dashboard.Overview;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Hydration;
-using MuscleCuties.Infrastructure.Nutrition.Recipes;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
@@ -89,29 +64,19 @@ using MuscleCuties.UseCases.Features.Profile.PhotoVault;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
-using MuscleCuties.UseCases.Features.Progress;
 using MuscleCuties.UseCases.Features.Workout.Archive;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Planning;
-using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using SkiaSharp.Views.Maui.Controls.Hosting;
-#if IOS || MACCATALYST
-using UIKit;
-#endif
-using INutritionChangeNotifier = MuscleCuties.Core.Services.Nutrition.INutritionChangeNotifier;
 
 namespace MuscleCuties.UI;
 
 public static class MauiProgram
 {
-    private const string DefaultBackendBaseUrl = "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com";
     private const string WorkoutPreferencesAfterOnboardingContextKey = "workout-preferences-after-onboarding";
-#if DEBUG
-    private const string DebugBackendBaseUrlPreferenceKey = "backend_api_base_url";
-#endif
-    private const int BackendRequestTimeoutSeconds = 15;
 
     public static MauiApp CreateMauiApp()
     {
@@ -122,7 +87,7 @@ public static class MauiProgram
             .UseMauiCommunityToolkit()
             .UseSkiaSharp()
             .UseFluentMauiIcons()
-            .ConfigureMauiHandlers(ConfigureInputHandlers)
+            .ConfigurePlatformInputHandlers()
             .ConfigureFonts(fonts =>
             {
                 fonts.AddFont("OpenSans-Regular.ttf", "Inter");
@@ -130,331 +95,16 @@ public static class MauiProgram
             });
 
         var services = builder.Services;
-        RegisterPlatformServices(services);
-        RegisterDomainServices(services);
-        RegisterWorkoutPlanningServices(services);
-        RegisterMigrationServices(services);
+        services.RegisterPlatformServices();
+        services.RegisterTransportServices();
+        services.RegisterDomainAndApplicationServices();
+        services.RegisterWorkoutPlanningServices();
         RegisterViewModels(services);
         RegisterPages(services);
-        ConfigureLogging(builder);
+
+        builder.ConfigureAppLogging();
 
         return builder.Build();
-    }
-
-    private static void ConfigureInputHandlers(IMauiHandlersCollection handlers)
-    {
-#if ANDROID
-        EntryHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-        {
-            ClearAndroidInputChrome(handler.PlatformView);
-            ConfigureAndroidAutofill(handler.PlatformView, handler.VirtualView.AutomationId);
-        });
-        PickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-            ClearAndroidInputChrome(handler.PlatformView));
-        DatePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-            ClearAndroidInputChrome(handler.PlatformView));
-        TimePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-            ClearAndroidInputChrome(handler.PlatformView));
-#elif IOS || MACCATALYST
-        ButtonHandler.Mapper.AppendToMapping("MuscleCutiesButtonCornerRadius", (handler, _) =>
-        {
-            handler.PlatformView.Layer.CornerRadius = (nfloat)handler.VirtualView.CornerRadius;
-            handler.PlatformView.Layer.MasksToBounds = handler.VirtualView.CornerRadius > 0;
-        });
-        EntryHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-        {
-            handler.PlatformView.BorderStyle = UITextBorderStyle.None;
-            handler.PlatformView.BackgroundColor = UIColor.Clear;
-
-            var textContentType = GetAuthFieldKind(handler.VirtualView.AutomationId) switch
-            {
-                AuthFieldKind.LoginIdentifier or AuthFieldKind.AccountUsername => UITextContentType.Username,
-                AuthFieldKind.EmailAddress => UITextContentType.EmailAddress,
-                AuthFieldKind.CurrentPassword => UITextContentType.Password,
-                AuthFieldKind.NewPassword => UITextContentType.NewPassword,
-                AuthFieldKind.OneTimeCode => UITextContentType.OneTimeCode,
-                _ => null
-            };
-
-            if (textContentType is not null)
-                handler.PlatformView.TextContentType = textContentType;
-
-            if (handler.VirtualView.AutomationId is "RegisterPassword")
-                handler.PlatformView.PasswordRules = UITextInputPasswordRules.Create(NewPasswordRules);
-        });
-        PickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-        {
-            handler.PlatformView.BorderStyle = UITextBorderStyle.None;
-            handler.PlatformView.BackgroundColor = UIColor.Clear;
-        });
-        DatePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-            handler.PlatformView.BackgroundColor = UIColor.Clear);
-        TimePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-            handler.PlatformView.BackgroundColor = UIColor.Clear);
-#endif
-    }
-
-    private enum AuthFieldKind
-    {
-        None,
-        LoginIdentifier,
-        EmailAddress,
-        AccountUsername,
-        CurrentPassword,
-        NewPassword,
-        OneTimeCode
-    }
-
-    // Matches AuthInputValidator's minimum length and character-class requirements.
-    private const string NewPasswordRules =
-        "required: upper; required: lower; required: digit; required: [-().&@?'#,/+_*]; minlength: 8;";
-
-    private static AuthFieldKind GetAuthFieldKind(string? automationId)
-    {
-        return automationId switch
-        {
-            "LoginEmail" => AuthFieldKind.LoginIdentifier,
-            "RegisterEmail" => AuthFieldKind.EmailAddress,
-            "RegisterUsername" => AuthFieldKind.AccountUsername,
-            "OtpEntry" => AuthFieldKind.OneTimeCode,
-            "LoginPassword" or "ProfileCurrentPassword" => AuthFieldKind.CurrentPassword,
-            "RegisterPassword" or "RegisterConfirmPassword" or "ProfileNewPassword" or "ProfileConfirmPassword" =>
-                AuthFieldKind.NewPassword,
-            _ => AuthFieldKind.None
-        };
-    }
-
-#if ANDROID
-    private static void ClearAndroidInputChrome(Android.Views.View view)
-    {
-        view.BackgroundTintList = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent);
-        view.SetBackgroundColor(Android.Graphics.Color.Transparent);
-        view.SetPadding(0, 0, 0, 0);
-    }
-
-    private static void ConfigureAndroidAutofill(Android.Widget.EditText editText, string? automationId)
-    {
-        var hint = GetAuthFieldKind(automationId) switch
-        {
-            AuthFieldKind.LoginIdentifier or AuthFieldKind.EmailAddress => Android.Views.View.AutofillHintEmailAddress,
-            AuthFieldKind.CurrentPassword => Android.Views.View.AutofillHintPassword,
-            AuthFieldKind.NewPassword => "newPassword",
-            _ => null
-        };
-
-        if (hint is null) return;
-
-        editText.ImportantForAutofill = Android.Views.ImportantForAutofill.Yes;
-        editText.SetAutofillHints(hint);
-    }
-#endif
-
-    private static void RegisterPlatformServices(IServiceCollection services)
-    {
-        services.AddSingleton<INavigationContextService, NavigationContextService>();
-        services.AddSingleton<ITokenStorage, SecureStorageService>();
-        services.AddSingleton(AccountSessionGate.Shared);
-        services.AddSingleton<ILocalNotificationService, LocalNotificationService>();
-#if IOS || MACCATALYST
-        services.AddSingleton<AppleSignInService>();
-        services.AddSingleton<IAppleSignInService>(sp => sp.GetRequiredService<AppleSignInService>());
-        services.AddSingleton<IPlatformSignInService>(sp => sp.GetRequiredService<AppleSignInService>());
-#endif
-
-#if IOS
-        services.AddSingleton<IHealthDataProvider, Platforms.iOS.AppleHealthDataProvider>();
-        services.AddSingleton<IHealthSyncService, HealthSyncService>();
-#else
-        services.AddSingleton<IHealthSyncService, DisabledHealthSyncService>();
-#endif
-        services.AddScoped<ICyclePhaseNotificationService>(sp =>
-            new CyclePhaseNotificationService(
-                sp.GetRequiredService<ICycleOverviewUseCase>(),
-                sp.GetRequiredService<ICyclePhaseProjectionUseCase>(),
-                sp.GetRequiredService<ILocalNotificationService>()));
-        services.AddScoped<IFeedbackEmailService, FeedbackEmailService>();
-    }
-
-    private static void RegisterDomainServices(IServiceCollection services)
-    {
-        services.AddSingleton<IFdcApiKeyProvider, SecureStorageFdcApiKeyProvider>();
-        services.AddTransient<FdcAirGapHandler>();
-        services.AddHttpClient<IFdcApiClient, FdcApiClient>(client =>
-            {
-                client.BaseAddress = FdcApiClient.BaseUri;
-                client.Timeout = TimeSpan.FromSeconds(8);
-            })
-            .ConfigurePrimaryHttpMessageHandler(CreateFdcHttpHandler)
-            .AddHttpMessageHandler<FdcAirGapHandler>();
-        services.AddHttpClient<IWgerApiClient, WgerApiClient>(client =>
-        {
-            client.BaseAddress = WgerApiClient.BaseUri;
-            client.Timeout = TimeSpan.FromSeconds(15);
-        });
-        services.AddHttpClient<IExerciseDbClient, ExerciseDbClient>(client =>
-        {
-            client.BaseAddress = ExerciseDbClient.BaseUri;
-            client.Timeout = TimeSpan.FromSeconds(15);
-        });
-        services.AddSingleton<IExerciseMediaStore>(_ =>
-            new LocalExerciseMediaStore(Path.Combine(FileSystem.AppDataDirectory, "exercises")));
-        services.AddScoped<ICalorieCalculator, CalorieCalculator>();
-        services.AddScoped<ICalorieDistributionService, CalorieDistributionService>();
-        services.AddScoped<IFallbackMealProvider, FallbackMealProvider>();
-        services.AddScoped<INutritionPlanner, NutritionPlanner>();
-        services.AddScoped<ICyclePhaseCalculator, CyclePhaseCalculator>();
-        services.AddScoped<ICyclePredictionPlanner, CyclePredictionPlanner>();
-        services.AddScoped<IDashboardPlanner, DashboardPlanner>();
-        services.AddScoped<IWorkoutPlanner, WorkoutPlanner>();
-        services.AddSingleton<IPasswordHasher, PasswordHasher>();
-        services.AddScoped<IAuthService, CloudAuthService>();
-        services.AddSingleton<IPendingRegistrationService, PendingRegistrationService>();
-        services.AddSingleton<IAppAccountPurgeService>(sp => new AppAccountPurgeService(
-            sp.GetRequiredService<IServiceScopeFactory>(),
-            new Lazy<IAppPreloadService>(sp.GetRequiredService<IAppPreloadService>),
-            sp.GetRequiredService<AccountSessionGate>(),
-            sp.GetRequiredService<ILocalPhotoCacheService>()));
-        services.AddSingleton<IProtectedPhotoCacheKeyStore, SecureStoragePhotoCacheKeyStore>();
-        services.AddSingleton<ILocalPhotoCacheService>(sp => new EncryptedLocalPhotoCacheService(
-            FileSystem.AppDataDirectory,
-            sp.GetRequiredService<IProtectedPhotoCacheKeyStore>(),
-            ProfileMediaProtection.Apply));
-        services.AddSingleton<ISnapshotCacheKeyStore, SecureStorageSnapshotCacheKeyStore>();
-        services.AddSingleton<IBackendSessionTokenStore, SecureStorageBackendSessionTokenStore>();
-        services.AddSingleton<ILocalCacheService>(sp => new EncryptedLocalSnapshotCacheService(
-            FileSystem.AppDataDirectory,
-            sp.GetRequiredService<ISnapshotCacheKeyStore>(),
-            ProfileMediaProtection.Apply));
-        services.AddSingleton<ICloudAuthorityGate>(_ => new VersionedCloudAuthorityGate());
-        services.AddHttpClient<IMuscleCutiesBackendApiClient, MuscleCutiesBackendApiClient>(client =>
-        {
-            var configuredUrl = DefaultBackendBaseUrl;
-#if DEBUG
-            configuredUrl = Preferences.Get(DebugBackendBaseUrlPreferenceKey, DefaultBackendBaseUrl);
-#endif
-            client.BaseAddress = new Uri(configuredUrl);
-            client.Timeout = TimeSpan.FromSeconds(BackendRequestTimeoutSeconds);
-        });
-        services.AddSingleton(TimeProvider.System);
-        services.AddSingleton<MobileJourneyCloudGateway>();
-        services.AddSingleton<IPhotoCacheAccountLifecycle>(sp => new PhotoCacheAccountLifecycle(
-            async () =>
-            {
-                await using var scope = sp.GetRequiredService<IServiceScopeFactory>().CreateAsyncScope();
-                return await scope.ServiceProvider.GetRequiredService<IAuthService>()
-                    .GetCurrentUserIdAsync().ConfigureAwait(false);
-            },
-            sp.GetRequiredService<ILocalPhotoCacheService>()));
-        services.AddScoped<CloudDailyCheckInStore>();
-        services.AddSingleton<IDailyCheckInStore, ScopedCloudDailyCheckInStore>();
-        services.AddSingleton<IDailyCheckInUseCase,
-            DailyCheckInUseCase>();
-        services.AddSingleton<IDashboardOverviewStore,
-            CloudDashboardOverviewStore>();
-        services.AddSingleton<IDashboardOverviewUseCase,
-            DashboardOverviewUseCase>();
-        services.AddSingleton<INutritionChangeNotifier>(_ =>
-            new NutritionChangeNotifier(MainThread.BeginInvokeOnMainThread));
-        services.AddSingleton<IBarcodeScannerHardwareService, BarcodeScannerHardwareService>();
-    }
-
-    private static void RegisterWorkoutPlanningServices(IServiceCollection services)
-    {
-        services.AddSingleton(WorkoutPlanningConfig.CreateDefault());
-
-        services.AddSingleton<IReadinessEngine, DailyReadinessEngine>();
-        services.AddSingleton<IGatingEngine, GatingEngine>();
-
-        services.AddScoped<IDailyCheckInNotificationService>(sp =>
-            new DailyCheckInNotificationService(
-                sp.GetRequiredService<ILocalNotificationService>(),
-                sp.GetRequiredService<IDailyCheckInStore>()));
-
-    }
-
-    private static void RegisterMigrationServices(IServiceCollection services)
-    {
-        services.AddSingleton<IAccountLoginScheduler, AccountLoginScheduler>();
-        services.AddSingleton<IAccountLookupScheduler, AccountLookupScheduler>();
-        services.AddSingleton<IPlatformAccountSignInAdapter>(sp =>
-            new PlatformAccountSignInAdapter(sp.GetService<IPlatformSignInService>()));
-        services.AddSingleton<IAccountPasswordValidator, AccountPasswordValidator>();
-        services.AddSingleton<IAccountSignInStore, CloudAccountSignInStore>();
-        services.AddSingleton<IAccountSignInUseCase, AccountSignInUseCase>();
-        services.AddSingleton<IAccountRecoveryStore, CloudAccountRecoveryStore>();
-        services.AddSingleton<IAccountRecoveryUseCase, AccountRecoveryUseCase>();
-        services.AddSingleton<IAccountRegistrationGateway, CloudAccountRegistrationGateway>();
-        services.AddSingleton<IAccountRegistrationUseCase, AccountRegistrationUseCase>();
-        services.AddSingleton<IRegistrationOtpGateway, CloudRegistrationOtpGateway>();
-        services.AddSingleton<IRegistrationOtpUseCase, RegistrationOtpUseCase>();
-
-        services.AddSingleton<IProfileRefreshNotifier>(sp =>
-            new ProfileRefreshNotifier(new Lazy<IAppPreloadService>(sp.GetRequiredService<IAppPreloadService>)));
-        services.AddScoped<ICurrentProfileUserIdProvider, CurrentProfileUserIdProvider>();
-        services.AddSingleton<IProfileHealthConnection, ProfileHealthConnection>();
-        services.AddSingleton<CloudProfileSetupStore>();
-        services.AddSingleton<IProfileSetupPersistence>(sp => sp.GetRequiredService<CloudProfileSetupStore>());
-        services.AddSingleton<IProfileSetupStore>(sp => sp.GetRequiredService<CloudProfileSetupStore>());
-        services.AddSingleton<IProfileSetupUseCase, ProfileSetupUseCase>();
-        services.AddSingleton<IOnboardingQuizStore, CloudOnboardingQuizStore>();
-        services.AddSingleton<IOnboardingQuizUseCase, OnboardingQuizUseCase>();
-        services.AddSingleton<IProfileAccountSession, CloudProfileAccountSession>();
-        services.AddSingleton<IProfileAccountDeletion, LocalProfileAccountDeletion>();
-        services.AddSingleton<IProfilePurgePort, ProfilePurgeCoordinator>();
-        services.AddSingleton<IProfileOverviewStore, CloudProfileOverviewStore>();
-        services.AddSingleton<IProfileOverviewUseCase, ProfileOverviewUseCase>();
-        services.AddSingleton<IProfilePersonalInfoStore, CloudProfilePersonalInfoStore>();
-        services.AddSingleton<IProfilePersonalInfoUseCase, ProfilePersonalInfoUseCase>();
-        services.AddSingleton<IProfileNutritionSettingsStore, CloudProfileNutritionSettingsStore>();
-        services.AddSingleton<IProfileNutritionSettingsUseCase, ProfileNutritionSettingsUseCase>();
-        services.AddSingleton<IProfileWorkoutPreferencesStore, CloudProfileWorkoutPreferencesStore>();
-        services.AddSingleton<IProfileWorkoutPreferencesUseCase, ProfileWorkoutPreferencesUseCase>();
-        services.AddSingleton<IReviewedExerciseExclusionCatalogV020Store,
-            CloudReviewedExerciseExclusionCatalogV020Store>();
-        services.AddSingleton<GetReviewedExerciseExclusionCatalogV020UseCase>();
-        services.AddSingleton<IProfileUnitsStore, CloudProfileUnitsStore>();
-        services.AddSingleton<IProfileUnitsUseCase, ProfileUnitsUseCase>();
-        services.AddHttpClient<IPhotoVaultStore, MobilePhotoVaultStore>();
-        services.AddSingleton<IPhotoVaultUseCase, PhotoVaultUseCase>();
-        services.AddSingleton<IProfileFeedbackComposer, LocalProfileFeedbackComposer>();
-        services.AddSingleton<IProfileFeedbackUseCase, ProfileFeedbackUseCase>();
-
-        services.AddSingleton<ILocalizationService, LocalizationService>();
-        services.AddSingleton<ICycleOverviewStore, CloudCycleOverviewStore>();
-        services.AddSingleton<ICycleOverviewUseCase, CycleOverviewUseCase>();
-        services.AddSingleton<ICyclePhaseProjectionUseCase, CyclePhaseProjectionUseCase>();
-        services.AddSingleton<ICycleDailyLogStore, CloudCycleDailyLogStore>();
-        services.AddSingleton<ICycleDailyLogUseCase, CycleDailyLogUseCase>();
-        services.AddSingleton<ICyclePhaseEditStore, CloudCyclePhaseEditStore>();
-        services.AddSingleton<ICyclePhaseEditUseCase, CyclePhaseEditUseCase>();
-        services.AddSingleton<INutritionDailyLogStore, CloudNutritionDailyLogStore>();
-        services.AddSingleton<INutritionDailyLogUseCase, NutritionDailyLogUseCase>();
-        services.AddSingleton<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier,
-            NutritionChangeNotifierAdapter>();
-        services.AddSingleton<INutritionOverviewStore, CloudNutritionOverviewStore>();
-        services.AddSingleton<INutritionOverviewUseCase, NutritionOverviewUseCase>();
-        services.AddSingleton<CloudFoodCatalogSearchStore>();
-        services.AddSingleton<IFoodCatalogSearchStore>(sp => sp.GetRequiredService<CloudFoodCatalogSearchStore>());
-        services.AddSingleton<IBarcodeFoodLookupStore>(sp => sp.GetRequiredService<CloudFoodCatalogSearchStore>());
-        services.AddSingleton<IFoodCatalogSearchUseCase, FoodCatalogSearchUseCase>();
-        services.AddSingleton<ILookupBarcodeUseCase, LookupBarcodeUseCase>();
-        services.AddSingleton<IRecipeStore, CloudRecipeStore>();
-        services.AddSingleton<ICreateRecipeUseCase, CreateRecipeUseCase>();
-        services.AddSingleton<IRecipePortionUseCase, RecipePortionUseCase>();
-        services.AddSingleton<IGetWaterQuickAddDefaultsUseCase, GetWaterQuickAddDefaultsUseCase>();
-        services.AddSingleton<ISaveMealTemplateUseCase, SaveMealTemplateUseCase>();
-        services.AddSingleton<IGetRecipesAndTemplatesUseCase, GetRecipesAndTemplatesUseCase>();
-        services.AddScoped<IWorkoutArchiveStore, CloudWorkoutArchiveStore>();
-        services.AddScoped<IWorkoutArchiveUseCase, WorkoutArchiveUseCase>();
-        services.AddSingleton<IWorkoutInjuryStore, CloudWorkoutInjuryStore>();
-        services.AddSingleton<IWorkoutInjuryUseCase, WorkoutInjuryUseCase>();
-        services.AddSingleton<IWorkoutOverviewStore, CloudWorkoutOverviewStore>();
-        services.AddSingleton<IWorkoutOverviewUseCase, WorkoutOverviewUseCase>();
-        services.AddSingleton<IStrengthPlanProposalClientV020, CloudStrengthPlanProposalStoreV020>();
-        services.AddSingleton<IStrengthStyleOfferClient, CloudStrengthStyleOfferClient>();
-        services.AddSingleton<IWorkoutAccountCalendarClient, WorkoutAccountCalendarClient>();
-        services.AddScoped<IWorkoutSessionActionStore, CloudWorkoutSessionActionStore>();
-        services.AddScoped<IWorkoutSessionActionUseCase, WorkoutSessionActionUseCase>();
     }
 
     private static void RegisterViewModels(IServiceCollection services)
@@ -587,7 +237,6 @@ public static class MauiProgram
             sp.GetRequiredService<IWorkoutAccountCalendarClient>(),
             overview: sp.GetRequiredService<IWorkoutOverviewUseCase>()));
 
-
         services.AddTransient<WorkoutSessionViewModel>(sp => new WorkoutSessionViewModel(
             sp.GetRequiredService<IWorkoutSessionActionUseCase>(),
             sp.GetRequiredService<ICycleOverviewUseCase>(),
@@ -702,28 +351,6 @@ public static class MauiProgram
         services.AddTransient<PasswordRecoveryPage>();
 
         services.AddSingleton<AppShell>();
-    }
-
-    private static void ConfigureLogging(MauiAppBuilder builder)
-    {
-#if DEBUG
-        builder.Logging.AddDebug();
-#endif
-    }
-
-    // Enforces TLS 1.3 and SPKI certificate pinning for USDA FoodData Central requests with cookies disabled.
-    private static HttpMessageHandler CreateFdcHttpHandler()
-    {
-        return new SocketsHttpHandler
-        {
-            AllowAutoRedirect = false,
-            SslOptions =
-            {
-                EnabledSslProtocols = SslProtocols.Tls13,
-                RemoteCertificateValidationCallback = FdcCertificatePinningPolicy.Validate
-            },
-            UseCookies = false
-        };
     }
 
     private static Task NavigateToAsync(string route)
@@ -857,4 +484,3 @@ public static class MauiProgram
         return queryIndex < 0 ? route : route[..queryIndex];
     }
 }
-

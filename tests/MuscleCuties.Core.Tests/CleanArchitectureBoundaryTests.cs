@@ -99,8 +99,9 @@ public class CleanArchitectureBoundaryTests
             if (name.StartsWith("MuscleCuties.", StringComparison.OrdinalIgnoreCase))
             {
                 Assert.True(
-                    string.Equals(name, "MuscleCuties.Core", StringComparison.OrdinalIgnoreCase),
-                    $"MuscleCuties.UseCases can only reference MuscleCuties.Core, but references '{name}'.");
+                    string.Equals(name, "MuscleCuties.Core", StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(name, "MuscleCuties.Contracts", StringComparison.OrdinalIgnoreCase),
+                    $"MuscleCuties.UseCases can only reference MuscleCuties.Core and MuscleCuties.Contracts, but references '{name}'.");
             }
 
             foreach (var prohibited in ProhibitedUseCasesOuterTokens)
@@ -120,8 +121,9 @@ public class CleanArchitectureBoundaryTests
         {
             var include = proj.Attribute("Include")?.Value ?? string.Empty;
             Assert.True(
-                include.EndsWith("MuscleCuties.Core.csproj", StringComparison.OrdinalIgnoreCase),
-                $"MuscleCuties.UseCases.csproj can only reference MuscleCuties.Core, but found '{include}'.");
+                include.EndsWith("MuscleCuties.Core.csproj", StringComparison.OrdinalIgnoreCase) ||
+                include.EndsWith("MuscleCuties.Contracts.csproj", StringComparison.OrdinalIgnoreCase),
+                $"MuscleCuties.UseCases.csproj can only reference MuscleCuties.Core and MuscleCuties.Contracts, but found '{include}'.");
         }
 
         var packageReferences = doc.Descendants("PackageReference").ToList();
@@ -134,6 +136,25 @@ public class CleanArchitectureBoundaryTests
                     include.Contains(prohibited, StringComparison.OrdinalIgnoreCase),
                     $"MuscleCuties.UseCases.csproj must not reference package '{include}' (matched prohibited token '{prohibited}').");
             }
+        }
+    }
+
+    [Fact]
+    public void Contracts_has_zero_dependencies_on_Core_Infrastructure_or_Frameworks()
+    {
+        var contractsAssembly = typeof(MuscleCuties.Contracts.Account.StartAccountRegistrationRequest).Assembly;
+        var referencedAssemblies = contractsAssembly.GetReferencedAssemblies();
+
+        foreach (var referenced in referencedAssemblies)
+        {
+            var name = referenced.Name ?? string.Empty;
+            Assert.False(
+                name.StartsWith("MuscleCuties.Core", StringComparison.OrdinalIgnoreCase) ||
+                name.StartsWith("MuscleCuties.Infrastructure", StringComparison.OrdinalIgnoreCase) ||
+                name.StartsWith("Microsoft.EntityFrameworkCore", StringComparison.OrdinalIgnoreCase) ||
+                name.StartsWith("Microsoft.AspNetCore", StringComparison.OrdinalIgnoreCase) ||
+                name.StartsWith("Microsoft.Maui", StringComparison.OrdinalIgnoreCase),
+                $"MuscleCuties.Contracts must not reference '{name}'.");
         }
     }
 
@@ -284,6 +305,46 @@ public class CleanArchitectureBoundaryTests
         Assert.True(
             violations.Count == 0,
             $"Found {violations.Count} migrated ViewModel(s) importing MuscleCuties.Core directly:\n" + string.Join("\n", violations));
+    }
+
+    [Fact]
+    public void Zero_unauthorized_or_duplicate_workout_planners_or_fallback_generators()
+    {
+        // Enforce AGENTS.md invariant and R07 resolution:
+        // 1. No competing or duplicate IWorkoutPlanner / WorkoutPlanner classes exist.
+        // 2. MauiProgram / Composition has zero registrations for IWorkoutPlanner or WorkoutPlanner.
+        // 3. Keep one authoritative workout planning client in UI (IStrengthPlanProposalClientV020) and application service (IWorkoutPlanningApplicationService).
+
+        var allCsFiles = Directory.EnumerateFiles(RepoRoot, "*.cs", SearchOption.AllDirectories)
+            .Where(f => !f.Contains(Path.DirectorySeparatorChar + "bin" + Path.DirectorySeparatorChar) &&
+                        !f.Contains(Path.DirectorySeparatorChar + "obj" + Path.DirectorySeparatorChar) &&
+                        !f.Contains(Path.DirectorySeparatorChar + ".git" + Path.DirectorySeparatorChar) &&
+                        !f.EndsWith("CleanArchitectureBoundaryTests.cs", StringComparison.OrdinalIgnoreCase))
+            .ToList();
+
+        var forbiddenTypeNames = new[] { "IWorkoutPlanner", "WorkoutPlanner" };
+        var violations = new List<string>();
+
+        foreach (var file in allCsFiles)
+        {
+            var content = File.ReadAllText(file);
+            foreach (var typeName in forbiddenTypeNames)
+            {
+                if (Regex.IsMatch(content, $@"\b(?:class|interface)\s+{typeName}\b"))
+                {
+                    violations.Add($"{Path.GetRelativePath(RepoRoot, file)} defines forbidden legacy duplicate planner type: '{typeName}'");
+                }
+
+                if (content.Contains($"<{typeName}>") || content.Contains($"<{typeName},") || content.Contains($", {typeName}>"))
+                {
+                    violations.Add($"{Path.GetRelativePath(RepoRoot, file)} contains forbidden DI registration or generic usage of '{typeName}'");
+                }
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} forbidden duplicate workout planner occurrences:\n" + string.Join("\n", violations));
     }
 
     private static string FindRepositoryRoot()

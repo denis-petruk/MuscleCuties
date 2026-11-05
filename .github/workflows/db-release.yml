@@ -1,0 +1,60 @@
+name: Database Migration & Schema Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: 'Target deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - beta
+
+permissions:
+  id-token: write
+  contents: read
+
+concurrency:
+  group: mutation-${{ inputs.target_environment }}
+  cancel-in-progress: false
+
+jobs:
+  db_release:
+    name: db_release_${{ inputs.target_environment }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Build DbMaintenance CLI
+        run: |
+          dotnet build src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj --configuration Release
+
+      - name: Preflight schema check under session advisory lock
+        env:
+          ConnectionStrings__PostgreSql: ${{ secrets.DATABASE_CONNECTION_STRING }}
+        run: |
+          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- \
+            session-lock-runner -- dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- dbcheck
+
+      - name: Apply schema under session advisory lock
+        env:
+          ConnectionStrings__PostgreSql: ${{ secrets.DATABASE_CONNECTION_STRING }}
+        run: |
+          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- \
+            session-lock-runner -- dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- dbinit
+
+      - name: Post-apply schema verification
+        env:
+          ConnectionStrings__PostgreSql: ${{ secrets.DATABASE_CONNECTION_STRING }}
+        run: |
+          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- \
+            session-lock-runner -- dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- dbcheck
