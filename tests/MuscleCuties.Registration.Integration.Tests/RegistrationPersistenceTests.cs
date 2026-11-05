@@ -4,6 +4,7 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
+using MuscleCuties.Contracts.Account;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
@@ -11,7 +12,7 @@ using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 using MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
 using MuscleCuties.UseCases.Features.Onboarding.Quiz;
 using Npgsql;
-using RegistrationWorkoutType = MuscleCuties.UseCases.Features.Account.Registration.Contracts.WorkoutType;
+using RegistrationWorkoutType = MuscleCuties.Contracts.Account.WorkoutType;
 
 namespace MuscleCuties.Registration.Integration.Tests;
 

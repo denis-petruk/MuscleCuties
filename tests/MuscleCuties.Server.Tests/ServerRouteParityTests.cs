@@ -20,6 +20,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
+using MuscleCuties.Contracts.Account;
+using MuscleCuties.Contracts.Onboarding;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Workout;

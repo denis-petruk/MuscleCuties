@@ -17,6 +17,8 @@ using MuscleCuties.UseCases.Features.Account.Otp;
 using MuscleCuties.UseCases.Features.Account.Otp.Contracts;
 using MuscleCuties.UseCases.Features.Account.Recovery;
 using MuscleCuties.UseCases.Features.Account.Recovery.Contracts;
+using MuscleCuties.Contracts.Account;
+using MuscleCuties.Contracts.Onboarding;
 using MuscleCuties.UseCases.Features.Account.Registration;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
