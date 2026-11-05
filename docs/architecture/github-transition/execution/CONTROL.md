@@ -29,8 +29,9 @@ Owner baseline source: `/Users/denispetruk/RiderProjects/MuscleCuties` (commit `
 | **R02** | A | MERGED | `571ee942` | `d83136b5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r02_transport_presentation` | `product/r02-transport-presentation` / [PR #27](https://github.com/denis-petruk/MuscleCuties/pull/27) | Isolate mobile configuration, transport and presentation adapters; 1,245 unit/contract tests passed; CI 8/8 green; merged to main |
 | **R03** | A | MERGED | `d83136b5` | `991c98ff` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r03_planning_orchestration` | `product/r03-planning-orchestration` / [PR #28](https://github.com/denis-petruk/MuscleCuties/pull/28) | Planning ports extracted (Clock, Catalog, Safety); \`IWorkoutPlanningApplicationService\` introduced; 1,259 tests green; CI 8/8 green; merged to main |
 | **R04** | A | MERGED | `089c3c8b` | `9e33ed12` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r04_preview_apply_transitions` | `product/r04-preview-apply-transitions` / [PR #29](https://github.com/denis-petruk/MuscleCuties/pull/29) | Preview/Apply/Navigation formalized as explicit state transitions; 1,286 tests green; CI 8/8 green; merged to main |
-| **R05** | A | IN PROGRESS | `ab567319` | pending | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r05_account_storage_offline` | `product/r05-account-storage-offline` | Harden account/environment storage and auth/offline continuity |
-| **R06-R07** | A/I | PENDING | `ab567319` | - | - | - | Sequential Plan II refactoring packages |
+| **R05** | A | MERGED | `ab567319` | `2b699ba8` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r05_account_storage_offline` | `product/r05-account-storage-offline` / [PR #30](https://github.com/denis-petruk/MuscleCuties/pull/30) | Environment-partitioned snapshot cache & token storage; session race elimination; 1,290 tests green; CI 8/8 green; merged to main |
+| **R06** | A | IN PROGRESS | `2ab653db` | pending | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r06_injury_reconciliation_progression` | `product/r06-injury-reconciliation-progression` | Consolidate injury/reconciliation/progression boundaries |
+| **R07** | A/I | PENDING | `2ab653db` | - | - | - | Sequential Plan II refactoring packages |
 
 ---
 
@@ -65,5 +66,5 @@ Owner baseline source: `/Users/denispetruk/RiderProjects/MuscleCuties` (commit `
 
 ## 4. Next Checkpoint
 
-- Completed Plan II Package R04 (Merged into main via PR #29).
-- Proceeding to Plan II Package R05 (Harden account/environment storage and auth/offline continuity).
+- Completed Plan II Package R05 (Merged into main via PR #30).
+- Proceeding to Plan II Package R06 (Consolidate injury/reconciliation/progression boundaries).
