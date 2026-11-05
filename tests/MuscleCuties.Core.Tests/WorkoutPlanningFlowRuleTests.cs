@@ -132,4 +132,62 @@ public sealed class WorkoutPlanningFlowRuleTests
         Assert.False(acceptance.ReducedVolumeAcknowledged);
         Assert.Empty(acceptance.AcknowledgedExerciseConditionIds);
     }
+
+    [Theory]
+    [InlineData(WorkoutPlanningState.Initial, WorkoutPlanningEvent.PreviewLoaded, WorkoutPlanningState.PreviewReady)]
+    [InlineData(WorkoutPlanningState.PreviewReady, WorkoutPlanningEvent.StartAccepting, WorkoutPlanningState.Accepting)]
+    [InlineData(WorkoutPlanningState.PreviewReady, WorkoutPlanningEvent.InvalidateInputs, WorkoutPlanningState.Invalidated)]
+    [InlineData(WorkoutPlanningState.PreviewReady, WorkoutPlanningEvent.ClosePreview, WorkoutPlanningState.Initial)]
+    [InlineData(WorkoutPlanningState.Accepting, WorkoutPlanningEvent.AcceptSucceeded, WorkoutPlanningState.Accepted)]
+    [InlineData(WorkoutPlanningState.Accepting, WorkoutPlanningEvent.AcceptTimedOutOrNetworkFailed, WorkoutPlanningState.UncertainAcceptance)]
+    [InlineData(WorkoutPlanningState.Accepting, WorkoutPlanningEvent.AcceptConflictOrStale, WorkoutPlanningState.Invalidated)]
+    [InlineData(WorkoutPlanningState.Accepting, WorkoutPlanningEvent.AcceptValidationFailed, WorkoutPlanningState.PreviewReady)]
+    [InlineData(WorkoutPlanningState.UncertainAcceptance, WorkoutPlanningEvent.StartAccepting, WorkoutPlanningState.Accepting)]
+    [InlineData(WorkoutPlanningState.UncertainAcceptance, WorkoutPlanningEvent.InvalidateInputs, WorkoutPlanningState.Invalidated)]
+    [InlineData(WorkoutPlanningState.UncertainAcceptance, WorkoutPlanningEvent.ClosePreview, WorkoutPlanningState.Initial)]
+    [InlineData(WorkoutPlanningState.Accepted, WorkoutPlanningEvent.NavigateStarted, WorkoutPlanningState.NavigationPending)]
+    [InlineData(WorkoutPlanningState.NavigationPending, WorkoutPlanningEvent.NavigateCompleted, WorkoutPlanningState.Completed)]
+    [InlineData(WorkoutPlanningState.Invalidated, WorkoutPlanningEvent.PreviewLoaded, WorkoutPlanningState.PreviewReady)]
+    [InlineData(WorkoutPlanningState.Invalidated, WorkoutPlanningEvent.ClosePreview, WorkoutPlanningState.Initial)]
+    public void StateTransitions_EvaluateAccordingToExpectedLifecycle(
+        WorkoutPlanningState current,
+        WorkoutPlanningEvent trigger,
+        WorkoutPlanningState expected)
+    {
+        var result = WorkoutPlanningFlowRule.Transition(current, trigger);
+        Assert.Equal(expected, result);
+    }
+
+    [Theory]
+    [InlineData(WorkoutPlanningState.PreviewReady, true, true, true)]
+    [InlineData(WorkoutPlanningState.PreviewReady, false, true, false)]
+    [InlineData(WorkoutPlanningState.PreviewReady, true, false, false)]
+    [InlineData(WorkoutPlanningState.UncertainAcceptance, true, true, true)]
+    [InlineData(WorkoutPlanningState.Accepting, true, true, false)]
+    [InlineData(WorkoutPlanningState.Accepted, true, true, false)]
+    [InlineData(WorkoutPlanningState.Invalidated, true, true, false)]
+    [InlineData(WorkoutPlanningState.Initial, true, true, false)]
+    public void CanAcceptInState_OnlyPermitsPreviewReadyAndUncertainRetryWithLeaseAndFeasibility(
+        WorkoutPlanningState state,
+        bool hasLease,
+        bool feasible,
+        bool expectedCanAccept)
+    {
+        var canAccept = WorkoutPlanningFlowRule.CanAcceptInState(state, hasLease, feasible);
+        Assert.Equal(expectedCanAccept, canAccept);
+    }
+
+    [Theory]
+    [InlineData(WorkoutPlanningState.PreviewReady, true, true)]
+    [InlineData(WorkoutPlanningState.PreviewReady, false, false)]
+    [InlineData(WorkoutPlanningState.UncertainAcceptance, true, false)]
+    [InlineData(WorkoutPlanningState.Accepting, true, false)]
+    public void RequiresReplacementConsentPrompt_OnlyAppliesToFirstAttemptOnReplacementPlan(
+        WorkoutPlanningState state,
+        bool replacesExistingPlan,
+        bool expectedPromptRequired)
+    {
+        var prompt = WorkoutPlanningFlowRule.RequiresReplacementConsentPrompt(state, replacesExistingPlan);
+        Assert.Equal(expectedPromptRequired, prompt);
+    }
 }
