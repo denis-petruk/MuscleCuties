@@ -1,5 +1,12 @@
 namespace MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
+public sealed record ObservedSetRecord(
+    int SetIndex,
+    int RepsCompleted,
+    decimal LoadKg,
+    int? RirActual = null,
+    bool TechniqueAcceptable = true);
+
 public sealed record WorkoutExerciseLogDto(
     int WorkoutDayExerciseId,
     int ExerciseId,
@@ -12,7 +19,8 @@ public sealed record WorkoutExerciseLogDto(
     int? PaceSecondsPerKm = null,
     int? PowerWatts = null,
     int? CadenceRpm = null,
-    int? EffortRating = null);
+    int? EffortRating = null,
+    IReadOnlyList<ObservedSetRecord>? ObservedSets = null);
 
 public sealed record LogWorkoutSessionRequest(
     int WorkoutDayId,

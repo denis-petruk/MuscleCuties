@@ -10,7 +10,11 @@ The corrective beta plan (`docs/release-audit/2026-11-04/IMPLEMENTATION_PLAN.md`
 - **PD00**: Versioned policy proposal adopted with 10 main muscle regions, $\ge 2$ exposures/week minimum (prefer 3), compact 35–45 min sessions, readiness load calibration, and cycle mode with fatigue safeguard (extra sets withheld when readiness $< 75$); 6 before/after test-backed scenarios verified in Core.
 - **DS00 / UX01a**: All-session schedule data seam added to `WorkoutScheduleEntry` via `Sessions` collection, preserving legacy `WorkoutDayId` and `CompanionWorkoutDayId` for backward compatibility. 1..N daily sessions projected in `DayOrder` across Postgres store, UI model, and viewmodel.
 - **PL01**: `AppEndpointConfiguration.cs` fail-closed in Release; `SecureStorageSnapshotCacheStores.cs` safely isolates legacy token migration to Beta only; `backend-release.yml` probes live `/health/live` and `/health/ready`; `mobile-release.yml` supports `device` (`ios-arm64`) target runtime.
-- **Current Test Suite**: **1,303 / 1,303 automated unit/contract tests passing (100% green)**.
+- **WP01 / WP02a**: 10 canonical muscle regions defined with direct (1.0) and compound synergist (0.5) weights in `TenRegionMuscleCoverageRule`; integrated into `StrengthPlanPreviewRule` enforcing $\ge 2$ exposures/week minimum and 3 preferred across available days, reporting explicit `Limited` status on infeasibility.
+- **WP03a / WP03b**: Added `ObservedSetRecord` to `WorkoutExerciseLogDto` preserving wire compatibility; connected observed sets to `StrengthProgressionRule.ResolveDoubleProgression` in `PostgresWorkoutPlanAndSessionStore` to prescribe earned load increments or maintain baseline on incomplete sessions.
+- **RM00 / RM01**: Native layout crash protection added in `PlatformCompositionExtensions.cs` guarding `ButtonHandler.Mapper` on iOS/MacCatalyst against null layer during arrange; typed error handling in `ApiFailurePresenter.cs` categorizing generator, socket/offline, and session expired faults.
+- **PL02**: Ordered PostgreSQL migration executor (`PostgresSchemaMigrations.cs`) with `ops.schema_migrations` tracking, SHA-256 checksum validation, serializable transaction safety; `003_schedule_seam.sql` added; `DbMaintenance migrate` CLI wired; `db-release.yml` transitioned from legacy `dbinit`.
+- **Current Test Suite**: **1,320 / 1,320 automated unit/contract tests passing (100% green)** across Core (1,114), Mobile Contracts (50), Registration (41), Server (112), and Registration Integration (3).
 
 See `docs/architecture/github-transition/execution/CONTROL.md` for live package lifecycle and reservations.
 
@@ -18,23 +22,24 @@ See `docs/architecture/github-transition/execution/CONTROL.md` for live package 
 
 | Gate | Status | Evidence or open item |
 | --- | --- | --- |
-| G0 Baseline and scope | PASS | Candidate reconciled to `d840d627` (PRs #15–#32 merged) and release audit package tracked. |
+| G0 Baseline and scope | PASS | Candidate reconciled to `67b14bf4` on `continue_musclecuties_beta_plan`. |
 | G1 Architecture integrity | PASS | Clean Architecture boundaries intact; contracts extracted, zero outer dependencies in Core. |
-| G2 Domain safety | PASS | Tri-state injury questions, double progression invariants, and policy proposals verified in 1,109 Core tests. |
-| G3 Persistence | PASS | Non-disposable EnsureCreated guard active; all-session schedule projection supported. |
+| G2 Domain safety | PASS | 10-region coverage rules, tri-state injury questions, double progression invariants verified in 1,114 Core tests. |
+| G3 Persistence | PASS | Non-disposable EnsureCreated guard active; versioned migrations runner with SHA-256 checksums verified. |
 | G4 Backend/API | PASS | Server route parity 100% green (112 tests); release workflows probe live endpoint health. |
-| G5 Mobile UI | OPEN | G5 reopened for native Button.LayoutButton crash and physical device acceptance. |
+| G5 Mobile UI | OPEN | RM00 layout crash protection and RM01 typed error handling verified; physical device acceptance (QA01) pending owner authorization. |
 | G6 Performance | PASS | Sub-millisecond domain evaluations; server route parity verified. |
 | G7 Privacy/security | PASS | Fail-closed Release endpoints; partitioned token/cache stores; legacy token leakage removed; OIDC AWS auth. |
-| G8 Build/regression | PASS | 1,303 unit, contract, and registration tests passing (100% pass rate). |
+| G8 Build/regression | PASS | 1,320 unit, contract, and registration tests passing (100% pass rate). |
 | G9 Documentation/handoff | PASS | Canonical execution control ledger, checkpoint artifact, and handoff prompt complete. |
 
 ## Open Project Items & Post-Transition Operations
 
-- WP01 / WP02a: Catalog variation metadata and 2–3 exposure coverage rule in `StrengthPlanPreviewRule`.
-- WP03a / WP03b: Connect observed set capture to active progression evaluation.
-- RM00–RM08: Native crash diagnostics (CR01/PG01), photo/archive, meal scrolling, micronutrient parity.
-- PL02–PL05: Versioned PostgreSQL schema migration lifecycle, immutable packaging qualification, Apple privacy manifest.
+- WP04: Composed readiness and cycle load/rep/set adjustment (single final dose authority).
+- WP05: Pain-trigger handling, hard eligibility, reviewed substitutions or withholding.
+- UX01b / UX02a / UX02b: Day and All agenda views, activity-level actuals, and shared activity logger.
+- RM02–RM08: Photo/archive, meal scrolling, locale/date edits, truthful micronutrients.
+- PL03–PL05: Immutable API/worker release packaging, isolated Staging qualification, Apple privacy manifest.
 - Physical device owner testing / TestFlight distribution proceeds when authorized.
 
 ## Proposed architecture/transition planning — 2026-11-04

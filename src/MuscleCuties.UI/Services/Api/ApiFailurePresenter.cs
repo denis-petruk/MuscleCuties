@@ -94,6 +94,10 @@ public static class ApiFailurePresenter
     private const string DatabaseMissingTableCode = "databaseMissingTable";
     private const string DatabaseMissingColumnCode = "databaseMissingColumn";
     private const string DatabasePermissionDeniedCode = "databasePermissionDenied";
+    private const string GeneratorFailureCode = "generatorFailure";
+    private const string PlanInfeasibleCode = "planInfeasible";
+    private const string PlanningProfileInvalidCode = "planningProfileInvalid";
+    private const string SafetyAnswersRequiredCode = "safetyAnswersRequired";
 
     public static ApiFailureNotice FromResponse<TResponse>(
         BackendApiResponse<TResponse> response,
@@ -110,6 +114,10 @@ public static class ApiFailurePresenter
                 new ApiFailureNotice(TimeoutKey, ApiFailureAction.Retry, response.RequestId),
             BackendApiStatus.Conflict =>
                 new ApiFailureNotice(fallbackKey, ApiFailureAction.Retry, response.RequestId),
+            BackendApiStatus.ServerError when response.ErrorCode is GeneratorFailureCode =>
+                new ApiFailureNotice(fallbackKey, ApiFailureAction.ContactSupport, response.RequestId),
+            BackendApiStatus.ServerError when response.ErrorCode is PlanInfeasibleCode or PlanningProfileInvalidCode or SafetyAnswersRequiredCode =>
+                new ApiFailureNotice(fallbackKey, ApiFailureAction.None, response.RequestId),
             BackendApiStatus.ServerError =>
                 FromStatusCode(
                     response.ResponseStatusCode,
@@ -123,11 +131,30 @@ public static class ApiFailurePresenter
     {
         ArgumentNullException.ThrowIfNull(exception);
 
-        if (exception is TaskCanceledException)
+        if (exception is TaskCanceledException or TimeoutException)
             return new ApiFailureNotice(TimeoutKey, ApiFailureAction.Retry, null);
 
-        if (exception is HttpRequestException { StatusCode: { } status })
-            return FromStatusCode(status, null, null, fallbackKey);
+        if (exception is System.Net.Sockets.SocketException)
+            return new ApiFailureNotice(OfflineKey, ApiFailureAction.Offline, null);
+
+        if (exception is System.Security.Authentication.AuthenticationException or UnauthorizedAccessException)
+            return new ApiFailureNotice(SessionExpiredKey, ApiFailureAction.SignInAgain, null);
+
+        if (exception is HttpRequestException httpEx)
+        {
+            if (httpEx.StatusCode is { } status)
+                return FromStatusCode(status, null, null, fallbackKey);
+
+            return new ApiFailureNotice(OfflineKey, ApiFailureAction.Offline, null);
+        }
+
+        if (exception is InvalidOperationException &&
+            (exception.Message.Contains("generator", StringComparison.OrdinalIgnoreCase) ||
+             exception.Message.Contains("planning", StringComparison.OrdinalIgnoreCase) ||
+             exception.Message.Contains("proposal", StringComparison.OrdinalIgnoreCase)))
+        {
+            return new ApiFailureNotice(fallbackKey, ApiFailureAction.None, null);
+        }
 
         return new ApiFailureNotice(fallbackKey, ApiFailureAction.Retry, null);
     }
