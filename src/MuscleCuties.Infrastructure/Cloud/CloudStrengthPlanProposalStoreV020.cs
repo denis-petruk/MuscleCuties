@@ -104,8 +104,8 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
 
     private static T RequirePlanningData<T>(BackendApiResponse<T> response, string operation) where T : class
     {
-        if (response.Status is BackendApiStatus.ServerError or BackendApiStatus.OfflineRejected)
-            throw new HttpRequestException($"Cloud {operation} is temporarily unavailable.");
+        if (response.Status is BackendApiStatus.ServerError or BackendApiStatus.OfflineRejected or BackendApiStatus.Timeout or BackendApiStatus.RateLimited)
+            throw new HttpRequestException($"Cloud {operation} is temporarily unavailable ({response.Status}).");
         return CloudStoreResponse.RequireData(response, operation);
     }
 }
