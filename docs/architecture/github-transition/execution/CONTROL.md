@@ -13,25 +13,25 @@ Current Candidate HEAD: `a3ca36cf` (`implement_musclecuties_beta_plan`)
 | Package | Lead | Status | Base SHA | Head SHA | Worktree Path | Branch / PR | Gates / Evidence |
 |---|---|---|---|---|---|---|---|
 | **BA00** | I | DONE | `d840d627` | `a3ca36cf` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Candidate reconciled; planning package imported & committed; 1,296 unit/contract tests passing (100% green); CONTROL & ROADMAP unified |
-| **WP00** | A | IN_PROGRESS | `a3ca36cf` | - | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Active generation path mapped (`PreviewStrengthPlanV020UseCase` -> `StrengthPlanPreviewRule` -> `PostgresWorkoutPlanReconciler`); disconnected helpers identified |
-| **PD00** | I/A | IN_PROGRESS | `a3ca36cf` | - | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Concrete parameter proposal prepared with 6 before/after examples; recommendation on conditional extra sets & recovery precedence |
-| **DS00** | I/A/B | READY | `a3ca36cf` | - | - | - | Additive data contracts for observed sets, all-session schedule, and modality metrics |
-| **WP02a** | A | READY | `a3ca36cf` | - | - | - | Exercise catalog inventory and variation/equipment/region metadata |
+| **WP00** | A | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Active generation path mapped (`PreviewStrengthPlanV020UseCase` -> `StrengthPlanPreviewRule` -> `PostgresWorkoutPlanReconciler`); disconnected helpers identified |
+| **PD00** | I/A | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Concrete parameter proposal prepared with 6 before/after examples; recommendation on conditional extra sets & recovery precedence; tests passing (1,109 Core) |
+| **DS00** | I/A/B | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | All-session schedule data seam added to DTO, store and UI viewmodel; backward-compatible with legacy clients (40 Mobile Contract tests green) |
+| **WP02a** | A | IN_PROGRESS | `d2e018de` | - | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Exercise catalog inventory and variation/equipment/region metadata |
 | **WP02b** | A | QUEUED | - | - | - | - | Evidence selection & study-based ranking |
-| **WP01** | A | QUEUED | - | - | - | - | Coverage (2–3 exposures/week), time budget, strength-first order, cardio-only days |
+| **WP01** | A | IN_PROGRESS | `d2e018de` | - | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Coverage (2–3 exposures/week), time budget, strength-first order, cardio-only days |
 | **WP03a** | A | QUEUED | - | - | - | - | Observed performance capture (planned vs actual sets, RIR/effort, execution difficulty) |
 | **WP03b** | A | QUEUED | - | - | - | - | Progression execution from actual work reaching next prescription |
 | **WP04** | A | QUEUED | - | - | - | - | Composed readiness and cycle load/rep/set adjustment (single final dose) |
 | **WP05** | A | QUEUED | - | - | - | - | Pain-trigger handling, hard eligibility, reviewed substitutions or withholding |
-| **UX01a** | I/A.API | QUEUED | - | - | - | - | Complete day contract (all ordered sessions in projection/DTO/mapper) |
+| **UX01a** | I/A.API | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Complete day contract (all ordered sessions in projection/DTO/mapper) |
 | **UX01b** | A.UI | QUEUED | - | - | - | - | Day and All agenda views with real date scoping |
 | **UX02a** | A.API | QUEUED | - | - | - | - | Activity-level actuals (running, cycling, swimming, recovery metrics) |
 | **UX02b** | A.UI | QUEUED | - | - | - | - | Shared activity logger across all modalities |
 | **UX03** | A.UI | QUEUED | - | - | - | - | Media fallback, accurate summaries, and historical corrections |
-| **RM00–RM08** | A | READY | `a3ca36cf` | - | - | - | CR01/PG01 diagnostics, photo/archive, meal scrolling, locale/date edits, truthful micronutrients |
-| **PL01** | B/A | READY | `a3ca36cf` | - | - | - | Fail-closed Release endpoints, environment-partitioned credentials/cache, legacy token migration |
+| **RM00–RM08** | A | IN_PROGRESS | `d2e018de` | - | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | CR01/PG01 diagnostics, photo/archive, meal scrolling, locale/date edits, truthful micronutrients |
+| **PL01** | B/A | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Fail-closed Release endpoints, environment-partitioned credentials/cache, legacy token migration safely isolated |
 | **PL02** | B/I | QUEUED | - | - | - | - | Ordered PostgreSQL migration adoption, versioning, locking, checksums, restore drill |
-| **PL03** | B | READY | `a3ca36cf` | - | - | - | Immutable API + worker release packaging, target probes, GitHub-only release scripts |
+| **PL03** | B | READY | `d2e018de` | - | - | - | Immutable API + worker release packaging, target probes, GitHub-only release scripts |
 | **PL04** | B/I | QUEUED | - | - | - | - | Isolated Staging target qualification with authenticated product/worker flows |
 | **PL05** | A/B/I | QUEUED | - | - | - | - | Privacy manifest, App Privacy declarations, AASA, Apple auth/deletion |
 | **QA00** | I/R | QUEUED | - | - | - | - | Integrated acceptance matrix on unified candidate |
