@@ -75,4 +75,35 @@ public sealed class ScheduleContractCompatibilityTests
         Assert.Equal(102, roundTripped.CompanionWorkoutDayId);
         Assert.Null(roundTripped.Sessions);
     }
+
+    [Fact]
+    public void WorkoutScheduleEntry_DayAndAllScoping_PreservesStableIdsAndOrder()
+    {
+        var daySessions = new List<WorkoutScheduleSessionItem>
+        {
+            new(WorkoutDayId: 201, Tag: "STRENGTH", Title: "Squat Focus", DayOrder: 0, IsCompleted: true, IsOptional: false, IsEasierAlternative: false),
+            new(WorkoutDayId: 202, Tag: "CARDIO", Title: "Zone 2 Cycling", DayOrder: 1, IsCompleted: false, IsOptional: false, IsEasierAlternative: false)
+        };
+
+        var entry = new WorkoutScheduleEntry(
+            Date: new DateOnly(2026, 11, 5),
+            WeekIndex: 1,
+            DayLabel: "THU",
+            Tag: "STRENGTH",
+            Title: "Squat Focus + Zone 2 Cycling",
+            WorkoutDayId: 201,
+            IsToday: true,
+            IsCompleted: false,
+            IsRestDay: false)
+        {
+            CompanionWorkoutDayId = 202,
+            Sessions = daySessions
+        };
+
+        Assert.Equal(2, entry.Sessions!.Count);
+        Assert.Equal(0, entry.Sessions[0].DayOrder);
+        Assert.Equal(1, entry.Sessions[1].DayOrder);
+        Assert.True(entry.Sessions[0].IsCompleted);
+        Assert.False(entry.Sessions[1].IsCompleted);
+    }
 }

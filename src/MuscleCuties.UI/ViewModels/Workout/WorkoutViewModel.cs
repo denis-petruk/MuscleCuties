@@ -105,6 +105,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private ObservableCollection<ScheduleDayItem> _scheduleDays = [];
     [ObservableProperty] private ScheduleDayItem? _selectedScheduleDay;
     [ObservableProperty] private int _selectedWeekIndex;
+    [ObservableProperty] private bool _isDayScopeOnly;
 
     [ObservableProperty] private string _weekTitle = "This week's plan";
     [ObservableProperty] private ObservableCollection<WorkoutItem> _workouts = new();
@@ -408,6 +409,23 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         ApplyFilter();
     }
 
+    partial void OnIsDayScopeOnlyChanged(bool value)
+    {
+        ApplyFilter();
+    }
+
+    [RelayCommand]
+    public void ToggleDayScope()
+    {
+        IsDayScopeOnly = !IsDayScopeOnly;
+    }
+
+    [RelayCommand]
+    public void SetDayScope(bool dayOnly)
+    {
+        IsDayScopeOnly = dayOnly;
+    }
+
     private void ApplyFilter()
     {
         var selected = Filters.FirstOrDefault(f => f.IsSelected);
@@ -416,6 +434,18 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         var weekWorkouts = hasWeekSchedule
             ? _allWorkouts.Where(workout => selectedWeekIds.Contains(workout.WorkoutDayId))
             : _allWorkouts.AsEnumerable();
+
+        if (IsDayScopeOnly && SelectedScheduleDay is { } day)
+        {
+            var dayIds = day.SessionWorkoutDayIds.Count > 0
+                ? day.SessionWorkoutDayIds
+                : (day.CompanionWorkoutDayId is { } comp
+                    ? new[] { day.WorkoutDayId, comp }
+                    : [day.WorkoutDayId]);
+
+            weekWorkouts = weekWorkouts.Where(w => dayIds.Contains(w.WorkoutDayId) || string.Equals(w.DayLabel, day.DayLabel, StringComparison.OrdinalIgnoreCase));
+        }
+
         if (selected is null || selected.Label == "All")
             Workouts = new ObservableCollection<WorkoutItem>(weekWorkouts.Where(IsVisibleWorkoutItem));
         else if (selected.Label == "Recovery")
