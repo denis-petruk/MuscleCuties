@@ -37,6 +37,18 @@ The backend needs PostgreSQL connection and JWT signing settings from configurat
 
 The MAUI client is iOS-only. Agents do not build, run, or screenshot it unless the user authorizes that check for the task; see [docs/VERIFICATION_GATES.md](docs/VERIFICATION_GATES.md).
 
+## CI/CD and Automation
+
+All automated verification, testing, and deployment pipelines are executed via GitHub Actions:
+- `.github/workflows/ci.yml`: Full solution build, unit tests, and code coverage checks.
+- `.github/workflows/db-verify.yml`: PostgreSQL integration and schema migration verification against isolated disposable databases.
+- `.github/workflows/backend-build.yml`: Immutable packaging and validation for ASP.NET Core Lambda API and background workers.
+- `.github/workflows/backend-release.yml`: OIDC-governed promotion to Staging and Beta environments.
+- `.github/workflows/db-release.yml`: Advisory session-locked database schema migrations.
+- `.github/workflows/mobile-release.yml`: Environment-specific iOS builds and TestFlight packaging.
+
+GitLab CI is retired; GitHub is the sole source of truth and deployment authority.
+
 ## Documentation
 
 ### Canonical instructions

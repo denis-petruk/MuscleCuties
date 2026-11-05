@@ -1,8 +1,12 @@
+# ==============================================================================
+# DEPRECATED / HISTORICAL ARCHIVE ONLY
+# This repository has migrated completely to GitHub Actions.
+# Canonical workflows reside in .github/workflows/.
+# GitLab CI is retired and disabled. Do not trigger pipelines here.
+# ==============================================================================
+
 workflow:
   rules:
-    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
-    - if: '$CI_PIPELINE_SOURCE == "push" && $CI_COMMIT_BRANCH'
-    - if: '$CI_PIPELINE_SOURCE == "web" && $CI_COMMIT_BRANCH'
     - when: never
 
 stages:
