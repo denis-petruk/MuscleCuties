@@ -48,13 +48,15 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         IAccountPasswordValidator passwordValidator,
         IProfileRefreshNotifier refreshNotifier,
         IProfileUnitsUseCase units,
-        Func<Task> navigateBackAsync)
+        Func<Task> navigateBackAsync,
+        BodyMeasurementClient? measurementClient = null)
     {
         _useCase = useCase;
         _units = units;
         _passwordValidator = passwordValidator;
         _refreshNotifier = refreshNotifier;
         _navigateBackAsync = navigateBackAsync;
+        _measurementClient = measurementClient;
         BackCommand = new AsyncRelayCommand(navigateBackAsync);
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);

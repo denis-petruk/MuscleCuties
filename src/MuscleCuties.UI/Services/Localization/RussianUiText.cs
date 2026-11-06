@@ -24,6 +24,7 @@ internal static partial class RussianUiText
         RegisterWorkoutGenerationStrings();
         RegisterWorkoutPhaseAdjustmentStrings();
         RegisterHydrationStrings();
+        RegisterBodyMeasurementStrings();
     }
 
     static partial void RegisterDashboardStrings();
@@ -32,4 +33,5 @@ internal static partial class RussianUiText
     static partial void RegisterWorkoutGenerationStrings();
     static partial void RegisterWorkoutPhaseAdjustmentStrings();
     static partial void RegisterHydrationStrings();
+    static partial void RegisterBodyMeasurementStrings();
 }

@@ -400,5 +400,22 @@ public static partial class UiTextCatalog
         English["Workout_Featured_Duration"] = "Duration";
         English["Workout_Featured_Exercises"] = "Exercises";
         English["Workout_Featured_Intensity"] = "Intensity";
+        English["Workout_Overview_RescheduleButton"] = "Reschedule";
+        English["Workout_Reschedule_ButtonHint"] = "Move this planned session to another available date";
+        English["Workout_Reschedule_Title"] = "Reschedule Workout";
+        English["Workout_Reschedule_ChooseDatePrompt"] = "Choose an available empty date this week:";
+        English["Workout_Reschedule_ConfirmButton"] = "Confirm Reschedule";
+        English["Workout_Reschedule_NoEmptyDates"] = "No empty dates available in this week's schedule.";
+        English["Workout_Reschedule_Error_Completed"] = "Cannot reschedule a completed workout session.";
+        English["Workout_Reschedule_Error_InProgress"] = "Cannot reschedule a session that is already in progress.";
+        English["Workout_Reschedule_Error_Occupied"] = "Destination date is already occupied.";
+        English["Workout_Reschedule_Failed"] = "Could not reschedule session. Please try again.";
+        English["Workout_Session_NoteButton"] = "Notes";
+        English["Workout_Session_NoteEditorTitle"] = "Movement Notes";
+        English["Workout_Session_NotePlaceholder"] = "Record setup, cues, or adjustments...";
+        English["Workout_Session_SaveNoteButton"] = "Save Note";
+        English["Workout_Session_ClearNoteButton"] = "Clear Note";
+        English["Workout_Session_NoteSaved"] = "Note saved.";
+        English["Workout_Session_NoteSaveFailed"] = "Could not save movement note.";
     }
 }

@@ -256,6 +256,7 @@ public static class MauiProgram
             }));
 
         services.AddTransient<HydrationClient>();
+        services.AddTransient<BodyMeasurementClient>();
         services.AddTransient<FoodLogViewModel>(sp => new FoodLogViewModel(
             sp.GetRequiredService<INutritionDailyLogUseCase>(),
             sp.GetRequiredService<IRecipePortionUseCase>(),
@@ -291,7 +292,8 @@ public static class MauiProgram
             sp.GetRequiredService<IAccountPasswordValidator>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
             sp.GetRequiredService<IProfileUnitsUseCase>(),
-            () => NavigateToAsync("..")));
+            () => NavigateToAsync(".."),
+            sp.GetRequiredService<BodyMeasurementClient>()));
 
         services.AddTransient<ProfileNutritionSettingsViewModel>(sp => new ProfileNutritionSettingsViewModel(
             sp.GetRequiredService<IProfileNutritionSettingsUseCase>(),

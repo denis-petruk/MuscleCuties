@@ -8,6 +8,7 @@
              xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
              xmlns:models="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
              xmlns:workoutControls="clr-namespace:MuscleCuties.UI.Controls.Workout"
+             xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
              x:Class="MuscleCuties.UI.Pages.Workout.WorkoutSessionPage"
              x:Name="Root" x:DataType="vm:WorkoutSessionViewModel"
              Title="{loc:LocalizedText Workout_Session_HeaderTitle}" Shell.NavBarIsVisible="False" Shell.TabBarIsVisible="False"
@@ -178,7 +179,7 @@
                     <!-- Exercise detail + logging inputs -->
                     <ScrollView Grid.Row="1">
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_0_0_12}">
-                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                 <mi:MauiIcon Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension24}"
                                              IconColor="{StaticResource Primary}" WidthRequest="{StaticResource UiDimension28}" HeightRequest="{StaticResource UiDimension28}"
                                              VerticalOptions="Center" />
@@ -186,6 +187,11 @@
                                        Style="{StaticResource SectionTitle}"
                                        SemanticProperties.HeadingLevel="Level3"
                                        SemanticProperties.Description="{Binding CurrentExercise.Name}" />
+                                <Button Grid.Column="2" Text="{loc:LocalizedText Workout_Session_NoteButton}"
+                                        Command="{Binding OpenMovementNoteCommand}"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        VerticalOptions="Center"
+                                        SemanticProperties.Hint="{loc:LocalizedText Workout_Session_NoteEditorTitle}" />
                             </Grid>
                             <Label LineBreakMode="WordWrap"
                                 Text="{Binding CurrentExercise.TargetText, Converter={StaticResource LocalizedStringConverter}}"
@@ -447,16 +453,19 @@
                         </VerticalStackLayout>
                     </VerticalStackLayout>
 
-                    <!-- Bottom action bar: Swap / Skip / Next -->
-                    <Grid Grid.Row="3" RowDefinitions="Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
+                    <!-- Bottom action bar: Swap / Notes / Skip / Next -->
+                    <Grid Grid.Row="3" RowDefinitions="Auto,Auto" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
                         <Button Text="{loc:LocalizedText Workout_Session_SwapButton}" Command="{Binding OpenSwapPanelCommand}"
                                 Style="{StaticResource ButtonSecondary}"
                                 IsVisible="{Binding CurrentExercise.UsesStrengthMetrics}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SwapExerciseAccessibility}" />
-                        <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_SkipButton}"
+                        <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_NoteButton}" Command="{Binding OpenMovementNoteCommand}"
+                                Style="{StaticResource ButtonSecondary}"
+                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_NoteEditorTitle}" />
+                        <Button Grid.Column="2" Text="{loc:LocalizedText Workout_Session_SkipButton}"
                                 Command="{Binding SkipExerciseCommand}" Style="{StaticResource ButtonSecondary}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SkipExerciseAccessibility}" />
-                        <Button Style="{StaticResource ButtonPrimary}" Grid.Row="1" Grid.ColumnSpan="2" Text="{loc:LocalizedText Workout_Session_NextExerciseButton}"
+                        <Button Style="{StaticResource ButtonPrimary}" Grid.Row="1" Grid.ColumnSpan="3" Text="{loc:LocalizedText Workout_Session_NextExerciseButton}"
                                 Command="{Binding NextExerciseCommand}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SaveAndNextAccessibility}" />
                     </Grid>
@@ -545,5 +554,66 @@
                                HorizontalOptions="Center" VerticalOptions="Center"
                                SemanticProperties.Description="{loc:LocalizedText Workout_Session_SavingLoadingAccessibility}" />
         </Grid>
+
+        <!-- Movement Note Editor Modal -->
+        <sharedControls:AnimatedModalView Grid.RowSpan="2"
+                                          ZIndex="30"
+                                          IsVisible="{Binding IsMovementNoteOpen}">
+            <Grid>
+                <BoxView BackgroundColor="{StaticResource ModalScrim}">
+                    <BoxView.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CloseMovementNoteCommand}" />
+                    </BoxView.GestureRecognizers>
+                </BoxView>
+                <Border Style="{StaticResource ModalSurface}"
+                        Padding="{DynamicResource PresentationModalPagePadding}"
+                        MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
+                        VerticalOptions="End">
+                    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_NoteEditorTitle}"
+                                   Style="{StaticResource ModalTitle}"
+                                   SemanticProperties.HeadingLevel="Level1" />
+                            <Button Grid.Column="1" Text="{loc:LocalizedText Common_Close}"
+                                    Command="{Binding CloseMovementNoteCommand}"
+                                    Style="{StaticResource ButtonSecondary}" />
+                        </Grid>
+
+                        <Label Grid.Row="1" LineBreakMode="WordWrap" Text="{Binding CurrentExercise.Name}"
+                               Style="{StaticResource BodyStrong}" />
+
+                        <Border Grid.Row="2" Style="{StaticResource InputContainer}" HeightRequest="{StaticResource UiDimension120}">
+                            <Editor Text="{Binding MovementNoteText, Mode=TwoWay}"
+                                    Placeholder="{loc:LocalizedText Workout_Session_NotePlaceholder}"
+                                    MaxLength="2000"
+                                    AutoSize="Disabled"
+                                    VerticalOptions="Fill" />
+                        </Border>
+
+                        <VerticalStackLayout Grid.Row="3" Spacing="{StaticResource UiSpaceMicro}">
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{Binding MovementNoteErrorText, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource ErrorLabel}"
+                                   IsVisible="{Binding HasMovementNoteError}" />
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{Binding MovementNoteStatusText, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource AccentLabel}"
+                                   IsVisible="{Binding HasMovementNoteStatus}" />
+                        </VerticalStackLayout>
+
+                        <Grid Grid.Row="4" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <Button Text="{loc:LocalizedText Workout_Session_ClearNoteButton}"
+                                    Command="{Binding ClearMovementNoteCommand}"
+                                    IsEnabled="{Binding IsMovementNoteBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                    Style="{StaticResource ButtonSecondary}" />
+                            <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_SaveNoteButton}"
+                                    Command="{Binding SaveMovementNoteCommand}"
+                                    IsEnabled="{Binding IsMovementNoteBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                    Style="{StaticResource ButtonPrimary}" />
+                        </Grid>
+                    </Grid>
+                </Border>
+            </Grid>
+        </sharedControls:AnimatedModalView>
     </Grid>
 </ContentPage>
