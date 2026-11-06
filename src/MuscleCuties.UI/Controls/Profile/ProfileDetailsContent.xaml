@@ -32,12 +32,12 @@
                             </Grid>
                             <Border
                                 Grid.Column="2"
-                                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDeepDark}}"
-                                StrokeThickness="{StaticResource UiStrokeWidth0}"
-                                StrokeShape="{StaticResource UiRoundRectangleRadius8}"
-                                Padding="{StaticResource UiInsets8_4}">
+                                Style="{StaticResource PillBadge}"
+                                VerticalOptions="Center">
                                 <Label
-                                    Text="{Binding VaultPhotoCountText, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource CaptionLabel}" />
+                                    Text="{Binding VaultPhotoCountText, Converter={StaticResource LocalizedStringConverter}}"
+                                    VerticalOptions="Center"
+                                    Style="{StaticResource CaptionLabel}" />
                             </Border>
                         </Grid>
 

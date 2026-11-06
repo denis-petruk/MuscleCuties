@@ -30,5 +30,6 @@
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/MobilePhotoVaultStore.cs" Link="Mobile/MobilePhotoVaultStore.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Configuration/AppEndpointConfiguration.cs" Link="Mobile/AppEndpointConfiguration.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Api/ApiFailurePresenter.cs" Link="Mobile/ApiFailurePresenter.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Services/Workout/TimedActivityProgress.cs" Link="Mobile/TimedActivityProgress.cs" />
   </ItemGroup>
 </Project>

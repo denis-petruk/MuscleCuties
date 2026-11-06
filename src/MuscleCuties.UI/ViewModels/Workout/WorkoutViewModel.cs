@@ -891,6 +891,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     public void StartReschedule(WorkoutItem? workout)
     {
+        // Beta 1.0.0 gates rescheduling to 1.1: the entry point stays closed even if a caller
+        // reaches the command while the presentation hides it.
+        if (!MuscleCuties.Core.Domain.Workout.BetaWorkoutScope.ReschedulingEnabled) return;
         if (workout is null || workout.WorkoutDayId <= 0) return;
 
         RescheduleStatusMessage = string.Empty;
@@ -956,6 +959,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     public async Task ConfirmRescheduleAsync()
     {
+        if (!MuscleCuties.Core.Domain.Workout.BetaWorkoutScope.ReschedulingEnabled)
+        {
+            CloseRescheduleModal();
+            return;
+        }
+
         if (ReschedulingWorkout is null || SelectedRescheduleDate is null || IsRescheduleBusy)
             return;
 

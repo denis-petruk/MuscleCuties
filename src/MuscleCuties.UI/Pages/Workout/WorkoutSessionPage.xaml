@@ -103,8 +103,63 @@
                         <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_StartButton}"
                                 Command="{Binding StartActivityCommand}" IsEnabled="{Binding CanStartActivity}" IsVisible="{Binding IsTimedActivityRunning, Converter={StaticResource InvertedBoolConverter}}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}" />
+                        <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Workout_Session_AbandonActivity}"
+                                Command="{Binding AbandonPlannedSessionCommand}" IsVisible="{Binding CanAbandonPlannedSession}" />
+                    </VerticalStackLayout>
+                </Grid>
+
+                <!-- ========== Timed activity: visible running state ========== -->
+                <Grid RowDefinitions="*,Auto" RowSpacing="{StaticResource UiSpaceControl}" IsVisible="{Binding IsTimedActivityScreen}">
+                    <ScrollView>
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceContent}" Padding="{StaticResource UiInsets0_24}">
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{Binding SelectedActivity.Title, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource SectionTitle}"
+                                   HorizontalTextAlignment="Center"
+                                   SemanticProperties.HeadingLevel="Level2" />
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{Binding TimedActivityPhaseKey, Converter={StaticResource LocalizedStringConverter}}"
+                                   IsVisible="{Binding HasTimedActivityPhase}"
+                                   Style="{StaticResource BodyCentered}"
+                                   SemanticProperties.HeadingLevel="Level3" />
+                            <Border Style="{StaticResource CardSecondary}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}" HorizontalOptions="Fill">
+                                    <Label Text="{Binding TimedActivityElapsedText}"
+                                           Style="{StaticResource WorkoutNumber}"
+                                           HorizontalTextAlignment="Center"
+                                           SemanticProperties.Description="{loc:LocalizedText Workout_Session_TimedElapsedAccessibility}" />
+                                    <Label LineBreakMode="WordWrap"
+                                           Text="{Binding TimedActivityElapsedText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TimedElapsedFormat}"
+                                           Style="{StaticResource CaptionCentered}" />
+                                    <Label LineBreakMode="WordWrap"
+                                           Text="{Binding TimedActivityRemainingText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TimedRemainingFormat}"
+                                           IsVisible="{Binding HasTimedActivityCountdown}"
+                                           Style="{StaticResource BodyCentered}" />
+                                    <ProgressBar Progress="{Binding TimedActivityProgressValue}"
+                                                 IsVisible="{Binding HasTimedActivityCountdown}"
+                                                 SemanticProperties.Description="{loc:LocalizedText Workout_Session_TimedProgressAccessibility}" />
+                                </VerticalStackLayout>
+                            </Border>
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{loc:LocalizedText Workout_Session_TimedNoPhases}"
+                                   IsVisible="{Binding HasTimedActivityPhase, Converter={StaticResource InvertedBoolConverter}}"
+                                   Style="{StaticResource MutedLabel}"
+                                   HorizontalTextAlignment="Center" />
+                            <Label LineBreakMode="WordWrap" Text="{Binding ActivityPrescriptionText}"
+                                   Style="{StaticResource BodyCentered}" />
+                        </VerticalStackLayout>
+                    </ScrollView>
+                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}">
                         <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_FinishTimedActivity}"
-                                Command="{Binding FinishTimedActivityCommand}" IsVisible="{Binding IsTimedActivityRunning}" />
+                                Command="{Binding FinishTimedActivityCommand}"
+                                IsEnabled="{Binding CanInteract}"
+                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_FinishTimedActivityAccessibility}" />
+                        <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Workout_Session_PauseButton}"
+                                Command="{Binding PauseTimedActivityCommand}"
+                                IsVisible="{Binding IsTimedActivityPaused, Converter={StaticResource InvertedBoolConverter}}" />
+                        <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Workout_Session_ResumeButton}"
+                                Command="{Binding ResumeTimedActivityCommand}"
+                                IsVisible="{Binding IsTimedActivityPaused}" />
                         <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Workout_Session_AbandonActivity}"
                                 Command="{Binding AbandonPlannedSessionCommand}" IsVisible="{Binding CanAbandonPlannedSession}" />
                     </VerticalStackLayout>
@@ -499,7 +554,7 @@
                                     SemanticProperties.Description="{Binding SummaryStatusText, Converter={StaticResource LocalizedStringConverter}}" />
                             </VerticalStackLayout>
                             <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
-                                <Border Style="{StaticResource CardSecondary}"
+                                <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding ShowStrengthSummaryMetrics}"
                                         SemanticProperties.Description="{Binding SummaryTotalVolume, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TotalVolumeFormat}">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                                         <Label LineBreakMode="WordWrap"
@@ -509,7 +564,7 @@
                                                Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                                <Border Grid.Column="1" Style="{StaticResource CardSecondary}"
+                                <Border Grid.Column="1" Style="{StaticResource CardSecondary}" IsVisible="{Binding ShowStrengthSummaryMetrics}"
                                         SemanticProperties.Description="{Binding SummaryPrCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_WeightPrsFormat}">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                                         <Label LineBreakMode="WordWrap"
@@ -554,6 +609,39 @@
                                HorizontalOptions="Center" VerticalOptions="Center"
                                SemanticProperties.Description="{loc:LocalizedText Workout_Session_SavingLoadingAccessibility}" />
         </Grid>
+
+        <!-- Abandon confirmation: keeps the active state unless the user confirms -->
+        <sharedControls:AnimatedModalView Grid.RowSpan="2"
+                                          ZIndex="35"
+                                          IsVisible="{Binding IsAbandonConfirmationVisible}">
+            <Grid>
+                <BoxView BackgroundColor="{StaticResource ModalScrim}">
+                    <BoxView.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CancelAbandonPlannedSessionCommand}" />
+                    </BoxView.GestureRecognizers>
+                </BoxView>
+                <Border Style="{StaticResource ModalSurface}"
+                        Padding="{DynamicResource PresentationModalPagePadding}"
+                        MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
+                        VerticalOptions="End">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                        <Label LineBreakMode="WordWrap"
+                               Text="{loc:LocalizedText Workout_Session_AbandonConfirmTitle}"
+                               Style="{StaticResource SectionTitle}"
+                               SemanticProperties.HeadingLevel="Level2" />
+                        <Label LineBreakMode="WordWrap"
+                               Text="{loc:LocalizedText Workout_Session_AbandonConfirmBody}"
+                               Style="{StaticResource BodyLabel}" />
+                        <Button Style="{StaticResource ButtonPrimary}"
+                                Text="{loc:LocalizedText Workout_Session_AbandonConfirmAction}"
+                                Command="{Binding ConfirmAbandonPlannedSessionCommand}" />
+                        <Button Style="{StaticResource ButtonSecondary}"
+                                Text="{loc:LocalizedText Workout_Session_AbandonCancel}"
+                                Command="{Binding CancelAbandonPlannedSessionCommand}" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </sharedControls:AnimatedModalView>
 
         <!-- Movement Note Editor Modal -->
         <sharedControls:AnimatedModalView Grid.RowSpan="2"

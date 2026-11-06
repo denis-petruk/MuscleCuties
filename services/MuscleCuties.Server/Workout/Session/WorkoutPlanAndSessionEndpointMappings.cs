@@ -38,6 +38,14 @@ public static class WorkoutPlanAndSessionEndpointMappings
             if (!TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
+            // Beta 1.0.0 gates rescheduling to 1.1. The deployed route fails closed instead of
+            // relying on a client that no longer renders the action.
+            if (!MuscleCuties.Core.Domain.Workout.BetaWorkoutScope.ReschedulingEnabled)
+                return Results.Conflict(new
+                {
+                    error = MuscleCuties.Core.Domain.Workout.BetaWorkoutScope.ReschedulingGateCode
+                });
+
             try
             {
                 await store.RescheduleAsync(userId, request, cancellationToken).ConfigureAwait(false);

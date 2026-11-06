@@ -30,7 +30,9 @@ public partial class WorkoutItem : ObservableObject
         : "Workout_Readiness_MarkEasierAlternative";
     public bool CanMarkOptional => !IsCompleted && !IsRestDay;
     public bool CanMarkEasierAlternative => CanMarkOptional && IsOptional;
-    public bool CanReschedule => !IsCompleted && !IsRestDay;
+    // Beta 1.0.0 gates rescheduling to 1.1, so the move action never renders for an eligible day.
+    public bool CanReschedule =>
+        MuscleCuties.Core.Domain.Workout.BetaWorkoutScope.CanOfferReschedule(IsCompleted, IsRestDay);
 }
 
 public sealed record WorkoutActivitySection(

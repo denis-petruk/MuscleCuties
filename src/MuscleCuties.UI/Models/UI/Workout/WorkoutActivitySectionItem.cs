@@ -42,6 +42,16 @@ public class WorkoutActivitySectionItem : ObservableObject, IEnumerable<WorkoutE
     public ObservableCollection<WorkoutExerciseItem> Exercises { get; init; } = new();
 
     public bool HasExercises => Exercises.Count > 0;
+
+    /// <summary>
+    /// Single-rule routing. A row-less non-rest section (including climbing, which the planner stores as
+    /// a strength-type day without rows) runs the shared timed lifecycle. A section with movement rows
+    /// keeps the exercise flow so distance, pace, heart-rate and power actuals stay recordable. Rest days
+    /// route to no-start. See <see cref="MuscleCuties.UI.Services.Workout.TimedActivityProgress.DecideSurface"/>.
+    /// </summary>
+    public bool IsTimedActivity =>
+        MuscleCuties.UI.Services.Workout.TimedActivityProgress.DecideSurface(Tag, HasExercises) ==
+        MuscleCuties.UI.Services.Workout.TimedActivityProgress.WorkoutActivitySurface.TimedActivity;
     public bool IsLogged => Exercises.Count > 0 && Exercises.All(exercise => exercise.IsLogged);
     public string LogButtonText => IsLogged ? "Update activity" : "Log activity";
 
