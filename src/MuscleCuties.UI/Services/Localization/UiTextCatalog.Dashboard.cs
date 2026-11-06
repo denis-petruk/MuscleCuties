@@ -164,7 +164,8 @@ public static partial class UiTextCatalog
         English["Dashboard_Trend_Fat"] = "Fat";
         English["Dashboard_Trend_WeeklyWeightTitle"] = "Weight by logged week";
         English["Dashboard_Trend_WeeklyWeightEmpty"] = "Log weight to see one point for each week.";
-        English["Dashboard_Trend_LoggedWeeksFormat"] = "{0} logged weeks · Latest {1} kg";
+        English["Dashboard_Trend_LoggedWeeksFormat"] = "{0} logged weeks · Latest {1} {2}";
+        English["Dashboard_Weight_TrendMedianFormat"] = "7-day median {0}";
         English["Dashboard_Trend_WorkoutHighlightsTitle"] = "Workout highlights";
         English["Dashboard_Trend_WorkoutHighlightsDescription"] = "Last 90 days";
         English["Dashboard_Trend_WorkoutHighlightsEmpty"] = "Complete a workout to see progress here.";

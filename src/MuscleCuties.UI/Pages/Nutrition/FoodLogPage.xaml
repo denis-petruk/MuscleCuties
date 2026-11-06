@@ -19,67 +19,38 @@
     <Grid RowDefinitions="Auto,*" ColumnDefinitions="*">
 
         <!-- Top Navigation Bar -->
-        <Grid
-            Grid.Row="0"
-            Padding="{DynamicResource PresentationPageHeaderPadding}"
-            ColumnDefinitions="Auto,*,Auto,Auto"
-            ColumnSpacing="{StaticResource UiSpacing10}"
-            MaximumWidthRequest="{StaticResource UiDimension640}"
-            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
-
-            <Border
-                Style="{StaticResource HeaderIconButton}"
-                SemanticProperties.Description="{loc:LocalizedText Common_Back}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding NavigateBackCommand}" />
-                </Border.GestureRecognizers>
-                <Path
-                    Data="M15 19l-7-7 7-7"
-                    Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth2}"
-                    StrokeLineCap="Round"
-                    StrokeLineJoin="Round"
-                    Aspect="Uniform"
-                    WidthRequest="{StaticResource UiDimension14}"
-                    HeightRequest="{StaticResource UiDimension14}"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center" />
-            </Border>
-
-            <Label
-                Grid.Column="1"
-                Text="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
-                Style="{StaticResource PageTitle}"
-                SemanticProperties.HeadingLevel="Level1"
-                VerticalOptions="Center" />
-
-            <Button
-                Grid.Column="2"
-                Style="{StaticResource ButtonSecondary}"
-                Text="{loc:LocalizedText Common_Today}"
-                Command="{Binding JumpToTodayCommand}"
-                VerticalOptions="Center"
-                IsVisible="{Binding IsSelectedDateToday, Converter={StaticResource InvertedBoolConverter}}" />
-
-            <Border
-                Grid.Column="3"
-                Style="{StaticResource HeaderIconButton}"
-                SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_OpenDatePicker}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ToggleDatePickerCommand}" />
-                </Border.GestureRecognizers>
-                <Path
-                    Data="M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zM16 2v4M8 2v4M3 10h18"
-                    Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth1_8}"
-                    StrokeLineCap="Round"
-                    StrokeLineJoin="Round"
-                    Aspect="Uniform"
-                    WidthRequest="{StaticResource UiDimension16}"
-                    HeightRequest="{StaticResource UiDimension16}"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center" />
-            </Border>
+        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}"
+              MaximumWidthRequest="{StaticResource UiDimension640}"
+              BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+            <sharedControls:PageHeader
+                Title="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
+                BackCommand="{Binding NavigateBackCommand}">
+                <sharedControls:PageHeader.ActionContent>
+                    <HorizontalStackLayout Spacing="{StaticResource UiSpacing10}" VerticalOptions="Center">
+                        <Button Style="{StaticResource ButtonSecondary}"
+                                Text="{loc:LocalizedText Common_Today}"
+                                Command="{Binding JumpToTodayCommand}"
+                                VerticalOptions="Center"
+                                IsVisible="{Binding IsSelectedDateToday, Converter={StaticResource InvertedBoolConverter}}" />
+                        <Border Style="{StaticResource HeaderIconButton}"
+                                SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_OpenDatePicker}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding ToggleDatePickerCommand}" />
+                            </Border.GestureRecognizers>
+                            <Path Data="M19 4H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2V6a2 2 0 00-2-2zM16 2v4M8 2v4M3 10h18"
+                                  Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                  StrokeThickness="{StaticResource UiStrokeWidth1_8}"
+                                  StrokeLineCap="Round"
+                                  StrokeLineJoin="Round"
+                                  Aspect="Uniform"
+                                  WidthRequest="{StaticResource UiDimension16}"
+                                  HeightRequest="{StaticResource UiDimension16}"
+                                  HorizontalOptions="Center"
+                                  VerticalOptions="Center" />
+                        </Border>
+                    </HorizontalStackLayout>
+                </sharedControls:PageHeader.ActionContent>
+            </sharedControls:PageHeader>
         </Grid>
 
         <!-- Main Virtualized Scroll Container (CollectionView, zero nested ScrollViews) -->

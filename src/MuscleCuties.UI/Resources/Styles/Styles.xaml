@@ -782,6 +782,12 @@
     <Style x:Key="ModalSubtitle" TargetType="Label" BasedOn="{StaticResource MutedLabel}">
     </Style>
 
+    <!-- A header icon gets its accessible action name from the instance that owns it: every Border
+         using this style sets SemanticProperties.Description from the catalog. That is the supported
+         iOS accessible name; AutomationProperties.Name is deprecated in .NET MAUI 10 and resolves to
+         the same label, so setting both would only restate the name. The style owns geometry and
+         surface only, so one page cannot silently render an icon that VoiceOver announces as an
+         unlabelled control; UiContractGuardTests fails a HeaderIconButton without a catalog name. -->
     <Style x:Key="HeaderIconButton" TargetType="Border">
         <Setter Property="WidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
         <Setter Property="HeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />

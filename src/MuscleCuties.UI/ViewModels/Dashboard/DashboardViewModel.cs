@@ -20,6 +20,7 @@ using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
@@ -43,6 +44,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     private readonly IDashboardOverviewUseCase _overview;
     private readonly ICyclePhaseProjectionUseCase _cyclePhaseProjection;
+    private readonly IProfileUnitsUseCase _profileUnits;
+
+    // F06: the dashboard renders weights and distances in the saved measurement system.
+    private bool _useMetricUnits = true;
     private readonly DailyCheckInPresentationSettings _readinessPresentationSettings;
     [ObservableProperty] private float _consumedCalories;
     [ObservableProperty] private float _consumedCarbs;
@@ -153,6 +158,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         IWorkoutInjuryUseCase injuries,
         IDailyCheckInUseCase dailyCheckIn,
         ICyclePhaseProjectionUseCase cyclePhaseProjection,
+        IProfileUnitsUseCase profileUnits,
         Func<Task> openCycleAsync,
         Func<Task> openWorkoutAsync,
         Func<int, Task> openWorkoutSessionAsync,
@@ -163,6 +169,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     {
         _overview = overview;
         _cyclePhaseProjection = cyclePhaseProjection;
+        _profileUnits = profileUnits;
         _readinessPresentationSettings = dailyCheckIn.PresentationSettings;
         _dailyCheckIn = dailyCheckIn;
         _injuries = injuries;
@@ -461,6 +468,21 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OnPropertyChanged(nameof(RecoveryScore));
     }
 
+    // A units-preference failure keeps the last known system instead of hiding the dashboard.
+    private async Task LoadDisplayUnitsAsync()
+    {
+        try
+        {
+            var units = await _profileUnits.LoadAsync();
+            if (units.Settings is { } settings)
+                _useMetricUnits = settings.UseMetricSystem;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Dashboard] Units preference load failed ({ex.GetType().Name}).");
+        }
+    }
+
     private async Task RefreshAsync()
     {
         IsRefreshing = true;
@@ -490,6 +512,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OnPropertyChanged(nameof(RetryLoadCommand));
         try
         {
+            await LoadDisplayUnitsAsync();
             var today = DateOnly.FromDateTime(DateTime.Today);
             var timeZoneId = TimeZoneInfo.Local.Id;
             var summary = await _overview.LoadAsync(new DashboardOverviewRequest(today, timeZoneId));
@@ -538,8 +561,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             HasReadinessTrend = TrendPoints.Any(point => point.ReadinessScore.HasValue);
             var lastWeight = TrendPoints.LastOrDefault(point => point.WeightKg.HasValue)?.WeightKg;
             WeightTrendSummary = lastWeight is null
-                ? "Add weight at three check-ins to see your trend"
-                : $"7-day median {lastWeight.Value:N1} kg";
+                ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Weight_TrendEmpty")
+                : string.Format(CultureInfo.CurrentCulture,
+                    System.Text.CompositeFormat.Parse(
+                        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(
+                            "Dashboard_Weight_TrendMedianFormat")),
+                    FormatWeight(lastWeight));
             ReadinessTrendSummary = HasReadinessTrend
                 ? $"{TrendPoints.Count(point => point.ReadinessScore.HasValue)} of 7 days checked in"
                 : "Complete a check-in to see readiness history";

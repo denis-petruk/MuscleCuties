@@ -17,58 +17,29 @@
     <Grid RowDefinitions="Auto,*" ColumnDefinitions="*">
 
         <!-- Top Navigation Bar -->
-        <Grid
-            Grid.Row="0"
-            Padding="{DynamicResource PresentationPageHeaderPadding}"
-            ColumnDefinitions="Auto,*,Auto"
-            ColumnSpacing="{StaticResource UiSpaceCompact}"
-            BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
-
-            <Border
-                Style="{StaticResource HeaderIconButton}"
-                SemanticProperties.Description="{loc:LocalizedText Workout_History_BackButton}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding NavigateBackCommand}" />
-                </Border.GestureRecognizers>
-                <Path
-                    Data="M15 19l-7-7 7-7"
-                    Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth2}"
-                    StrokeLineCap="Round"
-                    StrokeLineJoin="Round"
-                    Aspect="Uniform"
-                    WidthRequest="{StaticResource UiDimension14}"
-                    HeightRequest="{StaticResource UiDimension14}"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center" />
-            </Border>
-
-            <Label LineBreakMode="WordWrap"
-                Grid.Column="1"
-                Text="{loc:LocalizedText Workout_History_ArchiveTitle}"
-                Style="{StaticResource PageTitle}"
-                SemanticProperties.HeadingLevel="Level1"
-                VerticalOptions="Center" />
-
-            <Border
-                Grid.Column="2"
-                Style="{StaticResource HeaderIconButton}"
-                SemanticProperties.Description="{loc:LocalizedText Workout_History_RefreshArchiveAccessibility}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding LoadHistoryCommand}" />
-                </Border.GestureRecognizers>
-                <Path
-                    Data="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                    Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth1_8}"
-                    StrokeLineCap="Round"
-                    StrokeLineJoin="Round"
-                    Aspect="Uniform"
-                    WidthRequest="{StaticResource UiDimension16}"
-                    HeightRequest="{StaticResource UiDimension16}"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center" />
-            </Border>
+        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}">
+            <sharedControls:PageHeader
+                Title="{loc:LocalizedText Workout_History_ArchiveTitle}"
+                BackCommand="{Binding NavigateBackCommand}">
+                <sharedControls:PageHeader.ActionContent>
+                    <Border Style="{StaticResource HeaderIconButton}"
+                            SemanticProperties.Description="{loc:LocalizedText Workout_History_RefreshArchiveAccessibility}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding LoadHistoryCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path Data="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                              Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                              StrokeThickness="{StaticResource UiStrokeWidth1_8}"
+                              StrokeLineCap="Round"
+                              StrokeLineJoin="Round"
+                              Aspect="Uniform"
+                              WidthRequest="{StaticResource UiDimension16}"
+                              HeightRequest="{StaticResource UiDimension16}"
+                              HorizontalOptions="Center"
+                              VerticalOptions="Center" />
+                    </Border>
+                </sharedControls:PageHeader.ActionContent>
+            </sharedControls:PageHeader>
         </Grid>
 
         <!-- Chronological Virtualized Sessions Feed (No nested ScrollView) -->
