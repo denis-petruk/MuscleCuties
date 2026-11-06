@@ -108,7 +108,8 @@ public static class HydrationAndFastingEndpointMappings
             CancellationToken cancellationToken) =>
         {
             if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            return Results.Ok(await useCase.ExecuteAsync(new GetWaterIntakeInputDto(userId, date), cancellationToken).ConfigureAwait(false));
+            return await ExecuteSafeAsync(() => useCase.ExecuteAsync(new GetWaterIntakeInputDto(userId, date),
+                cancellationToken)).ConfigureAwait(false);
         });
 
         hydration.MapPost("/intake", async (

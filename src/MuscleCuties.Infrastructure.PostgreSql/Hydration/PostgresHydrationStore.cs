@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Hydration;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Hydration;
 
@@ -13,6 +14,7 @@ public sealed class PostgresHydrationStore(
     TimeProvider timeProvider)
     : IWaterPresetInitializationStore, IWaterIntakeStore, IWaterReminderConfigurationStore
 {
+    private const string LegacyIntakeConflict = "hydrationLegacyTotalConflict";
     private const string PresetsStateKey = "state:hydration:presets";
     private const string RemindersStateKey = "state:hydration:reminders";
     private const string IntakeStatePrefix = "state:hydration:intake:";
@@ -135,31 +137,20 @@ public sealed class PostgresHydrationStore(
         {
             await using var transaction = await dbContext.Database.BeginTransactionAsync(token).ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, accountId, token).ConfigureAwait(false);
+            await NutritionDiaryDayLock.AcquireAsync(dbContext, accountId, localDate, token).ConfigureAwait(false);
             var row = await dbContext.CommandIdempotencyRecords.AsNoTracking()
                 .SingleOrDefaultAsync(r => r.UserId == accountId && r.CommandKey == key, token)
                 .ConfigureAwait(false);
-            var diaryWaterMl = await dbContext.DailyNutritionLogs.AsNoTracking()
-                .Where(d => d.UserId == accountId && d.LocalDate == localDate && !d.IsDeleted)
-                .Select(d => (int?)d.WaterIntakeMl)
-                .FirstOrDefaultAsync(token)
-                .ConfigureAwait(false);
+            var diaryRow = await ReadIntakeDiaryRowAsync(dbContext.DailyNutritionLogs.AsNoTracking(),
+                accountId, localDate, token).ConfigureAwait(false);
+            var json = row?.ResponseJson;
+            var day = json is not null
+                ? ReadPersistedIntake(accountId, localDate, json)
+                : WaterIntakeDay.Restore(accountId, localDate, Math.Max(0, diaryRow?.WaterIntakeMl ?? 0), [], []);
+            if (json is not null)
+                RequireMatchingDiaryTotal(day, diaryRow);
             await transaction.CommitAsync(token).ConfigureAwait(false);
-
-            if (row?.ResponseJson is null)
-            {
-                var legacyBaseline = Math.Max(0, diaryWaterMl ?? 0);
-                return new StoredWaterIntakeDay(WaterIntakeDay.Restore(accountId, localDate, legacyBaseline, [], []), null);
-            }
-
-            var payload = JsonSerializer.Deserialize<PersistedIntakeDay>(row.ResponseJson, JsonOptions)
-                ?? new PersistedIntakeDay(0, [], []);
-            var day = WaterIntakeDay.Restore(
-                accountId,
-                localDate,
-                payload.LegacyMillilitres,
-                payload.Entries.Select(e => new WaterIntakeEntry(e.Id, e.Millilitres, e.Undone)),
-                payload.Operations.Select(o => new WaterIntakeChange(o.OperationId, o.EntryId, o.Kind, o.Millilitres)));
-            return new StoredWaterIntakeDay(day, row.RequestHash);
+            return new StoredWaterIntakeDay(day, json is not null ? row?.RequestHash : null);
         }, cancellationToken).ConfigureAwait(false);
     }
 
@@ -178,15 +169,23 @@ public sealed class PostgresHydrationStore(
             await using var transaction = await dbContext.Database.BeginTransactionAsync(token).ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, accountId, token).ConfigureAwait(false);
 
+            await NutritionDiaryDayLock.AcquireAsync(dbContext, accountId, day.Date, token).ConfigureAwait(false);
             var row = await dbContext.CommandIdempotencyRecords
                 .SingleOrDefaultAsync(r => r.UserId == accountId && r.CommandKey == key, token)
                 .ConfigureAwait(false);
             var currentToken = row?.RequestHash;
-            if (!string.Equals(currentToken, expectedVersion, StringComparison.Ordinal))
+            var diaryRow = await ReadIntakeDiaryRowAsync(dbContext.DailyNutritionLogs,
+                accountId, day.Date, token).ConfigureAwait(false);
+            if (!string.Equals(currentToken, expectedVersion, StringComparison.Ordinal) ||
+                (row is null && Math.Max(0, diaryRow?.WaterIntakeMl ?? 0) != day.LegacyMillilitres))
             {
                 await transaction.RollbackAsync(token).ConfigureAwait(false);
                 return null;
             }
+
+            // Recheck while writing because a legacy update can commit after the initial read.
+            if (row?.ResponseJson is { } previous)
+                RequireMatchingDiaryTotal(ReadPersistedIntake(accountId, day.Date, previous), diaryRow);
 
             var nextVersion = NextVersionToken(currentToken);
             var payload = new PersistedIntakeDay(
@@ -214,19 +213,54 @@ public sealed class PostgresHydrationStore(
                 row.CompletedAt = now;
             }
 
-            var diaryRow = await dbContext.DailyNutritionLogs
-                .FirstOrDefaultAsync(d => d.UserId == accountId && d.LocalDate == day.Date && !d.IsDeleted, token)
-                .ConfigureAwait(false);
-            if (diaryRow is not null)
+            if (diaryRow is null)
             {
-                diaryRow.WaterIntakeMl = day.TotalMillilitres;
-                diaryRow.UpdatedAt = now;
+                diaryRow = new DailyNutritionLogRecord
+                {
+                    Id = Guid.CreateVersion7(),
+                    UserId = accountId,
+                    LocalDate = day.Date,
+                    CreatedAt = now
+                };
+                dbContext.DailyNutritionLogs.Add(diaryRow);
             }
+            diaryRow.WaterIntakeMl = day.TotalMillilitres;
+            diaryRow.UpdatedAt = now;
 
             await dbContext.SaveChangesAsync(token).ConfigureAwait(false);
             await transaction.CommitAsync(token).ConfigureAwait(false);
             return new StoredWaterIntakeDay(day, nextVersion);
         }, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async Task<DailyNutritionLogRecord?> ReadIntakeDiaryRowAsync(
+        IQueryable<DailyNutritionLogRecord> rows, Guid accountId, DateOnly date, CancellationToken cancellationToken)
+    {
+        var matching = await rows.Where(row => row.UserId == accountId && row.LocalDate == date && !row.IsDeleted)
+            .Take(2).ToArrayAsync(cancellationToken).ConfigureAwait(false);
+        if (matching.Length > 1)
+            throw new InvalidOperationException(LegacyIntakeConflict);
+        return matching.SingleOrDefault();
+    }
+
+    private static void RequireMatchingDiaryTotal(WaterIntakeDay day, DailyNutritionLogRecord? diaryRow)
+    {
+        // Earlier backends could persist a ledger before any diary row existed.
+        // When both exist, neither a read nor a write can safely resolve disagreement.
+        if (diaryRow is not null && diaryRow.WaterIntakeMl != day.TotalMillilitres)
+            throw new InvalidOperationException(LegacyIntakeConflict);
+    }
+
+    private static WaterIntakeDay ReadPersistedIntake(Guid accountId, DateOnly localDate, string json)
+    {
+        var payload = JsonSerializer.Deserialize<PersistedIntakeDay>(json, JsonOptions)
+            ?? new PersistedIntakeDay(0, [], []);
+        return WaterIntakeDay.Restore(
+            accountId,
+            localDate,
+            payload.LegacyMillilitres,
+            payload.Entries.Select(e => new WaterIntakeEntry(e.Id, e.Millilitres, e.Undone)),
+            payload.Operations.Select(o => new WaterIntakeChange(o.OperationId, o.EntryId, o.Kind, o.Millilitres)));
     }
 
     async Task<StoredWaterReminderConfiguration> IWaterReminderConfigurationStore.ReadAsync(

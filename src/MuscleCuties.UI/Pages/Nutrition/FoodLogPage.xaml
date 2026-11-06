@@ -299,43 +299,7 @@
                          instead of trailing the numbers inside the summary. -->
                     <Border Style="{StaticResource CardPrimary}">
                         <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing14}">
-                            <!-- Water Tracker Row -->
-                            <VerticalStackLayout Grid.Row="0" Spacing="{StaticResource UiSpaceMicro}">
-                                <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
-                                      VerticalOptions="Center">
-                                    <Label Text="{loc:LocalizedText Nutrition_FoodLog_Water}" Style="{StaticResource MutedLabel}"
-                                           VerticalOptions="Center" />
-                                    <Label Grid.Column="1"
-                                           Text="{Binding WaterIntakeMl, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueMl}"
-                                           Style="{StaticResource MutedLabel}"
-                                           VerticalOptions="Center" />
-                                    <Button Grid.Column="2"
-                                            Style="{StaticResource ButtonSecondary}"
-                                            Text="{loc:LocalizedText Nutrition_FoodLog_SubtractWaterTwoFiftyMl}"
-                                            Command="{Binding RemoveWaterCommand}"
-                                            CommandParameter="{x:Int32 250}" />
-                                    <Button Grid.Column="3"
-                                            Style="{StaticResource ButtonSecondary}"
-                                            Text="{loc:LocalizedText Nutrition_FoodLog_AddWaterTwoFiftyMl}"
-                                            Command="{Binding AddWaterCommand}"
-                                            CommandParameter="{x:Int32 250}" />
-                                </Grid>
-                                <ActivityIndicator Style="{StaticResource StateBusyInline}"
-                                                   IsRunning="{Binding IsSavingWater}"
-                                                   IsVisible="{Binding IsSavingWater}"
-                                                   SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_WaterSaving}" />
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
-                                      IsVisible="{Binding HasWaterSaveError}">
-                                    <Label Text="{Binding WaterSaveError, Converter={StaticResource LocalizedStringConverter}}"
-                                           Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
-                                           VerticalOptions="Center" />
-                                    <Button Grid.Column="1"
-                                            Text="{loc:LocalizedText Nutrition_FoodLog_RetryWater}"
-                                            Command="{Binding RetryWaterSaveCommand}"
-                                            Style="{StaticResource ButtonSecondary}"
-                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_RetryWater}" />
-                                </Grid>
-                            </VerticalStackLayout>
+                            <nutritionControls:HydrationLogView Grid.Row="0" />
 
                             <!-- Quick Diary Actions Row -->
                             <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
