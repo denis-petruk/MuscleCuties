@@ -86,6 +86,7 @@ stage "S02 — headings and back actions"
 say "Use the VoiceOver rotor (Headings) on Dashboard, Vault, Profile, Food Log, Nutrition and History."
 say "Each screen must expose exactly one level-one heading naming the screen."
 say "On Food Log, History and Vault, the back control must announce Back and return to the prior screen."
+say "On Train (Workout), the phase badge under the title must still announce the current phase."
 if confirm "Headings and back actions behave as described?"; then
   record "- S02 headings and back actions: PASS"
 else

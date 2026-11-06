@@ -48,11 +48,13 @@ three cells in step with an edit or a reset.
 - `Title` / `Subtitle` — updated in place, so a bound title does not rebuild the tree.
 - `ActionContent` — the page's single contextual action, including an existing accessible
   `HeaderIconButton` Border, instead of a second hand-built header column.
+- `StatusContent` — a compact status view on the subtitle line (the Workout phase `PillBadge`);
+  when present it owns that line and the text subtitle steps back.
 - `ActionText` / `ActionCommand` — a text action rendered with `ButtonSecondary`.
 - Level-one heading semantics and the localized back name stay inside the control.
 
-Seven root/detail pages moved onto it: Dashboard, Profile, Nutrition, Food Log, Workout History,
-Photo Journey Vault and Cycle. Titles, subtitles, back commands and contextual actions are
+Eight root/detail pages moved onto it: Dashboard, Profile, Nutrition, Food Log, Workout,
+Workout History, Photo Journey Vault and Cycle. Titles, subtitles, back commands and contextual actions are
 preserved; the previously explicit `SemanticProperties.HeadingLevel="Level1"` labels are now
 provided by the shared control.
 
@@ -78,12 +80,11 @@ provided by the shared control.
 | Auth/LoginPage, Auth/OtpVerificationPage, Auth/PasswordRecoveryPage, Auth/RegisterPage | Not applicable — auth root frame without a back action or level-one page title |
 | Onboarding/ProfileSetupPage, Onboarding/QuizPage | Not applicable — progressive onboarding frame; the step indicator and progress belong to the flow, not the header |
 | Startup/AppStartupPage | Not applicable — bootstrap state, no title or action |
-| Workout/WorkoutPage | Pending — its subtitle is a phase PillBadge, not text; the header needs a status slot before migration |
+| Workout/WorkoutPage | Migrated — root, phase PillBadge in the status slot, injury action |
 | Workout/WorkoutSessionPage | Not applicable — session frame owns timing, exit and save actions |
 
 The seven pages the audit named for heading semantics (Dashboard, Vault, Profile, Food Log,
-Nutrition, Workout, History) all expose a Level1 heading; six now come from `PageHeader`, and
-Workout keeps its explicit Level1 until its status slot exists.
+Nutrition, Workout, History) all expose a Level1 heading through `PageHeader`.
 
 ### F06 — units preference
 
@@ -106,7 +107,8 @@ the catalog-backed unit label, so no view model imports `Core.Domain` or hardcod
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Core and UI source guards | `dotnet test tests/MuscleCuties.Core.Tests/` (SDK 10.0.200) | **1201 passed, 0 failed** |
+| Core and UI source guards | `dotnet test tests/MuscleCuties.Core.Tests/` (SDK 10.0.200) | **1202 passed, 0 failed** |
+| Workout header | `Workout_header_uses_the_shared_status_slot` | PageHeader + status slot + PillBadge asserted |
 | Unit formatting | `MeasurementUnitsTests` | Round trips, metric pass-through, distance/pace and label cases pass |
 | XAML well-formedness | `xml.etree.ElementTree` over all 67 UI XAML files | 0 parse errors |
 | Catalog parity | `LocalizationCatalogTests` | EN/RU key sets and format arguments match |
@@ -118,5 +120,5 @@ focus order, dynamic type or the visual result. Those remain owner device gates 
 
 ## Next action
 
-Build on the owner's Mac, run the device-verification wizard, and record the outcome. Then decide
-whether `WorkoutPage`'s phase badge becomes a `PageHeader` status slot or stays page-owned.
+Build on the owner's Mac, run the device-verification wizard, and record the outcome. No S02
+header item remains; any further UI package is outside this scope.
