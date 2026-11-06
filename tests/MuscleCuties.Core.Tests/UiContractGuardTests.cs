@@ -614,6 +614,21 @@ public sealed class UiContractGuardTests
             $"Found {violations.Count} navigation reachability/return defect(s):\n" + string.Join("\n", violations));
     }
 
+    [Fact]
+    public void Workout_header_uses_the_shared_status_slot()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var headerSource = File.ReadAllText(
+            Path.Combine(uiRoot, "Controls", "Shared", "PageHeader.cs"));
+        var workoutSource = File.ReadAllText(
+            Path.Combine(uiRoot, "Pages", "Workout", "WorkoutPage.xaml"));
+
+        Assert.Contains("StatusContentProperty", headerSource);
+        Assert.Contains("<sharedControls:PageHeader", workoutSource);
+        Assert.Contains("PageHeader.StatusContent", workoutSource);
+        Assert.Contains("PillBadge", workoutSource);
+    }
+
     private static string? AppliedStyleName(XElement element)
     {
         var reference = element.Attribute("Style")?.Value;

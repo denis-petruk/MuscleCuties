@@ -7,10 +7,11 @@ namespace MuscleCuties.UI.Controls.Shared;
 
 /// <summary>
 /// The single page header composition: an optional back affordance, the level-one title, an
-/// optional subtitle and one contextual action. Pages supply content and commands, never their
-/// own header grid, so insets, width, heading semantics and the back action's accessible name
-/// stay in one place. A root page sets <see cref="ShowBack"/> to false instead of faking a
-/// disabled back button.
+/// optional subtitle or status view, and one contextual action. Pages supply content and
+/// commands, never their own header grid, so insets, width, heading semantics and the back
+/// action's accessible name stay in one place. A root page sets <see cref="ShowBack"/> to false
+/// instead of faking a disabled back button. Bound properties update in place; the tree is only
+/// rebuilt when <see cref="ShowBack"/> changes shape.
 /// </summary>
 public class PageHeader : ContentView
 {
@@ -42,11 +43,16 @@ public class PageHeader : ContentView
         BindableProperty.Create(nameof(ActionCommand), typeof(ICommand), typeof(PageHeader),
             propertyChanged: (b, _, _) => ((PageHeader)b).ApplyAction());
 
+    public static readonly BindableProperty StatusContentProperty =
+        BindableProperty.Create(nameof(StatusContent), typeof(View), typeof(PageHeader),
+            propertyChanged: (b, _, _) => ((PageHeader)b).ApplyStatus());
+
     private readonly Command _backProxy;
     private Label? _titleLabel;
     private Label? _subtitleLabel;
     private ImageButton? _backButton;
     private ContentView? _actionHost;
+    private ContentView? _statusHost;
     private bool _builtWithBack;
 
     public PageHeader()
@@ -103,13 +109,27 @@ public class PageHeader : ContentView
         set => SetValue(ActionCommandProperty, value);
     }
 
+    /// <summary>
+    ///     A compact status view in the line under the title — a phase badge or a state pill. It
+    ///     takes the place of the text subtitle when present, so the two never compete for the
+    ///     same line. A page supplies its own already-styled control (for example a PillBadge).
+    /// </summary>
+    public View? StatusContent
+    {
+        get => (View?)GetValue(StatusContentProperty);
+        set => SetValue(StatusContentProperty, value);
+    }
+
     private void Build()
     {
-        // Detach a hosted action before replacing the tree so it is never parented twice.
+        // Detach hosted views before replacing the tree so nothing is parented twice.
         if (_actionHost is not null)
             _actionHost.Content = null;
+        if (_statusHost is not null)
+            _statusHost.Content = null;
 
         _actionHost = null;
+        _statusHost = null;
         _backButton = null;
         _builtWithBack = ShowBack;
 
@@ -155,6 +175,11 @@ public class PageHeader : ContentView
         Grid.SetColumn(_subtitleLabel, titleColumn);
         Grid.SetRow(_subtitleLabel, 1);
 
+        _statusHost = new ContentView { VerticalOptions = LayoutOptions.Start, IsVisible = false };
+        grid.Children.Add(_statusHost);
+        Grid.SetColumn(_statusHost, titleColumn);
+        Grid.SetRow(_statusHost, 1);
+
         _actionHost = new ContentView { VerticalOptions = LayoutOptions.Start };
         grid.Children.Add(_actionHost);
         Grid.SetColumn(_actionHost, titleColumn + 1);
@@ -163,6 +188,7 @@ public class PageHeader : ContentView
         Content = grid;
         ApplyText();
         ApplyAction();
+        ApplyStatus();
         ApplyBackCommand();
     }
 
@@ -197,7 +223,29 @@ public class PageHeader : ContentView
             return;
 
         _subtitleLabel.Text = Subtitle;
-        _subtitleLabel.IsVisible = !string.IsNullOrWhiteSpace(Subtitle);
+        _subtitleLabel.IsVisible = StatusContent is null && !string.IsNullOrWhiteSpace(Subtitle);
+    }
+
+    private void ApplyStatus()
+    {
+        if (_statusHost is null)
+            return;
+
+        if (StatusContent is { } custom)
+        {
+            _statusHost.Content = null;
+            _statusHost.Content = custom;
+            _statusHost.IsVisible = true;
+        }
+        else
+        {
+            _statusHost.Content = null;
+            _statusHost.IsVisible = false;
+        }
+
+        // The status view and the text subtitle share one line; the status wins when present.
+        if (_subtitleLabel is not null)
+            _subtitleLabel.IsVisible = StatusContent is null && !string.IsNullOrWhiteSpace(Subtitle);
     }
 
     private void ApplyBackCommand()
