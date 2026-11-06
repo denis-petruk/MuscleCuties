@@ -265,6 +265,8 @@ public static partial class UiTextCatalog
         English["Workout_History_AllMonths"] = "All Months";
         English["Workout_History_AllWorkoutsLoaded"] = "All workouts loaded";
         English["Workout_History_AggregateOnlyNote"] = "Historical aggregate: individual sets were not recorded.";
+        English["Workout_History_DistanceFormat"] = "{0:0.##} km";
+        English["Workout_History_DistanceHeader"] = "Distance";
         English["Workout_History_DurationMinutesFormat"] = "{0} min";
         English["Workout_History_NotRecorded"] = "Not recorded";
         English["Workout_History_NoSetDetailsNote"] = "Set details were not recorded.";

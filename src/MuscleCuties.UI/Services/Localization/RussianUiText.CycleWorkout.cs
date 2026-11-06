@@ -265,6 +265,8 @@ internal static partial class RussianUiText
         Values["Workout_History_AllMonths"] = "Все месяцы";
         Values["Workout_History_AllWorkoutsLoaded"] = "Все упражнения загружены";
         Values["Workout_History_AggregateOnlyNote"] = "Историческая сводка: отдельные подходы не записаны.";
+        Values["Workout_History_DistanceFormat"] = "{0:0.##} км";
+        Values["Workout_History_DistanceHeader"] = "Дистанция";
         Values["Workout_History_DurationMinutesFormat"] = "{0} мин";
         Values["Workout_History_NotRecorded"] = "Не записано";
         Values["Workout_History_NoSetDetailsNote"] = "Детали подходов не записаны.";
