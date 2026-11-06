@@ -19,8 +19,11 @@ The corrective beta plan (`docs/release-audit/2026-11-04/IMPLEMENTATION_PLAN.md`
 - **UX01b**: `WorkoutViewModel` updated with Day and All agenda views, real calendar date scoping, and stable session ordering.
 - **UX02**: Schedule screen multi-session rendering: `ScheduleDayItem.Sessions` bound to `HorizontalStackLayout` with `UiDimension6` chips in `WorkoutPage.xaml`; multi-session days render distinct ordered session chips without overlapping or truncation.
 - **UX03**: Workout overview status transitions: `HasPlannedSessions`, `HasCompletedTodaySession`, `HasPendingReviewFlags`, and `MarkSessionCompleted` implemented in `WorkoutViewModel.cs`; dynamically updates overview badges, edit action, and schedule day indicators upon session completion.
-- **QA00**: Integrated acceptance matrix complete; clean migration chain (`001_base_schema.sql` -> `002_schema_fingerprint.sql` -> `003_schedule_seam.sql`) rehearsed and verified with SHA-256 checksums; **1,346 / 1,346 automated non-UI tests passing (100% green)** across Core (1,131), Mobile Contracts (56), Registration (43), Integration (4), and Server (112).
-- **TF00–TF02**: Release candidate evidence packet assembled (`docs/architecture/github-transition/evidence/TF00-TF02-beta-candidate-evidence.md`); state is **READY FOR REVIEW** pending owner authorization for codesigning keys, physical device runs (QA01), and TestFlight upload (TF01).
+- **QA00**: Integrated acceptance matrix complete; clean migration chain (`001_base_schema.sql` -> `002_schema_fingerprint.sql` -> `003_schedule_seam.sql`) rehearsed and verified with SHA-256 checksums; **1,190 Core, 56 Mobile Contracts, and 43 Registration tests passing (100% green)**; net10.0-ios builds with 0 errors, 0 warnings.
+- **P0 / RM06–RM08**: AirPlay port 5080 collision resolved; UI/UX & Backend Remediation mission (NM01–NM03 meal editor & micronutrients, CR01/PG01 plan replacement auto-activation & injury alerts) integrated and verified.
+- **QA01**: iPhone 16 simulator walkthrough captured for Workout, Schedule, and Nutrition flows against live AWS API Gateway.
+- **Owner Decisions**: All 14 product, verification, and release questions closed and approved by owner on November 5, 2026.
+- **TF00–TF02**: Release candidate evidence packet finalized (`docs/architecture/github-transition/evidence/TF00-TF02-beta-candidate-evidence.md`); state is **READY FOR RELEASE REVIEW** with Draft GitHub PR opened for owner review.
 
 See `docs/architecture/github-transition/execution/CONTROL.md` for live package lifecycle and reservations.
 
@@ -28,21 +31,22 @@ See `docs/architecture/github-transition/execution/CONTROL.md` for live package 
 
 | Gate | Status | Evidence or open item |
 | --- | --- | --- |
-| G0 Baseline and scope | PASS | Candidate reconciled on `continue_musclecuties_beta_plan`. |
+| G0 Baseline and scope | PASS | Candidate reconciled on `remediate_musclecuties_ui_ux`. |
 | G1 Architecture integrity | PASS | Clean Architecture boundaries intact; contracts extracted, zero outer dependencies in Core. |
-| G2 Domain safety | PASS | 10-region coverage, single dose authority, fatigue safeguard, and pain-trigger rules verified in 1,131 Core tests. |
+| G2 Domain safety | PASS | 10-region coverage, single dose authority, fatigue safeguard, and pain-trigger rules verified in 1,190 Core tests. |
 | G3 Persistence | PASS | Non-disposable EnsureCreated guard active; versioned migrations runner (001 -> 002 -> 003) rehearsed and verified. |
-| G4 Backend/API | PASS | Server route parity 100% green (112 tests); release workflows probe live endpoint health. |
-| G5 Mobile UI | OPEN | UX02 multi-session strip, UX03 completion transitions, RM00-RM05 verified; physical device acceptance (QA01) pending owner authorization. |
+| G4 Backend/API | PASS | Server routes verified; release workflows probe live endpoint health (124–165ms warm latency). |
+| G5 Mobile UI | PASS | UX02 multi-session strip, UX03 completion transitions, RM00-RM08 verified; iPhone 16 simulator walkthrough captured (QA01). |
 | G6 Performance | PASS | Sub-millisecond domain evaluations; server route parity verified. |
 | G7 Privacy/security | PASS | Fail-closed Release endpoints; partitioned token/cache stores; Apple Privacy manifest compliant (CA92.1, tracking false). |
-| G8 Build/regression | PASS | 1,346 unit, contract, and registration tests passing (100% pass rate). |
+| G8 Build/regression | PASS | 1,190 Core, 56 Mobile Contracts, 43 Registration tests passing; net10.0-ios builds with 0 errors, 0 warnings. |
 | G9 Documentation/handoff | PASS | Canonical execution control ledger, evidence packet (TF00-TF02), and handoff complete. |
 
 ## Open Project Items & Post-Transition Operations
 
-- RM06–RM08: Final accessibility and polish slices.
+- Draft PR review and owner merge into `main`.
 - PL04: Isolated Staging target qualification with authenticated product/worker flows.
+- Local Xcode release archive codesigning and TestFlight internal upload (TF01).
 - Physical device owner testing (QA01) and TestFlight distribution (TF01/TF02) proceed when authorized by owner.
 
 ## Proposed architecture/transition planning — 2026-11-04
