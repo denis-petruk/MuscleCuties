@@ -111,3 +111,42 @@ grant is an interim deployment credential arrangement, not the target runtime de
 - A disposable probe membership proves `SCHEMA_ROLE_MEMBERSHIP_MISMATCH`.
 - Function owner and `search_path` drift proves `SCHEMA_FUNCTION_SECURITY_MISMATCH`.
 - No live role, grant, principal or secret was modified.
+
+---
+
+## K13 Target Privilege Separation Architecture (`mc_admin` vs `mc_runtime`)
+
+As specified in K13 of the GitHub Transition Roadmap, database operations are partitioned strictly across two distinct roles:
+
+### 1. `mc_admin` (Migration Runner & Schema Owner)
+- **Role Type:** Login principal used exclusively by CI/CD migration runners and `DbMaintenance` (`dbinit`, `migrate`, `dbcheck`, `seed`).
+- **Attributes:** `LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE`.
+- **Privileges:**
+  - Owner of schemas `app`, `catalog`, and `ops`.
+  - Owner of all tables, views, and sequences in `app`, `catalog`, and `ops`.
+  - Full DDL authority (`CREATE`, `ALTER`, `DROP`, `TRUNCATE`) required for schema evolution.
+  - Advisory lock execution rights (`pg_advisory_lock`, `pg_try_advisory_lock`) for deployment serialization (Class `0x4D435343`, Key `0x53434845`).
+  - Read/write access to migration ledger `ops.schema_migrations` and `ops.schema_metadata`.
+
+### 2. `mc_runtime` (Lambda Application Execution)
+- **Role Type:** Least-privilege connection role used by AWS Lambda (`MuscleCuties.Server`).
+- **Attributes:** `LOGIN NOSUPERUSER NOBYPASSRLS NOCREATEDB NOCREATEROLE NOINHERIT`.
+- **Privileges:**
+  - `CONNECT` to target database (`musclecuties_staging` / `musclecuties_beta`).
+  - `USAGE` on schemas `app` and `catalog`.
+  - DML only (`SELECT, INSERT, UPDATE, DELETE`) on tenant application tables in `app`.
+  - Read-only `SELECT` on canonical reference tables in `catalog`.
+  - Read-only `SELECT` on `ops.schema_migrations` and `ops.schema_metadata` for `/health/ready` startup checks.
+  - `USAGE, SELECT` on sequences in `app`.
+- **Enforced Restrictions (Zero DDL):**
+  - Explicitly revoked `CREATE` on all schemas (`app`, `catalog`, `ops`, `public`).
+  - Cannot `DROP`, `ALTER`, `TRUNCATE`, or create objects.
+  - Zero access to operational routines or administrative functions.
+  - `NOBYPASSRLS`: Row-Level Security (`FORCE ROW LEVEL SECURITY`) is permanently enforced on all tenant tables, guaranteeing tenant isolation via `app.user_id = current_setting('app.user_id')`.
+
+### Migration Script Reference
+The concrete SQL migration script implementing this role separation is prepared in:
+- `services/postgresql/004_privilege_separation_mc_admin_runtime.sql`
+- `src/MuscleCuties.DbMaintenance/sql/004_privilege_separation_mc_admin_runtime.sql`
+- `docs/infra/sql/k13-privilege-separation.sql`
+
