@@ -85,7 +85,7 @@ public sealed class InjuryCanonicalReconciliationTests
                     WarmupMinutes: WarmupMinutes, CooldownMinutes: CooldownMinutes) { DraftPreferences = draft };
                 var source = await new PostgresStrengthPlanPreviewSourceV020(db).LoadInCurrentTransactionAsync(user, CancellationToken.None);
                 var preview = PreviewStrengthPlanV020UseCase.EvaluateLoadedSource(user, request, source);
-                Assert.True(preview.Status is "Feasible" or "Limited", JsonSerializer.Serialize(preview));
+                Assert.True(preview.Status == "Feasible", JsonSerializer.Serialize(preview));
                 Assert.Contains(preview.Sessions.SelectMany(session => session.Slots), slot => slot.ExerciseId.HasValue);
                 await transaction.CommitAsync();
                 var proposal = await new PostgresStrengthPlanProposalStoreV020(db).SaveAsync(user, request, preview, CancellationToken.None);
