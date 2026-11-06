@@ -106,6 +106,10 @@ public partial class PageLoadingOverlay : ContentView
         MainThread.BeginInvokeOnMainThread(ApplyVisibility);
     }
 
-    private void ApplyVisibility() =>
-        IsVisible = BindingContext is IPageLoadAware page && (page.IsPageLoading || page.IsLoadError);
+    private void ApplyVisibility()
+    {
+        var isVisible = BindingContext is IPageLoadAware page && (page.IsPageLoading || page.IsLoadError);
+        IsVisible = isVisible;
+        InputTransparent = !isVisible;
+    }
 }

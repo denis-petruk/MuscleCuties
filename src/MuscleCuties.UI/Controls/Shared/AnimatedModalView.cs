@@ -210,7 +210,7 @@ public class AnimatedModalView : ContentView
     {
         return Descendants()
             .FirstOrDefault(element =>
-                (element is Entry or Editor or Picker or DatePicker or TimePicker or Button or SearchBar)
+                (element is Entry or Editor or Button or SearchBar)
                 && IsVisibleInTree(element)
                 && element.IsEnabled);
     }

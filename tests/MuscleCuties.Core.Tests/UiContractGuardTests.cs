@@ -558,6 +558,32 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Full_page_lazy_modal_hosts_keep_page_binding_context_and_input_transparency()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var nutritionXaml = XDocument.Load(
+            Path.Combine(uiRoot, "Pages", "Nutrition", "NutritionPage.xaml"),
+            LoadOptions.SetLineInfo);
+
+        var overlayLazyViews = nutritionXaml
+            .Descendants()
+            .Where(element => element.Name.LocalName == "LazyView" &&
+                              element.Attribute("Grid.RowSpan") is not null)
+            .ToArray();
+
+        Assert.NotEmpty(overlayLazyViews);
+        foreach (var lazyView in overlayLazyViews)
+        {
+            var name = lazyView.Attribute(XName.Get("Name", "http://schemas.microsoft.com/winfx/2009/xaml"))?.Value
+                       ?? "(unnamed)";
+            Assert.Null(lazyView.Attribute("BindingContext"));
+            Assert.NotNull(lazyView.Attribute("IsVisible"));
+            Assert.NotNull(lazyView.Attribute("InputTransparent"));
+            Assert.False(string.IsNullOrWhiteSpace(name));
+        }
+    }
+
+    [Fact]
     public void Registered_pages_have_an_entry_point_and_a_back_path()
     {
         var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");

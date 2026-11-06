@@ -136,9 +136,8 @@
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="Breakdown"
             x:TypeArguments="nutritionControls:NutritionBreakdownModal"
-            BindingContext="{Binding Breakdown}"
-            IsVisible="{Binding Breakdown.IsVisible}"
-            InputTransparent="{Binding Breakdown.IsVisible, Converter={StaticResource InvertedBoolConverter}}" />
+            IsVisible="{Binding IsBreakdownModalVisible}"
+            InputTransparent="{Binding IsBreakdownModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="Suggestions"
             x:TypeArguments="nutritionControls:MealSuggestionModal"
@@ -164,6 +163,7 @@
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="SaluteOverlay"
             x:TypeArguments="sharedControls:PhaseSaluteOverlay"
+            IsVisible="False"
             InputTransparent="True" />
         <sharedControls:PageLoadingOverlay Grid.RowSpan="2" />
     </Grid>

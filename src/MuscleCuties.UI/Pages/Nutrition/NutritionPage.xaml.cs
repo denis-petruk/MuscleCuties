@@ -68,18 +68,39 @@ public partial class NutritionPage : ContentPage
                 return;
 
             _lastCelebrationToken = _viewModel.CelebrationToken;
-            await SaluteOverlay.LoadIfNeededAsync(true);
-            await ((PhaseSaluteOverlay)SaluteOverlay.Content).PlayAsync(_viewModel.CelebrationIconSource);
+            SaluteOverlay.IsVisible = true;
+            try
+            {
+                await SaluteOverlay.LoadIfNeededAsync(true);
+                await ((PhaseSaluteOverlay)SaluteOverlay.Content).PlayAsync(_viewModel.CelebrationIconSource);
+            }
+            finally
+            {
+                SaluteOverlay.IsVisible = false;
+            }
         });
     }
 
     private async Task LoadRequestedViewsAsync()
     {
         await MealEditor.LoadIfNeededAsync(_viewModel.IsMealEditorVisible);
-        await Breakdown.LoadIfNeededAsync(_viewModel.IsBreakdownModalVisible);
+        await LoadBreakdownViewAsync();
         await Suggestions.LoadIfNeededAsync(_viewModel.IsSuggestionModalVisible);
         await MealDetail.LoadIfNeededAsync(_viewModel.IsMealDetailVisible);
         await LoadMealEntryViewAsync();
+    }
+
+    private async Task LoadBreakdownViewAsync()
+    {
+        if (!_viewModel.IsBreakdownModalVisible && !Breakdown.HasLazyViewLoaded)
+            return;
+
+        await Breakdown.LoadIfNeededAsync(_viewModel.IsBreakdownModalVisible);
+        if (Breakdown.HasLazyViewLoaded && Breakdown.Content is BindableObject breakdownModal &&
+            !ReferenceEquals(breakdownModal.BindingContext, _viewModel.Breakdown))
+        {
+            breakdownModal.BindingContext = _viewModel.Breakdown;
+        }
     }
 
     /// <summary>
