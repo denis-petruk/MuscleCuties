@@ -33,4 +33,11 @@ public partial class RegisterPage : ContentPage
     {
         RegisterConfirmPassword.Focus();
     }
+
+    // The acknowledgment copy toggles the same bound checkbox, so the label is part of the
+    // tap target without introducing a second source of consent state.
+    private void OnPrivacyConsentLabelTapped(object? sender, TappedEventArgs e)
+    {
+        PrivacyConsentCheckBox.IsChecked = !PrivacyConsentCheckBox.IsChecked;
+    }
 }

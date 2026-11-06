@@ -100,22 +100,31 @@
                 <DataTemplate x:DataType="profileModels:PhotoVaultItem">
                     <Border Style="{StaticResource CardPrimary}">
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
-                            <!-- Photo header / meta -->
-                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
-                                <Label
-                                    Text="{Binding DateFormatted, Converter={StaticResource LocalizedStringConverter}}" VerticalOptions="Center" Style="{StaticResource BodyStrong}" />
-
-                                <Border
-                                    Grid.Column="1"
-                                    Style="{StaticResource PillBadge}"
-                                    IsVisible="{Binding HasWeight}"
-                                    Padding="{StaticResource UiInsets8_3}">
+                            <!-- Photo header / meta: the localized date and weight badge stack in the
+                                 growing column so large text and Russian copy wrap instead of being
+                                 squeezed by the Delete action. -->
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" VerticalOptions="Center">
                                     <Label
-                                        Text="{Binding WeightFormatted, Converter={StaticResource LocalizedStringConverter}}" VerticalOptions="Center" Style="{StaticResource CaptionLabel}" />
-                                </Border>
+                                        Text="{Binding DateFormatted}"
+                                        Style="{StaticResource BodyStrong}"
+                                        LineBreakMode="WordWrap"
+                                        SemanticProperties.HeadingLevel="Level2" />
+                                    <Border
+                                        Style="{StaticResource PillBadge}"
+                                        IsVisible="{Binding HasWeight}"
+                                        Padding="{StaticResource UiInsets8_3}"
+                                        HorizontalOptions="Start">
+                                        <Label
+                                            Text="{Binding WeightFormatted}"
+                                            VerticalOptions="Center"
+                                            Style="{StaticResource CaptionLabel}" />
+                                    </Border>
+                                </VerticalStackLayout>
 
                                 <Button
-                                    Grid.Column="2"
+                                    Grid.Column="1"
+                                    VerticalOptions="Start"
                                     Text="{loc:LocalizedText Common_Delete}"
                                     Command="{Binding DeletePhotoCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
                                     CommandParameter="{Binding .}"
@@ -127,14 +136,16 @@
                             <Border
                                 Grid.Row="1"
                                 Style="{StaticResource CardSecondary}"
-                                HeightRequest="{StaticResource UiDimension240}">
+                                HeightRequest="{StaticResource UiDimension240}"
+                                SemanticProperties.Description="{Binding AccessibilityDescription}"
+                                SemanticProperties.Hint="{loc:LocalizedText Profile_PhotoJourney_RevealOrHideHint}">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding ToggleItemRevealCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
                                         CommandParameter="{Binding .}" />
                                 </Border.GestureRecognizers>
 
-                                <Grid>
+                                <Grid IsClippedToBounds="True">
                                     <!-- Revealed Photo Image -->
                                     <Image
                                         Source="{Binding RevealedImagePath}"
@@ -181,20 +192,22 @@
                                 IsVisible="{Binding HasNotes}"
                                 Style="{StaticResource CaptionLabel}"
                                 LineBreakMode="WordWrap" />
-                            <Grid Grid.Row="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSelectionRow}"
-                                  ColumnDefinitions="*,*"
-                                  ColumnSpacing="{StaticResource UiSpaceTight}"
-                                  IsVisible="{Binding IsImageAvailable}">
+                            <!-- Comparison selection stacks full width: two side-by-side halves
+                                 truncated "Use as first/second photo" at narrow widths, large text and RU. -->
+                            <VerticalStackLayout Grid.Row="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSelectionRow}"
+                                                 Spacing="{StaticResource UiSpaceTight}"
+                                                 IsVisible="{Binding IsImageAvailable}">
                                 <Button Text="{loc:LocalizedText Profile_PhotoJourney_FirstPhoto}"
                                         Command="{Binding SelectFirstComparisonPhotoCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
                                         CommandParameter="{Binding .}"
+                                        LineBreakMode="WordWrap"
                                         Style="{StaticResource ButtonSecondary}" />
-                                <Button Grid.Column="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSecondColumnIndex}"
-                                        Text="{loc:LocalizedText Profile_PhotoJourney_SecondPhoto}"
+                                <Button Text="{loc:LocalizedText Profile_PhotoJourney_SecondPhoto}"
                                         Command="{Binding SelectSecondComparisonPhotoCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
                                         CommandParameter="{Binding .}"
+                                        LineBreakMode="WordWrap"
                                         Style="{StaticResource ButtonSecondary}" />
-                            </Grid>
+                            </VerticalStackLayout>
                         </Grid>
                     </Border>
                 </DataTemplate>
@@ -207,26 +220,56 @@
                 Margin="{StaticResource UiInsets20}"
                 VerticalOptions="Center"
                 MaximumWidthRequest="{StaticResource UiDimension640}">
-            <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
-                <Label Text="{loc:LocalizedText Profile_PhotoJourney_ComparePhotos}"
-                       Style="{StaticResource SectionTitle}" />
-                <Label Text="{loc:LocalizedText Profile_PhotoJourney_ComparisonInstructions}"
-                       Style="{StaticResource CaptionLabel}"
-                       LineBreakMode="WordWrap" />
-                <Grid HeightRequest="{StaticResource UiDimension280}"
-                      ColumnSpacing="{StaticResource UiSpacing2}">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition x:Name="ComparisonFirstColumn" Width="*" />
-                        <ColumnDefinition x:Name="ComparisonSecondColumn" Width="*" />
-                    </Grid.ColumnDefinitions>
-                    <Image Source="{Binding ComparisonFirstImagePath}" Aspect="AspectFill" />
-                    <Image Grid.Column="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSecondColumnIndex}"
-                           Source="{Binding ComparisonSecondImagePath}" Aspect="AspectFill" />
-                </Grid>
-                <Slider x:Name="ComparisonSlider" ValueChanged="OnComparisonSliderChanged" />
-                <Button Text="{loc:LocalizedText Profile_PhotoJourney_CloseComparison}"
-                        Command="{Binding CloseComparisonCommand}" Style="{StaticResource ButtonSecondary}" />
-            </VerticalStackLayout>
+            <!-- One scroll owner keeps Close reachable at large text on short screens. -->
+            <ScrollView>
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                    <Label Text="{loc:LocalizedText Profile_PhotoJourney_ComparePhotos}"
+                           Style="{StaticResource SectionTitle}"
+                           SemanticProperties.HeadingLevel="Level2" />
+                    <Label Text="{loc:LocalizedText Profile_PhotoJourney_ComparisonInstructions}"
+                           Style="{StaticResource CaptionLabel}"
+                           LineBreakMode="WordWrap" />
+                    <!-- Each half clips its own AspectFill image, so moving the divider crops rather
+                         than stretches, and neither photo can draw over the other at narrow widths. -->
+                    <Grid HeightRequest="{StaticResource UiDimension280}"
+                          ColumnSpacing="{StaticResource UiSpacing2}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition x:Name="ComparisonFirstColumn" Width="*" />
+                            <ColumnDefinition x:Name="ComparisonSecondColumn" Width="*" />
+                        </Grid.ColumnDefinitions>
+                        <Grid IsClippedToBounds="True">
+                            <Image Source="{Binding ComparisonFirstImagePath}"
+                                   Aspect="AspectFill"
+                                   SemanticProperties.Description="{loc:LocalizedText Profile_PhotoJourney_FirstComparisonLabel}" />
+                        </Grid>
+                        <Grid Grid.Column="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSecondColumnIndex}"
+                              IsClippedToBounds="True">
+                            <Image Source="{Binding ComparisonSecondImagePath}"
+                                   Aspect="AspectFill"
+                                   SemanticProperties.Description="{loc:LocalizedText Profile_PhotoJourney_SecondComparisonLabel}" />
+                        </Grid>
+                    </Grid>
+                    <!-- Captions stay pinned to the outer edges rather than following the divider,
+                         so they never truncate when one half is narrow. -->
+                    <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                        <Label Text="{loc:LocalizedText Profile_PhotoJourney_FirstComparisonLabel}"
+                               Style="{StaticResource CaptionLabel}"
+                               LineBreakMode="WordWrap" />
+                        <Label Grid.Column="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSecondColumnIndex}"
+                               Text="{loc:LocalizedText Profile_PhotoJourney_SecondComparisonLabel}"
+                               Style="{StaticResource CaptionLabel}"
+                               HorizontalTextAlignment="End"
+                               LineBreakMode="WordWrap" />
+                    </Grid>
+                    <Slider x:Name="ComparisonSlider"
+                            ValueChanged="OnComparisonSliderChanged"
+                            SemanticProperties.Description="{loc:LocalizedText Profile_PhotoJourney_ComparisonSliderDescription}" />
+                    <Button Text="{loc:LocalizedText Profile_PhotoJourney_CloseComparison}"
+                            Command="{Binding CloseComparisonCommand}"
+                            LineBreakMode="WordWrap"
+                            Style="{StaticResource ButtonSecondary}" />
+                </VerticalStackLayout>
+            </ScrollView>
         </Border>
 
         <sharedControls:PageLoadingOverlay Grid.RowSpan="2" />

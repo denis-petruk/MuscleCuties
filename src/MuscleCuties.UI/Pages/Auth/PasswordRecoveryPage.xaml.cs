@@ -26,6 +26,32 @@ public partial class PasswordRecoveryPage : ContentPage
             RecoveryIdentifierEntry.Unfocus();
         else if (_viewModel.Step == PasswordRecoveryStep.SetNewPassword)
             RecoveryOtpEntry.Unfocus();
+
+        var step = _viewModel.Step;
+        var nextEntry = step switch
+        {
+            PasswordRecoveryStep.EnterIdentifier => RecoveryIdentifierEntry,
+            PasswordRecoveryStep.EnterCode => RecoveryOtpEntry,
+            PasswordRecoveryStep.SetNewPassword => NewPasswordEntry,
+            _ => null
+        };
+        if (nextEntry is null)
+            return;
+
+        // Wait for the step's visibility change to lay out, then start the new step at its
+        // instructions and hand focus to its first field so the keyboard flow continues.
+        Dispatcher.Dispatch(async () =>
+        {
+            if (Handler is null || _viewModel.Step != step)
+                return;
+            await RecoveryScroll.ScrollToAsync(0, 0, false);
+            nextEntry.Focus();
+        });
+    }
+
+    private void OnNewPasswordCompleted(object? sender, EventArgs e)
+    {
+        ConfirmPasswordEntry.Focus();
     }
 
     protected override void OnDisappearing()

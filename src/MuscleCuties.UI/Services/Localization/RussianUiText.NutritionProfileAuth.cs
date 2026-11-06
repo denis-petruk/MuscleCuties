@@ -711,6 +711,12 @@ internal static partial class RussianUiText
         Values["Profile_PhotoJourney_TapToReveal"] = "Нажмите, чтобы показать";
         Values["Profile_PhotoJourney_Title"] = "Фотоальбом путешествия";
         Values["Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd"] = "Для фотографий планируется приватное хранилище Amazon S3. Нажмите на фото, чтобы скрыть или показать.";
+        Values["Profile_PhotoJourney_DateFormat"] = "d MMM yyyy";
+        Values["Profile_PhotoJourney_PhotoRevealed"] = "Фото показано";
+        Values["Profile_PhotoJourney_RevealOrHideHint"] = "Дважды коснитесь, чтобы показать или скрыть фото.";
+        Values["Profile_PhotoJourney_FirstComparisonLabel"] = "Первое фото";
+        Values["Profile_PhotoJourney_SecondComparisonLabel"] = "Второе фото";
+        Values["Profile_PhotoJourney_ComparisonSliderDescription"] = "Разделитель сравнения";
         Values["Profile_Privacy_Title"] = "Конфиденциальность";
         Values["Profile_Privacy_DataTitle"] = "Ваши данные";
         Values["Profile_Privacy_StorageLabel"] = "Хранение";
