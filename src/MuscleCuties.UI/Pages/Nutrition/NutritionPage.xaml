@@ -136,18 +136,23 @@
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="Breakdown"
             x:TypeArguments="nutritionControls:NutritionBreakdownModal"
-            BindingContext="{Binding Breakdown}" />
+            BindingContext="{Binding Breakdown}"
+            IsVisible="{Binding Breakdown.IsVisible}"
+            InputTransparent="{Binding Breakdown.IsVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="Suggestions"
             x:TypeArguments="nutritionControls:MealSuggestionModal"
+            IsVisible="{Binding IsSuggestionModalVisible}"
             InputTransparent="{Binding IsSuggestionModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="MealDetail"
             x:TypeArguments="nutritionControls:MealDetailModal"
+            IsVisible="{Binding IsMealDetailVisible}"
             InputTransparent="{Binding IsMealDetailVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="MealEditor"
             x:TypeArguments="nutritionControls:MealEditorModal"
+            IsVisible="{Binding IsMealEditorVisible}"
             InputTransparent="{Binding IsMealEditorVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <!-- NM01: the Add meal host exists only while the sheet is requested, so it can never leave an
              uninitialized layer over an interactive page. -->
