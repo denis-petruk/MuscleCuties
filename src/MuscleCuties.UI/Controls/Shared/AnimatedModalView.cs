@@ -27,6 +27,7 @@ public class AnimatedModalView : ContentView
     {
         IsVisible = false;
         InputTransparent = true;
+        CascadeInputTransparent = true;
         Loaded += OnLoaded;
     }
 
@@ -60,7 +61,12 @@ public class AnimatedModalView : ContentView
     private void OnLoaded(object? sender, EventArgs e)
     {
         if (!IsOpen)
+        {
+            IsVisible = false;
+            InputTransparent = true;
+            CascadeInputTransparent = true;
             return;
+        }
 
         // A sheet can be opened before its page attaches it. Finish the parts that need the
         // page tree as soon as the sheet is loaded.
@@ -100,6 +106,7 @@ public class AnimatedModalView : ContentView
 
         IsVisible = true;
         InputTransparent = false;
+        CascadeInputTransparent = false;
         _isolationPage = HostPage();
         ModalAccessibilityScope.Acquire(_isolationPage, this);
         ModalTransition.PlayShow(this);
@@ -112,6 +119,7 @@ public class AnimatedModalView : ContentView
     private void Close(long version)
     {
         InputTransparent = true;
+        CascadeInputTransparent = true;
         ModalAccessibilityScope.Release(_isolationPage);
         _isolationPage = null;
         ModalTransition.PlayHide(this, () =>

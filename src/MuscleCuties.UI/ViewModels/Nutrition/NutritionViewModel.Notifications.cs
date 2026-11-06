@@ -11,6 +11,7 @@ public partial class NutritionViewModel
     {
         OnPropertyChanged(nameof(IsFoodFinderVisible));
         OnPropertyChanged(nameof(IsFoodFinderCollapsed));
+        OnPropertyChanged(nameof(IsFoodSourceTabsVisible));
         OnPropertyChanged(nameof(IsIngredientSearchVisible));
         OnPropertyChanged(nameof(IsBarcodeSourceVisible));
         OnPropertyChanged(nameof(MealEditorTitle));
@@ -132,10 +133,23 @@ public partial class NutritionViewModel
         AddIngredientCommand.NotifyCanExecuteChanged();
     }
 
-    partial void OnSelectedServingOptionChanged(FoodServingOptionItem? value)
+    partial void OnSelectedServingOptionChanged(FoodServingOptionItem? oldValue, FoodServingOptionItem? newValue)
     {
         if (!_isApplyingServingDefaults)
-            ApplyDefaultServingAmount(SelectedFoodResult, value);
+        {
+            if (oldValue is not null && newValue is not null &&
+                oldValue.Grams > 0f && newValue.Grams > 0f &&
+                TryParseAmount(FoodGrams, out var currentAmount))
+            {
+                var grams = currentAmount * oldValue.Grams;
+                var convertedAmount = grams / newValue.Grams;
+                FoodGrams = FormatConvertedAmount(convertedAmount);
+            }
+            else
+            {
+                ApplyDefaultServingAmount(SelectedFoodResult, newValue);
+            }
+        }
 
         OnPropertyChanged(nameof(SelectedFoodAmountText));
         AddIngredientCommand.NotifyCanExecuteChanged();

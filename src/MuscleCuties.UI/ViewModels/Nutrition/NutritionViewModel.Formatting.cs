@@ -176,11 +176,41 @@ public partial class NutritionViewModel
 
     private static bool TryParseAmount(string value, out float amount)
     {
-        if (!float.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out amount) &&
-            !float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out amount))
-            amount = 0f;
+        amount = 0f;
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
 
-        return amount > 0f;
+        var trimmed = value.Trim();
+        if (float.TryParse(trimmed, NumberStyles.Float, CultureInfo.CurrentCulture, out amount) &&
+            float.IsFinite(amount) && amount > 0f)
+            return true;
+
+        if (float.TryParse(trimmed, NumberStyles.Float, CultureInfo.InvariantCulture, out amount) &&
+            float.IsFinite(amount) && amount > 0f)
+            return true;
+
+        var decimalSeparator = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator;
+        var alternateSeparator = decimalSeparator == "." ? "," : ".";
+        if (!trimmed.Contains(decimalSeparator, StringComparison.Ordinal) &&
+            trimmed.Contains(alternateSeparator, StringComparison.Ordinal))
+        {
+            var normalized = trimmed.Replace(alternateSeparator, decimalSeparator, StringComparison.Ordinal);
+            if (float.TryParse(normalized, NumberStyles.Float, CultureInfo.CurrentCulture, out amount) &&
+                float.IsFinite(amount) && amount > 0f)
+                return true;
+        }
+
+        amount = 0f;
+        return false;
+    }
+
+    private static string FormatConvertedAmount(float amount)
+    {
+        var rounded = MathF.Round(amount);
+        if (MathF.Abs(amount - rounded) < 0.0001f)
+            return rounded.ToString("0", CultureInfo.CurrentCulture);
+
+        return amount.ToString("0.####", CultureInfo.CurrentCulture);
     }
 
     private static string FormatServingAmount(float amount, string label)
@@ -192,7 +222,7 @@ public partial class NutritionViewModel
     {
         var rounded = MathF.Round(amount);
         return MathF.Abs(amount - rounded) < 0.01f
-            ? rounded.ToString("N0", CultureInfo.CurrentCulture)
+            ? rounded.ToString("0", CultureInfo.CurrentCulture)
             : amount.ToString("0.##", CultureInfo.CurrentCulture);
     }
 
