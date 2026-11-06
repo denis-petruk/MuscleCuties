@@ -79,13 +79,16 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPlainFoodEditor))]
     private bool _isGroupedEditor;
 
-    [ObservableProperty] private bool _isLoadError;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanChangeHydration))]
+    private bool _isLoadError;
 
-    [ObservableProperty] private bool _isLoading;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanChangeHydration))]
+    private bool _isLoading;
 
     [ObservableProperty] private bool _isStatusVisible;
 
-    [ObservableProperty] private bool _isWriting;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanChangeHydration))]
+    private bool _isWriting;
 
     [ObservableProperty] private string _notesText = string.Empty;
 
@@ -142,7 +145,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         ISaveMealTemplateUseCase? saveMealTemplateUseCase = null,
         IGetRecipesAndTemplatesUseCase? getRecipesAndTemplatesUseCase = null,
         ICreateRecipeUseCase? createRecipeUseCase = null,
-        INutritionOverviewUseCase? overviewUseCase = null)
+        INutritionOverviewUseCase? overviewUseCase = null,
+        HydrationClient? hydrationClient = null)
     {
         _dailyLogUseCase = dailyLogUseCase;
         _recipePortionUseCase = recipePortionUseCase;
@@ -155,6 +159,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         _getRecipesAndTemplatesUseCase = getRecipesAndTemplatesUseCase;
         _createRecipeUseCase = createRecipeUseCase;
         _overviewUseCase = overviewUseCase;
+        _hydrationClient = hydrationClient;
         Breakdown = new NutritionBreakdownPresenter();
 
         MealSections.Add(BreakfastSection);
@@ -235,6 +240,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     public void Dispose()
     {
+        _isActive = false;
+        ResetHydration();
         Breakdown.Clear();
         _dateLoadLock.Dispose();
         GC.SuppressFinalize(this);
@@ -257,6 +264,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     public void Deactivate()
     {
         _isActive = false;
+        ResetHydration();
         Breakdown.Clear();
         CloseEditModal();
         if (_changeNotifier is not null) _changeNotifier.NutritionChanged -= OnNutritionChanged;
@@ -313,6 +321,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     partial void OnSelectedDateChanged(DateOnly value)
     {
+        ResetHydration();
         // The sheet belongs to one day; moving the date closes it before any old response can land.
         Breakdown.Clear();
         CloseEditModal();
@@ -845,12 +854,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    public Task AddWaterAsync(int amountMl) => ChangeWaterAsync(amountMl);
-
-    [RelayCommand]
-    public Task RemoveWaterAsync(int amountMl) => ChangeWaterAsync(-amountMl);
-
-    [RelayCommand]
     public async Task RetryWaterSaveAsync()
     {
         var date = SelectedDate;
@@ -952,7 +955,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             TargetProtein = log.TargetProtein > 0 ? log.TargetProtein : 130;
             TargetCarbs = log.TargetCarbs > 0 ? log.TargetCarbs : 220;
             TargetFat = log.TargetFat > 0 ? log.TargetFat : 65;
-            WaterIntakeMl = log.WaterIntakeMl;
+            if (_hydrationDay is null)
+                WaterIntakeMl = log.WaterIntakeMl;
             _confirmedWaterIntakeMl = log.WaterIntakeMl;
             _pendingWaterIntakeMl = null;
             WaterSaveError = string.Empty;
@@ -976,6 +980,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             TotalProtein = log.TotalProtein;
             TotalCarbs = log.TotalCarbs;
             TotalFat = log.TotalFat;
+            await LoadHydrationAsync(date);
         }
         catch
         {

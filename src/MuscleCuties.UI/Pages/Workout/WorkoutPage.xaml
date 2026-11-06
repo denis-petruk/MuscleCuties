@@ -21,51 +21,48 @@
     <Grid RowDefinitions="Auto,*">
         <!-- Top Sticky Header -->
         <Grid Padding="{DynamicResource PresentationPageHeaderPadding}"
-              ColumnDefinitions="*,Auto"
-              ColumnSpacing="{StaticResource UiSpaceControl}"
               HorizontalOptions="Fill"
               MaximumWidthRequest="{StaticResource UiDimension640}">
-            <VerticalStackLayout Grid.Column="0" Spacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
-                <Label
-                    Text="{Binding WeekTitle, Converter={StaticResource LocalizedStringConverter}}"
-                    Style="{StaticResource PageTitle}"
-                    SemanticProperties.HeadingLevel="Level1"
-                    LineBreakMode="WordWrap" />
-                <Border
-                    Style="{StaticResource PillBadge}"
-                    IsVisible="{Binding HasKnownCyclePhase}">
-                    <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                        <BoxView WidthRequest="{StaticResource UiDimension7}" HeightRequest="{StaticResource UiDimension7}" CornerRadius="{StaticResource UiCornerRadius4}"
-                                 Color="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                 VerticalOptions="Center" />
-                        <Label Style="{StaticResource MutedLabel}" Grid.Column="1"
-                               Text="{Binding CurrentPhaseName, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Page_PhaseFormat}"
-                               TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                               LineBreakMode="WordWrap" />
-                    </Grid>
-                </Border>
-            </VerticalStackLayout>
-
-            <Border
-                Grid.Column="1"
-                Style="{StaticResource HeaderIconButton}"
-                SemanticProperties.Description="{loc:LocalizedText Workout_Page_OpenInjuryLogAccessibility}"
-                SemanticProperties.Hint="{Binding InjuryBannerSummary, Converter={StaticResource LocalizedStringConverter}}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding OpenInjuryModalCommand}" />
-                </Border.GestureRecognizers>
-                <Grid>
-                    <mi:MauiIcon Icon="{mi:Fluent HeartPulse32}" IconSize="{StaticResource UiDimension22}"
-                                 IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                 WidthRequest="{StaticResource UiDimension22}" HeightRequest="{StaticResource UiDimension22}" HorizontalOptions="Center"
-                                 VerticalOptions="Center" />
-                    <BoxView WidthRequest="{StaticResource UiDimension8}" HeightRequest="{StaticResource UiDimension8}" CornerRadius="{StaticResource UiCornerRadius4}" Margin="{StaticResource UiInsets0_6_6_0}"
-                             Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
-                             HorizontalOptions="End" VerticalOptions="Start"
-                             IsVisible="{Binding HasActiveInjuries}"
-                             InputTransparent="True" />
-                </Grid>
-            </Border>
+            <sharedControls:PageHeader
+                Title="{Binding WeekTitle, Converter={StaticResource LocalizedStringConverter}}"
+                ShowBack="False">
+                <sharedControls:PageHeader.StatusContent>
+                    <Border
+                        Style="{StaticResource PillBadge}"
+                        IsVisible="{Binding HasKnownCyclePhase}">
+                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <BoxView WidthRequest="{StaticResource UiDimension7}" HeightRequest="{StaticResource UiDimension7}" CornerRadius="{StaticResource UiCornerRadius4}"
+                                     Color="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                                     VerticalOptions="Center" />
+                            <Label Style="{StaticResource MutedLabel}" Grid.Column="1"
+                                   Text="{Binding CurrentPhaseName, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Page_PhaseFormat}"
+                                   TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                                   LineBreakMode="WordWrap" />
+                        </Grid>
+                    </Border>
+                </sharedControls:PageHeader.StatusContent>
+                <sharedControls:PageHeader.ActionContent>
+                    <Border
+                        Style="{StaticResource HeaderIconButton}"
+                        SemanticProperties.Description="{loc:LocalizedText Workout_Page_OpenInjuryLogAccessibility}"
+                        SemanticProperties.Hint="{Binding InjuryBannerSummary, Converter={StaticResource LocalizedStringConverter}}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenInjuryModalCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid>
+                            <mi:MauiIcon Icon="{mi:Fluent HeartPulse32}" IconSize="{StaticResource UiDimension22}"
+                                         IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                         WidthRequest="{StaticResource UiDimension22}" HeightRequest="{StaticResource UiDimension22}" HorizontalOptions="Center"
+                                         VerticalOptions="Center" />
+                            <BoxView WidthRequest="{StaticResource UiDimension8}" HeightRequest="{StaticResource UiDimension8}" CornerRadius="{StaticResource UiCornerRadius4}" Margin="{StaticResource UiInsets0_6_6_0}"
+                                     Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
+                                     HorizontalOptions="End" VerticalOptions="Start"
+                                     IsVisible="{Binding HasActiveInjuries}"
+                                     InputTransparent="True" />
+                        </Grid>
+                    </Border>
+                </sharedControls:PageHeader.ActionContent>
+            </sharedControls:PageHeader>
         </Grid>
 
         <RefreshView Grid.Row="1"
@@ -310,13 +307,23 @@
             </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="workoutModels:WorkoutItem">
-                    <workoutControls:WorkoutActivityCard
-                        Margin="{StaticResource UiInsets20_0_20_12}"
-                        MaximumWidthRequest="{StaticResource UiDimension640}"
-                        OpenCommand="{Binding OpenWorkoutCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
-                        ToggleOptionalCommand="{Binding ToggleSessionOptionalCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
-                        ToggleEasierAlternativeCommand="{Binding ToggleEasierAlternativeCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
-                        CommandParameter="{Binding .}" />
+                    <VerticalStackLayout Margin="{StaticResource UiInsets20_0_20_12}"
+                                         MaximumWidthRequest="{StaticResource UiDimension640}"
+                                         Spacing="{StaticResource UiSpaceMicro}">
+                        <workoutControls:WorkoutActivityCard
+                            OpenCommand="{Binding OpenWorkoutCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
+                            ToggleOptionalCommand="{Binding ToggleSessionOptionalCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
+                            ToggleEasierAlternativeCommand="{Binding ToggleEasierAlternativeCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
+                            CommandParameter="{Binding .}" />
+                        <Button Text="{loc:LocalizedText Workout_Overview_RescheduleButton}"
+                                Command="{Binding StartRescheduleCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
+                                CommandParameter="{Binding .}"
+                                IsVisible="{Binding CanReschedule}"
+                                Style="{StaticResource ButtonSecondary}"
+                                HorizontalOptions="End"
+                                Margin="{StaticResource UiInsets0_0_0_4}"
+                                SemanticProperties.Hint="{loc:LocalizedText Workout_Reschedule_ButtonHint}" />
+                    </VerticalStackLayout>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
@@ -434,6 +441,85 @@
                            IsVisible="{Binding HasActivityChoices}" />
                 </Grid>
             </Border>
+            </Grid>
+        </sharedControls:AnimatedModalView>
+
+        <!-- Reschedule Workout Modal -->
+        <sharedControls:AnimatedModalView Grid.RowSpan="{StaticResource WorkoutOverlayRowSpan}"
+                                          ZIndex="12"
+                                          IsVisible="{Binding IsRescheduleModalVisible}">
+            <Grid>
+                <BoxView BackgroundColor="{StaticResource ModalScrim}">
+                    <BoxView.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CloseRescheduleModalCommand}" />
+                    </BoxView.GestureRecognizers>
+                </BoxView>
+                <Border Style="{StaticResource ModalSurface}"
+                        Padding="{DynamicResource PresentationModalPagePadding}"
+                        MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
+                        VerticalOptions="End">
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Reschedule_Title}"
+                                   Style="{StaticResource ModalTitle}"
+                                   SemanticProperties.HeadingLevel="Level1" />
+                            <Button Grid.Column="1" Text="{loc:LocalizedText Common_Close}"
+                                    Command="{Binding CloseRescheduleModalCommand}"
+                                    Style="{StaticResource ButtonSecondary}" />
+                        </Grid>
+
+                        <Label Grid.Row="1" LineBreakMode="WordWrap" Text="{Binding ReschedulingWorkoutTitle}"
+                               Style="{StaticResource BodyStrong}" />
+
+                        <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{Binding RescheduleStatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource ErrorLabel}"
+                                   IsVisible="{Binding HasRescheduleStatusMessage}" />
+
+                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Reschedule_ChooseDatePrompt}"
+                                   Style="{StaticResource MutedLabel}"
+                                   IsVisible="{Binding HasAvailableRescheduleDates}" />
+
+                            <ScrollView MaximumHeightRequest="{StaticResource ModalSheetBodyMaximumHeight}"
+                                        IsVisible="{Binding HasAvailableRescheduleDates}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                                     BindableLayout.ItemsSource="{Binding AvailableRescheduleDates}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="workoutModels:RescheduleDateOption">
+                                            <Border Style="{StaticResource CardPrimary}"
+                                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                                <Border.GestureRecognizers>
+                                                    <TapGestureRecognizer
+                                                        Command="{Binding SelectRescheduleDateCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
+                                                        CommandParameter="{Binding .}" />
+                                                </Border.GestureRecognizers>
+                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                                    <Label LineBreakMode="WordWrap" Text="{Binding DisplayText}"
+                                                           Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
+                                                    <BoxView Grid.Column="1"
+                                                             WidthRequest="{StaticResource UiDimension12}"
+                                                             HeightRequest="{StaticResource UiDimension12}"
+                                                             CornerRadius="{StaticResource UiCornerRadius6}"
+                                                             Color="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                                                             IsVisible="{Binding IsSelected}"
+                                                             VerticalOptions="Center" />
+                                                </Grid>
+                                            </Border>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                            </ScrollView>
+                        </VerticalStackLayout>
+
+                        <Button Grid.Row="3"
+                                Style="{StaticResource ButtonPrimary}"
+                                Text="{loc:LocalizedText Workout_Reschedule_ConfirmButton}"
+                                Command="{Binding ConfirmRescheduleCommand}"
+                                IsEnabled="{Binding CanConfirmReschedule}"
+                                IsVisible="{Binding HasAvailableRescheduleDates}" />
+                    </Grid>
+                </Border>
             </Grid>
         </sharedControls:AnimatedModalView>
     </Grid>

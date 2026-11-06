@@ -400,5 +400,22 @@ internal static partial class RussianUiText
         Values["Workout_Featured_Duration"] = "Длительность";
         Values["Workout_Featured_Exercises"] = "Упражнения";
         Values["Workout_Featured_Intensity"] = "Интенсивность";
+        Values["Workout_Overview_RescheduleButton"] = "Перенести";
+        Values["Workout_Reschedule_ButtonHint"] = "Перенести эту запланированную тренировку на другую доступную дату";
+        Values["Workout_Reschedule_Title"] = "Перенос тренировки";
+        Values["Workout_Reschedule_ChooseDatePrompt"] = "Выберите доступный свободный день на этой неделе:";
+        Values["Workout_Reschedule_ConfirmButton"] = "Подтвердить перенос";
+        Values["Workout_Reschedule_NoEmptyDates"] = "На этой неделе нет свободных дней для переноса.";
+        Values["Workout_Reschedule_Error_Completed"] = "Нельзя перенести завершенную тренировку.";
+        Values["Workout_Reschedule_Error_InProgress"] = "Нельзя перенести тренировку, которая уже выполняется.";
+        Values["Workout_Reschedule_Error_Occupied"] = "Выбранная дата уже занята тренировкой.";
+        Values["Workout_Reschedule_Failed"] = "Не удалось перенести тренировку. Пожалуйста, попробуйте снова.";
+        Values["Workout_Session_NoteButton"] = "Заметки";
+        Values["Workout_Session_NoteEditorTitle"] = "Заметки к упражнению";
+        Values["Workout_Session_NotePlaceholder"] = "Запишите настройки, подсказки или изменения...";
+        Values["Workout_Session_SaveNoteButton"] = "Сохранить заметку";
+        Values["Workout_Session_ClearNoteButton"] = "Очистить заметку";
+        Values["Workout_Session_NoteSaved"] = "Заметка сохранена.";
+        Values["Workout_Session_NoteSaveFailed"] = "Не удалось сохранить заметку к упражнению.";
     }
 }

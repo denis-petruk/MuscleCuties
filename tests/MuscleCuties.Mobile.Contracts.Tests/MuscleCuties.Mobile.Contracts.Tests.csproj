@@ -23,6 +23,7 @@
     <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryLogItem.cs" Link="Mobile/InjuryLogItem.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryFlagOption.cs" Link="Mobile/InjuryFlagOption.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryStatusOption.cs" Link="Mobile/InjuryStatusOption.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryAdviceOption.cs" Link="Mobile/InjuryAdviceOption.cs" />
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Workout/ActivityAnswersPendingSave.cs" Link="Mobile/ActivityAnswersPendingSave.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/AppAccountPurgeService.cs" Link="Mobile/AppAccountPurgeService.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/ILocalPhotoCacheService.cs" Link="Mobile/ILocalPhotoCacheService.cs" />

@@ -614,6 +614,112 @@ public sealed class UiContractGuardTests
             $"Found {violations.Count} navigation reachability/return defect(s):\n" + string.Join("\n", violations));
     }
 
+    [Fact]
+    public void Workout_header_uses_the_shared_status_slot()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var headerSource = File.ReadAllText(
+            Path.Combine(uiRoot, "Controls", "Shared", "PageHeader.cs"));
+        var workoutSource = File.ReadAllText(
+            Path.Combine(uiRoot, "Pages", "Workout", "WorkoutPage.xaml"));
+
+        Assert.Contains("StatusContentProperty", headerSource);
+        Assert.Contains("<sharedControls:PageHeader", workoutSource);
+        Assert.Contains("PageHeader.StatusContent", workoutSource);
+        Assert.Contains("PillBadge", workoutSource);
+    }
+
+    /// <summary>
+    /// S01: an icon-only header action carries no visible label, so its accessible name is the only
+    /// way VoiceOver can describe it. The shared style cannot supply a per-page name, so every
+    /// instance declares one from the catalog. .NET MAUI 10 deprecates AutomationProperties.Name in
+    /// favour of SemanticProperties.Description, so that property is the contract enforced here.
+    /// </summary>
+    [Fact]
+    public void Header_icon_buttons_declare_a_catalog_backed_accessible_name()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var violations = new List<string>();
+
+        foreach (var file in SourceFiles(uiRoot, "*.xaml"))
+        {
+            var document = XDocument.Load(file, LoadOptions.SetLineInfo);
+            foreach (var element in document.Descendants())
+            {
+                if (element.Attribute("Style")?.Value.Contains("HeaderIconButton", StringComparison.Ordinal) != true)
+                    continue;
+
+                var name = element.Attribute("SemanticProperties.Description")?.Value;
+                if (name is not null && name.StartsWith("{", StringComparison.Ordinal))
+                    continue;
+
+                var line = ((IXmlLineInfo)element).LineNumber;
+                violations.Add(
+                    $"{Relative(file, uiRoot).Replace('\\', '/')}:{line} uses HeaderIconButton without a catalog-backed SemanticProperties.Description");
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} header icon button(s) VoiceOver cannot name:\n"
+            + string.Join(Environment.NewLine, violations));
+    }
+
+    /// <summary>
+    /// AutomationProperties.Name is obsolete in .NET MAUI 10 and maps to the same iOS label as
+    /// SemanticProperties.Description. Setting both restates one name and starts a second,
+    /// unsupported accessibility contract, so the deprecated property must not reappear.
+    /// </summary>
+    [Fact]
+    public void Deprecated_automation_name_does_not_replace_the_semantic_property()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var violations = new List<string>();
+
+        foreach (var file in SourceFiles(uiRoot, "*.xaml"))
+        {
+            var document = XDocument.Load(file, LoadOptions.SetLineInfo);
+            foreach (var attribute in document.Descendants().Attributes())
+            {
+                if (!string.Equals(attribute.Name.LocalName, "AutomationProperties.Name", StringComparison.Ordinal))
+                    continue;
+
+                var line = ((IXmlLineInfo)attribute).LineNumber;
+                violations.Add(
+                    $"{Relative(file, uiRoot).Replace('\\', '/')}:{line} uses the deprecated AutomationProperties.Name; use SemanticProperties.Description");
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} deprecated accessibility name(s):\n"
+            + string.Join(Environment.NewLine, violations));
+    }
+
+    /// <summary>
+    /// F01: an unanswered clinician-advice answer, an explicit Yes and an explicit No are three
+    /// meanings. A two-state control collapses Unanswered into No, so the form must offer all three
+    /// through the shared choice anatomy and keep the null answer distinct.
+    /// </summary>
+    [Fact]
+    public void Injury_form_offers_three_distinct_clinician_advice_answers()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var content = File.ReadAllText(
+            Path.Combine(uiRoot, "Controls", "Injury", "InjuryLogContent.xaml"));
+        var viewModel = File.ReadAllText(
+            Path.Combine(uiRoot, "ViewModels", "Workout", "InjuryLogViewModel.cs"));
+
+        Assert.Contains("BindableLayout.ItemsSource=\"{Binding ClinicianAdviceOptions}\"", content);
+        Assert.Contains("SelectClinicianAdviceOptionCommand", content);
+        Assert.DoesNotContain("<Switch", content);
+
+        Assert.Contains("OnSelectedClinicianAdviceChanged(bool? value)", viewModel);
+        Assert.Contains("Value = null, LabelKey = \"Injury_Log_ClinicianAdvice_Unanswered\"", viewModel);
+        Assert.Contains("Value = true, LabelKey = \"Injury_Log_ClinicianAdvice_Yes\"", viewModel);
+        Assert.Contains("Value = false, LabelKey = \"Injury_Log_ClinicianAdvice_No\"", viewModel);
+    }
+
     private static string? AppliedStyleName(XElement element)
     {
         var reference = element.Attribute("Style")?.Value;

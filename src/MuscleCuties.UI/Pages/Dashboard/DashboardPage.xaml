@@ -19,37 +19,34 @@
 
     <Grid RowDefinitions="Auto,*">
         <Grid Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource UiDimension640}"
-              RowDefinitions="Auto" RowSpacing="{StaticResource UiSpaceCompact}" HorizontalOptions="Fill">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpacing2}">
-                    <Label Text="{Binding Greetings, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource PageTitle}"
-                           SemanticProperties.HeadingLevel="Level1"
-                           LineBreakMode="WordWrap" />
-                    <Label
-                        Text="{Binding DashboardPhaseHeaderText, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource MutedLabel}" />
-                </VerticalStackLayout>
-                <Border Grid.Column="1" Style="{StaticResource HeaderIconButton}"
-                        SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_OpenInjuryLogA11y}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding OpenInjuryModalCommand}" />
-                    </Border.GestureRecognizers>
-                    <Grid>
-                        <Path Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
-                              Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                              StrokeThickness="{StaticResource UiStrokeWidth1_75}" StrokeLineCap="Round" StrokeLineJoin="Round"
-                              Aspect="Uniform" WidthRequest="{StaticResource UiDimension18}" HeightRequest="{StaticResource UiDimension18}"
-                              HorizontalOptions="Center" VerticalOptions="Center" />
-                        <BoxView WidthRequest="{StaticResource UiDimension8}" HeightRequest="{StaticResource UiDimension8}" CornerRadius="{StaticResource UiCornerRadius4}" Margin="{StaticResource UiInsets0_6_6_0}"
-                                 Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
-                                 HorizontalOptions="End" VerticalOptions="Start"
-                                 IsVisible="{Binding HasActiveInjuries}" />
-                    </Grid>
-                </Border>
-            </Grid>
-
+              HorizontalOptions="Fill">
+            <sharedControls:PageHeader
+                Title="{Binding Greetings, Converter={StaticResource LocalizedStringConverter}}"
+                Subtitle="{Binding DashboardPhaseHeaderText, Converter={StaticResource LocalizedStringConverter}}"
+                ShowBack="False">
+                <sharedControls:PageHeader.ActionContent>
+                    <Border Style="{StaticResource HeaderIconButton}"
+                            HorizontalOptions="End"
+                            SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_OpenInjuryLogA11y}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenInjuryModalCommand}" />
+                        </Border.GestureRecognizers>
+                        <Grid>
+                            <Path Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
+                                  Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                  StrokeThickness="{StaticResource UiStrokeWidth1_75}" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                  Aspect="Uniform" WidthRequest="{StaticResource UiDimension18}" HeightRequest="{StaticResource UiDimension18}"
+                                  HorizontalOptions="Center" VerticalOptions="Center" />
+                            <BoxView WidthRequest="{StaticResource UiDimension8}" HeightRequest="{StaticResource UiDimension8}" CornerRadius="{StaticResource UiCornerRadius4}" Margin="{StaticResource UiInsets0_6_6_0}"
+                                     Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
+                                     HorizontalOptions="End" VerticalOptions="Start"
+                                     IsVisible="{Binding HasActiveInjuries}" />
+                        </Grid>
+                    </Border>
+                </sharedControls:PageHeader.ActionContent>
+            </sharedControls:PageHeader>
         </Grid>
+
         <RefreshView Grid.Row="1"
                      Command="{Binding RefreshCommand}"
                      IsRefreshing="{Binding IsRefreshing}"

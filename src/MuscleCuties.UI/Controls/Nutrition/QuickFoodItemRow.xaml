@@ -17,6 +17,7 @@
                   WidthRequest="{StaticResource PresentationMinimumTouchSize}"
                   HeightRequest="{StaticResource PresentationMinimumTouchSize}"
                   SemanticProperties.Description="{Binding SelectionAccessibilityText}"
+                  SemanticProperties.Hint="{Binding SelectionStateText}"
                   VerticalOptions="Center">
                 <Grid.GestureRecognizers>
                     <TapGestureRecognizer

@@ -110,6 +110,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         var id = item.Identity is null ? Guid.NewGuid() : ParseSnapshotIdentity(item.Identity);
         await WithTenant(userId, cancellationToken, async () =>
         {
+            await NutritionDiaryDayLock.AcquireAsync(db, userId, item.Date, cancellationToken).ConfigureAwait(false);
             var log = await db.DailyNutritionLogs.SingleOrDefaultAsync(x => x.UserId == userId && x.LocalDate == item.Date && !x.IsDeleted, cancellationToken).ConfigureAwait(false);
             if (log is null)
             {
@@ -154,6 +155,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
     {
         await WithTenant(userId, cancellationToken, async () =>
         {
+            await NutritionDiaryDayLock.AcquireAsync(db, userId, metadata.Date, cancellationToken).ConfigureAwait(false);
             var log = await db.DailyNutritionLogs.SingleOrDefaultAsync(x => x.UserId == userId && x.LocalDate == metadata.Date && !x.IsDeleted, cancellationToken).ConfigureAwait(false);
             if (log is null)
             {
@@ -175,6 +177,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
 
         var execution = await _idempotencyExecutor.ExecuteAsync(db, userId, commandKey, requestHash, async (context, ct) =>
         {
+            await NutritionDiaryDayLock.AcquireAsync(context, userId, command.Date, ct).ConfigureAwait(false);
             var log = await context.DailyNutritionLogs.SingleOrDefaultAsync(
                 x => x.UserId == userId && x.LocalDate == command.Date && !x.IsDeleted, ct).ConfigureAwait(false);
             if (log is null)
@@ -291,6 +294,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
                 return new CopyNutritionDiaryResponse(0, []);
             }
 
+            await NutritionDiaryDayLock.AcquireAsync(context, userId, command.TargetDate, ct).ConfigureAwait(false);
             var targetLog = await context.DailyNutritionLogs.SingleOrDefaultAsync(
                 x => x.UserId == userId && x.LocalDate == command.TargetDate && !x.IsDeleted, ct).ConfigureAwait(false);
             if (targetLog is null)
@@ -363,6 +367,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
 
         var execution = await _idempotencyExecutor.ExecuteAsync(db, userId, commandKey, requestHash, async (context, ct) =>
         {
+            await NutritionDiaryDayLock.AcquireAsync(context, userId, command.Date, ct).ConfigureAwait(false);
             var log = await context.DailyNutritionLogs.SingleOrDefaultAsync(
                 x => x.UserId == userId && x.LocalDate == command.Date && !x.IsDeleted, ct).ConfigureAwait(false);
             if (log is null)
