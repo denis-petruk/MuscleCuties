@@ -71,4 +71,24 @@ public static class WorkoutPlanningFlow
 
     public static bool RequiresReplacementConsentPrompt(WorkoutPlanningStateDto state, bool replacesExistingPlan) =>
         WorkoutPlanningFlowRule.RequiresReplacementConsentPrompt((WorkoutPlanningState)state, replacesExistingPlan);
+
+    public static bool CanAutoActivateRequestedPlan(bool userRequested, bool replacementDisclosed,
+        bool replacesExistingPlan, bool feasible, bool persisted, bool hasLease, bool missingRequiredAnswers,
+        bool styleChoiceRequired, bool acknowledgmentUnavailable) =>
+        WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(userRequested, replacementDisclosed,
+            replacesExistingPlan, feasible, persisted, hasLease, missingRequiredAnswers,
+            styleChoiceRequired, acknowledgmentUnavailable);
+
+    public static bool RequiresInjuryAcknowledgment(int exerciseReviewConditionCount,
+        int acknowledgedConditionCount) =>
+        WorkoutPlanningFlowRule.RequiresInjuryAcknowledgment(exerciseReviewConditionCount,
+            acknowledgedConditionCount);
+
+    public static bool AdaptationChanged(IEnumerable<int> acknowledgedConditionIds,
+        IEnumerable<int> returnedConditionIds) =>
+        WorkoutPlanningFlowRule.AdaptationChanged(acknowledgedConditionIds, returnedConditionIds);
+
+    public static bool IsCurrentGeneration(bool appearanceIsCurrent, long requestVersion,
+        long activeRequestVersion) =>
+        WorkoutPlanningFlowRule.IsCurrentGeneration(appearanceIsCurrent, requestVersion, activeRequestVersion);
 }

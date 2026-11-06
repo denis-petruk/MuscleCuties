@@ -29,6 +29,7 @@
                 <Label
                     Text="{Binding WeekTitle, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource PageTitle}"
+                    SemanticProperties.HeadingLevel="Level1"
                     LineBreakMode="WordWrap" />
                 <Border
                     Style="{StaticResource PillBadge}"
@@ -233,11 +234,21 @@
                                                Style="{StaticResource CaptionLabel}"
                                                HorizontalTextAlignment="Center"
                                                LineBreakMode="WordWrap" />
-                                        <BoxView WidthRequest="{StaticResource UiDimension7}"
-                                                 HeightRequest="{StaticResource UiDimension7}"
-                                                 CornerRadius="{StaticResource UiCornerRadius4}"
-                                                 Color="{Binding AccentColor}"
-                                                 HorizontalOptions="Center" />
+                                        <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Sessions}"
+                                                               Spacing="{StaticResource UiSpacing2}"
+                                                               HorizontalOptions="Center"
+                                                               HeightRequest="{StaticResource UiDimension7}"
+                                                               VerticalOptions="Center">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="workoutModels:ScheduleSessionChip">
+                                                    <BoxView WidthRequest="{StaticResource UiDimension6}"
+                                                             HeightRequest="{StaticResource UiDimension6}"
+                                                             CornerRadius="{StaticResource UiCornerRadius3}"
+                                                             Color="{Binding AccentColor}"
+                                                             VerticalOptions="Center" />
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </HorizontalStackLayout>
                                     </VerticalStackLayout>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>

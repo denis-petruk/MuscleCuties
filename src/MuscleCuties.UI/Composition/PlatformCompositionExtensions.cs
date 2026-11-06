@@ -42,8 +42,14 @@ public static class PlatformCompositionExtensions
             TimePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
                 ClearAndroidInputChrome(handler.PlatformView));
 #elif IOS || MACCATALYST
-            ButtonHandler.Mapper.AppendToMapping("MuscleCutiesButtonCornerRadius", (handler, _) =>
+            // RM00/CR01: Layout crash protection for native Button.LayoutButton
+            // Safeguards against NullReferenceException in Button.LayoutButton -> CrossPlatformArrange
+            // when buttons are unmapped or pages are popped while layout arrange is running.
+            ButtonHandler.Mapper.AppendToMapping("MuscleCutiesButtonCornerRadiusAndLayoutProtection", (handler, _) =>
             {
+                if (handler.PlatformView?.Layer is null || handler.VirtualView is null)
+                    return;
+
                 handler.PlatformView.Layer.CornerRadius = (nfloat)handler.VirtualView.CornerRadius;
                 handler.PlatformView.Layer.MasksToBounds = handler.VirtualView.CornerRadius > 0;
             });

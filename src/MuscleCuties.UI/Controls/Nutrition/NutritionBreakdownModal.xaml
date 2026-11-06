@@ -9,14 +9,14 @@
     xmlns:controls="clr-namespace:MuscleCuties.UI.Controls"
     xmlns:nutritionModels="clr-namespace:MuscleCuties.UI.Models.UI.Nutrition"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
-    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition"
-    x:DataType="vm:NutritionViewModel"
-    IsOpen="{Binding IsBreakdownModalVisible}">
+    xmlns:presenter="clr-namespace:MuscleCuties.UI.Services.Nutrition"
+    x:DataType="presenter:NutritionBreakdownPresenter"
+    IsOpen="{Binding IsVisible}">
 
     <Grid Padding="{StaticResource UiInsets0}">
         <BoxView Style="{StaticResource ModalBackdrop}">
             <BoxView.GestureRecognizers>
-                <TapGestureRecognizer Command="{Binding CloseMicronutrientsModalCommand}" />
+                <TapGestureRecognizer Command="{Binding CloseCommand}" />
             </BoxView.GestureRecognizers>
         </BoxView>
         <Border
@@ -35,12 +35,12 @@
                     Padding="{DynamicResource PresentationModalHeaderPadding}">
                     <Label
                         Grid.Row="0" Grid.Column="0"
-                        Text="{Binding SelectedBreakdownTitle, Converter={StaticResource LocalizedStringConverter}}"
+                        Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource ModalTitle}"
                         LineBreakMode="WordWrap" />
                     <Label
                         Grid.Row="1" Grid.Column="0"
-                        Text="{Binding SelectedBreakdownNutrientSummaryText, Converter={StaticResource LocalizedStringConverter}}"
+                        Text="{Binding NutrientSummaryText, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource ModalSubtitle}"
                         LineBreakMode="WordWrap" />
                     <Border
@@ -51,7 +51,7 @@
                         VerticalOptions="Start"
                         SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_CloseNutritionBreakdown}">
                         <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding CloseMicronutrientsModalCommand}" />
+                            <TapGestureRecognizer Command="{Binding CloseCommand}" />
                         </Border.GestureRecognizers>
                         <Path Style="{StaticResource ModalCloseIcon}" />
                     </Border>
@@ -64,7 +64,7 @@
 
                 <CollectionView
                     Grid.Row="2"
-                    ItemsSource="{Binding SelectedBreakdownMicronutrients}"
+                    ItemsSource="{Binding Micronutrients}"
                     ItemSizingStrategy="MeasureAllItems"
                     SelectionMode="None"
                     VerticalScrollBarVisibility="Always"
@@ -72,6 +72,23 @@
                     VerticalOptions="Fill">
                     <CollectionView.Header>
                         <VerticalStackLayout>
+                            <ActivityIndicator
+                                Style="{StaticResource StateBusyInline}"
+                                IsRunning="{Binding IsLoading}"
+                                IsVisible="{Binding IsLoading}"
+                                SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_Loading}" />
+                            <Label
+                                Text="{Binding ErrorText}"
+                                IsVisible="{Binding HasError}"
+                                Style="{StaticResource CaptionLabel}"
+                                LineBreakMode="WordWrap"
+                                Padding="{StaticResource UiInsets0_0_0_12}" />
+                            <Label
+                                Text="{Binding CoverageText}"
+                                IsVisible="{Binding HasCoverageText}"
+                                Style="{StaticResource CaptionLabel}"
+                                LineBreakMode="WordWrap"
+                                Padding="{StaticResource UiInsets0_0_0_12}" />
                             <Grid
                                 ColumnDefinitions="104, *"
                                 ColumnSpacing="{StaticResource UiSpaceControl}"
@@ -79,9 +96,9 @@
 
                                 <controls:MacroPieChart
                                     Grid.Column="0"
-                                    ProteinValue="{Binding SelectedBreakdownProteinCalories}"
-                                    CarbsValue="{Binding SelectedBreakdownCarbsCalories}"
-                                    FatsValue="{Binding SelectedBreakdownFatsCalories}"
+                                    ProteinValue="{Binding ProteinCalories}"
+                                    CarbsValue="{Binding CarbsCalories}"
+                                    FatsValue="{Binding FatsCalories}"
                                     ProteinColor="{AppThemeBinding Light={StaticResource ProteinLight}, Dark={StaticResource ProteinDark}}"
                                     CarbsColor="{AppThemeBinding Light={StaticResource CarbsLight}, Dark={StaticResource CarbsDark}}"
                                     FatsColor="{AppThemeBinding Light={StaticResource FatsLight}, Dark={StaticResource FatsDark}}"
@@ -108,19 +125,19 @@
                                         Margin="{StaticResource UiInsets0_0_7_0}" />
                                     <Label
                                         Grid.Column="1"
-                                        Text="{Binding SelectedBreakdownCaloriesText, Converter={StaticResource LocalizedStringConverter}}"
+                                        Text="{Binding CaloriesText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource AccentLabel}"
                                         VerticalOptions="Center" />
                                     <Label
                                         Grid.Row="1"
                                         Grid.ColumnSpan="2"
-                                        Text="{Binding SelectedBreakdownMacrosText, Converter={StaticResource LocalizedStringConverter}}"
+                                        Text="{Binding MacrosText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource CaptionLabel}"
                                         LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="2"
                                         Grid.ColumnSpan="2"
-                                        Text="{Binding SelectedBreakdownFiberText, Converter={StaticResource LocalizedStringConverter}}"
+                                        Text="{Binding FiberText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource CaptionLabel}"
                                         LineBreakMode="WordWrap" />
 
@@ -134,10 +151,10 @@
                                         MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                         MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
                                         HorizontalOptions="Start"
-                                        IsVisible="{Binding CanEditSelectedBreakdown}"
+                                        IsVisible="{Binding CanEditMeal}"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_EditMeal}">
                                         <Border.GestureRecognizers>
-                                             <TapGestureRecognizer Command="{Binding EditSelectedBreakdownMealCommand}" />
+                                             <TapGestureRecognizer Command="{Binding EditMealCommand}" />
                                         </Border.GestureRecognizers>
                                         <Grid ColumnDefinitions="Auto, Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                                             <mi:MauiIcon
@@ -158,7 +175,7 @@
                                         Grid.Row="4"
                                         Grid.ColumnSpan="2"
                                         Spacing="{StaticResource UiSpacing7}"
-                                        BindableLayout.ItemsSource="{Binding SelectedBreakdownMacroItems}">
+                                        BindableLayout.ItemsSource="{Binding MacroItems}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="nutritionModels:MacroBreakdownItem">
                                                 <Grid ColumnDefinitions="22, Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceTight}">

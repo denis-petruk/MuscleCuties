@@ -18,6 +18,7 @@
     <Grid RowDefinitions="Auto,*">
         <Grid Padding="{DynamicResource PresentationPageHeaderPadding}" VerticalOptions="Center">
             <Label Text="{loc:LocalizedText Nutrition_Page_Nutrition}" Style="{StaticResource PageTitle}"
+                   SemanticProperties.HeadingLevel="Level1"
                    VerticalOptions="Center" />
         </Grid>
 
@@ -137,7 +138,7 @@
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="Breakdown"
             x:TypeArguments="nutritionControls:NutritionBreakdownModal"
-            InputTransparent="{Binding IsBreakdownModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
+            BindingContext="{Binding Breakdown}" />
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="Suggestions"
             x:TypeArguments="nutritionControls:MealSuggestionModal"
@@ -150,9 +151,12 @@
             x:Name="MealEditor"
             x:TypeArguments="nutritionControls:MealEditorModal"
             InputTransparent="{Binding IsMealEditorVisible, Converter={StaticResource InvertedBoolConverter}}" />
+        <!-- NM01: the Add meal host exists only while the sheet is requested, so it can never leave an
+             uninitialized layer over an interactive page. -->
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="MealEntry"
             x:TypeArguments="nutritionControls:MealEntryModal"
+            IsVisible="{Binding IsMealEntryModalVisible}"
             InputTransparent="{Binding IsMealEntryModalVisible, Converter={StaticResource InvertedBoolConverter}}" />
         <toolkit:LazyView Grid.RowSpan="2"
             x:Name="SaluteOverlay"

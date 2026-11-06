@@ -1,6 +1,6 @@
 # Product workflows
 
-The complete approved workout-planning rules are:
+The rules below govern plan acceptance and safety. The [approved Beta workout policy](release-audit/2026-11-05/WORKOUT_POLICY.md) owns Beta coverage, exercise selection, progression and session adjustments.
 
 ## Workout planning
 

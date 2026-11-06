@@ -28,6 +28,9 @@
     </ItemGroup>
     <ItemGroup>
         <EmbeddedResource Include="Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json" />
+        <EmbeddedResource Include="Persistence/Schema/001_base_schema.sql" />
+        <EmbeddedResource Include="Persistence/Schema/002_schema_fingerprint.sql" />
+        <EmbeddedResource Include="Persistence/Schema/003_schedule_seam.sql" />
         <EmbeddedResource Include="Persistence/Schema/security.sql" />
         <EmbeddedResource Include="Persistence/Schema/schema_supplement.sql" />
         <EmbeddedResource Include="Persistence/Seed/CanonicalCatalogManifest.json" />

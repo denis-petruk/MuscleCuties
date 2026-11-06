@@ -11,6 +11,14 @@ on:
         options:
           - staging
           - beta
+      target_runtime:
+        description: 'Target runtime (device for TestFlight or simulator for verification)'
+        required: true
+        default: 'device'
+        type: choice
+        options:
+          - device
+          - simulator
       build_configuration:
         description: 'Build configuration'
         required: true
@@ -25,7 +33,7 @@ permissions:
 
 jobs:
   build_ios:
-    name: build_ios_${{ inputs.target_environment }}
+    name: build_ios_${{ inputs.target_environment }}_${{ inputs.target_runtime }}
     runs-on: macos-15
     steps:
       - name: Checkout repository
@@ -44,17 +52,29 @@ jobs:
         run: |
           sudo xcode-select -s /Applications/Xcode.app
 
+      - name: Resolve runtime identifier
+        id: runtime
+        run: |
+          if [ "${{ inputs.target_runtime }}" = "device" ]; then
+            echo "rid=ios-arm64" >> "$GITHUB_OUTPUT"
+            echo "archive_param=-p:ArchiveOnBuild=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "rid=iossimulator-arm64" >> "$GITHUB_OUTPUT"
+            echo "archive_param=" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Build MAUI iOS Client
         run: |
           dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj \
             -f net10.0-ios \
             -c ${{ inputs.build_configuration }} \
             -p:AppTargetEnvironment=${{ inputs.target_environment }} \
-            -p:RuntimeIdentifier=iossimulator-arm64
+            -p:RuntimeIdentifier=${{ steps.runtime.outputs.rid }} \
+            ${{ steps.runtime.outputs.archive_param }}
 
       - name: Archive build output
         uses: actions/upload-artifact@v4
         with:
-          name: musclecuties-ios-${{ inputs.target_environment }}-${{ github.sha }}
-          path: src/MuscleCuties.UI/bin/${{ inputs.build_configuration }}/net10.0-ios/iossimulator-arm64/
+          name: musclecuties-ios-${{ inputs.target_environment }}-${{ steps.runtime.outputs.rid }}-${{ github.sha }}
+          path: src/MuscleCuties.UI/bin/${{ inputs.build_configuration }}/net10.0-ios/${{ steps.runtime.outputs.rid }}/
           retention-days: 30

@@ -21,7 +21,15 @@ public sealed class CloudDashboardOverviewStore(
         var cloud = await cloudGateway.GetDashboardOverviewAsync(request.Today, request.TimeZoneId, ct).ConfigureAwait(false);
         if (cloud.Status == BackendApiStatus.Success && cloud.Data is not null)
             return await EnrichWithHealthKitIfNeededAsync(cloud.Data).ConfigureAwait(false);
-        return CloudStoreResponse.RequireData(cloud, "dashboard overview");
+        throw new CloudRequestFailedException(
+            "dashboard overview",
+            cloud.Status,
+            cloud.ErrorCode,
+            cloud.ResponseStatusCode,
+            cloud.RequestId,
+            cloud.Status == BackendApiStatus.Success
+                ? "Cloud dashboard overview returned no data."
+                : $"Cloud dashboard overview failed: {cloud.Status} ({cloud.ErrorCode ?? "unknown"}).");
     }
 
     public async Task<DashboardCalendarResponse> LoadCalendarAsync(DashboardCalendarRequest request, CancellationToken ct)

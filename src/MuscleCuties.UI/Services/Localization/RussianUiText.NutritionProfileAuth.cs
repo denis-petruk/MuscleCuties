@@ -5,6 +5,8 @@ internal static partial class RussianUiText
     static partial void RegisterNutritionProfileAuthStrings()
     {
         Values["Ui_Common_Error_ConnectionRetry"] = "Что-то пошло не так. Проверьте подключение и повторите попытку.";
+        Values["Ui_Common_Error_Online"] = "Сервер ответил, но не смог выполнить запрос. Измените данные и повторите попытку.";
+        Values["Nutrition_FoodLog_AmountError"] = "Укажите порцию больше 0 граммов. Для дробей используйте точку или запятую.";
         Values["Ui_Common_Error_Offline"] = "Вы не в сети. Подключитесь и повторите попытку.";
         Values["Ui_Common_Error_Timeout"] = "Запрос занял слишком много времени. Проверьте подключение и повторите попытку.";
         Values["Ui_Common_Error_RateLimited"] = "Слишком много запросов. Подождите немного и повторите попытку.";
@@ -175,7 +177,30 @@ internal static partial class RussianUiText
         Values["Common_Close"] = "Закрыть";
         Values["Common_Continue"] = "Продолжить";
         Values["Common_Delete"] = "Удалить";
+        Values["Common_Change"] = "Изменить";
         Values["Common_Done"] = "Готово";
+        Values["Nutrition_FoodLog_PreviousDay"] = "Предыдущий день";
+        Values["Nutrition_FoodLog_NextDay"] = "Следующий день";
+        Values["Nutrition_MealEditor_ChangeMealContext"] = "Изменить приём пищи и время";
+        Values["Nutrition_QuickFood_Selected"] = "Выбрано";
+        Values["Nutrition_QuickFood_NotSelected"] = "Не выбрано";
+        Values["Nutrition_FoodLog_OpenBreakdown"] = "Разбор питательных веществ";
+        Values["Nutrition_Breakdown_DailyTitle"] = "Питание за день";
+        Values["Nutrition_Breakdown_Loading"] = "Загрузка разбора питания…";
+        Values["Nutrition_Breakdown_LoadFailed"] = "Не удалось загрузить разбор за этот день. Проверьте подключение и повторите попытку.";
+        Values["Nutrition_Breakdown_TargetsReachedFormat"] = "Достигнуто целей по микронутриентам: {0} из {1}";
+        Values["Nutrition_FoodLog_WaterSaveFailed"] = "Потребление воды не сохранено. Повторите попытку.";
+        Values["Nutrition_FoodLog_WaterSaving"] = "Сохранение потребления воды…";
+        Values["Nutrition_FoodLog_RetryWater"] = "Повторить сохранение воды";
+        Values["Nutrition_Breakdown_CoverageComplete"] = "Микронутриенты учтены для всех записей этого дня.";
+        Values["Nutrition_Breakdown_CoveragePartial"] = "Микронутриенты учтены для {0} из {1} записей; часть записей даёт только макросы.";
+        Values["Nutrition_Breakdown_CoverageUnavailable"] = "Значения микронутриентов недоступны для записей этого дня.";
+        Values["Nutrition_Breakdown_CoverageKnownZero"] = "В этот день ничего не записано.";
+        Values["Nutrition_Breakdown_CoverageNames"] = "Недоступно для: {0}";
+        Values["Injury_Log_ClinicianAdvice_Unanswered"] = "Нет ответа";
+        Values["Injury_Log_ClinicianAdvice_Yes"] = "Да";
+        Values["Injury_Log_ClinicianAdvice_No"] = "Нет";
+        Values["Ui_Cycle_CachedEstimateFormat"] = "Сохранённая оценка от {0}; подключитесь для обновления";
         Values["Common_Edit"] = "Редактировать";
         Values["Common_Height"] = "Рост";
         Values["Common_MuscleCutiesLogo"] = "MuscleCuties logo";

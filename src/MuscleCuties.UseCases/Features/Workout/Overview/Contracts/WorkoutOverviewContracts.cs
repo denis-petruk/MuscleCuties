@@ -36,7 +36,17 @@ public sealed record WorkoutScheduleEntry(
     public bool IsOptional { get; init; }
     public bool IsEasierAlternative { get; init; }
     public int? CompanionWorkoutDayId { get; init; }
+    public IReadOnlyList<WorkoutScheduleSessionItem>? Sessions { get; init; }
 }
+
+public sealed record WorkoutScheduleSessionItem(
+    int WorkoutDayId,
+    string Tag,
+    string Title,
+    int? DayOrder,
+    bool IsCompleted,
+    bool IsOptional,
+    bool IsEasierAlternative);
 
 public sealed record SetWorkoutSessionOptionalRequest(int WorkoutDayId, bool IsOptional, bool IsEasierAlternative);
 

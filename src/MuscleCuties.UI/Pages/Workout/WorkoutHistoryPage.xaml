@@ -47,6 +47,7 @@
                 Grid.Column="1"
                 Text="{loc:LocalizedText Workout_History_ArchiveTitle}"
                 Style="{StaticResource PageTitle}"
+                SemanticProperties.HeadingLevel="Level1"
                 VerticalOptions="Center" />
 
             <Border
@@ -71,9 +72,12 @@
         </Grid>
 
         <!-- Chronological Virtualized Sessions Feed (No nested ScrollView) -->
+        <!-- AH01: one width and one horizontal inset belong to the virtualized list container, so the
+             summary, filters, heading and every session card share the same edges. -->
         <CollectionView
             Grid.Row="1"
             Margin="{DynamicResource PresentationCollectionHorizontalInset}"
+            MaximumWidthRequest="{StaticResource UiDimension640}"
             ItemsSource="{Binding Sessions}"
             ItemSizingStrategy="MeasureAllItems"
             RemainingItemsThreshold="4"
@@ -85,8 +89,7 @@
 
             <CollectionView.Header>
                 <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}"                                      Padding="{DynamicResource PresentationCollectionHeaderPadding}"
-                                      MaximumWidthRequest="{StaticResource UiDimension640}"
-                      HorizontalOptions="Center">
+                      HorizontalOptions="Fill">
                     <!-- Lifetime summary: both values start on the same edge and wrap rather than clip. -->
                     <Border
                         Grid.Row="0"
@@ -159,7 +162,6 @@
                 <DataTemplate x:DataType="archive:WorkoutArchiveSummaryDto">
                     <Border
                         Margin="{DynamicResource PresentationCollectionItemMargin}"
-                        MaximumWidthRequest="{StaticResource UiDimension640}"
                         Style="{StaticResource CardPrimary}"
                         SemanticProperties.Hint="{loc:LocalizedText Workout_History_OpenSessionHint}">
                         <Border.GestureRecognizers>

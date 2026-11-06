@@ -45,12 +45,12 @@ jobs:
           dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- \
             session-lock-runner -- dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- dbcheck
 
-      - name: Apply schema under session advisory lock
+      - name: Apply ordered migrations under session advisory lock
         env:
           ConnectionStrings__PostgreSql: ${{ secrets.DATABASE_CONNECTION_STRING }}
         run: |
           dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- \
-            session-lock-runner -- dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- dbinit
+            session-lock-runner -- dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- migrate
 
       - name: Post-apply schema verification
         env:

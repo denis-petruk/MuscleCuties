@@ -1,7 +1,5 @@
-using System.Collections.ObjectModel;
-using Microsoft.Maui.Graphics;
-using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
@@ -10,11 +8,13 @@ public partial class NutritionViewModel
 {
     private void OpenDailyBreakdown()
     {
-        ApplyBreakdown(
-            "Daily nutrition",
+        Breakdown.Show(
+            UiTextCatalog.Get("Nutrition_Breakdown_DailyTitle"),
             NutritionPresentationMapper.FromTotals(ConsumedCalories, ConsumedProtein, ConsumedCarbs, ConsumedFats),
             Micronutrients,
-            null);
+            null,
+            SelectedBreakdownCoverageText);
+        IsBreakdownModalVisible = true;
     }
 
     private void OpenMealBreakdown(MealItem? meal)
@@ -22,103 +22,31 @@ public partial class NutritionViewModel
         if (meal is null)
             return;
 
-        ApplyBreakdown(
+        Breakdown.Show(
             $"{meal.MealType} breakdown",
             meal.Macros,
             meal.Micronutrients,
             meal);
-    }
-
-    private void ApplyBreakdown(
-        string title,
-        NutritionMacros macros,
-        IEnumerable<DailyMicronutrientItem> micronutrients,
-        MealItem? meal)
-    {
-        var nutrients = micronutrients.ToList();
-
-        SelectedBreakdownMeal = meal;
-        SelectedBreakdownTitle = title;
-        SelectedBreakdownCaloriesText = macros.CaloriesText;
-        SelectedBreakdownMacrosText = macros.MacroText;
-        SelectedBreakdownFiberText = BuildFiberText(nutrients);
-        SelectedBreakdownNutrientSummaryText = BuildMicronutrientSummaryText(nutrients);
-        SelectedBreakdownProteinCalories = macros.ProteinCalories;
-        SelectedBreakdownCarbsCalories = macros.CarbsCalories;
-        SelectedBreakdownFatsCalories = macros.FatsCalories;
-        SelectedBreakdownMacroItems = new ObservableCollection<MacroBreakdownItem>(BuildMacroBreakdownItems(macros));
-        SelectedBreakdownMicronutrients = new ObservableCollection<DailyMicronutrientItem>(nutrients);
         IsBreakdownModalVisible = true;
     }
 
     private void CloseBreakdownModal()
     {
         IsBreakdownModalVisible = false;
+        Breakdown.Clear();
     }
 
-    private async Task EditSelectedBreakdownMealAsync()
+    /// <summary>Used by the shared presenter when a meal-level breakdown offers Edit meal.</summary>
+    private Task EditBreakdownMealAsync(MealItem meal)
     {
-        var meal = SelectedBreakdownMeal;
-        if (meal is null)
-            return;
-
-        CloseBreakdownModal();
-        await EditMealAsync(meal);
+        IsBreakdownModalVisible = false;
+        return EditMealAsync(meal);
     }
 
-    private static IEnumerable<MacroBreakdownItem> BuildMacroBreakdownItems(NutritionMacros macros)
-    {
-        var proteinCalories = macros.ProteinCalories;
-        var carbsCalories = macros.CarbsCalories;
-        var fatsCalories = macros.FatsCalories;
-        var macroCalories = Math.Max(0f, proteinCalories + carbsCalories + fatsCalories);
-
-        return
-        [
-            new MacroBreakdownItem
-            {
-                Name = "Protein",
-                Grams = macros.Protein,
-                Calories = proteinCalories,
-                Progress = CalculateMacroShare(proteinCalories, macroCalories),
-                Color = AppThemeResources.GetColor("ProteinLight", default)
-            },
-            new MacroBreakdownItem
-            {
-                Name = "Carbs",
-                Grams = macros.Carbs,
-                Calories = carbsCalories,
-                Progress = CalculateMacroShare(carbsCalories, macroCalories),
-                Color = AppThemeResources.GetColor("CarbsLight", default)
-            },
-            new MacroBreakdownItem
-            {
-                Name = "Fats",
-                Grams = macros.Fats,
-                Calories = fatsCalories,
-                Progress = CalculateMacroShare(fatsCalories, macroCalories),
-                Color = AppThemeResources.GetColor("FatsLight", default)
-            }
-        ];
-    }
-
-    private static float CalculateMacroShare(float calories, float totalCalories)
-    {
-        return totalCalories <= 0f ? 0f : Math.Clamp(calories / totalCalories, 0f, 1f);
-    }
-
-    private static string BuildFiberText(IEnumerable<DailyMicronutrientItem> micronutrients)
-    {
-        var fiber = micronutrients.FirstOrDefault(item => item.Name == "Fiber");
-        return fiber is null ? "0.0g fiber" : $"{fiber.Amount:N1}g fiber";
-    }
-
-    private static string BuildMicronutrientSummaryText(List<DailyMicronutrientItem> micronutrients)
-    {
-        if (micronutrients.Count == 0)
-            return "No micronutrients tracked yet";
-
-        var complete = micronutrients.Count(item => item.IsGoalHit);
-        return $"{complete} of {micronutrients.Count} daily targets reached";
-    }
+    /// <summary>
+    /// NM03: the note states what the micronutrient totals cover. Presentation parity alone never
+    /// claims data coverage, and a missing additive field shows no note for older responses.
+    /// </summary>
+    private static string DescribeMicronutrientCoverage(MicronutrientCoverage? coverage) =>
+        NutritionBreakdownPresenter.DescribeCoverage(coverage);
 }

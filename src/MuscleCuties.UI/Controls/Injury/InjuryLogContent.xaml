@@ -165,11 +165,57 @@
                                     SelectedItem="{Binding SelectedWorseningOption}"
                                     SemanticProperties.Description="{loc:LocalizedText Injury_Log_WorseningTrigger_Label}" />
                         </Border>
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Injury_Log_ClinicianAdvisedAvoid_Label}"
-                                   Style="{StaticResource CaptionLabel}" VerticalOptions="Center" />
-                            <Switch Grid.Column="1" IsToggled="{Binding ClinicianAdvisedAvoid}"
-                                    SemanticProperties.Description="{loc:LocalizedText Injury_Log_ClinicianAdvisedAvoid_Label}" />
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Injury_Log_ClinicianAdvisedAvoid_Label}"
+                               Style="{StaticResource CaptionLabel}" />
+                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <Border Style="{StaticResource CardSecondary}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    SemanticProperties.Description="{loc:LocalizedText Injury_Log_ClinicianAdvice_Unanswered}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsClinicianAdviceUnanswered}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectClinicianAdviceCommand}" CommandParameter="Unanswered" />
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:LocalizedText Injury_Log_ClinicianAdvice_Unanswered}" Style="{StaticResource BodyStrong}"
+                                       HorizontalOptions="Center" VerticalOptions="Center" LineBreakMode="WordWrap" />
+                            </Border>
+                            <Border Grid.Column="1" Style="{StaticResource CardSecondary}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    SemanticProperties.Description="{loc:LocalizedText Injury_Log_ClinicianAdvice_Yes}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsClinicianAdviceYes}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectClinicianAdviceCommand}" CommandParameter="Yes" />
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:LocalizedText Injury_Log_ClinicianAdvice_Yes}" Style="{StaticResource BodyStrong}"
+                                       HorizontalOptions="Center" VerticalOptions="Center" LineBreakMode="WordWrap" />
+                            </Border>
+                            <Border Grid.Column="2" Style="{StaticResource CardSecondary}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    SemanticProperties.Description="{loc:LocalizedText Injury_Log_ClinicianAdvice_No}">
+                                <Border.Triggers>
+                                    <DataTrigger TargetType="Border" Binding="{Binding IsClinicianAdviceNo}" Value="True">
+                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
+                                    </DataTrigger>
+                                </Border.Triggers>
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectClinicianAdviceCommand}" CommandParameter="No" />
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:LocalizedText Injury_Log_ClinicianAdvice_No}" Style="{StaticResource BodyStrong}"
+                                       HorizontalOptions="Center" VerticalOptions="Center" LineBreakMode="WordWrap" />
+                            </Border>
                         </Grid>
                         <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Injury_Log_Safety_StopAndSeekCare}"
                                Style="{StaticResource CaptionLabel}"

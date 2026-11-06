@@ -15,6 +15,13 @@ public readonly record struct NutritionMacros(
     public string NutritionText => $"{Calories:N0} kcal · P {Protein:N1}g · C {Carbs:N1}g · F {Fats:N1}g";
 }
 
+/// <summary>UI-local coverage statement; the presentation layer never binds a use-case DTO.</summary>
+public readonly record struct MicronutrientCoverage(
+    string Status,
+    int CoveredItemCount,
+    int UncoveredItemCount,
+    IReadOnlyList<string> UnavailableItemNames);
+
 public readonly record struct NutritionMealTarget(
     float Calories,
     float Protein,
