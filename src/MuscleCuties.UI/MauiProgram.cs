@@ -163,6 +163,7 @@ public static class MauiProgram
             sp.GetRequiredService<IWorkoutInjuryUseCase>(),
             sp.GetRequiredService<IDailyCheckInUseCase>(),
             sp.GetRequiredService<ICyclePhaseProjectionUseCase>(),
+            sp.GetRequiredService<IProfileUnitsUseCase>(),
             () => NavigateToAsync("//CyclePage"),
             () => NavigateToAsync("//WorkoutPage"),
             workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId),
@@ -254,6 +255,8 @@ public static class MauiProgram
                 return NavigateToAsync(nameof(StrengthPlanGenerationPage));
             }));
 
+        services.AddTransient<HydrationClient>();
+        services.AddTransient<BodyMeasurementClient>();
         services.AddTransient<FoodLogViewModel>(sp => new FoodLogViewModel(
             sp.GetRequiredService<INutritionDailyLogUseCase>(),
             sp.GetRequiredService<IRecipePortionUseCase>(),
@@ -266,7 +269,8 @@ public static class MauiProgram
             sp.GetRequiredService<ISaveMealTemplateUseCase>(),
             sp.GetRequiredService<IGetRecipesAndTemplatesUseCase>(),
             sp.GetRequiredService<ICreateRecipeUseCase>(),
-            sp.GetRequiredService<INutritionOverviewUseCase>()));
+            sp.GetRequiredService<INutritionOverviewUseCase>(),
+            sp.GetRequiredService<HydrationClient>()));
 
         services.AddTransient<WorkoutHistoryViewModel>(sp => new WorkoutHistoryViewModel(
             sp.GetRequiredService<IWorkoutArchiveUseCase>(),
@@ -287,7 +291,9 @@ public static class MauiProgram
             sp.GetRequiredService<IProfilePersonalInfoUseCase>(),
             sp.GetRequiredService<IAccountPasswordValidator>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
-            () => NavigateToAsync("..")));
+            sp.GetRequiredService<IProfileUnitsUseCase>(),
+            () => NavigateToAsync(".."),
+            sp.GetRequiredService<BodyMeasurementClient>()));
 
         services.AddTransient<ProfileNutritionSettingsViewModel>(sp => new ProfileNutritionSettingsViewModel(
             sp.GetRequiredService<IProfileNutritionSettingsUseCase>(),

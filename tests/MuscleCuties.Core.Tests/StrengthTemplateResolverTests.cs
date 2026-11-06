@@ -263,6 +263,36 @@ public sealed class StrengthTemplateResolverTests
         Assert.Equal(12, acknowledged.Slots.Single(slot => slot.SlotId == "knee-dominant").ExerciseId);
     }
 
+    [Fact]
+    public void WP02b_Evidence_Ranking_Selects_Highest_Hypertrophy_And_Joint_Friendly_Movement()
+    {
+        var lowerEfficacy = Candidate(11, MovementPattern.SquatPattern);
+        var higherEfficacy = Candidate(12, MovementPattern.SquatPattern) with
+        {
+            Candidate = Candidate(12, MovementPattern.SquatPattern).Candidate with
+            {
+                EvidenceRanking = new ExerciseEvidenceRanking(
+                    HypertrophyEfficacy: 5,
+                    JointFriendliness: 5,
+                    IsCompound: true,
+                    PrimaryEvidenceSource: "Plotkin 2023 / Maeo 2024")
+            }
+        };
+
+        var input = Input(Catalog(
+            lowerEfficacy,
+            higherEfficacy,
+            Candidate(21, MovementPattern.HipHinge),
+            Candidate(31, MovementPattern.HorizontalPush),
+            Candidate(41, MovementPattern.HorizontalPull)));
+
+        var result = StrengthTemplateResolver.Resolve(input, maximumWorkingExercises: 5);
+
+        var kneeSlot = result.Slots.Single(slot => slot.SlotId == "knee-dominant");
+        Assert.Equal(12, kneeSlot.ExerciseId);
+        Assert.Equal("StudyBasedEvidenceRanking", kneeSlot.SelectionReason);
+    }
+
     private static StrengthTemplateSelectionInput Input(
         IReadOnlyList<StrengthExerciseCatalogEntry> catalog,
         IReadOnlySet<int>? excludedIds = null,

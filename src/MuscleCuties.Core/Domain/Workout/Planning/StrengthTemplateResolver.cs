@@ -24,7 +24,8 @@ public sealed record StrengthTemplateSelectionInput(
     IReadOnlySet<int>? KnownManageableLoadExerciseIds = null,
     IReadOnlySet<int>? UserConfirmedFamiliarityExerciseIds = null,
     IReadOnlyDictionary<string, IReadOnlySet<int>>? ReviewedAllowedExerciseIdsByTemplateSlot = null,
-    IReadOnlySet<int>? UserConfirmedManageableLoadExerciseIds = null);
+    IReadOnlySet<int>? UserConfirmedManageableLoadExerciseIds = null,
+    IReadOnlyDictionary<int, ExerciseEvidenceRanking>? EvidenceRankingByExerciseId = null);
 
 public enum StrengthSlotResolutionOutcome { Selected, OptionalOmission, NoSafeCandidate, MissingReviewData }
 
@@ -176,6 +177,8 @@ public static class StrengthTemplateResolver
                 .ThenByDescending(entry => slot.MovementSlot == StrengthTemplateSlotId.GoalSpecificAccessory
                     ? goalPriorities.GetValueOrDefault(entry.Candidate.ExerciseId)
                     : 0)
+                // WP02b study-based evidence ranking (hypertrophy efficacy, joint friendliness, compound vs isolation)
+                .ThenByDescending(entry => GetEvidenceScore(entry, slot, input.EvidenceRankingByExerciseId))
                 // Prefer machines only when the selected equipment profile makes them eligible.
                 .ThenByDescending(entry => entry.Candidate.RequiredEquipment?.Contains(ExerciseEquipmentKind.Machine) == true)
                 .ThenByDescending(entry => slot.PreferredPatterns.Contains(entry.Candidate.Pattern))
@@ -288,6 +291,26 @@ public static class StrengthTemplateResolver
         };
     }
 
+    private static int GetEvidenceScore(
+        StrengthExerciseCatalogEntry entry,
+        StrengthTemplateSlot slot,
+        IReadOnlyDictionary<int, ExerciseEvidenceRanking>? evidenceRankings)
+    {
+        var ranking = evidenceRankings?.GetValueOrDefault(entry.Candidate.ExerciseId)
+            ?? entry.Candidate.EvidenceRanking;
+        if (ranking is null)
+            return 0;
+
+        var isMainSlot = slot.IsRequired || slot.IsHeavyMainInHighIntensity;
+        var roleMatchScore = 0;
+        if (isMainSlot)
+            roleMatchScore = ranking.IsCompound ? 100 : 0;
+        else
+            roleMatchScore = !ranking.IsCompound ? 100 : 50;
+
+        return roleMatchScore + (ranking.HypertrophyEfficacy * 10) + ranking.JointFriendliness;
+    }
+
     private static string SelectionReason(StrengthExerciseCatalogEntry entry,
         HashSet<int> preferredIds, StrengthTemplateSelectionInput input,
         StrengthTemplateSlot slot, IReadOnlyDictionary<int, int> goalPriorities)
@@ -306,6 +329,9 @@ public static class StrengthTemplateResolver
         if (slot.MovementSlot == StrengthTemplateSlotId.GoalSpecificAccessory &&
             goalPriorities.ContainsKey(id))
             return "GoalPriorityCatalogMatch";
+        var ranking = input.EvidenceRankingByExerciseId?.GetValueOrDefault(id) ?? entry.Candidate.EvidenceRanking;
+        if (ranking is not null && (ranking.HypertrophyEfficacy > 0 || ranking.JointFriendliness > 0))
+            return "StudyBasedEvidenceRanking";
         return "StableCatalogExerciseIdTieBreak";
     }
 }

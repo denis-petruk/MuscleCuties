@@ -65,8 +65,8 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             {
                 var firstDate = request.SourceDate < request.TargetDate ? request.SourceDate : request.TargetDate;
                 var secondDate = request.SourceDate < request.TargetDate ? request.TargetDate : request.SourceDate;
-                await LockOwnerDateAsync(context, userId, firstDate, ct).ConfigureAwait(false);
-                await LockOwnerDateAsync(context, userId, secondDate, ct).ConfigureAwait(false);
+                await NutritionDiaryDayLock.AcquireAsync(context, userId, firstDate, ct).ConfigureAwait(false);
+                await NutritionDiaryDayLock.AcquireAsync(context, userId, secondDate, ct).ConfigureAwait(false);
 
                 var currentSource = await BuildDateSnapshotCoreAsync(context, userId, request.SourceDate, ct).ConfigureAwait(false);
                 var currentTarget = await BuildDateSnapshotCoreAsync(context, userId, request.TargetDate, ct).ConfigureAwait(false);
@@ -150,7 +150,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             requestHash,
             async (context, ct) =>
             {
-                await LockOwnerDateAsync(context, userId, request.Date, ct).ConfigureAwait(false);
+                await NutritionDiaryDayLock.AcquireAsync(context, userId, request.Date, ct).ConfigureAwait(false);
                 var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
                 var log = await GetOrCreateDailyLogAsync(context, userId, request.Date, nowUtc, ct).ConfigureAwait(false);
 
@@ -245,8 +245,8 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             {
                 var firstDate = request.SourceDate < request.TargetDate ? request.SourceDate : request.TargetDate;
                 var secondDate = request.SourceDate < request.TargetDate ? request.TargetDate : request.SourceDate;
-                await LockOwnerDateAsync(context, userId, firstDate, ct).ConfigureAwait(false);
-                await LockOwnerDateAsync(context, userId, secondDate, ct).ConfigureAwait(false);
+                await NutritionDiaryDayLock.AcquireAsync(context, userId, firstDate, ct).ConfigureAwait(false);
+                await NutritionDiaryDayLock.AcquireAsync(context, userId, secondDate, ct).ConfigureAwait(false);
 
                 var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
                 var mealFilter = request.MealType?.ToString();
@@ -467,7 +467,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             requestHash,
             async (context, ct) =>
             {
-                await LockOwnerDateAsync(context, userId, request.Date, ct).ConfigureAwait(false);
+                await NutritionDiaryDayLock.AcquireAsync(context, userId, request.Date, ct).ConfigureAwait(false);
                 int? capturedVersion = request.SourceVersion;
                 if (!string.IsNullOrWhiteSpace(request.SourceFoodKey))
                     capturedVersion = await VerifySourceFoodOwnershipAndVersionAsync(
@@ -598,18 +598,6 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         };
         context.DailyNutritionLogs.Add(log);
         return log;
-    }
-
-    private static Task<int> LockOwnerDateAsync(
-        PostgresDbContext context,
-        Guid userId,
-        DateOnly date,
-        CancellationToken cancellationToken)
-    {
-        var lockKey = $"{userId:D}:{date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)}";
-        return context.Database.ExecuteSqlInterpolatedAsync(
-            $"SELECT pg_advisory_xact_lock(hashtextextended({lockKey}, 0))",
-            cancellationToken);
     }
 
     private static string BuildCommandKey(string prefix, string idempotencyKey)

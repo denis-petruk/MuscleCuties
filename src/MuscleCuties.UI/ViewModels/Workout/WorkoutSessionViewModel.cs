@@ -127,6 +127,16 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(ExercisePositionText))]
     private int _totalExercisesInActivity;
 
+    [ObservableProperty] private bool _isMovementNoteOpen;
+    [ObservableProperty] private bool _isMovementNoteBusy;
+    [ObservableProperty] private string _movementNoteText = string.Empty;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasMovementNoteError))]
+    private string _movementNoteErrorText = string.Empty;
+    public bool HasMovementNoteError => !string.IsNullOrWhiteSpace(MovementNoteErrorText);
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasMovementNoteStatus))]
+    private string _movementNoteStatusText = string.Empty;
+    public bool HasMovementNoteStatus => !string.IsNullOrWhiteSpace(MovementNoteStatusText);
+
     private int _workoutDayId;
     private bool _isRestDay;
     private Guid? _plannedSessionId;
@@ -1170,6 +1180,74 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     {
         if (IsBusy || SwapNeedsReload) return;
         ResetSwapPanel();
+    }
+
+    [RelayCommand]
+    public async Task OpenMovementNoteAsync()
+    {
+        if (CurrentExercise is not { WorkoutDayExerciseId: > 0 } exercise) return;
+
+        MovementNoteErrorText = string.Empty;
+        MovementNoteStatusText = string.Empty;
+        IsMovementNoteOpen = true;
+        IsMovementNoteBusy = true;
+        try
+        {
+            var noteDto = await _session.GetMovementNoteAsync(exercise.WorkoutDayExerciseId);
+            MovementNoteText = noteDto?.Notes ?? string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[WorkoutSession] Failed to load movement note: {ex.Message}");
+            MovementNoteErrorText = UiTextCatalog.Get("Workout_Session_NoteSaveFailed");
+        }
+        finally
+        {
+            IsMovementNoteBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task SaveMovementNoteAsync()
+    {
+        if (CurrentExercise is not { WorkoutDayExerciseId: > 0 } exercise || IsMovementNoteBusy)
+            return;
+
+        MovementNoteErrorText = string.Empty;
+        MovementNoteStatusText = string.Empty;
+        IsMovementNoteBusy = true;
+        try
+        {
+            await _session.SaveMovementNoteAsync(new SaveWorkoutMovementNoteRequest(
+                exercise.WorkoutDayExerciseId,
+                MovementNoteText));
+
+            MovementNoteStatusText = UiTextCatalog.Get("Workout_Session_NoteSaved");
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[WorkoutSession] Failed to save movement note: {ex.Message}");
+            MovementNoteErrorText = UiTextCatalog.Get("Workout_Session_NoteSaveFailed");
+        }
+        finally
+        {
+            IsMovementNoteBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    public async Task ClearMovementNoteAsync()
+    {
+        MovementNoteText = string.Empty;
+        await SaveMovementNoteAsync();
+    }
+
+    [RelayCommand]
+    public void CloseMovementNote()
+    {
+        IsMovementNoteOpen = false;
+        MovementNoteErrorText = string.Empty;
+        MovementNoteStatusText = string.Empty;
     }
 
     private void ResetSwapPanel()

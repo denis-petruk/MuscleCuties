@@ -1,18 +1,18 @@
 {
   "SchemaVersion": 1,
   "Protocol": "aws-cloudwatch-observed-deployed-latency-v1",
-  "MeasuredAtUtc": "2026-11-03T15:30:24Z",
+  "MeasuredAtUtc": "2026-11-06T05:36:59Z",
   "Region": "us-east-2",
   "Account": "028417007003",
   "Function": {
     "Name": "musclecuties-backend-api",
     "Version": "$LATEST",
-    "CodeSha256": "JWoa3D0RcmeQUFnlDWzpEd2e2oweex6bFbuedfpoano=",
+    "CodeSha256": "LM2QsLysDEaTyZUspB0tp23Bb83FKByo06pH3/QnbCg=",
     "Runtime": "dotnet10",
     "Architectures": [
       "arm64"
     ],
-    "MemorySizeMb": 1024,
+    "MemorySizeMb": 3008,
     "TimeoutSeconds": 27,
     "Environment": "Staging"
   },
@@ -23,51 +23,51 @@
   },
   "Window": {
     "Days": 30,
-    "StartUtc": "2026-10-04T15:29:56Z",
-    "EndUtc": "2026-11-03T15:29:56Z"
+    "StartUtc": "2026-10-07T05:36:48Z",
+    "EndUtc": "2026-11-06T05:36:48Z"
   },
   "Invocations": {
-    "Count": 4244,
+    "Count": 70984,
     "DurationMs": {
-      "P50": 100.7552,
-      "P95": 5976.8736,
-      "P99": 6895.2045,
+      "P50": 7.6277,
+      "P95": 148.4287,
+      "P99": 1555.2019,
       "Max": 27000.0
     }
   },
   "WarmInvocations": {
-    "Count": 3713,
+    "Count": 70366,
     "DurationMs": {
-      "P50": 76.848,
-      "P95": 4293.3315,
-      "P99": 5392.1764,
+      "P50": 7.5076,
+      "P95": 139.2975,
+      "P99": 581.2686,
       "Max": 27000.0
     }
   },
   "ColdStarts": {
-    "Count": 531,
+    "Count": 617,
     "InitMs": {
-      "P50": 1239.4703,
-      "P95": 1439.9511,
-      "P99": 1667.8505,
+      "P50": 1224.6929,
+      "P95": 1431.3415,
+      "P99": 1662.857,
       "Max": 2100.01
     },
     "DurationMs": {
-      "P99": 7859.7965,
+      "P99": 7789.4107,
       "Max": 8440.7
     }
   },
   "ApiGatewayLatencyDailyP99Ms": {
-    "Samples": 16,
-    "Min": 2817.6,
-    "Median": 8015.69,
-    "Max": 8841.33
+    "Samples": 18,
+    "Min": 182.48,
+    "Median": 7859.53,
+    "Max": 8642.08
   },
   "ApiGatewayIntegrationLatencyDailyP99Ms": {
-    "Samples": 16,
-    "Min": 2814.77,
-    "Median": 8014.87,
-    "Max": 8838.7
+    "Samples": 18,
+    "Min": 181.16,
+    "Median": 7859.06,
+    "Max": 8641.67
   },
   "Probe": {
     "Live": {
@@ -75,42 +75,42 @@
       "Samples": [
         {
           "StatusCode": 200,
-          "TotalMs": 1575.98,
+          "TotalMs": 110.35,
           "Error": null
         },
         {
           "StatusCode": 200,
-          "TotalMs": 1088.71,
+          "TotalMs": 87.37,
           "Error": null
         },
         {
           "StatusCode": 200,
-          "TotalMs": 976.81,
+          "TotalMs": 92.29,
           "Error": null
         }
       ],
-      "MedianMs": 1088.71
+      "MedianMs": 92.29
     },
     "Ready": {
       "Path": "/health/ready",
       "Samples": [
         {
           "StatusCode": 200,
-          "TotalMs": 716.41,
+          "TotalMs": 263.77,
           "Error": null
         },
         {
           "StatusCode": 200,
-          "TotalMs": 235.48,
+          "TotalMs": 136.49,
           "Error": null
         },
         {
           "StatusCode": 200,
-          "TotalMs": 229.47,
+          "TotalMs": 123.55,
           "Error": null
         }
       ],
-      "MedianMs": 235.48
+      "MedianMs": 136.49
     }
   },
   "ProductionDeployment": false,
@@ -119,9 +119,8 @@
   "BudgetBasis": "local 1000 ms handler budget used as a diagnostic comparison, not a production SLA",
   "Result": "fail",
   "Failures": [
-    "overall p99 6895.20 ms exceeds 1000 ms",
-    "warm p99 5392.18 ms exceeds 1000 ms",
-    "cold-start init p99 1667.85 ms exceeds 1000 ms"
+    "overall p99 1555.20 ms exceeds 1000 ms",
+    "cold-start init p99 1662.86 ms exceeds 1000 ms"
   ],
   "Notes": [
     "Cold starts are observed Init Duration values from CloudWatch REPORT lines; none were forced.",

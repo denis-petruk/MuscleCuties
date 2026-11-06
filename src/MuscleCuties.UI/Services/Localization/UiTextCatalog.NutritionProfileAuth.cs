@@ -895,5 +895,19 @@ public static partial class UiTextCatalog
         English["Startup_ResetConfirmationBody"] = "This clears the data saved on this device. Your account data stays in the cloud.";
         English["Startup_ResetAndRepopulate"] = "Reset and reload";
         English["Startup_Reinitializing"] = "Reloading...";
+        English["Profile_Measurements_Title"] = "Circumference Measurements";
+        English["Profile_Measurements_Date"] = "Measurement Date";
+        English["Profile_Measurements_Site"] = "Site";
+        English["Profile_Measurements_Side"] = "Side";
+        English["Profile_Measurements_Value"] = "Value";
+        English["Profile_Measurements_SaveButton"] = "Save Measurement";
+        English["Profile_Measurements_DeleteButton"] = "Delete";
+        English["Profile_Measurements_EditButton"] = "Edit";
+        English["Profile_Measurements_CancelEditButton"] = "Cancel Edit";
+        English["Profile_Measurements_UtcLeadExplanation"] = "Your local date leads UTC date. History records and validates using UTC cutoffs, so entries on dates leading UTC will reflect once UTC reaches this date.";
+        English["Profile_Measurements_Saved"] = "Measurement saved.";
+        English["Profile_Measurements_Deleted"] = "Measurement deleted.";
+        English["Profile_Measurements_InvalidValue"] = "Please enter a valid measurement value.";
+        English["Profile_Measurements_NoHistory"] = "No measurements recorded for this period.";
     }
 }

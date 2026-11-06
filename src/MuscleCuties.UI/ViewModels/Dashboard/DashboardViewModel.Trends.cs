@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Dashboard;
 using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.Services.Units;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Dashboard;
@@ -26,6 +27,12 @@ public partial class DashboardViewModel
     public bool IsWorkoutTrendVisible => TrendViewIndex == WorkoutTrendIndex;
     public string TrendPositionText => $"{TrendViewIndex + 1} / {TrendViewCount}";
 
+    // F06: every value below is formatted in the saved metric/imperial preference. Conversion
+    // happens at the display seam only; the DTOs keep their canonical kg and km values.
+    public string WeightUnitLabel => UnitsFormatter.WeightUnitLabel(_useMetricUnits);
+    public string DistanceUnitLabel => UnitsFormatter.DistanceUnitLabel(_useMetricUnits);
+    public string PaceUnitLabel => UnitsFormatter.PaceUnitLabel(_useMetricUnits);
+
     public bool HasWeeklyNutrition => _weeklyNutrition is not null;
     public string WeeklyCaloriesText => _weeklyNutrition is null
         ? string.Empty
@@ -46,9 +53,10 @@ public partial class DashboardViewModel
         : string.Format(CultureInfo.CurrentCulture,
             CompositeFormat.Parse(UiTextCatalog.Get("Dashboard_Trend_LoggedWeeksFormat")),
             WeeklyWeightPoints.Count,
-            WeeklyWeightPoints[^1].WeightKg?.ToString("N1", CultureInfo.CurrentCulture));
+            WeeklyWeightPoints[^1].WeightKg?.ToString("N1", CultureInfo.CurrentCulture),
+            WeightUnitLabel);
     public string WeeklyWeightValuesText => string.Join("  ·  ", WeeklyWeightPoints.Select(point =>
-        $"{point.Date.ToString("MMM d", CultureInfo.CurrentCulture)}: {point.WeightKg:N1} kg"));
+        $"{point.Date.ToString("MMM d", CultureInfo.CurrentCulture)}: {FormatWeight(point.WeightKg)}"));
 
     public bool HasWorkoutProgress => _workoutProgress is not null &&
                                       (_workoutProgress.HeaviestLiftKg.HasValue ||
@@ -56,17 +64,15 @@ public partial class DashboardViewModel
                                        _workoutProgress.LongestSessionMinutes.HasValue ||
                                        _workoutProgress.LongestDistanceKm.HasValue ||
                                        _workoutProgress.FastestPaceSecondsPerKm.HasValue);
-    public string HeaviestLiftText => FormatMetric(_workoutProgress?.HeaviestLiftKg, "kg");
+    public string HeaviestLiftText => FormatWeight(_workoutProgress?.HeaviestLiftKg);
     public string HeaviestLiftExerciseName => _workoutProgress?.HeaviestLiftExerciseName ?? string.Empty;
     public bool HasHeaviestLiftExerciseName => !string.IsNullOrWhiteSpace(HeaviestLiftExerciseName);
-    public string HighestVolumeText => FormatMetric(_workoutProgress?.HighestSessionVolumeKg, "kg");
+    public string HighestVolumeText => FormatWeight(_workoutProgress?.HighestSessionVolumeKg);
     public string LongestSessionText => _workoutProgress?.LongestSessionMinutes is { } minutes
         ? $"{minutes} min"
         : "—";
-    public string LongestDistanceText => FormatMetric(_workoutProgress?.LongestDistanceKm, "km");
-    public string FastestPaceText => _workoutProgress?.FastestPaceSecondsPerKm is { } seconds
-        ? $"{seconds / SecondsPerMinute}:{seconds % SecondsPerMinute:D2} /km"
-        : "—";
+    public string LongestDistanceText => FormatDistance(_workoutProgress?.LongestDistanceKm);
+    public string FastestPaceText => FormatPace(_workoutProgress?.FastestPaceSecondsPerKm);
 
     [RelayCommand]
     private void PreviousTrend() => TrendViewIndex = (TrendViewIndex + TrendViewCount - 1) % TrendViewCount;
@@ -97,7 +103,8 @@ public partial class DashboardViewModel
                      nameof(WeeklyCarbsText), nameof(WeeklyFatText), nameof(WeeklyProteinShare),
                      nameof(WeeklyCarbsShare), nameof(WeeklyFatShare), nameof(WeeklyWeightPoints),
                      nameof(HasWeeklyWeights), nameof(WeeklyWeightSummary), nameof(WeeklyWeightValuesText),
-                     nameof(HasWorkoutProgress),
+                     nameof(HasWorkoutProgress), nameof(WeightUnitLabel), nameof(DistanceUnitLabel),
+                     nameof(PaceUnitLabel),
                      nameof(HeaviestLiftText), nameof(HeaviestLiftExerciseName),
                      nameof(HasHeaviestLiftExerciseName), nameof(HighestVolumeText), nameof(LongestSessionText),
                      nameof(LongestDistanceText), nameof(FastestPaceText)
@@ -117,7 +124,25 @@ public partial class DashboardViewModel
         ? $"{value.ToString("N0", CultureInfo.CurrentCulture)} g"
         : "—";
 
-    private static string FormatMetric(double? value, string unit) => value is { } number
-        ? $"{number.ToString("N1", CultureInfo.CurrentCulture)} {unit}"
+    private string FormatWeight(double? kilograms) => kilograms is { } value
+        ? $"{UnitsFormatter.ToDisplayWeight(value, _useMetricUnits).ToString("N1", CultureInfo.CurrentCulture)} " +
+          WeightUnitLabel
         : "—";
+
+    private string FormatDistance(double? kilometres) => kilometres is { } value
+        ? $"{UnitsFormatter.ToDisplayDistance(value, _useMetricUnits).ToString("N1", CultureInfo.CurrentCulture)} " +
+          DistanceUnitLabel
+        : "—";
+
+    private string FormatPace(int? secondsPerKilometre)
+    {
+        if (secondsPerKilometre is not { } seconds)
+            return "—";
+
+        var displaySeconds = _useMetricUnits
+            ? seconds
+            : UnitsFormatter.SecondsPerKilometreToSecondsPerMile(seconds);
+        var rounded = (int)Math.Round(displaySeconds, MidpointRounding.AwayFromZero);
+        return $"{rounded / SecondsPerMinute}:{rounded % SecondsPerMinute:D2} {PaceUnitLabel}";
+    }
 }

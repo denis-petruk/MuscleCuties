@@ -17,36 +17,19 @@
     <Grid RowDefinitions="Auto,*"
           BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
         <!-- Header -->
-        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}"
-              VerticalOptions="Center">
-            <Border
-                Style="{StaticResource HeaderIconButton}"
-                HorizontalOptions="Start"
-                SemanticProperties.Description="{loc:LocalizedText Common_Back}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding NavigateBackCommand}" />
-                </Border.GestureRecognizers>
-                <mi:MauiIcon
-                    Icon="{mi:Fluent ChevronLeft24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    WidthRequest="{StaticResource UiDimension20}"
-                    HeightRequest="{StaticResource UiDimension20}"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center" />
-            </Border>
-
-            <Grid Grid.Column="1" RowDefinitions="Auto,Auto" VerticalOptions="Center">
-                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource PageTitle}"
-                       SemanticProperties.HeadingLevel="Level1" />
-                <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}" Style="{StaticResource CaptionSmall}"
-                       LineBreakMode="WordWrap" />
-            </Grid>
-
-            <Button
-                Grid.Column="2"
-                Text="{Binding PrivacyBlurButtonText, Converter={StaticResource LocalizedStringConverter}}"
-                Command="{Binding TogglePrivacyBlurCommand}"
-                IsVisible="{Binding IsEmpty, Converter={StaticResource InvertedBoolConverter}}"
-                Style="{StaticResource ButtonSecondary}" />
+        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" VerticalOptions="Center">
+            <sharedControls:PageHeader
+                Title="{loc:LocalizedText Profile_PhotoJourney_Title}"
+                Subtitle="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}"
+                BackCommand="{Binding NavigateBackCommand}">
+                <sharedControls:PageHeader.ActionContent>
+                    <Button
+                        Text="{Binding PrivacyBlurButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                        Command="{Binding TogglePrivacyBlurCommand}"
+                        IsVisible="{Binding IsEmpty, Converter={StaticResource InvertedBoolConverter}}"
+                        Style="{StaticResource ButtonSecondary}" />
+                </sharedControls:PageHeader.ActionContent>
+            </sharedControls:PageHeader>
         </Grid>
 
         <!-- Body (Virtualized CollectionView, zero ScrollViews) -->

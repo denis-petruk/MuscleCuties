@@ -113,6 +113,20 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private string _weekTitle = "This week's plan";
     [ObservableProperty] private ObservableCollection<WorkoutItem> _workouts = new();
 
+    [ObservableProperty] private bool _isRescheduleModalVisible;
+    [ObservableProperty] private bool _isRescheduleBusy;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasRescheduleStatusMessage))]
+    private string _rescheduleStatusMessage = string.Empty;
+    public bool HasRescheduleStatusMessage => !string.IsNullOrWhiteSpace(RescheduleStatusMessage);
+    [ObservableProperty] private WorkoutItem? _reschedulingWorkout;
+    [ObservableProperty] private string _reschedulingWorkoutTitle = string.Empty;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasAvailableRescheduleDates), nameof(CanConfirmReschedule))]
+    private ObservableCollection<RescheduleDateOption> _availableRescheduleDates = [];
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanConfirmReschedule))]
+    private RescheduleDateOption? _selectedRescheduleDate;
+    public bool HasAvailableRescheduleDates => AvailableRescheduleDates.Count > 0;
+    public bool CanConfirmReschedule => SelectedRescheduleDate is not null && !IsRescheduleBusy;
+
     public WorkoutViewModel(
         IWorkoutOverviewUseCase overview,
         IWorkoutInjuryUseCase injuries,
@@ -145,6 +159,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         SelectScheduleDayCommand = new RelayCommand<ScheduleDayItem>(SelectScheduleDay);
         ToggleInjuryBannerCommand = new RelayCommand(() => IsInjuryBannerExpanded = !IsInjuryBannerExpanded);
         NavigateToInjuryLogCommand = new AsyncRelayCommand(OpenInjuryModalAsync);
+        StartRescheduleCommand = new RelayCommand<WorkoutItem>(StartReschedule);
+        SelectRescheduleDateCommand = new RelayCommand<RescheduleDateOption>(SelectRescheduleDate);
+        ConfirmRescheduleCommand = new AsyncRelayCommand(ConfirmRescheduleAsync, () => CanConfirmReschedule);
+        CloseRescheduleModalCommand = new RelayCommand(CloseRescheduleModal);
         Filters = new ObservableCollection<FilterChipItem>
         {
             new() { Column = 0, Label = UiTextCatalog.Get("Workout_Filter_All"), IsSelected = true },
@@ -178,12 +196,15 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(HasKnownCyclePhase));
     }
 
-    public bool IsTabBarVisible => !IsInjuryModalVisible && !IsSessionActivitiesVisible;
+    public bool IsTabBarVisible => !IsInjuryModalVisible && !IsSessionActivitiesVisible && !IsRescheduleModalVisible;
 
     partial void OnIsInjuryModalVisibleChanged(bool value) =>
         OnPropertyChanged(nameof(IsTabBarVisible));
 
     partial void OnIsSessionActivitiesVisibleChanged(bool value) =>
+        OnPropertyChanged(nameof(IsTabBarVisible));
+
+    partial void OnIsRescheduleModalVisibleChanged(bool value) =>
         OnPropertyChanged(nameof(IsTabBarVisible));
 
     public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
@@ -267,6 +288,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public RelayCommand<ScheduleDayItem> SelectScheduleDayCommand { get; }
     public RelayCommand ToggleInjuryBannerCommand { get; }
     public AsyncRelayCommand NavigateToInjuryLogCommand { get; }
+    public RelayCommand<WorkoutItem> StartRescheduleCommand { get; }
+    public RelayCommand<RescheduleDateOption> SelectRescheduleDateCommand { get; }
+    public AsyncRelayCommand ConfirmRescheduleCommand { get; }
+    public RelayCommand CloseRescheduleModalCommand { get; }
 
     public void Dispose()
     {
@@ -861,6 +886,122 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         {
             workout.IsEasierAlternative = previous;
             throw;
+        }
+    }
+
+    public void StartReschedule(WorkoutItem? workout)
+    {
+        if (workout is null || workout.WorkoutDayId <= 0) return;
+
+        RescheduleStatusMessage = string.Empty;
+        ReschedulingWorkout = workout;
+        ReschedulingWorkoutTitle = workout.Title;
+
+        if (workout.IsCompleted)
+        {
+            RescheduleStatusMessage = UiTextCatalog.Get("Workout_Reschedule_Error_Completed");
+            AvailableRescheduleDates = [];
+            IsRescheduleModalVisible = true;
+            return;
+        }
+
+        if (InProgressWorkout is { IsInProgress: true } inProgress && inProgress.WorkoutDayId == workout.WorkoutDayId)
+        {
+            RescheduleStatusMessage = UiTextCatalog.Get("Workout_Reschedule_Error_InProgress");
+            AvailableRescheduleDates = [];
+            IsRescheduleModalVisible = true;
+            return;
+        }
+
+        var activeWeekSchedule = _datedSchedule.Where(day => day.WeekIndex == SelectedWeekIndex).ToList();
+        var emptyDays = activeWeekSchedule
+            .Where(day => day.IsRestDay && (day.Sessions == null || day.Sessions.All(s => s.WorkoutDayId <= 0)))
+            .Select(day => new RescheduleDateOption(
+                DateOnly.FromDateTime(day.Date),
+                day.DayLabel,
+                day.Date.ToString("dd MMM", CultureInfo.InvariantCulture)))
+            .ToList();
+
+        AvailableRescheduleDates = new ObservableCollection<RescheduleDateOption>(emptyDays);
+        if (emptyDays.Count == 0)
+        {
+            RescheduleStatusMessage = UiTextCatalog.Get("Workout_Reschedule_NoEmptyDates");
+            SelectedRescheduleDate = null;
+        }
+        else
+        {
+            SelectRescheduleDate(emptyDays[0]);
+        }
+
+        IsRescheduleModalVisible = true;
+    }
+
+    public void SelectRescheduleDate(RescheduleDateOption? option)
+    {
+        if (option is null) return;
+        foreach (var opt in AvailableRescheduleDates)
+            opt.IsSelected = opt == option;
+        SelectedRescheduleDate = option;
+        ConfirmRescheduleCommand.NotifyCanExecuteChanged();
+    }
+
+    public void CloseRescheduleModal()
+    {
+        IsRescheduleModalVisible = false;
+        ReschedulingWorkout = null;
+        SelectedRescheduleDate = null;
+        RescheduleStatusMessage = string.Empty;
+        ConfirmRescheduleCommand.NotifyCanExecuteChanged();
+    }
+
+    public async Task ConfirmRescheduleAsync()
+    {
+        if (ReschedulingWorkout is null || SelectedRescheduleDate is null || IsRescheduleBusy)
+            return;
+
+        // Optimistic concurrency verification:
+        // 1. Check if the session is currently in progress
+        if (InProgressWorkout is { IsInProgress: true } inProgress &&
+            inProgress.WorkoutDayId == ReschedulingWorkout.WorkoutDayId)
+        {
+            RescheduleStatusMessage = UiTextCatalog.Get("Workout_Reschedule_Error_InProgress");
+            return;
+        }
+
+        // 2. Check if destination date is already occupied
+        var targetDate = SelectedRescheduleDate.Date;
+        var occupied = _datedSchedule.Any(day =>
+            DateOnly.FromDateTime(day.Date) == targetDate && !day.IsRestDay && day.WorkoutDayId > 0);
+        if (occupied)
+        {
+            RescheduleStatusMessage = UiTextCatalog.Get("Workout_Reschedule_Error_Occupied");
+            return;
+        }
+
+        IsRescheduleBusy = true;
+        ConfirmRescheduleCommand.NotifyCanExecuteChanged();
+        try
+        {
+            await _overview.RescheduleAsync(new RescheduleWorkoutDayRequest(
+                ReschedulingWorkout.WorkoutDayId,
+                targetDate));
+
+            IsRescheduleModalVisible = false;
+            ReschedulingWorkout = null;
+            SelectedRescheduleDate = null;
+            RescheduleStatusMessage = string.Empty;
+
+            await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[Workout] Reschedule failed: {ex.Message}");
+            RescheduleStatusMessage = ApiFailurePresenter.FromException(ex, "Workout_Reschedule_Failed").MessageText;
+        }
+        finally
+        {
+            IsRescheduleBusy = false;
+            ConfirmRescheduleCommand.NotifyCanExecuteChanged();
         }
     }
 
