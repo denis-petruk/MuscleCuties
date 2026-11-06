@@ -109,12 +109,20 @@ public static class ActivityPrescriptionRule
 
     public const int ContinuousCardioWarmupMinutes = 5;
     public const int ContinuousCardioCooldownMinutes = 5;
-    public const int BeginnerCardioMainMinutes = 10;
-    public const int EstablishedCardioMainMinutesWithoutBaseline = 20;
+    public const int BeginnerCardioMainMinutes = 20;
+    public const int EstablishedCardioMainMinutesWithoutBaseline = 30;
     public const int BeginnerCardioSessionsPerWeek = 3;
     public const int EstablishedCardioSessionsPerWeekWithoutBaseline = 4;
     public const int SwimmingWarmupMinutes = 5;
     public const int SwimmingIntervalSeconds = 30;
+
+    /// <summary>
+    /// Longest main phase a swimming session may carry. Swimming has its own user-facing duration
+    /// policy (25–30 minutes, [ActivitySessionDurationRule]), so the main phase is capped there rather
+    /// than inheriting the longer continuous-cardio default.
+    /// </summary>
+    public const int SwimmingMainMinutesCap =
+        ActivitySessionDurationRule.SwimmingMaximumMinutes - SwimmingWarmupMinutes - ContinuousCardioCooldownMinutes;
     public const int BeginnerClimbingVisitMinutes = 45;
     public const int EstablishedClimbingVisitMinutesWithoutBaseline = 60;
     public const int HiitMaximumSessionsPerWeek = 2;
@@ -261,9 +269,9 @@ public static class ActivityPrescriptionRule
             return Result(ActivityPrescriptionStatus.NeedsFamiliarization,
                 "AskContinuousVersusSwimRestPreference");
 
-        var main = context.Experience == ActivityExperience.Established
+        var main = Math.Min(context.Experience == ActivityExperience.Established
             ? context.ExistingBaselineMinutes ?? ActivityPrescriptionRule.EstablishedCardioMainMinutesWithoutBaseline
-            : ActivityPrescriptionRule.BeginnerCardioMainMinutes;
+            : ActivityPrescriptionRule.BeginnerCardioMainMinutes, ActivityPrescriptionRule.SwimmingMainMinutesCap);
         return Session(ActivityPrescriptionStatus.Eligible, context, SessionPurpose.Conditioning,
             ActivityModality.Swimming, IntendedIntensity.Moderate,
             context.WantsContinuousSwimming.Value ? SessionTrainingStyle.Continuous : SessionTrainingStyle.Intervals,

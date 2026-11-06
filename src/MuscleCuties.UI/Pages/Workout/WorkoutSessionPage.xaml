@@ -121,23 +121,21 @@
                                    Style="{StaticResource SectionTitle}"
                                    HorizontalTextAlignment="Center"
                                    SemanticProperties.HeadingLevel="Level2" />
-                            <Label LineBreakMode="WordWrap"
-                                   Text="{Binding TimedActivityStateKey, Converter={StaticResource LocalizedStringConverter}}"
-                                   Style="{StaticResource CaptionCentered}" />
-                            <Label LineBreakMode="WordWrap"
-                                   Text="{Binding TimedActivityPhaseKey, Converter={StaticResource LocalizedStringConverter}}"
-                                   IsVisible="{Binding HasTimedActivityPhase}"
-                                   Style="{StaticResource BodyCentered}"
-                                   SemanticProperties.HeadingLevel="Level3" />
                             <Border Style="{StaticResource CardSecondary}">
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}" HorizontalOptions="Fill">
+                                    <Label LineBreakMode="WordWrap"
+                                           Text="{Binding TimedActivityStateKey, Converter={StaticResource LocalizedStringConverter}}"
+                                           Style="{StaticResource CaptionCentered}" />
+                                    <Label LineBreakMode="WordWrap"
+                                           Text="{Binding TimedActivityPhaseKey, Converter={StaticResource LocalizedStringConverter}}"
+                                           IsVisible="{Binding HasTimedActivityPhase}"
+                                           Style="{StaticResource BodyStrong}"
+                                           HorizontalTextAlignment="Center"
+                                           SemanticProperties.HeadingLevel="Level3" />
                                     <Label Text="{Binding TimedActivityElapsedText}"
                                            Style="{StaticResource WorkoutNumber}"
                                            HorizontalTextAlignment="Center"
                                            SemanticProperties.Description="{loc:LocalizedText Workout_Session_TimedElapsedAccessibility}" />
-                                    <Label LineBreakMode="WordWrap"
-                                           Text="{Binding TimedActivityElapsedText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TimedElapsedFormat}"
-                                           Style="{StaticResource CaptionCentered}" />
                                     <Label LineBreakMode="WordWrap"
                                            Text="{Binding TimedActivityRemainingText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TimedRemainingFormat}"
                                            IsVisible="{Binding HasTimedActivityCountdown}"
@@ -152,48 +150,54 @@
                                    IsVisible="{Binding HasTimedActivityPhase, Converter={StaticResource InvertedBoolConverter}}"
                                    Style="{StaticResource MutedLabel}"
                                    HorizontalTextAlignment="Center" />
-                            <Label LineBreakMode="WordWrap" Text="{Binding ActivityPrescriptionText}"
-                                   Style="{StaticResource BodyCentered}" />
-                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                            <Border Style="{StaticResource CardSecondary}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                        <Label LineBreakMode="WordWrap"
+                                               Text="{loc:LocalizedText Workout_Session_TimedRpeLabel}"
+                                               Style="{StaticResource CaptionLabel}" />
+                                        <Label Grid.Column="1" LineBreakMode="WordWrap"
+                                               Text="{Binding TimedActivityRpeText}"
+                                               Style="{StaticResource BodyStrong}" />
+                                    </Grid>
+                                    <Slider Minimum="0" Maximum="10"
+                                            Value="{Binding TimedActivityRpeValue, Mode=TwoWay}"
+                                            MinimumTrackColor="{StaticResource Primary}"
+                                            MaximumTrackColor="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                                            ThumbColor="{StaticResource Primary}"
+                                            SemanticProperties.Description="{loc:LocalizedText Workout_Session_TimedRpeAccessibility}" />
                                     <Label LineBreakMode="WordWrap"
-                                           Text="{loc:LocalizedText Workout_Session_TimedRpeLabel}"
+                                           Text="{loc:LocalizedText Workout_Session_TimedRpeHint}"
+                                           Style="{StaticResource MutedLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
+                            <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding ShowsTimedActivityDistance}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                    <Label LineBreakMode="WordWrap"
+                                           Text="{loc:LocalizedText Workout_Session_TimedDistanceLabel}"
                                            Style="{StaticResource CaptionLabel}" />
-                                    <Label Grid.Column="1" LineBreakMode="WordWrap"
-                                           Text="{Binding TimedActivityRpeText}"
-                                           Style="{StaticResource BodyStrong}" />
-                                </Grid>
-                                <Slider Minimum="0" Maximum="10"
-                                        Value="{Binding TimedActivityRpeValue, Mode=TwoWay}"
-                                        MinimumTrackColor="{StaticResource Primary}"
-                                        MaximumTrackColor="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                                        ThumbColor="{StaticResource Primary}"
-                                        SemanticProperties.Description="{loc:LocalizedText Workout_Session_TimedRpeAccessibility}" />
-                                <Label LineBreakMode="WordWrap"
-                                       Text="{loc:LocalizedText Workout_Session_TimedRpeHint}"
-                                       Style="{StaticResource MutedLabel}" />
-                            </VerticalStackLayout>
-                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}"
-                                                 IsVisible="{Binding ShowsTimedActivityDistance}">
-                                <Label LineBreakMode="WordWrap"
-                                       Text="{loc:LocalizedText Workout_Session_TimedDistanceLabel}"
-                                       Style="{StaticResource CaptionLabel}" />
-                                <Border Style="{StaticResource InputContainer}">
-                                    <Entry Style="{StaticResource WorkoutNumberEntry}"
-                                           Text="{Binding TimedActivityDistanceText, Mode=TwoWay}"
-                                           Keyboard="Numeric"
-                                           Placeholder="{loc:LocalizedText Workout_Session_TimedDistancePlaceholder}"
-                                           MaxLength="7"
-                                           ReturnType="Done"
-                                           SemanticProperties.Description="{loc:LocalizedText Workout_Session_TimedDistanceAccessibility}" />
-                                </Border>
-                                <Label LineBreakMode="WordWrap"
-                                       Text="{loc:LocalizedText Workout_Session_TimedDistanceHint}"
-                                       Style="{StaticResource MutedLabel}" />
-                            </VerticalStackLayout>
+                                    <Border Style="{StaticResource InputContainer}">
+                                        <Entry Style="{StaticResource WorkoutNumberEntry}"
+                                               Text="{Binding TimedActivityDistanceText, Mode=TwoWay}"
+                                               Keyboard="Numeric"
+                                               Placeholder="{loc:LocalizedText Workout_Session_TimedDistancePlaceholder}"
+                                               MaxLength="7"
+                                               ReturnType="Done"
+                                               SemanticProperties.Description="{loc:LocalizedText Workout_Session_TimedDistanceAccessibility}" />
+                                    </Border>
+                                    <Label LineBreakMode="WordWrap"
+                                           Text="{loc:LocalizedText Workout_Session_TimedDistanceHint}"
+                                           Style="{StaticResource MutedLabel}" />
+                                </VerticalStackLayout>
+                            </Border>
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{Binding ActivityPrescriptionText}"
+                                   Style="{StaticResource MutedLabel}"
+                                   HorizontalTextAlignment="Center" />
                         </VerticalStackLayout>
                     </ScrollView>
-                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}">
+                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}"
+                                         Padding="{StaticResource UiInsets0_16_0_8}">
                         <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_FinishTimedActivity}"
                                 Command="{Binding FinishTimedActivityCommand}"
                                 IsEnabled="{Binding CanInteract}"
