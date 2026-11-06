@@ -8,7 +8,7 @@ public partial class QuickFoodItemUiModel : ObservableObject
     private readonly Action<QuickFoodItemUiModel>? _onSelectionChanged;
 
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(SelectionAccessibilityText))]
+    [NotifyPropertyChangedFor(nameof(SelectionAccessibilityText), nameof(SelectionStateText))]
     private bool _isSelected;
 
     public QuickFoodItemUiModel(QuickFood item, Action<QuickFoodItemUiModel>? onSelectionChanged = null)
@@ -21,9 +21,13 @@ public partial class QuickFoodItemUiModel : ObservableObject
 
     /// <summary>S01: the visual checkmark alone does not communicate selection to VoiceOver.</summary>
     public string SelectionAccessibilityText =>
-        $"{Name} — {UiTextCatalog.Get(IsSelected
+        $"{Name} — {SelectionStateText}";
+
+    /// <summary>Selection is a state trait of the row, not part of its name.</summary>
+    public string SelectionStateText =>
+        UiTextCatalog.Get(IsSelected
             ? "Nutrition_QuickFood_Selected"
-            : "Nutrition_QuickFood_NotSelected")}";
+            : "Nutrition_QuickFood_NotSelected");
 
     public string Name => Item.Name;
     public double ServingSize => Item.ServingSize;

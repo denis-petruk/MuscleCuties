@@ -17,9 +17,7 @@
 
     <Grid RowDefinitions="Auto,*">
         <Grid Padding="{DynamicResource PresentationPageHeaderPadding}" VerticalOptions="Center">
-            <Label Text="{loc:LocalizedText Nutrition_Page_Nutrition}" Style="{StaticResource PageTitle}"
-                   SemanticProperties.HeadingLevel="Level1"
-                   VerticalOptions="Center" />
+            <sharedControls:PageHeader Title="{loc:LocalizedText Nutrition_Page_Nutrition}" ShowBack="False" />
         </Grid>
 
         <CollectionView

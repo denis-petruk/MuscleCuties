@@ -16,46 +16,33 @@
 
 
     <Grid RowDefinitions="Auto, *">
-        <Grid
-            Padding="{DynamicResource PresentationPageHeaderPadding}"
-            ColumnDefinitions="*, Auto"
-            ColumnSpacing="{StaticResource UiSpaceCompact}"
-            RowDefinitions="Auto, Auto"
-            RowSpacing="{StaticResource UiSpaceMicro}"
-            HorizontalOptions="Fill"
-            MaximumWidthRequest="{StaticResource UiDimension640}">
-            <Label
-                Text="{Binding CurrentMonthLabel, Converter={StaticResource LocalizedStringConverter}}"
-                Style="{StaticResource PageTitle}"
-                LineBreakMode="WordWrap"
-                SemanticProperties.HeadingLevel="Level1" />
-            <Label
-                Grid.Row="1"
-                Text="{loc:LocalizedText Cycle_Page_Title}"
-                Style="{StaticResource MutedLabel}"
-                LineBreakMode="WordWrap" />
-
-            <Border
-                Grid.Column="1"
-                Grid.RowSpan="2"
-                Style="{StaticResource HeaderIconButton}"
-                SemanticProperties.Description="{loc:LocalizedText Cycle_Page_SettingsAccessibility}"
-                SemanticProperties.Hint="{loc:LocalizedText Cycle_Page_OpenSettingsAccessibility}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding OpenCycleSettingsCommand}" />
-                </Border.GestureRecognizers>
-                <Path
-                    Data="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
-                    Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth1_5}"
-                    StrokeLineCap="Round"
-                    StrokeLineJoin="Round"
-                    Aspect="Uniform"
-                    WidthRequest="{StaticResource UiDimension18}"
-                    HeightRequest="{StaticResource UiDimension18}"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center" />
-            </Border>
+        <Grid Padding="{DynamicResource PresentationPageHeaderPadding}"
+              HorizontalOptions="Fill"
+              MaximumWidthRequest="{StaticResource UiDimension640}">
+            <sharedControls:PageHeader
+                Title="{Binding CurrentMonthLabel, Converter={StaticResource LocalizedStringConverter}}"
+                Subtitle="{loc:LocalizedText Cycle_Page_Title}"
+                ShowBack="False">
+                <sharedControls:PageHeader.ActionContent>
+                    <Border Style="{StaticResource HeaderIconButton}"
+                            SemanticProperties.Description="{loc:LocalizedText Cycle_Page_SettingsAccessibility}"
+                            SemanticProperties.Hint="{loc:LocalizedText Cycle_Page_OpenSettingsAccessibility}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding OpenCycleSettingsCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path Data="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6z M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                              Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                              StrokeThickness="{StaticResource UiStrokeWidth1_5}"
+                              StrokeLineCap="Round"
+                              StrokeLineJoin="Round"
+                              Aspect="Uniform"
+                              WidthRequest="{StaticResource UiDimension18}"
+                              HeightRequest="{StaticResource UiDimension18}"
+                              HorizontalOptions="Center"
+                              VerticalOptions="Center" />
+                    </Border>
+                </sharedControls:PageHeader.ActionContent>
+            </sharedControls:PageHeader>
         </Grid>
 
         <ScrollView Grid.Row="1">

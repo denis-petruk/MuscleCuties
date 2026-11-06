@@ -81,7 +81,7 @@
                                 <Label Grid.Row="0" Text="{loc:LocalizedText Common_Height}"
                                        Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Cm}"
+                                    <Entry Placeholder="{Binding HeightUnitLabel}"
                                            Text="{Binding HeightCm}"
                                            Keyboard="Numeric"
                                            SemanticProperties.Description="{loc:LocalizedText Common_Height}" />
@@ -92,7 +92,7 @@
                                 <Label Grid.Row="0" Text="{loc:LocalizedText Common_Weight}"
                                        Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                    <Entry Placeholder="{loc:LocalizedText Common_Unit_Kg}"
+                                    <Entry Placeholder="{Binding WeightUnitLabel}"
                                            Text="{Binding WeightKg}"
                                            Keyboard="Numeric"
                                            SemanticProperties.Description="{loc:LocalizedText Common_Weight}" />

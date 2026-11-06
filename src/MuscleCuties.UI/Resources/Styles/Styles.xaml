@@ -782,6 +782,10 @@
     <Style x:Key="ModalSubtitle" TargetType="Label" BasedOn="{StaticResource MutedLabel}">
     </Style>
 
+    <!-- A header icon gets its accessible action name from the instance that owns it:
+         set both AutomationProperties.Name and SemanticProperties.Description from the catalog on
+         every Border using this style. The style owns geometry and surface only, so one page cannot
+         silently render an icon that VoiceOver announces as an unlabelled control. -->
     <Style x:Key="HeaderIconButton" TargetType="Border">
         <Setter Property="WidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
         <Setter Property="HeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />

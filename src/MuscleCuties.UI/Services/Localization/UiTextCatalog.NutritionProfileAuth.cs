@@ -214,6 +214,9 @@ public static partial class UiTextCatalog
         English["Common_Unit_In"] = "in";
         English["Common_Unit_Kcal"] = "kcal";
         English["Common_Unit_Kg"] = "kg";
+        English["Common_Unit_Km"] = "km";
+        English["Common_Unit_Lb"] = "lb";
+        English["Common_Unit_Mi"] = "mi";
         English["Common_Unit_L"] = "L";
         English["Common_Unit_Mcg"] = "mcg";
         English["Common_Unit_Metric"] = "Metric";
