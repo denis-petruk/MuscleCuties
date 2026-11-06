@@ -31,14 +31,25 @@ three cells in step with an edit or a reset.
 
 ### S01 — accessible names and selection state
 
-- Food Log's Previous Day and Next Day borders now set `AutomationProperties.Name` as well as the
-  localized description.
-- `PageHeader` sets both the automation name and the description on its back button, so the four
-  migrated detail headers inherit a named control.
+- Food Log's Previous Day and Next Day borders name their action through
+  `SemanticProperties.Description` using the `Nutrition_FoodLog_PreviousDay` / `..._NextDay` keys.
+- `PageHeader` sets the localized back name on its back button, so every page that migrates to the
+  shared header inherits a named control rather than an unlabelled icon.
 - `HeaderIconButton` documents the per-instance contract: the style owns geometry and surface; each
-  instance supplies the catalog-backed action name.
+  instance supplies the catalog-backed name. `UiContractGuardTests` fails any instance without one.
 - `QuickFoodItemUiModel` exposes `SelectionStateText`; the selection target publishes it through
   `SemanticProperties.Hint`, so selection is a state trait rather than a change buried in the name.
+
+#### Reconciliation: `AutomationProperties.Name`
+
+The task named `AutomationProperties.Name` for the two Food Log date controls and the Vault back
+action. .NET MAUI 10 marks that property obsolete (`CS0618`: "Use SemanticProperties.Description
+instead"), and both properties resolve to the same iOS accessibility label. Setting the pair
+restated one name and added two warnings to an otherwise clean UI build, so the supported property
+carries the name and the deprecated one is not used. Two guards hold the line: a `HeaderIconButton`
+must declare a catalog-backed `SemanticProperties.Description`, and no XAML may reintroduce
+`AutomationProperties.Name`. Both were proved by injecting a deliberately unnamed probe Border,
+which failed both tests, then removing it.
 
 ### S02 — one shared page header
 
@@ -107,18 +118,20 @@ the catalog-backed unit label, so no view model imports `Core.Domain` or hardcod
 
 | Gate | Command | Result |
 | --- | --- | --- |
-| Core and UI source guards | `dotnet test tests/MuscleCuties.Core.Tests/` (SDK 10.0.200) | **1202 passed, 0 failed** |
+| Core and UI source guards | `dotnet test tests/MuscleCuties.Core.Tests/` (SDK 10.0.203) | **1205 passed, 0 failed** |
+| New guards | `Header_icon_buttons_declare_a_catalog_backed_accessible_name`, `Deprecated_automation_name_does_not_replace_the_semantic_property`, `Injury_form_offers_three_distinct_clinician_advice_answers` | Pass; the two accessibility guards were proved to fail on an injected unnamed probe file |
 | Workout header | `Workout_header_uses_the_shared_status_slot` | PageHeader + status slot + PillBadge asserted |
 | Unit formatting | `MeasurementUnitsTests` | Round trips, metric pass-through, distance/pace and label cases pass |
 | XAML well-formedness | `xml.etree.ElementTree` over all 67 UI XAML files | 0 parse errors |
 | Catalog parity | `LocalizationCatalogTests` | EN/RU key sets and format arguments match |
-| iOS compilation | `dotnet build src/MuscleCuties.UI -f net10.0-ios` | **Blocked** — `NETSDK1147: maui-tizen, wasm-tools` workloads are unavailable in this Linux environment; no iOS workload can be installed here |
-| Rendered UI / VoiceOver | Owner device run | **Unverified** — requires a macOS build and the steps in `scripts/verify-ui-consistency-accessibility.sh` |
+| iOS compilation | `dotnet build src/MuscleCuties.UI -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64` | **PASS** — build succeeded, 0 warnings, 0 errors (macOS, iOS SDK 26.2) |
+| iOS device build | `dotnet build src/MuscleCuties.UI -f net10.0-ios` | **BLOCKED** — no iOS signing identity in the keychain (`Xamarin.Shared.targets(2041,3)`); compilation is covered by the simulator build above |
+| Rendered UI / VoiceOver | Owner device run | **UNVERIFIED** — needs a signed build and `scripts/verify-ui-consistency-accessibility.sh` |
 
 The source guards prove the structure; they do not prove VoiceOver traversal, announcements,
 focus order, dynamic type or the visual result. Those remain owner device gates under AGENTS.md.
 
 ## Next action
 
-Build on the owner's Mac, run the device-verification wizard, and record the outcome. No S02
-header item remains; any further UI package is outside this scope.
+Sign a build with the owner's Apple identity, run the device-verification wizard and record the
+outcome. No S02 header item remains; any further UI package is outside this scope.
