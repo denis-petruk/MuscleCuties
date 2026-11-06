@@ -30,6 +30,7 @@ public partial class WorkoutItem : ObservableObject
         : "Workout_Readiness_MarkEasierAlternative";
     public bool CanMarkOptional => !IsCompleted && !IsRestDay;
     public bool CanMarkEasierAlternative => CanMarkOptional && IsOptional;
+    public bool CanReschedule => !IsCompleted && !IsRestDay;
 }
 
 public sealed record WorkoutActivitySection(
@@ -40,4 +41,21 @@ public sealed record WorkoutActivitySection(
     Color TextColor)
 {
     public string ExerciseCountText => ExerciseCount == 1 ? "1 exercise" : $"{ExerciseCount} exercises";
+}
+
+public partial class RescheduleDateOption : ObservableObject
+{
+    public DateOnly Date { get; }
+    public string DayLabel { get; }
+    public string FormattedDate { get; }
+    [ObservableProperty] private bool _isSelected;
+
+    public RescheduleDateOption(DateOnly date, string dayLabel, string formattedDate)
+    {
+        Date = date;
+        DayLabel = dayLabel;
+        FormattedDate = formattedDate;
+    }
+
+    public string DisplayText => $"{DayLabel}, {FormattedDate}";
 }

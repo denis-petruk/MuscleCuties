@@ -30,6 +30,7 @@ public static partial class UiTextCatalog
         RegisterWorkoutGenerationStrings();
         RegisterWorkoutPhaseAdjustmentStrings();
         RegisterHydrationStrings();
+        RegisterBodyMeasurementStrings();
         AuthoredKeyByEnglish = English
             .Where(pair => !IsHashKey(pair.Key))
             .GroupBy(pair => pair.Value, StringComparer.Ordinal)
@@ -42,6 +43,7 @@ public static partial class UiTextCatalog
     static partial void RegisterWorkoutGenerationStrings();
     static partial void RegisterWorkoutPhaseAdjustmentStrings();
     static partial void RegisterHydrationStrings();
+    static partial void RegisterBodyMeasurementStrings();
 
     private static readonly Dictionary<string, string> AuthoredKeyByEnglish;
 

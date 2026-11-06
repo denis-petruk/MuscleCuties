@@ -20,7 +20,7 @@
                 BackCommand="{Binding BackCommand}" />
         </Grid>
 
-        <ScrollView Grid.Row="1">
+        <ScrollView x:Name="PersonalInfoScroll" Grid.Row="1">
             <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceControl}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
                 <Border Style="{StaticResource CardPrimary}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
@@ -140,6 +140,178 @@
                                         SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_HormonalContraceptionOrCyclePattern}" />
                             </Border>
                         </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource CardPrimary}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                        <Label Text="{loc:LocalizedText Profile_Measurement_Title}"
+                               Style="{StaticResource SectionTitle}"
+                               SemanticProperties.HeadingLevel="Level2" />
+                        <Button Text="{loc:LocalizedText Profile_Measurement_ViewHistory}"
+                                Style="{StaticResource ButtonSecondary}"
+                                IsVisible="{Binding IsMeasurementHistoryOpen, Converter={StaticResource InvertedBoolConverter}}"
+                                Command="{Binding OpenMeasurementHistoryCommand}" />
+
+                        <VerticalStackLayout IsVisible="{Binding IsMeasurementHistoryOpen}"
+                                             Spacing="{StaticResource UiSpaceControl}">
+                            <ActivityIndicator IsRunning="{Binding IsMeasurementBusy}"
+                                               IsVisible="{Binding IsMeasurementBusy}"
+                                               SemanticProperties.Description="{loc:LocalizedText Profile_Measurement_Working}" />
+
+                            <Label Text="{Binding MeasurementStatus}" Style="{StaticResource CaptionSmall}"
+                                   IsVisible="{Binding MeasurementStatus, Converter={StaticResource StringToBoolConverter}}"
+                                   LineBreakMode="WordWrap" />
+                            <Label Text="{Binding MeasurementReference}" Style="{StaticResource CaptionSmall}"
+                                   IsVisible="{Binding MeasurementReference, Converter={StaticResource StringToBoolConverter}}"
+                                   LineBreakMode="WordWrap" />
+
+                            <VerticalStackLayout IsVisible="{Binding IsMeasurementEditorOpen, Converter={StaticResource InvertedBoolConverter}}"
+                                                 IsEnabled="{Binding IsMeasurementBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                                 Spacing="{StaticResource UiSpaceCompact}">
+                                <Button Text="{loc:LocalizedText Profile_Measurement_Add}"
+                                        Style="{StaticResource ButtonPrimary}"
+                                        IsEnabled="{Binding CanUseMeasurementHistory}"
+                                        IsVisible="{Binding IsMeasurementHistoryLoaded}"
+                                        Command="{Binding AddMeasurementCommand}" />
+                                <Button Text="{loc:LocalizedText Dashboard_Shared_Retry}"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        IsVisible="{Binding IsMeasurementHistoryLoaded, Converter={StaticResource InvertedBoolConverter}}"
+                                        Command="{Binding RefreshMeasurementHistoryCommand}" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout x:Name="MeasurementEditor"
+                                                 IsVisible="{Binding IsMeasurementEditorOpen}"
+                                                 Spacing="{StaticResource UiSpaceControl}">
+                                <VerticalStackLayout IsEnabled="{Binding CanEditMeasurement}"
+                                                     IsVisible="{Binding IsMeasurementDeleteConfirmationOpen, Converter={StaticResource InvertedBoolConverter}}"
+                                                     Spacing="{StaticResource UiSpaceControl}">
+                                    <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
+                                        <Label Text="{loc:LocalizedText Profile_Measurement_Site}"
+                                               Style="{StaticResource FormFieldLabel}" />
+                                        <Border Style="{StaticResource PickerContainer}">
+                                            <Picker Title="{loc:LocalizedText Profile_Measurement_Site}"
+                                                    ItemsSource="{Binding MeasurementSites}"
+                                                    ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
+                                                    SelectedItem="{Binding MeasurementSite}"
+                                                    SemanticProperties.Description="{loc:LocalizedText Profile_Measurement_Site}" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout IsVisible="{Binding IsMeasurementSideRequired}"
+                                                         Spacing="{StaticResource PresentationFieldSpacing}">
+                                        <Label Text="{loc:LocalizedText Profile_Measurement_Side}"
+                                               Style="{StaticResource FormFieldLabel}" />
+                                        <Border Style="{StaticResource PickerContainer}">
+                                            <Picker Title="{loc:LocalizedText Profile_Measurement_Side}"
+                                                    ItemsSource="{Binding MeasurementSides}"
+                                                    ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
+                                                    SelectedItem="{Binding MeasurementSide}"
+                                                    SemanticProperties.Description="{loc:LocalizedText Profile_Measurement_Side}" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
+                                        <Label Text="{loc:LocalizedText Profile_Measurement_Date}"
+                                               Style="{StaticResource FormFieldLabel}" />
+                                        <Border Style="{StaticResource InputContainer}">
+                                            <DatePicker Date="{Binding MeasurementDate}"
+                                                        MinimumDate="{Binding MinMeasurementDate}"
+                                                        MaximumDate="{Binding MaxMeasurementDate}"
+                                                        Format="d"
+                                                        SemanticProperties.Description="{loc:LocalizedText Profile_Measurement_Date}" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
+                                        <Label Text="{loc:LocalizedText Profile_Measurement_Unit}"
+                                               Style="{StaticResource FormFieldLabel}" />
+                                        <Border Style="{StaticResource PickerContainer}">
+                                            <Picker Title="{loc:LocalizedText Profile_Measurement_Unit}"
+                                                    ItemsSource="{Binding MeasurementUnits}"
+                                                    ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
+                                                    SelectedItem="{Binding MeasurementUnit}"
+                                                    SemanticProperties.Description="{loc:LocalizedText Profile_Measurement_Unit}" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
+                                        <Label Text="{Binding MeasurementValueLabel}"
+                                               Style="{StaticResource FormFieldLabel}" />
+                                        <Border Style="{StaticResource InputContainer}">
+                                            <Entry Text="{Binding MeasurementValue}" Keyboard="Numeric"
+                                                   ReturnType="Done"
+                                                   SemanticProperties.Description="{Binding MeasurementValueLabel}" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <Button Text="{loc:LocalizedText Profile_Measurement_Save}"
+                                            Style="{StaticResource ButtonPrimary}"
+                                            IsEnabled="{Binding CanSaveMeasurement}"
+                                            Command="{Binding SaveMeasurementCommand}" />
+                                    <Button Text="{loc:LocalizedText Profile_Measurement_Delete}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            IsEnabled="{Binding CanSaveMeasurement}"
+                                            IsVisible="{Binding IsMeasurementExisting}"
+                                            Command="{Binding RequestMeasurementDeleteCommand}" />
+                                </VerticalStackLayout>
+
+                                <VerticalStackLayout IsVisible="{Binding IsMeasurementDeleteConfirmationOpen}"
+                                                     Spacing="{StaticResource UiSpaceCompact}">
+                                    <Label Text="{loc:LocalizedText Profile_Measurement_ConfirmDelete}"
+                                           Style="{StaticResource BodyLabel}"
+                                           LineBreakMode="WordWrap" />
+                                    <Button Text="{loc:LocalizedText Profile_Measurement_Delete}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            Command="{Binding DeleteMeasurementCommand}" />
+                                    <Button Text="{loc:LocalizedText Common_Cancel}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            Command="{Binding CancelMeasurementDeleteCommand}" />
+                                </VerticalStackLayout>
+
+                                <Button Text="{loc:LocalizedText Dashboard_Shared_Retry}"
+                                        Style="{StaticResource ButtonPrimary}"
+                                        IsVisible="{Binding CanRetryMeasurementMutation}"
+                                        IsEnabled="{Binding IsMeasurementBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                        Command="{Binding RetryMeasurementCommand}" />
+                                <Button Text="{loc:LocalizedText Common_Cancel}"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        IsEnabled="{Binding IsMeasurementBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                        IsVisible="{Binding IsMeasurementDeleteConfirmationOpen, Converter={StaticResource InvertedBoolConverter}}"
+                                        Command="{Binding CancelMeasurementCommand}" />
+                            </VerticalStackLayout>
+
+                            <VerticalStackLayout IsVisible="{Binding IsMeasurementEditorOpen, Converter={StaticResource InvertedBoolConverter}}"
+                                                 IsEnabled="{Binding CanUseMeasurementHistory}"
+                                                 Spacing="{StaticResource UiSpaceCompact}">
+                                <Label Text="{loc:LocalizedText Profile_Measurement_Empty}"
+                                       Style="{StaticResource CaptionSmall}"
+                                       IsVisible="{Binding ShowEmptyMeasurements}" />
+                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding VisibleMeasurements}"
+                                                     Spacing="{StaticResource UiSpaceCompact}">
+                                    <BindableLayout.ItemTemplate>
+                                        <DataTemplate x:DataType="commonModels:MeasurementHistoryRow">
+                                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                                <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                                         Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
+                                                <Label Text="{Binding Name}" Style="{StaticResource FormFieldLabel}" />
+                                                <Label Text="{Binding Detail}" Style="{StaticResource CaptionSmall}" />
+                                                <Button Text="{loc:LocalizedText Common_Edit}"
+                                                        Style="{StaticResource ButtonSecondary}"
+                                                        HorizontalOptions="Start"
+                                                        CommandParameter="{Binding .}"
+                                                        Clicked="OnEditMeasurementClicked"
+                                                        SemanticProperties.Description="{Binding EditDescription}" />
+                                            </VerticalStackLayout>
+                                        </DataTemplate>
+                                    </BindableLayout.ItemTemplate>
+                                </VerticalStackLayout>
+                                <Button Text="{loc:LocalizedText Profile_Measurement_ShowMore}"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        IsVisible="{Binding HasMoreMeasurements}"
+                                        Command="{Binding ShowMoreMeasurementsCommand}" />
+                            </VerticalStackLayout>
+                        </VerticalStackLayout>
                     </VerticalStackLayout>
                 </Border>
 

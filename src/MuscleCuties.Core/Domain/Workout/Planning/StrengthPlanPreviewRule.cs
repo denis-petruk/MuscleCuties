@@ -46,6 +46,7 @@ public sealed record StrengthPlanPreviewData(
     IReadOnlyDictionary<string, string>? TemplateSlotReviewConditions)
 {
     public IReadOnlyDictionary<int, int>? GoalPriorityByExerciseId { get; init; }
+    public IReadOnlyDictionary<int, ExerciseEvidenceRanking>? EvidenceRankingByExerciseId { get; init; }
     public IReadOnlyDictionary<int, IReadOnlySet<string>>? MuscleGroupsByExerciseId { get; init; }
     public IReadOnlyDictionary<string, TemplateVolumeFloor>? TemplateVolumeFloors { get; init; }
     /// <summary>Server-derived activities an active injury blocks. Strength styles are never
@@ -259,7 +260,8 @@ public static class StrengthPlanPreviewRule
                     UserConfirmedManageableLoadExerciseIds:
                         choices.UserConfirmedManageableLoadExerciseIds ?? EmptyIds,
                     GoalPriorityByExerciseId: MergeCoveragePriority(
-                        data.GoalPriorityByExerciseId, coveragePriority));
+                        data.GoalPriorityByExerciseId, coveragePriority),
+                    EvidenceRankingByExerciseId: data.EvidenceRankingByExerciseId);
             var resolution = StrengthTemplateResolver.Resolve(selectionInput, MaximumWorkingExercises(activity, template));
             if (resolution.Slots.Any(slot => slot.IsRequired && slot.Outcome == StrengthSlotResolutionOutcome.NoSafeCandidate))
             {

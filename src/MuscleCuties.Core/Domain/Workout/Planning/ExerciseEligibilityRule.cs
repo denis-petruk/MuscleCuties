@@ -79,7 +79,8 @@ public sealed record ReviewedExerciseCandidate(
     string? ReviewConditions = null,
     bool ReviewEvidencePresent = true,
     IReadOnlyList<DirectedSubstitutionReview>? DirectedSubstitutionReviews = null,
-    bool UnilateralDoublesTime = false);
+    bool UnilateralDoublesTime = false,
+    ExerciseEvidenceRanking? EvidenceRanking = null);
 
 public sealed record ExerciseEligibilityContext(
     IReadOnlySet<ExerciseEquipmentKind> AvailableEquipment,

@@ -214,9 +214,6 @@ internal static partial class RussianUiText
         Values["Common_Unit_In"] = "дюйм";
         Values["Common_Unit_Kcal"] = "ккал";
         Values["Common_Unit_Kg"] = "кг";
-        Values["Common_Unit_Km"] = "км";
-        Values["Common_Unit_Lb"] = "фунт";
-        Values["Common_Unit_Mi"] = "ми";
         Values["Common_Unit_L"] = "л";
         Values["Common_Unit_Mcg"] = "мкг";
         Values["Common_Unit_Metric"] = "Метрическая система";
@@ -898,5 +895,19 @@ internal static partial class RussianUiText
         Values["Startup_ResetConfirmationBody"] = "Это очистит данные, сохранённые на этом устройстве. Данные аккаунта останутся в облаке.";
         Values["Startup_ResetAndRepopulate"] = "Сбросить и загрузить заново";
         Values["Startup_Reinitializing"] = "Повторная загрузка...";
+        Values["Profile_Measurements_Title"] = "Замеры обхватов";
+        Values["Profile_Measurements_Date"] = "Дата замера";
+        Values["Profile_Measurements_Site"] = "Зона";
+        Values["Profile_Measurements_Side"] = "Сторона";
+        Values["Profile_Measurements_Value"] = "Значение";
+        Values["Profile_Measurements_SaveButton"] = "Сохранить замер";
+        Values["Profile_Measurements_DeleteButton"] = "Удалить";
+        Values["Profile_Measurements_EditButton"] = "Изменить";
+        Values["Profile_Measurements_CancelEditButton"] = "Отменить редактирование";
+        Values["Profile_Measurements_UtcLeadExplanation"] = "Ваша местная дата опережает дату UTC. История замеров проверяется по времени UTC, поэтому записи на опережающие даты станут доступны, когда дата в UTC догонит местную.";
+        Values["Profile_Measurements_Saved"] = "Замер сохранен.";
+        Values["Profile_Measurements_Deleted"] = "Замер удален.";
+        Values["Profile_Measurements_InvalidValue"] = "Пожалуйста, введите корректное значение замера.";
+        Values["Profile_Measurements_NoHistory"] = "Нет сохраненных замеров за этот период.";
     }
 }
