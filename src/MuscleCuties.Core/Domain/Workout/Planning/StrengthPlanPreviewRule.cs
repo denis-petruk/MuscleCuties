@@ -443,7 +443,7 @@ public static class StrengthPlanPreviewRule
         {
             if (!tenRegionCoverage.MeetsMinimum)
             {
-                if (!choices.AllowMovementOmissionsForDuration && movementOmissions.Count == 0)
+                if (scheduledSessionsPerWeek < TenRegionMuscleCoverageRule.MinimumWeeklySessionExposures)
                     limitations.AddRange(tenRegionCoverage.LimitationCodes);
                 else
                     advisories.AddRange(tenRegionCoverage.LimitationCodes);
