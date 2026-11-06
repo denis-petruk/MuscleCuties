@@ -563,8 +563,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             WeightTrendSummary = lastWeight is null
                 ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Weight_TrendEmpty")
                 : string.Format(CultureInfo.CurrentCulture,
-                    MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(
-                        "Dashboard_Weight_TrendMedianFormat"),
+                    System.Text.CompositeFormat.Parse(
+                        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(
+                            "Dashboard_Weight_TrendMedianFormat")),
                     FormatWeight(lastWeight));
             ReadinessTrendSummary = HasReadinessTrend
                 ? $"{TrendPoints.Count(point => point.ReadinessScore.HasValue)} of 7 days checked in"
