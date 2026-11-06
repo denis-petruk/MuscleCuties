@@ -125,7 +125,6 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         CancelEditCommand = new RelayCommand(CancelEdit);
         SelectSiteCommand = new RelayCommand<InjuryFlagOption>(SelectSite);
         SelectStatusCommand = new RelayCommand<InjuryStatusOption>(SelectStatus);
-        SelectClinicianAdviceCommand = new RelayCommand<string>(SelectClinicianAdvice);
         SelectClinicianAdviceOptionCommand = new RelayCommand<InjuryAdviceOption>(SelectClinicianAdviceOption);
         ToggleHistoryCommand = new RelayCommand(() => IsHistoryExpanded = !IsHistoryExpanded);
         RetryPageRefreshCommand = new AsyncRelayCommand(RetryPageRefreshAsync, () => !IsBusy);
@@ -202,7 +201,6 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public RelayCommand CancelEditCommand { get; }
     public RelayCommand<InjuryFlagOption> SelectSiteCommand { get; }
     public RelayCommand<InjuryStatusOption> SelectStatusCommand { get; }
-    public RelayCommand<string> SelectClinicianAdviceCommand { get; }
     public RelayCommand<InjuryAdviceOption> SelectClinicianAdviceOptionCommand { get; }
     public RelayCommand ToggleHistoryCommand { get; }
     public AsyncRelayCommand RetryPageRefreshCommand { get; }
@@ -233,17 +231,6 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     partial void OnSelectedStatusChanged(WorkoutInjuryStatus? value)
     {
         RefreshSaveState();
-    }
-
-    private void SelectClinicianAdvice(string? answer)
-    {
-        SelectedClinicianAdvice = answer switch
-        {
-            "Yes" => true,
-            "No" => false,
-            _ => null
-        };
-        _clinicianAdviceTouched = true;
     }
 
     private void SelectClinicianAdviceOption(InjuryAdviceOption? option)
