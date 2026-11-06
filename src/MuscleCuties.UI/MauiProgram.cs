@@ -163,6 +163,7 @@ public static class MauiProgram
             sp.GetRequiredService<IWorkoutInjuryUseCase>(),
             sp.GetRequiredService<IDailyCheckInUseCase>(),
             sp.GetRequiredService<ICyclePhaseProjectionUseCase>(),
+            sp.GetRequiredService<IProfileUnitsUseCase>(),
             () => NavigateToAsync("//CyclePage"),
             () => NavigateToAsync("//WorkoutPage"),
             workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId),
@@ -287,6 +288,7 @@ public static class MauiProgram
             sp.GetRequiredService<IProfilePersonalInfoUseCase>(),
             sp.GetRequiredService<IAccountPasswordValidator>(),
             sp.GetRequiredService<IProfileRefreshNotifier>(),
+            sp.GetRequiredService<IProfileUnitsUseCase>(),
             () => NavigateToAsync("..")));
 
         services.AddTransient<ProfileNutritionSettingsViewModel>(sp => new ProfileNutritionSettingsViewModel(

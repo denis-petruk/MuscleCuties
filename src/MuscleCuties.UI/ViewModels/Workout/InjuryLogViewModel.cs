@@ -106,6 +106,14 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         };
         SelectedWorseningOption = WorseningTriggerOptions[0];
 
+        // F01: three visible answers, one of which is deliberately unanswered (null).
+        ClinicianAdviceOptions = new List<InjuryAdviceOption>
+        {
+            new() { Value = null, LabelKey = "Injury_Log_ClinicianAdvice_Unanswered", IsSelected = true },
+            new() { Value = true, LabelKey = "Injury_Log_ClinicianAdvice_Yes" },
+            new() { Value = false, LabelKey = "Injury_Log_ClinicianAdvice_No" }
+        };
+
         LoadCommand = new AsyncRelayCommand(LoadAsync, () => !IsBusy);
         ToggleAddFormCommand = new RelayCommand(BeginAdd, () => !IsBusy);
         SaveInjuryCommand = new AsyncRelayCommand(SaveInjuryAsync, () => CanSaveInjury);
@@ -118,6 +126,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         SelectSiteCommand = new RelayCommand<InjuryFlagOption>(SelectSite);
         SelectStatusCommand = new RelayCommand<InjuryStatusOption>(SelectStatus);
         SelectClinicianAdviceCommand = new RelayCommand<string>(SelectClinicianAdvice);
+        SelectClinicianAdviceOptionCommand = new RelayCommand<InjuryAdviceOption>(SelectClinicianAdviceOption);
         ToggleHistoryCommand = new RelayCommand(() => IsHistoryExpanded = !IsHistoryExpanded);
         RetryPageRefreshCommand = new AsyncRelayCommand(RetryPageRefreshAsync, () => !IsBusy);
     }
@@ -127,6 +136,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public string PainLabelText => PainLabelFor(NewPainLevel);
 
     public IReadOnlyList<InjuryWorseningOption> WorseningTriggerOptions { get; }
+    public IReadOnlyList<InjuryAdviceOption> ClinicianAdviceOptions { get; }
 
     /// <summary>
     ///     Owner rule: recorded worsening symptoms or a clinician restriction are safety concerns.
@@ -193,6 +203,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public RelayCommand<InjuryFlagOption> SelectSiteCommand { get; }
     public RelayCommand<InjuryStatusOption> SelectStatusCommand { get; }
     public RelayCommand<string> SelectClinicianAdviceCommand { get; }
+    public RelayCommand<InjuryAdviceOption> SelectClinicianAdviceOptionCommand { get; }
     public RelayCommand ToggleHistoryCommand { get; }
     public AsyncRelayCommand RetryPageRefreshCommand { get; }
 
@@ -233,6 +244,24 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             _ => null
         };
         _clinicianAdviceTouched = true;
+    }
+
+    private void SelectClinicianAdviceOption(InjuryAdviceOption? option)
+    {
+        if (option is null)
+            return;
+
+        SelectedClinicianAdvice = option.Value;
+        _clinicianAdviceTouched = true;
+    }
+
+    // Keeps the three segmented cells in step with the answer, including a restored edit or a
+    // reset back to unanswered. The selected cell is what VoiceOver announces, so the visual and
+    // the accessible state cannot diverge.
+    partial void OnSelectedClinicianAdviceChanged(bool? value)
+    {
+        foreach (var option in ClinicianAdviceOptions)
+            option.IsSelected = option.Value == value;
     }
 
     partial void OnSinceDateValueChanged(DateTime value)

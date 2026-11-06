@@ -164,7 +164,8 @@ internal static partial class RussianUiText
         Values["Dashboard_Trend_Fat"] = "Жиры";
         Values["Dashboard_Trend_WeeklyWeightTitle"] = "Вес по неделям с записями";
         Values["Dashboard_Trend_WeeklyWeightEmpty"] = "Записывайте вес, чтобы видеть по одной точке на неделю.";
-        Values["Dashboard_Trend_LoggedWeeksFormat"] = "Недель с записями: {0} · Последний вес: {1} кг";
+        Values["Dashboard_Trend_LoggedWeeksFormat"] = "Недель с записями: {0} · Последний вес: {1} {2}";
+        Values["Dashboard_Weight_TrendMedianFormat"] = "Медиана за 7 дней: {0}";
         Values["Dashboard_Trend_WorkoutHighlightsTitle"] = "Достижения в тренировках";
         Values["Dashboard_Trend_WorkoutHighlightsDescription"] = "Последние 90 дней";
         Values["Dashboard_Trend_WorkoutHighlightsEmpty"] = "Завершите тренировку, чтобы увидеть прогресс.";
