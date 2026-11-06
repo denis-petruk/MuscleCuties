@@ -96,6 +96,7 @@ public sealed record ActiveWorkoutSessionSnapshot(
     public int ConfirmedActiveSeconds { get; init; }
     public Guid? TimingIntervalId { get; init; }
     public int TimingIntervalConfirmedSeconds { get; init; }
+    public decimal? DistanceKm { get; init; }
 }
 
 public sealed record ResumeWorkoutTimingCommand(string IdempotencyKey, Guid SessionId);
@@ -123,7 +124,8 @@ public sealed record FinishWorkoutSessionCommand(
     int TotalDurationSeconds,
     int? RpeRating,
     string? Notes,
-    IReadOnlyList<ActiveExerciseSetInput>? FinalSets = null);
+    IReadOnlyList<ActiveExerciseSetInput>? FinalSets = null,
+    decimal? DistanceKm = null);
 
 public sealed record CancelWorkoutSessionCommand(
     string IdempotencyKey,

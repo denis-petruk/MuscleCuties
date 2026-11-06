@@ -642,8 +642,13 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             var timeProvider = new SyntheticTimeProvider(now);
             var store = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), timeProvider);
             await CompleteSyntheticTimingAsync(store, timeProvider, userId, sessionId);
-            await store.FinishSessionAsync(userId, new FinishWorkoutSessionCommand("synthetic-finish", sessionId, now,
-                SyntheticSessionDurationSeconds, null, null), CancellationToken.None);
+            var completed = await store.FinishSessionAsync(userId, new FinishWorkoutSessionCommand("synthetic-finish",
+                sessionId, now, SyntheticSessionDurationSeconds, RpeRating: 6, Notes: null, DistanceKm: 5.2m),
+                CancellationToken.None);
+            var persisted = await database.WorkoutSessionLogs.AsNoTracking().SingleAsync(row => row.Id == sessionId);
+            Xunit.Assert.Equal(5.2m, completed?.DistanceKm);
+            Xunit.Assert.Equal(5.2m, persisted.DistanceKm);
+            Xunit.Assert.Equal(6, persisted.RpeRating);
             var state = await database.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == userId);
             Xunit.Assert.Equal(TrainingExperienceLevel.Advanced, state.EffectiveExperience);
             Xunit.Assert.Equal(ExistingExperienceVersion, state.ExperienceVersion);

@@ -21,6 +21,8 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
     private const int MaximumRestSeconds = 3600;
     private const int MinimumDurationSeconds = 0;
     private const int MaximumDurationSeconds = 86_400;
+    private const decimal MinimumDistanceKm = 0m;
+    private const decimal MaximumDistanceKm = 500m;
 
     public Task<ActiveWorkoutSessionSnapshot?> ResumeTimingAsync(Guid userId, ResumeWorkoutTimingCommand command,
         CancellationToken cancellationToken = default)
@@ -92,6 +94,8 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
         if (command.TotalDurationSeconds < MinimumDurationSeconds ||
             command.TotalDurationSeconds > MaximumDurationSeconds ||
             (command.RpeRating is { } rpe && (rpe < (int)MinimumRpe || rpe > (int)MaximumRpe)) ||
+            (command.DistanceKm is { } distance &&
+                (distance < MinimumDistanceKm || distance > MaximumDistanceKm)) ||
             command.Notes?.Length > MaximumNotesLength)
             throw new ArgumentException("Workout finish parameters are outside supported bounds.", nameof(command));
 
@@ -101,7 +105,11 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
 
         return store.FinishSessionAsync(
             userId,
-            command with { FinalSets = finalSets.Select(NormalizeSet).ToArray() },
+            command with
+            {
+                FinalSets = finalSets.Select(NormalizeSet).ToArray(),
+                DistanceKm = NormalizeDistance(command.DistanceKm)
+            },
             cancellationToken);
     }
 
@@ -140,6 +148,9 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
             set.RestTimeSeconds > MaximumRestSeconds)
             throw new ArgumentException("Exercise set values are outside supported bounds.", nameof(set));
     }
+
+    private static decimal? NormalizeDistance(decimal? distance) =>
+        distance is > 0m ? Math.Round(distance.Value, 2, MidpointRounding.AwayFromZero) : null;
 
     private static ActiveExerciseSetInput NormalizeSet(ActiveExerciseSetInput set) =>
         set with

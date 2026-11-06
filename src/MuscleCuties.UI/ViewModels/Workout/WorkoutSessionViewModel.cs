@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -70,7 +71,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsActivityIntro), nameof(IsExerciseFlow),
         nameof(IsActivitySummary), nameof(IsTimedActivityScreen), nameof(IsTimedActivityActive),
-        nameof(IsTimedActivitySummary), nameof(CanPauseTimedActivity), nameof(CanResumeTimedActivity))]
+        nameof(IsTimedActivitySummary), nameof(ShowsTimedActivityDistance),
+        nameof(CanPauseTimedActivity), nameof(CanResumeTimedActivity))]
     private SessionScreen _currentScreen;
 
     [ObservableProperty] private string _cyclePhaseNote = string.Empty;
@@ -112,10 +114,13 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private int _restTimerVersion;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CanStartActivity), nameof(ShowStrengthSummaryMetrics),
-        nameof(IsTimedActivitySummary))]
+        nameof(IsTimedActivitySummary), nameof(ShowsTimedActivityDistance))]
     private WorkoutActivitySectionItem? _selectedActivity;
     [ObservableProperty] private string _summaryDuration = "<1 min";
     [ObservableProperty] private string _summaryEffortText = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSummaryDistance))]
+    private string _summaryDistanceText = string.Empty;
     [ObservableProperty] private int _summaryPrCount;
     [ObservableProperty] private string _summaryStatusText = string.Empty;
     [ObservableProperty] private string _summaryTitle = "Activity complete";
@@ -152,6 +157,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private DateTime _plannedSessionStartedAtUtc;
     private DateTime? _pendingCompletionAtUtc;
     private int? _pendingCompletionSeconds;
+    private int? _pendingCompletionRpe;
+    private decimal? _pendingCompletionDistanceKm;
     private readonly Stopwatch _plannedSessionTimer = new();
     private readonly SemaphoreSlim _timingGate = new(SingleConcurrentOperation, SingleConcurrentOperation);
     private readonly SemaphoreSlim _completionGate = new(SingleConcurrentOperation, SingleConcurrentOperation);
@@ -189,6 +196,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(TimedActivityRpe), nameof(TimedActivityRpeText),
         nameof(HasTimedActivityRpe))]
     private double _timedActivityRpeValue;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTimedActivityDistance))]
+    private string _timedActivityDistanceText = string.Empty;
     private CancellationTokenSource? _timedDisplayCancellation;
     private bool _abandonOutcomeUnknown;
 
@@ -231,6 +241,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         IsTimedActivityActive && IsTimedActivityPaused && !IsBusy && _pendingCompletionAtUtc is null;
     public bool HasTimedActivityPhase => !string.IsNullOrEmpty(TimedActivityPhaseKey);
     public bool HasTimedActivityCountdown => !string.IsNullOrEmpty(TimedActivityRemainingText);
+    public bool ShowsTimedActivityDistance => IsTimedActivityScreen && SelectedActivity is not null &&
+        TimedActivityProgress.SupportsDistance(SelectedActivity.Tag);
+    public bool HasTimedActivityDistance => !string.IsNullOrWhiteSpace(TimedActivityDistanceText);
+    public bool HasSummaryDistance => !string.IsNullOrEmpty(SummaryDistanceText);
     public bool IsTimedActivitySummary => IsActivitySummary && SelectedActivity?.IsTimedActivity == true;
     public bool IsRestDaySession => _isRestDay;
     public bool ShowStartButton => !_isRestDay;
@@ -438,7 +452,11 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             TimedActivityRemainingText = string.Empty;
             TimedActivityProgressValue = 0;
             TimedActivityRpeValue = 0;
+            TimedActivityDistanceText = string.Empty;
             SummaryEffortText = string.Empty;
+            SummaryDistanceText = string.Empty;
+            _pendingCompletionRpe = null;
+            _pendingCompletionDistanceKm = null;
             string phaseNote;
             try
             {
@@ -782,6 +800,24 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         RefreshProgress();
     }
 
+    private decimal? ReadTimedActivityDistance() =>
+        TryReadTimedActivityDistance(out var distanceKm) ? distanceKm : null;
+
+    private bool TryReadTimedActivityDistance(out decimal? distanceKm)
+    {
+        distanceKm = null;
+        if (!ShowsTimedActivityDistance || string.IsNullOrWhiteSpace(TimedActivityDistanceText))
+            return true;
+        var normalized = TimedActivityDistanceText.Trim().Replace(',', '.');
+        if (!decimal.TryParse(normalized,
+                NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign,
+                CultureInfo.InvariantCulture, out var value) ||
+            value < 0m || value > TimedActivityProgress.MaximumDistanceKm)
+            return false;
+        distanceKm = TimedActivityProgress.NormalizeDistance(value);
+        return true;
+    }
+
     private void RefreshProgress()
     {
         ExerciseProgress = new ObservableCollection<SessionExerciseProgress>(
@@ -854,6 +890,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         RefreshActivityCards();
         SelectedActivity = null;
         CurrentExercise = null;
+        SummaryEffortText = string.Empty;
+        SummaryDistanceText = string.Empty;
         Celebration = CelebrationType.None;
         ErrorText = string.Empty;
         await _navigateAsync("..");
@@ -862,9 +900,20 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task FinishTimedActivityAsync()
     {
-        if (IsBusy || _pendingCompletionAtUtc is not null) return;
+        if (IsBusy) return;
+        // A retained completion identity means the previous finish was not acknowledged. Retrying
+        // it with the frozen body is safe; the guard against a second identity stays inside
+        // CompletePlannedSessionCoreAsync.
         if (!IsTimedActivityRunning && !IsTimedActivityPaused) return;
+        decimal? requestedDistance = null;
+        if (_pendingCompletionAtUtc is null && !TryReadTimedActivityDistance(out requestedDistance))
+        {
+            ErrorText = "Workout_Session_DistanceInvalid";
+            return;
+        }
         var measuredSeconds = CurrentTimedElapsedSeconds;
+        var summaryRpe = _pendingCompletionRpe ?? TimedActivityRpe;
+        var summaryDistance = _pendingCompletionDistanceKm ?? requestedDistance;
         if (!await CompletePlannedSessionAsync())
         {
             // The finish was not acknowledged. Keep the draft, the confirmed time and the retained
@@ -882,10 +931,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         PauseActivity();
         IsTimedActivityRunning = false;
         IsTimedActivityPaused = false;
-        ShowTimedActivitySummary(measuredSeconds);
+        ShowTimedActivitySummary(measuredSeconds, summaryRpe, summaryDistance);
     }
 
-    private void ShowTimedActivitySummary(int measuredSeconds)
+    private void ShowTimedActivitySummary(int measuredSeconds, int? rpe, decimal? distanceKm)
     {
         SummaryTotalVolume = UiTextCatalog.Get("Workout_Session_NotApplicable");
         SummaryPrCount = 0;
@@ -893,9 +942,13 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             ? UiTextCatalog.Format("Workout_Session_TimedDurationMinutes",
                 (int)TimeSpan.FromSeconds(measuredSeconds).TotalMinutes)
             : UiTextCatalog.Get("Workout_Session_TimedDurationUnderMinute");
-        SummaryEffortText = TimedActivityRpe is { } rpe
-            ? UiTextCatalog.Format("Workout_Session_SummaryEffortFormat", rpe)
+        SummaryEffortText = rpe is { } rating
+            ? UiTextCatalog.Format("Workout_Session_SummaryEffortFormat", rating)
             : UiTextCatalog.Get("Workout_Session_SummaryEffortNotRated");
+        SummaryDistanceText = distanceKm is { } km
+            ? UiTextCatalog.Format("Workout_Session_SummaryDistanceFormat",
+                km.ToString("0.##", CultureInfo.CurrentCulture))
+            : string.Empty;
         SummaryTitle = "Workout_Session_TimedSummaryTitle";
         SummaryStatusText = "Workout_Session_TimedSummaryStatus";
         IsActivityComplete = true;
@@ -1065,15 +1118,18 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             return false;
         }
         _pendingCompletionAtUtc ??= DateTime.UtcNow;
+        // Freeze the optional actuals with the completion identity: a retry must send the same body
+        // the server may already have accepted, not whatever the controls show later.
+        _pendingCompletionRpe ??= SelectedActivity?.IsTimedActivity == true
+            ? TimedActivityProgress.NormalizeRpe(TimedActivityRpeValue)
+            : null;
+        _pendingCompletionDistanceKm ??= ReadTimedActivityDistance();
         OnPropertyChanged(nameof(CanAbandonPlannedSession));
         IsBusy = true;
         try
         {
-            var rpe = SelectedActivity?.IsTimedActivity == true
-                ? TimedActivityProgress.NormalizeRpe(TimedActivityRpeValue)
-                : null;
             await _session.FinishPlannedSessionAsync(sessionId, _pendingCompletionAtUtc.Value,
-                _pendingCompletionSeconds.Value, rpe);
+                _pendingCompletionSeconds.Value, _pendingCompletionRpe, _pendingCompletionDistanceKm);
             _plannedSessionId = null;
             OnPropertyChanged(nameof(CanAbandonPlannedSession));
             _plannedSessionStartedAtUtc = default;
@@ -1085,6 +1141,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             _pendingTimingCheckpoint = null;
             _pendingCompletionAtUtc = null;
             _pendingCompletionSeconds = null;
+            _pendingCompletionRpe = null;
+            _pendingCompletionDistanceKm = null;
             ErrorText = string.Empty;
             return true;
         }
@@ -1186,6 +1244,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         _pendingResumeOperationId = null;
         _pendingCompletionAtUtc = null;
         _pendingCompletionSeconds = null;
+        _pendingCompletionRpe = null;
+        _pendingCompletionDistanceKm = null;
         _confirmedActiveSeconds = 0;
         _plannedSessionStartedAtUtc = default;
         _abandonOutcomeUnknown = false;

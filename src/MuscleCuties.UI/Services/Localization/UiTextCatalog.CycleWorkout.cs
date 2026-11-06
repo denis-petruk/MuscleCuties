@@ -88,6 +88,13 @@ public static partial class UiTextCatalog
         English["Workout_Session_TimedRpeValueFormat"] = "{0}/10";
         English["Workout_Session_TimedRpeHint"] = "Optional. Rate how hard this activity felt.";
         English["Workout_Session_TimedRpeAccessibility"] = "Perceived effort from 1 to 10";
+        English["Workout_Session_TimedDistanceLabel"] = "Distance (km)";
+        English["Workout_Session_TimedDistancePlaceholder"] = "0.0";
+        English["Workout_Session_TimedDistanceHint"] = "Optional. Leave blank if you didn't track distance.";
+        English["Workout_Session_TimedDistanceAccessibility"] = "Distance covered in kilometres";
+        English["Workout_Session_DistanceInvalid"] = "Enter a distance between 0 and 500 km, or leave it blank.";
+        English["Workout_Session_SummaryDistanceFormat"] = "{0} km";
+        English["Workout_Session_SummaryDistanceHeader"] = "Distance";
         English["Workout_Session_SummaryCompleteTitle"] = "Activity complete!";
         English["Workout_Session_SummaryReviewedTitle"] = "Activity reviewed";
         English["Workout_Session_SummaryLoggedFormat"] = "{0} of {1} logged";

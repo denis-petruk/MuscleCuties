@@ -84,6 +84,13 @@ internal static partial class RussianUiText
         Values["Workout_Session_TimedRpeValueFormat"] = "{0}/10";
         Values["Workout_Session_TimedRpeHint"] = "Необязательно. Оцените, насколько тяжёлой была активность.";
         Values["Workout_Session_TimedRpeAccessibility"] = "Ощущаемое усилие от 1 до 10";
+        Values["Workout_Session_TimedDistanceLabel"] = "Дистанция (км)";
+        Values["Workout_Session_TimedDistancePlaceholder"] = "0,0";
+        Values["Workout_Session_TimedDistanceHint"] = "Необязательно. Оставьте пустым, если не отслеживали дистанцию.";
+        Values["Workout_Session_TimedDistanceAccessibility"] = "Пройденная дистанция в километрах";
+        Values["Workout_Session_DistanceInvalid"] = "Укажите дистанцию от 0 до 500 км или оставьте поле пустым.";
+        Values["Workout_Session_SummaryDistanceFormat"] = "{0} км";
+        Values["Workout_Session_SummaryDistanceHeader"] = "Дистанция";
         Values["Workout_Session_SummaryCompleteTitle"] = "Активность завершена!";
         Values["Workout_Session_SummaryReviewedTitle"] = "Активность просмотрена";
         Values["Workout_Session_SummaryLoggedFormat"] = "Записано {0} из {1}";

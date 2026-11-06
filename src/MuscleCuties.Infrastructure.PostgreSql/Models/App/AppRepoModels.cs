@@ -411,6 +411,7 @@ public sealed class WorkoutSessionLogRecord : ITenantRecord
     public decimal TotalVolumeKg { get; set; }
     public string? Notes { get; set; }
     public int? RpeRating { get; set; }
+    public decimal? DistanceKm { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }
     public DateTime CreatedAt { get; set; }

@@ -173,6 +173,23 @@
                                        Text="{loc:LocalizedText Workout_Session_TimedRpeHint}"
                                        Style="{StaticResource MutedLabel}" />
                             </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}"
+                                                 IsVisible="{Binding ShowsTimedActivityDistance}">
+                                <Label LineBreakMode="WordWrap"
+                                       Text="{loc:LocalizedText Workout_Session_TimedDistanceLabel}"
+                                       Style="{StaticResource CaptionLabel}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Style="{StaticResource WorkoutNumberEntry}"
+                                           Text="{Binding TimedActivityDistanceText, Mode=TwoWay}"
+                                           Keyboard="Numeric"
+                                           Placeholder="{loc:LocalizedText Workout_Session_TimedDistancePlaceholder}"
+                                           ReturnType="Done"
+                                           SemanticProperties.Description="{loc:LocalizedText Workout_Session_TimedDistanceAccessibility}" />
+                                </Border>
+                                <Label LineBreakMode="WordWrap"
+                                       Text="{loc:LocalizedText Workout_Session_TimedDistanceHint}"
+                                       Style="{StaticResource MutedLabel}" />
+                            </VerticalStackLayout>
                         </VerticalStackLayout>
                     </ScrollView>
                     <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}">
@@ -615,11 +632,19 @@
                                 <Border Grid.Column="2" Style="{StaticResource CardSecondary}"
                                         IsVisible="{Binding IsTimedActivitySummary}"
                                         SemanticProperties.Description="{Binding SummaryEffortText, Converter={StaticResource LocalizedStringConverter}}">
-                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
+                                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                                         <Label LineBreakMode="WordWrap"
                                             Text="{Binding SummaryEffortText}"
                                             Style="{StaticResource WorkoutMetricValue}" />
                                         <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{loc:LocalizedText Workout_Session_SummaryEffortHeader}"
+                                               Style="{StaticResource WorkoutMetricLabel}" />
+                                        <Label LineBreakMode="WordWrap" Grid.Row="2"
+                                            Text="{Binding SummaryDistanceText}"
+                                            IsVisible="{Binding HasSummaryDistance}"
+                                            Style="{StaticResource WorkoutMetricValue}" />
+                                        <Label LineBreakMode="WordWrap" Grid.Row="3"
+                                               Text="{loc:LocalizedText Workout_Session_SummaryDistanceHeader}"
+                                               IsVisible="{Binding HasSummaryDistance}"
                                                Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
