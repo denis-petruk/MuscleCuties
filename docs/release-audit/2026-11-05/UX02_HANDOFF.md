@@ -34,6 +34,17 @@ The governing scope is [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md#ux02-run-
 | `dotnet build src/MuscleCuties.UI -f net10.0-ios -p:EnableCodeSigning=false` | succeeded, 0 warnings, 0 errors (re-run after the summary XAML fix) |
 | Key parity audit `loc:LocalizedText` + `UiTextCatalog.Get/Format` vs both catalogs | 274 used keys, 0 missing in EN, 0 missing in RU |
 
+## Post-handoff correction
+
+An audit of the inherited tip found one lifecycle defect. `_appSuspended` was set by
+`SuspendForAppBackgroundAsync` and only cleared by `StartActivityAsync`, and no foreground-resume event
+exists. After backgrounding a running timed activity, **Resume** reached `if (_appSuspended) return;` in
+`ResumeTimedActivityAsync` while `ResumeTimingAsync` also refused to restart the local clock, so the
+paused surface kept a Resume button that could never recover; only Finish or Abandon escaped it.
+`ResumeTimedActivityAsync` now clears the flag on the explicit user action, before the resume call, so a
+suspension that happens during the call still wins. The ViewModel has no unit-test harness in
+`tests/`, so this path is verified by build and the suites below, not by an automated regression test.
+
 ## Not verified, and why
 
 - **No simulator or device walkthrough on this branch.** Per the repository contract, MAUI run and screenshots need task-specific owner authorization; none was given for this branch. Start, pause/resume, background/foreground, finish summary, cancel/confirm abandon, ambiguous response, HIIT gating, multi-activity day, EN/RU visuals, light/dark, large text and VoiceOver remain unobserved.

@@ -982,6 +982,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             return;
         }
         if (!CanResumeTimedActivity || _plannedSessionId is not { } sessionId) return;
+        // An explicit resume means the page is visible again. Clear the suspension flag that backgrounding
+        // set, otherwise ResumeTimingAsync reports success but refuses to restart the local clock and the
+        // paused surface keeps a Resume button that can never recover. A later suspension sets it again.
+        _appSuspended = false;
         IsBusy = true;
         try
         {
