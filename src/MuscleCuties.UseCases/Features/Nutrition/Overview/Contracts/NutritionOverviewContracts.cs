@@ -37,6 +37,18 @@ public sealed record DailyMicronutrientDto(
     float Goal
 );
 
+/// <summary>
+/// Additive, backward-compatible coverage metadata. <see cref="Status"/> is one of KnownZero,
+/// Complete, Partial or Unavailable. It states what the micronutrient totals actually cover; it
+/// never changes an amount and is absent for clients that do not read it.
+/// </summary>
+public sealed record MicronutrientCoverageDto(
+    string Status,
+    int CoveredItemCount,
+    int UncoveredItemCount,
+    IReadOnlyList<string> UnavailableItemNames
+);
+
 public sealed record MealSummaryDto(
     Guid HistoryId,
     int LoggedMealId,
@@ -187,5 +199,6 @@ public sealed record NutritionOverviewResponse(
     string BreakfastPreference,
     string PhaseAvailability = "Available",
     string TargetSource = "Account targets",
-    NutritionTargetBreakdownDto? TargetBreakdown = null
+    NutritionTargetBreakdownDto? TargetBreakdown = null,
+    MicronutrientCoverageDto? MicronutrientCoverage = null
 );

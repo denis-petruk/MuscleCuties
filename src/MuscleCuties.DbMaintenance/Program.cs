@@ -18,6 +18,7 @@ public static class DatabaseMaintenance
     private const string LambdaFunctionEnvironmentVariable = "AWS_LAMBDA_FUNCTION_NAME";
     private const string DbInitCommand = "dbinit";
     private const string DbCheckCommand = "dbcheck";
+    private const string MigrateCommand = "migrate";
     private const string SeedCommand = "seed";
     private const string SessionLockRunnerCommand = "session-lock-runner";
     private const string CleanupPhotosCommand = "cleanup-photos";
@@ -47,7 +48,7 @@ public static class DatabaseMaintenance
         if (!TryParse(args, out var command))
         {
             Console.Error.WriteLine(
-                "Usage: DbMaintenance dbinit | dbcheck | seed | session-lock-runner -- <child-command> [args...] | " +
+                "Usage: DbMaintenance migrate | dbinit | dbcheck | seed | session-lock-runner -- <child-command> [args...] | " +
                 "cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
             return InvalidUsageExitCode;
         }
@@ -141,6 +142,26 @@ public static class DatabaseMaintenance
                 return 0;
             }
 
+            if (command == MigrateCommand)
+            {
+                var summary = await PostgresSchemaMigrations.ApplyMigrationsAsync(context);
+                WriteJson(new
+                {
+                    contract_version = ContractVersion,
+                    status = CompatibleStatus,
+                    schema_version = summary.CurrentVersion,
+                    migrations_applied = summary.MigrationsApplied,
+                    details = summary.Details.Select(d => new
+                    {
+                        version = d.Version,
+                        script_name = d.ScriptName,
+                        checksum_sha256 = d.ChecksumSha256,
+                        already_applied = d.AlreadyApplied
+                    })
+                });
+                return 0;
+            }
+
             if (command == SeedCommand)
             {
                 var summary = await PostgresCanonicalCatalogSeeder.IngestEmbeddedManifestAsync(context);
@@ -227,7 +248,7 @@ public static class DatabaseMaintenance
             return false;
         }
 
-        if (args is [DbInitCommand] or [DbCheckCommand] or [SeedCommand])
+        if (args is [MigrateCommand] or [DbInitCommand] or [DbCheckCommand] or [SeedCommand])
         {
             command = args[0];
             return true;

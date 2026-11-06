@@ -75,9 +75,13 @@
                     </Border>
                 </Grid>
 
-                <Grid Grid.Row="3" RowDefinitions="Auto,*" IsVisible="{Binding IsFoodFinderCollapsed}" Margin="{StaticResource UiInsets20_0}">
+                <CollectionView Grid.Row="3" IsVisible="{Binding IsFoodFinderCollapsed}" Margin="{StaticResource UiInsets20_0}"
+                                ItemsSource="{Binding MealIngredients}"
+                                ItemSizingStrategy="MeasureAllItems" SelectionMode="None">
+                    <CollectionView.Header>
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="*"
-                              RowSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_20_0_12}">
+                              RowSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_20_0_12}"
+                              x:DataType="vm:NutritionViewModel">
                             <Border Style="{StaticResource CardSecondary}">
                                 <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing6}"
                                       RowSpacing="{StaticResource UiSpaceMicro}">
@@ -106,10 +110,10 @@
 
                             <Label Grid.Row="1" Text="{loc:LocalizedText Nutrition_Meal}"
                                    Style="{StaticResource FormFieldLabel}"
-                                   IsVisible="{Binding IsMealChoiceLocked, Converter={StaticResource InvertedBoolConverter}}" />
+                                   IsVisible="{Binding IsMealContextEditorVisible}" />
                             <Grid Grid.Row="2" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto"
                                   ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}"
-                                  IsVisible="{Binding IsMealChoiceLocked, Converter={StaticResource InvertedBoolConverter}}">
+                                  IsVisible="{Binding IsMealContextEditorVisible}">
                                 <Border Style="{StaticResource CardSecondary}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
                                     <Border.Triggers>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsBreakfastSelected}" Value="True">
@@ -173,17 +177,29 @@
                                 </Border>
                             </Grid>
                             <Border Grid.Row="2" Style="{StaticResource CardSecondary}"
-                                    IsVisible="{Binding IsMealChoiceLocked}">
-                                <Label Text="{Binding MealChoiceSummary}" Style="{StaticResource BodyStrong}"
-                                       LineBreakMode="WordWrap" />
+                                    IsVisible="{Binding IsMealContextSummaryVisible}">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                    <Label Text="{Binding MealChoiceSummary}" Style="{StaticResource BodyStrong}"
+                                           LineBreakMode="WordWrap" VerticalOptions="Center" />
+                                    <Button Grid.Column="1"
+                                            Text="{loc:LocalizedText Common_Change}"
+                                            Command="{Binding ToggleMealContextCommand}"
+                                            IsVisible="{Binding CanChangeMealContext}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_ChangeMealContext}" />
+                                </Grid>
                             </Border>
                             <VerticalStackLayout Grid.Row="3" Spacing="{StaticResource PresentationFieldSpacing}"
-                                                 IsVisible="{Binding IsMealChoiceLocked, Converter={StaticResource InvertedBoolConverter}}">
+                                                 IsVisible="{Binding IsMealContextEditorVisible}">
                                 <Label Text="{loc:LocalizedText Nutrition_MealEditor_Time}" Style="{StaticResource FormFieldLabel}" />
                                 <Border Style="{StaticResource InputContainer}">
                                     <TimePicker Time="{Binding SelectedMealTime}" Format="t"
                                                 SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_MealTime}" />
                                 </Border>
+                                <Button Text="{loc:LocalizedText Common_Done}"
+                                        Command="{Binding ToggleMealContextCommand}"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        HorizontalOptions="Start" />
                             </VerticalStackLayout>
                             <Grid Grid.Row="4" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                                 <Button Text="{loc:LocalizedText Nutrition_AddFood}"
@@ -198,8 +214,7 @@
                                         SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_OpensMealSuggestionsTailoredToYour}" />
                             </Grid>
                         </Grid>
-                    <CollectionView Grid.Row="1" ItemsSource="{Binding MealIngredients}"
-                                    ItemSizingStrategy="MeasureAllItems" SelectionMode="None">
+                    </CollectionView.Header>
                     <CollectionView.EmptyView>
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}"
                                              Padding="{StaticResource UiInsets0_16}"
@@ -238,8 +253,7 @@
                             </Grid>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
-                    </CollectionView>
-                </Grid>
+                </CollectionView>
 
                 <Grid Grid.Row="3" RowDefinitions="Auto,Auto,*" Margin="{StaticResource UiInsets20_16_20_0}" RowSpacing="{StaticResource UiSpaceTight}"
                       IsVisible="{Binding IsIngredientSearchVisible}">

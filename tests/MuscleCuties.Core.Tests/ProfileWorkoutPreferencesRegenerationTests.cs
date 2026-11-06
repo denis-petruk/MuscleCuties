@@ -148,8 +148,10 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
             new DateOnly(SyntheticProposalYear, SyntheticProposalMonth, SyntheticProposalDay),
             null) { DraftPreferences = preferences };
 
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        var failure = await Assert.ThrowsAsync<PlanningRequestFailedException>(() =>
             store.CreateAsync(request, CancellationToken.None));
+
+        Assert.Equal(BackendApiStatus.ServerError, failure.Status);
 
         Assert.Equal(new[] { ("POST", "/api/v1/workouts/plan/strength-proposals") }, apiClient.Calls);
         Assert.Same(preferences, apiClient.CapturedDraftPreferences);

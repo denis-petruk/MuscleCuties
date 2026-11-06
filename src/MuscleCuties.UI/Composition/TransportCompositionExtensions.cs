@@ -72,7 +72,8 @@ public static class TransportCompositionExtensions
 
         services.AddSingleton<ISnapshotCacheKeyStore, SecureStorageSnapshotCacheKeyStore>();
         services.AddSingleton<IBackendSessionTokenStore>(_ => new SecureStorageBackendSessionTokenStore(
-            AppEndpointConfiguration.GetSessionTokenKey(AppEndpointConfiguration.ActiveEnvironment)));
+            AppEndpointConfiguration.GetSessionTokenKey(AppEndpointConfiguration.ActiveEnvironment),
+            allowLegacyMigration: AppEndpointConfiguration.ActiveEnvironment == AppTargetEnvironment.Beta));
         services.AddSingleton<ILocalCacheService>(sp => new EncryptedLocalSnapshotCacheService(
             FileSystem.AppDataDirectory,
             sp.GetRequiredService<ISnapshotCacheKeyStore>(),

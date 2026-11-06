@@ -40,6 +40,22 @@ public static partial class NutritionPresentationMapper
     public static DailyMicronutrient FromMicronutrient(DailyMicronutrientDto item) =>
         new(item.Group, item.Name, item.Unit, item.Amount, item.Goal);
 
+    public static DailyMicronutrientItem FromMicronutrientItem(DailyMicronutrientDto item) =>
+        new()
+        {
+            Group = item.Group,
+            Name = item.Name,
+            Unit = item.Unit,
+            Amount = item.Amount,
+            Goal = item.Goal
+        };
+
+    public static MicronutrientCoverage? FromMicronutrientCoverage(MicronutrientCoverageDto? item) =>
+        item is null
+            ? null
+            : new MicronutrientCoverage(item.Status, item.CoveredItemCount, item.UncoveredItemCount,
+                item.UnavailableItemNames);
+
     public static CustomFoodResult FromCustomFood(CustomFoodResultDto item) =>
         new(item.FoodItemId, item.Name, item.Calories, item.Protein, item.Carbs, item.Fats,
             item.SourceSummary, item.ServingSize, item.ServingSizeUnit, item.ServingOptionsJson,

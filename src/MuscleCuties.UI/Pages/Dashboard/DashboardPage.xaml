@@ -24,6 +24,7 @@
                 <VerticalStackLayout Spacing="{StaticResource UiSpacing2}">
                     <Label Text="{Binding Greetings, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource PageTitle}"
+                           SemanticProperties.HeadingLevel="Level1"
                            LineBreakMode="WordWrap" />
                     <Label
                         Text="{Binding DashboardPhaseHeaderText, Converter={StaticResource LocalizedStringConverter}}"
@@ -186,7 +187,10 @@
             </ScrollView>
         </RefreshView>
 
-        <sharedControls:PageLoadingOverlay Grid.RowSpan="2" />
+        <sharedControls:PageLoadingOverlay
+            Grid.RowSpan="2"
+            MessageText="{Binding LoadErrorMessage}"
+            RetryCommand="{Binding RetryLoadCommand}" />
         <toolkit:LazyView
             x:Name="InjuryModalLazy"
             Grid.RowSpan="2"

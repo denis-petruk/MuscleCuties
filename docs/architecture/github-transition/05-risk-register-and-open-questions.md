@@ -53,7 +53,7 @@ These are deferred concrete decisions, not a questionnaire blocking this plannin
 | D05 / P09,P11,P12 | Actual supported TestFlight/client range, minimum-version/retirement policy and endpoint/bundle/signing scheme | Inventory Apple builds/installed usage and golden payloads; keep old supported clients working until explicit retirement decision. |
 | D06 / P10,P12 | Success-path performance/error targets, test load/window and Beta stability window | Measure isolated representative successful flows and historic tail; show workload/sample data before approval. Existing 1000ms diagnostic is not an automatic product SLO. |
 | D07 / P12,P13 | Concrete cutover/freeze/maintenance window if needed, candidate approval and archival/revocation retention | Complete Staging proof first; no migration/cutover scheduled automatically, one active authority per target. |
-| D08 / later R05/R06 only | Offline nutrition conflict semantics, clinical/catalog approval or changed safety rules if the refactor actually needs them | Preserve current characterized behavior and record gaps; do not reopen unrelated HealthKit/readiness proposal features for platform migration. |
+| D08 / later R05/R06 only | Offline nutrition conflict semantics or catalog and safety-rule changes if the refactor needs them | Preserve characterized behavior and use the [approved Beta workout policy](../../release-audit/2026-11-05/WORKOUT_POLICY.md) for Beta. Record gaps and keep unrelated features outside the platform migration. |
 
 ## Access and verification limits
 

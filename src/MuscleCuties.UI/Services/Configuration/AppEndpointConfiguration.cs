@@ -9,7 +9,7 @@ public enum AppTargetEnvironment
 
 public static class AppEndpointConfiguration
 {
-    public const string LocalBaseUrl = "http://127.0.0.1:5000";
+    public const string LocalBaseUrl = "http://127.0.0.1:5080";
     public const string StagingBaseUrl = "https://staging-api.musclecuties.app";
     public const string BetaBaseUrl = "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com";
 
@@ -31,8 +31,11 @@ public static class AppEndpointConfiguration
             return AppTargetEnvironment.Local;
 #elif APP_ENV_STAGING
             return AppTargetEnvironment.Staging;
-#else
+#elif APP_ENV_BETA
             return AppTargetEnvironment.Beta;
+#else
+            throw new InvalidOperationException(
+                "Release builds must explicitly define either APP_ENV_STAGING or APP_ENV_BETA. Implicit fallback to Beta is disabled for release safety.");
 #endif
         }
     }

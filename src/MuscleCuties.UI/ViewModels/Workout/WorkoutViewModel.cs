@@ -105,6 +105,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private ObservableCollection<ScheduleDayItem> _scheduleDays = [];
     [ObservableProperty] private ScheduleDayItem? _selectedScheduleDay;
     [ObservableProperty] private int _selectedWeekIndex;
+    [ObservableProperty] private bool _isDayScopeOnly;
+    [ObservableProperty] private bool _hasPlannedSessions;
+    [ObservableProperty] private bool _hasCompletedTodaySession;
+    [ObservableProperty] private bool _hasPendingReviewFlags;
 
     [ObservableProperty] private string _weekTitle = "This week's plan";
     [ObservableProperty] private ObservableCollection<WorkoutItem> _workouts = new();
@@ -359,20 +363,60 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                 ActivityTextColor = WorkoutPresentationPalette.Text(item.Tag)
             }).ToList();
             _dayPreviews = summary.ExercisePreviews;
-            _datedSchedule = summary.Schedule.Select(day => new ScheduleDayItem
+            _datedSchedule = summary.Schedule.Select(day =>
             {
-                Date = day.Date.ToDateTime(TimeOnly.MinValue),
-                WeekIndex = day.WeekIndex,
-                DayLabel = day.DayLabel,
-                WorkoutTag = day.Tag,
-                WorkoutTitle = day.Title,
-                WorkoutDayId = day.WorkoutDayId,
-                CompanionWorkoutDayId = day.CompanionWorkoutDayId,
-                IsToday = day.IsToday,
-                IsCompleted = day.IsCompleted,
-                IsRestDay = day.IsRestDay,
-                AccentColor = WorkoutPresentationPalette.Background(day.Tag),
-                AccentTextColor = WorkoutPresentationPalette.Text(day.Tag)
+                var sessions = day.Sessions is { Count: > 0 }
+                    ? day.Sessions.OrderBy(s => s.DayOrder ?? 0).Select(s => new ScheduleSessionChip(
+                        s.WorkoutDayId,
+                        s.Tag,
+                        WorkoutPresentationPalette.Background(s.Tag),
+                        s.IsCompleted,
+                        s.DayOrder,
+                        s.Title,
+                        s.IsEasierAlternative)).ToList()
+                    : (day.WorkoutDayId > 0
+                        ? new List<ScheduleSessionChip>
+                        {
+                            new(
+                                day.WorkoutDayId,
+                                day.Tag,
+                                WorkoutPresentationPalette.Background(day.Tag),
+                                day.IsCompleted,
+                                1,
+                                day.Title,
+                                day.IsEasierAlternative)
+                        }
+                        : new List<ScheduleSessionChip>
+                        {
+                            new(
+                                0,
+                                day.Tag,
+                                WorkoutPresentationPalette.Background(day.Tag),
+                                day.IsCompleted,
+                                1,
+                                day.Title,
+                                false)
+                        });
+
+                return new ScheduleDayItem
+                {
+                    Date = day.Date.ToDateTime(TimeOnly.MinValue),
+                    WeekIndex = day.WeekIndex,
+                    DayLabel = day.DayLabel,
+                    WorkoutTag = day.Tag,
+                    WorkoutTitle = day.Title,
+                    WorkoutDayId = day.WorkoutDayId,
+                    CompanionWorkoutDayId = day.CompanionWorkoutDayId,
+                    SessionWorkoutDayIds = day.Sessions?.Select(s => s.WorkoutDayId).ToList()
+                        ?? (day.CompanionWorkoutDayId is { } companion ? [day.WorkoutDayId, companion] : [day.WorkoutDayId]),
+                    Sessions = sessions,
+                    HasReviewFlag = day.IsEasierAlternative || sessions.Any(s => s.HasReviewFlag),
+                    IsToday = day.IsToday,
+                    IsCompleted = day.IsCompleted,
+                    IsRestDay = day.IsRestDay,
+                    AccentColor = WorkoutPresentationPalette.Background(day.Tag),
+                    AccentTextColor = WorkoutPresentationPalette.Text(day.Tag)
+                };
             }).ToArray();
             // Publish the plan before any advisory call so a secondary failure cannot hide it.
             SelectWeek(weekToRestore);
@@ -406,6 +450,23 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         ApplyFilter();
     }
 
+    partial void OnIsDayScopeOnlyChanged(bool value)
+    {
+        ApplyFilter();
+    }
+
+    [RelayCommand]
+    public void ToggleDayScope()
+    {
+        IsDayScopeOnly = !IsDayScopeOnly;
+    }
+
+    [RelayCommand]
+    public void SetDayScope(bool dayOnly)
+    {
+        IsDayScopeOnly = dayOnly;
+    }
+
     private void ApplyFilter()
     {
         var selected = Filters.FirstOrDefault(f => f.IsSelected);
@@ -414,6 +475,18 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         var weekWorkouts = hasWeekSchedule
             ? _allWorkouts.Where(workout => selectedWeekIds.Contains(workout.WorkoutDayId))
             : _allWorkouts.AsEnumerable();
+
+        if (IsDayScopeOnly && SelectedScheduleDay is { } day)
+        {
+            var dayIds = day.SessionWorkoutDayIds.Count > 0
+                ? day.SessionWorkoutDayIds
+                : (day.CompanionWorkoutDayId is { } comp
+                    ? new[] { day.WorkoutDayId, comp }
+                    : [day.WorkoutDayId]);
+
+            weekWorkouts = weekWorkouts.Where(w => dayIds.Contains(w.WorkoutDayId) || string.Equals(w.DayLabel, day.DayLabel, StringComparison.OrdinalIgnoreCase));
+        }
+
         if (selected is null || selected.Label == "All")
             Workouts = new ObservableCollection<WorkoutItem>(weekWorkouts.Where(IsVisibleWorkoutItem));
         else if (selected.Label == "Recovery")
@@ -452,7 +525,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         {
             var scheduledDay = ScheduleDays.FirstOrDefault(day =>
                 day.WorkoutDayId == workout.WorkoutDayId ||
-                day.CompanionWorkoutDayId == workout.WorkoutDayId);
+                day.CompanionWorkoutDayId == workout.WorkoutDayId ||
+                day.SessionWorkoutDayIds.Contains(workout.WorkoutDayId));
             if (scheduledDay is null)
                 continue;
 
@@ -464,15 +538,65 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                         ? "Workout_Overview_Status_Today"
                         : "Workout_Overview_Status_Upcoming";
         }
+
+        UpdateOverviewStatusTransitions();
+    }
+
+    private void UpdateOverviewStatusTransitions()
+    {
+        HasPlannedSessions = _datedSchedule.Any(day => !day.IsRestDay && day.WorkoutDayId > MissingWorkoutDayId)
+            || _allWorkouts.Any(w => !w.IsRestDay);
+
+        var todayLabel = FormatDayLabel(DateTime.Today.DayOfWeek);
+        var todayWorkouts = _allWorkouts
+            .Where(w => string.Equals(w.DayLabel, todayLabel, StringComparison.OrdinalIgnoreCase) && !w.IsRestDay)
+            .ToList();
+
+        var todayScheduledDay = _datedSchedule.FirstOrDefault(d => d.IsToday);
+
+        HasCompletedTodaySession = (todayWorkouts.Count > 0 && todayWorkouts.Any(w => w.IsCompleted))
+            || (todayScheduledDay is { IsCompleted: true })
+            || (todayScheduledDay?.Sessions.Any(s => s.IsCompleted) == true);
+
+        HasPendingReviewFlags = HasActiveInjuries
+            || _allWorkouts.Any(w => w.IsEasierAlternative)
+            || _datedSchedule.Any(d => d.HasReviewFlag);
+    }
+
+    public void MarkSessionCompleted(int workoutDayId)
+    {
+        var workout = _allWorkouts.FirstOrDefault(w => w.WorkoutDayId == workoutDayId);
+        if (workout is not null)
+        {
+            workout.IsCompleted = true;
+            workout.SessionProgressText = "Workout_Overview_Status_Completed";
+        }
+
+        foreach (var day in _datedSchedule)
+        {
+            if (day.WorkoutDayId == workoutDayId || day.SessionWorkoutDayIds.Contains(workoutDayId))
+            {
+                day.Sessions = day.Sessions.Select(s => s.WorkoutDayId == workoutDayId
+                    ? s with { IsCompleted = true }
+                    : s).ToList();
+                day.IsCompleted = day.Sessions.All(s => s.IsCompleted);
+            }
+        }
+
+        UpdateSessionProgressForSelectedWeek();
+        ApplyFeaturedWorkout(SelectedScheduleDay);
+        NotifyWorkoutStateProperties();
     }
 
     private HashSet<int> GetSelectedWeekWorkoutIds()
     {
         return _datedSchedule
             .Where(day => day.WeekIndex == SelectedWeekIndex && day.WorkoutDayId > MissingWorkoutDayId)
-            .SelectMany(day => day.CompanionWorkoutDayId is { } companionWorkoutDayId
-                ? new[] { day.WorkoutDayId, companionWorkoutDayId }
-                : [day.WorkoutDayId])
+            .SelectMany(day => day.SessionWorkoutDayIds.Count > 0
+                ? day.SessionWorkoutDayIds
+                : (day.CompanionWorkoutDayId is { } companionWorkoutDayId
+                    ? new[] { day.WorkoutDayId, companionWorkoutDayId }
+                    : [day.WorkoutDayId]))
             .ToHashSet();
     }
 
@@ -781,6 +905,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     private void NotifyWorkoutStateProperties()
     {
+        UpdateOverviewStatusTransitions();
         OnPropertyChanged(nameof(HasNoPlan));
         OnPropertyChanged(nameof(ShowNoPlanPrompt));
         OnPropertyChanged(nameof(HasWorkouts));
@@ -813,6 +938,11 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     partial void OnIsLoadErrorChanged(bool value)
     {
         NotifyWorkoutStateProperties();
+    }
+
+    partial void OnHasActiveInjuriesChanged(bool value)
+    {
+        UpdateOverviewStatusTransitions();
     }
 
     private async Task LoadInjuryBannerAsync()

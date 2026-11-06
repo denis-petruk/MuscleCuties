@@ -436,10 +436,24 @@ public static class StrengthPlanPreviewRule
                 .Where(code => code != WorkoutScheduleValidationRule.ConsecutiveStrengthMuscleGroups));
         }
 
+        var advisories = new List<string>(profileExperienceDecision.ReasonCodes);
+        var tenRegionCoverage = TenRegionMuscleCoverageRule.Evaluate(
+            weeklySessionMuscles, scheduledSessionsPerWeek);
+        if (data.MuscleGroupsByExerciseId is not null && data.MuscleGroupsByExerciseId.Count > 0)
+        {
+            if (!tenRegionCoverage.MeetsMinimum)
+            {
+                if (scheduledSessionsPerWeek < TenRegionMuscleCoverageRule.MinimumWeeklySessionExposures)
+                    limitations.AddRange(tenRegionCoverage.LimitationCodes);
+                else
+                    advisories.AddRange(tenRegionCoverage.LimitationCodes);
+            }
+            advisories.AddRange(tenRegionCoverage.AdvisoryCodes);
+        }
+
         var limitationCodes = limitations.Distinct(StringComparer.Ordinal)
             .OrderBy(value => value, StringComparer.Ordinal).ToArray();
         var reviewConditions = ExerciseReviewConditions(templates, data);
-        var advisories = new List<string>(profileExperienceDecision.ReasonCodes);
         advisories.AddRange(LowerBodyCoverageRule.Evaluate(weeklySessionMuscles).BelowMinimum
             .Select(LowerBodyCoverageRule.GapCode));
         advisories.AddRange(movementOmissions);

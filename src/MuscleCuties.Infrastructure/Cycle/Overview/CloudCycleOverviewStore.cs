@@ -33,18 +33,15 @@ public sealed class CloudCycleOverviewStore(
         if (cachedResult.Status is BackendApiStatus.Success or BackendApiStatus.OfflineStaleCacheHit &&
             cachedResult.Data is not null)
         {
+            // F03: a stale cache must not gain certainty. An unparsable phase stays Unknown, and
+            // ovulation/fertile dates are not reconstructed with fixed offsets that the live
+            // response never claimed.
             var phase = Enum.TryParse<CyclePhaseDto>(cachedResult.Data.CurrentPhase, true, out var cp) && Enum.IsDefined(cp)
                 ? cp
-                : CyclePhaseDto.Follicular;
+                : CyclePhaseDto.Unknown;
             var startDate = cachedResult.Data.AsOfLocalDate.AddDays(-cachedResult.Data.DayOfCycle + 1)
                 .ToDateTime(TimeOnly.MinValue);
             var nextPeriod = cachedResult.Data.PredictedNextPeriodStart?.ToDateTime(TimeOnly.MinValue);
-            var ovulation = cachedResult.Data.AsOfLocalDate.AddDays(-cachedResult.Data.DayOfCycle + 14)
-                .ToDateTime(TimeOnly.MinValue);
-            var fertileStart = cachedResult.Data.AsOfLocalDate.AddDays(-cachedResult.Data.DayOfCycle + 10)
-                .ToDateTime(TimeOnly.MinValue);
-            var fertileEnd = cachedResult.Data.AsOfLocalDate.AddDays(-cachedResult.Data.DayOfCycle + 15)
-                .ToDateTime(TimeOnly.MinValue);
 
             var summary = new CyclePredictionSummary(
                 HasActiveCycle: cachedResult.Data.DayOfCycle > 0,
@@ -54,10 +51,11 @@ public sealed class CloudCycleOverviewStore(
                 CurrentPhase: phase,
                 PredictedNextPeriodDate: nextPeriod,
                 DaysUntilPeriod: Math.Max(0, cachedResult.Data.CycleLengthDays - cachedResult.Data.DayOfCycle),
-                PredictedOvulationDate: ovulation,
-                FertileWindowStartDate: fertileStart,
-                FertileWindowEndDate: fertileEnd,
-                PredictionSource: cachedResult.Data.PredictionSource);
+                PredictedOvulationDate: null,
+                FertileWindowStartDate: null,
+                FertileWindowEndDate: null,
+                PredictionSource: cachedResult.Data.PredictionSource,
+                CachedAsOfDate: cachedResult.Data.AsOfLocalDate.ToDateTime(TimeOnly.MinValue));
 
             return new CycleOverviewSnapshot(summary, [], [], []);
         }

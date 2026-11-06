@@ -1392,4 +1392,4 @@
          distinct from CaptionLabel (12pt bold, a short metadata/caption label) and from BodyLabel
          (15pt, the app's body role). Use it for per-card secondary text only; section titles,
          card/modal titles, page titles and inline status labels remain their existing styles. -->
-</ResourceDictionary>
+    </ResourceDictionary>

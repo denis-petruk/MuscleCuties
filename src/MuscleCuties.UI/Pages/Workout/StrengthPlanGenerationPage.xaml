@@ -490,6 +490,12 @@
             </Border>
             <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ActivePreviewElsewhere}" IsVisible="{Binding HasActiveOtherPreview}" Style="{StaticResource MutedLabel}" />
             <Button Text="{loc:LocalizedText Workout_Generation_TakeOverPreview}" Command="{Binding TakeOverPreviewCommand}" IsVisible="{Binding HasActiveOtherPreview}" Style="{StaticResource ButtonSecondary}" />
+            <!-- PG01: the initiating action states the replacement consequence up front. A foreground
+                 Generate/Regenerate then activates the eligible plan without a second tap. -->
+            <Label LineBreakMode="WordWrap"
+                   Text="{Binding ReplacementDisclosureText}"
+                   IsVisible="{Binding ShowsReplacementDisclosure}"
+                   Style="{StaticResource MutedLabel}" />
             <Button Text="{loc:LocalizedText Workout_Generation_CreatePreview}"
                     Command="{Binding CreateProposalCommand}"
                     IsVisible="{Binding IsTrainNavigationPending, Converter={StaticResource InvertedBoolConverter}}"
@@ -744,6 +750,8 @@
         </Grid>
     </sharedControls:AnimatedModalView>
     </Grid>
-    <sharedControls:PageLoadingOverlay BackCommand="{Binding BackCommand}" />
+    <sharedControls:PageLoadingOverlay BackCommand="{Binding BackCommand}"
+                                 MessageText="{Binding LoadErrorMessage}"
+                                 RetryCommand="{Binding RetryLoadCommand}" />
     </Grid>
 </ContentPage>

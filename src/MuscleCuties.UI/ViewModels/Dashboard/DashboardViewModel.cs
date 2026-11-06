@@ -70,6 +70,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     // Suppresses per-field partial On*Changed notifications during a bulk load so that
     // computed properties are only invalidated once at the end via the Notify* helpers.
     private bool _isBulkLoading;
+    private MuscleCuties.UI.Services.Api.ApiFailureNotice? _lastFailure;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
@@ -359,6 +360,17 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     public AsyncRelayCommand LoadDataCommand { get; }
     public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
 
+    /// <summary>
+    /// The classified copy for the last failed load, or null before a failure. The shared overlay
+    /// renders it instead of its generic line, so a rejected session, a rate limit and a server fault
+    /// no longer all read as one connection problem.
+    /// </summary>
+    public string? LoadErrorMessage => _lastFailure?.MessageText;
+
+    /// <summary>The retry the last failure permits, or null when repeating it cannot succeed.</summary>
+    public AsyncRelayCommand? RetryLoadCommand =>
+        _lastFailure is null || _lastFailure.IsRetryable ? LoadDataCommand : null;
+
     private Task OpenPhotoVaultAsync()
     {
         return _openPhotoVaultAsync?.Invoke() ?? Task.CompletedTask;
@@ -473,6 +485,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     {
         IsBusy = true;
         IsLoadError = false;
+        _lastFailure = null;
+        OnPropertyChanged(nameof(LoadErrorMessage));
+        OnPropertyChanged(nameof(RetryLoadCommand));
         try
         {
             var today = DateOnly.FromDateTime(DateTime.Today);
@@ -490,9 +505,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             DaysUntilPeriod = Math.Max(summary.DaysUntilPeriod, 0);
             CycleCount = Math.Max(summary.CycleCount, 0);
             UsePhaseCardColor = summary.HasActiveCycle ||
-                                summary.PredictionSource.Equals("manual phase log",
+                                string.Equals(summary.PredictionSource, "manual phase log",
                                     StringComparison.OrdinalIgnoreCase) ||
-                                summary.PredictionSource.Equals("profile phase", StringComparison.OrdinalIgnoreCase);
+                                string.Equals(summary.PredictionSource, "profile phase",
+                                    StringComparison.OrdinalIgnoreCase);
             ConsumedCalories = summary.ConsumedCalories;
             ConsumedProtein = summary.ConsumedProtein;
             ConsumedCarbs = summary.ConsumedCarbs;
@@ -516,7 +532,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             RecoveryLabel = summary.RecoveryLabel;
             ApplyTodayReadiness(summary.TodayReadiness);
             NeedsDailyCheckIn = summary.TodayReadiness is not { Status: "Available" };
-            TrendPoints = summary.TrendPoints.Select(point =>
+            TrendPoints = (summary.TrendPoints ?? []).Select(point =>
                 new DashboardTrendPoint(point.Date, point.WeightKg, point.ReadinessScore)).ToArray();
             HasWeightTrend = TrendPoints.Any(point => point.WeightKg.HasValue);
             HasReadinessTrend = TrendPoints.Any(point => point.ReadinessScore.HasValue);
@@ -538,12 +554,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             SessionProgressText = summary.SessionProgressText;
             WorkoutActivityBackground = WorkoutPresentationPalette.Background(summary.WorkoutActivityTag);
             WorkoutActivityTextColor = WorkoutPresentationPalette.Text(summary.WorkoutActivityTag);
-            IsRestDay = summary.WorkoutActivityTag.Equals("REST", StringComparison.OrdinalIgnoreCase) ||
-                        summary.WorkoutActivityTag.Equals("Recovery", StringComparison.OrdinalIgnoreCase);
+            IsRestDay = string.Equals(summary.WorkoutActivityTag, "REST", StringComparison.OrdinalIgnoreCase) ||
+                        string.Equals(summary.WorkoutActivityTag, "Recovery", StringComparison.OrdinalIgnoreCase);
             OnPropertyChanged(nameof(WorkoutCountLabel));
             OnPropertyChanged(nameof(WorkoutCountValue));
             WorkoutActivitySections = new ObservableCollection<WorkoutActivitySection>(
-                summary.WorkoutActivitySections.Select(section => new WorkoutActivitySection(
+                (summary.WorkoutActivitySections ?? []).Select(section => new WorkoutActivitySection(
                     section.Tag, section.Title, section.ExerciseCount,
                     WorkoutPresentationPalette.Background(section.Tag), WorkoutPresentationPalette.Text(section.Tag))));
             HasMultipleActivities = WorkoutActivitySections.Count > 1;
@@ -559,8 +575,13 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         catch (Exception ex)
         {
             _isBulkLoading = false;
+            _lastFailure = MuscleCuties.UI.Services.Api.ApiFailurePresenter.FromException(
+                ex, "Dashboard_Shared_CouldNotLoadData");
             IsLoadError = true;
-            Trace.WriteLine($"[Dashboard] Load failed ({ex.GetType().Name}).");
+            OnPropertyChanged(nameof(LoadErrorMessage));
+            OnPropertyChanged(nameof(RetryLoadCommand));
+            Trace.WriteLine(
+                $"[Dashboard] Load failed ({ex.GetType().Name}) as {_lastFailure.MessageKey}.");
         }
         finally
         {

@@ -104,8 +104,16 @@ public sealed class CloudStrengthPlanProposalStoreV020(IMuscleCutiesBackendApiCl
 
     private static T RequirePlanningData<T>(BackendApiResponse<T> response, string operation) where T : class
     {
-        if (response.Status is BackendApiStatus.ServerError or BackendApiStatus.OfflineRejected or BackendApiStatus.Timeout or BackendApiStatus.RateLimited)
-            throw new HttpRequestException($"Cloud {operation} is temporarily unavailable ({response.Status}).");
+        // PG01: every outcome keeps its backend status, error category and request reference so the
+        // screen can offer the right next action. A 401/403, an unclassified 400/409/422, a 405/408 and
+        // a 429/503 used to become one generic connection exception before presentation.
+        if (response.Status != BackendApiStatus.Success)
+            throw new PlanningRequestFailedException(
+                operation,
+                response.Status,
+                response.ResponseStatusCode,
+                response.ErrorCode,
+                response.RequestId);
         return CloudStoreResponse.RequireData(response, operation);
     }
 }

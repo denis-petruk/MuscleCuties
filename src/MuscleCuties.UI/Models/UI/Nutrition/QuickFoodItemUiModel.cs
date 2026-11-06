@@ -1,4 +1,5 @@
 using CommunityToolkit.Mvvm.ComponentModel;
+using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
@@ -7,6 +8,7 @@ public partial class QuickFoodItemUiModel : ObservableObject
     private readonly Action<QuickFoodItemUiModel>? _onSelectionChanged;
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SelectionAccessibilityText))]
     private bool _isSelected;
 
     public QuickFoodItemUiModel(QuickFood item, Action<QuickFoodItemUiModel>? onSelectionChanged = null)
@@ -16,6 +18,12 @@ public partial class QuickFoodItemUiModel : ObservableObject
     }
 
     public QuickFood Item { get; }
+
+    /// <summary>S01: the visual checkmark alone does not communicate selection to VoiceOver.</summary>
+    public string SelectionAccessibilityText =>
+        $"{Name} — {UiTextCatalog.Get(IsSelected
+            ? "Nutrition_QuickFood_Selected"
+            : "Nutrition_QuickFood_NotSelected")}";
 
     public string Name => Item.Name;
     public double ServingSize => Item.ServingSize;

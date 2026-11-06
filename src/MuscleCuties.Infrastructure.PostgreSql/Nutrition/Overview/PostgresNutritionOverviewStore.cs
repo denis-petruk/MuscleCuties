@@ -284,6 +284,23 @@ public sealed class PostgresNutritionOverviewStore(
                 return new DailyMicronutrientDto(def.Group, def.Name, def.Unit, amount, def.Goal);
             }).ToList();
 
+            // Truthful coverage: catalog/user-food meal entries carry nutrient joins; independent
+            // food snapshots contribute macros only. Name the uncovered items instead of letting a
+            // zero-filled join imply a measured zero.
+            var uncoveredItemNames = snapshots
+                .Select(snapshot => snapshot.Name)
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Take(5)
+                .ToArray();
+            var coverageStatus = MuscleCuties.Core.Domain.Nutrition.MicronutrientCoverageRule.Classify(
+                allMealEntries.Length, snapshots.Count);
+            var coverage = new MicronutrientCoverageDto(
+                coverageStatus.ToString(),
+                allMealEntries.Length,
+                snapshots.Count,
+                uncoveredItemNames);
+
             var (focusTitle, focusCopy) = GetPhaseFocus(target.Phase);
 
             return new NutritionOverviewResponse(
@@ -298,7 +315,8 @@ public sealed class PostgresNutritionOverviewStore(
                 breakfastPreference,
                 target.AvailabilityCode,
                 target.Source,
-                targetBreakdown
+                targetBreakdown,
+                coverage
             );
         }).ConfigureAwait(false);
     }

@@ -4,7 +4,9 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.ApplicationModel;
+using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UI.Pages.Profile;
+using MuscleCuties.UI.Services.Api;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Navigation;
@@ -55,6 +57,12 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private const string ReplacementTitleKey = "Workout_Generation_ReplacementTitle";
     private const string ReplacementSummaryKey = "Workout_Generation_ReplacementSummary";
     private const string ReplacementCancelKey = "Workout_Generation_ReplacementCancel";
+    private const string ReplacementDisclosureKey = "Workout_Generation_ReplacesActivePlanNotice";
+    private const string InjuryTitleKey = "Workout_Generation_InjuryTitle";
+    private const string InjurySummaryFormatKey = "Workout_Generation_InjurySummaryFormat";
+    private const string InjuryCancelledKey = "Workout_Generation_InjuryCancelled";
+    private const string InjuryChangedKey = "Workout_Generation_InjuryChanged";
+    private const string InjuryUnavailableKey = "Workout_Generation_InjuryUnavailable";
     private const string ApplyPlanKey = "Workout_Generation_ApplyPlan";
     private const string CommonCancelKey = "Common_Cancel";
     private const string ReducedVolumeNoticeKey = "Workout_Generation_ReducedVolumeNotice";
@@ -92,6 +100,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private readonly Func<Task> _navigateToTrainAsync;
     private readonly INavigationContextService? _navigationContext;
     private readonly Func<string, Task<bool>>? _confirmReplacementAsync;
+    private readonly Func<string, Task<bool>>? _confirmInjuryAdaptationAsync;
     private readonly Func<Task>? _navigateToDashboardAsync;
     private readonly IWorkoutAccountCalendarClient? _accountCalendar;
     private readonly IWorkoutOverviewUseCase? _overview;
@@ -110,7 +119,16 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private Guid? _activeOtherProposalId;
     private CancellationTokenSource? _leaseRenewalCancellation;
     private bool _historyWasSelfReported;
-    private IReadOnlySet<int>? _pendingAcknowledgedConditionIds;
+    private HashSet<int>? _pendingAcknowledgedConditionIds;
+
+    // PG01/CR01: an in-flight generation may only publish, lease or activate while it is still the
+    // current appearance's current request. The page bumps this on entry and departure.
+    private long _generationVersion;
+    private bool _isAppearanceCurrent = true;
+    private bool _foregroundIntent;
+    private bool _injuryRevalidationAttempted;
+    private bool _openedFromPreferences;
+    private ApiFailureNotice? _lastPlanningFailure;
 
     [ObservableProperty] private ObservableCollection<StrengthPlanRecentWeekDisplay> _recentTrainingWeeks = [];
     [ObservableProperty] private ObservableCollection<StrengthPlanSessionDisplay> _strengthPreviewSessions = [];
@@ -167,7 +185,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         Func<string, Task<bool>>? confirmReplacementAsync = null,
         Func<Task>? navigateToDashboardAsync = null,
         IWorkoutAccountCalendarClient? accountCalendar = null,
-        IWorkoutOverviewUseCase? overview = null)
+        IWorkoutOverviewUseCase? overview = null,
+        Func<string, Task<bool>>? confirmInjuryAdaptationAsync = null)
     {
         _proposalClient = proposalClient;
         _preferences = preferences;
@@ -177,6 +196,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         _navigateToTrainAsync = navigateToTrainAsync;
         _navigationContext = navigationContext;
         _confirmReplacementAsync = confirmReplacementAsync;
+        _confirmInjuryAdaptationAsync = confirmInjuryAdaptationAsync;
         _navigateToDashboardAsync = navigateToDashboardAsync;
         _accountCalendar = accountCalendar;
         _overview = overview;
@@ -184,7 +204,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         SwimmingStyleChoices = CreateSwimmingStyleChoices();
         YogaContentChoices = CreateYogaContentChoices();
 
-        LoadCommand = new AsyncRelayCommand(LoadAsync);
+        LoadCommand = new AsyncRelayCommand(LoadAsync, () => CanRetryLoad);
         ToggleTrainingDetailsCommand = new RelayCommand(ToggleTrainingDetails, CanToggleTrainingDetails);
         CreateProposalCommand = new AsyncRelayCommand(CreateProposalAsync, CanCreateProposal);
         AcceptProposalCommand = new AsyncRelayCommand(AcceptProposalAsync, CanAcceptProposal);
@@ -346,6 +366,69 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             ? PreviewLeaseUnavailableKey
             : PreviewNotSavedKey);
 
+    /// <summary>
+    /// PG01: the initiating Generate/Regenerate action states the consequence of replacing the new
+    /// active plan, so no second replacement confirmation is needed for that intent.
+    /// </summary>
+    public bool ShowsReplacementDisclosure => HasExistingPlan && !IsProposalAccepted;
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Performance", "CA1822:Mark members as static",
+        Justification = "Target of compiled XAML bindings; must stay an instance member.")]
+    public string ReplacementDisclosureText => UiTextCatalog.Get(ReplacementDisclosureKey);
+
+    /// <summary>The typed failure copy shown in the page's foreground state.</summary>
+    public string LoadErrorMessage => StatusMessage;
+
+    /// <summary>
+    /// PG01: retry is only offered when the outcome permits repeating the same request. An outcome
+    /// that needs different input points at editable details instead.
+    /// </summary>
+    public bool CanRetryLoad => _lastPlanningFailure is null || _lastPlanningFailure.IsRetryable;
+
+    public AsyncRelayCommand? RetryLoadCommand => CanRetryLoad ? LoadCommand : null;
+
+    private void SetLastPlanningFailure(ApiFailureNotice? notice)
+    {
+        _lastPlanningFailure = notice;
+        OnPropertyChanged(nameof(CanRetryLoad));
+        OnPropertyChanged(nameof(RetryLoadCommand));
+        OnPropertyChanged(nameof(LoadErrorMessage));
+        LoadCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    /// CR01: the page enters a new appearance. Work started by the previous appearance is no longer
+    /// allowed to publish a preview, start a lease or activate a plan.
+    /// </summary>
+    public void NotifyAppearanceEntered()
+    {
+        _isAppearanceCurrent = true;
+        _generationVersion++;
+    }
+
+    public void NotifyAppearanceExited()
+    {
+        _isAppearanceCurrent = false;
+        _generationVersion++;
+    }
+
+    private bool IsCurrentGeneration(long requestVersion) =>
+        WorkoutPlanningFlow.IsCurrentGeneration(_isAppearanceCurrent, requestVersion, _generationVersion);
+
+    private bool IsAutoActivationEligible() =>
+        WorkoutPlanningFlow.CanAutoActivateRequestedPlan(
+            userRequested: _foregroundIntent,
+            replacementDisclosed: _foregroundIntent && HasExistingPlan,
+            replacesExistingPlan: _proposal?.ReplacesExistingPlan == true,
+            feasible: IsPreviewApplicable,
+            persisted: _proposal?.IsPersisted == true,
+            hasLease: _proposal?.Lease is not null,
+            missingRequiredAnswers: HasMissingRequiredAnswers(),
+            styleChoiceRequired: Preview?.StrengthStyleChoiceRequired == true,
+            acknowledgmentUnavailable: Preview is { ExerciseReviewConditions.Count: > NoPolicyReasons } &&
+                                        _confirmInjuryAdaptationAsync is null);
+
     private bool HasValidSavedAvailability =>
         _availableWeekdays.Length is >= WorkoutPreferencesConstraints.MinimumAvailableWeekdays and
             <= WorkoutPreferencesConstraints.MaximumAvailableWeekdays;
@@ -371,7 +454,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                     .FirstOrDefault(previous => previous.Activity == answer.Activity)?.ActivityHistory
             }).ToArray();
 
-    private async Task InitializePlanPreviewOrAutoApplyAsync()
+    private async Task InitializePlanPreviewOrAutoApplyAsync(long generation)
     {
         var selectedActivity = SelectedActivity;
         if (selectedActivity is null || !HasValidSavedAvailability)
@@ -408,6 +491,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         var request = BuildPreviewRequest(selectedActivity.Activity, preferences, history, warmup, cooldown);
 
         _proposal = await _proposalClient.CreateAsync(request);
+        if (!IsCurrentGeneration(generation))
+        {
+            // The page left (or a newer request started) while this load was in flight. Drop the
+            // result instead of mutating a detached page and starting an orphaned lease.
+            await DiscardStaleProposalAsync(_proposal);
+            return;
+        }
         if (HandlePreflightRequirement(_proposal.Preview))
         {
             _proposal = null;
@@ -418,19 +508,56 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         StartLeaseRenewal(_proposal);
         PopulatePreviewDisplays(_proposal.Preview);
 
-        if (WorkoutPlanningFlow.CanAutomaticallyApplyFirstPlan(_proposal.ReplacesExistingPlan,
+        if (IsCurrentGeneration(generation) &&
+            WorkoutPlanningFlow.CanAutomaticallyApplyFirstPlan(_proposal.ReplacesExistingPlan,
                 _proposal.Preview.Status == "Feasible", _proposal.IsPersisted, HasMissingRequiredAnswers(),
                 _proposal.Preview.StrengthStyleChoiceRequired, HasOptionalOmissions))
         {
             IsBusy = false;
-            await AcceptProposalAsync();
+            await AcceptProposalResponseAsync(generation);
         }
     }
+
+    private async Task DiscardStaleProposalAsync(StrengthPlanProposalCreatedV020? proposal)
+    {
+        _proposal = null;
+        if (proposal?.Lease is not { } lease)
+            return;
+
+        try
+        {
+            await _proposalClient.CloseAsync(
+                new PlanningLeaseRequest(proposal.ProposalId, lease.LeaseId, lease.Fence));
+        }
+        catch (Exception)
+        {
+            // The server lease expires on its own; nothing else may be published for this request.
+        }
+    }
+
+    /// <summary>
+    /// PG01: one visible recovery state keeps the server's own status, category and reference. The
+    /// localized reference is appended only when the server actually sent one.
+    /// </summary>
+    private static string DescribePlanningFailure(PlanningRequestFailedException failure)
+    {
+        var notice = ApiFailurePresenter.FromException(failure, ConnectionErrorKey);
+        return ComposeNotice(notice);
+    }
+
+    private static string ComposeNotice(ApiFailureNotice notice) =>
+        string.IsNullOrEmpty(notice.ReferenceText)
+            ? notice.MessageText
+            : $"{notice.MessageText} {notice.ReferenceText}";
 
     private async Task LoadAsync()
     {
         IsLoadError = false;
         IsLoadingData = true;
+        _foregroundIntent = false;
+        _openedFromPreferences = false;
+        SetLastPlanningFailure(null);
+        var generation = ++_generationVersion;
         if (!IsTrainNavigationPending)
         {
             IsProposalAccepted = false;
@@ -446,11 +573,15 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             if (_overview is not null)
                 _hasExistingPlan = (await _overview.LoadAsync(new WorkoutOverviewRequest(DateOnly.FromDateTime(DateTime.Now)))).PlanName is not null;
             OnPropertyChanged(nameof(HasExistingPlan));
+            OnPropertyChanged(nameof(ShowsReplacementDisclosure));
             OnPropertyChanged(nameof(CanOfferExploreOtherFeatures));
             _activeOtherProposalId = (await _proposalClient.GetActivePreviewAsync()).ProposalId;
             OnPropertyChanged(nameof(HasActiveOtherPreview));
             if (_navigationContext?.TryTake<WorkoutPreferencesDto>(ProfileWorkoutPreferencesViewModel.DraftPreferencesContextKey, out var draft) == true)
+            {
                 _draftPreferences = draft;
+                _openedFromPreferences = true;
+            }
             var preferences = _draftPreferences ?? await _preferences.LoadAsync();
             preferences ??= new WorkoutPreferencesDto(
                 ActivityTypes: [],
@@ -484,6 +615,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             {
                 SelectedFittingStrengthStyle = new StrengthPlanActivityChoice(offeredStyle,
                     StrengthPlanGenerationDisplayMapper.ActivityLabel(offeredStyle));
+                _openedFromPreferences = true;
             }
 
             if (string.IsNullOrWhiteSpace(WarmupMinutes))
@@ -499,7 +631,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 StatusMessage = UiTextCatalog.Get(AvailableDaysMissingKey);
             else if (!HasActiveOtherPreview && !HasMissingRequiredAnswers() && !editHiitAnswers)
             {
-                await InitializePlanPreviewOrAutoApplyAsync();
+                await InitializePlanPreviewOrAutoApplyAsync(generation);
             }
 
             CreateProposalCommand.NotifyCanExecuteChanged();
@@ -522,6 +654,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         {
             IsLoadError = true;
             StatusMessage = UiTextCatalog.Get(PlanChangedKey);
+        }
+        catch (PlanningRequestFailedException failure)
+        {
+            IsLoadError = true;
+            var notice = ApiFailurePresenter.FromException(failure, ConnectionErrorKey);
+            SetLastPlanningFailure(notice);
+            StatusMessage = ComposeNotice(notice);
         }
         catch (HttpRequestException)
         {
@@ -652,9 +791,19 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         finally { IsBusy = false; }
     }
 
-    private async Task CreatePreviewAsync()
+    private async Task CreatePreviewAsync(bool isUserIntent = true)
     {
         StatusMessage = NoStatusMessage;
+        if (isUserIntent)
+        {
+            // PG01: a foreground Generate/Regenerate is one intent to generate and activate. Any
+            // replacement consequence was disclosed on the initiating action.
+            _foregroundIntent = true;
+            _injuryRevalidationAttempted = false;
+            SetLastPlanningFailure(null);
+        }
+
+        var generation = ++_generationVersion;
         var selectedActivity = SelectedActivity;
         if (selectedActivity is null)
             return;
@@ -752,17 +901,29 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             }
 
             _proposal = await _proposalClient.CreateAsync(request);
+            if (!IsCurrentGeneration(generation))
+            {
+                await DiscardStaleProposalAsync(_proposal);
+                return;
+            }
             if (HandlePreflightRequirement(_proposal.Preview))
             {
                 _proposal = null;
                 return;
             }
             _hasExistingPlan = _proposal.ReplacesExistingPlan;
+            OnPropertyChanged(nameof(ShowsReplacementDisclosure));
             _proposalInvalidated = false;
             StartLeaseRenewal(_proposal);
             PopulatePreviewDisplays(_proposal.Preview);
             if (_safetyPlanChanged)
                 StatusMessage = UiTextCatalog.Get("Workout_Generation_SafetyPlanChanged");
+
+            if (IsAutoActivationEligible())
+            {
+                IsBusy = false;
+                await AcceptProposalResponseAsync(generation);
+            }
         }
         catch (WorkoutPreviewAlreadyOpenException)
         {
@@ -795,6 +956,10 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 }
             }
             StatusMessage = WithSafetyNotice(UiTextCatalog.Get(PlanChangedKey));
+        }
+        catch (PlanningRequestFailedException failure)
+        {
+            StatusMessage = WithSafetyNotice(DescribePlanningFailure(failure));
         }
         catch (HttpRequestException)
         {
@@ -911,7 +1076,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         _proposal?.Lease is not null, IsPreviewApplicable, _pendingAcceptance is not null) &&
         HasStrengthPreviewSessions;
 
-    // Apply accepts the visible preview; returned condition IDs are acknowledged automatically.
+    // A feasible preview, or a limited one whose strength content is still reviewed, can be activated.
+    // Any exercise excluded by injury is acknowledged through the preview request, never here.
     private bool IsPreviewApplicable => Preview is { Status: "Feasible" } ||
         Preview is { Status: "Limited" } preview && preview.ExerciseReviewConditions.Count > NoPolicyReasons;
 
@@ -1024,25 +1190,113 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         await _navigateBackAsync();
     }
 
+    private async Task<bool> ConfirmInjuryAdaptationAsync(long generation)
+    {
+        if (Preview is not { } preview)
+            return false;
+
+        var conditions = preview.ExerciseReviewConditions;
+        if (_confirmInjuryAdaptationAsync is null)
+        {
+            // No native surface can ask: the plan must stay inactive rather than acknowledge silently.
+            StatusMessage = UiTextCatalog.Get(InjuryUnavailableKey);
+            return false;
+        }
+
+        if (!await _confirmInjuryAdaptationAsync(BuildInjuryAdaptationSummary(conditions)))
+        {
+            // Cancel keeps the active plan and the excluded exercise stays blocked.
+            StatusMessage = UiTextCatalog.Get(InjuryCancelledKey);
+            return false;
+        }
+
+        if (_injuryRevalidationAttempted)
+        {
+            StatusMessage = UiTextCatalog.Get(InjuryChangedKey);
+            return false;
+        }
+        _injuryRevalidationAttempted = true;
+
+        var acknowledgedIds = conditions
+            .Select(condition => condition.ExerciseId)
+            .Where(id => id > 0)
+            .ToHashSet();
+        if (acknowledgedIds.Count == 0)
+        {
+            StatusMessage = UiTextCatalog.Get(InjuryUnavailableKey);
+            return false;
+        }
+
+        if (!IsCurrentGeneration(generation))
+            return false;
+
+        await ClosePreviewAsync();
+        _pendingAcknowledgedConditionIds = acknowledgedIds;
+        try
+        {
+            // Revalidate the same request with the acknowledged exercise set. The recreated preview
+            // activates itself when it is eligible; this outer acceptance must not continue.
+            await CreatePreviewAsync(isUserIntent: false);
+        }
+        finally
+        {
+            _pendingAcknowledgedConditionIds = null;
+        }
+
+        if (Preview is null)
+            return false;
+
+        if (WorkoutPlanningFlow.AdaptationChanged(acknowledgedIds,
+                Preview.ExerciseReviewConditions.Select(condition => condition.ExerciseId)))
+            StatusMessage = UiTextCatalog.Get(InjuryChangedKey);
+
+        return false;
+    }
+
+    private static string BuildInjuryAdaptationSummary(
+        IReadOnlyList<StrengthExerciseReviewConditionV020> conditions)
+    {
+        var names = conditions
+            .Select(condition => string.IsNullOrWhiteSpace(condition.ExerciseName)
+                ? condition.ExerciseId.ToString(CultureInfo.CurrentCulture)
+                : condition.ExerciseName)
+            .Where(name => !string.IsNullOrWhiteSpace(name))
+            .Distinct(StringComparer.CurrentCulture)
+            .ToArray();
+        return StrengthPlanGenerationDisplayMapper.FormatLocalized(InjurySummaryFormatKey,
+            string.Join(", ", names));
+    }
+
     private async Task EditDetailsAsync()
     {
+        // Close the foreground sheet before navigating so an obsolete failure/preview surface cannot
+        // stay interactive behind the editor, then route explicitly to the editable details.
         await ClosePreviewAsync();
         if (_draftPreferences is not null)
             _navigationContext?.Set(ProfileWorkoutPreferencesViewModel.DraftPreferencesContextKey, _draftPreferences);
-        try
-        {
-            await _navigateBackAsync();
-        }
-        catch (Exception)
+
+        if (_openedFromPreferences)
         {
             try
             {
-                await Shell.Current.GoToAsync(nameof(ProfileWorkoutPreferencesPage));
+                await _navigateBackAsync();
+                return;
             }
             catch (Exception ex)
             {
-                System.Diagnostics.Debug.WriteLine($"[StrengthPlanGeneration] Fallback navigation to Preferences failed: {ex.GetType().Name}.");
+                System.Diagnostics.Debug.WriteLine(
+                    $"[StrengthPlanGeneration] Return to preferences failed: {ex.GetType().Name}.");
             }
+        }
+
+        try
+        {
+            await Shell.Current.GoToAsync(nameof(ProfileWorkoutPreferencesPage));
+        }
+        catch (Exception ex)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"[StrengthPlanGeneration] Routing to Preferences failed: {ex.GetType().Name}.");
         }
     }
 
@@ -1093,9 +1347,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
-    private async Task AcceptProposalAsync()
+    private Task AcceptProposalAsync() => AcceptProposalResponseAsync(++_generationVersion);
+
+    private async Task AcceptProposalResponseAsync(long generation)
     {
-        if (_proposal is null || !CanAcceptProposal())
+        if (!IsCurrentGeneration(generation) || _proposal is null || !CanAcceptProposal())
         {
             StatusMessage = UiTextCatalog.Get(AcceptUnavailableKey);
             return;
@@ -1105,22 +1361,16 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         StatusMessage = NoStatusMessage;
         try
         {
-            if (_pendingAcceptance is null && Preview is { Status: "Limited" } limitedPreview &&
-                limitedPreview.ExerciseReviewConditions.Count > NoPolicyReasons)
+            // PG01: a specific exercise excluded because of a recorded injury is the only workout
+            // adaptation, and the only extra decision. It is never acknowledged on the person's
+            // behalf: one native alert names the excluded work and the eligible alternative.
+            if (_pendingAcceptance is null &&
+                WorkoutPlanningFlow.RequiresInjuryAcknowledgment(
+                    Preview?.ExerciseReviewConditions.Count ?? NoPolicyReasons,
+                    _pendingAcknowledgedConditionIds?.Count ?? NoPolicyReasons))
             {
-                var conditionIds = limitedPreview.ExerciseReviewConditions
-                    .Select(condition => condition.ExerciseId)
-                    .ToHashSet();
-                await ClosePreviewAsync();
-                _pendingAcknowledgedConditionIds = conditionIds;
-                try
-                {
-                    await CreatePreviewAsync();
-                }
-                finally
-                {
-                    _pendingAcknowledgedConditionIds = null;
-                }
+                if (!await ConfirmInjuryAdaptationAsync(generation))
+                    return;
             }
             if (!IsPreviewApplicable)
             {
@@ -1138,7 +1388,10 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             }
             if (_pendingAcceptance is null)
             {
-                if (_proposal.ReplacesExistingPlan)
+                // Replacement authority is bound to this foreground intent: the same proposal, an
+                // unchanged revision and a live lease fence. Only a replacement that was not
+                // disclosed on the initiating action still asks for confirmation.
+                if (_proposal.ReplacesExistingPlan && !_foregroundIntent)
                 {
                     if (_confirmReplacementAsync is null || !await _confirmReplacementAsync(BuildReplacementSummary()))
                         return;
@@ -1477,6 +1730,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(CanOfferExploreOtherFeatures));
         OnPropertyChanged(nameof(CanKeepCurrentPlan));
         OnPropertyChanged(nameof(HasExistingPlan));
+        OnPropertyChanged(nameof(ShowsReplacementDisclosure));
         NotifyCommandStates();
     }
 
@@ -1619,6 +1873,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         TakeOverPreviewCommand.NotifyCanExecuteChanged();
         UseLongerDurationCommand.NotifyCanExecuteChanged();
         UseShorterDurationCommand.NotifyCanExecuteChanged();
+        LoadCommand.NotifyCanExecuteChanged();
     }
 
     private static DayOfWeek[] NormalizeWeekdays(IReadOnlyList<int>? values) =>

@@ -177,6 +177,75 @@ public class ApiFailurePresenterContractTests
     }
 
     [Fact]
+    public void FromResponse_GeneratorFailure_ReturnsContactSupportAction()
+    {
+        var response = new BackendApiResponse<string>(
+            BackendApiStatus.ServerError,
+            Data: null,
+            ErrorCode: "generatorFailure",
+            ResponseStatusCode: HttpStatusCode.InternalServerError,
+            RequestId: "req-gen-fail-500");
+
+        var notice = ApiFailurePresenter.FromResponse(response, FallbackMessageKey);
+
+        Assert.Equal(ApiFailureAction.ContactSupport, notice.Action);
+        Assert.False(notice.IsRetryable);
+        Assert.Equal("req-gen-fail-500", notice.RequestId);
+    }
+
+    [Theory]
+    [InlineData("planInfeasible")]
+    [InlineData("planningProfileInvalid")]
+    [InlineData("safetyAnswersRequired")]
+    public void FromResponse_PlanInfeasibleOrInputRequired_ReturnsActionNone(string errorCode)
+    {
+        var response = new BackendApiResponse<string>(
+            BackendApiStatus.ServerError,
+            Data: null,
+            ErrorCode: errorCode,
+            ResponseStatusCode: HttpStatusCode.UnprocessableEntity,
+            RequestId: "req-infeasible");
+
+        var notice = ApiFailurePresenter.FromResponse(response, FallbackMessageKey);
+
+        Assert.Equal(ApiFailureAction.None, notice.Action);
+        Assert.False(notice.IsRetryable);
+        Assert.Equal("req-infeasible", notice.RequestId);
+    }
+
+    [Fact]
+    public void FromException_SocketException_ReturnsOfflineAction()
+    {
+        var exception = new System.Net.Sockets.SocketException(10061); // Connection refused
+        var notice = ApiFailurePresenter.FromException(exception, FallbackMessageKey);
+
+        Assert.Equal(ApiFailureAction.Offline, notice.Action);
+        Assert.Equal("Ui_Common_Error_Offline", notice.MessageKey);
+        Assert.True(notice.IsRetryable);
+    }
+
+    [Fact]
+    public void FromException_AuthenticationException_ReturnsSignInAgainAction()
+    {
+        var exception = new System.Security.Authentication.AuthenticationException("Invalid credentials.");
+        var notice = ApiFailurePresenter.FromException(exception, FallbackMessageKey);
+
+        Assert.Equal(ApiFailureAction.SignInAgain, notice.Action);
+        Assert.Equal("Ui_Common_Error_SessionExpired", notice.MessageKey);
+        Assert.False(notice.IsRetryable);
+    }
+
+    [Fact]
+    public void FromException_GeneratorInvalidOperation_ReturnsActionNone()
+    {
+        var exception = new InvalidOperationException("Workout generator failed to find safe candidates.");
+        var notice = ApiFailurePresenter.FromException(exception, FallbackMessageKey);
+
+        Assert.Equal(ApiFailureAction.None, notice.Action);
+        Assert.False(notice.IsRetryable);
+    }
+
+    [Fact]
     public void SanitizeRequestId_PreventsCredentialAndPiiLeakage()
     {
         // Valid trace correlation identifier preserved

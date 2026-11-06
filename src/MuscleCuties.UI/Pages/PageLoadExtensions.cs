@@ -95,24 +95,40 @@ internal static class PageLoadExtensions
         }
     }
 
-    public static void BeginPageLoad(this Page page, Func<Task> loadAsync)
+    /// <summary>
+    /// Queues a data load after first layout. <paramref name="isCurrent"/> is evaluated on the UI
+    /// thread immediately before the load wrapper runs; a stale appearance is skipped entirely so it
+    /// cannot reset loading/error state or start work on a page that has already left.
+    /// </summary>
+    public static void BeginPageLoad(this Page page, Func<Task> loadAsync, Func<bool>? isCurrent = null)
     {
         var pageName = page.GetType().Name;
         var firstLayout = GetFirstLayoutTask(page, pageName);
         Trace.WriteLine($"[Performance][{pageName}] Page entered; data load queued after first layout.");
-        _ = RunAfterFirstLayoutSafelyAsync(page, pageName, firstLayout, loadAsync);
+        _ = RunAfterFirstLayoutSafelyAsync(page, pageName, firstLayout, loadAsync, isCurrent);
     }
 
     private static async Task RunAfterFirstLayoutSafelyAsync(
         Page page,
         string pageName,
         Task firstLayout,
-        Func<Task> loadAsync)
+        Func<Task> loadAsync,
+        Func<bool>? isCurrent)
     {
         await firstLayout.ConfigureAwait(false);
         // Defer rendering by 50ms so native Shell slide animation completes without UI contention.
         await Task.Delay(PostLayoutRenderDelayMilliseconds).ConfigureAwait(false);
-        await MainThread.InvokeOnMainThreadAsync(() => RunSafelyAsync(page, pageName, "data load", loadAsync));
+        await MainThread.InvokeOnMainThreadAsync(() =>
+        {
+            if (isCurrent is not null && !isCurrent())
+            {
+                Trace.WriteLine(
+                    $"[Performance][{pageName}] Deferred data load skipped; the page appearance changed.");
+                return Task.CompletedTask;
+            }
+
+            return RunSafelyAsync(page, pageName, "data load", loadAsync);
+        });
     }
 
     public static void BeginDeferredLoad(this Page page, Func<Task> loadAsync)

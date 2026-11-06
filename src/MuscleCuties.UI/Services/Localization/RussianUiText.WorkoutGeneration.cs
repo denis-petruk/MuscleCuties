@@ -135,6 +135,18 @@ internal static partial class RussianUiText
         Values["Workout_Generation_ReplacementTitle"] = "Заменить текущий план?";
         Values["Workout_Generation_ReplacementSummary"] = "Ваш текущий план будет заменён этим расписанием:";
         Values["Workout_Generation_ReplacementCancel"] = "Отмена";
+        Values["Workout_Generation_ReplacesActivePlanNotice"] =
+            "Новый план заменит текущий активный план, как только сервер его подтвердит.";
+        Values["Workout_Generation_InjuryTitle"] = "Коррекция из-за травмы";
+        Values["Workout_Generation_InjuryContinue"] = "Продолжить";
+        Values["Workout_Generation_InjurySummaryFormat"] =
+            "Из-за указанной травмы эти упражнения исключены: {0}. В плане используется безопасная замена, а исключённое упражнение остаётся заблокированным. «Продолжить» активирует скорректированный план, «Отмена» сохранит текущий план.";
+        Values["Workout_Generation_InjuryCancelled"] =
+            "Текущий план сохранён. Исключённое упражнение остаётся заблокированным.";
+        Values["Workout_Generation_InjuryChanged"] =
+            "Коррекция из-за травмы изменилась во время подтверждения. Проверьте детали плана перед продолжением.";
+        Values["Workout_Generation_InjuryUnavailable"] =
+            "Для этого плана нужна коррекция из-за травмы, которую не удалось подтвердить. Проверьте данные и создайте план заново.";
         Values["Workout_Generation_KeepCurrentPlan"] = "Оставить текущий план";
         Values["Workout_Generation_EditDetails"] = "Изменить данные";
         Values["Workout_Generation_Loading"] = "Загрузка предпочтений тренировок";

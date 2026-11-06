@@ -270,7 +270,7 @@ Keep existing project paths initially. The following map is a target change sequ
 - **Ownership/collisions:** A owns characterized rule/use-case slice; I reserves shared DTO/ports; B approves any requested schema change separately, no migrations hidden here.
 - **Steps:** introduce explicit inputs/results and clock/catalog/safety ports; move only orchestration to application services and deterministic rules inward; preserve feasibility/frequency/duration/strength/injury/readiness behavior and source review requirements; remove no rule on the basis of naming alone.
 - **Tests/manual:** C1/C3/C5; policy boundary matrix, empty/missing/stale/invalid inputs, deterministic results, golden proposal/accept outputs and transaction invariants; synthetic success-path performance comparison.
-- **Staging/Beta gate:** full domain/API/DB gates for any behavior impact; separate clinical/product review for changed rules.
+- **Staging/Beta gate:** full domain/API/DB gates for behavior changes and independent review against the [approved Beta workout policy](../../release-audit/2026-11-05/WORKOUT_POLICY.md).
 - **Recovery:** revert one slice, preserve old contract adapter; no wholesale second generator or data conversion.
 - **Done/artifact:** equivalent outputs/invariants and inward dependency evidence for each extracted slice.
 - **Estimate/confidence:** 4–8 days across several PRs, medium/low.
