@@ -45,6 +45,20 @@ paused surface kept a Resume button that could never recover; only Finish or Aba
 suspension that happens during the call still wins. The ViewModel has no unit-test harness in
 `tests/`, so this path is verified by build and the suites below, not by an automated regression test.
 
+## Session-length and running-surface revision
+
+The running surface read as sparse and clipped on a device: the twenty-minute prescription (5 + 10 + 5)
+left single-activity days too short, the effort slider and distance field sat below the fold, and the
+elapsed time was printed twice. The continuous-cardio main phase is now 20 minutes for beginners and 30
+without a baseline; swimming is capped by its own 25–30 minute policy (`SwimmingMainMinutesCap`), so it
+lands on 30 instead of inheriting the longer cardio default. On the surface, the state and phase moved
+into the timer card, the duplicate elapsed line is gone, the effort and distance controls are cards, the
+prescription sits after the controls, and the action row has bottom clearance.
+`ActivityPrescriptionRuleTests.SingleDayCardioSessionsAreLongEnoughToRunForThirtyMinutes` pins the new
+lengths. Core 1220, Mobile.Contracts 119 and the iOS build (0 warnings, 0 errors) pass after the change.
+The rendered result is still unobserved: the UI cannot be run under the current owner rule, so the owner
+has to confirm the fold and the spacing on a device.
+
 ## Not verified, and why
 
 - **No simulator or device walkthrough on this branch.** Per the repository contract, MAUI run and screenshots need task-specific owner authorization; none was given for this branch. Start, pause/resume, background/foreground, finish summary, cancel/confirm abandon, ambiguous response, HIIT gating, multi-activity day, EN/RU visuals, light/dark, large text and VoiceOver remain unobserved.
