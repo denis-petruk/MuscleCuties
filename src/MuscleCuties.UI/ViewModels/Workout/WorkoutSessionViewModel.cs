@@ -25,9 +25,14 @@ public enum HiitConfirmationChoice { Cancel, Confirm, Update }
 
 public sealed record SessionExerciseProgress(int Index, string Name, bool IsLogged, bool IsCurrent, bool IsSkipped)
 {
-    public string AccessibilityText => $"Exercise {Index + 1}: {Name}, " +
-                                       (IsCurrent ? "current, " : string.Empty) +
-                                       (IsLogged ? "logged" : IsSkipped ? "skipped" : "pending");
+    public string AccessibilityText => UiTextCatalog.Format(
+        "Workout_Session_ExerciseProgressAccessibilityFormat",
+        Index + 1,
+        Name,
+        UiTextCatalog.Get(IsCurrent ? "Workout_Session_ExerciseStateCurrent"
+            : IsLogged ? "Workout_Session_ExerciseStateLogged"
+            : IsSkipped ? "Workout_Session_ExerciseStateSkipped"
+            : "Workout_Session_ExerciseStatePending"));
 }
 
 public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
@@ -65,7 +70,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsActivityIntro), nameof(IsExerciseFlow),
         nameof(IsActivitySummary), nameof(IsTimedActivityScreen), nameof(IsTimedActivityActive),
-        nameof(CanPauseTimedActivity), nameof(CanResumeTimedActivity))]
+        nameof(IsTimedActivitySummary), nameof(CanPauseTimedActivity), nameof(CanResumeTimedActivity))]
     private SessionScreen _currentScreen;
 
     [ObservableProperty] private string _cyclePhaseNote = string.Empty;
@@ -105,9 +110,12 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private int _restTimerTotalSeconds;
     private int _restTimerVersion;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanStartActivity), nameof(ShowStrengthSummaryMetrics))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanStartActivity), nameof(ShowStrengthSummaryMetrics),
+        nameof(IsTimedActivitySummary))]
     private WorkoutActivitySectionItem? _selectedActivity;
     [ObservableProperty] private string _summaryDuration = "<1 min";
+    [ObservableProperty] private string _summaryEffortText = string.Empty;
     [ObservableProperty] private int _summaryPrCount;
     [ObservableProperty] private string _summaryStatusText = string.Empty;
     [ObservableProperty] private string _summaryTitle = "Activity complete";
@@ -157,7 +165,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private sealed record PendingTimingCheckpoint(Guid OperationId, Guid IntervalId, int MeasuredSeconds, bool Pause);
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsTimedActivityActive), nameof(CanPauseTimedActivity),
-        nameof(CanResumeTimedActivity))]
+        nameof(CanResumeTimedActivity), nameof(TimedActivityStateKey))]
     private bool _isTimedActivityRunning;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanStartActivity))]
     private bool _isActivityUnsafe;
@@ -165,7 +173,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     // Timed running surface. One timing authority stays behind these values: confirmed server time
     // plus the existing local stopwatch, exactly like the strength flow.
     [ObservableProperty]
-    [NotifyPropertyChangedFor(nameof(CanPauseTimedActivity), nameof(CanResumeTimedActivity))]
+    [NotifyPropertyChangedFor(nameof(CanPauseTimedActivity), nameof(CanResumeTimedActivity),
+        nameof(TimedActivityStateKey))]
     private bool _isTimedActivityPaused;
     [ObservableProperty] private bool _isAbandonConfirmationVisible;
     [ObservableProperty] private string _timedActivityElapsedText = "00:00";
@@ -176,6 +185,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(HasTimedActivityCountdown))]
     private string _timedActivityRemainingText = string.Empty;
     [ObservableProperty] private double _timedActivityProgressValue;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TimedActivityRpe), nameof(TimedActivityRpeText),
+        nameof(HasTimedActivityRpe))]
+    private double _timedActivityRpeValue;
     private CancellationTokenSource? _timedDisplayCancellation;
     private bool _abandonOutcomeUnknown;
 
@@ -212,10 +225,23 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     public bool IsActivitySummary => CurrentScreen == SessionScreen.ActivitySummary;
     public bool IsTimedActivityScreen => CurrentScreen == SessionScreen.TimedActivity;
     public bool IsTimedActivityActive => IsTimedActivityScreen && _plannedSessionId.HasValue;
-    public bool CanPauseTimedActivity => IsTimedActivityActive && !IsTimedActivityPaused && !IsBusy;
-    public bool CanResumeTimedActivity => IsTimedActivityActive && IsTimedActivityPaused && !IsBusy;
+    public bool CanPauseTimedActivity =>
+        IsTimedActivityActive && !IsTimedActivityPaused && !IsBusy && _pendingCompletionAtUtc is null;
+    public bool CanResumeTimedActivity =>
+        IsTimedActivityActive && IsTimedActivityPaused && !IsBusy && _pendingCompletionAtUtc is null;
     public bool HasTimedActivityPhase => !string.IsNullOrEmpty(TimedActivityPhaseKey);
     public bool HasTimedActivityCountdown => !string.IsNullOrEmpty(TimedActivityRemainingText);
+    public bool IsTimedActivitySummary => IsActivitySummary && SelectedActivity?.IsTimedActivity == true;
+    public bool IsRestDaySession => _isRestDay;
+    public bool ShowStartButton => !_isRestDay;
+    public bool HasTimedActivityRpe => TimedActivityRpe.HasValue;
+    public int? TimedActivityRpe => TimedActivityProgress.NormalizeRpe(TimedActivityRpeValue);
+    public string TimedActivityRpeText => TimedActivityRpe is { } rpe
+        ? UiTextCatalog.Format("Workout_Session_TimedRpeValueFormat", rpe)
+        : UiTextCatalog.Get("Workout_Session_TimedRpeUnrated");
+    public string TimedActivityStateKey => IsTimedActivityPaused
+        ? "Workout_Session_TimedStatePaused"
+        : "Workout_Session_TimedStateRunning";
     public bool ShowStrengthSummaryMetrics => SelectedActivity?.IsTimedActivity != true;
     public bool CanAbandonPlannedSession => _sessionCreated && _plannedSessionId.HasValue && !IsBusy && _pendingCompletionAtUtc is null;
     public bool CanStartActivity => !IsActivityUnsafe && !_isRestDay && SelectedActivity is not null;
@@ -259,11 +285,15 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     public bool HasSwapCandidates => SwapCandidates.Count > 0;
     public bool HasSwapError => !string.IsNullOrEmpty(SwapErrorText);
     public bool CanDismissSwap => !SwapNeedsReload;
-    public string SwapConfirmText => SwapNeedsReload ? "Reload exercise" : "Confirm swap";
+    public string SwapConfirmText => SwapNeedsReload
+        ? UiTextCatalog.Get("Workout_Swap_ReloadExercise")
+        : UiTextCatalog.Get("Workout_Swap_ConfirmSwap");
     public bool ShowNoSwapCandidates => !IsSwapLoading && !HasSwapCandidates && !HasSwapError;
     public bool HasCelebration => Celebration != CelebrationType.None;
-    public string ExercisePositionText => $"Exercise {CurrentExerciseIndex + 1} of {TotalExercisesInActivity}";
-    public string TipsButtonText => IsTipsExpanded ? "Hide tips & technique" : "Tips & technique";
+    public string ExercisePositionText => UiTextCatalog.Format(
+        "Workout_Session_ExercisePositionFormat", CurrentExerciseIndex + 1, TotalExercisesInActivity);
+    public string TipsButtonText => UiTextCatalog.Get(
+        IsTipsExpanded ? "Workout_Session_TipsHide" : "Workout_Session_TipsShow");
     public string RestTimerDisplay => $"{RestTimerRemainingSeconds / 60:00}:{RestTimerRemainingSeconds % 60:00}";
 
     public double RestTimerProgress => RestTimerTotalSeconds > 0
@@ -384,6 +414,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             var existingSession = await _session.GetPlannedSessionAsync(workoutDayId);
             _isRestDay = detail.IsRestDay;
             OnPropertyChanged(nameof(CanStartActivity));
+            OnPropertyChanged(nameof(IsRestDaySession));
+            OnPropertyChanged(nameof(ShowStartButton));
             _plannedSessionId = existingSession is { IsCompleted: false, IsCanceled: false } ? existingSession.SessionId : null;
             _sessionCreated = _plannedSessionId.HasValue;
             IsActivityUnsafe = false;
@@ -405,6 +437,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             TimedActivityPhaseKey = string.Empty;
             TimedActivityRemainingText = string.Empty;
             TimedActivityProgressValue = 0;
+            TimedActivityRpeValue = 0;
+            SummaryEffortText = string.Empty;
             string phaseNote;
             try
             {
@@ -413,7 +447,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             }
             catch
             {
-                phaseNote = "Cycle guidance is unavailable. Follow your energy and comfort today.";
+                phaseNote = "Workout_Session_CycleUnavailable";
             }
 
             if (version != _loadVersion) return;
@@ -477,9 +511,11 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             SelectedActivity.Exercises.Select(exercise => exercise.TargetText + " " + exercise.RecommendationText));
         var rpe = Regex.Match(targets, @"RPE\s*(\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?)",
             RegexOptions.IgnoreCase);
-        ActivityIntroIntensity = rpe.Success ? $"Target RPE {rpe.Groups[1].Value}" :
-            targets.Contains("steady", StringComparison.OrdinalIgnoreCase) ? "Steady effort" :
-            "Follow the targets at a comfortable effort";
+        ActivityIntroIntensity = rpe.Success
+            ? UiTextCatalog.Format("Workout_Session_TargetRpeFormat", rpe.Groups[1].Value)
+            : UiTextCatalog.Get(targets.Contains("steady", StringComparison.OrdinalIgnoreCase)
+                ? "Workout_Session_SteadyEffort"
+                : "Workout_Session_ComfortableEffort");
         ActivityPrescriptionText = FormatPrescription(SelectedActivity.Prescription);
     }
 
@@ -678,9 +714,11 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             Celebration = celebration;
             CelebrationText = celebration switch
             {
-                CelebrationType.BigPR => $"{exercise.Name}: new weight best!",
-                CelebrationType.MediumFirstTime => $"First {exercise.Name} log. Great start!",
-                _ => $"{exercise.Name} logged"
+                CelebrationType.BigPR => UiTextCatalog.Format(
+                    "Workout_Session_CelebrationPrFormat", exercise.Name),
+                CelebrationType.MediumFirstTime => UiTextCatalog.Format(
+                    "Workout_Session_CelebrationFirstFormat", exercise.Name),
+                _ => UiTextCatalog.Format("Workout_Session_CelebrationLoggedFormat", exercise.Name)
             };
         }
         catch (Exception)
@@ -785,14 +823,19 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         SummaryTotalVolume = volume >= 1000 ? $"{volume / 1000:0.#} t" : $"{volume:0.#} kg";
         SummaryPrCount = _prIds.Count(ids.Contains);
         SummaryDuration = timer is null || timer.Elapsed.TotalMinutes < 1
-            ? "<1 min"
-            : $"{(int)timer.Elapsed.TotalMinutes} min";
+            ? UiTextCatalog.Get("Workout_Session_SummaryDurationUnderMinute")
+            : UiTextCatalog.Format("Workout_Session_SummaryDurationMinutesFormat",
+                (int)timer.Elapsed.TotalMinutes);
+        SummaryEffortText = string.Empty;
         var logged = activity.Exercises.Count(exercise => exercise.IsLogged);
         IsActivityComplete = logged == ids.Count;
-        SummaryTitle = IsActivityComplete ? "Activity complete!" : "Activity reviewed";
-        SummaryStatusText = $"{logged} of {ids.Count} logged" +
+        SummaryTitle = UiTextCatalog.Get(IsActivityComplete
+            ? "Workout_Session_SummaryCompleteTitle"
+            : "Workout_Session_SummaryReviewedTitle");
+        SummaryStatusText = UiTextCatalog.Format("Workout_Session_SummaryLoggedFormat", logged, ids.Count) +
                             (ids.Any(_skippedIds.Contains)
-                                ? $" · {ids.Count(_skippedIds.Contains)} skipped"
+                                ? UiTextCatalog.Format("Workout_Session_SummarySkippedFormat",
+                                    ids.Count(_skippedIds.Contains))
                                 : string.Empty);
         ErrorText = string.Empty;
         RefreshProgress();
@@ -822,8 +865,21 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         if (IsBusy || _pendingCompletionAtUtc is not null) return;
         if (!IsTimedActivityRunning && !IsTimedActivityPaused) return;
         var measuredSeconds = CurrentTimedElapsedSeconds;
-        if (!await CompletePlannedSessionAsync()) return;
+        if (!await CompletePlannedSessionAsync())
+        {
+            // The finish was not acknowledged. Keep the draft, the confirmed time and the retained
+            // completion identity so a retry reuses them instead of starting a second session.
+            if (CurrentScreen == SessionScreen.TimedActivity && _plannedSessionId.HasValue)
+            {
+                IsTimedActivityRunning = false;
+                IsTimedActivityPaused = true;
+                PauseActivity();
+                RefreshTimedActivityDisplay();
+            }
+            return;
+        }
         StopTimedActivityDisplay();
+        PauseActivity();
         IsTimedActivityRunning = false;
         IsTimedActivityPaused = false;
         ShowTimedActivitySummary(measuredSeconds);
@@ -837,6 +893,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             ? UiTextCatalog.Format("Workout_Session_TimedDurationMinutes",
                 (int)TimeSpan.FromSeconds(measuredSeconds).TotalMinutes)
             : UiTextCatalog.Get("Workout_Session_TimedDurationUnderMinute");
+        SummaryEffortText = TimedActivityRpe is { } rpe
+            ? UiTextCatalog.Format("Workout_Session_SummaryEffortFormat", rpe)
+            : UiTextCatalog.Get("Workout_Session_SummaryEffortNotRated");
         SummaryTitle = "Workout_Session_TimedSummaryTitle";
         SummaryStatusText = "Workout_Session_TimedSummaryStatus";
         IsActivityComplete = true;
@@ -863,6 +922,12 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task ResumeTimedActivityAsync()
     {
+        if (_pendingCompletionAtUtc is not null)
+        {
+            // A finish was already submitted. Retry that finish instead of resuming past it.
+            ErrorText = "Workout_Session_ConnectionRetry";
+            return;
+        }
         if (!CanResumeTimedActivity || _plannedSessionId is not { } sessionId) return;
         IsBusy = true;
         try
@@ -946,6 +1011,13 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [RelayCommand]
     private async Task CompleteSessionAsync()
     {
+        // A timed activity is completed before its summary, so the summary's end action only
+        // needs to return. Strength sessions still complete here and only leave on acknowledgment.
+        if (_plannedSessionId is null)
+        {
+            await _navigateAsync("..");
+            return;
+        }
         if (await CompletePlannedSessionAsync())
             await _navigateAsync("..");
     }
@@ -997,7 +1069,11 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         IsBusy = true;
         try
         {
-            await _session.FinishPlannedSessionAsync(sessionId, _pendingCompletionAtUtc.Value, _pendingCompletionSeconds.Value);
+            var rpe = SelectedActivity?.IsTimedActivity == true
+                ? TimedActivityProgress.NormalizeRpe(TimedActivityRpeValue)
+                : null;
+            await _session.FinishPlannedSessionAsync(sessionId, _pendingCompletionAtUtc.Value,
+                _pendingCompletionSeconds.Value, rpe);
             _plannedSessionId = null;
             OnPropertyChanged(nameof(CanAbandonPlannedSession));
             _plannedSessionStartedAtUtc = default;
@@ -1099,7 +1175,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         // Every exit path clears the timer, pending work and overlays before one bounded return.
         StopTimedActivityDisplay();
         _timingLoopCancellation?.Cancel();
+        StopRestTimer();
         PauseActivity();
+        _activityTimers.Clear();
         _plannedSessionTimer.Reset();
         _plannedSessionId = null;
         _sessionCreated = false;
@@ -1531,7 +1609,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private static string BuildPhaseNote(CyclePhase phase)
     {
         _ = phase;
-        return "Cycle phase is context. Use your current check-in and restrictions when reviewing your plan.";
+        return "Workout_Session_CycleContextNote";
     }
 
     private CelebrationType GetCelebration(WorkoutExerciseItem exercise, WorkoutExerciseLogDto log)
@@ -1569,8 +1647,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
                   ParsePace(exercise.LoggedPaceText) is null) ||
                  (exercise.UsesEffortMetric && !string.IsNullOrWhiteSpace(exercise.LoggedEffortText) &&
                   ParsePositiveInt(exercise.LoggedEffortText) is not (>= 1 and <= 10)))
-            ErrorText =
-                "Check your optional metrics. Use positive numbers, pace as minutes:seconds, and effort from 1 to 10.";
+            ErrorText = "Workout_Session_OptionalMetricsError";
         return !HasError;
     }
 

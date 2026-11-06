@@ -11,7 +11,22 @@ public static class TimedActivityProgress
     public const string MainPhaseKey = "Workout_Session_TimedPhaseMain";
     public const string CooldownPhaseKey = "Workout_Session_TimedPhaseCooldown";
 
+    /// <summary>Inclusive effort bounds shared with the session finish validation.</summary>
+    public const int MinimumRpe = 1;
+    public const int MaximumRpe = 10;
+
     private const string RestTag = "REST";
+
+    /// <summary>
+    /// Converts the optional effort control into the value the finish route accepts. An unrated
+    /// activity stays null instead of inventing an effort value; out-of-range input is discarded.
+    /// </summary>
+    public static int? NormalizeRpe(double? value)
+    {
+        if (value is not { } rating || double.IsNaN(rating) || double.IsInfinity(rating)) return null;
+        var rounded = (int)Math.Round(rating, MidpointRounding.AwayFromZero);
+        return rounded is >= MinimumRpe and <= MaximumRpe ? rounded : null;
+    }
 
     /// <summary>
     /// The surface a workout-day section runs on. One rule owns this decision so the view model, the
