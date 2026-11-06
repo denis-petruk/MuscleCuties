@@ -8,7 +8,7 @@ The [RM07 checkpoint](RM07_HANDOFF.md) records the owner's P0 acceptance and the
 
 | Field | Current evidence |
 | --- | --- |
-| Owner decision | Simulator debug data path resolved (P0 completed). Next phase: In-app simulator verification against AWS, fast-forwarding Rider `main`, and progressing QA01 / TF00–TF02. |
+| Owner decision | Simulator debug data path resolved (P0 completed). Next phase: In-app simulator verification against AWS, fast-forwarding Rider `main`, and progressing QA01 / TF00–TF02. UX02-RUN implementation is READY FOR REVIEW; result acceptance is pending (see the November 6 stage record). |
 | Observed Rider checkout | `main` at `d840d62745337a604f56f4ba32568fb66ae53158` in `/Users/denispetruk/RiderProjects/MuscleCuties`. Port 5080 fix applied to `AppEndpointConfiguration.cs`. Untracked audit files present. |
 | Selected candidate | `continue_musclecuties_beta_plan` at `6e38535756494ab3e40a75cc74109ad247727213` in `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan`. 1,346 automated tests green. Port 5080 fix applied. |
 | P0 Simulator Status | **COMPLETED & VERIFIED.** Port 5000 AirPlay collision diagnosed. Port 5080 configured in `AppEndpointConfiguration.LocalBaseUrl`. Simulator `backend_api_base_url` pointed to AWS API Gateway (`https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com`). App booted cleanly to login screen. Latency measured at 124–165ms warm, RDS PostgreSQL healthy. |
@@ -45,3 +45,71 @@ The owner's current inputs are recorded. Next ask only for a missing execution d
 ## Save before a limit
 
 Write the next checkpoint while context is available. Include the package, base/head SHA, actual changed files and reservations, approvals and exclusions, source/artifact/configuration identities, relevant commands and results, remaining checks, recovery requirements, and the exact next action. Record where any stopped local service or disposable fixture can be safely recreated. Resume through a supported continuation with scope and drift checked again.
+
+## Stage record — November 6, 2026 (P0 re-verification and UX02-RUN)
+
+**State:** READY FOR REVIEW. Result acceptance pending. No remote write, push, deploy, or release was performed.
+
+| Item | Evidence |
+| --- | --- |
+| Source | Rider `main` at `0af0bef5ba434339cfb5d09f9e177d5c322c2038` (tree `6850656e8e83418c7c227b63e1a53675f0bbfc3c`), worktree `/Users/denispetruk/RiderProjects/MuscleCuties`. |
+| Preserved unrelated work | Pre-existing changes kept untouched: `WorkoutPlanAndSessionEndpointMappings.cs`, `WorkoutPresentationModels.cs`, `WorkoutViewModel.cs`, both audit docs, and untracked `BetaWorkoutScope.cs` / `BetaWorkoutScopeTests.cs` (rescheduling gate). Not reviewed or adopted here. |
+| UX02-RUN changed paths | `src/MuscleCuties.UI/ViewModels/Workout/WorkoutSessionViewModel.cs`, `src/MuscleCuties.UI/Pages/Workout/WorkoutSessionPage.xaml`, new `src/MuscleCuties.UI/Services/Workout/TimedActivityProgress.cs`, `UiTextCatalog.CycleWorkout.cs`, `RussianUiText.CycleWorkout.cs`, new `tests/MuscleCuties.Mobile.Contracts.Tests/TimedActivityProgressTests.cs` plus its `.csproj` link. |
+| Implementation (4H) | A timed activity now enters a visible `SessionScreen.TimedActivity` surface on successful start: prescribed warm-up/main/cool-down phase derived from confirmed active time plus the activity's own prescription, elapsed clock, remaining time and progress when a total is known, and Pause/Resume/Finish. No second timing authority: values come from `_confirmedActiveSeconds` plus the existing `_plannedSessionTimer`. A duration-only activity shows elapsed time only and an honest no-phases note. Finish persists actuals through the existing planned-session finish route, then opens a summary where strength volume/PR cards are hidden and time is shown. |
+| Implementation (4I) | Abandon is now confirmed, single-flight, and reconciles an uncertain outcome: a retry reconciles the server session instead of sending a second abandon. Cancel preserves the active state and confirmed time. Success cancels the timing loop and display timer, clears busy/overlay/pending state, and performs one bounded return to the opener; the Workout page reloads on appearance, so the earlier "Loading your data" loop is not re-entered. `FinishActivityAsync` no longer re-finishes an already committed session. |
+| Checks run | `dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64` → **Build succeeded, 0 errors, 0 warnings** with `MauiStrictXamlCompilation` and compiled bindings. `dotnet test tests/MuscleCuties.Mobile.Contracts.Tests` → **66 passed, 0 failed** (10 new phase/countdown checks). |
+| Installed binary | `MuscleCuties.UI.app` built Nov 6 09:03:36 2026, installed and launched on booted iPhone 16 `60DD8563-A1D6-4FE5-9F4F-2BFB975B194B`. |
+| Effective endpoint | Simulator preference `backend_api_base_url` = `https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com` (the owner-accepted P0 target); no loopback override present. |
+| Endpoint evidence | AWS: `/health/live` 200 (96 ms), `/health/ready` 200 (301 ms), anonymous `/api/v1/session` 401 (108 ms). Loopback API on `127.0.0.1:5080`: `/health/live` 200, `/health/ready` 200, anonymous session 401. |
+| Authenticated data load | On this exact binary the synthetic account dashboard rendered with today's Running workout, readiness and recovery scores: `docs/release-audit/2026-11-05/evidence/ux02-run-boot.png` (synthetic data, no personal records). |
+| Not verified | Simulator tap-through of start → running surface → pause/resume → finish summary, and abandon confirm/cancel/uncertain-retry; background/foreground; strength-session baseline; EN/RU and light/dark screenshots; large text, keyboard and VoiceOver. No non-UI suite beyond Mobile Contracts was re-run. UX02-ACT activity rollout is untouched. |
+
+**Owner decision entries (kept separate)**
+
+1. **Plan approval** — the November 6 implementation plan and orchestrator prompt are the governing revision; this stage implements its UX02-RUN package and the P0 re-verification it prescribes.
+2. **Execution authorization** — the current request authorizes local source edits, the iOS simulator build/install/run/screenshot, and local test runs. It does not authorize pushes, cloud or database mutation, signing, or release actions; none were attempted.
+3. **Result acceptance** — PENDING. The stage is ready for owner review; acceptance of the observed simulator behavior requires the tap-through listed as not verified.
+
+**Next action:** owner reviews the diff and, on the installed binary, walks start → running surface → pause/resume → finish summary and abandon confirm/cancel; then UX02-ACT can proceed on the reviewed lifecycle.
+
+## Stage record — November 6, 2026 (UX02-ACT, all non-strength timed activities)
+
+**State:** READY FOR REVIEW. Result acceptance pending. No remote write, push, deploy, or release was performed.
+
+| Item | Evidence |
+| --- | --- |
+| Source | Rider `main` at `0af0bef5ba434339cfb5d09f9e177d5c322c2038` (tree `6850656e8e83418c7c227b63e1a53675f0bbfc3c`). Pre-existing workout-scope files and both audit docs remain untouched. |
+| UX02-ACT changed paths | `src/MuscleCuties.UI/Services/Workout/TimedActivityProgress.cs` (activity classification beside the phase rule), `src/MuscleCuties.UI/Models/UI/Workout/WorkoutActivitySectionItem.cs` (`IsTimedActivity`), `src/MuscleCuties.UI/ViewModels/Workout/WorkoutSessionViewModel.cs` (tag-based routing, rest-day start guard, localized summary), `UiTextCatalog.CycleWorkout.cs`, `RussianUiText.CycleWorkout.cs`, `tests/MuscleCuties.Mobile.Contracts.Tests/TimedActivityProgressTests.cs`. |
+| Shared lifecycle | One rule decides the surface: `TimedActivityProgress.IsTimedActivityTag` treats every non-strength, non-rest tag (cardio, recovery, yoga, climbing, case-insensitive) as timed, and an unknown or empty tag stays on the strength flow so a section that cannot be classified never loses its logging inputs. `StartActivityAsync` routes by `SelectedActivity.IsTimedActivity` rather than by exercise count, so all timed activities use the same `SessionScreen.TimedActivity` surface, the same confirmed-time-plus-stopwatch authority, the same Pause/Resume/Finish, the same finish route and the same summary. No second timer or parallel path was added. |
+| Per-activity behaviour | Phase, elapsed, remaining and progress come from each activity's own prescription: continuous cardio (walking, cycling, running, swimming, rowing, elliptical) uses 5/20/5, HIIT uses its 10-minute warm-up, climbing its longer main block, and yoga, mobility and gentle recovery show a main phase with no invented warm-up or cool-down. Prescription-free and zero-minute activities show elapsed time plus the “no timed phases” note. Finish persists actuals through the existing planned-session finish route and opens the summary with the strength-only volume/PR cards hidden and time shown. Abandon keeps the reviewed confirm, single-flight and uncertain-outcome reconciliation behaviour unchanged. |
+| Localization | EN and RU added for the timed summary duration, the under-a-minute value and the not-applicable placeholder; no new user-facing literal is hardcoded in the timed path. |
+| Checks run | `dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64` → **Build succeeded, 0 errors, 0 warnings** under strict XAML compilation with compiled bindings. `dotnet test tests/MuscleCuties.Mobile.Contracts.Tests` → **84 passed, 0 failed**, including per-activity phase and countdown coverage for 11 activity prescription shapes, tag-classification checks for cardio/recovery/yoga/climbing versus strength/rest/empty/null, and the zero-minute and negative-elapsed edges. |
+| Installed binary | Rebuilt `MuscleCuties.UI.app` installed and launched on booted iPhone 16 `60DD8563-A1D6-4FE5-9F4F-2BFB975B194B` (launch PID 79971). |
+| Endpoint and data load | Effective `backend_api_base_url` remains `https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com`; the app rendered the signed-in synthetic dashboard with today's Running workout: `docs/release-audit/2026-11-05/evidence/ux02-act-boot.png`. |
+| Surface rule | One rule decides the surface (`TimedActivityProgress.DecideSurface`): rest days never start; a section without planned movement rows is always a timed activity; a section that carries movement rows keeps the exercise flow because those rows record distance, pace, heart-rate and power actuals that the planned-session finish route does not persist. The planner assigns movement rows only to true strength activities, so every non-strength activity day — including rock climbing, which is persisted as a strength-type day without rows — reaches the timed surface. Unknown tags follow the same structural rule, so no section is stranded on an empty exercise flow. |
+| Not verified | On-device tap-through per activity (start → running surface → pause/resume → finish summary, and abandon confirm/cancel) remains unverified: no tap-automation input is available in this environment, and the requirement stands as a manual walk on the installed binary. HIIT history gating and abandoned-activity history readback were not re-exercised at runtime this stage. |
+
+**Owner decision entries (kept separate)**
+
+1. **Plan approval** — the November 6 implementation plan and orchestrator prompt remain the governing revision; this stage implements UX02-ACT on the reviewed UX02-RUN lifecycle.
+2. **Execution authorization** — the current request authorizes local source edits, the iOS simulator build/install/run/screenshot and local test runs. No push, cloud, database or release action was attempted.
+3. **Result acceptance** — PENDING. Acceptance requires the manual per-activity walkthrough on the installed binary listed as not verified.
+
+**Next action:** owner walks one cardio activity, one interval activity (HIIT) and one recovery activity on the installed binary, then QA00 can assemble integrated evidence.
+
+## Stage record — November 6, 2026 (UX02-ACT routing closure)
+
+**State:** READY FOR REVIEW. Result acceptance pending. No remote write, push, deploy, release or walkthrough harness was produced.
+
+**Code inspection that motivated the closure.** The planner creates movement rows only for true strength activities (`PostgresAcceptStrengthPlanProposalStoreV020`, `if (!IsStrengthActivity(activity) …) continue;`). Rock climbing is persisted as `WorkoutType.Strength`, so its section is tagged `STRENGTH` while carrying zero rows. The earlier tag-plus-rows rule therefore routed a climbing day into the exercise flow with no exercises to log, and the previous report's claim that every non-strength tag reaches the timed surface was inaccurate for that path.
+
+| Item | Evidence |
+| --- | --- |
+| Source | Rider `main` at `0af0bef5ba434339cfb5d09f9e177d5c322c2038` (tree `6850656e8e83418c7c227b63e1a53675f0bbfc3c`). Pre-existing workout-scope files and both audit docs remain untouched. |
+| Changed paths | `src/MuscleCuties.UI/Services/Workout/TimedActivityProgress.cs` (`WorkoutActivitySurface` and `DecideSurface` replace the tag-only helper), `src/MuscleCuties.UI/Models/UI/Workout/WorkoutActivitySectionItem.cs` (`IsTimedActivity` now reads `DecideSurface(Tag, HasExercises)`), `tests/MuscleCuties.Mobile.Contracts.Tests/TimedActivityProgressTests.cs` (routing table per activity type). The view model is unchanged in this stage: it already routes on `IsTimedActivity`, guards rest days out of Start, reuses the single confirmed-time-plus-stopwatch authority, and keeps the reviewed finish summary and abandon reconciliation. |
+| Surface rule (final) | `DecideSurface(tag, hasPlannedMovements)`: rest tag → no start; movements present → exercise flow; otherwise → timed activity. It reads the tag only for rest, because the tag alone cannot distinguish climbing from strength while the row count can. A section with movement rows is the only place distance, pace, heart-rate and power actuals can be recorded, so it keeps that flow; a row-less section has nothing to log per exercise and always gets the timed lifecycle. |
+| Checks run | `dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64` → **Build succeeded, 0 errors, 0 warnings** under strict XAML compilation with compiled bindings. `dotnet test tests/MuscleCuties.Mobile.Contracts.Tests` → **95 passed, 0 failed**, including the routing table for walking, cycling, running, swimming, rowing, elliptical, HIIT, climbing, yoga, mobility, gentle recovery, the three strength types, rest with and without rows, unknown and empty tags with and without rows, plus the existing per-activity phase/countdown checks and the zero-minute and negative-elapsed edges. |
+| Installed binary | Rebuilt `MuscleCuties.UI.app` installed and launched on booted iPhone 16 `60DD8563-A1D6-4FE5-9F4F-2BFB975B194B` (launch PID 80729) against `https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com`; screenshot `docs/release-audit/2026-11-05/evidence/ux02-act-routing.png`. |
+| Not verified | The on-device tap walkthrough (start → running surface → pause/resume → finish summary, abandon confirm/cancel) remains **unverified**: no tap-input automation is available here, and no result was invented for it. HIIT history gating and abandoned-activity history readback were likewise not re-exercised at runtime. |
+
+**Owner decision:** result acceptance pending; no acceptance was requested or assumed in this stage.
