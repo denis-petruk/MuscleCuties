@@ -5,15 +5,21 @@ using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UI.Services.Profile;
+using MuscleCuties.UI.Services.Units;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
 public partial class ProfilePersonalInfoViewModel : ObservableObject
 {
     private readonly IProfilePersonalInfoUseCase _useCase;
+    private readonly IProfileUnitsUseCase _units;
     private readonly IAccountPasswordValidator _passwordValidator;
     private readonly IProfileRefreshNotifier _refreshNotifier;
+
+    // F06: height and weight are entered in the saved system and stored in cm/kg.
+    private bool _useMetricSystem = true;
     private readonly Func<Task> _navigateBackAsync;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _statusMessage = string.Empty;
@@ -41,9 +47,11 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         IProfilePersonalInfoUseCase useCase,
         IAccountPasswordValidator passwordValidator,
         IProfileRefreshNotifier refreshNotifier,
+        IProfileUnitsUseCase units,
         Func<Task> navigateBackAsync)
     {
         _useCase = useCase;
+        _units = units;
         _passwordValidator = passwordValidator;
         _refreshNotifier = refreshNotifier;
         _navigateBackAsync = navigateBackAsync;
@@ -72,6 +80,11 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         new(3, "Irregular cycle")
     ];
 
+    /// <summary>F06: the entry hint names the unit the stored preference displays.</summary>
+    public string HeightUnitLabel => UnitsFormatter.HeightUnitLabel(_useMetricSystem);
+
+    public string WeightUnitLabel => UnitsFormatter.WeightUnitLabel(_useMetricSystem);
+
     public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
     public DateTime MaxBirthDate { get; } = DateTime.Today.AddYears(-18);
     public AsyncRelayCommand LoadDataCommand { get; }
@@ -98,12 +111,17 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             if (profile is null)
                 return;
 
+            var units = await _units.LoadAsync();
+            _useMetricSystem = units.Settings?.UseMetricSystem ?? _useMetricSystem;
+            OnPropertyChanged(nameof(HeightUnitLabel));
+            OnPropertyChanged(nameof(WeightUnitLabel));
+
             Name = profile.Name;
             _hasStoredBirthDate = profile.DateOfBirth != default;
             BirthDate = _hasStoredBirthDate ? profile.DateOfBirth : MaxBirthDate;
             _birthDateWasExplicitlyChanged = false;
-            HeightCm = FormatNumber(profile.Height);
-            WeightKg = FormatNumber(profile.Weight);
+            HeightCm = FormatNumber((float)UnitsFormatter.ToDisplayHeight(profile.Height, _useMetricSystem));
+            WeightKg = FormatNumber((float)UnitsFormatter.ToDisplayWeight(profile.Weight, _useMetricSystem));
             Goal = (UserGoal)profile.Goal;
             WeightGoalPace = UsesWeightGoalPace(Goal)
                 ? (WeightGoalPace)profile.WeightGoalPace
@@ -203,8 +221,8 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
 
     private bool TryValidate(out float height, out float weight, out int cycleLength)
     {
-        height = ParseFloat(HeightCm);
-        weight = ParseFloat(WeightKg);
+        height = (float)UnitsFormatter.FromDisplayHeight(ParseFloat(HeightCm), _useMetricSystem);
+        weight = (float)UnitsFormatter.FromDisplayWeight(ParseFloat(WeightKg), _useMetricSystem);
         cycleLength = ParseInt(CycleLength);
 
         if (string.IsNullOrWhiteSpace(Name))

@@ -214,6 +214,9 @@ internal static partial class RussianUiText
         Values["Common_Unit_In"] = "дюйм";
         Values["Common_Unit_Kcal"] = "ккал";
         Values["Common_Unit_Kg"] = "кг";
+        Values["Common_Unit_Km"] = "км";
+        Values["Common_Unit_Lb"] = "фунт";
+        Values["Common_Unit_Mi"] = "ми";
         Values["Common_Unit_L"] = "л";
         Values["Common_Unit_Mcg"] = "мкг";
         Values["Common_Unit_Metric"] = "Метрическая система";
