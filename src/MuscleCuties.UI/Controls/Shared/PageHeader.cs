@@ -207,9 +207,9 @@ public class PageHeader : ContentView
             VerticalOptions = LayoutOptions.Start,
             Command = _backProxy
         };
-        var backName = UiTextCatalog.TranslateRuntimeText("Back");
-        AutomationProperties.SetName(back, backName);
-        SemanticProperties.SetDescription(back, backName);
+        // SemanticProperties.Description is the supported iOS accessible name; the deprecated
+        // AutomationProperties.Name resolves to the same label, so it is not set a second time.
+        SemanticProperties.SetDescription(back, UiTextCatalog.TranslateRuntimeText("Back"));
         return back;
     }
 
