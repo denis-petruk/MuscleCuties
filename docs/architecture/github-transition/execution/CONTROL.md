@@ -103,8 +103,14 @@ Current Candidate HEAD: `a3ca36cf` (`implement_musclecuties_beta_plan`)
 
 ## 4. Next Checkpoint
 
-- **Full Roadmap Execution Complete:**
+- **Full Roadmap & Remediation Execution Complete:**
   - Plan I (P00–P13): 100% Completed, Verified, and Merged.
   - Plan II (R01–R07): 100% Completed, Verified, and Merged.
-  - Target branch: GitHub `main` at `d840d627`.
-  - All CI/CD checks 100% passing. Live Beta DB untouched. Independent Staging infrastructure active in `us-east-2`.
+  - Package P0 (Port 5080 AirPlay collision resolution): 100% Completed and Verified.
+  - UI/UX & Backend Remediation (NM01–NM03, CR01/PG01, PV01, AH01): 100% Completed and Verified.
+  - Owner Product & Release Decisions (Questions 1–14): Closed and Approved (2026-11-05).
+  - QA01: iPhone 16 simulator walkthrough captured.
+  - TF00–TF02 Evidence Packet finalized.
+  - Draft PR: Submitted to GitHub for owner merge review.
+  - Target branch: GitHub `main` at `d840d627` / candidate branch `remediate_musclecuties_ui_ux`.
+  - All CI/CD and domain checks passing. Live Beta DB untouched. Independent Staging infrastructure active in `us-east-2`.

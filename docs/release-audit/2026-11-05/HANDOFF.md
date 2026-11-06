@@ -2,6 +2,8 @@
 
 Start with the [implementation plan](IMPLEMENTATION_PLAN.md), then use the [orchestration prompt](ORCHESTRATOR_PROMPT.md). The [simulator checkpoint](../2026-11-05-simulator-checkpoint.md) is the incident record.
 
+The [RM07 checkpoint](RM07_HANDOFF.md) records the owner's P0 acceptance and the scoped local candidate work. The [approved Beta workout policy](WORKOUT_POLICY.md) records PD00 and governs the workout behavior.
+
 ## Resume from here
 
 | Field | Current evidence |
