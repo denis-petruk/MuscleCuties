@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: >-
-  MuscleCuties Observability Alarms for Lambda, SQS, and Error Rate Supervision.
+  MuscleCuties Observability Alarms for Lambda, SQS, EventBridge DLQ, and Latency/Error Supervision.
 
 Parameters:
   EnvironmentName:
@@ -18,29 +18,72 @@ Resources:
     Properties:
       TopicName: !Sub 'musclecuties-${EnvironmentName}-operational-alarms'
 
-  LambdaErrorRateAlarm:
+  # CloudWatch Alarm: Lambda 5xx error rate (> 0.5% over 5 minutes)
+  Lambda5xxErrorRateAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-API-ErrorRate'
-      AlarmDescription: Alarms when Server Lambda error rate exceeds 1% over 5 minutes.
-      Namespace: AWS/Lambda
-      MetricName: Errors
-      Dimensions:
-        - Name: FunctionName
-          Value: !Sub 'MuscleCuties-Server-${EnvironmentName}'
-      Statistic: Sum
-      Period: 300
+      AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-API-5xx-ErrorRate'
+      AlarmDescription: Alarms when Server Lambda 5xx error rate exceeds 0.5% over 5 minutes.
+      ComparisonOperator: GreaterThanThreshold
       EvaluationPeriods: 1
-      Threshold: 5
-      ComparisonOperator: GreaterThanOrEqualToThreshold
+      Threshold: 0.5
+      TreatMissingData: notBreaching
+      Metrics:
+        - Id: e1
+          Expression: "100 * (errors / MAX([invocations, 1]))"
+          Label: "ErrorRatePercent"
+          ReturnData: true
+        - Id: errors
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Errors
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Sub 'MuscleCuties-Server-${EnvironmentName}'
+            Period: 300
+            Stat: Sum
+          ReturnData: false
+        - Id: invocations
+          MetricStat:
+            Metric:
+              Namespace: AWS/Lambda
+              MetricName: Invocations
+              Dimensions:
+                - Name: FunctionName
+                  Value: !Sub 'MuscleCuties-Server-${EnvironmentName}'
+            Period: 300
+            Stat: Sum
+          ReturnData: false
       AlarmActions:
         - !Ref AlarmTopic
 
+  # CloudWatch Alarm: Lambda p95 latency spikes (> 1200ms over 5 minutes)
+  LambdaP95LatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-API-p95-Latency'
+      AlarmDescription: Alarms when Server Lambda p95 latency exceeds 1200ms over 5 minutes.
+      Namespace: AWS/Lambda
+      MetricName: Duration
+      ExtendedStatistic: p95
+      Dimensions:
+        - Name: FunctionName
+          Value: !Sub 'MuscleCuties-Server-${EnvironmentName}'
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1200
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlarmTopic
+
+  # CloudWatch Alarm: SQS Worker DLQ Depth
   DLQDepthAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
       AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-Worker-DLQ-Depth'
-      AlarmDescription: Alarms when dead-letter queue contains unprocessed failed messages.
+      AlarmDescription: Alarms when worker dead-letter queue contains unprocessed failed messages.
       Namespace: AWS/SQS
       MetricName: ApproximateNumberOfMessagesVisible
       Dimensions:
@@ -54,6 +97,52 @@ Resources:
       AlarmActions:
         - !Ref AlarmTopic
 
+  # Dead Letter Queue for asynchronous EventBridge dispatch failures
+  EventBridgeDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub 'musclecuties-${EnvironmentName}-eventbridge-dlq'
+      MessageRetentionPeriod: 1209600 # 14 days
+      SqsManagedSseEnabled: true
+
+  EventBridgeDLQPolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      Queues:
+        - !Ref EventBridgeDLQ
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowEventBridgeDeliveryFailures
+            Effect: Allow
+            Principal:
+              Service: events.amazonaws.com
+            Action: sqs:SendMessage
+            Resource: !GetAtt EventBridgeDLQ.Arn
+
+  # CloudWatch Alarm: EventBridge DLQ Depth
+  EventBridgeDLQDepthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-EventBridge-DLQ-Depth'
+      AlarmDescription: Alarms when EventBridge dead-letter queue contains failed dispatch messages.
+      Namespace: AWS/SQS
+      MetricName: ApproximateNumberOfMessagesVisible
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt EventBridgeDLQ.QueueName
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      AlarmActions:
+        - !Ref AlarmTopic
+
 Outputs:
   AlarmTopicArn:
     Value: !Ref AlarmTopic
+  EventBridgeDLQArn:
+    Value: !GetAtt EventBridgeDLQ.Arn
+  EventBridgeDLQUrl:
+    Value: !Ref EventBridgeDLQ
