@@ -75,7 +75,6 @@
                           ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
                         <Border
                             Style="{StaticResource HeaderIconButton}"
-                            AutomationProperties.Name="{loc:LocalizedText Nutrition_FoodLog_PreviousDay}"
                             SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_PreviousDay}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding PreviousDayCommand}" />
@@ -142,7 +141,6 @@
                         <Border
                             Grid.Column="2"
                             Style="{StaticResource HeaderIconButton}"
-                            AutomationProperties.Name="{loc:LocalizedText Nutrition_FoodLog_NextDay}"
                             SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_NextDay}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding NextDayCommand}" />
