@@ -255,6 +255,7 @@ public static class MauiProgram
                 return NavigateToAsync(nameof(StrengthPlanGenerationPage));
             }));
 
+        services.AddTransient<HydrationClient>();
         services.AddTransient<FoodLogViewModel>(sp => new FoodLogViewModel(
             sp.GetRequiredService<INutritionDailyLogUseCase>(),
             sp.GetRequiredService<IRecipePortionUseCase>(),
@@ -267,7 +268,8 @@ public static class MauiProgram
             sp.GetRequiredService<ISaveMealTemplateUseCase>(),
             sp.GetRequiredService<IGetRecipesAndTemplatesUseCase>(),
             sp.GetRequiredService<ICreateRecipeUseCase>(),
-            sp.GetRequiredService<INutritionOverviewUseCase>()));
+            sp.GetRequiredService<INutritionOverviewUseCase>(),
+            sp.GetRequiredService<HydrationClient>()));
 
         services.AddTransient<WorkoutHistoryViewModel>(sp => new WorkoutHistoryViewModel(
             sp.GetRequiredService<IWorkoutArchiveUseCase>(),
