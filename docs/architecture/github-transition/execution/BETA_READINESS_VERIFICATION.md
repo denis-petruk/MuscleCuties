@@ -7,10 +7,10 @@ Base SHA `5054f6f3` (local `main` before this work). Branch `integration/first-b
 | --- | --- |
 | Base commit | `5054f6f3` |
 | Reconciliation target | `origin/main` `5c7ccac7` (PR #37) |
-| Code commit (before this record) | `7743626c` |
-| Changed paths vs base | 98 |
-| Change-set diff SHA-256 vs base, excluding this record | `500c7d497bfbfe0c43a59f56d27dcc45961dac153f80b9def1c22f0ee47aa082` |
-| Files changed vs `origin/main` | 60 |
+| Branch tip (code commits before this record update) | `3dbf2eaf` |
+| Changed paths vs base | 100 |
+| Change-set diff SHA-256 vs base, excluding this record | `f8740ec5215d6c2f12aa60aa2079f0e21590c245dea2ded92424b5d9af99a82b` |
+| Files changed vs `origin/main` | 62 |
 
 Environment: macOS 26.6.2 arm64; .NET SDK 10.0.203; PostgreSQL 16.15 (Homebrew) on a throwaway `initdb` cluster
 (`127.0.0.1:55441`, `--locale=C --encoding=UTF8`, no pre-existing roles); Python 3.9.6; Ruby Psych for workflow parsing.
@@ -180,6 +180,28 @@ Two defects were introduced and repaired during that reconciliation, and are rec
    and `System.Globalization` using, the `AnimatedModalView.CompleteOpenTransition` API used by the nutrition handoff,
    four catalog keys still referenced by the session view model, and the direct PostgreSQL project reference needed by
    the migration contract test. All were restored, and every suite above was re-run afterwards.
+
+## CI evidence (GitHub Actions, PR #38)
+
+GitHub's pipeline ran the plan's checks on the reconciled tree: `verify_source` passed (Server
+restore/build), `verify_plan_generation` passed (offline deployment tests, Core 1,247, Mobile Contracts
+133, Registration 46, Server 112, model-catalog filter), `postgres_verify` passed (empty-database
+`migrate` + `seed` + `dbcheck` on `postgres:17-alpine`, then the PostgreSQL integration suite), and
+`required` passed as their aggregate.
+
+Two real defects were found by that pipeline and fixed rather than worked around:
+
+1. `test_deploy_release.py`/`test_release_engine.py` inherited `GITHUB_EVENT_NAME` from the runner, so
+   the deployer correctly refused a non-`workflow_dispatch` event and the digest/alias cases were
+   replaced by `manual_release_required`. The tests now clear `GITHUB_*` inputs, which is what the
+   offline-fixture intent required.
+2. `db-verify.yml` applies `services/postgresql/roles-and-grants.sql` before any migration has run, so
+   `ALTER SCHEMA app/catalog/ops` failed on a fresh database. That script now creates the schemas
+   idempotently, keeping it safe to run in either order.
+
+Merging into `main` is still gated by the `muscle_cuties_protection` ruleset, which requires a
+code-owner review and an approving review of the last push. Approval and merge are the owner's
+decision; nothing was bypassed.
 
 ## Owner-authorized external gates (unverified)
 
