@@ -1,6 +1,6 @@
 # Execution control ledger
 
-Updated 2026-11-07 against Rider HEAD `5054f6f3` with the first-beta package work uncommitted in the working tree. This ledger records package lifecycle and reservations only. It is not release evidence and it does not authorize deployment, migration, signing or distribution.
+Updated 2026-11-07 against `main` `fa1e6165` (PR #38 merged), which includes the first-beta package work. This ledger records package lifecycle and reservations only. It is not release evidence and it does not authorize deployment, migration, signing or distribution.
 
 ## Authority and reservations
 

@@ -4,8 +4,8 @@ Updated 2026-11-07. This is the compact continuation checkpoint. Dated audits, t
 
 ## Candidate
 
-- Rider HEAD `5054f6f3` on `main` (ahead 1 / behind 1 `origin/main`).
-- The first-beta package work (B1–B5) is present in the working tree and **uncommitted**. Nothing in this task was committed, pushed, deployed, migrated on a shared target, signed, archived or uploaded.
+- `main` at `fa1e6165`, the merge of PR #38; the local checkout tracks `origin/main`.
+- The first-beta package work (B1–B5) is merged and CI-verified on GitHub. Nothing was deployed, migrated on a shared target, signed, archived or uploaded; those stay owner-authorized gates.
 - The backend release target is **Beta only**. No separate Staging API or database is provisioned, and no workflow offers one as an option.
 - GitHub is the integration target; GitLab is read-only historical evidence. `tools/deployment/release.sh` and `release-engine.py` are the retired GitLab path.
 
