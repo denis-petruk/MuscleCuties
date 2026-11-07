@@ -103,7 +103,7 @@ internal static class ModalTransition
         });
     }
 
-    private static Border? FindCard(ContentView modal)
+    internal static Border? FindCard(ContentView modal)
     {
         if (modal.Content is Layout container)
             return container.Children.OfType<Border>().FirstOrDefault();

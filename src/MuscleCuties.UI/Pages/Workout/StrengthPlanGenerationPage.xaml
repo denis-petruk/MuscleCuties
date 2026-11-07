@@ -496,6 +496,12 @@
                    Text="{Binding ReplacementDisclosureText}"
                    IsVisible="{Binding ShowsReplacementDisclosure}"
                    Style="{StaticResource MutedLabel}" />
+            <!-- A missing saved activity or weekday set is recoverable: route straight to the editor
+                 instead of leaving the user on a status message with no way forward. -->
+            <Button Text="{Binding PrerequisiteRecoveryActionText}"
+                    Command="{Binding EditDetailsCommand}"
+                    IsVisible="{Binding NeedsPrerequisiteRecovery}"
+                    Style="{StaticResource ButtonSecondary}" />
             <Button Text="{loc:LocalizedText Workout_Generation_CreatePreview}"
                     Command="{Binding CreateProposalCommand}"
                     IsVisible="{Binding IsTrainNavigationPending, Converter={StaticResource InvertedBoolConverter}}"
@@ -544,6 +550,18 @@
                                    LineBreakMode="WordWrap" />
                         </Border>
 
+                        <!-- The week's composition in one line, before any per-day detail. -->
+                        <Border IsVisible="{Binding HasWeeklySummary}"
+                                Style="{StaticResource CardSecondary}">
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                <Label Text="{loc:LocalizedText Workout_Generation_WeeklySummaryTitle}"
+                                       Style="{StaticResource FormFieldLabel}" />
+                                <Label Text="{Binding WeeklySummaryText}"
+                                       Style="{StaticResource MutedLabel}"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
+                        </Border>
+
                         <!-- Mixed Schedule Sub-Section -->
                         <VerticalStackLayout IsVisible="{Binding HasMixedSchedule}" Spacing="{StaticResource UiSpaceCompact}">
                             <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_MixedScheduleTitle}"
@@ -572,7 +590,9 @@
                                                                      Spacing="{StaticResource UiSpaceMicro}">
                                                     <BindableLayout.ItemTemplate>
                                                         <DataTemplate x:DataType="vm:MixedActivitySessionDisplay">
-                                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto"
+                                                                  ColumnSpacing="{StaticResource UiSpaceTight}"
+                                                                  RowSpacing="{StaticResource UiSpaceMicro}">
                                                                 <Label Text="{Binding Activity}"
                                                                        Style="{StaticResource BodyLabel}" />
                                                                 <Label Grid.Column="1"
@@ -580,6 +600,11 @@
                                                                        Style="{StaticResource MutedLabel}"
                                                                        HorizontalTextAlignment="End"
                                                                        VerticalOptions="Start" />
+                                                                <Label Grid.Row="1" Grid.ColumnSpan="2"
+                                                                       LineBreakMode="WordWrap"
+                                                                       Text="{Binding PhaseDetail}"
+                                                                       IsVisible="{Binding HasPhaseDetail}"
+                                                                       Style="{StaticResource CaptionLabel}" />
                                                             </Grid>
                                                         </DataTemplate>
                                                     </BindableLayout.ItemTemplate>
@@ -686,6 +711,9 @@
                                                                     <Label LineBreakMode="WordWrap" Text="{Binding Name}" />
                                                                     <Label LineBreakMode="WordWrap" Text="{Binding Details}"
                                                                            Style="{StaticResource MutedLabel}" />
+                                                                    <Label LineBreakMode="WordWrap" Text="{Binding Rationale}"
+                                                                           IsVisible="{Binding HasRationale}"
+                                                                           Style="{StaticResource CaptionLabel}" />
                                                                 </VerticalStackLayout>
                                                                 <Label LineBreakMode="WordWrap" Grid.Column="1"
                                                                        Text="{loc:LocalizedText Workout_Generation_Required}"
@@ -728,6 +756,10 @@
                            IsVisible="{Binding HasUnavailableApplyReason}"
                            Style="{StaticResource MutedLabel}"
                            LineBreakMode="WordWrap" />
+                    <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
+                            Command="{Binding EditDetailsCommand}"
+                            IsVisible="{Binding CanEditDetailsFromPrerequisites}"
+                            Style="{StaticResource ButtonSecondary}" />
                     <Button Text="{loc:LocalizedText Workout_Generation_ApplyPlan}"
                             Command="{Binding AcceptProposalCommand}"
                             IsVisible="{Binding CanReviewPreview}"

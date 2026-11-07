@@ -746,6 +746,61 @@ public sealed class UiContractGuardTests
         Assert.Contains("Value = false, LabelKey = \"Injury_Log_ClinicianAdvice_No\"", viewModel);
     }
 
+    /// <summary>
+    /// The chooser and the editor are two full-screen layers. Closing the chooser before the editor
+    /// has completed its open transition exposes the page between them, so the source order is a
+    /// contract, not an implementation detail.
+    /// </summary>
+    [Fact]
+    public void Meal_entry_handoff_presents_editor_before_closing_chooser()
+    {
+        var pageSource = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Pages", "Nutrition", "NutritionPage.xaml.cs"));
+
+        var loadEditor = pageSource.IndexOf(
+            "MealEditor.LoadIfNeededAsync", StringComparison.Ordinal);
+        var presentEditor = pageSource.IndexOf(
+            "editorPresented = editorModal.CompleteOpenTransition()", StringComparison.Ordinal);
+        var closeDecision = pageSource.IndexOf(
+            "NutritionMealEntryHandoff.CanCloseChooser", StringComparison.Ordinal);
+        var closeChooser = pageSource.IndexOf(
+            "CloseMealEntryCommand.Execute", StringComparison.Ordinal);
+
+        Assert.True(loadEditor >= 0, "NutritionPage must load the editor during a handoff.");
+        Assert.True(presentEditor > loadEditor,
+            "The editor must be presented after it is loaded and before the chooser closes.");
+        Assert.True(closeDecision > presentEditor,
+            "The close decision must be made only after the editor reports a completed presentation.");
+        Assert.True(closeChooser > closeDecision,
+            "The chooser must not be dismissed before the handoff policy permits it.");
+        Assert.Contains("NutritionMealEntryHandoff.IsHandoff", pageSource);
+    }
+
+    /// <summary>
+    /// MauiProgram is the only place that hands a route to Shell. The diary consumes its intent
+    /// through IQueryAttributable, so the query must survive this boundary; only the login-root
+    /// comparison is allowed to use the query-free form.
+    /// </summary>
+    [Fact]
+    public void Shell_navigation_preserves_query_intent_for_the_food_log()
+    {
+        var root = RepositoryRoot();
+        var programSource = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "MauiProgram.cs"));
+        var foodLogSource = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Pages", "Nutrition", "FoodLogPage.xaml.cs"));
+
+        Assert.Contains(
+            "await shell.GoToAsync(ShellNavigationRoute.ForShell(route), false);",
+            programSource);
+        Assert.Contains("ShellNavigationRoute.IsLoginRoot(route)", programSource);
+        Assert.DoesNotContain("GoToAsync(ShellNavigationRoute.WithoutQuery", programSource);
+        Assert.DoesNotContain("RemoveQueryString", programSource);
+
+        Assert.Contains("IQueryAttributable", foodLogSource);
+        Assert.Contains("NutritionNavigation.TryReadEntryId(query", foodLogSource);
+        Assert.Contains("NutritionNavigation.TryReadAddFoodIntent(query", foodLogSource);
+    }
+
     private static string? AppliedStyleName(XElement element)
     {
         var reference = element.Attribute("Style")?.Value;

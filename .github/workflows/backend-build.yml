@@ -54,7 +54,14 @@ jobs:
             --self-contained false \
             --output artifacts/worker-publish
           cd artifacts/worker-publish && zip -r ../MuscleCuties.WorkoutReconciliation.zip . && cd ../..
-          sha256sum artifacts/MuscleCuties.WorkoutReconciliation.zip > artifacts/worker-checksum.txt
+
+      - name: Validate Worker package & generate manifest
+        run: |
+          export SOURCE_COMMIT_SHA="${{ github.sha }}"
+          export SOURCE_TREE_SHA="$(git rev-parse HEAD^{tree})"
+          bash tools/deployment/validate-worker-package.sh \
+            artifacts/MuscleCuties.WorkoutReconciliation.zip \
+            artifacts/worker-build-manifest.json
 
       - name: Upload immutable backend artifacts
         uses: actions/upload-artifact@v4

@@ -32,6 +32,9 @@ public sealed record MixedActivitySessionDisplay(string Title, string Details)
     public string Day { get; init; } = string.Empty;
     public string Activity { get; init; } = string.Empty;
     public string Duration { get; init; } = string.Empty;
+    /// <summary>Warm-up, main, cool-down and interval split of a timed phase.</summary>
+    public string PhaseDetail { get; init; } = string.Empty;
+    public bool HasPhaseDetail => !string.IsNullOrWhiteSpace(PhaseDetail);
 }
 
 public sealed record MixedActivityDayDisplay(
@@ -46,4 +49,9 @@ public sealed record MixedActivityDecisionDisplay(string Activity, string Status
     public bool HasFrequency => !string.IsNullOrWhiteSpace(Frequency);
 }
 
-public sealed record StrengthPlanSlotDisplay(string Name, string Details, bool IsRequired);
+public sealed record StrengthPlanSlotDisplay(string Name, string Details, bool IsRequired)
+{
+    /// <summary>Why this movement was selected for the slot, in the user's language.</summary>
+    public string Rationale { get; init; } = string.Empty;
+    public bool HasRationale => !string.IsNullOrWhiteSpace(Rationale);
+}

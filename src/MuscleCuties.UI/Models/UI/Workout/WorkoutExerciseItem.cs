@@ -70,6 +70,7 @@ public partial class WorkoutExerciseItem : ObservableObject
     public string CadenceLabel { get; set; } = "RPM";
     public string EffortLabel { get; set; } = "Effort";
     public ObservableCollection<ExerciseSetInputItem> Sets { get; } = [];
+    public bool SetsWereEdited { get; private set; }
 
     public string LoggedDurationMinutesText { get; set; } = string.Empty;
     public string LoggedDistanceKmText { get; set; } = string.Empty;
@@ -139,10 +140,12 @@ public partial class WorkoutExerciseItem : ObservableObject
             false,
             rest)
         {
-            OnChanged = UpdateAggregatesFromSets
+            OnChanged = () => UpdateAggregatesFromSets(fromUser: true),
+            RemoveCommand = RemoveSetCommand,
+            ShowWeight = UsesWeight
         };
         Sets.Add(set);
-        UpdateAggregatesFromSets();
+        UpdateAggregatesFromSets(fromUser: true);
     }
 
     [RelayCommand]
@@ -151,7 +154,7 @@ public partial class WorkoutExerciseItem : ObservableObject
         if (set is null || Sets.Count <= 1) return;
         Sets.Remove(set);
         for (var i = 0; i < Sets.Count; i++) Sets[i].SetNumber = i + 1;
-        UpdateAggregatesFromSets();
+        UpdateAggregatesFromSets(fromUser: true);
     }
 
     public void EnsureSets(int count = 3, Guid sessionId = default)
@@ -177,7 +180,9 @@ public partial class WorkoutExerciseItem : ObservableObject
                 false,
                 90)
             {
-                OnChanged = UpdateAggregatesFromSets
+                OnChanged = () => UpdateAggregatesFromSets(fromUser: true),
+                RemoveCommand = RemoveSetCommand,
+                ShowWeight = UsesWeight
             };
             Sets.Add(set);
         }
@@ -185,8 +190,9 @@ public partial class WorkoutExerciseItem : ObservableObject
         UpdateAggregatesFromSets();
     }
 
-    public void UpdateAggregatesFromSets()
+    public void UpdateAggregatesFromSets(bool fromUser = false)
     {
+        SetsWereEdited |= fromUser;
         if (Sets.Count == 0) return;
         LoggedSetsText = Sets.Count.ToString(CultureInfo.InvariantCulture);
         var workingSets = Sets.Where(s => !s.IsWarmup).ToList();

@@ -12,6 +12,9 @@ public partial class ExerciseSetInputItem : ObservableObject
     [ObservableProperty] private int _restTimeSeconds = 90;
     [ObservableProperty] private double? _rpe;
     [ObservableProperty] private string _rpeInput = string.Empty;
+    [ObservableProperty] private double? _rir;
+    [ObservableProperty] private string _rirInput = string.Empty;
+    [ObservableProperty] private bool _techniqueAcceptable = true;
 
     [ObservableProperty] private int _setNumber;
     [ObservableProperty] private string _weightInput = string.Empty;
@@ -41,18 +44,22 @@ public partial class ExerciseSetInputItem : ObservableObject
         WeightKg = weightKg;
         RepsCompleted = repsCompleted;
         Rpe = rpe;
+        Rir = rpe.HasValue ? Math.Clamp(10 - rpe.Value, 0, 10) : null;
         IsWarmup = isWarmup;
         RestTimeSeconds = restTimeSeconds;
         var formatted = FormatWeightAndReps(weightKg, repsCompleted);
         WeightInput = formatted.WeightInput;
         RepsInput = formatted.RepsInput;
         RpeInput = rpe.HasValue ? rpe.Value.ToString("F1", CultureInfo.CurrentCulture) : string.Empty;
+        RirInput = Rir.HasValue ? Rir.Value.ToString("F1", CultureInfo.CurrentCulture) : string.Empty;
     }
 
     public Guid Id { get; init; } = Guid.NewGuid();
     public Guid WorkoutSessionLogId { get; set; }
     public string? ExerciseId { get; set; }
     public string ExerciseName { get; set; } = string.Empty;
+    public bool ShowWeight { get; set; } = true;
+    public System.Windows.Input.ICommand? RemoveCommand { get; set; }
     public Action? OnChanged { get; set; }
 
     internal static (string WeightInput, string RepsInput) FormatWeightAndReps(double weightKg, int repsCompleted)
@@ -88,6 +95,11 @@ public partial class ExerciseSetInputItem : ObservableObject
             Rpe = Math.Clamp(Math.Round(parsedRpe, 1), 1.0, 10.0);
         else if (string.IsNullOrWhiteSpace(RpeInput)) Rpe = null;
 
+        if (double.TryParse(RirInput, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedRir) ||
+            double.TryParse(RirInput, NumberStyles.Float, CultureInfo.CurrentCulture, out parsedRir))
+            Rir = Math.Clamp(Math.Round(parsedRir, 1), 0.0, 10.0);
+        else if (string.IsNullOrWhiteSpace(RirInput)) Rir = null;
+
         OnChanged?.Invoke();
     }
 
@@ -113,6 +125,16 @@ public partial class ExerciseSetInputItem : ObservableObject
         SyncFromInputs();
     }
 
+    partial void OnRirInputChanged(string value)
+    {
+        SyncFromInputs();
+    }
+
+    partial void OnTechniqueAcceptableChanged(bool value)
+    {
+        OnChanged?.Invoke();
+    }
+
     partial void OnIsWarmupChanged(bool value)
     {
         OnChanged?.Invoke();
@@ -129,7 +151,7 @@ public partial class ExerciseSetInputItem : ObservableObject
             SetNumber,
             WeightKg,
             RepsCompleted,
-            Rpe,
+            Rir.HasValue ? 10 - Rir.Value : null,
             IsWarmup,
             RestTimeSeconds
         );

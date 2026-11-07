@@ -59,6 +59,7 @@ jobs:
           python3 tests/MuscleCuties.Deployment.Tests/test_package_upload.py
           bash tests/MuscleCuties.Deployment.Tests/release-fail-closed.sh
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_release_engine.py'
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_deploy_release.py'
 
       - name: Run Core tests
         run: |

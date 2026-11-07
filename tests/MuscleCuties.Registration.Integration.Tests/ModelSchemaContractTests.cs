@@ -1,12 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using Xunit;
 
 namespace MuscleCuties.Registration.Integration.Tests;
 
 /// <summary>
-/// Model-first contract guard. There is no EF migration snapshot to compare against, so these tests
-/// assert the invariants the schema bootstrap relies on: every mapped table lands in a registered
-/// schema, and the fingerprint used for drift detection is deterministic.
+///     Model-first contract guard. There is no EF migration snapshot to compare against, so these tests
+///     assert the invariants the schema bootstrap relies on: every mapped table lands in a registered
+///     schema, and the fingerprint used for drift detection is deterministic.
 /// </summary>
 public sealed class ModelSchemaContractTests
 {
@@ -16,10 +16,10 @@ public sealed class ModelSchemaContractTests
     [
         PostgresSchemas.App,
         PostgresSchemas.Catalog,
-PostgresSchemas.Operations
+        PostgresSchemas.Operations
     ];
 
-    [Xunit.Fact]
+    [Fact]
     public void EveryMappedTableLivesInARegisteredSchema()
     {
         using var context = CreateContext();
@@ -31,44 +31,47 @@ PostgresSchemas.Operations
                 continue;
 
             var schema = entityType.GetSchema() ?? entityType.GetDefaultSchema();
-            Xunit.Assert.Contains(schema, RegisteredSchemas);
+            Assert.Contains(schema, RegisteredSchemas);
         }
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void ModelFingerprintIsDeterministic()
     {
         using var first = CreateContext();
         using var second = CreateContext();
 
-        Xunit.Assert.Equal(
+        Assert.Equal(
             PostgresSchemaBootstrap.ComputeModelFingerprint(first),
             PostgresSchemaBootstrap.ComputeModelFingerprint(second));
     }
 
-    [Xunit.Fact]
+    [Fact]
     public void SecurityScriptDeclaresTenantPolicies()
     {
         var script = PostgresSchemaBootstrap.ReadSecurityScriptAsync().GetAwaiter().GetResult();
 
-        Xunit.Assert.Contains("ENABLE ROW LEVEL SECURITY", script, StringComparison.Ordinal);
-        Xunit.Assert.Contains("CREATE POLICY", script, StringComparison.Ordinal);
-        Xunit.Assert.Contains("CREATE OR REPLACE FUNCTION", script, StringComparison.Ordinal);
+        Assert.Contains("ENABLE ROW LEVEL SECURITY", script, StringComparison.Ordinal);
+        Assert.Contains("CREATE POLICY", script, StringComparison.Ordinal);
+        Assert.Contains("CREATE OR REPLACE FUNCTION", script, StringComparison.Ordinal);
     }
 
-    [Xunit.Fact]
+    [Fact]
     public async Task MigrationChain_ContainsBaseSchemaFingerprintAndScheduleSeam()
     {
         var rehearsal = await PostgresSchemaMigrations.RehearseChainAsync();
-        Xunit.Assert.Equal(4, rehearsal.Count);
-        Xunit.Assert.Equal("001_base_schema.sql", rehearsal[0].ScriptName);
-        Xunit.Assert.Equal("002_schema_fingerprint.sql", rehearsal[1].ScriptName);
-        Xunit.Assert.Equal("003_schedule_seam.sql", rehearsal[2].ScriptName);
-        Xunit.Assert.Equal("004_session_distance.sql", rehearsal[3].ScriptName);
+        Assert.Equal(5, rehearsal.Count);
+        Assert.Equal("001_base_schema.sql", rehearsal[0].ScriptName);
+        Assert.Equal("002_schema_fingerprint.sql", rehearsal[1].ScriptName);
+        Assert.Equal("003_schedule_seam.sql", rehearsal[2].ScriptName);
+        Assert.Equal("004_session_distance.sql", rehearsal[3].ScriptName);
+        Assert.Equal("005_observed_set_actuals.sql", rehearsal[4].ScriptName);
     }
 
-    private static PostgresDbContext CreateContext() =>
-        new(new DbContextOptionsBuilder<PostgresDbContext>()
+    private static PostgresDbContext CreateContext()
+    {
+        return new(new DbContextOptionsBuilder<PostgresDbContext>()
             .UseNpgsql(UnusedLocalConnection)
             .Options);
+    }
 }

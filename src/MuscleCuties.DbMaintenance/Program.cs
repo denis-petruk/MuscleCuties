@@ -20,6 +20,7 @@ public static class DatabaseMaintenance
     private const string DbCheckCommand = "dbcheck";
     private const string MigrateCommand = "migrate";
     private const string SeedCommand = "seed";
+    private const string BaselineScriptCommand = "baseline-script";
     private const string SessionLockRunnerCommand = "session-lock-runner";
     private const string CleanupPhotosCommand = "cleanup-photos";
     private const string CompatibleStatus = "compatible";
@@ -48,7 +49,7 @@ public static class DatabaseMaintenance
         if (!TryParse(args, out var command))
         {
             Console.Error.WriteLine(
-                "Usage: DbMaintenance migrate | dbinit | dbcheck | seed | session-lock-runner -- <child-command> [args...] | " +
+                "Usage: DbMaintenance migrate | dbinit | dbcheck | seed | baseline-script | session-lock-runner -- <child-command> [args...] | " +
                 "cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
             return InvalidUsageExitCode;
         }
@@ -57,6 +58,18 @@ public static class DatabaseMaintenance
         {
             Console.Error.WriteLine("Database maintenance is forbidden in AWS Lambda.");
             return InvalidUsageExitCode;
+        }
+
+        if (command == BaselineScriptCommand)
+        {
+            // Maintainer-only: emit the model DDL used to regenerate the frozen baseline
+            // migration. It reads the EF model and does not connect to a database.
+            var options = new DbContextOptionsBuilder<PostgresDbContext>()
+                .UseNpgsql("Host=127.0.0.1;Database=mc_baseline_generator;Username=baseline;Password=baseline")
+                .Options;
+            await using var baselineContext = new PostgresDbContext(options);
+            Console.Write(baselineContext.Database.GenerateCreateScript());
+            return 0;
         }
 
         if (command == SessionLockRunnerCommand)
@@ -248,7 +261,7 @@ public static class DatabaseMaintenance
             return false;
         }
 
-        if (args is [MigrateCommand] or [DbInitCommand] or [DbCheckCommand] or [SeedCommand])
+        if (args is [MigrateCommand] or [DbInitCommand] or [DbCheckCommand] or [SeedCommand] or [BaselineScriptCommand])
         {
             command = args[0];
             return true;

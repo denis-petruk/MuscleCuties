@@ -23,6 +23,14 @@ internal static partial class RussianUiText
         Values["Workout_Generation_RecentHistoryBadge"] = "НЕДАВНЯЯ ИСТОРИЯ";
         Values["Workout_Generation_ActivityEvidenceBadge"] = "ДЕТАЛИ АКТИВНОСТИ";
         Values["Workout_Generation_PreviewBadge"] = "ПРЕДПРОСМОТР ПЛАНА";
+        Values["Workout_Generation_PrerequisiteRecoveryAction"] = "Изменить настройки тренировок";
+        Values["Workout_Generation_WeeklySummaryTitle"] = "Ваша неделя кратко";
+        Values["Workout_Generation_WeeklySummaryFormat"] = "{0} силовых тренировок · {1} рабочих подходов · {2} минут аэробики";
+        Values["Workout_Generation_PhaseWarmupFormat"] = "Разминка {0} мин";
+        Values["Workout_Generation_PhaseMainFormat"] = "Основная часть {0} мин";
+        Values["Workout_Generation_PhaseCooldownFormat"] = "Заминка {0} мин";
+        Values["Workout_Generation_PhaseIntervalsFormat"] = "{0} × {1} с работы";
+        Values["Workout_Generation_PhaseRecoveryFormat"] = "{0} × {1} с восстановления";
         Values["Workout_Generation_Title"] = "Составить новый план тренировок";
         Values["Workout_Generation_Intro"] = "Сначала проверьте черновик. Текущий план не изменится, пока вы не выберете «Применить план».";
         Values["Workout_Generation_Open"] = "Составить новый план";

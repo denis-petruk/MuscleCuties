@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.Globalization;
 using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.UI.Services.Workout;
@@ -40,6 +42,7 @@ internal static class WorkoutSessionPresentationMapper
             MetricText = activity.MetricText,
             SummaryText = activity.SummaryText,
             Prescription = activity.Prescription,
+            ActivityType = activity.ActivityType,
             ActivityBackground = WorkoutPresentationPalette.Background(activity.Tag),
             ActivityTextColor = WorkoutPresentationPalette.Text(activity.Tag),
             Exercises = new ObservableCollection<WorkoutExerciseItem>(
@@ -71,7 +74,7 @@ internal static class WorkoutSessionPresentationMapper
             QuickTipsText = source.QuickTipsText,
             TargetText = source.TargetText,
             PreviousText = source.PreviousText,
-            RecommendationText = source.RecommendationText,
+            RecommendationText = FormatRecommendation(source),
             MovementNotes = source.MovementNotes,
             LoggedSetsText = source.LoggedSetsText,
             LoggedRepsText = source.LoggedRepsText,
@@ -97,13 +100,34 @@ internal static class WorkoutSessionPresentationMapper
             UsesWeight = source.UsesWeight
         };
         foreach (var set in source.Sets)
-            item.Sets.Add(new ExerciseSetInputItem(
+        {
+            var input = new ExerciseSetInputItem(
                 Guid.NewGuid(), Guid.Empty, source.ExerciseId.ToString(CultureInfo.InvariantCulture), source.Name,
                 set.SetNumber, set.WeightKg, set.RepsCompleted, set.Rpe,
                 set.IsWarmup, set.RestTimeSeconds)
             {
-                OnChanged = item.UpdateAggregatesFromSets
-            });
+                OnChanged = () => item.UpdateAggregatesFromSets(fromUser: true),
+                RemoveCommand = item.RemoveSetCommand,
+                ShowWeight = item.UsesWeight
+            };
+            item.Sets.Add(input);
+        }
+        if (item.Sets.Count == 0 && item.UsesStrengthMetrics)
+            item.EnsureSets(source.PlannedSets > 0 ? source.PlannedSets : 3);
         return item;
+    }
+
+    private static string FormatRecommendation(WorkoutExerciseDetailDto source)
+    {
+        if (string.IsNullOrWhiteSpace(source.RecommendationCode))
+            return source.RecommendationText;
+
+        if (!UiTextCatalog.HasKey(source.RecommendationCode))
+            return source.RecommendationText;
+
+        return source.RecommendationLoadKg is { } load
+            ? UiTextCatalog.Format(source.RecommendationCode,
+                load.ToString("0.#", CultureInfo.CurrentCulture))
+            : UiTextCatalog.Get(source.RecommendationCode);
     }
 }

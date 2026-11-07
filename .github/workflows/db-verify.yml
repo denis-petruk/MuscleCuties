@@ -41,6 +41,16 @@ jobs:
           psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE mc_retry_disposable;"
           psql -h 127.0.0.1 -U postgres -d postgres -f services/postgresql/roles-and-grants.sql
 
+      - name: Rehearse empty-database migration and seed
+        env:
+          ConnectionStrings__PostgreSql: 'Host=127.0.0.1;Database=mc_migration_rehearsal;Username=postgres;Password=ci_disposable_only'
+        run: |
+          export PGPASSWORD='ci_disposable_only'
+          psql -h 127.0.0.1 -U postgres -d postgres -c "CREATE DATABASE mc_migration_rehearsal;"
+          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release -- migrate
+          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- seed
+          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- dbcheck
+
       - name: Bootstrap disposable database schema
         env:
           MC_PREPARE_DISPOSABLE_WORKOUT_DATABASE: 'True'

@@ -999,6 +999,24 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
     }
 
     [Fact]
+    public void Preview_ReportsEveryRecoverablePrerequisiteInsteadOfOnlyTheFirst()
+    {
+        var choices = new StrengthPlanPreviewChoices(
+            WorkoutActivityType.GeneralStrength, ReferenceDate, null,
+            WarmupMinutes: null, CooldownMinutes: null);
+        var data = CreatePreviewData(WorkoutActivityType.GeneralStrength) with
+        {
+            AvailableWeekdays = new HashSet<DayOfWeek>()
+        };
+
+        var result = StrengthPlanPreviewRule.EvaluateDirect(choices, data);
+
+        Assert.Equal(StrengthPlanPreviewStatus.Limited, result.Status);
+        Assert.Contains(StrengthPlanPreviewRule.WeekdaysMissingCode, result.LimitationCodes);
+        Assert.Contains(StrengthPlanPreviewRule.MissingWarmupOrCooldownCode, result.LimitationCodes);
+    }
+
+    [Fact]
     public void Regression_13_Actual_Injury_Equipment_Time_And_Availability_Restrictions_Still_Apply()
     {
         // Duration invalid (too short < 10)

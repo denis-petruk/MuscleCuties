@@ -237,12 +237,12 @@ public static partial class PostgresSchemaDriftInspector
         if (recordedFingerprint is null)
         {
             failures.Add(SchemaDriftCodes.MetadataMissing);
-            details.Add("schema metadata row is absent; run dbinit");
+            details.Add("schema metadata row is absent; run migrate, then seed");
         }
         else if (!string.Equals(recordedFingerprint, modelFingerprint, StringComparison.Ordinal))
         {
             failures.Add(SchemaDriftCodes.ModelFingerprintMismatch);
-            details.Add("the deployed model does not match the model this database was initialized with; run dbinit");
+            details.Add("the deployed model does not match the model this database was initialized with; run migrate, then seed");
         }
 
         return new SchemaDriftReport(

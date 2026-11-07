@@ -8,6 +8,7 @@ using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.UI.Composition;
+using MuscleCuties.UI.Navigation;
 using MuscleCuties.UI.Pages;
 using MuscleCuties.UI.Pages.Auth;
 using MuscleCuties.UI.Pages.Cycle;
@@ -366,7 +367,7 @@ public static class MauiProgram
 
     private static Task NavigateToAsync(string route)
     {
-        if (RemoveQueryString(route) == "//LoginPage")
+        if (ShellNavigationRoute.IsLoginRoot(route))
         {
             var app = Application.Current as App
                 ?? throw new InvalidOperationException("The active application is unavailable.");
@@ -376,7 +377,9 @@ public static class MauiProgram
         return MainThread.InvokeOnMainThreadAsync(async () =>
         {
             var shell = Shell.Current ?? throw new InvalidOperationException("Shell is not available.");
-            await shell.GoToAsync(RemoveQueryString(route), false);
+            // Keep the query: the diary reads entryId/addMeal/addAt through IQueryAttributable.
+            // Stripping it here silently drops the requested entry or meal context.
+            await shell.GoToAsync(ShellNavigationRoute.ForShell(route), false);
         });
     }
 
@@ -486,12 +489,6 @@ public static class MauiProgram
     {
         var app = Application.Current as App
             ?? throw new InvalidOperationException("The active application is unavailable.");
-        return app.ActivateRootAsync(RemoveQueryString(route).TrimStart('/'));
-    }
-
-    private static string RemoveQueryString(string route)
-    {
-        var queryIndex = route.IndexOf('?', StringComparison.Ordinal);
-        return queryIndex < 0 ? route : route[..queryIndex];
+        return app.ActivateRootAsync(ShellNavigationRoute.WithoutQuery(route).TrimStart('/'));
     }
 }

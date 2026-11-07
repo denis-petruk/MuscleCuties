@@ -35,7 +35,12 @@ public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
                     sets.ToString(CultureInfo.CurrentCulture), minimum.ToString(CultureInfo.CurrentCulture),
                     maximum.ToString(CultureInfo.CurrentCulture))
                 : UiTextCatalog.Get("Workout_Generation_PrescriptionPending");
-            return new StrengthPlanSlotDisplay(name, details, slot.IsRequired);
+            var rationale = string.IsNullOrWhiteSpace(slot.SelectionReason)
+                ? string.Empty
+                : UiTextCatalog.HasKey(slot.SelectionReason)
+                    ? UiTextCatalog.Get(slot.SelectionReason)
+                    : slot.SelectionReason;
+            return new StrengthPlanSlotDisplay(name, details, slot.IsRequired) { Rationale = rationale };
         }).ToList();
 
         return new StrengthPlanSessionDisplay(title, duration,

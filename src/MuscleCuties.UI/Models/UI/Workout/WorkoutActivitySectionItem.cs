@@ -37,6 +37,8 @@ public class WorkoutActivitySectionItem : ObservableObject, IEnumerable<WorkoutE
     public string MetricText { get; init; } = string.Empty;
     public string SummaryText { get; init; } = string.Empty;
     public ActivitySessionPrescriptionOutputV020? Prescription { get; init; }
+    public MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto ActivityType { get; init; }
+        = MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Other;
     public Color ActivityBackground { get; init; } = AppThemeResources.GetRequired<Color>("Transparent");
     public Color ActivityTextColor { get; init; } = AppThemeResources.GetRequired<Color>("TextPrimary");
     public ObservableCollection<WorkoutExerciseItem> Exercises { get; init; } = new();

@@ -9,31 +9,33 @@
         <NoWarn>$(NoWarn);NU1202;NU1701</NoWarn>
     </PropertyGroup>
     <ItemGroup>
-        <ProjectReference Include="../MuscleCuties.Contracts/MuscleCuties.Contracts.csproj" />
-        <ProjectReference Include="../MuscleCuties.Core/MuscleCuties.Core.csproj" />
-        <ProjectReference Include="../MuscleCuties.UseCases/MuscleCuties.UseCases.csproj" />
+        <ProjectReference Include="../MuscleCuties.Contracts/MuscleCuties.Contracts.csproj"/>
+        <ProjectReference Include="../MuscleCuties.Core/MuscleCuties.Core.csproj"/>
+        <ProjectReference Include="../MuscleCuties.UseCases/MuscleCuties.UseCases.csproj"/>
     </ItemGroup>
     <ItemGroup>
-        <InternalsVisibleTo Include="MuscleCuties.PostgreSql.Tests" />
-        <InternalsVisibleTo Include="MuscleCuties.Registration.Integration.Tests" />
+        <InternalsVisibleTo Include="MuscleCuties.PostgreSql.Tests"/>
+        <InternalsVisibleTo Include="MuscleCuties.Registration.Integration.Tests"/>
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.3">
             <PrivateAssets>all</PrivateAssets>
             <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
-        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3" />
+        <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3"/>
     </ItemGroup>
     <ItemGroup>
-        <PackageReference Include="SkiaSharp" Version="3.119.1" />
-        <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1" />
+        <PackageReference Include="SkiaSharp" Version="3.119.1"/>
+        <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1"/>
     </ItemGroup>
     <ItemGroup>
-        <EmbeddedResource Include="Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json" />
-        <EmbeddedResource Include="Persistence/Schema/001_base_schema.sql" />
-        <EmbeddedResource Include="Persistence/Schema/002_schema_fingerprint.sql" />
-        <EmbeddedResource Include="Persistence/Schema/003_schedule_seam.sql" />
-        <EmbeddedResource Include="Persistence/Schema/004_session_distance.sql" />
-        <EmbeddedResource Include="Persistence/Schema/security.sql" />
-        <EmbeddedResource Include="Persistence/Schema/schema_supplement.sql" />
-        <EmbeddedResource Include="Persistence/Seed/CanonicalCatalogManifest.json" />
+        <EmbeddedResource Include="Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json"/>
+        <EmbeddedResource Include="Persistence/Schema/000_model_baseline.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/001_base_schema.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/002_schema_fingerprint.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/003_schedule_seam.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/004_session_distance.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/005_observed_set_actuals.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/security.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/schema_supplement.sql"/>
+        <EmbeddedResource Include="Persistence/Seed/CanonicalCatalogManifest.json"/>
     </ItemGroup>
 </Project>

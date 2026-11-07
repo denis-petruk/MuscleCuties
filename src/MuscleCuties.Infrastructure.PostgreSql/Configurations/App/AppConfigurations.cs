@@ -525,6 +525,8 @@ public sealed class ExerciseSetLogConfiguration : IEntityTypeConfiguration<Exerc
     public void Configure(EntityTypeBuilder<ExerciseSetLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "exercise_set_logs");
+        builder.Property(x => x.TechniqueAcceptable).HasDefaultValue(true);
+        builder.Property(x => x.IsObserved).HasDefaultValue(false);
         builder.HasOne<WorkoutSessionLogRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.WorkoutSessionLogId })
             .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Cascade);
     }
