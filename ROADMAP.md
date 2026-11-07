@@ -4,7 +4,7 @@ Updated 2026-11-07. Short sequence of remaining work; evidence stays with its ow
 
 ## Where we are
 
-The GitHub transition (Plan I P00–P13, Plan II R01–R07) is complete and merged. The corrective beta plan is implemented through the five first-beta packages, which are **uncommitted** at `5054f6f3` and locally verified only:
+The GitHub transition (Plan I P00–P13, Plan II R01–R07) is complete and merged. The corrective beta plan is implemented through the five first-beta packages, which are merged at `fa1e6165` (PR #38) and locally verified only:
 
 1. **B1 Provisionable schema** — frozen model baseline, ordered `migrate`, `seed`, `dbcheck`, one role model, and an empty-database CI rehearsal. A fresh database now provisions without `EnsureCreated`.
 2. **B2 Honest release** — GitHub OIDC deployer for both Lambda functions by immutable digest, report written only after serving digests match, recorded rollback target, and an explicit rollback workflow mode. Beta-only; no misleading Staging job.
