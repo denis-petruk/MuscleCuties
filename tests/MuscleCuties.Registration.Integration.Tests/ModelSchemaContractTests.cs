@@ -60,10 +60,11 @@ PostgresSchemas.Operations
     public async Task MigrationChain_ContainsBaseSchemaFingerprintAndScheduleSeam()
     {
         var rehearsal = await PostgresSchemaMigrations.RehearseChainAsync();
-        Xunit.Assert.Equal(3, rehearsal.Count);
+        Xunit.Assert.Equal(4, rehearsal.Count);
         Xunit.Assert.Equal("001_base_schema.sql", rehearsal[0].ScriptName);
         Xunit.Assert.Equal("002_schema_fingerprint.sql", rehearsal[1].ScriptName);
         Xunit.Assert.Equal("003_schedule_seam.sql", rehearsal[2].ScriptName);
+        Xunit.Assert.Equal("004_session_distance.sql", rehearsal[3].ScriptName);
     }
 
     private static PostgresDbContext CreateContext() =>

@@ -383,6 +383,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
             command.CompletedAtUtc,
             command.TotalDurationSeconds,
             command.RpeRating,
+            command.DistanceKm,
             command.Notes,
             FinalSets = command.FinalSets ?? []
         });
@@ -462,6 +463,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     ? nowUtc : DateTime.SpecifyKind(command.CompletedAtUtc, DateTimeKind.Utc);
                 session.TotalDurationSeconds = command.TotalDurationSeconds;
                 session.RpeRating = command.RpeRating;
+                session.DistanceKm = command.DistanceKm;
                 if (command.Notes is not null)
                     session.Notes = command.Notes;
 
@@ -643,7 +645,8 @@ public sealed class PostgresWorkoutActiveSessionStore(
         {
             ConfirmedActiveSeconds = session.ConfirmedActiveSeconds,
             TimingIntervalId = session.TimingIntervalId,
-            TimingIntervalConfirmedSeconds = session.TimingIntervalConfirmedSeconds
+            TimingIntervalConfirmedSeconds = session.TimingIntervalConfirmedSeconds,
+            DistanceKm = session.DistanceKm
         };
     }
 

@@ -177,6 +177,66 @@ public sealed class TimedActivityProgressTests
         Assert.Equal(1800, state.RemainingSeconds);
     }
 
+    [Theory]
+    [InlineData(0d, null)]
+    [InlineData(1d, 1)]
+    [InlineData(7d, 7)]
+    [InlineData(7.4d, 7)]
+    [InlineData(7.6d, 8)]
+    [InlineData(10d, 10)]
+    [InlineData(11d, null)]
+    [InlineData(-1d, null)]
+    public void OptionalEffortNormalizesWithoutInventingAValue(double value, int? expected)
+    {
+        Assert.Equal(expected, TimedActivityProgress.NormalizeRpe(value));
+    }
+
+    [Fact]
+    public void UnratedEffortStaysNull()
+    {
+        Assert.Null(TimedActivityProgress.NormalizeRpe(null));
+    }
+
+    [Theory]
+    [InlineData("Walking", "CARDIO")]
+    [InlineData("Cycling", "CARDIO")]
+    [InlineData("Mobility", "RECOVERY")]
+    public void BetaApprovedDurationOnlyActivitiesUseTheTimedSurface(string activity, string tag)
+    {
+        // The three approved Beta additions are duration-only: they reach the shared timed
+        // lifecycle, and without a prescription they report elapsed time instead of inventing phases.
+        Assert.Equal(Surface.TimedActivity, TimedActivityProgress.DecideSurface(tag, false));
+
+        var state = TimedActivityProgress.Describe(45, null, null, null);
+        Assert.False(state.HasPhase);
+        Assert.False(state.HasCountdown);
+        Assert.Equal(45, state.ElapsedSeconds);
+        Assert.NotEmpty(activity);
+    }
+
+    [Theory]
+    [InlineData("CARDIO", true)]
+    [InlineData("cardio", true)]
+    [InlineData("RECOVERY", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void DistanceIsOfferedOnlyForCardioTimedActivities(string? tag, bool expected)
+    {
+        Assert.Equal(expected, TimedActivityProgress.SupportsDistance(tag));
+    }
+
+    [Theory]
+    [InlineData(0d, null)]
+    [InlineData(5.234d, 5.23)]
+    [InlineData(0.01d, 0.01)]
+    [InlineData(500d, 500d)]
+    [InlineData(500.01d, null)]
+    public void OptionalDistanceNormalizesWithinBounds(double value, double? expected)
+    {
+        var normalized = TimedActivityProgress.NormalizeDistance((decimal)value);
+        Assert.Equal(expected is null ? null : (decimal?)expected, normalized);
+    }
+
     private static int ToSeconds(decimal? minutes) =>
         minutes is > 0 ? (int)(minutes.Value * SecondsPerMinute) : 0;
 }

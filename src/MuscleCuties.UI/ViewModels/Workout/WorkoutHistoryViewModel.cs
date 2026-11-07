@@ -21,6 +21,8 @@ public partial class WorkoutHistoryViewModel : ObservableObject
 
     private int _currentOffset;
 
+    [ObservableProperty] private string _detailDistanceFormatted = string.Empty;
+
     [ObservableProperty] private string _detailDurationFormatted = string.Empty;
 
     [ObservableProperty] private string _detailKindLabel = string.Empty;
@@ -37,6 +39,8 @@ public partial class WorkoutHistoryViewModel : ObservableObject
 
     private int _filterRequestId;
     private int _statusVersion;
+
+    [ObservableProperty] private bool _hasDetailDistance;
 
     [ObservableProperty] private bool _hasMoreSessions;
 
@@ -304,6 +308,10 @@ public partial class WorkoutHistoryViewModel : ObservableObject
                     "Workout_History_DurationMinutesFormat",
                     Math.Round(detail.TotalDurationSeconds / SecondsPerMinute))
                 : UiTextCatalog.Get("Workout_History_NotRecorded");
+            HasDetailDistance = detail.DistanceKm is not null;
+            DetailDistanceFormatted = detail.DistanceKm is { } distanceKm
+                ? UiTextCatalog.Format("Workout_History_DistanceFormat", distanceKm)
+                : string.Empty;
             var startedText = detail.StartedAt.ToString(
                 detail.StartedAt.TimeOfDay == TimeSpan.Zero ? "D" : "f",
                 CultureInfo.CurrentCulture);

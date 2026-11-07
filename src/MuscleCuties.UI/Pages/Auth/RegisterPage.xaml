@@ -12,7 +12,7 @@
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*">
     <VerticalStackLayout Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
         <Label
            
@@ -106,79 +106,86 @@
                     SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     SemanticProperties.HeadingLevel="Level3" />
             
-                <Grid Grid.Row="5"
-                      ColumnDefinitions="Auto,*"
-                      RowDefinitions="Auto,Auto"
-                      ColumnSpacing="{StaticResource UiSpaceTight}"
-                      RowSpacing="{StaticResource UiSpaceTight}">
-                    <CheckBox x:Name="PrivacyConsentCheckBox"
-                              Grid.Row="0"
-                              Grid.Column="0"
-                              AutomationId="PrivacyConsentCheckBox"
-                              IsChecked="{Binding HasAcceptedPrivacyNotice}"
-                              Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
-                              HorizontalOptions="Start"
-                              VerticalOptions="Start"
-                              MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                              MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                              SemanticProperties.Description="{loc:LocalizedText Auth_Register_PrivacyConsent}" />
-                    <Label Grid.Row="0"
-                           Grid.Column="1"
-                           Text="{loc:LocalizedText Auth_Register_PrivacyConsent}"
-                           Style="{StaticResource CaptionLabel}"
-                           LineBreakMode="WordWrap"
-                           VerticalOptions="Center" />
+                <!-- One acknowledgment group: the checkbox carries the accessible name and state, and
+                     the wrapped label toggles it so the whole copy is a tap target. The policy stays
+                     a separate, full action beneath it. -->
+                <VerticalStackLayout Grid.Row="5" Spacing="{StaticResource UiSpaceTight}">
+                    <Grid ColumnDefinitions="Auto,*"
+                          ColumnSpacing="{StaticResource UiSpaceTight}">
+                        <CheckBox x:Name="PrivacyConsentCheckBox"
+                                  AutomationId="PrivacyConsentCheckBox"
+                                  IsChecked="{Binding HasAcceptedPrivacyNotice}"
+                                  Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
+                                  HorizontalOptions="Start"
+                                  VerticalOptions="Start"
+                                  MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                                  MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                  SemanticProperties.Description="{loc:LocalizedText Auth_Register_PrivacyConsent}" />
+                        <Label Grid.Column="1"
+                               Text="{loc:LocalizedText Auth_Register_PrivacyConsent}"
+                               Style="{StaticResource CaptionLabel}"
+                               LineBreakMode="WordWrap"
+                               VerticalOptions="Center"
+                               AutomationProperties.IsInAccessibleTree="False">
+                            <Label.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnPrivacyConsentLabelTapped" />
+                            </Label.GestureRecognizers>
+                        </Label>
+                    </Grid>
                     <Button
-                        Grid.Row="1"
-                        Grid.Column="0"
-                        Grid.ColumnSpan="2"
                         Text="{loc:LocalizedText Profile_Privacy_Policy}"
                         Style="{StaticResource ButtonSecondary}"
                         HorizontalOptions="Start"
+                        LineBreakMode="WordWrap"
                         Command="{Binding GoToPrivacyPolicyCommand}"
                         SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_Policy}" />
-                </Grid>
+                </VerticalStackLayout>
             
             </Grid>
+
+            <!-- Actions live in the same scroll flow directly after the acknowledgment, so the
+                 keyboard and large text never pin a footer over the fields, consent or validation. -->
+            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                <Button Style="{StaticResource ButtonPrimary}"
+                    Text="{loc:LocalizedText Auth_CreateAccount}"
+                    Command="{Binding RegisterCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    LineBreakMode="WordWrap"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreateYourAccount}" />
+                <ActivityIndicator
+                    Style="{StaticResource StateBusyInline}"
+                    HorizontalOptions="Center"
+                    IsRunning="{Binding IsBusy}"
+                    IsVisible="{Binding IsBusy}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatingAccountPleaseWait}" />
+                <Button
+                    Style="{StaticResource ButtonSecondary}"
+                    Text="{loc:LocalizedText Auth_SignInWithApple}"
+                    Command="{Binding SignInWithAppleCommand}"
+                    IsVisible="{Binding IsAppleSignInAvailable}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    LineBreakMode="WordWrap"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
+                <Grid
+                    ColumnDefinitions="Auto,Auto"
+                    ColumnSpacing="{StaticResource UiSpaceMicro}"
+                    HorizontalOptions="Center"
+                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                    MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Register_ReturnToLogin}"
+                    SemanticProperties.Hint="{loc:LocalizedText Auth_Register_DoubleTapToGoBackTo}">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding GoBackCommand}" />
+                    </Grid.GestureRecognizers>
+                    <Label Text="{loc:LocalizedText Auth_Register_AlreadyHaveAnAccount}" Style="{StaticResource MutedLabel}"
+                           LineBreakMode="WordWrap"
+                           VerticalOptions="Center" />
+                    <Label Grid.Column="1" Text="{loc:LocalizedText Auth_LogIn}" Style="{StaticResource AccentLabel}"
+                           LineBreakMode="WordWrap"
+                           VerticalOptions="Center" />
+                </Grid>
+            </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
-    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
-        <Button Style="{StaticResource ButtonPrimary}"
-            Text="{loc:LocalizedText Auth_CreateAccount}"
-            Command="{Binding RegisterCommand}"
-            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-            SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreateYourAccount}" />
-        <ActivityIndicator
-                        Style="{StaticResource StateBusyInline}"
-            HorizontalOptions="Center"
-            IsRunning="{Binding IsBusy}"
-            IsVisible="{Binding IsBusy}"
-            SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatingAccountPleaseWait}" />
-        <Button
-            Style="{StaticResource ButtonSecondary}"
-            Text="{loc:LocalizedText Auth_SignInWithApple}"
-            Command="{Binding SignInWithAppleCommand}"
-            IsVisible="{Binding IsAppleSignInAvailable}"
-            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-            SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
-        <Grid
-            ColumnDefinitions="Auto,Auto"
-            ColumnSpacing="{StaticResource UiSpaceMicro}"
-            HorizontalOptions="Center"
-            MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-            MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
-            SemanticProperties.Description="{loc:LocalizedText Auth_Register_ReturnToLogin}"
-            SemanticProperties.Hint="{loc:LocalizedText Auth_Register_DoubleTapToGoBackTo}">
-            <Grid.GestureRecognizers>
-                <TapGestureRecognizer Command="{Binding GoBackCommand}" />
-            </Grid.GestureRecognizers>
-            <Label Text="{loc:LocalizedText Auth_Register_AlreadyHaveAnAccount}" Style="{StaticResource MutedLabel}"
-                   LineBreakMode="WordWrap"
-                   VerticalOptions="Center" />
-            <Label Grid.Column="1" Text="{loc:LocalizedText Auth_LogIn}" Style="{StaticResource AccentLabel}"
-                   LineBreakMode="WordWrap"
-                   VerticalOptions="Center" />
-        </Grid>
-    </VerticalStackLayout>
 </Grid>
 </ContentPage>

@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 using Xunit;
@@ -77,6 +78,50 @@ public sealed class ActivityActualsContractTests
         Assert.Equal(155, activity.AverageHeartRateBpm);
         Assert.Equal(7, activity.EffortRpe);
         Assert.Equal("Tempo run around park", activity.Notes);
+    }
+
+    [Fact]
+    public void FinishWorkoutSessionCommand_RoundTripsDistance()
+    {
+        var command = new FinishWorkoutSessionCommand(
+            "finish-key",
+            Guid.NewGuid(),
+            new DateTime(2026, 11, 6, 10, 0, 0, DateTimeKind.Utc),
+            1800,
+            RpeRating: 7,
+            Notes: "Felt steady",
+            DistanceKm: 5.25m);
+
+        var json = JsonSerializer.Serialize(command, JsonOptions);
+        var roundTripped = JsonSerializer.Deserialize<FinishWorkoutSessionCommand>(json, JsonOptions);
+
+        Assert.NotNull(roundTripped);
+        Assert.Equal(5.25m, roundTripped.DistanceKm);
+        Assert.Equal(7, roundTripped.RpeRating);
+        Assert.Equal(1800, roundTripped.TotalDurationSeconds);
+        Assert.Equal("Felt steady", roundTripped.Notes);
+    }
+
+    [Fact]
+    public void FinishWorkoutSessionCommand_OmitsDistanceForLegacyPayload()
+    {
+        const string legacyJson = """
+            {
+                "idempotencyKey": "legacy-finish",
+                "sessionId": "11111111-1111-1111-1111-111111111111",
+                "completedAtUtc": "2026-11-06T10:00:00Z",
+                "totalDurationSeconds": 900,
+                "rpeRating": 6,
+                "notes": null
+            }
+            """;
+
+        var command = JsonSerializer.Deserialize<FinishWorkoutSessionCommand>(legacyJson, JsonOptions);
+
+        Assert.NotNull(command);
+        Assert.Null(command.DistanceKm);
+        Assert.Null(command.FinalSets);
+        Assert.Equal(6, command.RpeRating);
     }
 
     [Fact]

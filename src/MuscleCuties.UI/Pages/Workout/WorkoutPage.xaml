@@ -231,21 +231,28 @@
                                                Style="{StaticResource CaptionLabel}"
                                                HorizontalTextAlignment="Center"
                                                LineBreakMode="WordWrap" />
-                                        <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Sessions}"
-                                                               Spacing="{StaticResource UiSpacing2}"
-                                                               HorizontalOptions="Center"
-                                                               HeightRequest="{StaticResource UiDimension7}"
-                                                               VerticalOptions="Center">
+                                        <!-- Compact chips wrap instead of clipping: a day can carry
+                                             several sessions, and the column must stay readable at narrow
+                                             widths and large text sizes. -->
+                                        <FlexLayout BindableLayout.ItemsSource="{Binding Sessions}"
+                                                    Direction="Row"
+                                                    Wrap="Wrap"
+                                                    JustifyContent="Center"
+                                                    AlignItems="Center"
+                                                    HorizontalOptions="Fill"
+                                                    IsClippedToBounds="False">
                                             <BindableLayout.ItemTemplate>
                                                 <DataTemplate x:DataType="workoutModels:ScheduleSessionChip">
                                                     <BoxView WidthRequest="{StaticResource UiDimension6}"
                                                              HeightRequest="{StaticResource UiDimension6}"
+                                                             Margin="{StaticResource UiInsets2}"
                                                              CornerRadius="{StaticResource UiCornerRadius3}"
                                                              Color="{Binding AccentColor}"
+                                                             InputTransparent="True"
                                                              VerticalOptions="Center" />
                                                 </DataTemplate>
                                             </BindableLayout.ItemTemplate>
-                                        </HorizontalStackLayout>
+                                        </FlexLayout>
                                     </VerticalStackLayout>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>

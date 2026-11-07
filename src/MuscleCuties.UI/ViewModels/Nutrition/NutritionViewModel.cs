@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Cycle;
@@ -103,9 +104,11 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _selectedBreakdownCoverageText = string.Empty;
     [ObservableProperty] private string _selectedCustomFoodServingUnit = "g";
     [ObservableProperty] private FoodSearchResultItem? _selectedFoodResult;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(MealChoiceSummary))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MealChoiceSummary), nameof(SelectedMealTimeText))]
     private TimeSpan _selectedMealTime = DateTime.Now.TimeOfDay;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(MealChoiceSummary))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(MealChoiceSummary), nameof(SelectedMealTypeText))]
     private MealType _selectedMealType = MealType.Snack;
     [ObservableProperty] private FoodServingOptionItem? _selectedServingOption;
     [ObservableProperty] private ObservableCollection<FoodServingOptionItem> _servingOptions = new();
@@ -314,6 +317,20 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public bool CanChangeMealContext => !IsMealChoiceLocked;
     public string MealChoiceSummary =>
         $"{UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}")} · {DateTime.Today.Add(SelectedMealTime):t}";
+
+    public string SelectedMealTypeText =>
+        UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}");
+
+    public string SelectedMealDateText =>
+        IsEditingMeal && _editingMealDate.Date != DateTime.Today
+            ? _editingMealDate.ToString("MMM d", CultureInfo.CurrentCulture)
+            : UiTextCatalog.Get("Common_Today");
+
+    public string SelectedMealTimeText =>
+        DateTime.Today.Add(SelectedMealTime).ToString("t", CultureInfo.CurrentCulture);
+
+    public bool IsFoodSourceTabsVisible =>
+        IsFoodFinderExpanded && SelectedFoodResult is null && !IsCustomFoodPanelVisible;
 
     public string SelectedFoodText => SelectedFoodResult?.Name ?? "No food selected";
     public string SelectedFoodSourceText => SelectedFoodResult?.SourceSummary ?? string.Empty;
