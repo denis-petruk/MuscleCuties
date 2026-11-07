@@ -426,6 +426,9 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(MealDraftProteinText));
         OnPropertyChanged(nameof(MealDraftCarbsText));
         OnPropertyChanged(nameof(MealDraftFatsText));
+        OnPropertyChanged(nameof(SelectedMealDateText));
+        OnPropertyChanged(nameof(SelectedMealTypeText));
+        OnPropertyChanged(nameof(SelectedMealTimeText));
         OnPropertyChanged(nameof(LogMealButtonText));
         LogMealCommand.NotifyCanExecuteChanged();
     }
