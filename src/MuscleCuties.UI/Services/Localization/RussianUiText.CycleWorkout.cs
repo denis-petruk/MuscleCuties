@@ -92,6 +92,10 @@ internal static partial class RussianUiText
         Values["Workout_Session_SummaryDistanceFormat"] = "{0} км";
         Values["Workout_Session_SummaryDistanceHeader"] = "Дистанция";
         Values["Workout_Session_SummaryCompleteTitle"] = "Активность завершена!";
+        Values["Workout_Session_ExerciseCountOne"] = "1 упражнение";
+        Values["Workout_Session_ExerciseCountFormat"] = "{0} упражнений";
+        Values["Workout_Session_SummaryStatusFormat"] = "{0} из {1} отмечено";
+        Values["Workout_Session_SummaryStatusSkippedFormat"] = "{0} из {1} отмечено · {2} пропущено";
         Values["Workout_Session_SummaryReviewedTitle"] = "Активность просмотрена";
         Values["Workout_Session_SummaryLoggedFormat"] = "Записано {0} из {1}";
         Values["Workout_Session_SummarySkippedFormat"] = " · пропущено: {0}";

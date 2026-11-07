@@ -96,6 +96,10 @@ public static partial class UiTextCatalog
         English["Workout_Session_SummaryDistanceFormat"] = "{0} km";
         English["Workout_Session_SummaryDistanceHeader"] = "Distance";
         English["Workout_Session_SummaryCompleteTitle"] = "Activity complete!";
+        English["Workout_Session_ExerciseCountOne"] = "1 exercise";
+        English["Workout_Session_ExerciseCountFormat"] = "{0} exercises";
+        English["Workout_Session_SummaryStatusFormat"] = "{0} of {1} logged";
+        English["Workout_Session_SummaryStatusSkippedFormat"] = "{0} of {1} logged · {2} skipped";
         English["Workout_Session_SummaryReviewedTitle"] = "Activity reviewed";
         English["Workout_Session_SummaryLoggedFormat"] = "{0} of {1} logged";
         English["Workout_Session_SummarySkippedFormat"] = " · {0} skipped";

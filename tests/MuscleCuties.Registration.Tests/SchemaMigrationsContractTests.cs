@@ -1,4 +1,5 @@
 using System.Text;
+using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using Xunit;
 
 namespace MuscleCuties.Registration.Tests;
