@@ -711,6 +711,12 @@ public static partial class UiTextCatalog
         English["Profile_PhotoJourney_TapToReveal"] = "Tap to reveal";
         English["Profile_PhotoJourney_Title"] = "Photo Journey Vault";
         English["Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd"] = "Photos are intended for private Amazon S3 storage. Tap photos to reveal or hide.";
+        English["Profile_PhotoJourney_DateFormat"] = "MMM d, yyyy";
+        English["Profile_PhotoJourney_PhotoRevealed"] = "Photo shown";
+        English["Profile_PhotoJourney_RevealOrHideHint"] = "Double-tap to reveal or hide this photo.";
+        English["Profile_PhotoJourney_FirstComparisonLabel"] = "First photo";
+        English["Profile_PhotoJourney_SecondComparisonLabel"] = "Second photo";
+        English["Profile_PhotoJourney_ComparisonSliderDescription"] = "Comparison divider";
         English["Profile_Privacy_Title"] = "Privacy";
         English["Profile_Privacy_DataTitle"] = "Your data";
         English["Profile_Privacy_StorageLabel"] = "Storage";
