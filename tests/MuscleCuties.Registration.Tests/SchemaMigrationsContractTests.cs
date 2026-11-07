@@ -40,10 +40,26 @@ public sealed class SchemaMigrationsContractTests
     }
 
     [Fact]
+    public async Task BaselineScript_IsEmbeddedAndCreatesApplicationSchema()
+    {
+        var assembly = typeof(PostgresSchemaMigrations).Assembly;
+        await using var stream = assembly.GetManifestResourceStream(PostgresSchemaMigrations.BaselineScript.ResourceName);
+        Assert.NotNull(stream);
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        var content = await reader.ReadToEndAsync();
+
+        Assert.Contains("CREATE SCHEMA app", content, StringComparison.Ordinal);
+        Assert.Contains("CREATE TABLE app.users", content, StringComparison.Ordinal);
+        Assert.Contains("CREATE TABLE catalog.exercises", content, StringComparison.Ordinal);
+        Assert.Equal(0, PostgresSchemaMigrations.BaselineScript.Version);
+        Assert.Equal("000_model_baseline.sql", PostgresSchemaMigrations.BaselineScript.ScriptName);
+    }
+
+    [Fact]
     public void MigrationScripts_MatchesExpectedCleanMigrationChain()
     {
         var scripts = PostgresSchemaMigrations.Scripts;
-        Assert.Equal(4, scripts.Count);
+        Assert.Equal(5, scripts.Count);
 
         Assert.Equal(1, scripts[0].Version);
         Assert.Equal("001_base_schema.sql", scripts[0].ScriptName);
@@ -60,6 +76,10 @@ public sealed class SchemaMigrationsContractTests
         Assert.Equal(4, scripts[3].Version);
         Assert.Equal("004_session_distance.sql", scripts[3].ScriptName);
         Assert.Equal(PostgresSchemaMigrations.SessionDistanceResourceName, scripts[3].ResourceName);
+
+        Assert.Equal(5, scripts[4].Version);
+        Assert.Equal("005_observed_set_actuals.sql", scripts[4].ScriptName);
+        Assert.Equal(PostgresSchemaMigrations.ObservedSetActualsResourceName, scripts[4].ResourceName);
     }
 
     [Fact]
@@ -78,12 +98,28 @@ public sealed class SchemaMigrationsContractTests
     }
 
     [Fact]
+    public async Task ObservedSetActualsMigrationIsAdditiveAndBackfillsUnobserved()
+    {
+        var script = PostgresSchemaMigrations.Scripts.Single(candidate => candidate.Version == 5);
+        await using var stream = typeof(PostgresSchemaMigrations).Assembly
+            .GetManifestResourceStream(script.ResourceName);
+        Assert.NotNull(stream);
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        var sql = await reader.ReadToEndAsync();
+
+        Assert.Contains("ADD COLUMN IF NOT EXISTS rir_actual", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ADD COLUMN IF NOT EXISTS technique_acceptable", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("ADD COLUMN IF NOT EXISTS is_observed", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("DEFAULT false", sql, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public async Task RehearseChainAsync_ProducesVerifiedChecksumsAndMonotonicOrder()
     {
-        // QA00: Rehearse clean migration chain (001 -> 002 -> 003 -> 004)
+        // QA00: Rehearse clean migration chain (001 -> 002 -> 003 -> 004 -> 005)
         var rehearsal = await PostgresSchemaMigrations.RehearseChainAsync();
 
-        Assert.Equal(4, rehearsal.Count);
+        Assert.Equal(5, rehearsal.Count);
         for (var i = 0; i < rehearsal.Count; i++)
         {
             Assert.Equal(i + 1, rehearsal[i].Version);

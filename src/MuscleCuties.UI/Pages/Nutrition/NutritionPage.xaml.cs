@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using System.Diagnostics;
 using MuscleCuties.UI.Controls.Shared;
+using MuscleCuties.UI.Navigation;
 using MuscleCuties.UI.ViewModels.Nutrition;
 
 namespace MuscleCuties.UI.Pages.Nutrition;
@@ -83,11 +84,38 @@ public partial class NutritionPage : ContentPage
 
     private async Task LoadRequestedViewsAsync()
     {
+        var handoffToEditor = NutritionMealEntryHandoff.IsHandoff(
+            _viewModel.IsMealEditorVisible, _viewModel.IsMealEntryModalVisible);
+        var editorPresented = false;
         await MealEditor.LoadIfNeededAsync(_viewModel.IsMealEditorVisible);
+        if (handoffToEditor && MealEditor.Content is AnimatedModalView editorModal)
+        {
+            // The editor sits behind the chooser in the page grid. Finish its presentation
+            // before dismissing the chooser so no frame exposes the page between the two sheets.
+            editorPresented = editorModal.CompleteOpenTransition();
+        }
+
         await LoadBreakdownViewAsync();
         await Suggestions.LoadIfNeededAsync(_viewModel.IsSuggestionModalVisible);
         await MealDetail.LoadIfNeededAsync(_viewModel.IsMealDetailVisible);
         await LoadMealEntryViewAsync();
+
+        if (NutritionMealEntryHandoff.CanCloseChooser(
+                _viewModel.IsMealEditorVisible,
+                _viewModel.IsMealEntryModalVisible,
+                editorPresented))
+        {
+            // Let the tap that chose the meal finish before the chooser disappears; otherwise the
+            // touch can fall through to the editor that is now occupying the same screen.
+            await Task.Yield();
+            if (NutritionMealEntryHandoff.CanCloseChooser(
+                    _viewModel.IsMealEditorVisible,
+                    _viewModel.IsMealEntryModalVisible,
+                    editorPresented))
+            {
+                _viewModel.CloseMealEntryCommand.Execute(null);
+            }
+        }
     }
 
     private async Task LoadBreakdownViewAsync()

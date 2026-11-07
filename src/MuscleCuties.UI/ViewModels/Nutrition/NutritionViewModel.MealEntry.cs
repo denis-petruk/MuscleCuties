@@ -79,20 +79,21 @@ public partial class NutritionViewModel
         NotifyEntryProperties();
     }
 
-    private async Task StartManualMealAsync()
+    private Task StartManualMealAsync()
     {
         if (IsBusy || IsWritingMealEntry)
-            return;
+            return Task.CompletedTask;
 
         IsMealChoiceLocked = false;
-        IsMealEntryModalVisible = false;
+        // Open the editor behind the chooser. NutritionPage dismisses the chooser only after the
+        // editor host is loaded and fully presented, so the page cannot flash between two sheets.
         IsMealEditorVisible = true;
         PrepareMealEditor();
         SelectedMealType = Enum.IsDefined(EntryMealType) ? EntryMealType : GuessNextMealType();
         SelectedMealTime = EntryMealTime;
         NotifyEntryProperties();
         NotifyMealIngredientProperties();
-        await Task.CompletedTask;
+        return Task.CompletedTask;
     }
 
     private void StartSuggestedMeal()

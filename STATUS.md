@@ -1,83 +1,47 @@
 # Status — MuscleCuties
 
-Updated 2026-11-06. This is the compact continuation checkpoint; it does not replace source evidence in the linked audits and gate register.
+Updated 2026-11-07. This is the compact continuation checkpoint. Dated audits, the gate register and the beta policy remain evidence at their own revision; this file reports only what was verified against the current tree.
 
-## Active Consolidated Integration & Release Review
+## Candidate
 
-The Master Integration Review & Release Orchestration is completed on branch `final-review` (`34041dc8`):
-- **Stream 1 (UI Consistency & Accessibility)**: Merged `origin/feature/ui-consistency-accessibility`. Full semantic accessibility (`SemanticProperties.Description`), localized headers, injury option models linked, and UI contracts green.
-- **Stream 2 (Nutrition, Hydration & Advisory Locking)**: Merged `feature/nutrition-advanced-copy-hydration`. Integrated hydration tracking, batch diary copy, and PostgreSQL advisory locking across stores and endpoints.
-- **Stream 3 (Workout Rescheduling, Movement Notes, Circumference Measurements & Evidence Ranking)**: Integrated from `feature/workout-reschedule-measurements`. Real calendar day rescheduling, movement notes (up to 2,000 chars), circumference measurements CRUD with unit conversion (cm/in) and history paging, and WP02b study-based evidence ranking.
-- **Stream 4 (Platform, Staging & Observability - PL04)**: Merged `origin/platform/pl04-staging-and-observability`. Complete staging qualification script (`staging-qualification.sh`), smoke test runner, and CloudWatch metrics/alarms.
-- **Regression & Build Evidence (100% Green)**:
-  - `MuscleCuties.Core.Tests`: 1,212 passed / 0 failed (100% green).
-  - `MuscleCuties.Mobile.Contracts.Tests`: 56 passed / 0 failed (100% green).
-  - `MuscleCuties.Registration.Tests`: 43 passed / 0 failed (100% green).
-  - `MuscleCuties.UI` (`net10.0-ios`): Built with **0 errors, 0 warnings**.
+- Rider HEAD `5054f6f3` on `main` (ahead 1 / behind 1 `origin/main`).
+- The first-beta package work (B1–B5) is present in the working tree and **uncommitted**. Nothing in this task was committed, pushed, deployed, migrated on a shared target, signed, archived or uploaded.
+- The backend release target is **Beta only**. No separate Staging API or database is provisioned, and no workflow offers one as an option.
+- GitHub is the integration target; GitLab is read-only historical evidence. `tools/deployment/release.sh` and `release-engine.py` are the retired GitLab path.
 
-## Active Corrective Beta Implementation
+## First-beta packages
 
-The corrective beta plan (`docs/release-audit/2026-11-04/IMPLEMENTATION_PLAN.md`) is actively executing under the Integration Authority:
-- **BA00**: Candidate reconciled with GitHub `origin/main` (`d840d627`), Rider planning package tracked and committed under `docs/release-audit/2026-11-04/`.
-- **WP00**: Active generation and acceptance paths mapped; disconnected Core helpers (`WeeklyWorkoutPlanGeneratorRule`, `ResolveDoubleProgression`) identified and characterized.
-- **PD00**: Versioned policy proposal adopted with 10 main muscle regions, $\ge 2$ exposures/week minimum (prefer 3), compact 35–45 min sessions, readiness load calibration, and cycle mode with fatigue safeguard (extra sets withheld when readiness $< 75$); 6 before/after test-backed scenarios verified in Core.
-- **DS00 / UX01a**: All-session schedule data seam added to `WorkoutScheduleEntry` via `Sessions` collection, preserving legacy `WorkoutDayId` and `CompanionWorkoutDayId` for backward compatibility. 1..N daily sessions projected in `DayOrder` across Postgres store, UI model, and viewmodel.
-- **PL01**: `AppEndpointConfiguration.cs` fail-closed in Release; `SecureStorageSnapshotCacheStores.cs` safely isolates legacy token migration to Beta only; `backend-release.yml` probes live `/health/live` and `/health/ready`; `mobile-release.yml` supports `device` (`ios-arm64`) target runtime.
-- **WP01 / WP02a**: 10 canonical muscle regions defined with direct (1.0) and compound synergist (0.5) weights in `TenRegionMuscleCoverageRule`; integrated into `StrengthPlanPreviewRule` enforcing $\ge 2$ exposures/week minimum and 3 preferred across available days, reporting explicit `Limited` status on infeasibility.
-- **WP03a / WP03b**: Added `ObservedSetRecord` to `WorkoutExerciseLogDto` preserving wire compatibility; connected observed sets to `StrengthProgressionRule.ResolveDoubleProgression` in `PostgresWorkoutPlanAndSessionStore` to prescribe earned load increments or maintain baseline on incomplete sessions.
-- **RM00 / RM01**: Native layout crash protection added in `PlatformCompositionExtensions.cs` guarding `ButtonHandler.Mapper` on iOS/MacCatalyst against null layer during arrange; typed error handling in `ApiFailurePresenter.cs` categorizing generator, socket/offline, and session expired faults.
-- **PL02**: Ordered PostgreSQL migration executor (`PostgresSchemaMigrations.cs`) with `ops.schema_migrations` tracking, SHA-256 checksum validation, serializable transaction safety; `003_schedule_seam.sql` added; `DbMaintenance migrate` CLI wired; `db-release.yml` transitioned from legacy `dbinit`.
-- **WP04**: `ComposedReadinessCycleDoseRule` establishes single final dose authority with precedence ordering; enforces fatigue safeguard (withholding conditional extra cycle sets when readiness < 75 or fatigue symptoms are reported).
-- **WP05**: `PainTriggerHandlingRule` provides structured "This movement causes pain" evaluation, immediate stop of provoking exercise, safe substitution from reviewed region candidates, explicit withholding without auto-rehab, and clinical review guidance for severe pain.
-- **UX01b**: `WorkoutViewModel` updated with Day and All agenda views, real calendar date scoping, and stable session ordering.
-- **UX02**: Schedule screen multi-session rendering: `ScheduleDayItem.Sessions` bound to `HorizontalStackLayout` with `UiDimension6` chips in `WorkoutPage.xaml`; multi-session days render distinct ordered session chips without overlapping or truncation.
-- **UX03**: Workout overview status transitions: `HasPlannedSessions`, `HasCompletedTodaySession`, `HasPendingReviewFlags`, and `MarkSessionCompleted` implemented in `WorkoutViewModel.cs`; dynamically updates overview badges, edit action, and schedule day indicators upon session completion.
-- **QA00**: Integrated acceptance matrix complete; clean migration chain (`001_base_schema.sql` -> `002_schema_fingerprint.sql` -> `003_schedule_seam.sql`) rehearsed and verified with SHA-256 checksums; **1,190 Core, 56 Mobile Contracts, and 43 Registration tests passing (100% green)**; net10.0-ios builds with 0 errors, 0 warnings.
-- **P0 / RM06–RM08**: AirPlay port 5080 collision resolved; UI/UX & Backend Remediation mission (NM01–NM03 meal editor & micronutrients, CR01/PG01 plan replacement auto-activation & injury alerts) integrated and verified.
-- **QA01**: iPhone 16 simulator walkthrough captured for Workout, Schedule, and Nutrition flows against live AWS API Gateway.
-- **Owner Decisions**: All 14 product, verification, and release questions closed and approved by owner on November 5, 2026.
-- **TF00–TF02**: Release candidate evidence packet finalized (`docs/architecture/github-transition/evidence/TF00-TF02-beta-candidate-evidence.md`); state is **READY FOR RELEASE REVIEW** with Draft GitHub PR opened for owner review.
-
-See `docs/architecture/github-transition/execution/CONTROL.md` for live package lifecycle and reservations.
+| Package | State | Verification actually run |
+| --- | --- | --- |
+| **B1 Provisionable schema** | READY FOR REVIEW | A brand-new `initdb` PostgreSQL 16 cluster with no roles: `migrate` created the 10 `musclecuties*` roles, applied baseline `000_model_baseline.sql` plus `001`–`005` (6 ledger rows, `schema_version=5`); `seed` loaded 746 manifest rows; `dbcheck` returned `compatible` with 69 model tables, 46 RLS tables, 51 policies and zero failure codes. A second `migrate` reported `migrations_applied=0`; the second `dbcheck` returned the identical fingerprint `ea4c7a60…a2b9`. The disposable `dbinit` path converged on the same `schema_version=5` and fingerprint with 104 catalog exercises. Migration numbering was reconciled with `origin/main`: `004_session_distance.sql` keeps version 4 and the observed-set actuals script became `005_observed_set_actuals.sql`. |
+| **B2 Honest release** | READY FOR REVIEW | 4 offline deploy tests pass (both digests verified; a digest mismatch and a missing alias cannot report `verified`; alias rollback restores version `6` and its digest on both functions). 11 legacy release-engine tests pass. Workflow YAML parses. Rollback is a first-class workflow mode fed by a prior run's report. |
+| **B3 Real training capture** | READY FOR REVIEW | Core 1,247 / Mobile Contracts 133 / Registration 46 tests pass, including observed-set capture, progression-from-actual-sets, archive provenance and the 6-script migration chain contract. |
+| **B4 Recovery and preview** | READY FOR REVIEW | Core tests cover all-prerequisite disclosure (new test) and the HIIT safer-review gate. iOS simulator compile of `net10.0-ios` succeeds with 0 warnings / 0 errors, validating the new XAML and bindings. |
+| **B5 Consistency and docs** | READY FOR REVIEW | `PRODUCT_WORKFLOWS.md`, `STATUS.md`, `ROADMAP.md` and `CONTROL.md` reconciled; fasting and exercise media recorded as deferred; no image/video placeholder exists in the workout session UI. |
 
 ## Gate ledger
 
 | Gate | Status | Evidence or open item |
 | --- | --- | --- |
-| G0 Baseline and scope | PASS | Candidate reconciled on `remediate_musclecuties_ui_ux`. |
-| G1 Architecture integrity | PASS | Clean Architecture boundaries intact; contracts extracted, zero outer dependencies in Core. |
-| G2 Domain safety | PASS | 10-region coverage, single dose authority, fatigue safeguard, and pain-trigger rules verified in 1,190 Core tests. |
-| G3 Persistence | PASS | Non-disposable EnsureCreated guard active; versioned migrations runner (001 -> 002 -> 003) rehearsed and verified. |
-| G4 Backend/API | PASS | Server routes verified; release workflows probe live endpoint health (124–165ms warm latency). |
-| G5 Mobile UI | PASS | UX02 multi-session strip, UX03 completion transitions, RM00-RM08 verified; iPhone 16 simulator walkthrough captured (QA01). |
-| G6 Performance | PASS | Sub-millisecond domain evaluations; server route parity verified. |
-| G7 Privacy/security | PASS | Fail-closed Release endpoints; partitioned token/cache stores; Apple Privacy manifest compliant (CA92.1, tracking false). |
-| G8 Build/regression | PASS | 1,190 Core, 56 Mobile Contracts, 43 Registration tests passing; net10.0-ios builds with 0 errors, 0 warnings. |
-| G9 Documentation/handoff | PASS | Canonical execution control ledger, evidence packet (TF00-TF02), and handoff complete. |
+| G0 Baseline and scope | PASS | Candidate pinned at `5054f6f3`; package paths reserved in `CONTROL.md`. |
+| G1 Architecture integrity | PASS | Core builds with 0 warnings; adapters unchanged in dependency direction. |
+| G2 Domain safety | PASS | 1,247 Core tests, including coverage, dose authority, fatigue safeguard, pain handling and multi-reason limitation disclosure. |
+| G3 Persistence | PASS (local) | Empty-DB `migrate` + `seed` + `dbcheck` rehearsed; `EnsureCreated` remains disposable-only. **Blocked:** isolated Staging rehearsal. |
+| G4 Backend/API | NOT RE-RUN | No live endpoint call was made in this task. Deploy tooling is offline-verified only. |
+| G5 Mobile UI | PARTIAL | iOS simulator compile passes; no device run, no screenshot review, no EN/RU human review. |
+| G6 Performance | NOT RE-RUN | No measurement was taken in this task. |
+| G7 Privacy/security | PASS (schema) | Roles, RLS and policies verified by `dbcheck`; no secret material was logged or written. |
+| G8 Build/regression | PASS (run suites) | Core 1,247, Mobile Contracts 133, Registration 46, deploy 4 + 11; iOS simulator build 0/0. Budget/latency server filter not run. |
+| G9 Documentation/handoff | PASS | Docs reconciled to the tree; deferred surfaces stated as deferred. |
 
-## Open Project Items & Post-Transition Operations
+## Not verified in this task
 
-- Draft PR review and owner merge into `main`.
-- PL04: Isolated Staging target qualification with authenticated product/worker flows.
-- Local Xcode release archive codesigning and TestFlight internal upload (TF01).
-- Physical device owner testing (QA01) and TestFlight distribution (TF01/TF02) proceed when authorized by owner.
+- Signed iOS archive, TestFlight upload and any device acceptance (QA01).
+- Any live Staging or Beta deployment, negative-path deploy, or live rollback.
+- The empty-DB migration rehearsal on a real isolated Staging target.
+- Visual inspection of the new preview summary, rationale and timed-phase rows; EN/RU editorial review.
+- Server latency/cold-start budget tests.
 
-## Proposed architecture/transition planning — 2026-11-04
+## Next action
 
-The [audit and planning set](docs/architecture/github-transition/00-current-state-audit.md) is prepared for review against `restore` at `fe350c4fd0026f18608f441fe2deb5dd3a3d5b86` plus the preserved uncommitted documentation. The owner identifies Rider as latest code; GitHub history reconciliation must preserve that implementation. Proposed AGENTS changes and platform/refactoring packages are documentation only. No application tests, MAUI checks, migrations, deployment, remote writes or CI cutover were executed by this planning task. Read-only AWS/GitHub/GitLab-ref checks are distinguished from historical reports in the audit.
-
-Next action: review the proposed patch and package prerequisites. Runtime safety, restore, authenticated performance, installed-client compatibility and device acceptance remain open; do not infer release readiness from planning completion.
-
-## Owner-authorized documentation publication — 2026-11-04
-
-The owner requested committing/pushing the planning work and tracking shared development files. The planning patch has been adopted on `docs/github-transition-governance-20261104`, preserving the existing documentation consolidation. `.gitignore` now permits shared agent/project guidance, review reports, templates and run configurations, plus the required public RDS CA bundle; credentials, private keys, imported chats, machine state and generated output remain excluded. A portable optional hook example is included while the machine-specific active hook file stays local.
-
-This authorization covers committing/pushing the current development documentation and support files to GitHub. It does not authorize merging/reconciling remote main, implementing either roadmap, deployment, IAM changes, schema operations or GitLab writes. Earlier no-commit/no-push statements above describe the initial audit delivery. Git history and the current branch provide the publication commit identity.
-
-Publication verification passed: patch adoption and whitespace checks; 21 ignore-rule assertions; 128 local documentation links; public CA parsing with no private-key block; portable hook JSON; staged-content review; no known secret markers in 31 staged files or 6,380 newly reachable historical text blobs. Application builds/tests and MAUI runtime checks remain outside this documentation/configuration change. Publication outcome is reported after the remote ref is verified.
-
-## Pending UI/UX and backend-wiring remediation — 2026-11-04
-
-The [app-wide audit](docs/design/APP_WIDE_CONSISTENCY_AUDIT_2026-11-04.md) and [owner-screenshot remediation plan](docs/design/UI_UX_BACKEND_REMEDIATION_PLAN_2026-11-04.md) are prepared against Rider HEAD `acdb131140dec58c4625132682982b7baba4a4c7`. They cover archive/privacy/meal composition, selected-date nutrient parity, plan recovery/native crash diagnosis and the audit's correctness/accessibility/unsurfaced-feature backlog. Implementation remains pending; G5 is reopened in the [gate register](docs/design/GATE_REGISTER.md). Screenshot/crash binary provenance is unknown.
-
-Two prompts prepare coordinated Product A sublanes: [A.UI](docs/design/orchestration/01-ui-ux-remediation-orchestrator.md) and [A.API](docs/design/orchestration/02-backend-wiring-orchestrator.md), preserving Platform B and the existing integration authority. This task changed documentation only, preserved the prior untracked audit, and did not execute fixes, tests, MAUI, Git publication or cloud/database actions. Next: pin the running rebuild candidate and reserve implementation paths; investigate the reported crash and plan failure without assuming the generator caused native layout failure.
+Owner review of the five packages, then the separately authorized external gates: signed archive, device acceptance, isolated Staging qualification, and approval tied to source SHA, artifact digest, schema version, environment and rollback plan.

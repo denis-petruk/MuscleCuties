@@ -238,6 +238,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool CanReviewPreview => HasPreview && !IsProposalAccepted && !IsTrainNavigationPending;
     public bool CanApplyPlanFromPreview => CanReviewPreview;
     public bool CanEditDetailsFromPreview => CanReviewPreview;
+    public bool CanEditDetailsFromPrerequisites => IsBeforePreview && !IsBusy && !IsProposalAccepted;
     public bool HasFeasiblePreview => CanSubmitProposal;
     public bool HasLimitation => Preview is not null && Preview.Status != "Feasible";
     public bool HasMixedSchedule => Preview?.MixedActivitySchedule is not null;
@@ -293,6 +294,45 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         : string.Empty;
     public bool IsBeforePreview => Preview is null;
     public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
+
+    /// <summary>
+    /// A missing saved strength activity or a missing valid weekday set blocks generation. The page
+    /// must offer the way out of that state instead of leaving the user on a status message.
+    /// </summary>
+    public bool NeedsPrerequisiteRecovery => IsBeforePreview && !IsBusy && HasStatusMessage &&
+        (!HasSavedStrengthActivity || !HasSavedAvailability);
+
+    [System.Diagnostics.CodeAnalysis.SuppressMessage(
+        "Performance", "CA1822:Mark members as static",
+        Justification = "Target of compiled XAML bindings; must stay an instance member.")]
+    public string PrerequisiteRecoveryActionText =>
+        UiTextCatalog.Get("Workout_Generation_PrerequisiteRecoveryAction");
+
+    public bool HasWeeklySummary => Preview is not null;
+
+    /// <summary>
+    /// The week's composition in one line: scheduled strength sessions, prescribed working sets and
+    /// timed aerobic minutes. Values come from the preview itself, never from a second estimate.
+    /// </summary>
+    public string WeeklySummaryText
+    {
+        get
+        {
+            if (Preview is null)
+                return NoStatusMessage;
+
+            var sessions = Preview.Sessions.Count;
+            var workingSets = Preview.Sessions.Sum(session => session.Slots.Sum(slot => slot.Sets ?? 0));
+            var aerobicMinutes = Preview.MixedActivitySchedule?.Sessions
+                .Where(session => session.ActivityTypeId != (int)WorkoutActivityDto.RestDay)
+                .Sum(session => (int)Math.Round(session.DurationMinutes)) ?? 0;
+            return StrengthPlanGenerationDisplayMapper.FormatLocalized(
+                "Workout_Generation_WeeklySummaryFormat",
+                sessions.ToString(CultureInfo.CurrentCulture),
+                workingSets.ToString(CultureInfo.CurrentCulture),
+                aerobicMinutes.ToString(CultureInfo.CurrentCulture));
+        }
+    }
     public bool IsHistorySelfReported => _historyWasSelfReported;
     public string TrainingDetailsToggleText => UiTextCatalog.Get(IsTrainingDetailsExpanded
         ? HideTrainingDetailsKey
@@ -509,6 +549,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         PopulatePreviewDisplays(_proposal.Preview);
 
         if (IsCurrentGeneration(generation) &&
+            !_proposal.ReplacesExistingPlan &&
             WorkoutPlanningFlow.CanAutomaticallyApplyFirstPlan(_proposal.ReplacesExistingPlan,
                 _proposal.Preview.Status == "Feasible", _proposal.IsPersisted, HasMissingRequiredAnswers(),
                 _proposal.Preview.StrengthStyleChoiceRequired, HasOptionalOmissions))
@@ -1163,7 +1204,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         return true;
     }
 
-    private bool CanEditDetails() => !IsBusy && Preview is not null && !IsProposalAccepted;
+    private bool CanEditDetails() => !IsBusy && !IsProposalAccepted;
 
     private bool CanClosePreview() => !IsBusy && Preview is not null;
 
@@ -1694,6 +1735,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     {
         OnPropertyChanged(nameof(HasPreview));
         OnPropertyChanged(nameof(IsBeforePreview));
+        OnPropertyChanged(nameof(CanEditDetailsFromPrerequisites));
         OnPropertyChanged(nameof(CanReviewPreview));
         OnPropertyChanged(nameof(CanApplyPlanFromPreview));
         OnPropertyChanged(nameof(CanEditDetailsFromPreview));

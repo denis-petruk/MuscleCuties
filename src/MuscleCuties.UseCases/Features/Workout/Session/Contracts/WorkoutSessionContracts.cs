@@ -89,6 +89,8 @@ public sealed record WorkoutExerciseDetailDto(
     public string TargetText { get; init; } = string.Empty;
     public string PreviousText { get; init; } = string.Empty;
     public string RecommendationText { get; init; } = string.Empty;
+    public string RecommendationCode { get; init; } = string.Empty;
+    public decimal? RecommendationLoadKg { get; init; }
     public string MovementNotes { get; init; } = string.Empty;
     public string LoggedSetsText { get; init; } = string.Empty;
     public string LoggedRepsText { get; init; } = string.Empty;
@@ -125,6 +127,8 @@ public sealed record WorkoutActivityDetailDto(
     IReadOnlyList<int> WorkoutDayExerciseIds)
 {
     public MuscleCuties.UseCases.Features.Workout.Planning.ActivitySessionPrescriptionOutputV020? Prescription { get; init; }
+    public MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto ActivityType { get; init; }
+        = MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Other;
 }
 
 public enum WorkoutDoseAdjustmentReason { DailyReadiness, ProvisionalPhaseFeeling, RepeatedPhasePattern, SafetyReview }

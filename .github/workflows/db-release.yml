@@ -6,10 +6,9 @@ on:
       target_environment:
         description: 'Target deployment environment'
         required: true
-        default: 'staging'
+        default: 'beta'
         type: choice
         options:
-          - staging
           - beta
 
 permissions:
@@ -38,19 +37,21 @@ jobs:
         run: |
           dotnet build src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj --configuration Release
 
-      - name: Preflight schema check under session advisory lock
-        env:
-          ConnectionStrings__PostgreSql: ${{ secrets.DATABASE_CONNECTION_STRING }}
-        run: |
-          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- \
-            session-lock-runner -- dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- dbcheck
-
+      # No preflight schema check: a fresh environment has no schema yet, and migrate is
+      # idempotent and checksum-guarded. Verification runs after the schema exists.
       - name: Apply ordered migrations under session advisory lock
         env:
           ConnectionStrings__PostgreSql: ${{ secrets.DATABASE_CONNECTION_STRING }}
         run: |
           dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- \
             session-lock-runner -- dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- migrate
+
+      - name: Seed canonical catalog under session advisory lock
+        env:
+          ConnectionStrings__PostgreSql: ${{ secrets.DATABASE_CONNECTION_STRING }}
+        run: |
+          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- \
+            session-lock-runner -- dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- seed
 
       - name: Post-apply schema verification
         env:

@@ -23,6 +23,14 @@ public static partial class UiTextCatalog
         English["Workout_Generation_RecentHistoryBadge"] = "RECENT HISTORY";
         English["Workout_Generation_ActivityEvidenceBadge"] = "ACTIVITY DETAILS";
         English["Workout_Generation_PreviewBadge"] = "PLAN PREVIEW";
+        English["Workout_Generation_PrerequisiteRecoveryAction"] = "Edit workout setup";
+        English["Workout_Generation_WeeklySummaryTitle"] = "Your week at a glance";
+        English["Workout_Generation_WeeklySummaryFormat"] = "{0} strength sessions · {1} working sets · {2} aerobic minutes";
+        English["Workout_Generation_PhaseWarmupFormat"] = "Warm-up {0} min";
+        English["Workout_Generation_PhaseMainFormat"] = "Main {0} min";
+        English["Workout_Generation_PhaseCooldownFormat"] = "Cool-down {0} min";
+        English["Workout_Generation_PhaseIntervalsFormat"] = "{0} × {1}s work";
+        English["Workout_Generation_PhaseRecoveryFormat"] = "{0} × {1}s recovery";
         English["Workout_Generation_Title"] = "Build a new workout plan";
         English["Workout_Generation_Intro"] = "Review a draft before it replaces your current plan. Your plan stays unchanged until you choose Apply plan.";
         English["Workout_Generation_Open"] = "Build a new plan";

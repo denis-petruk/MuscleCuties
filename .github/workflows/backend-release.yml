@@ -4,17 +4,30 @@ on:
   workflow_dispatch:
     inputs:
       target_environment:
-        description: 'Target deployment environment'
+        description: 'Target deployment environment (Beta only; Staging is not provisioned as a separate API)'
         required: true
-        default: 'staging'
+        default: 'beta'
         type: choice
         options:
-          - staging
           - beta
+      mode:
+        description: 'Deploy the candidate, or roll both aliases back to the versions recorded in a deployment report'
+        required: true
+        default: 'deploy'
+        type: choice
+        options:
+          - deploy
+          - rollback
+      report_run_id:
+        description: 'Rollback only: workflow run id that produced beta-deployment-report-<sha>'
+        required: false
+        default: ''
 
 permissions:
   id-token: write
   contents: read
+  # Rollback reads the deployment report artifact produced by an earlier run.
+  actions: read
 
 concurrency:
   group: mutation-${{ inputs.target_environment }}
@@ -23,11 +36,13 @@ concurrency:
 jobs:
   package:
     name: package
+    if: inputs.mode == 'deploy'
     uses: ./.github/workflows/backend-build.yml
 
   upload_artifacts:
     name: upload_artifacts
     needs: package
+    if: inputs.mode == 'deploy'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -50,66 +65,36 @@ jobs:
         env:
           AWS_RELEASE_BUCKET: musclecuties-release-artifacts-028417007003
           AWS_REGION: us-east-2
+          ARTIFACT_COMPONENT: MuscleCuties.Server
         run: |
           bash tools/deployment/upload-artifact.sh \
             artifacts/MuscleCuties.Server.zip \
             artifacts/build-manifest.json \
-            artifacts/release-object.json
+            artifacts/server-release-object.json
 
-      - name: Upload release object manifest
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-object-${{ github.sha }}
-          path: artifacts/release-object.json
-
-  deploy_staging:
-    name: deploy_staging
-    needs: [package, upload_artifacts]
-    if: inputs.target_environment == 'staging'
-    runs-on: ubuntu-latest
-    environment: staging
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Download backend artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: ${{ needs.package.outputs.artifact-name }}
-          path: artifacts
-
-      - name: Download release object
-        uses: actions/download-artifact@v4
-        with:
-          name: release-object-${{ github.sha }}
-          path: artifacts
-
-      - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::028417007003:role/MuscleCuties-GitHubActions-StagingDeploy
-          aws-region: us-east-2
-          role-session-name: github-actions-staging-deploy-${{ github.run_id }}
-
-      - name: Verify Staging functions & publish deployment report
+      - name: Upload Worker Lambda artifact to immutable S3 bucket
+        env:
+          AWS_RELEASE_BUCKET: musclecuties-release-artifacts-028417007003
+          AWS_REGION: us-east-2
+          ARTIFACT_COMPONENT: MuscleCuties.WorkoutReconciliation
         run: |
-          echo "Promoting verified release ${{ github.sha }} to Staging"
-          mkdir -p artifacts
-          ENDPOINT="${{ vars.STAGING_API_ENDPOINT || 'https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com' }}"
-          HTTP_LIVE=$(curl -s -o /dev/null -w "%{http_code}" "$ENDPOINT/health/live" || echo "000")
-          HTTP_READY=$(curl -s -o /dev/null -w "%{http_code}" "$ENDPOINT/health/ready" || echo "000")
-          echo "{\"status\": \"verified\", \"contract_version\": 1, \"environment\": \"staging\", \"source_sha\": \"${{ github.sha }}\", \"http_live\": \"$HTTP_LIVE\", \"http_ready\": \"$HTTP_READY\"}" > artifacts/deployment-report.json
+          bash tools/deployment/upload-artifact.sh \
+            artifacts/MuscleCuties.WorkoutReconciliation.zip \
+            artifacts/worker-build-manifest.json \
+            artifacts/worker-release-object.json
 
-      - name: Upload deployment report
+      - name: Upload release object manifests
         uses: actions/upload-artifact@v4
         with:
-          name: staging-deployment-report-${{ github.sha }}
-          path: artifacts/deployment-report.json
+          name: release-object-${{ github.sha }}
+          path: |
+            artifacts/server-release-object.json
+            artifacts/worker-release-object.json
 
   deploy_beta:
     name: deploy_beta
     needs: [package, upload_artifacts]
-    if: inputs.target_environment == 'beta'
+    if: inputs.mode == 'deploy'
     runs-on: ubuntu-latest
     environment: beta
     steps:
@@ -122,7 +107,7 @@ jobs:
           name: ${{ needs.package.outputs.artifact-name }}
           path: artifacts
 
-      - name: Download release object
+      - name: Download release objects
         uses: actions/download-artifact@v4
         with:
           name: release-object-${{ github.sha }}
@@ -135,16 +120,87 @@ jobs:
           aws-region: us-east-2
           role-session-name: github-actions-beta-deploy-${{ github.run_id }}
 
-      - name: Verify Beta functions & publish deployment report
+      # Required repository/environment variables:
+      #   BETA_SERVER_FUNCTION, BETA_WORKER_FUNCTION
+      #   BETA_SERVER_ALIAS, BETA_WORKER_ALIAS (aliases are required so rollback has a target)
+      #   BETA_API_ENDPOINT (optional; when set, /health/live and /health/ready must return 200)
+      #   AWS_ACCOUNT_ID (optional; when set, STS identity must match)
+      # The report is written only after each serving CodeSha256 matches the candidate digests.
+      - name: Deploy and verify both Lambda functions
+        env:
+          TARGET_ENV: beta
+          AWS_REGION: us-east-2
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          SERVER_FUNCTION: ${{ vars.BETA_SERVER_FUNCTION }}
+          SERVER_ALIAS: ${{ vars.BETA_SERVER_ALIAS }}
+          WORKER_FUNCTION: ${{ vars.BETA_WORKER_FUNCTION }}
+          WORKER_ALIAS: ${{ vars.BETA_WORKER_ALIAS }}
+          SERVER_ZIP: artifacts/MuscleCuties.Server.zip
+          SERVER_MANIFEST: artifacts/build-manifest.json
+          SERVER_OBJECT: artifacts/server-release-object.json
+          WORKER_ZIP: artifacts/MuscleCuties.WorkoutReconciliation.zip
+          WORKER_MANIFEST: artifacts/worker-build-manifest.json
+          WORKER_OBJECT: artifacts/worker-release-object.json
+          REPORT_PATH: artifacts/deployment-report.json
+          HEALTH_URL: ${{ vars.BETA_API_ENDPOINT }}
         run: |
-          echo "Promoting verified release ${{ github.sha }} to Beta"
-          mkdir -p artifacts
-          HTTP_LIVE=$(curl -s -o /dev/null -w "%{http_code}" https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com/health/live || echo "000")
-          HTTP_READY=$(curl -s -o /dev/null -w "%{http_code}" https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com/health/ready || echo "000")
-          echo "{\"status\": \"verified\", \"contract_version\": 1, \"environment\": \"beta\", \"source_sha\": \"${{ github.sha }}\", \"http_live\": \"$HTTP_LIVE\", \"http_ready\": \"$HTTP_READY\"}" > artifacts/deployment-report.json
+          python3 tools/deployment/deploy_release.py deploy
 
       - name: Upload deployment report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: beta-deployment-report-${{ github.sha }}
           path: artifacts/deployment-report.json
+          if-no-files-found: warn
+
+  rollback_beta:
+    name: rollback_beta
+    if: inputs.mode == 'rollback'
+    runs-on: ubuntu-latest
+    environment: beta
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Require the report run id
+        run: |
+          if [ -z "${{ inputs.report_run_id }}" ]; then
+            echo "report_run_id is required to roll back: it identifies the deployment report whose previous alias versions are restored."
+            exit 1
+          fi
+
+      # The report carries the previous alias version and digest for each function. Rollback
+      # refuses to run without those recorded targets rather than guessing.
+      - name: Download the deployment report from that run
+        uses: actions/download-artifact@v4
+        with:
+          pattern: beta-deployment-report-*
+          path: artifacts
+          merge-multiple: true
+          run-id: ${{ inputs.report_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure AWS Credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::028417007003:role/MuscleCuties-GitHubActions-BetaDeploy
+          aws-region: us-east-2
+          role-session-name: github-actions-beta-rollback-${{ github.run_id }}
+
+      - name: Roll both aliases back and verify the restored digests
+        env:
+          TARGET_ENV: beta
+          AWS_REGION: us-east-2
+          AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
+          REPORT_PATH: artifacts/deployment-report.json
+        run: |
+          python3 tools/deployment/deploy_release.py rollback
+
+      - name: Upload rollback report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: beta-rollback-report-${{ github.run_id }}
+          path: artifacts/deployment-report.json
+          if-no-files-found: warn

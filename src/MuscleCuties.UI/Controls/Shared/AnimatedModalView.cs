@@ -135,6 +135,16 @@ public class AnimatedModalView : ContentView
         });
     }
 
+    /// <summary>
+    /// Finishes a pending open presentation synchronously and reports whether the sheet is now
+    /// open. Sheet-to-sheet handoffs use it so the outgoing sheet never exposes the page beneath.
+    /// </summary>
+    public bool CompleteOpenTransition()
+    {
+        CompleteOpen(_transitionVersion);
+        return IsOpen;
+    }
+
     private void CompleteOpen(long version)
     {
         if (version != _transitionVersion || !IsOpen)

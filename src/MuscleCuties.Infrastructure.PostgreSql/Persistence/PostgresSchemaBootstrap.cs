@@ -13,10 +13,10 @@ public sealed record SchemaBootstrapResult(
     CanonicalCatalogSeedSummary? Seed);
 
 /// <summary>
-/// Model-first schema creation. There is no migration chain: the EF model is the single source of
-/// table, column, index and constraint truth, and <c>security.sql</c> owns the objects the model cannot
-/// express (tenant policies, service roles and grants, SECURITY DEFINER functions).
-/// Both steps are idempotent so repeated deploys converge instead of drifting.
+/// Disposable/test-only model-first initialization. Production environments must use
+/// <c>migrate</c> (frozen baseline plus versioned evolution) followed by <c>seed</c>.
+/// This path exists for loopback test databases and explicitly disposable CI targets; it
+/// creates the model, applies the same versioned ledger, then seeds the canonical catalog.
 /// </summary>
 public static class PostgresSchemaBootstrap
 {
@@ -28,31 +28,7 @@ public static class PostgresSchemaBootstrap
 
     public const string MetadataTableName = "ops.schema_metadata";
 
-    private const int CurrentSchemaVersion = 1;
     private const char StatementSeparator = ';';
-
-    private const string MetadataTableSql = """
-        CREATE SCHEMA IF NOT EXISTS ops;
-
-        CREATE TABLE IF NOT EXISTS ops.schema_metadata (
-            singleton boolean NOT NULL DEFAULT true PRIMARY KEY,
-            schema_version integer NOT NULL,
-            model_fingerprint text NOT NULL,
-            applied_at_utc timestamp with time zone NOT NULL DEFAULT now(),
-            CONSTRAINT schema_metadata_is_singleton CHECK (singleton)
-        );
-
-        GRANT SELECT ON ops.schema_metadata TO musclecuties_app, musclecuties_auth;
-        """;
-
-    private const string RecordMetadataSql = """
-        INSERT INTO ops.schema_metadata (singleton, schema_version, model_fingerprint, applied_at_utc)
-        VALUES (true, @schema_version, @model_fingerprint, now())
-        ON CONFLICT (singleton) DO UPDATE
-        SET schema_version = EXCLUDED.schema_version,
-            model_fingerprint = EXCLUDED.model_fingerprint,
-            applied_at_utc = EXCLUDED.applied_at_utc;
-        """;
 
     public static bool IsDisposableTarget(string? connectionString)
     {
@@ -86,13 +62,12 @@ public static class PostgresSchemaBootstrap
 
         var createdFromModel = await context.Database.EnsureCreatedAsync(cancellationToken).ConfigureAwait(false);
 
-        var supplementalSql = await ReadEmbeddedScriptAsync(SchemaSupplementResourceName, cancellationToken)
-            .ConfigureAwait(false);
-        await ExecuteScriptAsync(context, supplementalSql, cancellationToken).ConfigureAwait(false);
+        // EnsureCreated owns the model tables; the migration ledger still records the frozen
+        // baseline as adopted and applies the supplement, security and index scripts so dbinit
+        // and migrate converge on the same metadata and version.
+        await PostgresSchemaMigrations.ApplyMigrationsAsync(context, cancellationToken).ConfigureAwait(false);
 
         var securitySql = await ReadSecurityScriptAsync(cancellationToken).ConfigureAwait(false);
-        await ExecuteScriptAsync(context, securitySql, cancellationToken).ConfigureAwait(false);
-        await ExecuteScriptAsync(context, MetadataTableSql, cancellationToken).ConfigureAwait(false);
 
         CanonicalCatalogSeedSummary? seedSummary = null;
         if (seed)
@@ -102,51 +77,15 @@ public static class PostgresSchemaBootstrap
                 .ConfigureAwait(false);
         }
 
-        var fingerprint = ComputeModelFingerprint(context);
-        await context.Database.ExecuteSqlRawAsync(
-            RecordMetadataSql,
-            [
-                new NpgsqlParameter("schema_version", CurrentSchemaVersion),
-                new NpgsqlParameter("model_fingerprint", fingerprint)
-            ]).ConfigureAwait(false);
-
         return new SchemaBootstrapResult(
             createdFromModel,
             CountStatements(securitySql),
-            fingerprint,
+            ComputeModelFingerprint(context),
             seedSummary);
     }
 
     public static Task<string> ReadSecurityScriptAsync(CancellationToken cancellationToken = default) =>
         ReadEmbeddedScriptAsync(SecurityScriptResourceName, cancellationToken);
-
-    /// <summary>
-    /// Runs a multi-statement script through the provider directly. EF's raw SQL helpers treat the text as
-    /// a composite format string, which corrupts scripts that contain braces or parameter-like tokens.
-    /// </summary>
-    private static async Task ExecuteScriptAsync(
-        PostgresDbContext context,
-        string sql,
-        CancellationToken cancellationToken)
-    {
-        var connection = context.Database.GetDbConnection();
-        var mustClose = connection.State != ConnectionState.Open;
-        if (mustClose)
-            await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-        try
-        {
-            await using var command = connection.CreateCommand();
-            command.CommandText = sql;
-            command.CommandTimeout = PostgreSqlTimeoutDefaults.CommandSeconds;
-            await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            if (mustClose)
-                await connection.CloseAsync().ConfigureAwait(false);
-        }
-    }
 
     private static async Task<string> ReadEmbeddedScriptAsync(
         string resourceName,

@@ -1,6 +1,14 @@
 -- Run as a PostgreSQL administrator after applying the application migrations.
 -- Roles are non-login groups. Provision secret-bearing login roles separately and
 -- grant each service login the matching group; do not put credentials in source.
+--
+-- The ALTER SCHEMA/GRANT statements below need the application schemas to exist. The migration
+-- runner creates them on a fresh database, but CI applies these grants to the cluster database
+-- before the empty-database rehearsal, so create them idempotently to keep the script order-free.
+CREATE SCHEMA IF NOT EXISTS app;
+CREATE SCHEMA IF NOT EXISTS catalog;
+CREATE SCHEMA IF NOT EXISTS ops;
+
 DO $$
 BEGIN
     IF NOT EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'musclecuties_migrator') THEN

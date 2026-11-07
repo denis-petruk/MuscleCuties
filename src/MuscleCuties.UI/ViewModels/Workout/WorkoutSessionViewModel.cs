@@ -123,7 +123,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private string _summaryDistanceText = string.Empty;
     [ObservableProperty] private int _summaryPrCount;
     [ObservableProperty] private string _summaryStatusText = string.Empty;
-    [ObservableProperty] private string _summaryTitle = "Activity complete";
+    [ObservableProperty] private string _summaryTitle = "Workout_Session_SummaryCompleteTitle";
     [ObservableProperty] private string _summaryTotalVolume = "0 kg";
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasSwapCandidates), nameof(ShowNoSwapCandidates))]
@@ -1079,14 +1079,14 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             await _navigateAsync("..");
     }
 
-    private async Task<bool> CompletePlannedSessionAsync()
+    private async Task<bool> CompletePlannedSessionAsync(int? timedActivitySeconds = null)
     {
         if (!await _completionGate.WaitAsync(NoCompletionWaitMilliseconds)) return false;
-        try { return await CompletePlannedSessionCoreAsync(); }
+        try { return await CompletePlannedSessionCoreAsync(timedActivitySeconds); }
         finally { _completionGate.Release(); }
     }
 
-    private async Task<bool> CompletePlannedSessionCoreAsync()
+    private async Task<bool> CompletePlannedSessionCoreAsync(int? timedActivitySeconds = null)
     {
         if (IsBusy || _plannedSessionId is not { } sessionId) return false;
         _timingLoopCancellation?.Cancel();
@@ -1651,11 +1651,17 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
                 Tag = activity.Tag,
                 Title = activity.Title,
                 Subtitle = activity.Subtitle,
-                MetricText = $"{count} {(count == 1 ? "exercise" : "exercises")}",
-                SummaryText = $"{activity.Exercises.Count(exercise => exercise.IsLogged)} of {count} logged" +
-                              (skipped > 0 ? $" · {skipped} skipped" : string.Empty),
+                MetricText = count == 1
+                    ? UiTextCatalog.Get("Workout_Session_ExerciseCountOne")
+                    : UiTextCatalog.Format("Workout_Session_ExerciseCountFormat", count),
+                SummaryText = skipped > 0
+                    ? UiTextCatalog.Format("Workout_Session_SummaryStatusSkippedFormat",
+                        activity.Exercises.Count(exercise => exercise.IsLogged), count, skipped)
+                    : UiTextCatalog.Format("Workout_Session_SummaryStatusFormat",
+                        activity.Exercises.Count(exercise => exercise.IsLogged), count),
                 ActivityBackground = activity.ActivityBackground,
                 Prescription = activity.Prescription,
+                ActivityType = activity.ActivityType,
                 ActivityTextColor = activity.ActivityTextColor,
                 Exercises = activity.Exercises
             };
@@ -1764,11 +1770,28 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     private static WorkoutExerciseLogDto BuildLogInput(WorkoutExerciseItem item)
     {
+        var observedSets = ObservedSetInputMapping.Build(
+            item.UsesStrengthMetrics && item.SetsWereEdited,
+            item.Sets.Select(set => new EditableObservedSet(
+                set.SetNumber,
+                set.RepsCompleted,
+                item.UsesWeight ? (decimal)set.WeightKg : 0m,
+                set.Rir is >= 0 and <= 10 ? (int)Math.Round(set.Rir.Value) : null,
+                set.TechniqueAcceptable,
+                set.IsWarmup)));
+        var completedSets = observedSets is { Count: > 0 }
+            ? observedSets.Count
+            : item.UsesStrengthMetrics ? ParsePositiveInt(item.LoggedSetsText) : 0;
+        var completedReps = observedSets is { Count: > 0 }
+            ? (int)Math.Round(observedSets.Average(set => set.RepsCompleted))
+            : item.UsesStrengthMetrics ? ParsePositiveInt(item.LoggedRepsText) : 0;
+        var completedWeight = observedSets is { Count: > 0 }
+            ? (float?)observedSets.Max(set => set.LoadKg)
+            : item.UsesStrengthMetrics && item.UsesWeight ? ParseOptionalFloat(item.LoggedWeightText) : 0f;
+
         return new WorkoutExerciseLogDto(
             item.WorkoutDayExerciseId, item.ExerciseId,
-            item.UsesStrengthMetrics ? ParsePositiveInt(item.LoggedSetsText) : 0,
-            item.UsesStrengthMetrics ? ParsePositiveInt(item.LoggedRepsText) : 0,
-            item.UsesStrengthMetrics ? item.UsesWeight ? ParseOptionalFloat(item.LoggedWeightText) : 0f : null,
+            completedSets, completedReps, completedWeight,
             item.UsesDurationMetric ? ParseDurationSeconds(item.LoggedDurationMinutesText) : null,
             item.UsesDistanceMetric ? ParseOptionalFloat(item.LoggedDistanceKmText) : null,
             item.UsesHeartRateMetric ? ParseOptionalInt(item.LoggedHeartRateText) : null,
@@ -1777,6 +1800,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             item.UsesCadenceMetric ? ParseOptionalInt(item.LoggedCadenceRpmText) : null,
             item.UsesEffortMetric && ParsePositiveInt(item.LoggedEffortText) is >= 1 and <= 10 and var effort
                 ? effort
-                : null);
+                : null,
+            ObservedSets: observedSets);
     }
 }

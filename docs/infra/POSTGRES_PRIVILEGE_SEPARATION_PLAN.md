@@ -1,6 +1,6 @@
 # PostgreSQL privilege separation plan
 
-**Current-checkout note (2026-11-04):** This dated document records a migration-era source tree and target investigation. The current checkout is model-first and has no EF migration chain; its database commands are dbinit, dbcheck, and seed. Treat migration, schema-preflight, schema-verify, schema-reconcile, and migration-prerequisite instructions here as historical evidence, not executable instructions for this checkout. Revalidate the current source, target, and authorization before any database operation. See [the current schema runbook](POSTGRES_SCHEMA_COMPATIBILITY_RUNBOOK.md).
+**Current-checkout note (2026-11-07):** This is a historical investigation. The current checkout provisions a fresh database with `migrate` (frozen model baseline `000_model_baseline.sql` plus `001`-`003`), followed by `seed` and `dbcheck`. `dbinit` is disposable/test-only. The canonical role model is `musclecuties_app` / `musclecuties_auth` / `musclecuties_migrator` plus the narrowly scoped discovery, dispatch and photo roles declared in `security.sql`. The alternative `mc_admin` / `mc_runtime` scripts were deleted because they were never embedded, scheduled, or applied by any workflow; the section below is retained only as historical evidence. Revalidate the current source, target, and authorization before any database operation.
 
 
 Status: staging migration-runner membership was applied on 2026-10-30 under
@@ -114,9 +114,11 @@ grant is an interim deployment credential arrangement, not the target runtime de
 
 ---
 
-## K13 Target Privilege Separation Architecture (`mc_admin` vs `mc_runtime`)
+## K13 Target Privilege Separation Architecture (superseded, historical only)
 
-As specified in K13 of the GitHub Transition Roadmap, database operations are partitioned strictly across two distinct roles:
+> **Superseded 2026-11-07.** This proposed `mc_admin` / `mc_runtime` pair was never embedded in the migration chain, never referenced by a workflow, and conflicted with the live `musclecuties_*` role model. Both copies of `004_privilege_separation_mc_admin_runtime.sql` were deleted. Do not provision these roles. The authoritative design is the `musclecuties_*` model in `security.sql` and `services/postgresql/roles-and-grants.sql`.
+
+As specified in K13 of the GitHub Transition Roadmap, database operations were to be partitioned across two roles:
 
 ### 1. `mc_admin` (Migration Runner & Schema Owner)
 - **Role Type:** Login principal used exclusively by CI/CD migration runners and `DbMaintenance` (`dbinit`, `migrate`, `dbcheck`, `seed`).

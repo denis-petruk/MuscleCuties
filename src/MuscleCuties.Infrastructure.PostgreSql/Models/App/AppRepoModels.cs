@@ -429,6 +429,9 @@ public sealed class ExerciseSetLogRecord : ITenantRecord
     public decimal WeightKg { get; set; }
     public int RepsCompleted { get; set; }
     public decimal? Rpe { get; set; }
+    public int? RirActual { get; set; }
+    public bool TechniqueAcceptable { get; set; } = true;
+    public bool IsObserved { get; set; }
     public bool IsWarmup { get; set; }
     public int RestTimeSeconds { get; set; }
     public bool IsDeleted { get; set; }

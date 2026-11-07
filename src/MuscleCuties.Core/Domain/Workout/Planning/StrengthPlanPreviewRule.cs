@@ -152,51 +152,65 @@ public static class StrengthPlanPreviewRule
                 PlanningProfileInvalidCode);
 
         var activity = choices!.Activity;
+
+        // Every recoverable prerequisite is collected before returning, so the user sees the whole
+        // remaining setup in one pass instead of rediscovering each gap after a reload.
+        var prerequisites = new List<string>();
+
         if (data.SelectedActivities is null || !data.SelectedActivities.Contains(activity))
-            return Failure(StrengthPlanPreviewStatus.Limited, ActivityExperience.Unknown,
-                ActivityNotSelectedCode);
+            prerequisites.Add(ActivityNotSelectedCode);
 
         if (data.ActivitySessionDurationsMinutes is null)
-            return Failure(StrengthPlanPreviewStatus.Limited, ActivityExperience.Unknown,
-                SessionDurationMissingCode);
-        if (data.ActivitySessionDurationsMinutes.Any(pair => !Enum.IsDefined(pair.Key) ||
-                pair.Key == activity && !IsValidActivityDuration(pair.Key, pair.Value)))
+        {
+            prerequisites.Add(SessionDurationMissingCode);
+        }
+        else if (data.ActivitySessionDurationsMinutes.Any(pair => !Enum.IsDefined(pair.Key) ||
+                 pair.Key == activity && !IsValidActivityDuration(pair.Key, pair.Value)))
+        {
+            // Structurally invalid data is not a user-recoverable prerequisite.
             return Failure(StrengthPlanPreviewStatus.InvalidInput, ActivityExperience.Unknown,
                 SessionDurationInvalidCode);
+        }
+
+        var sessionMinutes = NoMinutes;
+        if (data.ActivitySessionDurationsMinutes is not null &&
+            !data.ActivitySessionDurationsMinutes.TryGetValue(activity, out sessionMinutes))
+            prerequisites.Add(SessionDurationMissingCode);
 
         var weekdays = data.AvailableWeekdays ?? choices.RequestedAvailableWeekdays;
         if (!ValidWeekdays(weekdays))
-            return Failure(StrengthPlanPreviewStatus.Limited, ActivityExperience.Unknown,
-                WeekdaysMissingCode);
-        if (choices.RequestedAvailableWeekdays is not null && data.AvailableWeekdays is not null &&
-            !choices.RequestedAvailableWeekdays.SetEquals(data.AvailableWeekdays))
-            return Failure(StrengthPlanPreviewStatus.Limited, ActivityExperience.Unknown,
-                "SavedWorkoutAvailabilityChanged");
+            prerequisites.Add(WeekdaysMissingCode);
+        else if (choices.RequestedAvailableWeekdays is not null && data.AvailableWeekdays is not null &&
+                 !choices.RequestedAvailableWeekdays.SetEquals(data.AvailableWeekdays))
+            prerequisites.Add("SavedWorkoutAvailabilityChanged");
 
         if (choices.WarmupMinutes is null || choices.CooldownMinutes is null)
-            return Failure(StrengthPlanPreviewStatus.Limited, ActivityExperience.Unknown,
-                MissingWarmupOrCooldownCode);
-
-        if (!data.ActivitySessionDurationsMinutes!.TryGetValue(activity, out var sessionMinutes))
-            return Failure(StrengthPlanPreviewStatus.Limited, ActivityExperience.Unknown,
-                SessionDurationMissingCode);
-        if (!IsValidActivityDuration(activity, sessionMinutes))
-            return Failure(StrengthPlanPreviewStatus.InvalidInput, ActivityExperience.Unknown,
-                SessionDurationInvalidCode);
+            prerequisites.Add(MissingWarmupOrCooldownCode);
 
         if (activity == WorkoutActivityType.StrengthHighIntensity)
-            return Failure(StrengthPlanPreviewStatus.Limited, ActivityExperience.Unknown,
-                ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing);
+            prerequisites.Add(ActivityPrescriptionRule.HighIntensitySaferAlternativeReviewMissing);
 
         var experience = ActivityExperienceRule.Classify(activity.ToString(), choices.ActivityHistory,
             choices.LocalDate).Experience;
 
-        if (activity != WorkoutActivityType.GeneralStrength &&
-                 activity != WorkoutActivityType.HighVolumeStrength &&
-                 experience == ActivityExperience.Unknown &&
-                 !choices.UnknownExperienceAssessmentCompleted)
+        // High-intensity strength is gated by its safer-prescription review, not by an experience
+        // question, so it must not also report a missing experience answer.
+        if (activity is not (WorkoutActivityType.GeneralStrength or
+                WorkoutActivityType.HighVolumeStrength or WorkoutActivityType.StrengthHighIntensity) &&
+            experience == ActivityExperience.Unknown &&
+            !choices.UnknownExperienceAssessmentCompleted)
+            prerequisites.Add(ExperienceHistoryMissingCode);
+
+        if (prerequisites.Count > NoSessions)
         {
-            return Failure(StrengthPlanPreviewStatus.Limited, experience, ExperienceHistoryMissingCode);
+            return new StrengthPlanPreviewResult(
+                StrengthPlanPreviewStatus.Limited,
+                experience,
+                [],
+                prerequisites.Distinct(StringComparer.Ordinal)
+                    .OrderBy(value => value, StringComparer.Ordinal).ToArray(),
+                [],
+                []);
         }
 
         var profileExperienceDecision = ProfileTrainingExperiencePlanningRule.Resolve(
@@ -734,6 +748,6 @@ public static class StrengthPlanPreviewRule
     }
 
     private static StrengthPlanPreviewResult Failure(StrengthPlanPreviewStatus status,
-        ActivityExperience experience, string reason) =>
-        new(status, experience, [], [reason], [], []);
+        ActivityExperience experience, params string[] reasons) =>
+        new(status, experience, [], [.. reasons], [], []);
 }

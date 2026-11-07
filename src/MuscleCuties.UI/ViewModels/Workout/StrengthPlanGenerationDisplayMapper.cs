@@ -33,8 +33,40 @@ internal static class StrengthPlanGenerationDisplayMapper
         {
             Day = FullWeekdayLabel(session.Weekday),
             Activity = ActivityLabel(session.ActivityTypeId),
-            Duration = duration
+            Duration = duration,
+            PhaseDetail = PhaseDetailText(session.OccurrencePrescription)
         };
+    }
+
+    /// <summary>
+    /// The timed phase a session actually prescribes. Only supplied values are shown; an activity
+    /// without a phase split stays silent instead of inventing a warm-up or interval block.
+    /// </summary>
+    private static string PhaseDetailText(ActivitySessionPrescriptionOutputV020? prescription)
+    {
+        if (prescription is null)
+            return NoStatusMessage;
+
+        var parts = new List<string>();
+        if (prescription.WarmupMinutes is { } warmup)
+            parts.Add(FormatLocalized("Workout_Generation_PhaseWarmupFormat",
+                warmup.ToString("0.#", CultureInfo.CurrentCulture)));
+        if (prescription.MainMinutes is { } main)
+            parts.Add(FormatLocalized("Workout_Generation_PhaseMainFormat",
+                main.ToString("0.#", CultureInfo.CurrentCulture)));
+        if (prescription.CooldownMinutes is { } cooldown)
+            parts.Add(FormatLocalized("Workout_Generation_PhaseCooldownFormat",
+                cooldown.ToString("0.#", CultureInfo.CurrentCulture)));
+        if (prescription.IntervalWorkCount is { } workCount && prescription.IntervalWorkSeconds is { } workSeconds)
+            parts.Add(FormatLocalized("Workout_Generation_PhaseIntervalsFormat",
+                workCount.ToString(CultureInfo.CurrentCulture),
+                workSeconds.ToString("0.#", CultureInfo.CurrentCulture)));
+        if (prescription.IntervalRecoveryCount is { } recoveryCount &&
+            prescription.IntervalRecoverySeconds is { } recoverySeconds)
+            parts.Add(FormatLocalized("Workout_Generation_PhaseRecoveryFormat",
+                recoveryCount.ToString(CultureInfo.CurrentCulture),
+                recoverySeconds.ToString("0.#", CultureInfo.CurrentCulture)));
+        return string.Join(" · ", parts);
     }
 
     public static MixedActivityDecisionDisplay ToMixedActivityDecisionDisplay(

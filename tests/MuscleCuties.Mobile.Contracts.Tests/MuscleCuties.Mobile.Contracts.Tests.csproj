@@ -31,5 +31,8 @@
     <Compile Include="../../src/MuscleCuties.UI/Services/Configuration/AppEndpointConfiguration.cs" Link="Mobile/AppEndpointConfiguration.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Api/ApiFailurePresenter.cs" Link="Mobile/ApiFailurePresenter.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Workout/TimedActivityProgress.cs" Link="Mobile/TimedActivityProgress.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Navigation/ShellNavigationRoute.cs" Link="Mobile/ShellNavigationRoute.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Navigation/NutritionNavigation.cs" Link="Mobile/NutritionNavigation.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Navigation/NutritionMealEntryHandoff.cs" Link="Mobile/NutritionMealEntryHandoff.cs" />
   </ItemGroup>
 </Project>

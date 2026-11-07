@@ -1,116 +1,42 @@
-# Canonical Execution Control Ledger
+# Execution control ledger
 
-Authoritative coordinator: Integration Authority (`implement_musclecuties_beta_plan`)
-Integration worktree: `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan`
-Baseline commit: `d840d62745337a604f56f4ba32568fb66ae53158` (GitHub `origin/main` with R01–R07 & P01–P13 merged)
-Owner baseline source: `/Users/denispetruk/RiderProjects/MuscleCuties` (commit `a2d55adc331dcdcf7d7089d061c9037a1d12e079` + uncommitted audit package imported)
-Current Candidate HEAD: `a3ca36cf` (`implement_musclecuties_beta_plan`)
+Updated 2026-11-07 against Rider HEAD `5054f6f3` with the first-beta package work uncommitted in the working tree. This ledger records package lifecycle and reservations only. It is not release evidence and it does not authorize deployment, migration, signing or distribution.
 
----
+## Authority and reservations
 
-## 1. Corrective Beta Package Lifecycle
+| Role | Owner | Notes |
+| --- | --- | --- |
+| Integration authority | Repository owner | Owns root AGENTS, shared DTOs, canonical docs, release manifests and migration numbering. |
+| Package B1 (schema) | Platform B | Reserved paths: `src/MuscleCuties.Infrastructure.PostgreSql/Persistence/**`, `src/MuscleCuties.DbMaintenance/**`, `.github/workflows/db-*.yml`. |
+| Package B2 (release) | Platform B | Reserved paths: `tools/deployment/**`, `.github/workflows/backend-*.yml`. |
+| Package B3 (capture) | Product A | Reserved paths: workout session contracts, store, session UI/VM and Core progression. |
+| Package B4 (recovery/preview) | Product A | Reserved paths: `StrengthPlanPreviewRule`, strength generation page/VM/display layer, localization. |
+| Package B5 (consistency/docs) | Integration authority | Reserved paths: `STATUS.md`, `ROADMAP.md`, `docs/PRODUCT_WORKFLOWS.md`, this ledger. |
 
-| Package | Lead | Status | Base SHA | Head SHA | Worktree Path | Branch / PR | Gates / Evidence |
-|---|---|---|---|---|---|---|---|
-| **BA00** | I | DONE | `d840d627` | `a3ca36cf` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Candidate reconciled; planning package imported & committed; 1,296 unit/contract tests passing (100% green); CONTROL & ROADMAP unified |
-| **WP00** | A | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Active generation path mapped (`PreviewStrengthPlanV020UseCase` -> `StrengthPlanPreviewRule` -> `PostgresWorkoutPlanReconciler`); disconnected helpers identified |
-| **PD00** | I/A | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Concrete parameter proposal prepared with 6 before/after examples; recommendation on conditional extra sets & recovery precedence; tests passing (1,109 Core) |
-| **DS00** | I/A/B | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | All-session schedule data seam added to DTO, store and UI viewmodel; backward-compatible with legacy clients (40 Mobile Contract tests green) |
-| **WP02a** | A | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | 10 canonical muscle regions defined with direct (1.0) and compound synergist (0.5) weights; Core suite green (1,114 tests) |
-| **WP02b** | A | DONE | `210f41fd` | `34041dc8` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/master_integration_and_release` | `final-review` | Evidence selection & study-based ranking, rescheduling, movement notes, and circumference measurements |
-| **WP01** | A | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | 10-region coverage rule (>=2 min, 3 pref), time budget, Limited status on infeasibility; Core suite green (1,114 tests) |
-| **WP03a** | A | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | ObservedSetRecord added to WorkoutExerciseLogDto with backward compatibility for legacy clients |
-| **WP03b** | A | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Active double progression connected to next prescription load calculation; 50 Mobile Contract tests green |
-| **WP04** | A | DONE | `7c743ae5` | `e09892ce` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | ComposedReadinessCycleDoseRule: single final dose authority with fatigue safeguard (extra sets withheld on readiness < 75); 8 tests green |
-| **WP05** | A | DONE | `7c743ae5` | `e09892ce` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | PainTriggerHandlingRule: immediate stop of provoking exercise, safe alternative substitution, explicit withholding, clinical escalation |
-| **UX01a** | I/A.API | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Complete day contract (all ordered sessions in projection/DTO/mapper) |
-| **UX01b** | A.UI | DONE | `e09892ce` | `8c7dc388` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Day and All agenda views with real date scoping, stable IDs, and session group filtering |
-| **UX02** | A.UI | DONE | `7b692958` | HEAD | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Schedule screen multi-session rendering: ScheduleDayItem.Sessions bound to HorizontalStackLayout in WorkoutPage.xaml, ordered non-overlapping chips |
-| **UX02a** | A.API | DONE | `7c743ae5` | `e09892ce` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | ActivityActualLogDto & ActivityModalityMetrics supporting zero-exercise running, cycling, swimming, recovery without dummy rows |
-| **UX02b** | A.UI | DONE | `e09892ce` | `8c7dc388` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Shared activity session lifecycle across modalities (ActivityIntro, ExerciseFlow, ActivitySummary) |
-| **UX03** | A.UI | DONE | `7b692958` | HEAD | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Workout overview status transition: HasPlannedSessions, HasCompletedTodaySession, HasPendingReviewFlags, and MarkSessionCompleted |
-| **RM00–RM01** | A | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Button.LayoutButton null layer crash protection & typed ApiFailurePresenter error mapping (5 new contract tests) |
-| **RM02–RM05** | A | DONE | `7c743ae5` | `e09892ce` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | PV01 photo privacy overlay, AH01 archive width hierarchy, NM03 Daily Food Log micronutrient parity |
-| **RM06–RM08** | A | DONE | `6e385357` | `0cd98df5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/remediate_musclecuties_ui_ux` | `remediate_musclecuties_ui_ux` | Reconciled from musclecuties-ui-ux-backend-remediation-kickoff: NM01/NM02 grouped meal drafts, NM03 micronutrient presenter, PG01 auto-activation & native injury alert, CR01 appearance guard, 3-state clinician advice |
-| **P0** | I | DONE | `6e385357` | `0cd98df5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/remediate_musclecuties_ui_ux` | `remediate_musclecuties_ui_ux` | Port 5000 AirPlay collision fixed; LocalBaseUrl set to 5080; tests passing (56/56 Mobile Contracts) |
-| **PL01** | B/A | DONE | `a3ca36cf` | `d2e018de` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/implement_musclecuties_beta_plan` | `implement_musclecuties_beta_plan` | Fail-closed Release endpoints, environment-partitioned credentials/cache, legacy token migration safely isolated |
-| **PL02** | B/I | DONE | `67b14bf4` | `7c743ae5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Ordered PostgreSQL migration runner (ops.schema_migrations with SHA-256 checksums), 003_schedule_seam.sql, db-release.yml migrate |
-| **PL03** | B | DONE | `7c743ae5` | `e09892ce` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Immutable API + worker release packaging, target probes, validate-package.sh script resilience |
-| **PL04** | B/I | DONE | `210f41fd` | `640bb599` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/master_integration_and_release` | `final-review` | Merged from origin/platform/pl04-staging-and-observability; qualification script, smoke runner, alarms |
-| **PL05** | A/B/I | DONE | `7c743ae5` | `e09892ce` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | PrivacyInfo.xcprivacy with CA92.1, tracking false, tracking domains, and collected types |
-| **QA00** | I/R | DONE | `7b692958` | HEAD | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Integrated acceptance matrix on unified candidate: 1,346 automated tests green (100% pass rate); clean migration rehearsal (001 -> 002 -> 003) |
-| **TF00–TF02** | I/O | READY FOR REVIEW | `7b692958` | HEAD | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/continue_musclecuties_beta_plan` | `continue_musclecuties_beta_plan` | Release candidate evidence packet assembled (TF00-TF02-beta-candidate-evidence.md); pending owner authorization for codesigning & TestFlight |
-| **QA01** | A/O | QUEUED | - | - | - | - | Physical device acceptance across themes, locales (EN/RU), accessibility (pending owner device run) |
+One package has one accountable owner. No two packages edit the same shared contract or allocate the same migration number concurrently.
 
----
+## Package lifecycle
 
-## 2. Completed GitHub Transition History (Plan I & Plan II)
+| Package | Base | Status | Local verification | Blocking external gate |
+| --- | --- | --- | --- | --- |
+| B1 — Provisionable schema | `5054f6f3` | READY FOR REVIEW | Brand-new `initdb` cluster with no roles: `migrate` created 10 `musclecuties*` roles and applied baseline + 001–005 (6 ledger rows, `schema_version=5`), `seed` loaded 746 manifest rows, `dbcheck` compatible with 69 model tables, 46 RLS tables, 51 policies; second `migrate`/`dbcheck` reported `migrations_applied=0` and the identical fingerprint `ea4c7a60…a2b9`; disposable `dbinit` converged on the same `schema_version=5` and fingerprint with a 5-row ledger. | Staging empty-DB rehearsal on an isolated target. |
+| B2 — Honest release | `5054f6f3` | READY FOR REVIEW | Offline fake-AWS suite: 4 deploy tests (both digests verified, mismatch cannot report `verified`, alias rollback restores both versions, missing alias blocks before mutation) and 11 legacy release-engine tests pass; workflow YAML parses. | Real OIDC deploy to Beta, negative-path run, live rollback rehearsal. |
+| B3 — Real training capture | `5054f6f3` | READY FOR REVIEW | Core (1,247), Mobile Contracts (133) and Registration (46) tests pass, including observed-set/progression and the 6-script schema-migration contract. | Device log proving progression consumes actual sets. |
+| B4 — Recovery and preview | `5054f6f3` | READY FOR REVIEW | Core tests cover multi-reason prerequisites; iOS simulator compile validates the new XAML and bindings. | EN/RU review on device; weekly-summary and timed-phase visual acceptance. |
+| B5 — Consistency and docs | `5054f6f3` | READY FOR REVIEW | Docs reconciled to HEAD; deferred surfaces documented; no broken media placeholder exists. | Owner reading of the reconciled docs. |
 
-| Package | Lead | Status | Base SHA | Head SHA | Worktree Path | Branch / PR | Gates / Evidence |
-|---|---|---|---|---|---|---|---|
-| **P00** | I/O | DONE | `acdb1311` | `acdb1311` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/execute_gemini_cli_roadmap` | `execute_gemini_cli_roadmap` | C0 preflight; bundle created & verified (`mc-baseline-all.bundle`); baseline ledger written |
-| **P01** | I | MERGED | `ff3be300` | `7628f1e8` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/integration_github_history` | `integration/github-history` / [PR #15](https://github.com/denis-petruk/MuscleCuties/pull/15) | True 2-parent merge; zero diff to Rider baseline; non-UI build green; suites green; dead styles removed |
-| **P02** | I/O | MERGED | `7628f1e8` | `fd694b8f` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p02_governance` | `platform/p02-governance` / [PR #16](https://github.com/denis-petruk/MuscleCuties/pull/16) | CODEOWNERS, PR template, governance ledger added; merged to main |
-| **P03** | B | MERGED | `fd694b8f` | `8fea05dc` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p03_ci_scaffold` | `platform/p03-ci-scaffold` / [PR #17](https://github.com/denis-petruk/MuscleCuties/pull/17) | Actions CI workflows (`ci.yml`, `db-verify.yml`) with automated PG schema bootstrap; all 8 checks passed green; merged to main |
-| **P04** | B/O | MERGED & DEPLOYED | `8fea05dc` | `4eea6592` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p04_oidc_iam` | `platform/p04-oidc-iam` / [PR #18](https://github.com/denis-petruk/MuscleCuties/pull/18) | CloudFormation OIDC template deployed (`MuscleCuties-Identity`); OIDC provider and 3 IAM roles active; unit tests passed (5/5) |
-| **P05** | B | MERGED | `4eea6592` | `f8a80929` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p05_artifact_packaging` | `platform/p05-artifact-packaging` / [PR #19](https://github.com/denis-petruk/MuscleCuties/pull/19) | \`validate-package.sh\` ported; reusable \`backend-build.yml\` created for API and worker; merged to main |
-| **P06** | B/I | MERGED | `f8a80929` | `01906ab9` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p06_schema_lifecycle` | `platform/p06-schema-lifecycle` / [PR #20](https://github.com/denis-petruk/MuscleCuties/pull/20) | \`EnsureCreated\` guarded from non-disposable DBs; \`db-release.yml\` created; merged to main |
-| **P07** | B/O | MERGED | `01906ab9` | `289afa61` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p07_staging_iac` | `platform/p07-staging-iac` / [PR #21](https://github.com/denis-petruk/MuscleCuties/pull/21) | Staging and observability CloudFormation templates validated; merged to main |
-| **P08** | B/O | DEPLOYED | `76fbd553` | - | - | CloudFormation Stacks | `MuscleCuties-Staging` & `MuscleCuties-Observability` deployed in us-east-2; S3 release bucket created with versioning; Beta DB untouched |
-| **P09** | A/I | MERGED | `289afa61` | `b5d66a3b` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_p09_client_endpoints` | `product/p09-client-endpoints` / [PR #22](https://github.com/denis-petruk/MuscleCuties/pull/22) | Explicit endpoint allowlist, safe Local debug default, partitioned cache/token keys, unit tests passing (25/25); merged to main |
-| **P10** | I/A/B/O | MERGED | `76fbd553` | `1b7e728e` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p10_backend_release` | `platform/p10-backend-release` / [PR #24](https://github.com/denis-petruk/MuscleCuties/pull/24) | \`.github/workflows/backend-release.yml\` created; \`validate-package.sh\` fixed (24/24 tests OK); live API health verified; merged to main |
-| **P11** | A/O | MERGED | `b5d66a3b` | `7bdcb71a` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_p11_ios_release` | `product/p11-ios-release` / [PR #23](https://github.com/denis-petruk/MuscleCuties/pull/23) | iOS compilation targets, \`mobile-release.yml\` created, simulator build verified clean (0 errors, 0 warnings); merged to main |
-| **P12** | I/O | MERGED | `76fbd553` | `26c4100a` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p12_p13_cutover` | `platform/p12-p13-cutover` / [PR #25](https://github.com/denis-petruk/MuscleCuties/pull/25) | Beta authority transfer & preservation ledger documented; merged to main |
-| **P13** | B/I/O | MERGED | `76fbd553` | `26c4100a` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/platform_p12_p13_cutover` | `platform/p12-p13-cutover` / [PR #25](https://github.com/denis-petruk/MuscleCuties/pull/25) | GitLab retired with rules: - when: never; README updated to GitHub Actions; merged to main |
-| **R01** | A/I | MERGED | `e00d5752` | `571ee942` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r01_wire_contracts` | `product/r01-wire-contracts` / [PR #26](https://github.com/denis-petruk/MuscleCuties/pull/26) | \`MuscleCuties.Contracts\` wire-only project created; Account & Onboarding DTOs extracted; 1,235 unit/contract tests passed; CI 8/8 green; merged to main |
-| **R02** | A | MERGED | `571ee942` | `d83136b5` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r02_transport_presentation` | `product/r02-transport-presentation` / [PR #27](https://github.com/denis-petruk/MuscleCuties/pull/27) | Isolate mobile configuration, transport and presentation adapters; 1,245 unit/contract tests passed; CI 8/8 green; merged to main |
-| **R03** | A | MERGED | `d83136b5` | `991c98ff` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r03_planning_orchestration` | `product/r03-planning-orchestration` / [PR #28](https://github.com/denis-petruk/MuscleCuties/pull/28) | Planning ports extracted (Clock, Catalog, Safety); \`IWorkoutPlanningApplicationService\` introduced; 1,259 tests green; CI 8/8 green; merged to main |
-| **R04** | A | MERGED | `089c3c8b` | `9e33ed12` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r04_preview_apply_transitions` | `product/r04-preview-apply-transitions` / [PR #29](https://github.com/denis-petruk/MuscleCuties/pull/29) | Preview/Apply/Navigation formalized as explicit state transitions; 1,286 tests green; CI 8/8 green; merged to main |
-| **R05** | A | MERGED | `ab567319` | `2b699ba8` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r05_account_storage_offline` | `product/r05-account-storage-offline` / [PR #30](https://github.com/denis-petruk/MuscleCuties/pull/30) | Environment-partitioned snapshot cache & token storage; session race elimination; 1,290 tests green; CI 8/8 green; merged to main |
-| **R06** | A | MERGED | `2ab653db` | `9c980fa2` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r06_injury_reconciliation_progression` | `product/r06-injury-reconciliation-progression` / [PR #31](https://github.com/denis-petruk/MuscleCuties/pull/31) | Consolidate injury safety, reconciliation lifecycle, and double progression invariants; 1,292 tests green; CI 8/8 green; merged to main |
-| **R07** | A/I | MERGED | `f010787a` | `123f05d4` | `/Users/denispetruk/.gemini/antigravity/worktrees/MuscleCuties/product_r07_retire_duplicate_paths` | `product/r07-retire-duplicate-paths` / [PR #32](https://github.com/denis-petruk/MuscleCuties/pull/32) | Retire proven duplicate workout planner paths, resolve audit E18, automated source guards added; 1,293 tests green; CI 8/8 green; merged to main |
+No package is `SAFE TO PROMOTE` from local checks alone.
 
----
+## Retired or superseded paths
 
-## 2. Active Reservations
+- `tools/deployment/release.sh` and `tools/deployment/release-engine.py` are the GitLab-era path. GitHub releases use `tools/deployment/deploy_release.py`; the legacy scripts remain only as historical reference and their tests still run so the retirement is not silent.
+- `004_privilege_separation_mc_admin_runtime.sql` is deleted. The authoritative role model is `musclecuties_app` / `musclecuties_auth` / `musclecuties_migrator`, declared by `security.sql` and verified by `dbcheck`.
+- Migration numbers are unique across both lineages: `004_session_distance.sql` (from `origin/main` #37) keeps version 4, and the observed-set actuals script was renumbered to `005_observed_set_actuals.sql` when the two histories were reconciled. Existing environments that already recorded version 4 keep a valid ledger.
+- `EnsureCreated` remains confined to explicitly disposable targets; `migrate` + `seed` is the provisioning path.
 
-| Scope / Path / Sequence | Reserved To | Purpose | Granted Date | Expiry / Release Condition |
-|---|---|---|---|---|
-| Shared root docs (`AGENTS.md`, `STATUS.md`, `ROADMAP.md`, `docs/architecture/*`) | Integration Authority (I) | Governance & execution control | 2026-11-04 | Standing integration ownership |
-| Solution / project graph (`*.sln`, `*.csproj`) | Integration Authority (I) | Dependency isolation | 2026-11-04 | Standing integration ownership |
-| Shared DTOs (`*Contracts.cs`) | Integration Authority (I) | Contract stability | 2026-11-04 | Standing integration ownership |
-| Migration sequence / numbers | Integration Authority (I) | No uncoordinated migrations | 2026-11-04 | Standing integration ownership |
+## Owner-authorized external gates (not started)
 
----
-
-## 3. Authorization Scope & Records
-
-- **Granted (Full Roadmap Execution):**
-  - Autonomous local package implementation on isolated worktrees/branches.
-  - Running local verification suites with synthetic/disposable fixtures.
-  - Committing scoped work and pushing feature branches to GitHub `origin`.
-  - Creating and updating GitHub draft PRs.
-  - iOS MAUI build, simulator execution, and screenshot capture for UI verification (under synthetic/local endpoints only).
-  - CloudFormation deployments for `MuscleCuties-Identity`, `MuscleCuties-Staging`, `MuscleCuties-Observability` and S3 release bucket configuration in `us-east-2`.
-- **Reserved to Owner (Explicit Action Required):**
-  - GitHub branch protection configuration / changes on `main`.
-  - Merging PRs into `main`.
-  - Remote history rewrites or direct pushes to `main`.
-  - Shared DB writes / migrations / schema alterations on live Beta DB.
-  - TestFlight / Apple store publication.
-
----
-
-## 4. Next Checkpoint
-
-- **Full Roadmap & Remediation Execution Complete:**
-  - Plan I (P00–P13): 100% Completed, Verified, and Merged.
-  - Plan II (R01–R07): 100% Completed, Verified, and Merged.
-  - Package P0 (Port 5080 AirPlay collision resolution): 100% Completed and Verified.
-  - UI/UX & Backend Remediation (NM01–NM03, CR01/PG01, PV01, AH01): 100% Completed and Verified.
-  - Owner Product & Release Decisions (Questions 1–14): Closed and Approved (2026-11-05).
-  - QA01: iPhone 16 simulator walkthrough captured.
-  - TF00–TF02 Evidence Packet finalized.
-  - Draft PR: Submitted to GitHub for owner merge review.
-  - Target branch: GitHub `main` at `d840d627` / candidate branch `remediate_musclecuties_ui_ux`.
-  - All CI/CD and domain checks passing. Live Beta DB untouched. Independent Staging infrastructure active in `us-east-2`.
+- Signed iOS archive and TestFlight upload.
+- QA01 physical-device acceptance: themes, EN/RU, accessibility, timed and strength flows.
+- Staging qualification on a genuinely isolated API and database, including an empty-DB migration rehearsal there.
+- Owner approval tied to source SHA, artifact digest, schema version, environment and rollback plan.

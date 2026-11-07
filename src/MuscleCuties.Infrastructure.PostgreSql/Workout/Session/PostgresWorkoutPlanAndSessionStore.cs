@@ -13,6 +13,7 @@ using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
@@ -365,6 +366,23 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .GroupBy(l => l.ExerciseId)
                 .ToDictionary(g => g.Key, g => g.First());
 
+            var userProfile = await dbContext.UserProfiles.AsNoTracking()
+                .SingleOrDefaultAsync(profile => profile.UserId == userId, cancellationToken)
+                .ConfigureAwait(false);
+            var progressionTier = ResolveExperienceTier(userProfile);
+            var exerciseIdStrings = exerciseIds
+                .Select(id => id.ToString(CultureInfo.InvariantCulture))
+                .ToArray();
+            var observedSetRows = exerciseIdStrings.Length == 0
+                ? []
+                : await dbContext.ExerciseSetLogs.AsNoTracking()
+                    .Where(set => set.UserId == userId && !set.IsDeleted && set.IsObserved &&
+                                  set.ExerciseId != null && exerciseIdStrings.Contains(set.ExerciseId))
+                    .OrderByDescending(set => set.CreatedAt)
+                    .Take(500)
+                    .ToListAsync(cancellationToken)
+                    .ConfigureAwait(false);
+
             var notesByExerciseId = exerciseIds.Length == 0
                 ? new Dictionary<int, string>()
                 : await dbContext.UserMovementNotes.AsNoTracking()
@@ -374,14 +392,32 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
+            var observedWeeksByExerciseId = observedSetRows
+                .Where(set => set.ExerciseId is not null)
+                .GroupBy(set => set.ExerciseId!)
+                .ToDictionary(
+                    group => group.Key,
+                    group => ObservedSetProgressionHistoryBuilder.Build(group.Select(set =>
+                        new ObservedSetHistoryRow(
+                            set.WorkoutSessionLogId,
+                            set.CreatedAt,
+                            set.SetNumber,
+                            set.RepsCompleted,
+                            set.WeightKg,
+                            set.RirActual,
+                            set.TechniqueAcceptable,
+                            set.IsWarmup))));
+
             var exerciseDtos = orderedExercises.Select(dayEx =>
             {
                 var catalogEx = exercisesById.GetValueOrDefault(dayEx.ExerciseId);
                 var prevLog = latestPreviousByExerciseId.GetValueOrDefault(dayEx.ExerciseId);
                 var currLog = currentByDayExerciseId.GetValueOrDefault(dayEx.Id);
                 var movementNote = notesByExerciseId.GetValueOrDefault(dayEx.ExerciseId, string.Empty);
-                var history = previousLogs.Where(l => l.ExerciseId == dayEx.ExerciseId).Take(5).ToList();
-                return BuildExerciseDetailDto(dayEx, day.WorkoutType, catalogEx, prevLog, currLog, movementNote, history);
+                var observedWeeks = observedWeeksByExerciseId.GetValueOrDefault(
+                    dayEx.ExerciseId.ToString(CultureInfo.InvariantCulture));
+                return BuildExerciseDetailDto(dayEx, day.WorkoutType, catalogEx, prevLog, currLog, movementNote,
+                    progressionTier, observedWeeks);
             }).ToArray();
 
             var activities = BuildActivityDetails(day, orderedExercises, exercisesById, exerciseDtos);
@@ -606,6 +642,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .Where(l => l.UserId == userId && l.WorkoutLogId == primaryLog.Id)
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
+            var observedByDayExerciseId = validInputs
+                .Where(pair => pair.Input.ObservedSets is { Count: > 0 })
+                .ToDictionary(pair => pair.DayExercise.Id, pair => pair.Input.ObservedSets!);
 
             foreach (var (dayExercise, input) in validInputs)
             {
@@ -676,6 +715,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 existingExerciseLogs,
                 catalogExercises,
                 request.PlannedSessionId,
+                observedByDayExerciseId,
                 cancellationToken).ConfigureAwait(false);
 
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -1024,6 +1064,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         IReadOnlyList<WorkoutExerciseLogRecord> exerciseLogs,
         IReadOnlyDictionary<int, Exercise> catalogExercises,
         Guid? plannedSessionId,
+        IReadOnlyDictionary<Guid, IReadOnlyList<ObservedSetRecord>> observedByDayExerciseId,
         CancellationToken cancellationToken)
     {
         var dayStartUtc = date.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
@@ -1077,10 +1118,43 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         foreach (var exLog in exerciseLogs)
         {
             var exName = catalogExercises.GetValueOrDefault(exLog.ExerciseId)?.Name ?? "Exercise";
+
+            if (observedByDayExerciseId.GetValueOrDefault(exLog.WorkoutDayExerciseId) is { Count: > 0 } observedSets)
+            {
+                foreach (var set in observedSets
+                             .Where(set => set.RepsCompleted > 0)
+                             .OrderBy(set => set.SetIndex))
+                {
+                    totalVolume += set.LoadKg * set.RepsCompleted;
+                    dbContext.ExerciseSetLogs.Add(new ExerciseSetLogRecord
+                    {
+                        Id = Guid.CreateVersion7(),
+                        UserId = userId,
+                        WorkoutSessionLogId = session.Id,
+                        ExerciseId = exLog.ExerciseId.ToString(CultureInfo.InvariantCulture),
+                        ExerciseName = exName,
+                        SetNumber = set.SetIndex,
+                        WeightKg = set.LoadKg,
+                        RepsCompleted = set.RepsCompleted,
+                        Rpe = set.RirActual is { } rir ? 10m - rir : null,
+                        RirActual = set.RirActual,
+                        TechniqueAcceptable = set.TechniqueAcceptable,
+                        IsObserved = true,
+                        IsWarmup = false,
+                        RestTimeSeconds = 90,
+                        CreatedAt = nowUtc,
+                        UpdatedAt = nowUtc
+                    });
+                }
+
+                continue;
+            }
+
+            // Legacy aggregate-only clients keep a readable archive row, but these rows are
+            // explicitly not observed and never feed double progression.
             var setsCount = Math.Max(1, exLog.CompletedSets);
             var reps = Math.Max(0, exLog.CompletedReps);
             var weight = exLog.WeightKg ?? 0m;
-
             for (var setNum = 1; setNum <= setsCount; setNum++)
             {
                 totalVolume += weight * reps;
@@ -1095,6 +1169,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     WeightKg = weight,
                     RepsCompleted = reps,
                     Rpe = exLog.EffortRating,
+                    IsObserved = false,
                     IsWarmup = false,
                     RestTimeSeconds = 90,
                     CreatedAt = nowUtc,
@@ -1321,7 +1396,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         WorkoutExerciseLogRecord? previousLog,
         WorkoutExerciseLogRecord? currentLog,
         string movementNotes,
-        IReadOnlyList<WorkoutExerciseLogRecord>? exerciseHistory = null)
+        EffectiveExperienceTier progressionTier = EffectiveExperienceTier.Tier1BeginnerOrNew,
+        IReadOnlyList<DoubleProgressionWeekPerformance>? observedWeeks = null)
     {
         var name = exercise?.Name ?? "Exercise";
         var usesEndurance = UsesEnduranceMetrics(dayExercise, name);
@@ -1335,12 +1411,12 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         var activityTag = ClassifyExerciseTag(dayExercise, workoutType, exercise);
         var isLogged = IsExerciseLogComplete(currentLog, dayExercise, name);
 
-        decimal? progressedLoad = null;
-        var recommendationText = usesEndurance
-            ? "Own the full time with clean, controlled form."
+        var recommendation = usesEndurance
+            ? StrengthProgressionAdviceRule.Endurance()
             : previousLog?.WeightKg is > 0m
-                ? BuildStrengthProgressionRecommendation(dayExercise, exercise, previousLog, exerciseHistory, out progressedLoad)
-                : "Pick a steady starting weight.";
+                ? BuildStrengthProgressionRecommendation(dayExercise, exercise, previousLog, observedWeeks, progressionTier)
+                : StrengthProgressionAdviceRule.StartingWeight();
+        var progressedLoad = recommendation.LoadIncreased ? recommendation.PrescribedLoad : null;
 
         var setsCount = currentLog?.CompletedSets ?? (dayExercise.Sets > 0 ? dayExercise.Sets : 3);
         var repsCount = currentLog?.CompletedReps ?? (dayExercise.Reps > 0 ? dayExercise.Reps : 10);
@@ -1386,7 +1462,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             QuickTipsText = "Brace your core and keep each rep controlled.",
             TargetText = targetText,
             PreviousText = previousText,
-            RecommendationText = recommendationText,
+            RecommendationText = recommendation.RecommendationCode,
+            RecommendationCode = recommendation.RecommendationCode,
+            RecommendationLoadKg = recommendation.PrescribedLoad,
             MovementNotes = movementNotes,
             LoggedSetsText = currentLog is not null ? currentLog.CompletedSets.ToString(CultureInfo.InvariantCulture) :
                 dayExercise.Sets > 0 ? dayExercise.Sets.ToString(CultureInfo.InvariantCulture) : string.Empty,
@@ -1431,89 +1509,56 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         };
     }
 
-    private static string BuildStrengthProgressionRecommendation(
+    private static StrengthProgressionAdvice BuildStrengthProgressionRecommendation(
         WorkoutDayExerciseRecord dayExercise,
         Exercise? exercise,
         WorkoutExerciseLogRecord previousLog,
-        IReadOnlyList<WorkoutExerciseLogRecord>? exerciseHistory,
-        out decimal? progressedLoad)
+        IReadOnlyList<DoubleProgressionWeekPerformance>? observedWeeks,
+        EffectiveExperienceTier tier)
     {
-        progressedLoad = null;
         if (previousLog.WeightKg is not { } currentLoad || currentLoad <= 0m)
-            return "Pick a steady starting weight.";
+            return StrengthProgressionAdviceRule.StartingWeight();
 
-        var slot = dayExercise.PlanningSlotId ?? string.Empty;
-        var isCompound = slot.Contains("knee", StringComparison.OrdinalIgnoreCase) ||
-                         slot.Contains("hip", StringComparison.OrdinalIgnoreCase) ||
-                         slot.Contains("push", StringComparison.OrdinalIgnoreCase) ||
-                         slot.Contains("pull", StringComparison.OrdinalIgnoreCase) ||
-                         (dayExercise.Sets >= 3 && dayExercise.Reps <= 12);
-
-        var category = isCompound ? ExerciseMovementCategory.Compound : ExerciseMovementCategory.Accessory;
-        var (repLow, repHigh, targetRir) = StrengthProgressionRule.GetEffortPrescription(category);
-        var increment = isCompound ? 2.5m : 1.25m;
-
-        var history = (exerciseHistory ?? [previousLog])
-            .Take(StrengthProgressionRule.TwoConsecutiveWeeksForDoubleProgression)
-            .ToList();
-        var recentWeeks = new List<DoubleProgressionWeekPerformance>();
-
-        for (var i = 0; i < history.Count; i++)
-        {
-            var log = history[i];
-            var sets = new List<CompletedWorkingSet>();
-            var count = log.CompletedSets > 0 ? log.CompletedSets : 1;
-            var load = log.WeightKg ?? currentLoad;
-            var rir = log.EffortRating.HasValue
-                ? Math.Max(0, 10 - log.EffortRating.Value)
-                : StrengthProgressionRule.DefaultTargetRepsInReserve;
-
-            for (var s = 0; s < count; s++)
-            {
-                sets.Add(new CompletedWorkingSet(log.CompletedReps, load, rir, TechniqueAcceptable: true));
-            }
-            recentWeeks.Add(new DoubleProgressionWeekPerformance(i + 1, sets));
-        }
-
-        var candidate = new MuscleProgressionCandidate(
-            MajorMuscleGroup.Chest,
-            dayExercise.ExerciseId,
+        var muscle = exercise is null
+            ? MajorMuscleGroup.Core
+            : MapMajorMuscleGroup(exercise.PrimaryMuscle);
+        return StrengthProgressionAdviceRule.Resolve(
+            muscle,
+            exercise?.Id ?? dayExercise.ExerciseId,
             currentLoad,
-            increment,
-            category,
-            recentWeeks,
-            CurrentWeeklyVolume: dayExercise.Sets,
-            PreviousWeeklyVolume: dayExercise.Sets);
-
-        var decisions = StrengthProgressionRule.ResolveDoubleProgression(
-            EffectiveExperienceTier.Tier2IntermediateOrEstablished,
-            [candidate]);
-
-        if (decisions.Count > 0)
-        {
-            var decision = decisions[0];
-            progressedLoad = decision.PrescribedLoad;
-
-            if (decision.LoadIncreased)
-            {
-                return $"Progression earned! Try {decision.PrescribedLoad:0.#} kg (all sets hit rep ceiling with solid form).";
-            }
-
-            if (decision.ReasonCode == StrengthProgressionRule.IncompleteHistoryMaintainsLoad)
-            {
-                return $"Maintain {decision.PrescribedLoad:0.#} kg (previous session incomplete).";
-            }
-
-            if (decision.ProgressionStatus == StrengthProgressionRule.StatusRegressed)
-            {
-                return $"Reduce to {decision.PrescribedLoad:0.#} kg to protect recovery and clean form.";
-            }
-
-            return $"Repeat {decision.PrescribedLoad:0.#} kg at target effort.";
-        }
-
-        return $"Repeat {currentLoad:0.#} kg";
+            dayExercise.Reps,
+            tier,
+            observedWeeks);
     }
+
+    private static EffectiveExperienceTier ResolveExperienceTier(UserProfileRecord? profile) =>
+        Enum.TryParse<TrainingExperienceLevel>(profile?.TrainingExperienceLevel, ignoreCase: true, out var level)
+            ? level switch
+            {
+                TrainingExperienceLevel.Beginner => EffectiveExperienceTier.Tier1BeginnerOrNew,
+                TrainingExperienceLevel.Intermediate => EffectiveExperienceTier.Tier2IntermediateOrEstablished,
+                TrainingExperienceLevel.Advanced => EffectiveExperienceTier.Tier3Advanced,
+                _ => EffectiveExperienceTier.Tier1BeginnerOrNew
+            }
+            : EffectiveExperienceTier.Tier1BeginnerOrNew;
+
+    private static MajorMuscleGroup MapMajorMuscleGroup(MuscleGroup muscle) => muscle switch
+    {
+        MuscleGroup.Chest => MajorMuscleGroup.Chest,
+        MuscleGroup.UpperBack or MuscleGroup.LowerBack or MuscleGroup.Lats or
+            MuscleGroup.MidBack or MuscleGroup.Erectors => MajorMuscleGroup.Back,
+        MuscleGroup.FrontShoulders or MuscleGroup.SideShoulders or
+            MuscleGroup.RearShoulders => MajorMuscleGroup.Shoulders,
+        MuscleGroup.Quads or MuscleGroup.HipFlexors or
+            MuscleGroup.Adductors => MajorMuscleGroup.Quads,
+        MuscleGroup.Glutes or MuscleGroup.GluteMax or MuscleGroup.GluteMed => MajorMuscleGroup.Glutes,
+        MuscleGroup.Hamstrings => MajorMuscleGroup.Hamstrings,
+        MuscleGroup.Biceps or MuscleGroup.Triceps or MuscleGroup.Forearms or
+            MuscleGroup.Grip => MajorMuscleGroup.Arms,
+        MuscleGroup.Calves => MajorMuscleGroup.Calves,
+        MuscleGroup.Abs or MuscleGroup.Obliques or MuscleGroup.Core => MajorMuscleGroup.Core,
+        _ => MajorMuscleGroup.Core
+    };
 
     private static IReadOnlyList<WorkoutActivityDetailDto> BuildActivityDetails(
         WorkoutDayRecord day,
@@ -1534,7 +1579,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 day.PlannedMainDurationMinutes is { } duration ? $"{duration:0.#} min" : string.Empty,
                 string.Empty, [])
             {
-                Prescription = ActivityOccurrencePrescription.Deserialize(day.PlannedActivityPrescriptionJson)
+                Prescription = ActivityOccurrencePrescription.Deserialize(day.PlannedActivityPrescriptionJson),
+                ActivityType = ResolveActivityType(day, tag)
             }];
         }
         if (tags.Count == 0 && exerciseDtos.Count > 0)
@@ -1558,8 +1604,25 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 BuildSectionSubtitle(tag),
                 metric,
                 summary,
-                group.Select(e => e.WorkoutDayExerciseId).ToArray());
+                group.Select(e => e.WorkoutDayExerciseId).ToArray())
+            {
+                ActivityType = ResolveActivityType(day, tag)
+            };
         }).ToArray();
+    }
+
+    private static WorkoutActivityDto ResolveActivityType(WorkoutDayRecord day, string tag)
+    {
+        if (day.ActivityTypeId is { } typeId && Enum.IsDefined(typeof(WorkoutActivityDto), typeId))
+            return (WorkoutActivityDto)typeId;
+
+        return tag switch
+        {
+            StrengthTag => WorkoutActivityDto.GeneralStrength,
+            CardioTag => WorkoutActivityDto.Other,
+            RecoveryTag => WorkoutActivityDto.GentleRecovery,
+            _ => WorkoutActivityDto.Other
+        };
     }
 
     private static bool IsExerciseLogComplete(

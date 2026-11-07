@@ -17,7 +17,9 @@ try:
     commit = manifest['source_sha']
     if not re.fullmatch(r'[0-9a-f]{40}', commit) or manifest['zip_sha256'] != hexsha or manifest['zip_sha256_base64'] != b64 or manifest['zip_bytes'] != len(data): fail('manifest does not match ZIP')
 except (OSError, ValueError, KeyError): fail('invalid input')
-bucket = os.environ['AWS_RELEASE_BUCKET']; key = f'lambda/MuscleCuties.Server/{commit}/{hexsha}/MuscleCuties.Server.zip'
+component = os.environ.get('ARTIFACT_COMPONENT', 'MuscleCuties.Server')
+if not re.fullmatch(r'[A-Za-z0-9._-]+', component): fail('invalid component name')
+bucket = os.environ['AWS_RELEASE_BUCKET']; key = f'lambda/{component}/{commit}/{hexsha}/{pathlib.Path(sys.argv[1]).name}'
 headargs = ['head-object','--bucket',bucket,'--key',key,'--checksum-mode','ENABLED']
 head = aws(*headargs)
 if head.returncode:
