@@ -186,6 +186,12 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             ? UiTextCatalog.Get("Nutrition_Breakdown_EditMeal")
             : UiTextCatalog.Get("Nutrition_FoodLog_EditEntryTitle"))
         : UiTextCatalog.Get("Nutrition_FoodLog_LogEntryTitle");
+
+    /// <summary>Draft totals for the meal being edited, so the sheet can open on what it contains.</summary>
+    public string EditDraftCaloriesText => $"{EditingIngredients.Sum(i => (double)i.MacrosForDraft.Calories):N0} kcal";
+    public string EditDraftProteinText => $"P {EditingIngredients.Sum(i => (double)i.MacrosForDraft.Protein):N1} g";
+    public string EditDraftCarbsText => $"C {EditingIngredients.Sum(i => (double)i.MacrosForDraft.Carbs):N1} g";
+    public string EditDraftFatsText => $"F {EditingIngredients.Sum(i => (double)i.MacrosForDraft.Fats):N1} g";
     public ObservableCollection<HistoryIngredientEditor> EditingIngredients { get; } = [];
     public IReadOnlyList<MealType> MealCategories { get; } = Enum.GetValues<MealType>();
 
@@ -575,9 +581,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             }
 
             _editingMealIngredients = ingredients;
-            SetIngredients(_editingMealIngredients
-                .Select(i => new FoodHistoryIngredient(i.FoodItemId, i.Name, i.Grams))
-                .ToList());
+            SetMealIngredients(_editingMealIngredients);
         }
 
         IsFastLoggingVisible = false;
@@ -635,6 +639,47 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         foreach (var ingredient in ingredients)
             EditingIngredients.Add(new HistoryIngredientEditor(ingredient));
         IsGroupedEditor = ingredients.Count > 0;
+        TrackEditingIngredientTotals();
+    }
+
+    /// <summary>
+    /// The meal being edited arrives with per-100 g macros, so each row can show the nutrition of the
+    /// portion it is about to save and the sheet can total them while quantities change.
+    /// </summary>
+    private void SetMealIngredients(IReadOnlyList<NutritionMealIngredient> ingredients)
+    {
+        EditingIngredients.Clear();
+        foreach (var ingredient in ingredients)
+            EditingIngredients.Add(new HistoryIngredientEditor(
+                new FoodHistoryIngredient(ingredient.FoodItemId, ingredient.Name, ingredient.Grams),
+                ingredient.Calories, ingredient.Protein, ingredient.Carbs, ingredient.Fats));
+        IsGroupedEditor = ingredients.Count > 0;
+        TrackEditingIngredientTotals();
+    }
+
+    private void TrackEditingIngredientTotals()
+    {
+        foreach (var editor in EditingIngredients)
+        {
+            editor.PropertyChanged -= OnEditingIngredientChanged;
+            editor.PropertyChanged += OnEditingIngredientChanged;
+        }
+
+        NotifyEditingIngredientTotals();
+    }
+
+    private void OnEditingIngredientChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(HistoryIngredientEditor.GramsText))
+            NotifyEditingIngredientTotals();
+    }
+
+    private void NotifyEditingIngredientTotals()
+    {
+        OnPropertyChanged(nameof(EditDraftCaloriesText));
+        OnPropertyChanged(nameof(EditDraftProteinText));
+        OnPropertyChanged(nameof(EditDraftCarbsText));
+        OnPropertyChanged(nameof(EditDraftFatsText));
     }
 
     /// <summary>

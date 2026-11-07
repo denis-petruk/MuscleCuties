@@ -486,9 +486,9 @@ public sealed class CloudWorkoutSessionActionStore(
         return RequirePlannedSession(response, "start planned workout session");
     }
 
-    public async Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, CancellationToken cancellationToken)
+    public async Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, int? rpeRating, decimal? distanceKm, CancellationToken cancellationToken)
     {
-        var request = new FinishWorkoutSessionCommand(sessionId.ToString("N"), sessionId, completedAtUtc, totalDurationSeconds, null, null);
+        var request = new FinishWorkoutSessionCommand(sessionId.ToString("N"), sessionId, completedAtUtc, totalDurationSeconds, rpeRating, null, DistanceKm: distanceKm);
         var response = await apiClient.SendMutationAsync<FinishWorkoutSessionCommand, ActiveWorkoutSessionSnapshot>(
             HttpMethod.Post, $"/api/v1/workouts/sessions/{sessionId:D}/finish", request, idempotencyKey: sessionId.ToString("N"), cancellationToken).ConfigureAwait(false);
         return RequirePlannedSession(response, "finish planned workout session");

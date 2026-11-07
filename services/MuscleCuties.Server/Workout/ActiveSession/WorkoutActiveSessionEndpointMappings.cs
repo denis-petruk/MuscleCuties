@@ -188,7 +188,8 @@ public static class WorkoutActiveSessionEndpointMappings
                         body.TotalDurationSeconds,
                         body.RpeRating,
                         body.Notes,
-                        body.FinalSets),
+                        body.FinalSets,
+                        body.DistanceKm),
                     cancellationToken).ConfigureAwait(false);
                 return snapshot is null ? Results.NotFound() : Results.Ok(snapshot);
             }
@@ -262,6 +263,7 @@ public static class WorkoutActiveSessionEndpointMappings
         DateTime CompletedAtUtc,
         int TotalDurationSeconds,
         int? RpeRating = null,
+        decimal? DistanceKm = null,
         string? Notes = null,
         IReadOnlyList<ActiveExerciseSetInput>? FinalSets = null);
 

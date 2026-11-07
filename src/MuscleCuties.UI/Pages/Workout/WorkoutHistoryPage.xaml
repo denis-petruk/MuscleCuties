@@ -283,7 +283,8 @@
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceControl}" Padding="{DynamicResource PresentationModalPagePadding}">
 
                         <!-- Key Metrics Row -->
-                        <Grid Grid.Row="0" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                        <Grid Grid.Row="0" ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
+                              ColumnSpacing="{StaticResource UiSpaceCompact}" RowSpacing="{StaticResource UiSpaceCompact}">
                             <Border Style="{StaticResource CardSecondary}">
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                                     <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Grid.Row="0" Text="{loc:LocalizedText Workout_History_DurationHeader}"
@@ -309,6 +310,17 @@
  />
                                     <Label LineBreakMode="WordWrap" Style="{StaticResource BodyLabel}" Grid.Row="1"
                                            Text="{Binding DetailRpeFormatted, Converter={StaticResource LocalizedStringConverter}}" />
+                                </Grid>
+                            </Border>
+
+                            <!-- Distance is recorded only for timed distance activities. -->
+                            <Border Grid.Row="1" Grid.ColumnSpan="3" Style="{StaticResource CardSecondary}"
+                                    IsVisible="{Binding HasDetailDistance}">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                    <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}"
+                                           Text="{loc:LocalizedText Workout_History_DistanceHeader}" />
+                                    <Label Grid.Column="1" LineBreakMode="WordWrap" Style="{StaticResource BodyLabel}"
+                                           Text="{Binding DetailDistanceFormatted, Converter={StaticResource LocalizedStringConverter}}" />
                                 </Grid>
                             </Border>
                         </Grid>

@@ -516,6 +516,7 @@ public sealed class WorkoutSessionLogConfiguration : IEntityTypeConfiguration<Wo
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_session_logs");
         builder.HasIndex(x => new { x.UserId, x.StartedAt }).IsDescending(false, true).HasDatabaseName("ix_workout_session_logs_owner_started_at_desc");
+        builder.Property(x => x.DistanceKm).HasPrecision(8, 2);
     }
 }
 

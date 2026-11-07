@@ -8,7 +8,7 @@ public interface IWorkoutSessionActionStore
     Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(int workoutDayId, CancellationToken cancellationToken);
     Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(int workoutDayId, CancellationToken cancellationToken);
     Task<ActiveWorkoutSessionSnapshot> StartPlannedSessionAsync(int workoutDayId, Guid sessionId, DateTime startedAtUtc, CancellationToken cancellationToken);
-    Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, CancellationToken cancellationToken);
+    Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, int? rpeRating, decimal? distanceKm, CancellationToken cancellationToken);
     Task AbandonPlannedSessionAsync(Guid sessionId, CancellationToken cancellationToken);
     Task<ActiveWorkoutSessionSnapshot> ResumePlannedTimingAsync(Guid sessionId, Guid operationId, CancellationToken cancellationToken);
     Task<ActiveWorkoutSessionSnapshot> CheckpointPlannedTimingAsync(Guid sessionId, Guid operationId, Guid intervalId,

@@ -125,6 +125,24 @@ public sealed class ActivityPrescriptionRuleTests
     }
 
     [Fact]
+    public void SingleDayCardioSessionsAreLongEnoughToRunForThirtyMinutes()
+    {
+        var beginner = Evaluate(WorkoutActivityType.Cycling, ActivityExperience.Beginner).Sessions.Single();
+        var established = Evaluate(WorkoutActivityType.Running, ActivityExperience.Established).Sessions.Single();
+        var swimming = EvaluateSwimming(access: true, independent: true, continuous: true).Sessions.Single();
+
+        Assert.Equal(30m, TotalMinutes(beginner));
+        Assert.Equal(30m + ActivityPrescriptionRule.EstablishedCardioMainMinutesWithoutBaseline -
+                     ActivityPrescriptionRule.BeginnerCardioMainMinutes, TotalMinutes(established));
+        // Swimming keeps its own 25–30 minute policy instead of inheriting the longer cardio default.
+        Assert.Equal(30m, TotalMinutes(swimming));
+        Assert.True(TotalMinutes(swimming) <= ActivitySessionDurationRule.SwimmingMaximumMinutes);
+    }
+
+    private static decimal TotalMinutes(ActivitySessionPrescription prescription) =>
+        (prescription.WarmupMinutes ?? 0) + (prescription.MainMinutes ?? 0) + (prescription.CooldownMinutes ?? 0);
+
+    [Fact]
     public void HiitRequiresThreeQualifyingManageableSessionsInEachPriorWeek()
     {
         var evidence = EligibleHiitEvidence();

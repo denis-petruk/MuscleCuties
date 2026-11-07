@@ -9,7 +9,7 @@ public interface IWorkoutSessionActionUseCase
     Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(int workoutDayId, CancellationToken cancellationToken = default);
     Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(int workoutDayId, CancellationToken cancellationToken = default);
     Task<ActiveWorkoutSessionSnapshot> StartPlannedSessionAsync(int workoutDayId, Guid sessionId, DateTime startedAtUtc, CancellationToken cancellationToken = default);
-    Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, CancellationToken cancellationToken = default);
+    Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, int? rpeRating = null, decimal? distanceKm = null, CancellationToken cancellationToken = default);
     Task AbandonPlannedSessionAsync(Guid sessionId, CancellationToken cancellationToken = default);
     Task<ActiveWorkoutSessionSnapshot> ResumePlannedTimingAsync(Guid sessionId, Guid operationId, CancellationToken cancellationToken = default);
     Task<ActiveWorkoutSessionSnapshot> CheckpointPlannedTimingAsync(Guid sessionId, Guid operationId, Guid intervalId,
@@ -34,7 +34,7 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
     public Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(int workoutDayId, CancellationToken cancellationToken = default) => store.GetPlannedSessionHistoryAsync(workoutDayId, cancellationToken);
     public Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(int workoutDayId, CancellationToken cancellationToken = default) => store.GetPlannedSessionAsync(workoutDayId, cancellationToken);
     public Task<ActiveWorkoutSessionSnapshot> StartPlannedSessionAsync(int workoutDayId, Guid sessionId, DateTime startedAtUtc, CancellationToken cancellationToken = default) => store.StartPlannedSessionAsync(workoutDayId, sessionId, startedAtUtc, cancellationToken);
-    public Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, CancellationToken cancellationToken = default) => store.FinishPlannedSessionAsync(sessionId, completedAtUtc, totalDurationSeconds, cancellationToken);
+    public Task<ActiveWorkoutSessionSnapshot> FinishPlannedSessionAsync(Guid sessionId, DateTime completedAtUtc, int totalDurationSeconds, int? rpeRating = null, decimal? distanceKm = null, CancellationToken cancellationToken = default) => store.FinishPlannedSessionAsync(sessionId, completedAtUtc, totalDurationSeconds, rpeRating, distanceKm, cancellationToken);
     public Task AbandonPlannedSessionAsync(Guid sessionId, CancellationToken cancellationToken = default) => store.AbandonPlannedSessionAsync(sessionId, cancellationToken);
     public Task<ActiveWorkoutSessionSnapshot> ResumePlannedTimingAsync(Guid sessionId, Guid operationId, CancellationToken cancellationToken = default) => store.ResumePlannedTimingAsync(sessionId, operationId, cancellationToken);
     public Task<ActiveWorkoutSessionSnapshot> CheckpointPlannedTimingAsync(Guid sessionId, Guid operationId, Guid intervalId, int measuredSeconds, bool pause, CancellationToken cancellationToken = default) => store.CheckpointPlannedTimingAsync(sessionId, operationId, intervalId, measuredSeconds, pause, cancellationToken);

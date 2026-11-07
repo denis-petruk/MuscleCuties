@@ -43,6 +43,8 @@ public sealed record WorkoutArchiveSummaryDto(
     public string SetCountLabel => DetailKind == "aggregateOnly"
         ? "Not recorded"
         : $"{TotalSetsCount} sets";
+
+    public decimal? DistanceKm { get; init; }
 }
 
 public sealed record WorkoutArchiveDetailDto(
@@ -56,7 +58,10 @@ public sealed record WorkoutArchiveDetailDto(
     int? RpeRating,
     IReadOnlyList<WorkoutExerciseSetDto> Sets,
     string DetailKind = "noSetDetails",
-    string TimePrecision = "unknown");
+    string TimePrecision = "unknown")
+{
+    public decimal? DistanceKm { get; init; }
+}
 
 public sealed record HistoryMonthOptionDto(int Year, int Month);
 

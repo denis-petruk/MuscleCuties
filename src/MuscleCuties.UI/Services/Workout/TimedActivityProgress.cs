@@ -11,7 +11,41 @@ public static class TimedActivityProgress
     public const string MainPhaseKey = "Workout_Session_TimedPhaseMain";
     public const string CooldownPhaseKey = "Workout_Session_TimedPhaseCooldown";
 
+    /// <summary>Inclusive effort bounds shared with the session finish validation.</summary>
+    public const int MinimumRpe = 1;
+    public const int MaximumRpe = 10;
+
     private const string RestTag = "REST";
+
+    /// <summary>
+    /// Converts the optional effort control into the value the finish route accepts. An unrated
+    /// activity stays null instead of inventing an effort value; out-of-range input is discarded.
+    /// </summary>
+    public static int? NormalizeRpe(double? value)
+    {
+        if (value is not { } rating || double.IsNaN(rating) || double.IsInfinity(rating)) return null;
+        var rounded = (int)Math.Round(rating, MidpointRounding.AwayFromZero);
+        return rounded is >= MinimumRpe and <= MaximumRpe ? rounded : null;
+    }
+
+    /// <summary>Upper bound shared by the distance input and the finish validation.</summary>
+    public const decimal MaximumDistanceKm = 500m;
+
+    /// <summary>
+    /// Distance is an optional actual only for cardio-style timed activities. Recovery, mobility and
+    /// rest never ask for it, so the field cannot imply a metric the activity does not have.
+    /// </summary>
+    public static bool SupportsDistance(string? tag) =>
+        !string.IsNullOrWhiteSpace(tag) && tag.Equals("CARDIO", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>
+    /// Keeps an entered distance within the supported bound. Blank or zero means "not recorded"
+    /// rather than zero kilometres, and out-of-range input is discarded instead of clamped.
+    /// </summary>
+    public static decimal? NormalizeDistance(decimal? value) =>
+        value is > 0m and <= MaximumDistanceKm
+            ? Math.Round(value.Value, 2, MidpointRounding.AwayFromZero)
+            : null;
 
     /// <summary>
     /// The surface a workout-day section runs on. One rule owns this decision so the view model, the

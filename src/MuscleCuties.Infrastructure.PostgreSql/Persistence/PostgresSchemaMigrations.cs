@@ -70,11 +70,15 @@ public static class PostgresSchemaMigrations
     public const string ScheduleSeamResourceName =
         "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.003_schedule_seam.sql";
 
+    public const string SessionDistanceResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.004_session_distance.sql";
+
     private static readonly IReadOnlyList<MigrationScriptDefinition> OrderedScripts =
     [
         new(1, "001_base_schema.sql", BaseSchemaResourceName),
         new(2, "002_schema_fingerprint.sql", SchemaFingerprintResourceName),
-        new(3, "003_schedule_seam.sql", ScheduleSeamResourceName)
+        new(3, "003_schedule_seam.sql", ScheduleSeamResourceName),
+        new(4, "004_session_distance.sql", SessionDistanceResourceName)
     ];
 
     public static IReadOnlyList<MigrationScriptDefinition> Scripts => OrderedScripts;

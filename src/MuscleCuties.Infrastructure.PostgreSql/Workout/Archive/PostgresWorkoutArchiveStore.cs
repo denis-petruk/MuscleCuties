@@ -133,7 +133,10 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 session.RpeRating,
                 sets,
                 detailKind,
-                RecordedWallTimePrecision);
+                RecordedWallTimePrecision)
+            {
+                DistanceKm = session.DistanceKm
+            };
         }).ConfigureAwait(false);
 
     public async Task<bool> UpdateWorkoutSessionNotesAsync(
@@ -413,7 +416,10 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 sessionSets.Count,
                 primaryExercises,
                 detailKind,
-                RecordedWallTimePrecision));
+                RecordedWallTimePrecision)
+            {
+                DistanceKm = session.DistanceKm
+            });
         }
 
         return result;
