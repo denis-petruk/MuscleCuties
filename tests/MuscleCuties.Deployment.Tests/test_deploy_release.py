@@ -85,6 +85,11 @@ class DeployTests(unittest.TestCase):
         self.env.update(self.worker['env'])
         self.env['TARGET_SERVER_B64'] = self.server['b64']
         self.env['TARGET_WORKER_B64'] = self.worker['b64']
+        # These tests describe an offline deploy driven by explicit inputs. A real GitHub run exports
+        # GITHUB_EVENT_NAME/GITHUB_REPOSITORY, and the deployer correctly refuses a non-dispatch event,
+        # so the inherited values would replace the case under test with manual_release_required.
+        for name in [key for key in self.env if key.startswith('GITHUB_')]:
+            del self.env[name]
 
     def make_component(self, name, payload):
         zip_path = self.root / (name + '.zip')

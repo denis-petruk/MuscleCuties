@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using Xunit;
 
 namespace MuscleCuties.Registration.Integration.Tests;
