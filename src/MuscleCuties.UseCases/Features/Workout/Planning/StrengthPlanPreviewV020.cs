@@ -12,7 +12,6 @@ public sealed record StrengthPlanPreviewRequestV020(
     ActivityTrainingHistoryInputV020? ActivityHistory,
     HashSet<int>? ExcludedExerciseIds = null,
     HashSet<int>? UserConfirmedFamiliarExerciseIds = null,
-    HashSet<int>? AcknowledgedExerciseConditionIds = null,
     bool UnknownExperienceAssessmentCompleted = false,
     HashSet<int>? UserConfirmedManageableLoadExerciseIds = null,
     HashSet<string>? AcknowledgedSubstitutionPairKeys = null,

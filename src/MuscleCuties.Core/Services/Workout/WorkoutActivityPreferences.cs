@@ -4,11 +4,15 @@ namespace MuscleCuties.Core.Services.Workout;
 
 public static class WorkoutActivityPreferences
 {
+    /// <summary>
+    /// A default must be the lowest-demand style so a new account is never started on the
+    /// highest-volume prescription. High volume remains available when the user selects it.
+    /// </summary>
     public static IReadOnlySet<WorkoutActivityType> BuildDefaultSelection()
     {
         return new HashSet<WorkoutActivityType>
         {
-            WorkoutActivityType.HighVolumeStrength
+            WorkoutActivityType.GeneralStrength
         };
     }
 

@@ -191,5 +191,8 @@ public sealed class ProfileWorkoutPreferencesRegenerationTests
     {
         public Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken) =>
             Task.FromResult(saved);
+
+        public Task<bool> SaveAsync(WorkoutPreferencesDto preferences, CancellationToken cancellationToken) =>
+            Task.FromResult(true);
     }
 }

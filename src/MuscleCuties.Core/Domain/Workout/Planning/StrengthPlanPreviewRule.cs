@@ -16,7 +16,6 @@ public sealed record StrengthPlanPreviewChoices(
     ActivityTrainingHistory? ActivityHistory,
     IReadOnlySet<int>? ExcludedExerciseIds = null,
     IReadOnlySet<int>? UserConfirmedFamiliarExerciseIds = null,
-    IReadOnlySet<int>? AcknowledgedExerciseConditionIds = null,
     bool UnknownExperienceAssessmentCompleted = false,
     IReadOnlySet<int>? UserConfirmedManageableLoadExerciseIds = null,
     IReadOnlySet<string>? AcknowledgedSubstitutionPairKeys = null,
@@ -70,11 +69,13 @@ public sealed record StrengthPlanPreviewSession(
     int? OriginalPlannedWorkingSets = null,
     int? ActualWorkingSets = null);
 
+/// <summary>Exercise-specific review text. Both fields stay null when the catalog has nothing
+/// to say, so no empty rationale entry is ever produced for an unreviewed exercise.</summary>
 public sealed record StrengthExerciseReviewCondition(
     int ExerciseId,
     string ExerciseName,
-    string ExperienceConditions,
-    string GeneralConditions);
+    string? ExperienceConditions,
+    string? ReviewConditions);
 
 public sealed record StrengthPlanPreviewResult(
     StrengthPlanPreviewStatus Status,
@@ -230,7 +231,6 @@ public static class StrengthPlanPreviewRule
         var eligibilityContext = new ExerciseEligibilityContext(availableEquipment, prescriptionExperience,
             choices.ExcludedExerciseIds ?? EmptyIds, data.BlockedMovementPatterns ?? EmptyMovementPatterns,
             new HashSet<ActivityDemandTag>(), false, data.ActiveInjuryFlags,
-            choices.AcknowledgedExerciseConditionIds,
             choices.UnknownExperienceAssessmentCompleted, choices.AcknowledgedSubstitutionPairKeys);
         var isEstablishedResistanceHistory = GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(
             choices.ActivityHistory, choices.LocalDate);
@@ -509,8 +509,6 @@ public static class StrengthPlanPreviewRule
         (choices.ExcludedExerciseIds is null || choices.ExcludedExerciseIds.All(IsPositiveIdentifier)) &&
         (choices.UserConfirmedFamiliarExerciseIds is null ||
          choices.UserConfirmedFamiliarExerciseIds.All(IsPositiveIdentifier)) &&
-        (choices.AcknowledgedExerciseConditionIds is null ||
-         choices.AcknowledgedExerciseConditionIds.All(IsPositiveIdentifier)) &&
         (choices.UserConfirmedManageableLoadExerciseIds is null ||
          choices.UserConfirmedManageableLoadExerciseIds.All(IsPositiveIdentifier)) &&
         (choices.AcknowledgedSubstitutionPairKeys is null ||
@@ -738,14 +736,22 @@ public static class StrengthPlanPreviewRule
             .Where(pair => templates.Any(template => pair.Key.StartsWith(
                 template.TemplateId + "|", StringComparison.Ordinal)))
             .SelectMany(pair => pair.Value).ToHashSet();
+        // Rationale exists only where the reviewed catalog supplies real exercise-specific text.
+        // An exercise with nothing to say is dropped instead of travelling as an empty string, so
+        // the preview cannot render a blank rationale row.
         return data.Catalog!
             .Where(entry => relevantIds.Contains(entry.Candidate.ExerciseId))
             .OrderBy(entry => entry.Candidate.ExerciseId)
             .Select(entry => new StrengthExerciseReviewCondition(entry.Candidate.ExerciseId,
-                entry.Name, entry.Candidate.ExperienceConditions ?? string.Empty,
-                entry.Candidate.ReviewConditions ?? string.Empty))
+                entry.Name, TrimToNull(entry.Candidate.ExperienceConditions),
+                TrimToNull(entry.Candidate.ReviewConditions)))
+            .Where(condition => condition.ExperienceConditions is not null ||
+                                condition.ReviewConditions is not null)
             .ToArray();
     }
+
+    private static string? TrimToNull(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
     private static StrengthPlanPreviewResult Failure(StrengthPlanPreviewStatus status,
         ActivityExperience experience, params string[] reasons) =>

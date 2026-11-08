@@ -176,7 +176,7 @@ Evidence paths are under `src/MuscleCuties.UI/` unless otherwise specified. This
 | Preferences → generate plan | Connected in source | WorkoutPage.xaml:333 → WorkoutViewModel.cs:643-646 → preferences; MauiProgram.cs:644-649 injects generation navigation |
 | Proposal preview → Apply | Connected in source | StrengthPlanGenerationPage.xaml:494,726 → VM commands :189-190 → proposal Create :754 / Accept :1168 → cloud/server |
 | First-plan automatic acceptance exception | Connected; preserve | VM :421-426 delegates to WorkoutPlanningFlow.CanAutomaticallyApplyFirstPlan; not a general replacement-plan exception |
-| Replacement decline/acknowledgment/stale preview/lease | Connected in source | VM :1096-1187,1365-1430; takeover control in generation XAML :492 |
+| Replacement decline/stale preview/lease | Connected in source | VM :1096-1187,1365-1430; takeover control in generation XAML :492 |
 | Mixed schedule, reasons, omitted work, duration alternatives | Connected in source | Generation XAML :542-690 presents distinct preview sections |
 | Schedule day/open, optional session, easier alternative | Connected in source | WorkoutPage.xaml:305-307 → WorkoutViewModel.cs:692-741 |
 | Workout rescheduling | Implemented, unsurfaced | F04; endpoint/use case/adapter without UI caller located |
@@ -251,7 +251,7 @@ Skill sequence after approved fixes: `impeccable harden` → `impeccable layout`
 - Make registered entry checks exclude registration/declaration-only evidence and validate bound callers. Require a semantic screen heading, localized icon action names and accessible custom-selection state where applicable.
 - Resolve style inheritance before declaring variants distinct or redundant. Check semantic usage and real composed contrast; token membership alone is insufficient.
 - Add meaningful behavior cases for the changed seams: failed/rapid writes, stale data, unknown values, units, declined replacement, stale preview, resume/finish/cancel and retry/conflict. Use synthetic/disposable data. No tests were added or run by this documentation audit.
-- Preserve first-plan automatic acceptance only under the existing domain rule; replacement acceptance/acknowledgments and injury restrictions stay intact. Do not rewrite them to make a visual flow simpler.
+- Preserve first-plan automatic acceptance only under the existing domain rule; replacement acceptance and injury restrictions stay intact. Do not rewrite them to make a visual flow simpler.
 
 ### Required native evidence on the eventual candidate
 

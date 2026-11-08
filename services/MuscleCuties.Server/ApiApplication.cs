@@ -581,6 +581,20 @@ public static class ApiApplication
             return MapProfileWrite(await profile.UpdateNutritionPreferencesAsync(new UpdateServerNutritionPreferencesRequest(
                 userId, request.ExpectedVersion, request.Goal, request.WeightGoalPace, request.DietaryTags), cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
+        app.MapPut("/api/v1/profile/workout-preferences", async (
+            UpdateServerWorkoutPreferencesBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
+        {
+            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
+            return MapProfileWrite(await profile.UpdateWorkoutPreferencesAsync(new UpdateServerWorkoutPreferencesRequest(
+                userId,
+                request.ExpectedVersion,
+                request.ActivityTypes,
+                request.AvailableWeekdays,
+                request.ActivitySessionDurationsMinutes,
+                request.EquipmentLevel,
+                request.RequestedSessionsPerWeek,
+                request.ExcludedExerciseIds), cancellationToken).ConfigureAwait(false));
+        }).RequireAuthorization();
         app.MapPut("/api/v1/profile/nutrition-targets", async (
             UpdateServerNutritionTargetsBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
         {

@@ -173,7 +173,7 @@ Use [G0–G9](../VERIFICATION_GATES.md) and existing source/contract guards. App
 | CR01 | Proven failing/fixed binary identity, controlled reproduction, native stack/runtime result, framework compatibility and regression transitions |
 | Prior audit | Null/No/Yes injury, failed/rapid hydration writes, cached cycle Unknown/freshness, accessible custom actions, shared frame and feature disposition |
 
-Preserve first-plan automatic acceptance only under the existing tested rule; replacements require explicit Apply/acknowledgments. Unknown injury answers stay unknown, accepted plans/history remain intact, health integration stays dormant and fasting stays excluded. No UI-local nutrient or clinical calculations.
+Preserve first-plan automatic acceptance only under the existing tested rule; replacements require explicit Apply. Unknown injury answers stay unknown, accepted plans/history remain intact, health integration stays dormant and fasting stays excluded. No UI-local nutrient or clinical calculations.
 
 G5 completion requires both appearances, EN/RU, supported iPhone sizes/largest text, VoiceOver, Reduce Motion, keyboard/safe areas, native back/dismiss and interrupted-network behavior on the same candidate. MAUI build/run/install/new captures require task-specific owner authorization under AGENTS; the supplied screenshots authorize analysis, not a fresh run. Complete all independent authorized implementation and non-UI checks before requesting a concrete missing verification action. Record blocked/unverified gates without calling the work release-ready.
 

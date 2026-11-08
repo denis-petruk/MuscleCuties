@@ -52,13 +52,13 @@ not reverted. Nothing was committed, pushed, deployed or migrated.
   foreground intent; it still asks when a replacement preview arrived outside that intent.
   Replacement authority stays bound to the same proposal, an unchanged revision and a live lease
   fence (`RenewAsync` before acceptance, `_proposalInvalidated` respected).
-- **One native injury alert.** The previous Silent `Limited` branch that acknowledged every returned
-  review condition is gone. Acceptance now requires
-  `WorkoutPlanningFlow.RequiresInjuryAcknowledgment` to be resolved by one native alert that names
-  the excluded exercise and the alternative. Continue sends exactly those exercise IDs through the
-  preview request's `AcknowledgedExerciseConditionIds` and revalidates once; Cancel keeps the active
-  plan, keeps the exercise blocked and leaves the draft. A changed adaptation is disclosed again and
-  never accepted silently; a second required acknowledgment stops with `InjuryChanged`.
+- **Removed 2026-11-08: the per-exercise acknowledgment gate.** The native injury alert, the
+  `AcknowledgedExerciseConditionIds` request field, `RequiresInjuryAcknowledgment`,
+  `AdaptationChanged` and `ReviewConditionsNeedAcknowledgment` no longer exist. The gate blocked every
+  catalog exercise until each one was individually acknowledged, which no screen could satisfy, so a
+  valid profile could never activate a plan. Eligibility now relies only on reviewed contraindication
+  flags, equipment, supported experience and explicit restrictions; the preview still explains each
+  movement inline.
 - **No non-injury fallback.** Ineligible requests (missing answers, style choice, no lease, not
   persisted, infeasible) stay in the draft.
 - **Direct Edit details.** One tap closes the sheet, preserves the draft and routes explicitly to the

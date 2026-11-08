@@ -32,8 +32,7 @@ public enum WorkoutPlanningEvent
 /// <summary>Everything the user accepts by pressing Apply on the visible preview.</summary>
 public sealed record PlanAcceptanceAcknowledgments(
     bool ReplacementConfirmed,
-    bool ReducedVolumeAcknowledged,
-    IReadOnlySet<int> AcknowledgedExerciseConditionIds);
+    bool ReducedVolumeAcknowledged);
 
 public static class WorkoutPlanningFlowRule
 {
@@ -57,30 +56,9 @@ public static class WorkoutPlanningFlowRule
     /// </summary>
     public static bool CanAutoActivateRequestedPlan(bool userRequested, bool replacementDisclosed,
         bool replacesExistingPlan, bool feasible, bool persisted, bool hasLease, bool missingRequiredAnswers,
-        bool styleChoiceRequired, bool acknowledgmentUnavailable) =>
+        bool styleChoiceRequired) =>
         userRequested && feasible && persisted && hasLease && !missingRequiredAnswers &&
-        !styleChoiceRequired && !acknowledgmentUnavailable && (!replacesExistingPlan || replacementDisclosed);
-
-    /// <summary>
-    /// PG01: an injury-excluded exercise is the only permitted workout adaptation and the only extra
-    /// decision. Any other required acknowledgment is an unresolved contract outcome: it may not be
-    /// accepted on the person's behalf.
-    /// </summary>
-    public static bool RequiresInjuryAcknowledgment(int exerciseReviewConditionCount,
-        int acknowledgedConditionCount) =>
-        exerciseReviewConditionCount > 0 && acknowledgedConditionCount == 0;
-
-    /// <summary>
-    /// A revalidated adaptation that no longer matches the acknowledged exercise set must be
-    /// disclosed again rather than accepted.
-    /// </summary>
-    public static bool AdaptationChanged(IEnumerable<int> acknowledgedConditionIds,
-        IEnumerable<int> returnedConditionIds)
-    {
-        var acknowledged = acknowledgedConditionIds.Where(id => id > 0).ToHashSet();
-        var returned = returnedConditionIds.Where(id => id > 0).ToHashSet();
-        return !acknowledged.SetEquals(returned);
-    }
+        !styleChoiceRequired && (!replacesExistingPlan || replacementDisclosed);
 
     /// <summary>
     /// CR01/PG01: an in-flight generation may only publish its result, start a lease or accept a plan
@@ -91,9 +69,8 @@ public static class WorkoutPlanningFlowRule
         appearanceIsCurrent && requestVersion == activeRequestVersion;
 
     public static PlanAcceptanceAcknowledgments AcceptanceAcknowledgments(bool replacesExistingPlan,
-        bool reducedVolumeRequired, IEnumerable<int> exerciseConditionIds) =>
-        new(replacesExistingPlan, reducedVolumeRequired,
-            exerciseConditionIds.Where(id => id > 0).ToHashSet());
+        bool reducedVolumeRequired) =>
+        new(replacesExistingPlan, reducedVolumeRequired);
 
     public static bool CanAccept(bool busy, bool accepted, bool navigationPending, bool invalidated,
         bool persisted, bool hasLease, bool feasible, bool uncertainAcceptance) =>
