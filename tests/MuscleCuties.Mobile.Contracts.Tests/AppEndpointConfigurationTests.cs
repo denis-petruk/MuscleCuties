@@ -9,14 +9,20 @@ public sealed class AppEndpointConfigurationTests
     public void Endpoint_Urls_Match_Documented_Targets()
     {
         Assert.Equal("http://127.0.0.1:5080", AppEndpointConfiguration.LocalBaseUrl);
-        Assert.Equal("https://staging-api.musclecuties.app", AppEndpointConfiguration.StagingBaseUrl);
         Assert.Equal("https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com", AppEndpointConfiguration.BetaBaseUrl);
     }
 
+    [Fact]
+    public void No_Staging_Target_Exists()
+    {
+        // Beta is the only non-local target; a Staging host must never pass the allowlist.
+        Assert.False(AppEndpointConfiguration.IsAllowlisted("https://staging-api.musclecuties.app", out _));
+        Assert.DoesNotContain("Staging", Enum.GetNames<AppTargetEnvironment>());
+    }
+
     [Theory]
-    [InlineData("http://127.0.0.1:5080", true)]
-    [InlineData("http://localhost:5080", true)]
-    [InlineData("https://staging-api.musclecuties.app", true)]
+    [InlineData("http://127.0.0.1:5080", true)]        [InlineData("http://localhost:5080", true)]
+        [InlineData("https://staging-api.musclecuties.app", false)]
     [InlineData("https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com", true)]
     [InlineData("https://malicious.example.com", false)]
     [InlineData("ftp://127.0.0.1:5000", false)]
@@ -31,17 +37,13 @@ public sealed class AppEndpointConfigurationTests
     public void Cache_And_Token_Keys_Are_Partitioned_By_Environment()
     {
         var localDir = AppEndpointConfiguration.GetCacheDirectoryName(AppTargetEnvironment.Local);
-        var stagingDir = AppEndpointConfiguration.GetCacheDirectoryName(AppTargetEnvironment.Staging);
         var betaDir = AppEndpointConfiguration.GetCacheDirectoryName(AppTargetEnvironment.Beta);
 
-        Assert.NotEqual(localDir, stagingDir);
-        Assert.NotEqual(stagingDir, betaDir);
+        Assert.NotEqual(localDir, betaDir);
 
         var localKey = AppEndpointConfiguration.GetSessionTokenKey(AppTargetEnvironment.Local);
-        var stagingKey = AppEndpointConfiguration.GetSessionTokenKey(AppTargetEnvironment.Staging);
         var betaKey = AppEndpointConfiguration.GetSessionTokenKey(AppTargetEnvironment.Beta);
 
-        Assert.NotEqual(localKey, stagingKey);
-        Assert.NotEqual(stagingKey, betaKey);
+        Assert.NotEqual(localKey, betaKey);
     }
 }

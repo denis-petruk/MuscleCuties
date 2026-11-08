@@ -4,12 +4,11 @@ on:
   workflow_dispatch:
     inputs:
       target_environment:
-        description: 'Target environment (staging or beta)'
+        description: 'Target environment (beta only; no separate Staging API or database is provisioned)'
         required: true
-        default: 'staging'
+        default: 'beta'
         type: choice
         options:
-          - staging
           - beta
       target_runtime:
         description: 'Target runtime (device for TestFlight or simulator for verification)'
