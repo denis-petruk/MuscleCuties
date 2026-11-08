@@ -104,33 +104,29 @@ public sealed class WorkoutPlanningFlowRuleTests
 
         var acceptance = WorkoutPlanningFlowRule.AcceptanceAcknowledgments(
             replacesExistingPlan: false,
-            reducedVolumeRequired: true,
-            exerciseConditionIds: []);
+            reducedVolumeRequired: true);
 
         Assert.True(acceptance.ReducedVolumeAcknowledged);
     }
 
     [Fact]
-    public void AcceptanceAcknowledgments_CarryVisibleConditionIdsAndReplacementConsent()
+    public void AcceptanceAcknowledgments_CarryReplacementAndReducedVolume()
     {
         var acceptance = WorkoutPlanningFlowRule.AcceptanceAcknowledgments(
             replacesExistingPlan: true,
-            reducedVolumeRequired: true,
-            exerciseConditionIds: [3, 7, 3, 0, -2]);
+            reducedVolumeRequired: true);
 
         Assert.True(acceptance.ReplacementConfirmed);
         Assert.True(acceptance.ReducedVolumeAcknowledged);
-        Assert.Equal(new HashSet<int> { 3, 7 }, acceptance.AcknowledgedExerciseConditionIds);
     }
 
     [Fact]
-    public void AcceptanceAcknowledgments_WithoutReducedVolumeOrConditions_KeepsFlagsClear()
+    public void AcceptanceAcknowledgments_WithoutDecisions_KeepFlagsClear()
     {
-        var acceptance = WorkoutPlanningFlowRule.AcceptanceAcknowledgments(false, false, []);
+        var acceptance = WorkoutPlanningFlowRule.AcceptanceAcknowledgments(false, false);
 
         Assert.False(acceptance.ReplacementConfirmed);
         Assert.False(acceptance.ReducedVolumeAcknowledged);
-        Assert.Empty(acceptance.AcknowledgedExerciseConditionIds);
     }
 
     [Theory]

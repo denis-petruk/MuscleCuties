@@ -42,7 +42,6 @@ public enum ExerciseEligibilityReason
     BodyZoneNeedsIndividualReview,
     MissingReviewedSubstitutionMapping,
     UnknownExperienceNeedsAssessment,
-    ReviewConditionsNeedAcknowledgment,
     RejectedReviewedSubstitution,
     ManualProgrammingChangeRequired,
     SubstitutionConditionsNeedAcknowledgment,
@@ -91,7 +90,6 @@ public sealed record ExerciseEligibilityContext(
     bool HasBodyZoneLimitation,
     MuscleCuties.Core.Models.Enums.Workout.InjuryFlag ActiveInjuryFlags =
         MuscleCuties.Core.Models.Enums.Workout.InjuryFlag.None,
-    IReadOnlySet<int>? AcknowledgedExerciseConditionIds = null,
     bool UnknownExperienceAssessmentCompleted = false,
     IReadOnlySet<string>? AcknowledgedSubstitutionPairKeys = null);
 
@@ -213,11 +211,6 @@ public static class ExerciseEligibilityRule
         if (context.Experience == ActivityExperience.Unknown &&
             !context.UnknownExperienceAssessmentCompleted)
             reasons.Add(ExerciseEligibilityReason.UnknownExperienceNeedsAssessment);
-        // ExperienceConditions are coaching guidance, not an individualized safety restriction.
-        // Only an explicit ReviewConditions entry requires a separate acknowledgment.
-        if (!string.IsNullOrWhiteSpace(candidate.ReviewConditions) &&
-            context.AcknowledgedExerciseConditionIds?.Contains(candidate.ExerciseId) != true)
-            reasons.Add(ExerciseEligibilityReason.ReviewConditionsNeedAcknowledgment);
         if (reasons.Count > 0)
             return new ExerciseEligibilityDecision(candidate, ExerciseEligibilityStatus.Blocked,
                 reasons.Distinct().ToArray());

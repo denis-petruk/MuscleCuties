@@ -6,7 +6,7 @@ namespace MuscleCuties.Core.Tests;
 /// <summary>
 /// PG01: one foreground Generate/Regenerate intent activates an eligible plan. A replacement is only
 /// activated when its consequence was disclosed on the initiating action, and an injury-excluded
-/// exercise is the only acknowledgment that may interrupt activation.
+/// No per-exercise acknowledgment gate exists; eligibility is decided by the reviewed rules.
 /// </summary>
 public sealed class WorkoutPlanningActivationRuleTests
 {
@@ -15,17 +15,16 @@ public sealed class WorkoutPlanningActivationRuleTests
     {
         Assert.True(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
             userRequested: true, replacementDisclosed: false, replacesExistingPlan: false, feasible: true,
-            persisted: true, hasLease: true, missingRequiredAnswers: false, styleChoiceRequired: false,
-            acknowledgmentUnavailable: false));
+            persisted: true, hasLease: true, missingRequiredAnswers: false, styleChoiceRequired: false));
     }
 
     [Fact]
     public void ReplacementActivatesOnlyWhenItsConsequenceWasDisclosedUpFront()
     {
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, replacementDisclosed: false, replacesExistingPlan: true, true, true, true, false, false, false));
+            true, replacementDisclosed: false, replacesExistingPlan: true, true, true, true, false, false));
         Assert.True(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, replacementDisclosed: true, replacesExistingPlan: true, true, true, true, false, false, false));
+            true, replacementDisclosed: true, replacesExistingPlan: true, true, true, true, false, false));
     }
 
     [Theory]
@@ -34,7 +33,7 @@ public sealed class WorkoutPlanningActivationRuleTests
     public void BackgroundWorkNeverActivatesAPlan(bool userRequested)
     {
         var activated = WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            userRequested, true, false, true, true, true, false, false, false);
+            userRequested, true, false, true, true, true, false, false);
         Assert.Equal(userRequested, activated);
     }
 
@@ -44,17 +43,15 @@ public sealed class WorkoutPlanningActivationRuleTests
         // Missing required answers, a strength-style choice, no lease, an unpersisted proposal, a
         // pending acknowledgment or an infeasible preview must not activate anything.
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, true, true, true, missingRequiredAnswers: true, false, false));
+            true, true, false, true, true, true, missingRequiredAnswers: true, false));
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, true, true, true, false, styleChoiceRequired: true, false));
+            true, true, false, true, true, true, false, styleChoiceRequired: true));
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, true, true, hasLease: false, false, false, false));
+            true, true, false, true, true, hasLease: false, false, false));
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, true, persisted: false, true, false, false, false));
+            true, true, false, true, persisted: false, true, false, false));
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, true, true, true, false, false, acknowledgmentUnavailable: true));
-        Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, feasible: false, true, true, false, false, false));
+            true, true, false, feasible: false, true, true, false, false));
     }
 
     [Fact]
@@ -67,24 +64,6 @@ public sealed class WorkoutPlanningActivationRuleTests
         Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
             replacesExistingPlan: true, feasible: true, persisted: true, missingRequiredAnswers: false,
             styleChoiceRequired: false, hasOmissions: false));
-    }
-
-    [Fact]
-    public void InjuryAcknowledgementIsTheOnlyInterruptingDecision()
-    {
-        Assert.True(WorkoutPlanningFlowRule.RequiresInjuryAcknowledgment(
-            exerciseReviewConditionCount: 2, acknowledgedConditionCount: 0));
-        Assert.False(WorkoutPlanningFlowRule.RequiresInjuryAcknowledgment(0, 0));
-        Assert.False(WorkoutPlanningFlowRule.RequiresInjuryAcknowledgment(2, 2));
-    }
-
-    [Fact]
-    public void AChangedAdaptationHasToBeDisclosedAgain()
-    {
-        Assert.False(WorkoutPlanningFlowRule.AdaptationChanged([7, 9], [9, 7]));
-        Assert.True(WorkoutPlanningFlowRule.AdaptationChanged([7, 9], [7]));
-        Assert.True(WorkoutPlanningFlowRule.AdaptationChanged([7], [7, 9]));
-        Assert.True(WorkoutPlanningFlowRule.AdaptationChanged([], [7]));
     }
 
     [Theory]

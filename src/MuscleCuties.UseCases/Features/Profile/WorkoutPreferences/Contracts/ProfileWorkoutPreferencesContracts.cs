@@ -103,4 +103,6 @@ public sealed record WorkoutPreferencesDto(
 public interface IProfileWorkoutPreferencesUseCase
 {
     Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken = default);
+
+    Task<bool> SaveAsync(WorkoutPreferencesDto preferences, CancellationToken cancellationToken = default);
 }

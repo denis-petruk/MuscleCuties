@@ -41,11 +41,13 @@ public sealed record StrengthPlanPreviewSessionV020(
     IReadOnlyDictionary<string, string> SlotReviewConditions,
     DayOfWeek? PlannedWeekday = null);
 
+/// <summary><c>GeneralConditions</c> keeps its wire name and now carries only real review
+/// conditions; it is null when the review supplied none.</summary>
 public sealed record StrengthExerciseReviewConditionV020(
     int ExerciseId,
     string ExerciseName,
-    string ExperienceConditions,
-    string GeneralConditions);
+    string? ExperienceConditions,
+    string? GeneralConditions);
 
 public sealed record StrengthPlanPreviewResponseV020(
     string PolicyId,

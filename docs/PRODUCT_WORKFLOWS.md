@@ -9,13 +9,14 @@ The rules below govern plan acceptance and safety. The [approved Beta workout po
 - Show a new or changed plan for user review when the established workflow requires it.
 - Automatically apply approved conservative adjustments for readiness, sleep, energy, or cycle-related conditions within the existing reviewed rules.
 - Apply injury-related restrictions and safe substitutions; request additional information when the existing rules cannot determine a safe result.
-- Treat **Apply** as the user's acceptance and acknowledgment where required.
+- Treat **Apply** as the user's acceptance of the preview it belongs to.
 
 ## Plan acceptance (one policy)
 
 - **First plan:** the source's tested exception stands. A generated first plan that is feasible, persisted, leased, requested in the foreground and free of missing required answers is applied automatically; no separate Apply tap is added.
 - **Replacement plan:** an existing active plan is never replaced without an explicit user action. The initiating Generate/Regenerate control states the replacement consequence up front, and the resulting plan is activated only through **Apply plan**.
-- **Acknowledgments:** Apply plan supplies the required acknowledgments for the preview it belongs to. A preview that needs an acknowledgment the UI cannot collect cannot be auto-activated.
+- **No per-exercise acknowledgment gate:** applying the preview is the only decision. Injury-excluded movements are already removed by the reviewed rules and the preview explains the week inline, so nothing waits on a per-exercise acknowledgment step.
+- **Reduced volume:** when the week fits only with reduced volume, the preview says so and Apply plan carries that acceptance.
 - No other acceptance path exists. A local generator, a cached preview or a failed API call must not substitute for this policy.
 
 ## Generation prerequisites and recovery

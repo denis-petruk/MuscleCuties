@@ -119,6 +119,9 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         StatusMessage = string.Empty;
         try
         {
+            // A draft only applies to the navigation that supplied it; the cached copy made the
+            // editor keep showing preferences the user had since changed.
+            _pendingLoadPreferences = null;
             if (_navigationContext?.TryTake<WorkoutPreferencesDto>(DraftPreferencesContextKey, out var draft) == true)
                 _pendingLoadPreferences = draft;
             var preferences = _pendingLoadPreferences ?? await _useCase.LoadAsync();
@@ -215,13 +218,6 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         var settingsSaved = false;
         try
         {
-            if (IsPlanSetupNavigationPending && !HasUnsavedChanges)
-            {
-                settingsSaved = true;
-                await OpenPlanSetupAsync();
-                return;
-            }
-
             if (!IsExerciseExclusionCatalogLoaded)
             {
                 StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_ExerciseCatalogUnavailable");
@@ -267,6 +263,12 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                             option.ActivityType, availableWeekdays.Length)!.Value),
                 ExerciseExclusionOptions.Where(option => option.IsSelected)
                     .Select(option => option.ExerciseId).ToHashSet());
+            if (!await _useCase.SaveAsync(draftPreferences).ConfigureAwait(true))
+            {
+                StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_SaveServerUnavailable");
+                return;
+            }
+
             if (_navigationContext is null)
                 throw new InvalidOperationException("Workout planning draft context is unavailable.");
             _navigationContext.Set(DraftPreferencesContextKey, draftPreferences);

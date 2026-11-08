@@ -237,12 +237,7 @@ public static class MauiProgram
                 UiTextCatalog.Get("Workout_Generation_ReplacementCancel"))),
             () => NavigateToAsync("//DashboardPage"),
             sp.GetRequiredService<IWorkoutAccountCalendarClient>(),
-            overview: sp.GetRequiredService<IWorkoutOverviewUseCase>(),
-            confirmInjuryAdaptationAsync: summary => MainThread.InvokeOnMainThreadAsync(() =>
-                Shell.Current.DisplayAlertAsync(
-                    UiTextCatalog.Get("Workout_Generation_InjuryTitle"), summary,
-                    UiTextCatalog.Get("Workout_Generation_InjuryContinue"),
-                    UiTextCatalog.Get("Common_Cancel")))));
+            overview: sp.GetRequiredService<IWorkoutOverviewUseCase>()));
 
         services.AddTransient<WorkoutSessionViewModel>(sp => new WorkoutSessionViewModel(
             sp.GetRequiredService<IWorkoutSessionActionUseCase>(),

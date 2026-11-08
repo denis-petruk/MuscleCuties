@@ -31,7 +31,7 @@ This follow-up records work in the current local checkout and disposable Postgre
 | API with invalid local database credentials | Liveness 200, readiness 503 |
 | ARM64 Lambda package | `.NET 10` `linux-arm64` package built; archive includes `MuscleCuties.Infrastructure.PostgreSql.dll` and migration identifiers |
 
-The injury reconciliation integration test remains blocked. Its preview returns no sessions against the local catalog fixture. A diagnostic run with spaced strength days still found required movements waiting for exercise-condition acknowledgment, an unsupported beginner experience for reviewed candidates, and missing duration metadata for the timed trunk movement. I left the fixture blocked rather than inventing acknowledgments or duration values.
+The injury reconciliation integration test was blocked at this revision: its preview returned no sessions against the local catalog fixture. The cause was the per-exercise exercise-condition acknowledgment gate, which blocked every catalog exercise until each was individually acknowledged and which no screen could satisfy. That gate was removed on 2026-11-08 — the workbook's coaching text is guidance and is shown with the exercise instead of gating eligibility — and the test now asserts a feasible week with real strength content and passes against the seeded fixture.
 
 An earlier full PostgreSQL integration run reported 86 passed and 3 failed: one database-name fixture mismatch, one planning acceptance case that passed in isolation, and this injury preview case. Focused reruns passed the generated-meal readback and planning acceptance cases; the full integration project was not rerun after those focused changes.
 

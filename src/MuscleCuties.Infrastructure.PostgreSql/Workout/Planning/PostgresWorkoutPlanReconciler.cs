@@ -128,7 +128,6 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
 
         var styleDto = WorkoutActivityContractMapper.ToDto(style);
         var request = new StrengthPlanPreviewRequestV020(styleDto, today, previous.ActivityHistory,
-            AcknowledgedExerciseConditionIds: previous.AcknowledgedExerciseConditionIds,
             AcknowledgedSubstitutionPairKeys: previous.AcknowledgedSubstitutionPairKeys,
             WarmupMinutes: previous.WarmupMinutes, CooldownMinutes: previous.CooldownMinutes)
         {

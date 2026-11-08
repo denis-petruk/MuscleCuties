@@ -76,12 +76,7 @@ public sealed class InjuryCanonicalReconciliationTests
                     TimeZoneId = TimeZoneInfo.Utc.Id, BaselineExperience = TrainingExperienceLevel.Beginner,
                     EffectiveExperience = TrainingExperienceLevel.Beginner });
                 await db.SaveChangesAsync();
-                var definitions = await db.WorkoutExerciseDefinitions.AsNoTracking().ToListAsync();
-                var acknowledgedIds = definitions.Where(row =>
-                    WorkoutExerciseV020CatalogMapper.Map(row).MetadataGaps.Count == 0).Select(row => row.Id).ToHashSet();
-                Assert.NotEmpty(acknowledgedIds);
                 var request = new StrengthPlanPreviewRequestV020(WorkoutActivityDto.GeneralStrength, today, null,
-                    AcknowledgedExerciseConditionIds: acknowledgedIds,
                     WarmupMinutes: WarmupMinutes, CooldownMinutes: CooldownMinutes) { DraftPreferences = draft };
                 var source = await new PostgresStrengthPlanPreviewSourceV020(db).LoadInCurrentTransactionAsync(user, CancellationToken.None);
                 var preview = PreviewStrengthPlanV020UseCase.EvaluateLoadedSource(user, request, source);
@@ -240,7 +235,7 @@ public sealed class InjuryCanonicalReconciliationTests
     }
 
     [Fact]
-    public async Task UnacknowledgedBeginnerInjuryDefersReconciliationAndPreservesHistory()
+    public async Task BeginnerWithoutAcknowledgmentGetsFeasibleWeekAndHistoryIsPreserved()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);
         Assert.False(string.IsNullOrWhiteSpace(connection));
@@ -278,10 +273,10 @@ public sealed class InjuryCanonicalReconciliationTests
                     WarmupMinutes: WarmupMinutes, CooldownMinutes: CooldownMinutes) { DraftPreferences = draft };
                 var source = await new PostgresStrengthPlanPreviewSourceV020(db).LoadInCurrentTransactionAsync(user, CancellationToken.None);
                 var preview = PreviewStrengthPlanV020UseCase.EvaluateLoadedSource(user, request, source);
-                // Every reviewed catalog exercise has a user-specific condition. This synthetic
-                // beginner has acknowledged none, so a strength proposal must not be accepted.
-                Assert.NotEqual("Feasible", preview.Status);
-                Assert.DoesNotContain(preview.Sessions, session => session.Slots.Any(slot => slot.ExerciseId.HasValue));
+                // Reviewed coaching text is guidance, not a per-exercise acknowledgment, so a valid
+                // beginner profile gets a feasible week with real strength content.
+                Assert.True(preview.Status == "Feasible", JsonSerializer.Serialize(preview));
+                Assert.Contains(preview.Sessions.SelectMany(session => session.Slots), slot => slot.ExerciseId.HasValue);
                 await transaction.CommitAsync();
             }
             db.ChangeTracker.Clear();

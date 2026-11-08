@@ -58,11 +58,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private const string ReplacementSummaryKey = "Workout_Generation_ReplacementSummary";
     private const string ReplacementCancelKey = "Workout_Generation_ReplacementCancel";
     private const string ReplacementDisclosureKey = "Workout_Generation_ReplacesActivePlanNotice";
-    private const string InjuryTitleKey = "Workout_Generation_InjuryTitle";
-    private const string InjurySummaryFormatKey = "Workout_Generation_InjurySummaryFormat";
-    private const string InjuryCancelledKey = "Workout_Generation_InjuryCancelled";
-    private const string InjuryChangedKey = "Workout_Generation_InjuryChanged";
-    private const string InjuryUnavailableKey = "Workout_Generation_InjuryUnavailable";
     private const string ApplyPlanKey = "Workout_Generation_ApplyPlan";
     private const string CommonCancelKey = "Common_Cancel";
     private const string ReducedVolumeNoticeKey = "Workout_Generation_ReducedVolumeNotice";
@@ -100,7 +95,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private readonly Func<Task> _navigateToTrainAsync;
     private readonly INavigationContextService? _navigationContext;
     private readonly Func<string, Task<bool>>? _confirmReplacementAsync;
-    private readonly Func<string, Task<bool>>? _confirmInjuryAdaptationAsync;
     private readonly Func<Task>? _navigateToDashboardAsync;
     private readonly IWorkoutAccountCalendarClient? _accountCalendar;
     private readonly IWorkoutOverviewUseCase? _overview;
@@ -119,7 +113,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private Guid? _activeOtherProposalId;
     private CancellationTokenSource? _leaseRenewalCancellation;
     private bool _historyWasSelfReported;
-    private HashSet<int>? _pendingAcknowledgedConditionIds;
 
     // PG01/CR01: an in-flight generation may only publish, lease or activate while it is still the
     // current appearance's current request. The page bumps this on entry and departure.
@@ -185,8 +178,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         Func<string, Task<bool>>? confirmReplacementAsync = null,
         Func<Task>? navigateToDashboardAsync = null,
         IWorkoutAccountCalendarClient? accountCalendar = null,
-        IWorkoutOverviewUseCase? overview = null,
-        Func<string, Task<bool>>? confirmInjuryAdaptationAsync = null)
+        IWorkoutOverviewUseCase? overview = null)
     {
         _proposalClient = proposalClient;
         _preferences = preferences;
@@ -196,7 +188,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         _navigateToTrainAsync = navigateToTrainAsync;
         _navigationContext = navigationContext;
         _confirmReplacementAsync = confirmReplacementAsync;
-        _confirmInjuryAdaptationAsync = confirmInjuryAdaptationAsync;
         _navigateToDashboardAsync = navigateToDashboardAsync;
         _accountCalendar = accountCalendar;
         _overview = overview;
@@ -209,7 +200,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         CreateProposalCommand = new AsyncRelayCommand(CreateProposalAsync, CanCreateProposal);
         AcceptProposalCommand = new AsyncRelayCommand(AcceptProposalAsync, CanAcceptProposal);
         EditDetailsCommand = new AsyncRelayCommand(EditDetailsAsync, CanEditDetails);
-        ClosePreviewCommand = new AsyncRelayCommand(ClosePreviewAsync, CanClosePreview);
+        ClosePreviewCommand = new AsyncRelayCommand(DismissPreviewAsync, CanClosePreview);
         KeepCurrentPlanCommand = new AsyncRelayCommand(_navigateBackAsync);
         BackCommand = new AsyncRelayCommand(BackAsync, () => !IsBusy);
         OpenTrainCommand = new AsyncRelayCommand(OpenTrainAsync, CanOpenTrain);
@@ -465,9 +456,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             persisted: _proposal?.IsPersisted == true,
             hasLease: _proposal?.Lease is not null,
             missingRequiredAnswers: HasMissingRequiredAnswers(),
-            styleChoiceRequired: Preview?.StrengthStyleChoiceRequired == true,
-            acknowledgmentUnavailable: Preview is { ExerciseReviewConditions.Count: > NoPolicyReasons } &&
-                                        _confirmInjuryAdaptationAsync is null);
+            styleChoiceRequired: Preview?.StrengthStyleChoiceRequired == true);
 
     private bool HasValidSavedAvailability =>
         _availableWeekdays.Length is >= WorkoutPreferencesConstraints.MinimumAvailableWeekdays and
@@ -493,6 +482,30 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 ActivityHistory = _savedAnswers?.ActivityEligibilityEvidence
                     .FirstOrDefault(previous => previous.Activity == answer.Activity)?.ActivityHistory
             }).ToArray();
+
+    // Closing the preview returns to wherever generation started. The builder stays on screen only
+    // when a safety answer is still missing and preferences have to change before previewing again.
+    private bool RequiresSafetyInput => _safetyPlanChanged || HasMissingRequiredAnswers();
+
+    private async Task DismissPreviewAsync()
+    {
+        var keepBuilder = RequiresSafetyInput;
+        await ClosePreviewAsync();
+        if (keepBuilder && !IsTrainNavigationPending)
+            return;
+
+        // Closing returns to the training surface. Popping ".." here assumed a pushed page and left a
+        // root-opened builder on screen, so the destination is explicit instead.
+        try
+        {
+            await _navigateToTrainAsync();
+        }
+        catch (Exception exception)
+        {
+            System.Diagnostics.Debug.WriteLine(
+                $"[StrengthPlanGeneration] Return to Train after closing the preview failed: {exception.GetType().Name}.");
+        }
+    }
 
     private async Task InitializePlanPreviewOrAutoApplyAsync(long generation)
     {
@@ -618,6 +631,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             OnPropertyChanged(nameof(CanOfferExploreOtherFeatures));
             _activeOtherProposalId = (await _proposalClient.GetActivePreviewAsync()).ProposalId;
             OnPropertyChanged(nameof(HasActiveOtherPreview));
+
+            // A draft belongs to the navigation that produced it. Keeping a previously consumed draft
+            // here made every later visit reuse preferences the user had since changed, so the page
+            // now falls back to the persisted preferences unless a fresh draft was just handed over.
+            _draftPreferences = null;
             if (_navigationContext?.TryTake<WorkoutPreferencesDto>(ProfileWorkoutPreferencesViewModel.DraftPreferencesContextKey, out var draft) == true)
             {
                 _draftPreferences = draft;
@@ -1103,7 +1121,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             ActivitySessionDurationsMinutes = preferences.ActivitySessionDurationsMinutes,
             RequestedSessionsPerWeek = preferences.RequestedSessionsPerWeek,
             ExcludedExerciseIds = preferences.ExcludedExerciseIds?.ToHashSet(),
-            AcknowledgedExerciseConditionIds = _pendingAcknowledgedConditionIds?.ToHashSet(),
             ActivityEligibilityEvidence = CurrentActivityEvidence(),
             HiitUnderlyingCardioActivity = underlyingCardioActivity,
             HiitEligibilityEvidence = underlyingCardioActivity is { } selectedUnderlyingActivity
@@ -1117,10 +1134,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         _proposal?.Lease is not null, IsPreviewApplicable, _pendingAcceptance is not null) &&
         HasStrengthPreviewSessions;
 
-    // A feasible preview, or a limited one whose strength content is still reviewed, can be activated.
-    // Any exercise excluded by injury is acknowledged through the preview request, never here.
-    private bool IsPreviewApplicable => Preview is { Status: "Feasible" } ||
-        Preview is { Status: "Limited" } preview && preview.ExerciseReviewConditions.Count > NoPolicyReasons;
+    // Only a feasible preview can be applied. Preferences are saved before the preview is requested.
+    private bool IsPreviewApplicable => Preview is { Status: "Feasible" };
 
     private bool CanExploreOtherFeatures() => !IsBusy && CanOfferExploreOtherFeatures;
 
@@ -1231,83 +1246,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         await _navigateBackAsync();
     }
 
-    private async Task<bool> ConfirmInjuryAdaptationAsync(long generation)
-    {
-        if (Preview is not { } preview)
-            return false;
-
-        var conditions = preview.ExerciseReviewConditions;
-        if (_confirmInjuryAdaptationAsync is null)
-        {
-            // No native surface can ask: the plan must stay inactive rather than acknowledge silently.
-            StatusMessage = UiTextCatalog.Get(InjuryUnavailableKey);
-            return false;
-        }
-
-        if (!await _confirmInjuryAdaptationAsync(BuildInjuryAdaptationSummary(conditions)))
-        {
-            // Cancel keeps the active plan and the excluded exercise stays blocked.
-            StatusMessage = UiTextCatalog.Get(InjuryCancelledKey);
-            return false;
-        }
-
-        if (_injuryRevalidationAttempted)
-        {
-            StatusMessage = UiTextCatalog.Get(InjuryChangedKey);
-            return false;
-        }
-        _injuryRevalidationAttempted = true;
-
-        var acknowledgedIds = conditions
-            .Select(condition => condition.ExerciseId)
-            .Where(id => id > 0)
-            .ToHashSet();
-        if (acknowledgedIds.Count == 0)
-        {
-            StatusMessage = UiTextCatalog.Get(InjuryUnavailableKey);
-            return false;
-        }
-
-        if (!IsCurrentGeneration(generation))
-            return false;
-
-        await ClosePreviewAsync();
-        _pendingAcknowledgedConditionIds = acknowledgedIds;
-        try
-        {
-            // Revalidate the same request with the acknowledged exercise set. The recreated preview
-            // activates itself when it is eligible; this outer acceptance must not continue.
-            await CreatePreviewAsync(isUserIntent: false);
-        }
-        finally
-        {
-            _pendingAcknowledgedConditionIds = null;
-        }
-
-        if (Preview is null)
-            return false;
-
-        if (WorkoutPlanningFlow.AdaptationChanged(acknowledgedIds,
-                Preview.ExerciseReviewConditions.Select(condition => condition.ExerciseId)))
-            StatusMessage = UiTextCatalog.Get(InjuryChangedKey);
-
-        return false;
-    }
-
-    private static string BuildInjuryAdaptationSummary(
-        IReadOnlyList<StrengthExerciseReviewConditionV020> conditions)
-    {
-        var names = conditions
-            .Select(condition => string.IsNullOrWhiteSpace(condition.ExerciseName)
-                ? condition.ExerciseId.ToString(CultureInfo.CurrentCulture)
-                : condition.ExerciseName)
-            .Where(name => !string.IsNullOrWhiteSpace(name))
-            .Distinct(StringComparer.CurrentCulture)
-            .ToArray();
-        return StrengthPlanGenerationDisplayMapper.FormatLocalized(InjurySummaryFormatKey,
-            string.Join(", ", names));
-    }
-
     private async Task EditDetailsAsync()
     {
         // Close the foreground sheet before navigating so an obsolete failure/preview surface cannot
@@ -1402,17 +1340,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         StatusMessage = NoStatusMessage;
         try
         {
-            // PG01: a specific exercise excluded because of a recorded injury is the only workout
-            // adaptation, and the only extra decision. It is never acknowledged on the person's
-            // behalf: one native alert names the excluded work and the eligible alternative.
-            if (_pendingAcceptance is null &&
-                WorkoutPlanningFlow.RequiresInjuryAcknowledgment(
-                    Preview?.ExerciseReviewConditions.Count ?? NoPolicyReasons,
-                    _pendingAcknowledgedConditionIds?.Count ?? NoPolicyReasons))
-            {
-                if (!await ConfirmInjuryAdaptationAsync(generation))
-                    return;
-            }
             if (!IsPreviewApplicable)
             {
                 NotifyPreviewChanged();
@@ -1452,8 +1379,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 lease = renewed.Lease;
                 var acceptance = WorkoutPlanningFlow.AcceptanceAcknowledgments(
                     _proposal.ReplacesExistingPlan,
-                    RequiresReducedVolumeAcknowledgment,
-                    (Preview?.ExerciseReviewConditions ?? []).Select(condition => condition.ExerciseId));
+                    RequiresReducedVolumeAcknowledgment);
                 _pendingAcceptance = new AcceptStrengthPlanProposalRequestV020(
                     _proposal.ProposalId, lease.LeaseId, lease.Fence, _proposal.ProposalVersion,
                     ReplacementConfirmed: acceptance.ReplacementConfirmed,

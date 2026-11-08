@@ -284,6 +284,69 @@ public sealed class StrengthPlanPreviewRuleTests
         Assert.Contains(StrengthPlanPreviewRule.SessionDurationInvalidCode, result.LimitationCodes);
     }
 
+    [Fact]
+    public void Preview_DisclosesEveryLimitationReasonInsteadOfOnlyTheFirst()
+    {
+        var tooShortWithoutMuscleMetadata = Data(new Dictionary<WorkoutActivityType, int>
+        {
+            [WorkoutActivityType.GeneralStrength] = DurationTooShortMinutes
+        }, ExcessiveExerciseSecondsPerRep) with
+        {
+            PrimaryMuscleByExerciseId = new Dictionary<int, string>()
+        };
+
+        var result = StrengthPlanPreviewRule.Evaluate(Choices(), tooShortWithoutMuscleMetadata);
+
+        Assert.Equal(StrengthPlanPreviewStatus.Limited, result.Status);
+        Assert.Contains("RequiredMovementWorkExceedsSessionDurationOrTimingMissing", result.LimitationCodes);
+        Assert.Contains(result.LimitationCodes,
+            code => code.StartsWith("PrimaryMuscleMissing:", StringComparison.Ordinal));
+        Assert.True(result.LimitationCodes.Count >= 2,
+            $"Expected every limitation reason, got: {string.Join(", ", result.LimitationCodes)}");
+    }
+
+    [Fact]
+    public void Preview_OmitsRationaleEntriesWhenNoExerciseHasReviewContent()
+    {
+        var result = StrengthPlanPreviewRule.Evaluate(Choices(), Data(
+            new Dictionary<WorkoutActivityType, int>
+            {
+                [WorkoutActivityType.GeneralStrength] = DurationSufficientMinutes
+            }));
+
+        Assert.NotEmpty(result.Sessions);
+        Assert.Empty(result.ExerciseReviewConditions);
+    }
+
+    [Fact]
+    public void Preview_KeepsExerciseSpecificRationaleAndLeavesMissingReviewTextNull()
+    {
+        var data = Data(new Dictionary<WorkoutActivityType, int>
+        {
+            [WorkoutActivityType.GeneralStrength] = DurationSufficientMinutes
+        });
+        var catalog = data.Catalog!
+            .Select(entry => entry with
+            {
+                Candidate = entry.Candidate with
+                {
+                    ExperienceConditions = entry.Candidate.ExerciseId == FirstExerciseId
+                        ? "  Progress load only while form holds.  "
+                        : "   "
+                }
+            })
+            .ToArray();
+        var result = StrengthPlanPreviewRule.Evaluate(Choices(), data with { Catalog = catalog });
+
+        var condition = Assert.Single(result.ExerciseReviewConditions);
+        Assert.Equal(FirstExerciseId, condition.ExerciseId);
+        Assert.Equal("Progress load only while form holds.", condition.ExperienceConditions);
+        Assert.Null(condition.ReviewConditions);
+        Assert.All(result.ExerciseReviewConditions, entry => Assert.True(
+            !string.IsNullOrWhiteSpace(entry.ExperienceConditions) ||
+            !string.IsNullOrWhiteSpace(entry.ReviewConditions)));
+    }
+
     private static StrengthPlanPreviewChoices Choices(
         WorkoutActivityType activity = WorkoutActivityType.GeneralStrength) => new(
         activity,

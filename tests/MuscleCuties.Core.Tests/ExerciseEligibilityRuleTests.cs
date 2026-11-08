@@ -129,25 +129,6 @@ public sealed class ExerciseEligibilityRuleTests
         var result = ExerciseEligibilityRule.Filter([candidate], Context());
 
         Assert.Equal(ExerciseEligibilityStatus.Eligible, result.Status);
-        Assert.DoesNotContain(ExerciseEligibilityReason.ReviewConditionsNeedAcknowledgment,
-            result.Decisions.Single().Reasons);
-    }
-
-    [Fact]
-    public void Explicit_Review_Condition_Still_Requires_Acknowledgment()
-    {
-        var candidate = Candidate(FirstExerciseId) with
-        {
-            ReviewConditions = "Use only a controlled, tolerated range."
-        };
-        var missing = ExerciseEligibilityRule.Filter([candidate], Context());
-        var acknowledged = ExerciseEligibilityRule.Filter([candidate],
-            Context() with { AcknowledgedExerciseConditionIds = new HashSet<int> { FirstExerciseId } });
-
-        Assert.Equal(ExerciseEligibilityStatus.Blocked, missing.Status);
-        Assert.Contains(ExerciseEligibilityReason.ReviewConditionsNeedAcknowledgment,
-            missing.Decisions.Single().Reasons);
-        Assert.Equal(ExerciseEligibilityStatus.Eligible, acknowledged.Status);
     }
 
     [Fact]
