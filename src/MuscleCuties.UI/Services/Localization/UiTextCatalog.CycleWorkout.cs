@@ -374,6 +374,12 @@ public static partial class UiTextCatalog
         English["Workout_Session_SavingLoadingAccessibility"] = "Saving or loading your workout";
         English["Workout_Session_SetsCompletedAccessibility"] = "Number of sets completed";
         English["Workout_Session_SetsHeader"] = "Sets";
+        English["Workout_Session_SetRowsHeader"] = "Logged sets";
+        English["Workout_Session_RirHeader"] = "RIR";
+        English["Workout_Session_RirAccessibility"] = "Reps in reserve for this set";
+        English["Workout_Session_TechniqueAccessibility"] = "Mark whether technique was acceptable for this set";
+        English["Workout_Session_AddSet"] = "Add set";
+        English["Workout_Session_RemoveSetAccessibility"] = "Remove this set";
         English["Workout_Session_SkipButton"] = "Skip";
         English["Workout_Session_SkipExerciseAccessibility"] = "Skip this exercise and move to the next";
         English["Workout_Session_Start60SecRestAccessibility"] = "Start 60-second rest";

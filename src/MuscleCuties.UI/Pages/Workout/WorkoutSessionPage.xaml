@@ -344,6 +344,60 @@
                                     </Border>
                                 </Grid>
 
+                                <!-- Per-set capture: load, reps, RIR and technique for every working set -->
+                                <VerticalStackLayout IsVisible="{Binding UsesStrengthMetrics}"
+                                                     Spacing="{StaticResource UiSpaceMicro}">
+                                    <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_SetRowsHeader}"
+                                           Style="{StaticResource CaptionLabel}" />
+                                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Sets}"
+                                                         Spacing="{StaticResource UiSpaceMicro}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="models:ExerciseSetInputItem">
+                                                <Grid ColumnDefinitions="Auto,*,*,*,Auto,Auto"
+                                                      ColumnSpacing="{StaticResource UiSpaceTight}">
+                                                    <Label Grid.Column="0" VerticalOptions="Center"
+                                                           Text="{Binding SetNumber, StringFormat='#{0}'}"
+                                                           Style="{StaticResource CaptionLabel}" />
+                                                    <Border Grid.Column="1" Style="{StaticResource InputContainer}"
+                                                            IsVisible="{Binding ShowWeight}">
+                                                        <Entry Style="{StaticResource WorkoutNumberEntry}"
+                                                               SemanticProperties.Description="{loc:LocalizedText Workout_Session_WeightInKgAccessibility}"
+                                                               Text="{Binding WeightInput, Mode=TwoWay}"
+                                                               Keyboard="Numeric"
+                                                               Placeholder="{loc:LocalizedText Workout_Session_KgUnit}" />
+                                                    </Border>
+                                                    <Border Grid.Column="2" Style="{StaticResource InputContainer}">
+                                                        <Entry Style="{StaticResource WorkoutNumberEntry}"
+                                                               SemanticProperties.Description="{loc:LocalizedText Workout_Session_RepsPerSetAccessibility}"
+                                                               Text="{Binding RepsInput, Mode=TwoWay}"
+                                                               Keyboard="Numeric"
+                                                               Placeholder="{loc:LocalizedText Workout_Session_RepsHeader}" />
+                                                    </Border>
+                                                    <Border Grid.Column="3" Style="{StaticResource InputContainer}">
+                                                        <Entry Style="{StaticResource WorkoutNumberEntry}"
+                                                               SemanticProperties.Description="{loc:LocalizedText Workout_Session_RirAccessibility}"
+                                                               Text="{Binding RirInput, Mode=TwoWay}"
+                                                               Keyboard="Numeric"
+                                                               Placeholder="{loc:LocalizedText Workout_Session_RirHeader}" />
+                                                    </Border>
+                                                    <CheckBox Grid.Column="4" VerticalOptions="Center"
+                                                              IsChecked="{Binding TechniqueAcceptable, Mode=TwoWay}"
+                                                              SemanticProperties.Description="{loc:LocalizedText Workout_Session_TechniqueAccessibility}" />
+                                                    <Button Grid.Column="5" Text="−"
+                                                            Command="{Binding RemoveCommand}"
+                                                            CommandParameter="{Binding .}"
+                                                            Style="{StaticResource ButtonSecondary}"
+                                                            SemanticProperties.Description="{loc:LocalizedText Workout_Session_RemoveSetAccessibility}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                    <Button Text="{loc:LocalizedText Workout_Session_AddSet}"
+                                            Command="{Binding AddSetCommand}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            HorizontalOptions="Start" />
+                                </VerticalStackLayout>
+
                                 <!-- Duration input -->
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" IsVisible="{Binding UsesDurationOnlyMetric}">
                                     <Label LineBreakMode="WordWrap"
