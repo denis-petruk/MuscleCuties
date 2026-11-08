@@ -355,6 +355,11 @@ public static class ApiApplication
                 return new ResendEmailChallengeDelivery(resendClient, resendApiKey, fromEmail);
             }
 
+            // A local, disposable backend has no provider credentials; log the code so registration stays
+            // testable end to end in Development. Every other environment keeps the relay-only path.
+            if (builder.Environment.IsDevelopment())
+                return new LocalDevelopmentEmailChallengeDelivery();
+
             return new FirstPartyEmailChallengeDelivery(
                 serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("FirstPartyEmailChallengeRelay"),
                 builder.Configuration["EmailChallenges:RelayEndpoint"],

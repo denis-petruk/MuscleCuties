@@ -121,7 +121,9 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
 
             if (!result.Verified)
             {
-                ErrorMessage = result.ErrorMessage ?? "Invalid code. Please check and try again.";
+                // Only an invalid code reaches this branch: an expired session is reported above. Never surface
+                // a server error code or English sentence directly, so both locales stay consistent.
+                ErrorMessage = "Ui_Auth_Error_InvalidVerificationCode";
                 return;
             }
 
@@ -184,7 +186,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
 
             if (!result.Resent)
             {
-                ErrorMessage = result.ErrorMessage ?? "Could not resend code. Please try again.";
+                ErrorMessage = "Ui_Auth_Error_ResendCode";
                 return;
             }
 
