@@ -123,7 +123,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private long _generationVersion;
     private bool _isAppearanceCurrent = true;
     private bool _foregroundIntent;
-    private bool _injuryRevalidationAttempted;
     private bool _openedFromPreferences;
     private ApiFailureNotice? _lastPlanningFailure;
 
@@ -940,7 +939,6 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             // A foreground Generate/Regenerate discloses any replacement consequence up front. It may
             // only activate a first plan; a replacement waits for Apply plan (G-01).
             _foregroundIntent = true;
-            _injuryRevalidationAttempted = false;
             SetLastPlanningFailure(null);
         }
 
