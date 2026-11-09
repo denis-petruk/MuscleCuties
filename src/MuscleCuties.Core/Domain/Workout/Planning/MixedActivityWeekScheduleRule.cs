@@ -69,6 +69,8 @@ public static class MixedActivityWeekScheduleRule
 
     public const string ActivitySelectionMissing = "ActivitySelectionMissing";
     public const string NoActivitiesSelected = "NoActivitiesSelected";
+    // The value is a serialized client reason code and stays stable; the rule it names is
+    // MinimumAvailableWeekdays..MaximumAvailableWeekdays (2–7 distinct days).
     public const string AvailableWeekdaysMustContainOneToSevenDistinctDays =
         "AvailableWeekdaysMustContainOneToSevenDistinctDays";
     public const string AvailableWeekdayValueInvalid = "AvailableWeekdayValueInvalid";
