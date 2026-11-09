@@ -169,6 +169,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private int _confirmedActiveSeconds;
     private bool _sessionCreated;
     private bool _appSuspended;
+    private bool _hasLoadedSession;
     private sealed record PendingTimingCheckpoint(Guid OperationId, Guid IntervalId, int MeasuredSeconds, bool Pause);
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsTimedActivityActive), nameof(CanPauseTimedActivity),
@@ -294,8 +295,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
     public bool HasErrorReference => HasError && !string.IsNullOrEmpty(ErrorReference);
-    public bool HasNoActivities => !IsBusy && !HasError && ActivityCards.Count == 0;
-    public bool HasActivityChoices => !IsBusy && !HasError && ActivityCards.Count > 0;
+    // The page is pushed before the session is fetched. Without this gate the empty state
+    // renders for one frame and then disappears once the activities arrive.
+    public bool HasNoActivities => _hasLoadedSession && !IsBusy && !HasError && ActivityCards.Count == 0;
+    public bool HasActivityChoices => _hasLoadedSession && !IsBusy && !HasError && ActivityCards.Count > 0;
     public bool HasSwapCandidates => SwapCandidates.Count > 0;
     public bool HasSwapError => !string.IsNullOrEmpty(SwapErrorText);
     public bool CanDismissSwap => !SwapNeedsReload;
@@ -400,6 +403,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         StopRestTimer();
         var version = ++_loadVersion;
         _workoutDayId = workoutDayId;
+        _hasLoadedSession = false;
+        OnPropertyChanged(nameof(HasNoActivities));
+        OnPropertyChanged(nameof(HasActivityChoices));
         ResetSwapPanel();
         ActivityCards = [];
         SelectedActivity = null;
@@ -497,7 +503,13 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }
         finally
         {
-            if (version == _loadVersion) IsBusy = false;
+            if (version == _loadVersion)
+            {
+                _hasLoadedSession = true;
+                IsBusy = false;
+                OnPropertyChanged(nameof(HasNoActivities));
+                OnPropertyChanged(nameof(HasActivityChoices));
+            }
         }
     }
 
