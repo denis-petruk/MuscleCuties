@@ -144,6 +144,74 @@ public sealed class BackendApiRefreshFailureTests
         Content = new StringContent($$"""{"userId":"{{Tokens.AccountId}}","accessToken":"{{RotatedAccessToken}}","refreshToken":"{{RotatedRefreshToken}}","accessExpiresAtUtc":"{{ConcurrentRefreshHandler.Expiration:O}}"}""")
     };
 
+    [Theory]
+    [InlineData(HttpStatusCode.Unauthorized, 1)]
+    [InlineData(HttpStatusCode.Forbidden, 1)]
+    [InlineData(HttpStatusCode.ServiceUnavailable, 0)]
+    public async Task RejectedRefreshRaisesSessionLostExactlyOnce(HttpStatusCode refreshStatus, int expectedSignals)
+    {
+        using var handler = new RefreshFailureHandler(refreshStatus);
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri(ApiBaseAddress) };
+        var tokenStore = new RecordingTokenStore(Tokens);
+        var signal = new BackendSessionLostSignal();
+        var raised = 0;
+        signal.SessionLost += (_, _) => Interlocked.Increment(ref raised);
+        var client = new MuscleCutiesBackendApiClient(httpClient, tokenStore, new RecordingCache(),
+            new OnlineAuthorityGate(), signal);
+
+        // 401, then the refresh is rejected; later requests in the same burst must not signal again.
+        await client.GetAsync<object>(ProtectedRoute);
+        await client.GetAsync<object>(ProtectedRoute);
+
+        Assert.Equal(expectedSignals, raised);
+        Assert.Equal(expectedSignals == 1, tokenStore.Cleared);
+    }
+
+    [Fact]
+    public async Task SessionLostSignalReArmsAfterTheShellAcknowledges()
+    {
+        var signal = new BackendSessionLostSignal();
+        var raised = 0;
+        signal.SessionLost += (_, _) => raised++;
+
+        signal.NotifySessionLost();
+        signal.NotifySessionLost();
+        signal.Acknowledge();
+        signal.NotifySessionLost();
+
+        Assert.Equal(2, raised);
+        await Task.CompletedTask.ConfigureAwait(false);
+    }
+
+    [Fact]
+    public async Task MutationsSendTheStandardIdempotencyHeader()
+    {
+        using var handler = new HeaderCapturingHandler();
+        using var httpClient = new HttpClient(handler) { BaseAddress = new Uri(ApiBaseAddress) };
+        var client = new MuscleCutiesBackendApiClient(httpClient, new RecordingTokenStore(Tokens),
+            new RecordingCache(), new OnlineAuthorityGate());
+
+        await client.SendMutationAsync<object, object>(HttpMethod.Post, ProtectedRoute, new { }, "synthetic-key");
+        await client.DeleteAsync(ProtectedRoute, "synthetic-delete-key");
+
+        Assert.Equal(["synthetic-key", "synthetic-delete-key"], handler.IdempotencyKeys);
+        Assert.False(handler.SawLegacyHeader);
+    }
+
+    private sealed class HeaderCapturingHandler : HttpMessageHandler
+    {
+        public List<string> IdempotencyKeys { get; } = [];
+        public bool SawLegacyHeader { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            if (request.Headers.TryGetValues("Idempotency-Key", out var values))
+                IdempotencyKeys.AddRange(values);
+            SawLegacyHeader |= request.Headers.Contains("X-Idempotency-Key");
+            return Task.FromResult(new HttpResponseMessage(HttpStatusCode.NoContent));
+        }
+    }
+
     private sealed class PausedRefreshHandler : HttpMessageHandler
     {
         public TaskCompletionSource RefreshStarted { get; } = new(TaskCreationOptions.RunContinuationsAsynchronously);

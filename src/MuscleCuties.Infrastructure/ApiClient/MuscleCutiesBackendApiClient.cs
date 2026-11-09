@@ -83,10 +83,12 @@ public sealed class MuscleCutiesBackendApiClient(
     HttpClient httpClient,
     IBackendSessionTokenStore tokenStore,
     ILocalCacheService snapshotCache,
-    ICloudAuthorityGate authorityGate) : IMuscleCutiesBackendApiClient
+    ICloudAuthorityGate authorityGate,
+    IBackendSessionLostSignal? sessionLostSignal = null) : IMuscleCutiesBackendApiClient
 {
     private const string RefreshRoute = "/api/v1/auth/refresh";
-    private const string IdempotencyHeaderName = "X-Idempotency-Key";
+    // U-08: the server's IdempotencyKeyResolver reads the standard header name.
+    private const string IdempotencyHeaderName = "Idempotency-Key";
     private const string RequestIdHeaderName = "X-Request-Id";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
@@ -213,6 +215,8 @@ public sealed class MuscleCutiesBackendApiClient(
                     {
                         await tokenStore.ClearTokensAsync(cancellationToken).ConfigureAwait(false);
                         await snapshotCache.ClearAsync(cancellationToken).ConfigureAwait(false);
+                        // U-01: the session is gone; the shell returns the person to sign-in once.
+                        sessionLostSignal?.NotifySessionLost();
                     }
                     return SyntheticFailureResponse(failureStatus, rejectedRequestId);
                 }
