@@ -1,26 +1,29 @@
 # State checkpoint — 2026-11-09
 
-## integration/beta-polish-20261109 (this run)
+## integration/beta-polish-20261109-v2 (this run)
 
 - Branch `integration/beta-polish-20261109-v2` from `origin/main` = `a99fd80c` (PR #46 merge), in
-  `.agent-worktrees/beta-polish-20261109`. The parent checkout's uncommitted delta was not touched.
+  `.agent-worktrees/beta-polish-20261109`. The parent checkout's uncommitted delta was not touched. Reviewer-facing
+  summary: [REVIEW_PACKET.md](REVIEW_PACKET.md).
 - **Remote branch caveat:** `integration/beta-polish-20261109` on GitHub points at `4ee9b4f`, the session
   checkout's snapshot, not at this work. It was created by the push tool before the mistake was caught; do not open a PR
   from it. The reviewed commits live on `-v2`; the stale branch needs deletion by the owner.
 - Commits: `ecf556a` E-04 footer validation; `17e5be0` session empty-state gate (E-07); `afb459a` intensity label +
   Today phase copy localization (E-06, E-05 copy half); `4cc0ddb` alarm SNS subscription (A11 repo half); `4ad99a2`
   audit/readiness refresh; `5a752d8` featured-card and count-tile localization (U-09/U-10) plus
-  `scripts/beta-release-wizard.sh`; docs update follows this file.
+  `scripts/beta-release-wizard.sh`; `3c48236` localization corrections + owner wizard; `1f71f83` dedicated branch
+  publish; `54d8826` CI evidence; `91886e2` G11 CI evidence; `6ee9d53` dated simulator acceptance record. The
+  `REVIEW_PACKET.md` commit sits on top and is documentation-only.
 - Verified in this environment: non-UI projects build with the MSBuild recipe; Core 1325/1325, Mobile Contracts
   183/183, Registration 54/54, Deployment policy tests 17/17 — all 0 failed, 0 skipped. `Core.Tests` still emits 4
   xUnit analyzer warnings (T-21). `LocalizationCatalogTests` 8/8 after the U-09/U-10 keys; a full EN/RU scan is
   2036/2036 keys with 0 missing, 0 extra and 0 format-argument mismatches. Edited XAML parses as XML;
   `observability.yaml` parses with CloudFormation tags; the wizard passes `bash -n`.
-- **CI**: runs [42675311877](https://github.com/denis-petruk/MuscleCuties/actions/runs/42675311877) at `1f71f83` and
-  [42676415439](https://github.com/denis-petruk/MuscleCuties/actions/runs/42676415439) at `54d8826` completed
-  successfully — 10 successful, 0 failing, 0 pending; `verify_source`, `verify_plan_generation`, `verify_ios_compile`
-  (xcode-27), `postgres_verify / verify_postgres_compatibility` and `required` green. The `CI` workflow triggers on
-  `integration/**` pushes, so no PR is needed to start it.
+- **CI**: run [42677684566](https://github.com/denis-petruk/MuscleCuties/actions/runs/42677684566) at `6ee9d53`
+  completed successfully — 10 successful, 0 failing, 0 pending; `verify_source`, `verify_plan_generation`,
+  `verify_ios_compile` (xcode-27), `postgres_verify / verify_postgres_compatibility` and `required` green. Earlier runs
+  42676922976 at `91886e2`, 42676415439 at `54d8826` and 42675311877 at `1f71f83` were also green. The `CI` workflow
+  triggers on `integration/**` pushes, so the docs-only packet commit is covered; see the live branch run list.
 - **BLOCKED here**: simulator/device journeys (Linux, no Xcode). Attempting the simulator build fails with
   `NETSDK1147` (no workloads; no `xcrun`/`simctl`/`xcodebuild`), so acceptance is recorded as NOT RUN in
   [SIMULATOR_ACCEPTANCE_2026-11-09.md](../release-audit/2026-11-09/SIMULATOR_ACCEPTANCE_2026-11-09.md) rather than
@@ -31,7 +34,8 @@
   this work, has no PR, and must not be used. Delete the branch.
 - Owner decisions requested in `docs/release-audit/2026-11-09/WORKOUT_POLICY_RESEARCH.md`: S-03 load step vs set-only,
   decision 5 cycle dose (recommend amend to symptoms/readiness only), S-04 pain surface, S-05 seven-day window.
-- Next action: push, read CI, then build the branch on the simulator and re-check E-04…E-07 plus journeys 4, 6–15.
+- Next action: the owner opens the PR from `-v2` (none exists) using REVIEW_PACKET.md, then runs wizard stage 3 on a
+  Mac and folds the dated record into G12; S-03/S-04/S-05 and the live AWS items remain owner decisions.
 
 ---
 
