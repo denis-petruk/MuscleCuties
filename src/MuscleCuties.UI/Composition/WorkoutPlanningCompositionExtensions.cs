@@ -28,14 +28,9 @@ public static class WorkoutPlanningCompositionExtensions
 {
     public static IServiceCollection RegisterWorkoutPlanningServices(this IServiceCollection services)
     {
-        services.AddSingleton(WorkoutPlanningConfig.CreateDefault());
-
         services.AddSingleton<IPlanningClockPort, SystemPlanningClockPort>();
         services.AddSingleton<IPlanningCatalogPort, DefaultPlanningCatalogPort>();
         services.AddSingleton<IPlanningSafetyPort, DefaultPlanningSafetyPort>();
-
-        services.AddSingleton<IReadinessEngine, DailyReadinessEngine>();
-        services.AddSingleton<IGatingEngine, GatingEngine>();
 
         services.AddScoped<IDailyCheckInNotificationService>(sp =>
             new DailyCheckInNotificationService(

@@ -24,7 +24,6 @@ on:
         default: ''
 
 permissions:
-  id-token: write
   contents: read
   # Rollback reads the deployment report artifact produced by an earlier run.
   actions: read
@@ -42,8 +41,12 @@ jobs:
   upload_artifacts:
     name: upload_artifacts
     needs: package
-    if: inputs.mode == 'deploy'
+    if: inputs.mode == 'deploy' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    environment: beta
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -94,9 +97,12 @@ jobs:
   deploy_beta:
     name: deploy_beta
     needs: [package, upload_artifacts]
-    if: inputs.mode == 'deploy'
+    if: inputs.mode == 'deploy' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: beta
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -123,9 +129,18 @@ jobs:
       # Required repository/environment variables:
       #   BETA_SERVER_FUNCTION, BETA_WORKER_FUNCTION
       #   BETA_SERVER_ALIAS, BETA_WORKER_ALIAS (aliases are required so rollback has a target)
-      #   BETA_API_ENDPOINT (optional; when set, /health/live and /health/ready must return 200)
+      #   BETA_API_ENDPOINT (required; /health/live and /health/ready must return 200)
       #   AWS_ACCOUNT_ID (optional; when set, STS identity must match)
       # The report is written only after each serving CodeSha256 matches the candidate digests.
+      - name: Require the smoke endpoint
+        env:
+          BETA_API_ENDPOINT: ${{ vars.BETA_API_ENDPOINT }}
+        run: |
+          if [ -z "$BETA_API_ENDPOINT" ]; then
+            echo "BETA_API_ENDPOINT repository/environment variable is required: the post-deploy health smoke check cannot be skipped."
+            exit 1
+          fi
+
       - name: Deploy and verify both Lambda functions
         env:
           TARGET_ENV: beta
@@ -156,9 +171,13 @@ jobs:
 
   rollback_beta:
     name: rollback_beta
-    if: inputs.mode == 'rollback'
+    if: inputs.mode == 'rollback' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: beta
+    permissions:
+      id-token: write
+      contents: read
+      actions: read
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

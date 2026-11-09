@@ -55,8 +55,6 @@ public static class ApplicationCompositionExtensions
     public static IServiceCollection RegisterDomainAndApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<ICalorieCalculator, CalorieCalculator>();
-        services.AddScoped<ICalorieDistributionService, CalorieDistributionService>();
-        services.AddScoped<IFallbackMealProvider, FallbackMealProvider>();
         services.AddScoped<INutritionPlanner, NutritionPlanner>();
         services.AddScoped<ICyclePhaseCalculator, CyclePhaseCalculator>();
         services.AddScoped<ICyclePredictionPlanner, CyclePredictionPlanner>();
@@ -76,7 +74,6 @@ public static class ApplicationCompositionExtensions
         services.AddSingleton<IProfileRefreshNotifier>(sp =>
             new ProfileRefreshNotifier(new Lazy<IAppPreloadService>(sp.GetRequiredService<IAppPreloadService>)));
         services.AddScoped<ICurrentProfileUserIdProvider, CurrentProfileUserIdProvider>();
-        services.AddSingleton<IProfileHealthConnection, ProfileHealthConnection>();
 
         services.AddSingleton<CloudProfileSetupStore>();
         services.AddSingleton<IProfileSetupPersistence>(sp => sp.GetRequiredService<CloudProfileSetupStore>());

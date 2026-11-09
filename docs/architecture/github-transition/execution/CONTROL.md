@@ -29,7 +29,7 @@ No package is `SAFE TO PROMOTE` from local checks alone.
 
 ## Retired or superseded paths
 
-- `tools/deployment/release.sh` and `tools/deployment/release-engine.py` are the GitLab-era path. GitHub releases use `tools/deployment/deploy_release.py`; the legacy scripts remain only as historical reference and their tests still run so the retirement is not silent.
+- `tools/deployment/release.sh` and `tools/deployment/release-engine.py` are the GitLab-era path. GitHub releases use `tools/deployment/deploy_release.py`; the legacy scripts and their tests were removed (see repository history).
 - `004_privilege_separation_mc_admin_runtime.sql` is deleted. The authoritative role model is `musclecuties_app` / `musclecuties_auth` / `musclecuties_migrator`, declared by `security.sql` and verified by `dbcheck`.
 - Migration numbers are unique across both lineages: `004_session_distance.sql` (from `origin/main` #37) keeps version 4, and the observed-set actuals script was renumbered to `005_observed_set_actuals.sql` when the two histories were reconciled. Existing environments that already recorded version 4 keep a valid ledger.
 - `EnsureCreated` remains confined to explicitly disposable targets; `migrate` + `seed` is the provisioning path.

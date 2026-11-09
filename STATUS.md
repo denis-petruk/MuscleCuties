@@ -7,7 +7,7 @@ Updated 2026-11-08. This is the compact continuation checkpoint. Dated audits, t
 - `main` at `4ee9b4f2`, the merge of PR #39 (docs finalization); the B1–B5 package work landed in PR #38 at `fa1e6165`, and the local checkout tracks `origin/main`.
 - The first-beta package work (B1–B5) is merged and CI-verified on GitHub. Nothing was deployed, migrated on a shared target, signed, archived or uploaded; those stay owner-authorized gates.
 - The backend release target is **Beta only**. No separate Staging API or database is provisioned, no workflow offers a Staging target (the mobile release workflow builds `beta` only), and the client carries no Staging endpoint or allowlisted Staging host.
-- GitHub is the integration target; GitLab is read-only historical evidence. `tools/deployment/release.sh` and `release-engine.py` are the retired GitLab path.
+- GitHub is the integration target; GitLab is read-only historical evidence. The retired GitLab-era release scripts (`release.sh`, `release-engine.py`) and `.gitlab-ci.yml` were removed; they remain in repository history.
 
 ## First-beta packages
 
