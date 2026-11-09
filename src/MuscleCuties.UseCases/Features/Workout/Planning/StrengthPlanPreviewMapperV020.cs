@@ -168,11 +168,19 @@ internal static class StrengthPlanPreviewMapperV020
             session.Slots.Any(slot => slot.ExerciseId.HasValue));
         var hasStrengthInEverySession = alignedStrengthSessions.All(session =>
             session.Slots.Any(slot => slot.ExerciseId.HasValue));
-        var isVolumeReduced = hasStrengthDays && effectiveCount < response.Sessions.Count;
+        var placedStrengthSessions = hasStrengthDays ? alignedStrengthSessions.Length : 0;
+        var isVolumeReduced = hasStrengthDays && placedStrengthSessions < response.Sessions.Count;
         var isIncomplete = schedule.InputReasons.Count > 0 ||
                            !hasStrengthContent || !hasStrengthInEverySession ||
                            (response.Sessions.Count > 0 && !hasStrengthDays) ||
                            totalScheduledSessions == 0;
+        // Recovery spacing (StrengthScheduleAssignmentRule.Reconcile) can cut sessions after the
+        // Core preview ran. Re-apply its weekly checks to the placed week: fewer strength days than
+        // the coverage minimum is Limited exactly as a one-day template is; any cut is reduced volume.
+        var placementCoverageLimitations = hasStrengthDays && isVolumeReduced &&
+            placedStrengthSessions < TenRegionMuscleCoverageRule.MinimumWeeklySessionExposures
+                ? new[] { TenRegionMuscleCoverageRule.DaysInsufficientForCoverageCode }
+                : Array.Empty<string>();
 
         // Placed strength sessions satisfy availability, clearing template-overflow limitation codes.
         var limitationCodes = isIncomplete
@@ -181,11 +189,25 @@ internal static class StrengthPlanPreviewMapperV020
                 .Concat(hasStrengthContent
                     ? Array.Empty<string>()
                     : new[] { NoSafeStrengthContentRemainingCode })
+                .Concat(placementCoverageLimitations)
                 .Distinct(StringComparer.Ordinal)
                 .ToArray()
             : response.LimitationCodes
                 .Where(code => code is not "StrengthSessionsExceedAvailableWeekdays" and not MixedActivityScheduleIncompleteCode)
+                .Concat(placementCoverageLimitations)
+                .Distinct(StringComparer.Ordinal)
                 .ToArray();
+        var advisoryCodes = isVolumeReduced
+            ? response.AdvisoryCodes
+                .Append(StrengthPlanPreviewRule.ReducedVolumeNotice)
+                .Concat(schedule.Activities.Any(decision => decision.Reasons.Contains(
+                        StrengthScheduleAssignmentRule.SessionsReducedForMuscleRecovery, StringComparer.Ordinal))
+                    ? new[] { StrengthScheduleAssignmentRule.SessionsReducedForMuscleRecovery }
+                    : Array.Empty<string>())
+                .Distinct(StringComparer.Ordinal)
+                .OrderBy(code => code, StringComparer.Ordinal)
+                .ToArray()
+            : response.AdvisoryCodes;
 
         var isFeasible = !isIncomplete &&
                          limitationCodes.Length == 0 &&
@@ -196,7 +218,8 @@ internal static class StrengthPlanPreviewMapperV020
 
         var status = isFeasible
             ? nameof(StrengthPlanPreviewStatus.Feasible)
-            : isIncomplete || totalScheduledSessions == 0 || !hasStrengthContent
+            : isIncomplete || totalScheduledSessions == 0 || !hasStrengthContent ||
+              placementCoverageLimitations.Length > 0
                 ? nameof(StrengthPlanPreviewStatus.Limited)
                 : response.Status;
 
@@ -205,6 +228,7 @@ internal static class StrengthPlanPreviewMapperV020
             Status = status,
             Sessions = hasStrengthContent ? alignedStrengthSessions : Array.Empty<StrengthPlanPreviewSessionV020>(),
             LimitationCodes = limitationCodes,
+            AdvisoryCodes = advisoryCodes,
             MixedActivitySchedule = ToMixedSchedule(schedule),
             RequiresReducedVolumeAcknowledgment = isVolumeReduced || response.RequiresReducedVolumeAcknowledgment
         };

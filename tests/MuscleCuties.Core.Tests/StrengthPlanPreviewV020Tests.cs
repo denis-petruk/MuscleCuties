@@ -997,6 +997,30 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Equal(0, store.SaveCount);
     }
 
+    [Theory]
+    [InlineData(DayOfWeek.Saturday, DayOfWeek.Sunday)]
+    [InlineData(DayOfWeek.Sunday, DayOfWeek.Monday)]
+    public async Task Adjacent_days_cut_by_recovery_spacing_are_reported_after_reconcile(DayOfWeek first, DayOfWeek second)
+    {
+        var days = new HashSet<DayOfWeek> { first, second };
+        var profile = Profile() with
+        {
+            AvailableWeekdays = days,
+            SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.GeneralStrength }
+        };
+
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(profile))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = days });
+
+        // Every synthetic exercise trains the same muscle, so only one of the adjacent days can hold strength.
+        Assert.Single(preview.Sessions);
+        Assert.NotEqual("Feasible", preview.Status);
+        Assert.Contains(TenRegionMuscleCoverageRule.DaysInsufficientForCoverageCode, preview.LimitationCodes);
+        Assert.True(preview.RequiresReducedVolumeAcknowledgment);
+        Assert.Contains(StrengthPlanPreviewRule.ReducedVolumeNotice, preview.AdvisoryCodes);
+        Assert.Contains(StrengthScheduleAssignmentRule.SessionsReducedForMuscleRecovery, preview.AdvisoryCodes);
+    }
+
     private static StrengthPlanPreviewRequestV020 Request() => new(
         WorkoutActivityDto.GeneralStrength, LocalDate,
         HistoryFor(WorkoutActivityType.GeneralStrength),
@@ -1083,7 +1107,9 @@ public sealed class StrengthPlanPreviewV020Tests
         var preview = await new PreviewStrengthPlanV020UseCase(new Source(source))
             .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = days });
 
-        Assert.Equal("Feasible", preview.Status);
+        // G-02: the recovery-spacing cut is re-checked; one strength day is below weekly coverage.
+        Assert.Equal("Limited", preview.Status);
+        Assert.True(preview.RequiresReducedVolumeAcknowledgment);
         var strength = Assert.Single(preview.Sessions);
         var scheduled = Assert.Single(preview.MixedActivitySchedule!.Sessions,
             session => session.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength);
