@@ -32,7 +32,7 @@ iPhone.
 | G14 Security | PASS (repo) / FAIL (live) | No secrets in tracked files; Debug cannot target Beta; live Lambda secrets in plaintext env (A6) |
 | G15 Migrations | PASS (local disposable) | Empty DB bootstrap applies 6 ordered scripts (001–006); the ledger reports 6 applied, head 6, seed 746, re-run applies 0. `ops.schema_metadata` records `schema_version=6` with fingerprint `96b48ad3…f447ea`. `dbcheck` at head 6 and live Beta adoption are not proven (A4) |
 | G16 Cleanup | PASS | Dead DI/gating/readiness code, GitLab stub, retired release scripts, Android/Windows/MacCatalyst trees removed; suites green |
-| G17 CI | PASS | `gh pr checks 46` at `39053ecd`: 10 successful, 0 failing, 0 pending, on both push and PR. `verify_source` 1m14s, `verify_plan_generation` 2m2s, `postgres_verify` 5m2s, `verify_ios_compile` 3m28s push / 2m47s PR on the `xcode-27` runner, `required` green. The earlier failure was the `maui-ios` workload resolving to .NET for iOS 27.1 against `macos-15`'s Xcode 16.4, fixed by `6cce5fc8` |
+| G17 CI | PASS | `gh pr checks 46` at the final code head `1e547a07`: 10 successful, 0 failing, 0 pending on both push and PR — `postgres_verify` 4m32s push / 4m54s PR, `verify_ios_compile` 3m6s / 1m37s on `xcode-27`, `verify_plan_generation` 1m26s / 1m56s, `verify_source` 49s / 1m24s, `required` green. The first green run was `39053ecd`; the earlier failure was the `maui-ios` workload resolving to .NET for iOS 27.1 against `macos-15`'s Xcode 16.4, fixed by `6cce5fc8` |
 | G18 GitHub | See PR | Branch pushed and PR opened only after owner-authorized push |
 
 ## Owner actions

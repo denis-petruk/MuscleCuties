@@ -12,8 +12,9 @@
   `maui-ios` workload needs Xcode 27.1; `macos-15` has 16.4), `da93d6f9` removes the CS0414 dead field, and `a6eaa76b`
   records the real reasons the swap/reschedule guards were skipped (all three now run after `e0adcaf9`/`80ec4d20`).
 - Open: S-03, S-04, S-05, S-07, G-10, G-11, E-04…E-07, live AWS A1–A14, simulator journeys 4 and 6–15, device QA01.
-- 2026-11-09: CI is green at `39053ecd` — `gh pr checks 46` reports 10 successful, 0 failing, 0 pending on both push
-  and PR, including `verify_ios_compile` (3m28s push / 2m47s PR) on the `xcode-27` runner.
+- 2026-11-09: CI is green at the final code head `1e547a07` — `gh pr checks 46` reports 10 successful, 0 failing,
+  0 pending on both push and PR (`postgres_verify` 4m32s push / 4m54s PR, `verify_ios_compile` 3m6s / 1m37s on
+  `xcode-27`, `required` green). The first green run was `39053ecd`.
 - 2026-11-09 `e0adcaf9` fixes G-07: `catalog.workout_exercise_definitions.source_exercise_id` is now persisted
   (migration 006, nullable unique, 59/60 rows mapped to planning ids 101–182) and written by the reviewed catalog
   import. `GetSwapCandidatesAsync` and `SwapAsync` translate the day exercise's `ENGINE_<planningId>` code through it
