@@ -14,6 +14,9 @@ public partial class SelectableQuizAnswer : ObservableObject
     public QuizAnswerDto Answer { get; init; } = null!;
     public QuizQuestionType QuestionType { get; init; }
 
+    /// <summary>Stable E2E selector: question type plus the answer's catalog order.</summary>
+    public string AutomationId => $"QuizAnswer{QuestionType}{Answer.OrderIndex}";
+
     public string IconGlyph => QuestionType switch
     {
         QuizQuestionType.Goal => BuildGoalIcon(),

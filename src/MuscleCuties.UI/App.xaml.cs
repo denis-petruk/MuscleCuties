@@ -24,6 +24,7 @@ namespace MuscleCuties.UI;
 public partial class App : Application, IDisposable
 {
     private readonly IServiceProvider _services;
+    private readonly IBackendSessionLostSignal? _sessionLostSignal;
     private bool _startupFailed;
     private bool _startupFailedToUnlockData;
     private AppStartupPage? _startupPage;
@@ -40,10 +41,37 @@ public partial class App : Application, IDisposable
         InitializeComponent();
         SyncActivityTheme();
         RequestedThemeChanged += (_, e) => SyncActivityTheme(e.RequestedTheme);
+        _sessionLostSignal = services.GetService<IBackendSessionLostSignal>();
+        if (_sessionLostSignal is not null)
+            _sessionLostSignal.SessionLost += OnSessionLost;
+    }
+
+    /// <summary>
+    /// U-01: a rejected refresh cleared the session. Every screen would otherwise keep failing with
+    /// 401s, so the app returns to sign-in once; the signal is re-armed after the switch.
+    /// </summary>
+    private void OnSessionLost(object? sender, EventArgs e) => _ = ReturnToSignInAsync();
+
+    private async Task ReturnToSignInAsync()
+    {
+        try
+        {
+            await ActivateRootAsync("LoginPage");
+        }
+        catch (Exception exception)
+        {
+            Trace.WriteLine($"[Session] Return to sign-in failed ({exception.GetType().Name}).");
+        }
+        finally
+        {
+            _sessionLostSignal?.Acknowledge();
+        }
     }
 
     public void Dispose()
     {
+        if (_sessionLostSignal is not null)
+            _sessionLostSignal.SessionLost -= OnSessionLost;
         _foregroundCancellation?.Cancel();
         _foregroundCancellation?.Dispose();
         _foregroundCancellation = null;

@@ -99,7 +99,7 @@
         <Button Style="{StaticResource ButtonPrimary}"
            
             Text="{loc:LocalizedText Auth_LogIn}"
-            Command="{Binding LoginCommand}"
+            AutomationId="LoginButton" Command="{Binding LoginCommand}"
             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
             SemanticProperties.Description="{loc:LocalizedText Auth_Login_LogInToYourAccount}" />
         <ActivityIndicator

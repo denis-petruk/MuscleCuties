@@ -14,6 +14,10 @@ internal static class StrengthPlanGenerationDisplayMapper
     private const string NoStatusMessage = "";
     private const string MixedActivityScheduleIncompleteCode = "MixedActivityScheduleIncomplete";
     private const string NoSafeStrengthContentRemainingCode = "NoSafeStrengthContentRemaining";
+    private const string SessionWithheldCodePrefix = "SessionWithheld:";
+    private const int OneWithheldSession = 1;
+    private const string SessionWithheldOneKey = "Workout_Generation_SessionWithheldOne";
+    private const string SessionWithheldManyKey = "Workout_Generation_SessionWithheldManyFormat";
 
     public static MixedActivitySessionDisplay ToMixedActivitySessionDisplay(
         MixedActivityScheduleSessionV020 session)
@@ -300,6 +304,9 @@ internal static class StrengthPlanGenerationDisplayMapper
             return UiTextCatalog.Get("Workout_Generation_Reason_NoSafeStrengthContentRemaining");
         }
 
+        if (reasons.Any(IsSessionWithheldCode))
+            return SessionWithheldNote(preview);
+
         if (reasons.Contains(MixedActivityScheduleIncompleteCode) &&
             preview.MixedActivitySchedule is { } schedule)
         {
@@ -341,6 +348,33 @@ internal static class StrengthPlanGenerationDisplayMapper
                     : "Workout_Generation_LimitationGeneral";
         return UiTextCatalog.Get(key);
     }
+
+    /// <summary>
+    /// The server withholds a session whose strength block has no safe exercise left instead of
+    /// sending it empty, and reports it as <c>SessionWithheld:&lt;template&gt;</c>. The preview states how
+    /// many sessions were removed and why; it is silent when none were.
+    /// </summary>
+    public static string SessionWithheldNote(StrengthPlanPreviewResponseV020? preview)
+    {
+        if (preview is null)
+            return NoStatusMessage;
+
+        var withheld = preview.AdvisoryCodes
+            .Concat(preview.LimitationCodes)
+            .Concat(preview.Sessions.SelectMany(session => session.LimitationCodes))
+            .Where(IsSessionWithheldCode)
+            .Distinct(StringComparer.Ordinal)
+            .Count();
+        return withheld switch
+        {
+            NoPolicyReasons => NoStatusMessage,
+            OneWithheldSession => UiTextCatalog.Get(SessionWithheldOneKey),
+            _ => FormatLocalized(SessionWithheldManyKey, withheld.ToString(CultureInfo.CurrentCulture))
+        };
+    }
+
+    private static bool IsSessionWithheldCode(string? code) =>
+        code is not null && code.StartsWith(SessionWithheldCodePrefix, StringComparison.Ordinal);
 
     public static string FormatLocalized(string key, params string[] arguments)
     {

@@ -95,6 +95,7 @@ public static class ApplicationCompositionExtensions
 
         services.AddSingleton<IProfilePersonalInfoStore, CloudProfilePersonalInfoStore>();
         services.AddSingleton<IProfilePersonalInfoUseCase, ProfilePersonalInfoUseCase>();
+        services.AddSingleton<MuscleCuties.Infrastructure.ApiClient.IBackendSessionLostSignal, MuscleCuties.Infrastructure.ApiClient.BackendSessionLostSignal>();
 
         services.AddSingleton<IProfileNutritionSettingsStore, CloudProfileNutritionSettingsStore>();
         services.AddSingleton<IProfileNutritionSettingsUseCase, ProfileNutritionSettingsUseCase>();

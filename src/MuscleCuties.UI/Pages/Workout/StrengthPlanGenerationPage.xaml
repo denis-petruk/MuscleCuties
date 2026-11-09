@@ -73,6 +73,19 @@
                                LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
 
+                    <!-- C1/OD-7: a saved style restricted to established history states why and offers
+                         the General strength alternative. -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                         IsVisible="{Binding HasIneligibleSavedStyle}">
+                        <Label Text="{loc:LocalizedText Workout_Generation_StyleNeedsHistory}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
+                        <Button Text="{loc:LocalizedText Workout_Generation_SwitchToGeneralStrength}"
+                                Command="{Binding SwitchToGeneralStrengthCommand}"
+                                Style="{StaticResource ButtonSecondary}"
+                                AutomationId="StrengthPlanSwitchToGeneralStrengthButton" />
+                    </VerticalStackLayout>
+
                 </VerticalStackLayout>
             </Border>
 
@@ -490,8 +503,8 @@
             </Border>
             <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ActivePreviewElsewhere}" IsVisible="{Binding HasActiveOtherPreview}" Style="{StaticResource MutedLabel}" />
             <Button Text="{loc:LocalizedText Workout_Generation_TakeOverPreview}" Command="{Binding TakeOverPreviewCommand}" IsVisible="{Binding HasActiveOtherPreview}" Style="{StaticResource ButtonSecondary}" />
-            <!-- PG01: the initiating action states the replacement consequence up front. A foreground
-                 Generate/Regenerate then activates the eligible plan without a second tap. -->
+            <!-- G-01: the initiating action states the replacement consequence up front; the
+                 replacement itself stays in the preview until Apply plan. -->
             <Label LineBreakMode="WordWrap"
                    Text="{Binding ReplacementDisclosureText}"
                    IsVisible="{Binding ShowsReplacementDisclosure}"
@@ -503,6 +516,7 @@
                     IsVisible="{Binding NeedsPrerequisiteRecovery}"
                     Style="{StaticResource ButtonSecondary}" />
             <Button Text="{loc:LocalizedText Workout_Generation_CreatePreview}"
+                    AutomationId="StrengthPlanGenerateButton"
                     Command="{Binding CreateProposalCommand}"
                     IsVisible="{Binding IsTrainNavigationPending, Converter={StaticResource InvertedBoolConverter}}"
                     Style="{StaticResource ButtonPrimary}" />
@@ -752,8 +766,16 @@
                             <sharedControls:ScreenReaderStatusAnnouncementBehavior />
                         </Label.Behaviors>
                     </Label>
+                    <!-- U-04/U-05: every disabled Apply states its reason right next to it; Edit
+                         details stays reachable below. -->
                     <Label Text="{Binding UnavailableApplyReason}"
                            IsVisible="{Binding HasUnavailableApplyReason}"
+                           Style="{StaticResource MutedLabel}"
+                           LineBreakMode="WordWrap"
+                           AutomationId="StrengthPlanApplyUnavailableReason" />
+                    <!-- G-01: a replacement is only activated by Apply plan. -->
+                    <Label Text="{Binding ReplacementApplyNoticeText}"
+                           IsVisible="{Binding ShowsReplacementApplyNotice}"
                            Style="{StaticResource MutedLabel}"
                            LineBreakMode="WordWrap" />
                     <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
@@ -763,19 +785,23 @@
                     <Button Text="{loc:LocalizedText Workout_Generation_ApplyPlan}"
                             Command="{Binding AcceptProposalCommand}"
                             IsVisible="{Binding CanReviewPreview}"
-                            Style="{StaticResource ButtonPrimary}" />
+                            Style="{StaticResource ButtonPrimary}"
+                            AutomationId="StrengthPlanApplyButton" />
                     <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
                             Command="{Binding EditDetailsCommand}"
                             IsVisible="{Binding CanReviewPreview}"
-                            Style="{StaticResource ButtonSecondary}" />
+                            Style="{StaticResource ButtonSecondary}"
+                            AutomationId="StrengthPlanEditDetailsButton" />
                     <Button Text="{Binding ExploreOtherFeaturesButtonText}"
                             Command="{Binding ExploreOtherFeaturesCommand}"
                             IsVisible="{Binding CanOfferExploreOtherFeatures}"
-                            Style="{StaticResource ButtonSecondary}" />
+                            Style="{StaticResource ButtonSecondary}"
+                            AutomationId="StrengthPlanExploreButton" />
                     <Button Text="{loc:LocalizedText Workout_Generation_OpenTrainAfterApply}"
                             Command="{Binding OpenTrainCommand}"
                             IsVisible="{Binding IsTrainNavigationPending}"
-                            Style="{StaticResource ButtonPrimary}" />
+                            Style="{StaticResource ButtonPrimary}"
+                            AutomationId="StrengthPlanOpenTrainButton" />
                 </VerticalStackLayout>
             </Grid>
         </Border>

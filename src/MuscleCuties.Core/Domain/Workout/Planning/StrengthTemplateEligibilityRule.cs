@@ -1,6 +1,10 @@
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
+
+/// <summary>Whether a strength style may be offered as a new choice, and why not.</summary>
+public sealed record StrengthStyleChoiceEligibility(WorkoutActivityType Style, bool IsEligible, string? ReasonCode);
 
 public static class StrengthTemplateEligibilityRule
 {
@@ -160,5 +164,29 @@ public static class StrengthTemplateEligibilityRule
             ShiEligible,
             "User satisfies all SHI eligibility criteria.",
             PolicyRequirementCategory.DefaultPrescription);
+    }
+
+    /// <summary>
+    /// C1/OD-7: pure projection of the HVS/SHI gates for choice surfaces. Only the profile-level gate is
+    /// decidable before planning; history, return-after-break, injury, hard-day and manageable-load
+    /// inputs are unknown there and are passed as satisfied, so this projection can only withhold a
+    /// style the reviewed templates restrict to non-beginners. The planner stays authoritative.
+    /// </summary>
+    public static StrengthStyleChoiceEligibility EvaluateStyleChoice(WorkoutActivityType style,
+        TrainingExperienceLevel? profileLevel)
+    {
+        var result = style switch
+        {
+            WorkoutActivityType.HighVolumeStrength => EvaluateHvsEligibility(
+                isGsEstablished: true, isHvsEstablished: true, profileLevel, isHvsReturning: false,
+                hasConflictingInjury: false),
+            WorkoutActivityType.StrengthHighIntensity => EvaluateShiEligibility(
+                isGsEstablished: true, isShiEstablished: true, profileLevel, isShiReturning: false,
+                hasManageableLoadForAllMainExercises: true, hasConflictingInjury: false),
+            _ => null
+        };
+        return result is null || result.IsAllowed
+            ? new StrengthStyleChoiceEligibility(style, true, null)
+            : new StrengthStyleChoiceEligibility(style, false, result.ReasonCode);
     }
 }

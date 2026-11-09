@@ -43,8 +43,12 @@
                                     Style="{StaticResource CardSecondary}"
                                     HorizontalOptions="Fill"
                                     Margin="{StaticResource UiInsets0}"
+                                    IsEnabled="{Binding CanToggle}"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
                                     <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding CanToggle}" Value="False">
+                                            <Setter Property="Opacity" Value="{StaticResource UiOpacitySubtle}" />
+                                        </DataTrigger>
                                         <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
                                             <Setter Property="SemanticProperties.Hint"
                                                     Value="{loc:LocalizedText Workout_ActivityPreference_SelectedHint}" />
@@ -79,7 +83,7 @@
                                                 VerticalOptions="Center" />
                                         </Border>
 
-                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}"
+                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}"
                                               VerticalOptions="Center">
                                             <Label
                                                 Grid.Row="0"
@@ -101,6 +105,14 @@
                                                     </DataTrigger>
                                                 </Label.Triggers>
                                             </Label>
+
+                                            <!-- C1/OD-7: why this style is not offered, with the alternative. -->
+                                            <Label
+                                                Grid.Row="2"
+                                                Text="{Binding UnavailableReason}"
+                                                IsVisible="{Binding HasUnavailableReason}"
+                                                Style="{StaticResource MutedLabel}"
+                                                LineBreakMode="WordWrap" />
                                         </Grid>
 
                                         <Border Style="{StaticResource SelectionRadioRing}"
