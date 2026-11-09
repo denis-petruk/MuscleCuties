@@ -201,8 +201,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
 
     public string DashboardPhaseHeaderText => CurrentPhase == CyclePhase.Unknown
-        ? "This week · Set your cycle phase"
-        : $"This week · {CurrentPhase}";
+        ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Phase_MissingHeader")
+        : MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+            "Dashboard_Phase_HeaderFormat", LocalizedCurrentPhaseName);
 
     public string HormonalSummary => !HasActiveCycle
         ? "Log your cycle to see typical hormone patterns for each phase."
@@ -216,10 +217,14 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         };
 
     public string PhaseStatusText => CurrentPhase == CyclePhase.Unknown
-        ? "Add a cycle phase to get started"
+        ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Phase_MissingStatus")
         : CurrentCycleDay > 0
-            ? $"{CurrentPhase} · Day {CurrentCycleDay} / {PredictedCycleLength}"
-            : $"{CurrentPhase} · Phase selected";
+            ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+                "Dashboard_Phase_StatusDayFormat", LocalizedCurrentPhaseName,
+                CurrentCycleDay.ToString(CultureInfo.CurrentCulture),
+                PredictedCycleLength.ToString(CultureInfo.CurrentCulture))
+            : MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+                "Dashboard_Phase_StatusSelectedFormat", LocalizedCurrentPhaseName);
 
     public string WorkoutCountLabel => IsRestDay
         ? "Activity"
@@ -252,27 +257,30 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         }
     }
 
-    public string PhaseCardTitle => CurrentPhase switch
+    public string PhaseCardTitle => MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(CurrentPhase switch
     {
-        CyclePhase.Menstrual => "Recovery rhythm",
-        CyclePhase.Follicular => "Build momentum",
-        CyclePhase.Ovulatory => "Your power window",
-        CyclePhase.Luteal => "Steady strength window",
-        _ => "Cycle window"
-    };
+        CyclePhase.Menstrual => "Dashboard_Phase_TitleRecovery",
+        CyclePhase.Follicular => "Dashboard_Phase_TitleBuild",
+        CyclePhase.Ovulatory => "Dashboard_Phase_TitlePower",
+        CyclePhase.Luteal => "Dashboard_Phase_TitleSteady",
+        _ => "Dashboard_Phase_TitleCycle"
+    });
 
     public string PhaseShortAdvice => CurrentPhase switch
     {
         CyclePhase.Menstrual => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
-            "Take it easy, prioritize rest"),
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Phase_AdviceMenstrual")),
         CyclePhase.Follicular => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
-            "Energy rising, great time to train"),
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Phase_AdviceFollicular")),
         CyclePhase.Ovulatory => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
-            "Peak energy and strength"),
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Phase_AdviceOvulatory")),
         CyclePhase.Luteal => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
-            "Moderate intensity, listen to your body"),
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Phase_AdviceLuteal")),
         _ => string.Empty
     };
+
+    private string LocalizedCurrentPhaseName =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get($"Dashboard_Phase_{CurrentPhase}");
 
     public string PhaseIconSource => CyclePhaseAssets.GetIconSource(CurrentPhase);
     public bool HasKnownPhase => CurrentPhase != CyclePhase.Unknown;

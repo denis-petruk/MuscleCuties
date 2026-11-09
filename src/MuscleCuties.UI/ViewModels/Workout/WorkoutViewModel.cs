@@ -680,7 +680,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                 : UiTextCatalog.Get("Dashboard_Workout_RecoverySubtitle");
             FeaturedWorkoutDurationText = UiTextCatalog.Get("Dashboard_Workout_RestDay");
             FeaturedWorkoutExercisesCount = "0";
-            FeaturedWorkoutIntensity = "Light";
+            FeaturedWorkoutIntensity = UiTextCatalog.Get("Dashboard_Workout_IntensityLight");
             FeaturedWorkoutActionText = UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
             FeaturedWorkoutActivityBackground =
                 WorkoutPresentationPalette.Background("REST");
@@ -1028,15 +1028,17 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private static string BuildFeaturedIntensity(string tag)
     {
         if (tag.Contains("RECOVERY", StringComparison.OrdinalIgnoreCase))
-            return "Light";
+            return UiTextCatalog.Get("Dashboard_Workout_IntensityLight");
 
         if (tag.Contains("REST", StringComparison.OrdinalIgnoreCase))
-            return "None";
+            return UiTextCatalog.Get("Dashboard_Workout_IntensityNone");
 
         if (tag.Contains("CARDIO", StringComparison.OrdinalIgnoreCase))
-            return "Steady";
+            return UiTextCatalog.Get("Dashboard_Workout_IntensitySteady");
 
-        return "Heavy";
+        // The tag carries the activity type, not the planned load. "Heavy" was a false claim
+        // on general-strength and beginner plans, so strength work reports a neutral effort.
+        return UiTextCatalog.Get("Dashboard_Workout_IntensityModerate");
     }
 
     private static string FormatDayLabel(DayOfWeek dayOfWeek)

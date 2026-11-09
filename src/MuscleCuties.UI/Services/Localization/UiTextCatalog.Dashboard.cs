@@ -158,6 +158,18 @@ public static partial class UiTextCatalog
         English["Dashboard_Targets_SleepFormat"] = "Sleep estimate: {0}";
         English["Dashboard_Targets_Title"] = "Planning estimates";
         English["Dashboard_Phase_MissingHeader"] = "This week · Set your cycle phase";
+        English["Dashboard_Phase_HeaderFormat"] = "This week · {0}";
+        English["Dashboard_Phase_StatusDayFormat"] = "{0} · Day {1} / {2}";
+        English["Dashboard_Phase_StatusSelectedFormat"] = "{0} · Phase selected";
+        English["Dashboard_Phase_TitleRecovery"] = "Recovery rhythm";
+        English["Dashboard_Phase_TitleBuild"] = "Build momentum";
+        English["Dashboard_Phase_TitlePower"] = "Your power window";
+        English["Dashboard_Phase_TitleSteady"] = "Steady strength window";
+        English["Dashboard_Phase_TitleCycle"] = "Cycle window";
+        English["Dashboard_Phase_AdviceMenstrual"] = "Take it easy, prioritize rest";
+        English["Dashboard_Phase_AdviceFollicular"] = "Energy rising, great time to train";
+        English["Dashboard_Phase_AdviceOvulatory"] = "Peak energy and strength";
+        English["Dashboard_Phase_AdviceLuteal"] = "Moderate intensity, listen to your body";
         English["Dashboard_Phase_MissingStatus"] = "Add a cycle phase to get started";
         English["Dashboard_Phase_MissingInsight"] = "Add a cycle phase to see phase guidance";
         English["Dashboard_Phase_SelectedInsight"] = "Selected cycle phase is recorded";
@@ -206,6 +218,8 @@ public static partial class UiTextCatalog
         English["Dashboard_Workout_IntensityLow"] = "Low";
         English["Dashboard_Workout_IntensityLight"] = "Light";
         English["Dashboard_Workout_IntensityNone"] = "None";
+        English["Dashboard_Workout_IntensityModerate"] = "Moderate";
+        English["Dashboard_Workout_IntensitySteady"] = "Steady";
         English["Dashboard_Prompt_NoActivePlan"] = "No active plan";
         English["Dashboard_Prompt_NoPlanBody"] = "Your training sessions will appear once a plan exists.";
         English["Dashboard_Readiness_TrendEmpty"] = "Complete a check-in to see readiness history";
