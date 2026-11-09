@@ -58,6 +58,7 @@
                             AutomationId="RegisterUsername"
                             Placeholder="{loc:LocalizedText Auth_Register_UsernamePlaceholder}"
                             Text="{Binding Username}"
+                            Keyboard="Plain"
                             ReturnType="Next"
                             Completed="OnUsernameCompleted"
                             SemanticProperties.Description="{loc:LocalizedText Auth_Register_UsernameLabel}"
