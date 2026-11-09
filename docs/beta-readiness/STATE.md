@@ -1,5 +1,25 @@
 # State checkpoint — 2026-11-09
 
+## integration/beta-polish-20261109 (this run)
+
+- Branch `integration/beta-polish-20261109` from `origin/main` = `a99fd80c` (PR #46 merge), in
+  `.agent-worktrees/beta-polish-20261109`. The parent checkout's uncommitted delta was not touched.
+- Commits: `ecf556a` E-04 footer validation; `17e5be0` session empty-state gate (E-07); `afb459a` intensity label +
+  Today phase copy localization (E-06, E-05 copy half); `4cc0ddb` alarm SNS subscription (A11 repo half); docs commit
+  follows this file.
+- Verified in this environment: non-UI projects build with the MSBuild recipe; Core 1325/1325, Mobile Contracts
+  183/183, Registration 54/54, Deployment policy tests 17/17 — all 0 failed, 0 skipped. `Core.Tests` still emits 4
+  xUnit analyzer warnings (T-21). Edited XAML parses as XML; `observability.yaml` parses with CloudFormation tags.
+- **BLOCKED here**: iOS build and simulator journeys (Linux, no Xcode); PostgreSQL integration suite (no PG16 and no
+  root); `gh` (sandbox TLS); live AWS (not authorised). CI on this branch has not run yet.
+- Owner decisions requested in `docs/release-audit/2026-11-09/WORKOUT_POLICY_RESEARCH.md`: S-03 load step vs set-only,
+  decision 5 cycle dose (recommend amend to symptoms/readiness only), S-04 pain surface, S-05 seven-day window.
+- Next action: push, read CI, then build the branch on the simulator and re-check E-04…E-07 plus journeys 4, 6–15.
+
+---
+
+# State checkpoint — 2026-11-09 (PR #46 run)
+
 - Branch `integration/beta-rc-20261108`, base `main` `4ee9b4f2`; merges the six Phase 0 branches (PRs #40–#45) and
   four worker branches (W2 safety/dose, W3 planning UX/client, W4 CI/cleanup, W5 engine/stores) plus orchestrator
   fixes (`95b3785b`, `7aa53789`, `bbc27ada`, `438de156`, `3f45639e`).
