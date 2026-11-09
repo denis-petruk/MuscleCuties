@@ -10,7 +10,7 @@
   `.github/workflows/db-verify.yml`, pointed at that cluster.
 - 2026-11-09 (integration authority): `6cce5fc8` moves both Apple jobs from `macos-15` to the `xcode-27` runner (the
   `maui-ios` workload needs Xcode 27.1; `macos-15` has 16.4), `da93d6f9` removes the CS0414 dead field, and `a6eaa76b`
-  records the real reasons the swap/reschedule guards stay skipped.
+  records the real reasons the swap/reschedule guards were skipped (all three now run after `e0adcaf9`/`80ec4d20`).
 - Open: S-03, S-04, S-05, S-07, G-10, G-11, E-03…E-07, live AWS A1–A14, simulator journeys 4 and 6–15, device QA01.
 - 2026-11-09: CI is green at `39053ecd` — `gh pr checks 46` reports 10 successful, 0 failing, 0 pending on both push
   and PR, including `verify_ios_compile` (3m28s push / 2m47s PR) on the `xcode-27` runner.
@@ -18,7 +18,10 @@
   (migration 006, nullable unique, 59/60 rows mapped to planning ids 101–182) and written by the reviewed catalog
   import. `GetSwapCandidatesAsync` and `SwapAsync` translate the day exercise's `ENGINE_<planningId>` code through it
   into the reviewed definition id space; candidates and saved preferences stay in definition ids (their foreign keys)
-  and the target catalog row resolves by the derived `ENGINE_` code alone. Evidence: swap guards 2 passed, 1 skipped;
-  migration chain contract 7/7; model schema 4/4; planning fingerprint inputs unchanged.
-- Next action: seed reviewed muscle metadata for the reschedule guard (still skipped), then the Phase 2 findings, then
-  owner review of PR #46 and the owner actions in RELEASE_READINESS.md.
+  and the target catalog row resolves by the derived `ENGINE_` code alone. Evidence: migration chain contract 7/7;
+  model schema 4/4; planning fingerprint inputs unchanged.
+- 2026-11-09 `80ec4d20` fixes the reschedule half of the same id-space defect: `exercise_muscle_contributions` holds
+  reviewed definition ids, but `ValidateRescheduledWindowAsync` filtered them by the planning id, so every strength
+  reschedule was rejected with `ScheduleStrengthMuscleMetadataMissing`. It now translates through `SourceExerciseId`,
+  and the third guard is unskipped: `WorkoutSwapAndRescheduleSafetyTests` 3 passed, 0 skipped.
+- Next action: the Phase 2 findings, then owner review of PR #46 and the owner actions in RELEASE_READINESS.md.
