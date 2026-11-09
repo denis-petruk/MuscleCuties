@@ -57,7 +57,7 @@ public sealed class StrengthProgressionRuleTests
     }
 
     [Fact]
-    public void SingleSetLoad_BelowMinimumReps_DecreasesLoad()
+    public void SingleSetLoad_OneSessionBelowMinimumReps_HoldsLoad()
     {
         var result = StrengthProgressionRule.ResolveSingleSetLoad(
             repsPrevious: 4,
@@ -67,6 +67,24 @@ public sealed class StrengthProgressionRuleTests
             repLow: 6,
             repHigh: 12,
             targetRir: 2);
+
+        Assert.Equal(StartingLoad, result.PrescribedLoad);
+        Assert.Equal(StrengthProgressionRule.ActionMaintain, result.ProgressionAction);
+        Assert.Equal(StrengthProgressionRule.SingleUnderTargetSessionHoldsLoad, result.ReasonCode);
+    }
+
+    [Fact]
+    public void SingleSetLoad_SecondConsecutiveSessionBelowMinimumReps_DecreasesLoad()
+    {
+        var result = StrengthProgressionRule.ResolveSingleSetLoad(
+            repsPrevious: 4,
+            loadPrevious: StartingLoad,
+            rirPrevious: 2,
+            loadIncrement: Increment,
+            repLow: 6,
+            repHigh: 12,
+            targetRir: 2,
+            previousComparableSessionUnderTarget: true);
 
         Assert.Equal(StartingLoad - Increment, result.PrescribedLoad);
         Assert.Equal(StrengthProgressionRule.ActionDecrease, result.ProgressionAction);

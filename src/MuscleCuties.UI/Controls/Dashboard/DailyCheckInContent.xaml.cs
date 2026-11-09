@@ -26,6 +26,8 @@ public partial class DailyCheckInContent : ContentView
 
     private Button[] EnergyChips => [EnergyChip1, EnergyChip2, EnergyChip3, EnergyChip4, EnergyChip5];
     private Button[] PainChips => [PainChip0, PainChip1, PainChip2, PainChip3];
+    private Button[] SorenessChips => [SorenessChip1, SorenessChip2, SorenessChip3, SorenessChip4, SorenessChip5];
+    private Button[] BloatingChips => [BloatingNoChip, BloatingYesChip];
 
     protected override void OnBindingContextChanged()
     {
@@ -88,7 +90,9 @@ public partial class DailyCheckInContent : ContentView
     {
         if (e.PropertyName is nameof(DailyCheckInViewModel.PlanningSleepQuality)
             or nameof(DailyCheckInViewModel.EnergyLevel)
-            or nameof(DailyCheckInViewModel.PainLevel))
+            or nameof(DailyCheckInViewModel.PainLevel)
+            or nameof(DailyCheckInViewModel.PlanningSoreness)
+            or nameof(DailyCheckInViewModel.HasBloating))
             UpdateChipGroups();
     }
 
@@ -119,6 +123,24 @@ public partial class DailyCheckInContent : ContentView
         }
     }
 
+    private void OnSorenessClicked(object? sender, EventArgs e)
+    {
+        if (TryReadLevel(sender, out var level) && BindingContext is DailyCheckInViewModel vm)
+        {
+            vm.PlanningSoreness = level;
+            UpdateChipGroups();
+        }
+    }
+
+    private void OnBloatingClicked(object? sender, EventArgs e)
+    {
+        if (TryReadLevel(sender, out var level) && BindingContext is DailyCheckInViewModel vm)
+        {
+            vm.HasBloating = level == 1;
+            UpdateChipGroups();
+        }
+    }
+
     private static bool TryReadLevel(object? sender, out int level)
     {
         level = 0;
@@ -133,7 +155,9 @@ public partial class DailyCheckInContent : ContentView
 
         UpdateChipGroup(SleepQualityChips, (vm.PlanningSleepQuality ?? 0) - 1);
         UpdateChipGroup(EnergyChips, (vm.EnergyLevel ?? 0) - 1);
-        UpdateChipGroup(PainChips, vm.PainLevel);
+        UpdateChipGroup(PainChips, vm.PainLevel ?? -1);
+        UpdateChipGroup(SorenessChips, (vm.PlanningSoreness ?? 0) - 1);
+        UpdateChipGroup(BloatingChips, vm.HasBloating switch { false => 0, true => 1, null => -1 });
     }
 
     private static void UpdateChipGroup(Button[] chips, int selectedIndex)
