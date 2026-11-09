@@ -27,6 +27,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
     private const int DaysPerWeek = 7;
     private const int DefaultCycleLengthDays = 28;
     private const int FallbackMinutesPerExercise = 12;
+    private const int MaximumSwapCandidates = 8;
     private const string PlannedDurationMinuteFormat = "0.#";
     private const string StrengthTag = "STRENGTH";
     private const string CardioTag = "CARDIO";
@@ -772,8 +773,15 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .First()
                 .MuscleGroupId;
 
-            var (equipment, injuryFlags) = await LoadSwapEligibilityAsync(userId, cancellationToken)
-                .ConfigureAwait(false);
+            // Candidates come only from the reviewed directed substitutions of this exercise, filtered
+            // by the planner's own eligibility context. Unknown equipment yields no candidates.
+            var eligibility = await ExerciseSwapEligibilitySource.EvaluateAsync(dbContext, userId,
+                currentPlanningId.Value, allDefinitions,
+                await LoadWorkoutActivityTypeIdAsync(userId, dayExercise.WorkoutDayId, cancellationToken)
+                    .ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
+            var eligibleIds = eligibility.Candidates.Select(candidate => candidate.Entry.Candidate.ExerciseId)
+                .ToHashSet();
 
             var muscleGroups = await dbContext.WorkoutMuscleGroups.AsNoTracking()
                 .ToDictionaryAsync(mg => mg.Id, mg => mg.Name, cancellationToken)
@@ -782,9 +790,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
             return allDefinitions
-                .Where(e => e.Id != currentPlanningId.Value)
-                .Where(e => e.IsBodyweight || (e.Required & equipment) == e.Required)
-                .Where(e => (e.Contraindications & injuryFlags) == 0)
+                .Where(e => e.Id != currentPlanningId.Value && eligibleIds.Contains(e.Id))
                 .Select(e =>
                 {
                     var matchScore = ComputeMuscleMatchScore(
@@ -795,12 +801,13 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 })
                 .Where(x => x.MatchScore > 0)
                 .OrderByDescending(x => x.MatchScore)
-                .Take(8)
+                .ThenBy(x => x.Exercise.Id)
+                .Take(MaximumSwapCandidates)
                 .Select(x => new WorkoutSwapCandidateDto(
                     x.Exercise.Id,
                     x.Exercise.Name,
                     $"{(int)(x.MatchScore * 100)}% muscle match",
-                    x.Exercise.IsBodyweight ? "Bodyweight" : FormatEquipmentName(x.Exercise.Required),
+                    FormatEquipmentName(x.Exercise.Required),
                     string.Join(", ", x.Exercise.MuscleContributions
                         .Where(c => c.Fraction >= 0.3m)
                         .OrderByDescending(c => c.Fraction)
@@ -842,18 +849,28 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .ConfigureAwait(false)
                 ?? throw new InvalidOperationException($"Exercise definition {request.NewExerciseId} was not found.");
 
-            var (equipment, injuryFlags) = await LoadSwapEligibilityAsync(userId, cancellationToken)
+            // The selected exercise must be one the candidate list could have offered: a reviewed close
+            // alternative to the planned exercise that passes the planner's eligibility filters.
+            if (originalPlanningId is null)
+                throw new InvalidOperationException(ExerciseSwapEligibilityRule.OriginalExerciseNotReviewedCode);
+            var allDefinitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
+                .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
-
-            if ((newExerciseDef.Contraindications & injuryFlags) != 0)
-                throw new InvalidOperationException($"Exercise '{newExerciseDef.Name}' is contraindicated by active injuries.");
-
-            if (!newExerciseDef.IsBodyweight && (newExerciseDef.Required & equipment) != newExerciseDef.Required)
-                throw new InvalidOperationException($"Exercise '{newExerciseDef.Name}' requires equipment not available in current profile.");
+            var eligibility = await ExerciseSwapEligibilitySource.EvaluateAsync(dbContext, userId,
+                originalPlanningId.Value, allDefinitions,
+                await LoadWorkoutActivityTypeIdAsync(userId, dayExercise.WorkoutDayId, cancellationToken)
+                    .ConfigureAwait(false),
+                cancellationToken).ConfigureAwait(false);
+            if (!eligibility.Allows(newExerciseDef.Id))
+                throw new InvalidOperationException(eligibility.ReasonCodes.FirstOrDefault() ??
+                    ExerciseSwapEligibilityRule.SubstituteNotEligibleCode);
 
             var targetCode = $"ENGINE_{request.NewExerciseId}";
+            // Prefer the row whose code names the validated planning exercise.
             var catalogExercise = await dbContext.Exercises.AsNoTracking()
-                .FirstOrDefaultAsync(e => e.Code == targetCode || e.Id == request.NewExerciseId, cancellationToken)
+                .Where(e => e.Code == targetCode || e.Id == request.NewExerciseId)
+                .OrderByDescending(e => e.Code == targetCode)
+                .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false)
                 ?? throw new InvalidOperationException($"Catalog exercise for planning ID {request.NewExerciseId} was not found.");
 
@@ -1181,28 +1198,15 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         session.TotalVolumeKg = Math.Round(totalVolume, 1);
     }
 
-    private async Task<(EquipmentSet Equipment, InjuryFlag InjuryFlags)> LoadSwapEligibilityAsync(
+    private async Task<int?> LoadWorkoutActivityTypeIdAsync(
         Guid userId,
-        CancellationToken cancellationToken)
-    {
-        var profile = await dbContext.UserProfiles.AsNoTracking()
-            .SingleOrDefaultAsync(p => p.UserId == userId, cancellationToken)
+        Guid workoutDayId,
+        CancellationToken cancellationToken) =>
+        await dbContext.WorkoutDays.AsNoTracking()
+            .Where(day => day.UserId == userId && day.Id == workoutDayId)
+            .Select(day => day.ActivityTypeId)
+            .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
-        var equipmentEnum = profile is not null && Enum.TryParse<Equipment>(profile.EquipmentLevel, true, out var eq)
-            ? eq
-            : Equipment.FullGym;
-        var equipmentSet = ExercisePickerRule.MapEquipment(equipmentEnum);
-
-        var activeInjuries = await dbContext.WorkoutInjuryLogs.AsNoTracking()
-            .Where(i => i.UserId == userId && i.Status != "Cleared")
-            .ToListAsync(cancellationToken)
-            .ConfigureAwait(false);
-        var flags = InjuryFlag.None;
-        foreach (var injury in activeInjuries)
-            flags |= (InjuryFlag)injury.SiteFlag;
-
-        return (equipmentSet, flags);
-    }
 
     private static IReadOnlyList<WorkoutListEntry> BuildWorkoutListEntries(
         IReadOnlyList<WorkoutDayRecord> workoutDays,

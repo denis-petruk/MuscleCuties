@@ -217,17 +217,13 @@ public static class StrengthPlanPreviewRule
         var profileExperienceDecision = ProfileTrainingExperiencePlanningRule.Resolve(
             experience, data.ProfileTrainingExperience, choices.ActivityHistory,
             allowProfileFallbackWhenHistoryMissing: true);
-        var prescriptionExperience = profileExperienceDecision.PrescriptionExperience;
+        var prescriptionExperience = EligibilityExperience(activity, profileExperienceDecision);
 
-        if (activity is WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength)
-        {
-            if (prescriptionExperience == ActivityExperience.Unknown)
-                prescriptionExperience = ActivityExperience.Beginner;
-            if (experience == ActivityExperience.Unknown)
-                experience = ActivityExperience.Beginner;
-        }
+        if ((activity is WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength) &&
+            experience == ActivityExperience.Unknown)
+            experience = ActivityExperience.Beginner;
 
-        var availableEquipment = EquipmentFor(data.Equipment);
+        var availableEquipment = AvailableEquipmentFor(data.Equipment);
         var eligibilityContext = new ExerciseEligibilityContext(availableEquipment, prescriptionExperience,
             choices.ExcludedExerciseIds ?? EmptyIds, data.BlockedMovementPatterns ?? EmptyMovementPatterns,
             new HashSet<ActivityDemandTag>(), false, data.ActiveInjuryFlags,
@@ -627,7 +623,27 @@ public static class StrengthPlanPreviewRule
         _ => template.Slots.Count
     };
 
-    private static HashSet<ExerciseEquipmentKind> EquipmentFor(Equipment equipment) => equipment switch
+    /// <summary>
+    /// Experience used for exercise eligibility. In-session swaps reuse it so a swap can never
+    /// admit an exercise the planner would have excluded for the same history and profile.
+    /// </summary>
+    public static ActivityExperience EligibilityExperience(WorkoutActivityType activity,
+        ActivityTrainingHistory? history, DateOnly localDate, TrainingExperienceLevel? profileExperience)
+    {
+        var historyExperience = ActivityExperienceRule.Classify(activity.ToString(), history, localDate).Experience;
+        return EligibilityExperience(activity, ProfileTrainingExperiencePlanningRule.Resolve(
+            historyExperience, profileExperience, history, allowProfileFallbackWhenHistoryMissing: true));
+    }
+
+    private static ActivityExperience EligibilityExperience(WorkoutActivityType activity,
+        ProfileTrainingExperienceDecision decision) =>
+        (activity is WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength) &&
+        decision.PrescriptionExperience == ActivityExperience.Unknown
+            ? ActivityExperience.Beginner
+            : decision.PrescriptionExperience;
+
+    /// <summary>Equipment kinds a saved equipment profile provides; an undefined profile provides none.</summary>
+    public static IReadOnlySet<ExerciseEquipmentKind> AvailableEquipmentFor(Equipment equipment) => equipment switch
     {
         Equipment.FullGym => Enum.GetValues<ExerciseEquipmentKind>().ToHashSet(),
         Equipment.HomeDumbbellsBands => new HashSet<ExerciseEquipmentKind>

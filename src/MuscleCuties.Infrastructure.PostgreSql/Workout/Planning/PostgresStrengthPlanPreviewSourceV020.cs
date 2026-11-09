@@ -77,34 +77,9 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         var episodes = await dbContext.WorkoutInjuryEpisodes.AsNoTracking()
             .Where(row => row.UserId == userId).ToListAsync(cancellationToken).ConfigureAwait(false);
-        DateOnly? today = null;
-        if (planningState?.TimeZoneId is { } zoneId)
-        {
-            try { today = WorkoutAccountCalendarRule.LocalDate(DateTimeOffset.UtcNow, TimeZoneInfo.FindSystemTimeZoneById(zoneId)); }
-            catch (TimeZoneNotFoundException) { }
-            catch (InvalidTimeZoneException) { }
-        }
-        var relevantInjuries = injuries.Where(injury =>
-            !string.Equals(injury.Status, "Cleared", StringComparison.OrdinalIgnoreCase) || today is null ||
-            injury.ClearedDate is null || injury.ClearedDate > today ||
-            !episodes.Any(episode => episode.InjuryLogId == injury.Id && !episode.SourceDeleted &&
-                episode.ClearedOn == injury.ClearedDate && !string.IsNullOrWhiteSpace(episode.ClearanceTimeZoneId) &&
-                episode.ClearanceTimeZoneVersion is not null) ||
-            episodes.Any(episode => episode.InjuryLogId == injury.Id && (episode.SourceDeleted ||
-                episode.ClearedOn is null || episode.ClearedOn > today ||
-                string.IsNullOrWhiteSpace(episode.ClearanceTimeZoneId) || episode.ClearanceTimeZoneVersion is null))).ToArray();
-        // Safety answers drive exercise substitution, not only the cycle/readiness gate. The trigger
-        // mapping is closed; an explicit clinician restriction expands through reviewed catalog
-        // contraindications so it still applies when the trigger question was left unanswered.
-        var blockedMovementPatterns = InjuryWorseningMovementRule.BlockedPatterns(
-            relevantInjuries.Select(injury => new InjurySafetyAnswer(
-                InjuryObservationRule.TryNormalizeWorseningTrigger(injury.WorseningTrigger, out var worsening)
-                    ? worsening
-                    : InjuryWorseningTrigger.NotAnswered,
-                injury.ClinicianAdvisedAvoid,
-                (InjuryFlag)injury.SiteFlag)),
-            definitions.Select(definition => new ExerciseContraindicationPattern(
-                definition.Pattern, definition.Contraindications)));
+        var today = PlanningSafetyInputs.AccountToday(planningState?.TimeZoneId);
+        var relevantInjuries = PlanningSafetyInputs.RelevantInjuries(injuries, episodes, today);
+        var blockedMovementPatterns = PlanningSafetyInputs.BlockedMovementPatterns(relevantInjuries, definitions);
         // The reviewed site/status table is the only source of activity-level injury restriction.
         // Unknown status fails closed as Acute; cleared injuries never restrict an activity.
         var restrictedActivityTypes = InjuryActivityRestrictionRule.GetBlockedActivities(
@@ -141,8 +116,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         }
         return new StrengthPlanPreviewSourceV020(
             goal, equipment,
-            relevantInjuries.Aggregate(InjuryFlag.None, (flags, injury) =>
-                flags | (InjuryFlag)injury.SiteFlag),
+            PlanningSafetyInputs.ActiveInjuryFlags(relevantInjuries),
             relevantInjuries.Any(injury => injury.Pain > 0),
             definitions.Select(WorkoutExerciseV020CatalogMapper.Map).ToArray(),
             preferences.GroupBy(row => row.OriginalExerciseId)
@@ -164,14 +138,12 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             reviewedSlots.Conditions)
         {
             SelectedActivityTypes = ParseActivityTypes(profile?.PreferredWorkoutActivityTypes),
-            ExcludedExerciseIds = ParseExcludedExerciseIds(profile?.ExcludedStrengthExerciseIdsJson),
+            ExcludedExerciseIds = PlanningSafetyInputs.ParseExcludedExerciseIds(profile?.ExcludedStrengthExerciseIdsJson),
             AvailableWeekdays = ParseAvailableWeekdays(profile?.AvailableWorkoutWeekdaysJson),
             ActivitySessionDurationsMinutes = ParseActivityDurations(profile?.ActivitySessionDurationsJson),
             RequestedSessionsPerWeek = ParseActivityFrequencies(
                 profile?.RequestedActivitySessionsPerWeekJson),
-            ProfileTrainingExperience = planningState?.EffectiveExperience ?? (Enum.TryParse<TrainingExperienceLevel>(
-                profile?.TrainingExperienceLevel, true, out var trainingExperience) &&
-                Enum.IsDefined(trainingExperience) ? trainingExperience : null),
+            ProfileTrainingExperience = PlanningSafetyInputs.ProfileTrainingExperience(planningState, profile),
             MuscleGroupsByExerciseId = definitions
                 .Where(row => row.MuscleContributions.Any(contribution => contribution.Fraction > 0) &&
                     row.MuscleContributions.Where(contribution => contribution.Fraction > 0)
@@ -201,25 +173,6 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                 : JsonSerializer.Deserialize<SavedActivityAnswersDto>(planningState.AnswersJson,
                     new JsonSerializerOptions(JsonSerializerDefaults.Web))
         };
-    }
-
-    private static IReadOnlySet<int> ParseExcludedExerciseIds(string? json)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "[]" : json);
-            if (document.RootElement.ValueKind != JsonValueKind.Array)
-                return new HashSet<int>();
-            return document.RootElement.EnumerateArray()
-                .Where(value => value.ValueKind == JsonValueKind.Number &&
-                                value.TryGetInt32(out var exerciseId) && exerciseId > 0)
-                .Select(value => value.GetInt32())
-                .ToHashSet();
-        }
-        catch (JsonException)
-        {
-            return new HashSet<int>();
-        }
     }
 
     private static IReadOnlySet<int> ParseActivityTypes(string? value)
