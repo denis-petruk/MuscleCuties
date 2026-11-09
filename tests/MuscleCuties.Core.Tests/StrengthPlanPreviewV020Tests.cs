@@ -1021,6 +1021,20 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Contains(StrengthScheduleAssignmentRule.SessionsReducedForMuscleRecovery, preview.AdvisoryCodes);
     }
 
+    [Fact]
+    public async Task Missing_saved_equipment_and_goal_are_required_answers_not_defaults()
+    {
+        var profile = Profile() with { EquipmentAnswerMissing = true, GoalAnswerMissing = true };
+
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(profile))
+            .ExecuteAsync(Guid.NewGuid(), Request());
+
+        Assert.Equal("RequiredAnswersMissing", preview.Status);
+        Assert.Contains(PreviewStrengthPlanV020UseCase.EquipmentAnswerMissingCode, preview.LimitationCodes);
+        Assert.Contains(PreviewStrengthPlanV020UseCase.GoalAnswerMissingCode, preview.LimitationCodes);
+        Assert.Empty(preview.Sessions);
+    }
+
     private static StrengthPlanPreviewRequestV020 Request() => new(
         WorkoutActivityDto.GeneralStrength, LocalDate,
         HistoryFor(WorkoutActivityType.GeneralStrength),

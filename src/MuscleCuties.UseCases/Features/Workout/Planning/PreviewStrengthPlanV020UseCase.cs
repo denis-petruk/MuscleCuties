@@ -21,6 +21,22 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         return EvaluateLoadedSource(userId, request, sourceData);
     }
 
+    public const string EquipmentAnswerMissingCode = "EquipmentProfileAnswerMissing";
+    public const string GoalAnswerMissingCode = "GoalProfileAnswerMissing";
+
+    /// <summary>
+    /// Saved answers the planner needs and must never invent: equipment (unless the draft supplies it)
+    /// and goal.
+    /// </summary>
+    private static IEnumerable<string> MissingProfileAnswers(StrengthPlanPreviewSourceV020 source,
+        StrengthPlanPreviewRequestV020 request)
+    {
+        if (source.EquipmentAnswerMissing && request.DraftPreferences?.EquipmentLevel is null)
+            yield return EquipmentAnswerMissingCode;
+        if (source.GoalAnswerMissing)
+            yield return GoalAnswerMissingCode;
+    }
+
     /// <summary>Evaluates the canonical preview using source data loaded by the caller.</summary>
     public static StrengthPlanPreviewResponseV020 EvaluateLoadedSource(Guid userId,
         StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewSourceV020? sourceData) =>
@@ -90,8 +106,11 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         if (sourceData is not null)
         {
             var selected = sourceData.SelectedActivityTypes?.Select(value => (WorkoutActivityDto)value).ToArray() ?? [];
-            var missing = WorkoutActivityRequirements.Missing(selected, request.ActivityEligibilityEvidence ?? [], request.LocalDate);
-            if (missing.Count > 0)
+            var missing = WorkoutActivityRequirements.Missing(selected, request.ActivityEligibilityEvidence ?? [], request.LocalDate)
+                .Concat(MissingProfileAnswers(sourceData, request))
+                .Distinct(StringComparer.Ordinal)
+                .ToArray();
+            if (missing.Length > 0)
                 return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null)) with
                 {
                     Status = "RequiredAnswersMissing",

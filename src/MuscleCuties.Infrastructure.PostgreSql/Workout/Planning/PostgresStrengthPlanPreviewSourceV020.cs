@@ -44,14 +44,12 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             .ConfigureAwait(false);
         var planningState = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
             .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
-        var goal = Enum.TryParse<UserGoal>(profile?.Goal, true, out var parsedGoal) &&
-            Enum.IsDefined(parsedGoal)
-            ? parsedGoal
-            : UserGoal.MuscleTone;
-        var equipment = Enum.TryParse<Equipment>(profile?.EquipmentLevel, true, out var parsedEquipment) &&
-            Enum.IsDefined(parsedEquipment)
-            ? parsedEquipment
-            : Equipment.FullGym;
+        // Missing answers stay missing: the placeholders below are never planned with, because the
+        // preview reports EquipmentAnswerMissing / GoalAnswerMissing as required answers first.
+        var parsedGoal = PlanningSafetyInputs.ParseGoal(profile?.Goal);
+        var parsedEquipment = PlanningSafetyInputs.ParseEquipment(profile?.EquipmentLevel);
+        var goal = parsedGoal ?? UserGoal.MaintainHealth;
+        var equipment = parsedEquipment ?? Equipment.Bodyweight;
         var definitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
             .Include(row => row.MuscleContributions)
             .ThenInclude(row => row.MuscleGroup)
@@ -137,6 +135,8 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             reviewedSlots.AllowedIds,
             reviewedSlots.Conditions)
         {
+            EquipmentAnswerMissing = parsedEquipment is null,
+            GoalAnswerMissing = parsedGoal is null,
             SelectedActivityTypes = ParseActivityTypes(profile?.PreferredWorkoutActivityTypes),
             ExcludedExerciseIds = PlanningSafetyInputs.ParseExcludedExerciseIds(profile?.ExcludedStrengthExerciseIdsJson),
             AvailableWeekdays = ParseAvailableWeekdays(profile?.AvailableWorkoutWeekdaysJson),
