@@ -108,7 +108,7 @@
                 </VerticalStackLayout>
             </Border>
 
-            <!-- Energy (also drives stress for planning), soreness, pain, bloating -->
+            <!-- Energy, soreness, pain, bloating: each starts unanswered and needs an explicit choice -->
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpacing14}">
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
@@ -167,16 +167,28 @@
                                 Style="{StaticResource MetricValue}"
                                 VerticalOptions="Center" />
                         </Grid>
-                        <Slider
-                            Grid.Row="1"
-                            Minimum="1"
-                            Maximum="5"
-                            Value="{Binding PlanningSorenessSlider}"
-                            HorizontalOptions="Fill"
-                            MinimumTrackColor="{StaticResource Primary}"
-                            MaximumTrackColor="{AppThemeBinding Light={StaticResource TrackMutedLight}, Dark={StaticResource TrackMutedDark}}"
-                            ThumbColor="{StaticResource Primary}"
-                            SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_PlanningSoreness}" />
+                        <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="{StaticResource UiSpacing6}">
+                            <Button x:Name="SorenessChip1" Style="{StaticResource ButtonSecondary}" Grid.Column="0"
+                                    Text="{loc:LocalizedText Common_Scale_1}"
+                                    CommandParameter="1" Clicked="OnSorenessClicked"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Soreness1A11y}" />
+                            <Button x:Name="SorenessChip2" Style="{StaticResource ButtonSecondary}" Grid.Column="1"
+                                    Text="{loc:LocalizedText Common_Scale_2}"
+                                    CommandParameter="2" Clicked="OnSorenessClicked"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Soreness2A11y}" />
+                            <Button x:Name="SorenessChip3" Style="{StaticResource ButtonSecondary}" Grid.Column="2"
+                                    Text="{loc:LocalizedText Common_Scale_3}"
+                                    CommandParameter="3" Clicked="OnSorenessClicked"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Soreness3A11y}" />
+                            <Button x:Name="SorenessChip4" Style="{StaticResource ButtonSecondary}" Grid.Column="3"
+                                    Text="{loc:LocalizedText Common_Scale_4}"
+                                    CommandParameter="4" Clicked="OnSorenessClicked"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Soreness4A11y}" />
+                            <Button x:Name="SorenessChip5" Style="{StaticResource ButtonSecondary}" Grid.Column="4"
+                                    Text="{loc:LocalizedText Common_Scale_5}"
+                                    CommandParameter="5" Clicked="OnSorenessClicked"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Soreness5A11y}" />
+                        </Grid>
                         <Grid Grid.Row="2" ColumnDefinitions="*, *">
                             <Label
                                 Grid.Column="0"
@@ -231,14 +243,17 @@
                             Text="{loc:LocalizedText Dashboard_CheckIn_BloatingTitle}"
                             Style="{StaticResource FormFieldLabel}"
                             VerticalOptions="Center" />
-                        <Switch
-                            Grid.Column="1"
-                            IsToggled="{Binding HasBloating}"
-                            OnColor="{StaticResource Primary}"
-                            ThumbColor="{StaticResource ControlThumbLight}"
-                            VerticalOptions="Center"
-                            SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_BloatingA11y}"
-                            SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_BloatingHint}" />
+                        <Grid Grid.Column="1" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                              SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_BloatingHint}">
+                            <Button x:Name="BloatingNoChip" Style="{StaticResource ButtonSecondary}" Grid.Column="0"
+                                    Text="{loc:LocalizedText Dashboard_CheckIn_BloatingNo}"
+                                    CommandParameter="0" Clicked="OnBloatingClicked"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_BloatingNoA11y}" />
+                            <Button x:Name="BloatingYesChip" Style="{StaticResource ButtonSecondary}" Grid.Column="1"
+                                    Text="{loc:LocalizedText Dashboard_CheckIn_BloatingYes}"
+                                    CommandParameter="1" Clicked="OnBloatingClicked"
+                                    SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_BloatingYesA11y}" />
+                        </Grid>
                     </Grid>
                 </VerticalStackLayout>
             </Border>
