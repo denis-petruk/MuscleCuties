@@ -55,6 +55,13 @@ public static class StrengthProgressionRule
     public const int Tier3MaxConcurrentMuscleProgressions = 3;
 
     public const int TwoConsecutiveWeeksForDoubleProgression = 2;
+
+    /// <summary>
+    /// Owner decision OD-6 (option b): a load decrease needs this many consecutive comparable,
+    /// fully logged under-target sessions. One under-target session holds the load. Skipped and
+    /// incomplete sessions are not comparable evidence and never count toward the streak.
+    /// </summary>
+    public const int ConsecutiveUnderTargetSessionsForLoadDecrease = 2;
     public const decimal MinimumLoad = 0m;
 
     public const string ActionIncrease = "Increase";
@@ -70,6 +77,7 @@ public static class StrengthProgressionRule
     public const string DoubleProgressionEarned = "DoubleProgressionEarned";
     public const string RepRangeAndRirSatisfied = "RepRangeAndRirSatisfied";
     public const string RepOrRirDeficitRequiresLoadRegression = "RepOrRirDeficitRequiresLoadRegression";
+    public const string SingleUnderTargetSessionHoldsLoad = "SingleUnderTargetSessionHoldsLoad";
     public const string UnacceptableTechniqueBlocksProgression = "UnacceptableTechniqueBlocksProgression";
     public const string SimultaneousVolumeIncreaseBlocksLoadProgression = "SimultaneousVolumeIncreaseBlocksLoadProgression";
     public const string ConcurrentProgressionCapExceeded = "ConcurrentProgressionCapExceeded";
@@ -85,6 +93,12 @@ public static class StrengthProgressionRule
             : (AccessoryRepMinimum, AccessoryRepMaximum, targetRir);
     }
 
+    /// <summary>
+    /// Resolves the next load from one comparable session. An under-target result (reps below the
+    /// range or effort harder than the target) lowers the load only when the previous comparable,
+    /// fully logged session was also under target; otherwise the load is held. Callers must not pass
+    /// a skipped or incomplete session as the previous comparable session.
+    /// </summary>
     public static SingleSetProgressionResult ResolveSingleSetLoad(
         int repsPrevious,
         decimal loadPrevious,
@@ -93,35 +107,32 @@ public static class StrengthProgressionRule
         int repLow,
         int repHigh,
         int targetRir,
-        bool techniqueAcceptable = true)
+        bool techniqueAcceptable = true,
+        bool previousComparableSessionUnderTarget = false)
     {
         var safePreviousLoad = Math.Max(MinimumLoad, loadPrevious);
         var safeIncrement = Math.Max(MinimumLoad, loadIncrement);
+        var underTarget = repsPrevious < repLow || rirPrevious < targetRir;
 
-        if (!techniqueAcceptable)
+        if (underTarget)
         {
-            if (repsPrevious < repLow || rirPrevious < targetRir)
-            {
-                var regressedLoad = Math.Max(MinimumLoad, safePreviousLoad - safeIncrement);
-                return new SingleSetProgressionResult(regressedLoad, ActionDecrease, RepOrRirDeficitRequiresLoadRegression);
-            }
+            if (!previousComparableSessionUnderTarget)
+                return new SingleSetProgressionResult(safePreviousLoad, ActionMaintain, SingleUnderTargetSessionHoldsLoad);
 
-            return new SingleSetProgressionResult(safePreviousLoad, ActionMaintain, UnacceptableTechniqueBlocksProgression);
+            var regressedLoad = Math.Max(MinimumLoad, safePreviousLoad - safeIncrement);
+            return new SingleSetProgressionResult(regressedLoad, ActionDecrease, RepOrRirDeficitRequiresLoadRegression);
         }
 
-        if (repsPrevious >= repHigh && rirPrevious >= targetRir)
+        if (!techniqueAcceptable)
+            return new SingleSetProgressionResult(safePreviousLoad, ActionMaintain, UnacceptableTechniqueBlocksProgression);
+
+        if (repsPrevious >= repHigh)
         {
             var advancedLoad = safePreviousLoad + safeIncrement;
             return new SingleSetProgressionResult(advancedLoad, ActionIncrease, DoubleProgressionEarned);
         }
 
-        if (repsPrevious >= repLow && rirPrevious >= targetRir)
-        {
-            return new SingleSetProgressionResult(safePreviousLoad, ActionMaintain, RepRangeAndRirSatisfied);
-        }
-
-        var decreased = Math.Max(MinimumLoad, safePreviousLoad - safeIncrement);
-        return new SingleSetProgressionResult(decreased, ActionDecrease, RepOrRirDeficitRequiresLoadRegression);
+        return new SingleSetProgressionResult(safePreviousLoad, ActionMaintain, RepRangeAndRirSatisfied);
     }
 
     public static int GetConcurrentProgressionLimit(EffectiveExperienceTier tier) => tier switch
@@ -166,25 +177,26 @@ public static class StrengthProgressionRule
                 .TakeLast(TwoConsecutiveWeeksForDoubleProgression)
                 .ToList();
 
-            var anyUnderperformed = false;
             var allWorkingSetsQualified = true;
+            var underTargetWeeks = 0;
 
             foreach (var week in qualifyingWeeks)
             {
+                // A week without working sets is skipped or incomplete: it neither qualifies
+                // nor counts as an under-target result.
                 if (week.WorkingSets is null || week.WorkingSets.Count == 0)
                 {
                     allWorkingSetsQualified = false;
-                    break;
+                    continue;
                 }
 
-                foreach (var set in week.WorkingSets)
-                {
-                    if (!set.TechniqueAcceptable || set.RepsCompleted < repLow || set.RirActual < targetRir)
-                        anyUnderperformed = true;
+                if (week.WorkingSets.Any(set => set is null || !set.TechniqueAcceptable ||
+                        set.RepsCompleted < repLow || set.RirActual < targetRir))
+                    underTargetWeeks++;
 
-                    if (!set.TechniqueAcceptable || set.RepsCompleted < repHigh || set.RirActual < targetRir)
-                        allWorkingSetsQualified = false;
-                }
+                if (week.WorkingSets.Any(set => set is null || !set.TechniqueAcceptable ||
+                        set.RepsCompleted < repHigh || set.RirActual < targetRir))
+                    allWorkingSetsQualified = false;
             }
 
             if (allWorkingSetsQualified)
@@ -226,7 +238,7 @@ public static class StrengthProgressionRule
                 continue;
             }
 
-            if (anyUnderperformed)
+            if (underTargetWeeks >= ConsecutiveUnderTargetSessionsForLoadDecrease)
             {
                 var regressed = Math.Max(MinimumLoad, safeCurrentLoad - safeIncrement);
                 decisions.Add(new MuscleProgressionDecision(
@@ -236,6 +248,18 @@ public static class StrengthProgressionRule
                     LoadIncreased: false,
                     StatusRegressed,
                     RepOrRirDeficitRequiresLoadRegression));
+                continue;
+            }
+
+            if (underTargetWeeks > 0)
+            {
+                decisions.Add(new MuscleProgressionDecision(
+                    candidate.Muscle,
+                    candidate.ExerciseId,
+                    safeCurrentLoad,
+                    LoadIncreased: false,
+                    StatusMaintained,
+                    SingleUnderTargetSessionHoldsLoad));
                 continue;
             }
 
