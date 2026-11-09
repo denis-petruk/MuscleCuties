@@ -355,7 +355,7 @@
                            HorizontalTextAlignment="Center" />
                     <Button Style="{StaticResource ButtonPrimary}"
                             Text="{loc:LocalizedText Workout_Generation_PromptGeneratePlanButton}"
-                            Command="{Binding GeneratePlanCommand}"
+                            AutomationId="WorkoutGeneratePlanButton" Command="{Binding GeneratePlanCommand}"
                             HorizontalOptions="Fill" />
                 </VerticalStackLayout>
             </Border>

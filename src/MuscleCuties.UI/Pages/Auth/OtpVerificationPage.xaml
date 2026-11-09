@@ -75,7 +75,7 @@
         <Button Style="{StaticResource ButtonPrimary}"
            
             Text="{loc:LocalizedText Auth_VerifyCode}"
-            Command="{Binding VerifyCommand}"
+            AutomationId="OtpVerifyButton" Command="{Binding VerifyCommand}"
             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
             SemanticProperties.Description="{loc:LocalizedText Auth_Otp_VerifyConfirmationCode}" />
         <ActivityIndicator
@@ -93,7 +93,7 @@
             Margin="{StaticResource UiInsets0_12_0_0}">
             <Button
                 Text="{loc:LocalizedText Auth_Otp_ResendCode}"
-                Command="{Binding ResendCodeCommand}"
+                AutomationId="OtpResendButton" Command="{Binding ResendCodeCommand}"
                 IsEnabled="{Binding CanResend}"
                 Style="{StaticResource ButtonSecondary}"
                 SemanticProperties.Description="{loc:LocalizedText Auth_Otp_ResendVerificationCode}" />
