@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using Microsoft.Maui.Accessibility;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Profile;
@@ -31,6 +32,11 @@ public partial class ProfileSetupPage : ContentPage
         ((ProfileSetupViewModel)BindingContext).MarkBirthDateSelected(e.OldDate, e.NewDate);
     }
 
+    private void OnBirthDatePickerUnfocused(object? sender, FocusEventArgs e)
+    {
+        ((ProfileSetupViewModel)BindingContext).MarkBirthDateConfirmedFromPicker();
+    }
+
     private async void OnProfileImageButtonClicked(object? sender, EventArgs e)
     {
         await ShowProfileImageActionsAsync();
@@ -43,6 +49,9 @@ public partial class ProfileSetupPage : ContentPage
         if (!WellnessAcknowledgment.IsChecked)
         {
             AcknowledgmentError.IsVisible = true;
+            // The message is static text, so announce it explicitly when it appears.
+            if (!string.IsNullOrWhiteSpace(AcknowledgmentError.Text))
+                SemanticScreenReader.Default.Announce(AcknowledgmentError.Text);
             return;
         }
 

@@ -5,6 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:workoutControls="clr-namespace:MuscleCuties.UI.Controls.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileSetupViewModel"
@@ -102,6 +103,7 @@
                                 AutomationId="ProfileSetupBirthDatePicker"
                                 Date="{Binding BirthDate}"
                                 DateSelected="OnBirthDateSelected"
+                                Unfocused="OnBirthDatePickerUnfocused"
                                 MinimumDate="{Binding MinBirthDate}"
                                 MaximumDate="{Binding MaxBirthDate}"
                                 Format="d"
@@ -283,15 +285,17 @@
             Style="{StaticResource ErrorLabel}"
             LineBreakMode="WordWrap"
             IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
-            SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
-            SemanticProperties.HeadingLevel="Level3" />
+            SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}">
+            <Label.Behaviors>
+                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+            </Label.Behaviors>
+        </Label>
         <Label
             x:Name="AcknowledgmentError"
             IsVisible="False"
             Text="{loc:LocalizedText Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo}"
             Style="{StaticResource ErrorLabel}"
-            LineBreakMode="WordWrap"
-            SemanticProperties.HeadingLevel="Level3" />
+            LineBreakMode="WordWrap" />
         <ActivityIndicator
                         Style="{StaticResource StateBusyInline}"
             IsRunning="{Binding IsBusy}"

@@ -180,7 +180,7 @@ public sealed class BackendApiRefreshFailureTests
         signal.NotifySessionLost();
 
         Assert.Equal(2, raised);
-        await Task.CompletedTask.ConfigureAwait(false);
+        await Task.CompletedTask;
     }
 
     [Fact]

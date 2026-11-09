@@ -5,6 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:quizModels="clr-namespace:MuscleCuties.UI.Models.UI.Quiz"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Quiz"
     x:DataType="vm:QuizViewModel"
@@ -362,8 +363,11 @@
                     LineBreakMode="WordWrap"
                     IsVisible="{Binding HasError}"
                     Margin="{StaticResource UiInsets0_0_0_10}"
-                    SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
-                    SemanticProperties.HeadingLevel="Level3" />
+                    SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}">
+                    <Label.Behaviors>
+                        <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                    </Label.Behaviors>
+                </Label>
 
                 <ActivityIndicator
                         Style="{StaticResource StateBusyInline}"

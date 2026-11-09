@@ -612,19 +612,37 @@
                         </VerticalStackLayout>
                     </VerticalStackLayout>
 
-                    <!-- Bottom action bar: Swap / Notes / Skip / Next -->
-                    <Grid Grid.Row="3" RowDefinitions="Auto,Auto" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
-                        <Button Text="{loc:LocalizedText Workout_Session_SwapButton}" Command="{Binding OpenSwapPanelCommand}"
+                    <!-- Bottom action bar: pain report / Swap / Notes / Skip / This hurts / Next -->
+                    <Grid Grid.Row="3" RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
+                        <!-- S-04: inline pain report. Stops the movement; offers only reviewed swaps or stopping. -->
+                        <Border Grid.ColumnSpan="2" Style="{StaticResource CardSecondary}" IsVisible="{Binding IsPainReportVisible}">
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_PainTitle}" Style="{StaticResource BodyStrong}"
+                                       SemanticProperties.HeadingLevel="Level3" />
+                                <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_PainBody}" Style="{StaticResource CaptionLabel}" />
+                                <Button Text="{loc:LocalizedText Workout_Session_PainSwap}" Command="{Binding PainSwapCommand}"
+                                        Style="{StaticResource ButtonSecondary}" IsVisible="{Binding CurrentExercise.UsesStrengthMetrics}" />
+                                <Button Text="{loc:LocalizedText Workout_Session_PainStop}" Command="{Binding PainStopExerciseCommand}"
+                                        Style="{StaticResource ButtonPrimary}" />
+                                <Button Text="{loc:LocalizedText Common_Cancel}" Command="{Binding CancelPainReportCommand}"
+                                        Style="{StaticResource ButtonSecondary}" />
+                            </VerticalStackLayout>
+                        </Border>
+                        <Button Grid.Row="1" Text="{loc:LocalizedText Workout_Session_SwapButton}" Command="{Binding OpenSwapPanelCommand}"
                                 Style="{StaticResource ButtonSecondary}"
                                 IsVisible="{Binding CurrentExercise.UsesStrengthMetrics}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SwapExerciseAccessibility}" />
-                        <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_NoteButton}" Command="{Binding OpenMovementNoteCommand}"
+                        <Button Grid.Row="1" Grid.Column="1" Text="{loc:LocalizedText Workout_Session_NoteButton}" Command="{Binding OpenMovementNoteCommand}"
                                 Style="{StaticResource ButtonSecondary}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_NoteEditorTitle}" />
-                        <Button Grid.Column="2" Text="{loc:LocalizedText Workout_Session_SkipButton}"
+                        <Button Grid.Row="2" Text="{loc:LocalizedText Workout_Session_SkipButton}"
                                 Command="{Binding SkipExerciseCommand}" Style="{StaticResource ButtonSecondary}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SkipExerciseAccessibility}" />
-                        <Button Style="{StaticResource ButtonPrimary}" Grid.Row="1" Grid.ColumnSpan="3" Text="{loc:LocalizedText Workout_Session_NextExerciseButton}"
+                        <Button Grid.Row="2" Grid.Column="1" Text="{loc:LocalizedText Workout_Session_PainButton}"
+                                AutomationId="WorkoutSessionReportPainButton"
+                                Command="{Binding ReportPainCommand}" Style="{StaticResource ButtonSecondary}"
+                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_PainAccessibility}" />
+                        <Button Style="{StaticResource ButtonPrimary}" Grid.Row="3" Grid.ColumnSpan="2" Text="{loc:LocalizedText Workout_Session_NextExerciseButton}"
                                 AutomationId="WorkoutSessionNextExerciseButton" Command="{Binding NextExerciseCommand}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SaveAndNextAccessibility}" />
                     </Grid>
@@ -656,6 +674,8 @@
                                     Text="{Binding SummaryStatusText, Converter={StaticResource LocalizedStringConverter}}"
                                     Style="{StaticResource CaptionCentered}"
                                     SemanticProperties.Description="{Binding SummaryStatusText, Converter={StaticResource LocalizedStringConverter}}" />
+                                <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_PainLogReminder}"
+                                       Style="{StaticResource CaptionCentered}" IsVisible="{Binding HasPainReports}" />
                             </VerticalStackLayout>
                             <!-- Strength metrics: volume, PRs and time. Timed activities use the row below
                                  instead, so the two sets never share a column. -->

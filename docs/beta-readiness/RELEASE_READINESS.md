@@ -70,7 +70,9 @@ need the live AWS items.
    read-only `dbcheck` then rehearse adoption on a restored snapshot, create `beta` aliases and serve them, subscribe
    alarms, move secrets to Secrets Manager and rotate.
 7. Decide S-03 (implement or amend policy decisions 4/5) and S-04 (mid-session pain action).
-8. Physical-device QA01 in EN and RU, including VoiceOver, Dynamic Type and the CR01 transition sequence.
+8. QA01 in EN and RU, including VoiceOver, Dynamic Type and the CR01 transition sequence. **Owner 2026-11-09: physical-device
+   QA is deprecated; QA01 runs on the iOS Simulator launched from Rider** (`.run/iOS Simulator - *`, `scripts/run-ios-simulator.sh`)
+   against the loopback API (`scripts/run-local-api.sh`). Pending review in `docs/review_owner/list_of_changes.md`.
 9. App Store Connect: App Privacy answers matching `PrivacyInfo.xcprivacy`, beta description, demo account,
    feedback email.
 

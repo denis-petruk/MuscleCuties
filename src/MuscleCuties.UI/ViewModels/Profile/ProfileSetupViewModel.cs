@@ -173,9 +173,23 @@ public partial class ProfileSetupViewModel : ObservableObject
             age--;
 
         if (age < 18)
-            ErrorMessage = "Ui_Onboarding_Error_Age";
-        else if (ErrorMessage == "Please provide a valid date of birth (must be at least 18 years old).")
+            ErrorMessage = AgeErrorKey;
+        // Clear only the age error this handler raised, so a corrected date never leaves it behind.
+        else if (ErrorMessage == AgeErrorKey)
             ErrorMessage = string.Empty;
+    }
+
+    private const string AgeErrorKey = "Ui_Onboarding_Error_Age";
+
+    /// <summary>
+    /// The picker was opened and dismissed. On iOS, closing it with Done on the pre-filled date raises no
+    /// DateSelected event, so a user whose 18th birthday is today could otherwise never confirm it.
+    /// Opening and confirming the picker counts as answering; an untouched picker still does not.
+    /// </summary>
+    public void MarkBirthDateConfirmedFromPicker()
+    {
+        if (!_loadingBirthDate)
+            _birthDateWasSelected = true;
     }
 
     public void MarkBirthDateSelected(DateTime? oldDate, DateTime? newDate)

@@ -33,7 +33,7 @@ public sealed class CycleOnboardingAnchorTests
     }
 
     [Fact]
-    public void OnboardingPhaseLogAloneProducesAnActiveCycle()
+    public async Task OnboardingPhaseLogAloneProducesAnActiveCycle()
     {
         var useCase = new CycleHistoryUseCase(new StubCycleHistoryStore(
             new CyclePredictionInputs(
@@ -41,7 +41,7 @@ public sealed class CycleOnboardingAnchorTests
                 ProfileCycleLength,
                 new CycleManualPhaseLog(CyclePhase.Luteal.ToString(), OnboardingDate))));
 
-        var prediction = useCase.ProjectPredictionAsync(Guid.NewGuid(), OnboardingDate).GetAwaiter().GetResult();
+        var prediction = await useCase.ProjectPredictionAsync(Guid.NewGuid(), OnboardingDate);
 
         var expectedStart = CycleAnchorRule.GetImpliedCycleStart(
             CyclePhase.Luteal, OnboardingDate, ProfileCycleLength);
@@ -52,7 +52,7 @@ public sealed class CycleOnboardingAnchorTests
     }
 
     [Fact]
-    public void RecordedCycleHistoryStaysAuthoritativeOverTheOnboardingAnchor()
+    public async Task RecordedCycleHistoryStaysAuthoritativeOverTheOnboardingAnchor()
     {
         var recordedStart = OnboardingDate.AddDays(-9);
         var useCase = new CycleHistoryUseCase(new StubCycleHistoryStore(
@@ -61,7 +61,7 @@ public sealed class CycleOnboardingAnchorTests
                 ProfileCycleLength,
                 new CycleManualPhaseLog(CyclePhase.Menstrual.ToString(), OnboardingDate))));
 
-        var prediction = useCase.ProjectPredictionAsync(Guid.NewGuid(), OnboardingDate).GetAwaiter().GetResult();
+        var prediction = await useCase.ProjectPredictionAsync(Guid.NewGuid(), OnboardingDate);
 
         Assert.True(prediction.HasActiveCycle);
         Assert.Equal(recordedStart, prediction.CurrentCycleStartDate);

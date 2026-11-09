@@ -5,15 +5,14 @@ namespace MuscleCuties.Core.Tests;
 public sealed class InjuryProgressionPhaseRuleTests
 {
     private static readonly DateOnly Clearance = new(2024, 2, 28);
-    private static readonly DateOnly LastOptionalDate = new(2024, 3, 5);
-    private static readonly DateOnly FirstRequiredDate = new(2024, 3, 6);
+    private static readonly DateOnly FirstRequiredDate = new(2024, 2, 29);
 
     [Fact]
-    public void SevenDatesIncludingClearanceRemainInOptionalWindow()
+    public void ClearanceDayIsAlreadyAfterTheWindow()
     {
+        // S-05: no post-clearance optional window.
         var episode = new InjuryRestorationEpisode(false, Clearance);
-        Assert.Equal(InjuryProgressionPhase.ClearedOptionalWindow, InjuryProgressionPhaseRule.Classify(episode, Clearance));
-        Assert.Equal(InjuryProgressionPhase.ClearedOptionalWindow, InjuryProgressionPhaseRule.Classify(episode, LastOptionalDate));
+        Assert.Equal(InjuryProgressionPhase.ClearedAfterWindow, InjuryProgressionPhaseRule.Classify(episode, Clearance));
         Assert.Equal(InjuryProgressionPhase.ClearedAfterWindow, InjuryProgressionPhaseRule.Classify(episode, FirstRequiredDate));
     }
 

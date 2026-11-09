@@ -51,6 +51,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private readonly Func<SavedActivityAnswersDto, Task<HiitConfirmationChoice>>? _confirmHiitAsync;
     private readonly Func<Task>? _updateHiitAsync;
     private readonly HashSet<int> _skippedIds = [];
+    // S-04: exercises the user reported as painful in this session (stopped, never made up for).
+    private readonly HashSet<int> _painReportedIds = [];
+    [ObservableProperty] private bool _isPainReportVisible;
+    public bool HasPainReports => _painReportedIds.Count > 0;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivities), nameof(HasActivityChoices))]
     private ObservableCollection<WorkoutActivitySectionItem> _activityCards = [];
@@ -417,6 +421,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         DayTitle = "Workout";
         CyclePhaseNote = string.Empty;
         _skippedIds.Clear();
+        _painReportedIds.Clear();
+        IsPainReportVisible = false;
+        OnPropertyChanged(nameof(HasPainReports));
         _prIds.Clear();
         _savedLogs.Clear();
         _activityTimers.Clear();
@@ -772,6 +779,43 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private void JumpToExercise(int index)
     {
         if (CanChangeExercise() && index >= 0 && index < TotalExercisesInActivity) SetCurrentExercise(index);
+    }
+
+    /// <summary>
+    /// S-04 / policy decision 6: pain stops the provoking movement. The user can switch to a reviewed alternative
+    /// (the swap panel only lists canonically eligible candidates) or stop the exercise; nothing is added to make up
+    /// for it. The injury itself is logged after the session, because the server keeps the plan fixed while a
+    /// session is open.
+    /// </summary>
+    [RelayCommand]
+    private void ReportPain()
+    {
+        if (!CanChangeExercise() || CurrentExercise is null) return;
+        _painReportedIds.Add(CurrentExercise.WorkoutDayExerciseId);
+        OnPropertyChanged(nameof(HasPainReports));
+        IsPainReportVisible = true;
+    }
+
+    [RelayCommand]
+    private async Task PainSwapAsync()
+    {
+        IsPainReportVisible = false;
+        await OpenSwapPanelAsync();
+    }
+
+    [RelayCommand]
+    private void PainStopExercise()
+    {
+        IsPainReportVisible = false;
+        SkipExercise();
+    }
+
+    [RelayCommand]
+    private void CancelPainReport()
+    {
+        if (CurrentExercise is not null && _painReportedIds.Remove(CurrentExercise.WorkoutDayExerciseId))
+            OnPropertyChanged(nameof(HasPainReports));
+        IsPainReportVisible = false;
     }
 
     [RelayCommand]

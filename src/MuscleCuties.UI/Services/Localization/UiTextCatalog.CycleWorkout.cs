@@ -385,6 +385,13 @@ public static partial class UiTextCatalog
         English["Workout_Session_Start60SecRestAccessibility"] = "Start 60-second rest";
         English["Workout_Session_StartButton"] = "Start";
         English["Workout_Session_SwapButton"] = "Swap";
+        English["Workout_Session_PainButton"] = "This hurts";
+        English["Workout_Session_PainAccessibility"] = "Report pain and stop this exercise";
+        English["Workout_Session_PainTitle"] = "Stop this movement";
+        English["Workout_Session_PainBody"] = "Pain means this exercise stops for today. Switch to a reviewed alternative or stop it. Nothing is added to make up for it.";
+        English["Workout_Session_PainSwap"] = "Switch exercise";
+        English["Workout_Session_PainStop"] = "Stop this exercise";
+        English["Workout_Session_PainLogReminder"] = "You reported pain during this workout. Add it to your injury log so your next sessions adjust.";
         English["Workout_Session_SwapExerciseAccessibility"] = "Swap this exercise for an alternative";
         English["Workout_Session_TimeFormat"] = "Time: {0}";
         English["Workout_Session_TimeLabel"] = "Time";
