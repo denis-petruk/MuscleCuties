@@ -210,19 +210,25 @@ fi
 say "PR #$PR_NUMBER recorded for this run."
 
 # ── 2. CI ─────────────────────────────────────────────────────────────────
-stage "CI on the pull request"
-say "The fixes only count once this branch's own checks are green."
-note "The last green run belongs to PR #46 at a different head; do not reuse it."
-open_url "$REPO_URL/pull/$PR_NUMBER/checks"
+stage "CI on the branch"
+say "CI runs automatically for every push to integration/**, so the push already started it."
+note "Commit under test: $HEAD_SHA on $BRANCH."
+open_url "$REPO_URL/actions?query=branch%3A$BRANCH"
+open_url "$REPO_URL/commit/$HEAD_SHA"
+step "Open the newest CI run for this branch and confirm it says completed successfully."
+step "Green means all of these are green: verify_source, verify_plan_generation,"
+step "verify_ios_compile (on xcode-27), postgres_verify / verify_postgres_compatibility,"
+step "and the aggregate required job."
+step "The commit page's checks summary must read 0 failing and 0 pending."
 if command -v gh >/dev/null 2>&1 && gh auth status >/dev/null 2>&1; then
-  step "Watching the checks here; Ctrl-C leaves them running in GitHub."
-  gh pr checks "$PR_NUMBER" --watch || true
+  step "Or watch from here:"
+  note "  gh run list --branch $BRANCH --limit 1"
+  note "  gh run watch <run-id>"
 else
-  note "gh is not signed in, so watch them in the browser."
+  note "gh is not signed in; the public run page above is enough."
 fi
-if ! confirm "Are every required check and the required gate green?"; then
-  warn "Stop here: a red or pending check is a NO-GO for this branch."
-  warn "Fix it, push, and re-run this wizard."
+if ! confirm "Is the run on $HEAD_SHA completed successfully with every required job green?"; then
+  warn "Stop here: red or pending is a NO-GO. Fix it, push, and re-run this wizard."
   exit 1
 fi
 

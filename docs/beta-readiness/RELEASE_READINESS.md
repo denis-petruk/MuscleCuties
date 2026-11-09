@@ -3,15 +3,15 @@
 Candidate branch `integration/beta-rc-20261108` (base `main` `4ee9b4f2`). Verdict and gates below reflect only what was
 run locally in this task; nothing was deployed, migrated on a shared target, signed or uploaded.
 
-## Verdict: **NO-GO for external testers. NO-GO for internal TestFlight on this branch until it is built and CI is green.**
+## Verdict: **NO-GO for external testers. NO-GO for internal TestFlight until device acceptance and the owner actions are complete.**
 
-This revision is `integration/beta-polish-20261109` from `a99fd80c`. It adds the E-04…E-07 code fixes and the A11
-repository half; it does not change backend, schema or policy behaviour. Verdict inputs: the UI changes are
-**code-only evidence** here (Linux workspace, no Xcode/CoreSimulator), CI has not run on this branch, the PostgreSQL
-integration suite could not run (no PG16, no root), and the live AWS posture (A1–A6) is unchanged. The owner product
-decisions (`S-03`, `S-04`, `S-05`) and the physical-device QA01 remain open. External-tester readiness stays blocked by
-those items; internal TestFlight becomes possible only after the branch builds on a Mac, CI is green and E-04…E-07 are
-re-checked on a simulator.
+This revision is `integration/beta-polish-20261109-v2` from `a99fd80c`. It adds the E-04…E-07 code fixes, the
+localization repairs and the A11 repository half; it does not change backend, schema or policy behaviour. CI is green at
+`1f71f83` (run 42675311877: 10 successful, 0 failing, 0 pending, including `verify_ios_compile` on `xcode-27`), so the UI
+compiles — but no simulator or device journey was run, the PostgreSQL suite could not run in this workspace, and the live
+AWS posture is unchanged. The owner product decisions (`S-03`, `S-04`, `S-05`) and physical-device QA01 remain open.
+Internal TestFlight becomes possible after the simulator checks and owner actions below; external testers additionally
+need the live AWS items.
 
 ### This revision's executed checks
 
@@ -30,7 +30,7 @@ re-checked on a simulator.
 
 | Gate | Status | Evidence / cause |
 | --- | --- | --- |
-| G01 Build | PARTIAL (iOS BLOCKED) | Non-UI projects build at this revision; Core.Tests has 4 analyzer warnings (T-21). iOS `net10.0-ios` was **not built here**: the workspace is Linux with no Xcode, so the earlier MAUI 10.0.90 success is not evidence for this head. |
+| G01 Build | PASS (compile) | Non-UI projects build locally; Core.Tests has 4 analyzer warnings (T-21). The iOS simulator target was compiled by `verify_ios_compile` on `xcode-27` in run 42675311877 at `1f71f83`, so the UI changes compile; no device install or launch was run. |
 | G02 Unit tests | PASS (local, this revision) | Core 1325/1325 (the duplicate theory row is skipped by the runner); Mobile Contracts 183/183; Registration 54/54; Deployment policy 17/17. Server host-building tests were not run locally (sandbox file-watcher hang, per recipe) |
 | G03 Workout rules | PASS with open items | Traceability in AUDIT.md; S-03 (policy load step-down) and S-04 (in-session pain report) open |
 | G04 Canonical engine | PASS | Swap/reschedule now go through canonical eligibility and schedule validation; dead gating/readiness/generator code removed |
@@ -46,7 +46,7 @@ re-checked on a simulator.
 | G14 Security | PASS (repo) / FAIL (live) | No secrets in tracked files; Debug cannot target Beta; live Lambda secrets in plaintext env (A6) |
 | G15 Migrations | PASS (local disposable) | Empty DB bootstrap applies 7 ordered scripts (001–007); the ledger reports 7 applied, head 7, tree `746`, re-run applies 0. `ops.schema_metadata` records `schema_version=7` with fingerprint `25ff237d…8c982c4b`. `dbcheck` at head 7 and live Beta adoption are not proven (A4) |
 | G16 Cleanup | PASS | Dead DI/gating/readiness code, GitLab stub, retired release scripts, Android/Windows/MacCatalyst trees removed; suites green |
-| G17 CI | NOT RUN at this head | Last verified on PR #46: `gh pr checks 46` at the final code head `c7b3a1ff`: 10 successful, 0 failing, 0 pending on both push and PR — `postgres_verify` 4m26s push / 4m57s PR, `verify_ios_compile` 2m56s / 3m43s on `xcode-27`, `verify_plan_generation` 2m1s / 1m28s, `verify_source` 52s / 1m14s, `required` green. The first green run was `dcb43f79`; the earlier failure was the `maui-ios` workload resolving to .NET for iOS 27.1 against `macos-15`'s Xcode 16.4, fixed by `8162bfff` |
+| G17 CI | PASS (observed) | Run [42675311877](https://github.com/denis-petruk/MuscleCuties/actions/runs/42675311877) on `integration/beta-polish-20261109-v2` at `1f71f83`: **completed successfully**; the commit page reports **10 successful, 0 failing, 0 pending**. `verify_source`, `verify_plan_generation`, `verify_ios_compile` (xcode-27), `postgres_verify / verify_postgres_compatibility` and the aggregate `required` are green. The `CI` workflow triggers on `integration/**` pushes, not only PRs. Prior PR #46 evidence: `c7b3a1ff`, 10/0/0 |
 | G18 GitHub | Branch pushed; PR pending | `integration/beta-polish-20261109-v2` carries this work. The earlier `integration/beta-polish-20261109` branch holds `4ee9b4f` (session snapshot) and must not be used; delete it before opening the PR. `gh` is unavailable in the sandbox (no auth), so the PR must be opened by the owner |
 
 ## Owner actions

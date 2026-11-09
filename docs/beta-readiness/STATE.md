@@ -16,8 +16,15 @@
   xUnit analyzer warnings (T-21). `LocalizationCatalogTests` 8/8 after the U-09/U-10 keys; a full EN/RU scan is
   2036/2036 keys with 0 missing, 0 extra and 0 format-argument mismatches. Edited XAML parses as XML;
   `observability.yaml` parses with CloudFormation tags; the wizard passes `bash -n`.
-- **BLOCKED here**: iOS build and simulator journeys (Linux, no Xcode); PostgreSQL integration suite (no PG16 and no
-  root); `gh` (sandbox TLS); live AWS (not authorised). CI on this branch has not run yet.
+- **CI**: run [42675311877](https://github.com/denis-petruk/MuscleCuties/actions/runs/42675311877) on `-v2` at
+  `1f71f83` completed successfully — 10 successful, 0 failing, 0 pending; `verify_source`, `verify_plan_generation`,
+  `verify_ios_compile` (xcode-27), `postgres_verify / verify_postgres_compatibility` and `required` green. The `CI`
+  workflow triggers on `integration/**` pushes, so no PR is needed to start it.
+- **BLOCKED here**: simulator/device journeys (Linux, no Xcode); the PostgreSQL suite locally (no PG16 and no root);
+  live AWS (not authorised). `gh` is unauthenticated, but the public run and commit pages are readable.
+- The stale `integration/beta-polish-20261109` branch has a failed run
+  [42673683274](https://github.com/denis-petruk/MuscleCuties/actions/runs/42673683274) on `4ee9b4f`; it is unrelated to
+  this work, has no PR, and must not be used. Delete the branch.
 - Owner decisions requested in `docs/release-audit/2026-11-09/WORKOUT_POLICY_RESEARCH.md`: S-03 load step vs set-only,
   decision 5 cycle dose (recommend amend to symptoms/readiness only), S-04 pain surface, S-05 seven-day window.
 - Next action: push, read CI, then build the branch on the simulator and re-check E-04…E-07 plus journeys 4, 6–15.
