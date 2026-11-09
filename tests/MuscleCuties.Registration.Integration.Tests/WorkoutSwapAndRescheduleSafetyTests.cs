@@ -1,3 +1,4 @@
+using System.Text.Json.Nodes;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Users;
@@ -70,9 +71,9 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
         }
     }
 
-    // OPEN: the seeded day exercise carries no reviewed muscle metadata, so reschedule fails closed
-    // with ScheduleStrengthMuscleMetadataMissing before the schedule rule under test is reached.
-    [Xunit.Fact(Skip = "Reschedule rejects the synthetic day with ScheduleStrengthMuscleMetadataMissing before the two-session rule can be asserted; seed reviewed muscle metadata for the day exercise.")]
+    // The synthetic day carries the reviewed metadata of its ENGINE_<id> exercise, so this asserts the
+    // two-session rule rather than the fail-closed metadata guard.
+    [Xunit.Fact]
     public async Task RescheduleMovesTheWholeOccurrenceAndRejectsAThirdActivityOnADay()
     {
         await using var database = Open();
@@ -108,7 +109,11 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
             var moved = await database.WorkoutDays.AsNoTracking().SingleAsync(day => day.Id == strength.Id);
             Xunit.Assert.Equal(today.AddDays(1), moved.Date);
             Xunit.Assert.Equal((int)WorkoutActivityType.GeneralStrength, moved.ActivityTypeId);
-            Xunit.Assert.Equal(strength.PlannedActivityPrescriptionJson, moved.PlannedActivityPrescriptionJson);
+            // jsonb normalizes whitespace on the round trip; the occurrence must stay semantically identical.
+            Xunit.Assert.True(JsonNode.DeepEquals(
+                    JsonNode.Parse(strength.PlannedActivityPrescriptionJson!),
+                    JsonNode.Parse(moved.PlannedActivityPrescriptionJson!)),
+                "The moved occurrence keeps its planned prescription.");
             Xunit.Assert.Equal(WorkoutSessionOrderingRule.FirstSessionOrder, moved.DayOrder);
             var walkingAfter = await database.WorkoutDays.AsNoTracking().SingleAsync(day => day.Id == walking.Id);
             Xunit.Assert.Equal((int)WorkoutActivityType.Walking, walkingAfter.ActivityTypeId);

@@ -1269,8 +1269,17 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .ToListAsync(cancellationToken).ConfigureAwait(false))
             .ToDictionary(row => row.Id, row => ExtractPlanningId(row.Code) ?? row.Id);
         var planningIds = planningIdByExerciseId.Values.Distinct().ToArray();
-        var musclesByPlanningId = (await dbContext.ExerciseMuscleContributions.AsNoTracking()
-                .Where(row => planningIds.Contains(row.ExerciseId) && row.Fraction > 0)
+        // Contributions are stored against reviewed definition rows, whose ids the database assigns;
+        // the day exercise only carries a planning id in its ENGINE_<id> code. Translate through the
+        // persisted source id, exactly as the swap path does, or every strength reschedule fails closed.
+        var definitionIdByPlanningId = (await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
+                .Where(row => row.SourceExerciseId != null && planningIds.Contains(row.SourceExerciseId.Value))
+                .Select(row => new { row.Id, row.SourceExerciseId })
+                .ToListAsync(cancellationToken).ConfigureAwait(false))
+            .ToDictionary(row => row.SourceExerciseId!.Value, row => row.Id);
+        var definitionIds = definitionIdByPlanningId.Values.ToArray();
+        var musclesByDefinitionId = (await dbContext.ExerciseMuscleContributions.AsNoTracking()
+                .Where(row => definitionIds.Contains(row.ExerciseId) && row.Fraction > 0)
                 .Select(row => new { row.ExerciseId, row.MuscleGroupId })
                 .ToListAsync(cancellationToken).ConfigureAwait(false))
             .GroupBy(row => row.ExerciseId)
@@ -1288,7 +1297,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 foreach (var row in dayExercises)
                 {
                     if (planningIdByExerciseId.TryGetValue(row.ExerciseId, out var planningId) &&
-                        musclesByPlanningId.TryGetValue(planningId, out var values) && values.Count > 0)
+                        definitionIdByPlanningId.TryGetValue(planningId, out var definitionId) &&
+                        musclesByDefinitionId.TryGetValue(definitionId, out var values) && values.Count > 0)
                         set.UnionWith(values);
                     else
                         complete = false;
