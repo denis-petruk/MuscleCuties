@@ -258,14 +258,6 @@
                     ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
             </VerticalStackLayout>
 
-            <Label
-                Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
-                Style="{StaticResource ErrorLabel}"
-                LineBreakMode="WordWrap"
-                IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
-                SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
-                SemanticProperties.HeadingLevel="Level3" />
-
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing10}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
                 <CheckBox
                     x:Name="WellnessAcknowledgment"
@@ -282,15 +274,24 @@
                     VerticalOptions="Center" />
             </Grid>
 
-            <Label
-                x:Name="AcknowledgmentError"
-                IsVisible="False"
-                Text="{loc:LocalizedText Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo}"
-                Style="{StaticResource ErrorLabel}"
-                LineBreakMode="WordWrap" />
         </VerticalStackLayout>
     </ScrollView>
     <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <!-- Validation stays beside the action that raised it, never inside the scrolling form. -->
+        <Label
+            Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
+            Style="{StaticResource ErrorLabel}"
+            LineBreakMode="WordWrap"
+            IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+            SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
+            SemanticProperties.HeadingLevel="Level3" />
+        <Label
+            x:Name="AcknowledgmentError"
+            IsVisible="False"
+            Text="{loc:LocalizedText Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo}"
+            Style="{StaticResource ErrorLabel}"
+            LineBreakMode="WordWrap"
+            SemanticProperties.HeadingLevel="Level3" />
         <ActivityIndicator
                         Style="{StaticResource StateBusyInline}"
             IsRunning="{Binding IsBusy}"
