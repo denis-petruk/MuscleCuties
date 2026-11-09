@@ -18,6 +18,14 @@ Resources:
     Properties:
       TopicName: !Sub 'musclecuties-${EnvironmentName}-operational-alarms'
 
+  # Without a subscription the alarms publish to a topic nobody reads (audit A11).
+  AlarmEmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      TopicArn: !Ref AlarmTopic
+      Protocol: email
+      Endpoint: !Ref NotificationEmail
+
   # CloudWatch Alarm: Lambda 5xx error rate (> 0.5% over 5 minutes)
   Lambda5xxErrorRateAlarm:
     Type: AWS::CloudWatch::Alarm
