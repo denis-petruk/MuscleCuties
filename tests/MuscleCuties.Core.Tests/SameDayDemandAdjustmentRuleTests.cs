@@ -37,8 +37,12 @@ public sealed class SameDayDemandAdjustmentRuleTests
         Assert.Contains(WorkoutScheduleValidationRule.MultipleHardSessions,
             WorkoutScheduleValidationRule.Validate([strength, climbing, hiit]));
         var adjusted = SameDayDemandAdjustmentRule.Adjust(original)!;
-        Assert.Empty(WorkoutScheduleValidationRule.Validate([strength, climbing with
-        { DurationMinutes = ReducedClimbingMinutes, OccurrencePrescription = adjusted }, hiit]));
+        // A reduced dose resolves the hard-session conflict, but the owner's two-activities-per-day
+        // limit still rejects a third session on the day.
+        var withAdjustment = WorkoutScheduleValidationRule.Validate([strength, climbing with
+        { DurationMinutes = ReducedClimbingMinutes, OccurrencePrescription = adjusted }, hiit]);
+        Assert.DoesNotContain(WorkoutScheduleValidationRule.MultipleHardSessions, withAdjustment);
+        Assert.Equal([WorkoutScheduleValidationRule.TooManySessions], withAdjustment);
     }
 
     private static ActivitySessionPrescription Prescription(WorkoutActivityType activity, ActivityModality modality) =>

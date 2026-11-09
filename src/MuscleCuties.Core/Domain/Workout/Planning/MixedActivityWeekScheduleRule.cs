@@ -58,7 +58,9 @@ public static class MixedActivityWeekScheduleRule
     public const int MaximumHardDaysPerWeek = 6;
     public const int MaximumRequestedSessionsPerWeek = MaximumAvailableWeekdays;
     public const int MaximumStrengthSessionsPerDay = 1;
-    public const int MaximumStrengthCompanionsPerDay = 3;
+    // Owner requirement (2026-11-08): at most two activities per day — one strength session and
+    // at most one companion. This supersedes the 3–4 per day planned in ACTIVITY_EXPERIENCE.md.
+    public const int MaximumStrengthCompanionsPerDay = 1;
     public const int MaximumHardSessionsPerDay = 2;
     public const int MaximumHardSessionsOnAdjustedDay = 3;
     public const int MinimumHardSessionsForAdjustment = MaximumHardSessionsOnAdjustedDay;
@@ -67,6 +69,8 @@ public static class MixedActivityWeekScheduleRule
 
     public const string ActivitySelectionMissing = "ActivitySelectionMissing";
     public const string NoActivitiesSelected = "NoActivitiesSelected";
+    // The value is a serialized client reason code and stays stable; the rule it names is
+    // MinimumAvailableWeekdays..MaximumAvailableWeekdays (2–7 distinct days).
     public const string AvailableWeekdaysMustContainOneToSevenDistinctDays =
         "AvailableWeekdaysMustContainOneToSevenDistinctDays";
     public const string AvailableWeekdayValueInvalid = "AvailableWeekdayValueInvalid";
@@ -775,6 +779,12 @@ public static class MixedActivityWeekScheduleRule
             return false;
         if (IsStrengthChoice(incoming) && dayState.Activities.Any(IsStrengthChoice))
             return false;
+        // Same exclusion WorkoutScheduleValidationRule enforces later: HIIT never shares a day with
+        // strength or climbing, so placement moves HIIT to another day or reduces it instead of
+        // producing a schedule the validator would reject.
+        if (incoming == WorkoutActivityType.Hiit && dayState.Activities.Any(IsStrengthOrClimbing) ||
+            IsStrengthOrClimbing(incoming) && dayState.Activities.Contains(WorkoutActivityType.Hiit))
+            return false;
         if (!isHard)
             return true;
         if (dayState.HardSessionCount >= MaximumHardSessionsOnAdjustedDay)
@@ -785,6 +795,9 @@ public static class MixedActivityWeekScheduleRule
         return SameDayDemandAdjustmentRule.Adjust(dayState.Decision!.Prescription) is not null ||
                SameDayDemandAdjustmentRule.Adjust(decision.Prescription) is not null;
     }
+
+    private static bool IsStrengthOrClimbing(WorkoutActivityType activity) =>
+        IsStrengthChoice(activity) || activity == WorkoutActivityType.RockClimbing;
 
     private static bool IsStrengthCompanion(WorkoutActivityType activity, bool isHard) =>
         !isHard && !IsStrengthChoice(activity) && activity != WorkoutActivityType.RestDay;

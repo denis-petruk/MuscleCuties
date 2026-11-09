@@ -347,6 +347,51 @@ public sealed class StrengthPlanPreviewRuleTests
             !string.IsNullOrWhiteSpace(entry.ReviewConditions)));
     }
 
+    [Fact]
+    public void Injury_that_empties_one_session_withholds_only_that_session_and_discloses_reduced_volume()
+    {
+        var baseline = Data();
+        var templates = StrengthTemplateCatalog.ForSchedule(SessionsPerWeekFor(WorkoutActivityType.GeneralStrength));
+        var emptied = templates[^1];
+        var emptiedIds = baseline.ReviewedAllowedExerciseIdsByTemplateSlot!
+            .Where(pair => pair.Key.StartsWith(emptied.TemplateId + "|", StringComparison.Ordinal))
+            .SelectMany(pair => pair.Value).ToHashSet();
+        var data = InjureExercises(baseline, emptiedIds);
+
+        var result = StrengthPlanPreviewRule.Evaluate(Choices(), data);
+
+        Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
+        Assert.Equal(templates.Count - 1, result.Sessions.Count);
+        Assert.DoesNotContain(result.Sessions, session => session.TemplateId == emptied.TemplateId);
+        Assert.All(result.Sessions, session => Assert.Contains(session.Slots, slot => slot.ExerciseId.HasValue));
+        Assert.Contains($"{StrengthPlanPreviewRule.SessionWithheldCodePrefix}{emptied.TemplateId}", result.AdvisoryCodes);
+        Assert.Contains(StrengthPlanPreviewRule.ReducedVolumeNotice, result.AdvisoryCodes);
+        Assert.True(result.RequiresReducedVolumeAcknowledgment);
+        Assert.True(result.ActualWorkingSets < result.OriginalPlannedWorkingSets);
+    }
+
+    [Fact]
+    public void Injury_that_empties_every_session_keeps_the_no_safe_strength_withhold()
+    {
+        var baseline = Data();
+        var data = InjureExercises(baseline, baseline.Catalog!.Select(entry => entry.Candidate.ExerciseId).ToHashSet());
+
+        var result = StrengthPlanPreviewRule.Evaluate(Choices(), data);
+
+        Assert.Equal(StrengthPlanPreviewStatus.Limited, result.Status);
+        Assert.Empty(result.Sessions);
+        Assert.Contains(StrengthPlanPreviewRule.NoSafeStrengthContentRemainingCode, result.LimitationCodes);
+    }
+
+    private static StrengthPlanPreviewData InjureExercises(StrengthPlanPreviewData data, IReadOnlySet<int> ids) =>
+        data with
+        {
+            ActiveInjuryFlags = InjuryFlag.Knee,
+            Catalog = data.Catalog!.Select(entry => ids.Contains(entry.Candidate.ExerciseId)
+                ? entry with { Candidate = entry.Candidate with { Contraindications = InjuryFlag.Knee } }
+                : entry).ToArray()
+        };
+
     private static StrengthPlanPreviewChoices Choices(
         WorkoutActivityType activity = WorkoutActivityType.GeneralStrength) => new(
         activity,

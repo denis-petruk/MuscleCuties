@@ -21,7 +21,7 @@ The rules below govern plan acceptance and safety. The [approved Beta workout po
 
 ## Generation prerequisites and recovery
 
-- Generation needs a saved strength activity and a valid saved weekday set (1–7 distinct days).
+- Generation needs a saved strength activity and a valid saved weekday set (2–7 distinct days). Registration enforces the same strength-style requirement on the server.
 - When either is missing, the page must show what is missing **and** an action that opens the editable workout setup. A status message alone is a dead end and is not acceptable.
 - Every missing or changed prerequisite is reported together, not one per retry. Structurally invalid input remains a distinct failure and is never presented as a user-recoverable gap.
 

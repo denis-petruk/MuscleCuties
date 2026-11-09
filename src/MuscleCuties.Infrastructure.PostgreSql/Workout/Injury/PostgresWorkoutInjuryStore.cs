@@ -168,22 +168,15 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
 
             var primaryMuscleId = targetContribs.OrderByDescending(c => c.Fraction).First().MuscleGroupId;
 
-            var activeLogs = await dbContext.WorkoutInjuryLogs.AsNoTracking()
-                .Where(l => l.UserId == userId && l.Status != "Cleared")
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-
-            var activeFlags = (InjuryFlag)activeLogs.Aggregate(0, (acc, l) => acc | l.SiteFlag);
-
-            var profile = await dbContext.UserProfiles.AsNoTracking()
-                .SingleOrDefaultAsync(p => p.UserId == userId, cancellationToken)
-                .ConfigureAwait(false);
-
-            var equipment = ResolveEquipment(profile?.EquipmentLevel);
-
             var allExercises = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
+            // Same canonical gate as the in-session swap: reviewed close alternatives that pass the
+            // planner's equipment, experience, restriction and injury filters. No equipment default.
+            var eligibility = await ExerciseSwapEligibilitySource.EvaluateAsync(dbContext, userId,
+                exerciseDefinitionId, allExercises, null, cancellationToken).ConfigureAwait(false);
+            var eligibleIds = eligibility.Candidates.Select(candidate => candidate.Entry.Candidate.ExerciseId)
+                .ToHashSet();
 
             var allContribs = await dbContext.ExerciseMuscleContributions.AsNoTracking()
                 .ToListAsync(cancellationToken)
@@ -200,9 +193,7 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
             var candidates = allExercises
-                .Where(e => e.Id != exerciseDefinitionId)
-                .Where(e => (e.Contraindications & activeFlags) == InjuryFlag.None)
-                .Where(e => e.IsBodyweight || (e.Required & equipment) == e.Required)
+                .Where(e => e.Id != exerciseDefinitionId && eligibleIds.Contains(e.Id))
                 .Select(e =>
                 {
                     var contribs = contribsByExercise.TryGetValue(e.Id, out var c) ? c : [];
@@ -216,7 +207,7 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
                     x.Exercise.Id,
                     x.Exercise.Name,
                     $"{(int)(x.Score * MatchScoreMultiplier)}% muscle match",
-                    x.Exercise.IsBodyweight ? "Bodyweight" : x.Exercise.Required.ToString(),
+                    x.Exercise.Required == EquipmentSet.None ? "Bodyweight" : x.Exercise.Required.ToString(),
                     string.Join(", ", x.Contribs
                         .Where(c => (double)c.Fraction >= SignificantMuscleFraction)
                         .OrderByDescending(c => c.Fraction)
@@ -263,22 +254,19 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
                 return false;
             }
 
-            var activeLogs = await dbContext.WorkoutInjuryLogs.AsNoTracking()
-                .Where(l => l.UserId == userId && l.Status != "Cleared")
+            var allDefinitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
-
-            var activeFlags = (InjuryFlag)activeLogs.Aggregate(0, (acc, l) => acc | l.SiteFlag);
-            if ((newDef.Contraindications & activeFlags) != InjuryFlag.None)
-                throw new InvalidOperationException($"Exercise '{newDef.Name}' is contraindicated by active injuries.");
-
-            var profile = await dbContext.UserProfiles.AsNoTracking()
-                .SingleOrDefaultAsync(p => p.UserId == userId, cancellationToken)
+            var dayActivityTypeId = await dbContext.WorkoutDays.AsNoTracking()
+                .Where(day => day.UserId == userId && day.Id == dayExercise.WorkoutDayId)
+                .Select(day => day.ActivityTypeId)
+                .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
-
-            var equipment = ResolveEquipment(profile?.EquipmentLevel);
-            if (!newDef.IsBodyweight && (newDef.Required & equipment) != newDef.Required)
-                throw new InvalidOperationException($"Exercise '{newDef.Name}' requires equipment not available in current profile.");
+            var eligibility = await ExerciseSwapEligibilitySource.EvaluateAsync(dbContext, userId,
+                dayExercise.ExerciseId, allDefinitions, dayActivityTypeId, cancellationToken).ConfigureAwait(false);
+            if (!eligibility.Allows(newDef.Id))
+                throw new InvalidOperationException(eligibility.ReasonCodes.FirstOrDefault() ??
+                    ExerciseSwapEligibilityRule.SubstituteNotEligibleCode);
 
             var originalExerciseId = dayExercise.ExerciseId;
             dayExercise.ExerciseId = newExerciseDefinitionId;
@@ -317,16 +305,6 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
         InjuryFlag.LowBack => "Low back",
         _ => site.ToString()
     };
-
-    private static EquipmentSet ResolveEquipment(string? equipmentLevel)
-    {
-        if (string.IsNullOrWhiteSpace(equipmentLevel))
-            return ExercisePickerRule.MapEquipment(Equipment.FullGym);
-
-        return Enum.TryParse<Equipment>(equipmentLevel, true, out var eq)
-            ? ExercisePickerRule.MapEquipment(eq)
-            : ExercisePickerRule.MapEquipment(Equipment.FullGym);
-    }
 
     private static double ComputeMuscleMatchScore(
         IReadOnlyList<ExerciseMuscleContribution> original,

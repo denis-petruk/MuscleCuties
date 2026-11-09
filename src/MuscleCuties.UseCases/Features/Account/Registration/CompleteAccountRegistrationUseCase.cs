@@ -1,5 +1,6 @@
 using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.Core.Domain.Onboarding;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 
@@ -47,7 +48,9 @@ public sealed class CompleteAccountRegistrationUseCase(
         var profile = request.Profile;
         if (profile is null || profile.SelectedActivityTypes is null ||
             profile.SelectedActivityTypes.Count == 0 ||
-            profile.SelectedActivityTypes.Any(activity => !Enum.IsDefined((WorkoutActivityType)activity)))
+            profile.SelectedActivityTypes.Any(activity => !Enum.IsDefined((WorkoutActivityType)activity)) ||
+            // Same rule as saved workout preferences: every plan needs a strength style.
+            !WorkoutPreferencesRule.HasAtLeastOneStrengthStyle(profile.SelectedActivityTypes))
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidProfile);
         if (request.QuizResponses is null || request.QuizResponses.Any(selection => selection is null))
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidQuiz);
