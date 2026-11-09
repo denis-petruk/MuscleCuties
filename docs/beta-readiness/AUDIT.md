@@ -8,7 +8,7 @@ New IDs below: G (generation), S (safety/personalization), U (UX/contracts), T (
 Status: **FIXED** (implemented + tested on this branch), **OPEN** (not fixed), **OWNER** (needs owner/external action),
 **BLOCKED** (cannot progress without an owner decision or an environment the run does not have).
 
-Refresh 2026-11-09 on `integration/beta-polish-20261109` (base `a99fd80c`): every open row below was re-derived from
+Refresh 2026-11-09 on `integration/beta-polish-20261109-v2` (base `a99fd80c`): every open row below was re-derived from
 code at this revision. New IDs: U-09, U-10 (localization), T-21 (build warnings). Policy evidence and recommendations:
 [WORKOUT_POLICY_RESEARCH.md](../release-audit/2026-11-09/WORKOUT_POLICY_RESEARCH.md).
 

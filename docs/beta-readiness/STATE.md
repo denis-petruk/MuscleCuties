@@ -2,8 +2,11 @@
 
 ## integration/beta-polish-20261109 (this run)
 
-- Branch `integration/beta-polish-20261109` from `origin/main` = `a99fd80c` (PR #46 merge), in
+- Branch `integration/beta-polish-20261109-v2` from `origin/main` = `a99fd80c` (PR #46 merge), in
   `.agent-worktrees/beta-polish-20261109`. The parent checkout's uncommitted delta was not touched.
+- **Remote branch caveat:** `integration/beta-polish-20261109` on GitHub points at `4ee9b4f`, the session
+  checkout's snapshot, not at this work. It was created by the push tool before the mistake was caught; do not open a PR
+  from it. The reviewed commits live on `-v2`; the stale branch needs deletion by the owner.
 - Commits: `ecf556a` E-04 footer validation; `17e5be0` session empty-state gate (E-07); `afb459a` intensity label +
   Today phase copy localization (E-06, E-05 copy half); `4cc0ddb` alarm SNS subscription (A11 repo half); `4ad99a2`
   audit/readiness refresh; `5a752d8` featured-card and count-tile localization (U-09/U-10) plus

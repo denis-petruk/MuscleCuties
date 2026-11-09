@@ -47,7 +47,7 @@ re-checked on a simulator.
 | G15 Migrations | PASS (local disposable) | Empty DB bootstrap applies 7 ordered scripts (001–007); the ledger reports 7 applied, head 7, tree `746`, re-run applies 0. `ops.schema_metadata` records `schema_version=7` with fingerprint `25ff237d…8c982c4b`. `dbcheck` at head 7 and live Beta adoption are not proven (A4) |
 | G16 Cleanup | PASS | Dead DI/gating/readiness code, GitLab stub, retired release scripts, Android/Windows/MacCatalyst trees removed; suites green |
 | G17 CI | NOT RUN at this head | Last verified on PR #46: `gh pr checks 46` at the final code head `c7b3a1ff`: 10 successful, 0 failing, 0 pending on both push and PR — `postgres_verify` 4m26s push / 4m57s PR, `verify_ios_compile` 2m56s / 3m43s on `xcode-27`, `verify_plan_generation` 2m1s / 1m28s, `verify_source` 52s / 1m14s, `required` green. The first green run was `dcb43f79`; the earlier failure was the `maui-ios` workload resolving to .NET for iOS 27.1 against `macos-15`'s Xcode 16.4, fixed by `8162bfff` |
-| G18 GitHub | Branch pushed; PR pending | `integration/beta-polish-20261109` pushed to `origin`; `gh` is unavailable in the sandbox (TLS), so the PR must be opened from the push response or by the owner |
+| G18 GitHub | Branch pushed; PR pending | `integration/beta-polish-20261109-v2` carries this work. The earlier `integration/beta-polish-20261109` branch holds `4ee9b4f` (session snapshot) and must not be used; delete it before opening the PR. `gh` is unavailable in the sandbox (no auth), so the PR must be opened by the owner |
 
 ## Owner actions
 

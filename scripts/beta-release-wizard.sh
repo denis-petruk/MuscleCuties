@@ -186,7 +186,7 @@ finish() {
 TOTAL_STAGES=5
 
 cd "$(git rev-parse --show-toplevel)"
-BRANCH="integration/beta-polish-20261109"
+BRANCH="integration/beta-polish-20261109-v2"
 REPO_URL="https://github.com/denis-petruk/MuscleCuties"
 RECORD_DIR="docs/release-audit/2026-11-09"
 HEAD_SHA="$(git rev-parse --short=7 HEAD)"
