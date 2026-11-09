@@ -46,10 +46,10 @@
 | U-10 | PASS | RU count tile "Подходы" / "Продолжительность" / "Интенсивность" localized | `RU-after-restart-dark.png` |
 | J14 | **FAIL (P1)** | RU at accessibility-XXXL: mid-word breaks ("qasimte/ster", "Сег/одн/я"), clipped "Нет зафиксирова…", Save button "Сохрани…" cut. Dynamic Type also does not update live (needs relaunch) | `J14-*.png` |
 | J04 | PARTIAL | Injury log opens from the bell; the new-injury form accepts a body area; Save sent no request (required fields below the fold at XXXL). Restriction/substitution behaviour not exercised in UI | `J04-*.png` |
-| J06, J07, J08 (completion), J15, CR01 ×20, iPhone SE, VoiceOver, Reduce Motion | NOT RUN | Stopped to keep the remaining session for reporting. CR01 already failed on cycle 2. J15 needs uninstall + Rider rerun. VoiceOver is not drivable by this tool; the Maestro tree finding above stands in for it | — |
+| CR01 ×20, Reduce Motion | NOT RUN | Stopped to keep the remaining session for reporting. CR01 already failed on cycle 2. J15 needs uninstall + Rider rerun. VoiceOver is not drivable by this tool; the Maestro tree finding above stands in for it | — |
 | QA01 | DEPRECATED → simulator | Owner instruction: physical-device QA replaced by the Rider-attached simulator | — |
 
-**Counts (21-row checklist, this run):** PASS 8 (E-04, E-05, E-07, J01*, J02, J03, J10, J13) · FAIL 6 (E-06, J05, J09, J14, CR01, plus E-01 outside the 21) · PARTIAL 2 (J04, J11) · NOT RUN 4 (J06, J07, J08, J15) · J12 PASS after local config · QA01 deprecated. *J01 completes but carries the E-01 defect.
+**Counts superseded below (run 2b).** Original run-2a counts: PASS 8 (E-04, E-05, E-07, J01*, J02, J03, J10, J13) · FAIL 6 (E-06, J05, J09, J14, CR01, plus E-01 outside the 21) · PARTIAL 2 (J04, J11) · NOT RUN 4 (J06, J07, J08, J15) · J12 PASS after local config · QA01 deprecated. *J01 completes but carries the E-01 defect.
 
 ## Additional findings (run 2)
 
@@ -72,3 +72,33 @@
 | F-15 | P2 | Resume from the activity sheet returns to the intro (Start / Abandon activity) instead of the current exercise |
 | F-16 | P1 | Nutrition targets (2010 kcal) are derived from the fabricated defaults (DOB today−18y, 165 cm, 65 kg) when onboarding is left untouched |
 | F-17 | P2 | Agent-added `.run` shell configuration `iOS Simulator - iPhone SE (3rd gen)` failed for the owner; the owner used Rider's native configuration instead |
+
+## Run 2b — J06, J07, J08, J15 (owner request; iPhone SE and VoiceOver removed from scope)
+
+Same device, tree and backend; relaunches via Rider Stop-and-Rerun / Run. The owner removed the iPhone SE and VoiceOver
+requirements on 2026-11-09; they are out of scope for this record, not passed.
+
+| ID | Result | Observation | Evidence |
+| --- | --- | --- | --- |
+| J08 | **FAIL (P0)** | The in-progress session cannot be completed. Today → Start opens a differently ordered workout → `POST /sessions/start` 409 "This workout is no longer in your active plan". Train → Resume → Start → `PUT /optional-exercise` 400 → "Could not save this exercise", back at exercise 1 with no inputs; Try again loops to the intro. **Abandon activity** does nothing (no request, no confirmation, also via Maestro). DB session log keeps `completed_at` empty | `J08-*.png`, API log, `workout_session_logs` |
+| J06 | PASS (with notes) | Workout availability Mon/Thu preserved; adding Saturday → Continue → preview "General strength (low volume): 2 strength sessions per week", "Apply plan replaces your current plan. Until then, your current plan stays active."; plan unchanged before Apply (1 revision); native "Replace your current plan?" → Apply → `accept 200`, 2 plans / 1 active. Notes: weekdays saved to the profile before Apply; the confirmation is a native alert, not the shared sheet; the orphaned in-progress session from the old plan is still shown | `J06-*.png`, DB |
+| J07 | PASS (schedule) / N/A (reschedule) | After replacement the schedule still shows Mon/Thu only, "2 training days - 5 full rest days". Rescheduling is disabled for Beta by design (`BetaWorkoutScope.ReschedulingEnabled => false`) and the UI hides it. Open question: a future Thursday session can be opened from the chooser today | `J07-*.png`, code |
+| J15 | **FAIL (P1)** | After `simctl uninstall` and a fresh Rider install the app opens signed in on Today as the previous user: the session survives uninstall (Keychain/SecureStorage). Also: the notification permission prompt appears immediately on first launch, before any context | `J15-first-run*.png` |
+| QA01 / iPhone SE / VoiceOver | Out of scope | Owner instruction | — |
+
+### Final counts (21-row checklist, run 2a + 2b)
+
+PASS 9 (E-04, E-05, E-07, J01*, J02, J03, J06, J10, J13) · FAIL 7 (E-06, J05, J08, J09, J14, J15, CR01) · PARTIAL 3
+(J04, J07 reschedule N/A, J11) · PASS after local config 1 (J12) · out of scope 1 (QA01). Outside the 21: E-01 FAIL,
+E-02/E-03/U-10/G05/G13 PASS, U-09 FAIL (RU). *J01 completes but carries the E-01 defect.
+
+### Run 2b findings
+
+| ID | Sev | Finding |
+| --- | --- | --- |
+| F-18 | P0 | Session lifecycle: cannot finish, resume or abandon an in-progress session (see J08); Abandon activity is inert |
+| F-19 | P1 | Today's Start for an in-progress session opens a different (reordered) workout context and fails 409 |
+| F-20 | P1 | Login session survives uninstall/reinstall (Keychain); first run skips login/onboarding |
+| F-21 | P2 | Notification permission requested on first launch without context |
+| F-22 | P2 | "Nutrition: Muscle Tone • Steady (+150 kcal)" shows a pace the user was never asked |
+| F-23 | P2 | Plan replacement confirmation uses a native alert; availability is saved before Apply |

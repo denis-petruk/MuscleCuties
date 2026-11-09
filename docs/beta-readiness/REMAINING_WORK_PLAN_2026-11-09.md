@@ -95,3 +95,16 @@ Evidence: [OWNER_SIMULATOR_QA_2026-11-09_RUN2.md](../release-audit/2026-11-09/OW
 | R-12 | P2 | Styling: system-blue checkboxes (wellness, set rows), duplicate Notes, two primary CTAs on Train, destructive action style, Quick Log single chip, tab bar under sheets, stale acknowledgment error, "Order 1" ordinal | Various XAML | Converge on role tokens and DESIGN rules | Styling re-audit | M |
 
 Sequence update: R-1, R-2, R-3 before any further simulator pass; then R-4…R-11; then rerun the full 21-row matrix (including J06, J07, J08, J15, CR01 ×20, iPhone SE, VoiceOver, Reduce Motion), which this run did not finish.
+
+### Run 2b additions
+
+| ID | Sev | Item | Approach | Acceptance | Effort |
+| --- | --- | --- | --- | --- | --- |
+| R-13 | P0 | Session lifecycle: complete/resume/abandon broken (J08) | Fix with R-2: resume to the first unlogged exercise; make Abandon call the cancel endpoint with confirmation; Today's CTA resumes the same session id | Finish a session end to end; Abandon closes it; history shows it completed | M (2 d) |
+| R-14 | P1 | Session survives uninstall (J15) | On first launch after install (flag in Preferences, non-sensitive) clear SecureStorage tokens and encrypted snapshots | Fresh install lands on login | S |
+| R-15 | P1 | Plan replacement while a session is in progress leaves an orphaned session | Block Apply while a session is open, or close/migrate it explicitly | No orphaned "Workout in progress" after Apply | S–M |
+| R-16 | P2 | First-launch notification prompt; pace shown when unasked; native replace alert | Ask in context; hide pace when not asked; shared sheet per DESIGN | Styling/UX re-check | S |
+
+Scope change (owner, 2026-11-09): iPhone SE and VoiceOver passes are removed from the acceptance requirements; QA01 is
+the Rider-attached simulator. The Maestro accessibility-tree finding (R-3) remains a P0 because it blocks any
+assistive-technology use regardless of the VoiceOver pass.
