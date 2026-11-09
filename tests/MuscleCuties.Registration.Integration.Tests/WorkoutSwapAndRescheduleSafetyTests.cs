@@ -20,7 +20,11 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
     private const int LatPulldownId = 142;
     private const int PullUpId = 141;
 
-    [Xunit.Fact(Skip = "Fixture catalog mismatch: the disposable test catalog numbers definitions 1-60 while app exercises carry canonical ENGINE_ ids (141/142). Re-enable once the fixture seeds the canonical catalog; tracked in docs/beta-readiness/RELEASE_READINESS.md.")]
+    // OPEN: PostgresWorkoutPlanAndSessionStore.SwapAsync resolves request.NewExerciseId against
+    // WorkoutExerciseDefinitions.Id (serial 1..59) but then builds ENGINE_<that id> for the catalog,
+    // while this scenario addresses exercises by planning id (ENGINE_141/142). The id space must be
+    // reconciled before this can assert swap safety; see docs/beta-readiness/AUDIT.md G-07.
+    [Xunit.Fact(Skip = "Swap request id space is unresolved: the store matches WorkoutExerciseDefinitions.Id but looks the exercise up as ENGINE_<id>, while planning ids are 141/142.")]
     public async Task BodyweightProfileSwapNeverOffersOrAcceptsAPullUp()
     {
         await using var database = Open();
@@ -45,7 +49,7 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
         }
     }
 
-    [Xunit.Fact(Skip = "Fixture catalog mismatch: the disposable test catalog numbers definitions 1-60 while app exercises carry canonical ENGINE_ ids (141/142). Re-enable once the fixture seeds the canonical catalog; tracked in docs/beta-readiness/RELEASE_READINESS.md.")]
+    [Xunit.Fact(Skip = "Swap request id space is unresolved: the store matches WorkoutExerciseDefinitions.Id but looks the exercise up as ENGINE_<id>, while planning ids are 141/142.")]
     public async Task MissingEquipmentProfileYieldsNoSwapCandidates()
     {
         await using var database = Open();
@@ -66,7 +70,9 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
         }
     }
 
-    [Xunit.Fact(Skip = "Fixture catalog mismatch: the disposable test catalog numbers definitions 1-60 while app exercises carry canonical ENGINE_ ids (141/142). Re-enable once the fixture seeds the canonical catalog; tracked in docs/beta-readiness/RELEASE_READINESS.md.")]
+    // OPEN: the seeded day exercise carries no reviewed muscle metadata, so reschedule fails closed
+    // with ScheduleStrengthMuscleMetadataMissing before the schedule rule under test is reached.
+    [Xunit.Fact(Skip = "Reschedule rejects the synthetic day with ScheduleStrengthMuscleMetadataMissing before the two-session rule can be asserted; seed reviewed muscle metadata for the day exercise.")]
     public async Task RescheduleMovesTheWholeOccurrenceAndRejectsAThirdActivityOnADay()
     {
         await using var database = Open();
