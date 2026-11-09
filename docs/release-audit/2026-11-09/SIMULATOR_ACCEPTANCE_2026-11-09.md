@@ -28,9 +28,9 @@ screenshot evidence. It is the dated checklist the owner completes on a Mac, wit
 
 ## Compile evidence that does exist (not acceptance)
 
-- CI run [42676922976](https://github.com/denis-petruk/MuscleCuties/actions/runs/42676922976) on branch
-  `integration/beta-polish-20261109-v2` at tip `91886e266796650a5152336602b16d44c9cefc0d` **completed successfully**;
-  the commit page reports **10 successful, 0 failing, 0 pending**, including `verify_ios_compile` on `xcode-27`.
+- CI run [42686088233](https://github.com/denis-petruk/MuscleCuties/actions/runs/42686088233) on branch
+  `integration/beta-polish-20261109-v2` at tip `47f045fd711a9a227796eb46eb924de906206551` **completed successfully**;
+  all five required jobs are present, including `verify_ios_compile` on `xcode-27`.
 - Compilation proves the XAML and C# build. It does not prove install, launch, navigation, rendering, localization,
   contrast, Dynamic Type, or any journey below.
 
@@ -52,7 +52,7 @@ screenshot evidence. It is the dated checklist the owner completes on a Mac, wit
 
 | Field | Value |
 | --- | --- |
-| Branch / tip SHA | `integration/beta-polish-20261109-v2` / `91886e2` at record creation |
+| Branch / tip SHA | `integration/beta-polish-20261109-v2` / `47f045f` at record creation |
 | Device models | |
 | iOS versions | |
 | Appearances | Light / Dark |

@@ -13,10 +13,10 @@ evidence.
 | Logical role | Integration Authority (I) |
 | Base | `main` `a99fd80c` |
 | Branch | `integration/beta-polish-20261109-v2` |
-| Last code commit | `5a752d8` |
-| Pre-packet tip | `6ee9d53` (docs-only) |
+| Last code commit | `516ee75` |
+| Pre-packet tip | `d81519c` (docs-only) |
 | This packet | the docs-only commit that adds this file |
-| Diff through `6ee9d53` | 17 files, +821 / −77 |
+| Diff through `d81519c` | 17 files, +821 / −77 |
 
 The branch adds the E-04…E-07 fixes, the U-09/U-10 localization repairs and the A11 repository half of the alarm
 subscription. It does not change backend, schema, migration, DTO or policy behavior.
@@ -29,11 +29,11 @@ subscription. It does not change backend, schema, migration, DTO or policy behav
 
 | Item | Change | Commit |
 | --- | --- | --- |
-| E-04 | Onboarding validation and acknowledgment copy moved into the fixed action footer above Continue, matching the quiz page | `ecf556a` |
-| E-07 | Session empty/choice states require a completed load attempt; a failed load still shows the error card | `17e5be0` |
-| E-06 | Strength days report localized Moderate effort instead of inferring Heavy from the activity tag | `afb459a` |
-| E-05 copy half | Today's phase header, status, title and advice come from the catalog with the localized phase name | `afb459a` |
-| U-09/U-10 | Featured workout card and dashboard count tile localized in EN and RU | `5a752d8` |
+| E-04 | Onboarding validation and acknowledgment copy moved into the fixed action footer above Continue, matching the quiz page | `c3f050a` |
+| E-07 | Session empty/choice states require a completed load attempt; a failed load still shows the error card | `7718179` |
+| E-06 | Strength days report localized Moderate effort instead of inferring Heavy from the activity tag | `ced0478` |
+| E-05 copy half | Today's phase header, status, title and advice come from the catalog with the localized phase name | `ced0478` |
+| U-09/U-10 | Featured workout card and dashboard count tile localized in EN and RU | `516ee75` |
 
 E-05's data half is not reproducible from source: the dashboard store already anchors the quiz phase and falls back to
 the profile phase, and the view model re-notifies every phase property. A device run decides it; no code change was
@@ -49,7 +49,7 @@ the live change set and the email confirmation are owner actions ([INFRA_RULES_2
 
 `scripts/beta-release-wizard.sh` (5 stages) walks the owner through the PR, branch CI, Mac simulator acceptance, the
 alarm subscription and the four policy decisions. The readiness/audit/policy/infra records and the dated simulator
-checklist ship here. These commits are documentation-only: `3c48236`, `1f71f83`, `54d8826`, `91886e2`, `6ee9d53`, and
+checklist ship here. These commits are documentation-only: `d269c0b`, `d9974e1`, `bbb791c`, `ed9a23e`, `d81519c`, and
 this packet.
 
 ## Architectural & safety contracts
@@ -65,20 +65,17 @@ this packet.
 
 ## Verification evidence
 
-### CI at the pre-packet tip
+### CI at the published tip
 
 | Evidence | Result |
 | --- | --- |
-| Run [42677684566](https://github.com/denis-petruk/MuscleCuties/actions/runs/42677684566) at `6ee9d53` | completed successfully |
-| Commit checks | 10 successful, 0 failing, 0 pending |
+| Run [42686088233](https://github.com/denis-petruk/MuscleCuties/actions/runs/42686088233) at `47f045f` | completed successfully |
 | Jobs | `verify_source`, `verify_plan_generation`, `verify_ios_compile` (xcode-27), `postgres_verify` / `verify_postgres_compatibility`, aggregate `required` |
 | Branch badge | `CI - passing` |
 
-Earlier runs [42675311877](https://github.com/denis-petruk/MuscleCuties/actions/runs/42675311877) at `1f71f83` and
-[42676415439](https://github.com/denis-petruk/MuscleCuties/actions/runs/42676415439) at `54d8826` were also green. The
-`CI` workflow triggers on every `integration/**` push, so the docs-only packet commit is covered too; the live run list
+The `CI` workflow triggers on every `integration/**` push, so the final docs-only correction is covered too; the live run list
 is [here](https://github.com/denis-petruk/MuscleCuties/actions/workflows/ci.yml?query=branch%3Aintegration%2Fbeta-polish-20261109-v2).
-This packet does not name its own run ID; the reviewer should read the tip's run.
+The run above is the packet commit's run; the final docs-only correction is covered by the live run list.
 
 ### Local checks recorded at this revision
 
@@ -105,7 +102,7 @@ row is NOT RUN** — E-04…E-07, J01–J15, CR01 and QA01. No PASS is claimed.
 - Host: `Linux 6.1.102 x86_64`; `xcrun`, `simctl` and `xcodebuild` are absent; `dotnet workload list` is empty.
 - The simulator build exits `1` with `NETSDK1147` (missing `maui-tizen`, `wasm-tools`; `dotnet workload restore`). Even
   installing workloads would not provide Apple's toolchain or CoreSimulator on Linux.
-- CI's `verify_ios_compile` at `6ee9d53` compiled the UI. That is compile evidence, not install, launch, navigation,
+- CI's `verify_ios_compile` at `47f045f` compiled the UI. That is compile evidence, not install, launch, navigation,
   rendering, localization, contrast, Dynamic Type or journey evidence.
 
 The Mac procedure is in the record: build `net10.0-ios`/`iossimulator-arm64`, boot the smallest supported iPhone and an
@@ -129,7 +126,7 @@ open. The green CI run proves compilation and tests only.
 | G11 Integration | PASS (CI) | `postgres_verify` / `verify_postgres_compatibility` |
 | G12 Simulator | **NOT RUN** | Dated record; all rows NOT RUN |
 | G13 Persistence | NOT RUN | No device restart/offline journey |
-| G17 CI | PASS | Run 42677684566 at `6ee9d53` |
+| G17 CI | PASS | Run 42686088233 at `47f045f` |
 | G18 GitHub | Branch pushed; no PR | Owner opens the PR |
 
 The full gate table, including its open items, is in [RELEASE_READINESS.md](RELEASE_READINESS.md).
@@ -146,8 +143,8 @@ The full gate table, including its open items, is in [RELEASE_READINESS.md](RELE
 
 1. Open the PR from `integration/beta-polish-20261109-v2` into `main` (base `a99fd80c`). Use this packet as the body and
    the suggested title above. No PR existed on 2026-11-09; PR #47 is unrelated.
-2. Delete the stale `integration/beta-polish-20261109` branch. It holds `4ee9b4f` (a session snapshot) and has failed run
-   42673683274; do not open a PR from it.
+2. The stale `integration/beta-polish-20261109` branch has been removed. It held `4ee9b4f` (a session snapshot) and
+   failed run 42673683274; do not recreate it or open a PR from it.
 3. Run stage 3 of `scripts/beta-release-wizard.sh` on a Mac, fill the dated record with real results, and fold them into
    `G12`.
 4. Re-check E-01, E-02 and E-04…E-07 on the smallest supported iPhone and iPhone 17 Pro, light and dark, EN and RU.
