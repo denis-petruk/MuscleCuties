@@ -9,9 +9,11 @@
         <UseMaui>true</UseMaui>
         <SingleProject>true</SingleProject>
 
-        <!-- 10.0.20 can throw NullReferenceException from Button.LayoutButton on iOS when a
-             page pops during layout. 10.0.60 includes dotnet/maui#35284 (fixes #31048). -->
-        <MauiVersion>10.0.60</MauiVersion>
+        <!-- CR01: Button.LayoutButton dereferenced a null platform button on iOS when a page
+             popped during layout. The null guard first ships in 10.0.90 (10.0.60 lacks it; see
+             dotnet/maui tags 10.0.60 vs 10.0.90, src/Controls/src/Core/Button/Button.iOS.cs).
+             CommunityToolkit.Maui 13.0.0 requires Microsoft.Maui.Controls >= 10.0.10. -->
+        <MauiVersion>10.0.90</MauiVersion>
 
         <ApplicationTitle>MuscleCuties</ApplicationTitle>
         <ApplicationId>com.musclecuties.app</ApplicationId>
@@ -20,16 +22,12 @@
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <AnalysisLevel>latest-recommended</AnalysisLevel>
 
-        <WindowsPackageType>None</WindowsPackageType>
-
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">18.0</SupportedOSPlatformVersion>
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">18.0</SupportedOSPlatformVersion>
-        <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
-        <TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
         <EnableAppleSignInEntitlements>true</EnableAppleSignInEntitlements>
-        <EnableAppleHealthEntitlements>true</EnableAppleHealthEntitlements>
-        <!-- SourceGen is enabled on the pinned MAUI 10.0.60 baseline. Keep the
-             Shell TabBar navigation check in the owner device pass. -->
+        <!-- Health synchronization is dormant for Beta (CLAUDE.md; OD-4): no HealthKit
+             entitlement, no HealthKit provider compiled, DisabledHealthSyncService on iOS. -->
+        <!-- SourceGen XAML inflation. Keep the Shell TabBar navigation check in the owner
+             device pass. -->
         <MauiXamlInflator>SourceGen</MauiXamlInflator>
 
         <EnableTrimAnalyzer>true</EnableTrimAnalyzer>
@@ -47,36 +45,9 @@
     <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
         <Compile Include="Platforms/iOS/**/*.cs" />
     </ItemGroup>
-    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
-        <Compile Include="Platforms/MacCatalyst/**/*.cs" />
-    </ItemGroup>
-    <ItemGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
-        <Compile Include="Platforms/Windows/**/*.cs" />
-    </ItemGroup>
 
     <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(EnableAppleSignInEntitlements)' == 'true'">
         <CodesignEntitlements>Platforms/iOS/Entitlements.plist</CodesignEntitlements>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(EnableAppleSignInEntitlements)' != 'true' and '$(EnableAppleHealthEntitlements)' == 'true'">
-        <CodesignEntitlements>Platforms/iOS/HealthEntitlements.plist</CodesignEntitlements>
-    </PropertyGroup>
-
-    <!-- Windows Release: R2R eliminates JIT startup cost for the managed host. Partial trimming
-         removes dead code without breaking EF Core reflection. Verify in Release on the target
-         Windows version before shipping. -->
-    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">
-        <PublishTrimmed>true</PublishTrimmed>
-        <TrimMode>partial</TrimMode>
-        <PublishReadyToRun>true</PublishReadyToRun>
-    </PropertyGroup>
-
-    <!-- macOS Catalyst Release: AOT speeds cold launch; partial trimming avoids EF Core
-         reflection breakage. Verify on a physical Mac in Release before shipping. -->
-    <PropertyGroup Condition="'$(Configuration)' == 'Release' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">
-        <RunAOTCompilation>true</RunAOTCompilation>
-        <PublishTrimmed>true</PublishTrimmed>
-        <TrimMode>partial</TrimMode>
     </PropertyGroup>
 
     <!-- iOS Release: AOT compile assemblies, with an interpreter available for dynamic
@@ -95,14 +66,12 @@
 
     <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and ('$(RuntimeIdentifier)' == 'iossimulator-arm64' or '$(RuntimeIdentifier)' == 'iossimulator-x64')">
         <CodesignKey>-</CodesignKey>
-        <CodesignEntitlements Condition="'$(EnableAppleSignInEntitlements)' == 'true'">Platforms/iOS/Entitlements.plist</CodesignEntitlements>
-        <CodesignEntitlements Condition="'$(EnableAppleSignInEntitlements)' != 'true' and '$(EnableAppleHealthEntitlements)' == 'true'">Platforms/iOS/HealthEntitlements.plist</CodesignEntitlements>
-        <CodesignEntitlements Condition="'$(EnableAppleSignInEntitlements)' != 'true' and '$(EnableAppleHealthEntitlements)' != 'true'">Platforms/iOS/Entitlements.plist</CodesignEntitlements>
+        <CodesignEntitlements>Platforms/iOS/Entitlements.plist</CodesignEntitlements>
     </PropertyGroup>
 
     <ItemGroup>
         <MauiIcon Include="Resources\AppIcon\appicon.png" Color="#FFF8FB" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>
-        <MauiSplashScreen Include="Resources\Splash\splash.png" Color="#FFF8FB" BaseSize="320,180" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'maccatalyst'"/>
+        <MauiSplashScreen Include="Resources\Splash\splash.png" Color="#FFF8FB" BaseSize="320,180" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>
         <MauiImage Include="Resources\Images\*"/>
         <MauiImage Update="Resources\Images\musclecuties_logo_light.png" Resize="True" BaseSize="360,200"/>
         <MauiImage Update="Resources\Images\musclecuties_logo_dark.png" Resize="True" BaseSize="360,200"/>

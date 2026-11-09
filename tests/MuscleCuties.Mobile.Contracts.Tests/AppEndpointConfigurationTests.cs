@@ -21,8 +21,9 @@ public sealed class AppEndpointConfigurationTests
     }
 
     [Theory]
-    [InlineData("http://127.0.0.1:5080", true)]        [InlineData("http://localhost:5080", true)]
-        [InlineData("https://staging-api.musclecuties.app", false)]
+    [InlineData("http://127.0.0.1:5080", true)]
+    [InlineData("http://localhost:5080", true)]
+    [InlineData("https://staging-api.musclecuties.app", false)]
     [InlineData("https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com", true)]
     [InlineData("https://malicious.example.com", false)]
     [InlineData("ftp://127.0.0.1:5000", false)]
@@ -45,5 +46,32 @@ public sealed class AppEndpointConfigurationTests
         var betaKey = AppEndpointConfiguration.GetSessionTokenKey(AppTargetEnvironment.Beta);
 
         Assert.NotEqual(localKey, betaKey);
+    }
+
+    [Theory]
+    [InlineData("http://127.0.0.1:5090", true)]
+    [InlineData("http://localhost:5090", true)]
+    [InlineData("http://[::1]:5090", true)]
+    [InlineData("https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com", false)]
+    [InlineData("https://malicious.example.com", false)]
+    [InlineData("", false)]
+    [InlineData(null, false)]
+    public void Debug_Override_Accepts_Only_Loopback_Hosts(string? url, bool expected)
+    {
+        // A persisted debug override naming Beta must not route a Debug build to shared data.
+        Assert.Equal(expected, AppEndpointConfiguration.IsLoopbackOverride(url, out _));
+    }
+
+    [Fact]
+    public void Debug_Build_Ignores_A_Persisted_Beta_Override()
+    {
+#if DEBUG
+        Assert.Equal(
+            AppEndpointConfiguration.LocalBaseUrl,
+            AppEndpointConfiguration.ResolveBackendBaseUrl(AppEndpointConfiguration.BetaBaseUrl));
+        Assert.Equal(
+            "http://127.0.0.1:5090",
+            AppEndpointConfiguration.ResolveBackendBaseUrl("http://127.0.0.1:5090/"));
+#endif
     }
 }

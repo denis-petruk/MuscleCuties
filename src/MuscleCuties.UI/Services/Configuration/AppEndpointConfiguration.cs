@@ -52,7 +52,26 @@ public static class AppEndpointConfiguration
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
             return false;
 
-        if (!AllowlistedHosts.Contains(uri.Host))
+        // DnsSafeHost strips IPv6 brackets ([::1] -> ::1) so the loopback entry can match.
+        if (!AllowlistedHosts.Contains(uri.DnsSafeHost))
+            return false;
+
+        validatedUri = uri;
+        return true;
+    }
+
+    /// <summary>
+    /// A debug override may only move the local endpoint to another loopback port. A persisted
+    /// override that names Beta (or any non-loopback host) is ignored, so a Debug build can never
+    /// silently write synthetic test data into the shared Beta environment.
+    /// </summary>
+    public static bool IsLoopbackOverride(string? urlString, out Uri? validatedUri)
+    {
+        validatedUri = null;
+        if (string.IsNullOrWhiteSpace(urlString) || !IsAllowlisted(urlString, out var uri) || uri is null)
+            return false;
+
+        if (!uri.IsLoopback)
             return false;
 
         validatedUri = uri;
@@ -62,7 +81,7 @@ public static class AppEndpointConfiguration
     public static string ResolveBackendBaseUrl(string? overrideUrl = null)
     {
 #if DEBUG
-        if (!string.IsNullOrWhiteSpace(overrideUrl) && IsAllowlisted(overrideUrl, out var validOverride))
+        if (IsLoopbackOverride(overrideUrl, out var validOverride))
         {
             return validOverride!.ToString().TrimEnd('/');
         }

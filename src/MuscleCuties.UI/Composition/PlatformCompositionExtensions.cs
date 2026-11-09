@@ -100,12 +100,9 @@ public static class PlatformCompositionExtensions
         services.AddSingleton<IPlatformSignInService>(sp => sp.GetRequiredService<AppleSignInService>());
 #endif
 
-#if IOS
-        services.AddSingleton<IHealthDataProvider, Platforms.iOS.AppleHealthDataProvider>();
-        services.AddSingleton<IHealthSyncService, HealthSyncService>();
-#else
+        // Health synchronization stays dormant until the owner authorizes its scope (CLAUDE.md,
+        // OD-4). The Beta binary carries no HealthKit entitlement or provider.
         services.AddSingleton<IHealthSyncService, DisabledHealthSyncService>();
-#endif
         services.AddScoped<ICyclePhaseNotificationService>(sp =>
             new CyclePhaseNotificationService(
                 sp.GetRequiredService<ICycleOverviewUseCase>(),
