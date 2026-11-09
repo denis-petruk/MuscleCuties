@@ -54,7 +54,7 @@ Status: **FIXED** (implemented + tested on this branch), **OPEN** (not fixed), *
 | S-05 | Seven-day post-clearance window exists only in code; preview drops cleared injury on day 1 | OPEN / OWNER (no approved basis) |
 | S-07 | Possible double decrement in deload window | OPEN |
 | G-10/G-11 | Style offer created on every revision; promotion store-level tests | OPEN |
-| E-03 | Username field auto-capitalizes | OPEN |
+| E-03 | Username field auto-capitalizes | FIXED `286cda4c` | Username entry uses `Keyboard="Plain"`; `net10.0-ios` simulator build succeeds (exit 0) |
 | E-04 | Validation message off-screen on onboarding Continue | OPEN |
 | E-05 | Today tab shows "Set your cycle phase" while Train shows the quiz phase | OPEN |
 | E-06 | Beginner General-strength card labelled "Intensity: Heavy" | OPEN (copy/product review) |

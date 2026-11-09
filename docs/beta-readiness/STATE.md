@@ -11,7 +11,7 @@
 - 2026-11-09 (integration authority): `6cce5fc8` moves both Apple jobs from `macos-15` to the `xcode-27` runner (the
   `maui-ios` workload needs Xcode 27.1; `macos-15` has 16.4), `da93d6f9` removes the CS0414 dead field, and `a6eaa76b`
   records the real reasons the swap/reschedule guards were skipped (all three now run after `e0adcaf9`/`80ec4d20`).
-- Open: S-03, S-04, S-05, S-07, G-10, G-11, E-03…E-07, live AWS A1–A14, simulator journeys 4 and 6–15, device QA01.
+- Open: S-03, S-04, S-05, S-07, G-10, G-11, E-04…E-07, live AWS A1–A14, simulator journeys 4 and 6–15, device QA01.
 - 2026-11-09: CI is green at `39053ecd` — `gh pr checks 46` reports 10 successful, 0 failing, 0 pending on both push
   and PR, including `verify_ios_compile` (3m28s push / 2m47s PR) on the `xcode-27` runner.
 - 2026-11-09 `e0adcaf9` fixes G-07: `catalog.workout_exercise_definitions.source_exercise_id` is now persisted
@@ -24,4 +24,7 @@
   reviewed definition ids, but `ValidateRescheduledWindowAsync` filtered them by the planning id, so every strength
   reschedule was rejected with `ScheduleStrengthMuscleMetadataMissing`. It now translates through `SourceExerciseId`,
   and the third guard is unskipped: `WorkoutSwapAndRescheduleSafetyTests` 3 passed, 0 skipped.
-- Next action: the Phase 2 findings, then owner review of PR #46 and the owner actions in RELEASE_READINESS.md.
+- 2026-11-09 `286cda4c` fixes E-03 (username auto-capitalization) and the `net10.0-ios` simulator build succeeds. Full
+  integration suite at this commit: 99 passed, 3 failed, 0 skipped of 102; the failures are fixture-name guards
+  (`mc_test_nutrition_*`, `mc_retry_disposable`, missing `MC_PG09_LOAD_POSTGRES`), not product assertions.
+- Next action: owner review of PR #46 and the owner-only actions in RELEASE_READINESS.md.
