@@ -286,6 +286,7 @@ qa "J15" "Journey 15 (first-run install) still passes?"
 step "Add one screenshot per defect and one home-screen capture, then fill in"
 say "device, iOS version, appearance and language at the top of:"
 note "  $QA_RECORD"
+note "Then replace the G12 Simulator row in docs/beta-readiness/RELEASE_READINESS.md with these results."
 pause "Press Enter once the record is filled in."
 
 if (( QA_FAILED )); then

@@ -39,7 +39,9 @@ Branch `integration/beta-polish-20261109-v2` (base `a99fd80c`) was **not** built
 and has no Xcode/CoreSimulator. CI's `verify_ios_compile` compiled the branch at `1f71f83` (run 42675311877), so
 the E-04…E-07 fixes build; runtime and visual evidence still needs the owner.
 Stage 3 of `scripts/beta-release-wizard.sh` runs the build, walks E-04…E-07 and journeys 4 and 6–15, and writes the
-dated record this section should be replaced with.
+dated record this section should be replaced with. The current dated checklist is
+[SIMULATOR_ACCEPTANCE_2026-11-09.md](../release-audit/2026-11-09/SIMULATOR_ACCEPTANCE_2026-11-09.md); every row there is
+`NOT RUN` because this workspace has no macOS/Xcode, and the file records the exact `NETSDK1147` blocker.
 
 | ID | Change | Commit | Status |
 | --- | --- | --- | --- |

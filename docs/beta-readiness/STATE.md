@@ -21,9 +21,11 @@
   successfully — 10 successful, 0 failing, 0 pending; `verify_source`, `verify_plan_generation`, `verify_ios_compile`
   (xcode-27), `postgres_verify / verify_postgres_compatibility` and `required` green. The `CI` workflow triggers on
   `integration/**` pushes, so no PR is needed to start it.
-- **BLOCKED here**: simulator/device journeys (Linux, no Xcode); only a local PostgreSQL run (no PG16 and no root),
-  since CI's `postgres_verify` covers the gate; live AWS (not authorised). `gh` is unauthenticated, but the public run and
-  commit pages are readable.
+- **BLOCKED here**: simulator/device journeys (Linux, no Xcode). Attempting the simulator build fails with
+  `NETSDK1147` (no workloads; no `xcrun`/`simctl`/`xcodebuild`), so acceptance is recorded as NOT RUN in
+  [SIMULATOR_ACCEPTANCE_2026-11-09.md](../release-audit/2026-11-09/SIMULATOR_ACCEPTANCE_2026-11-09.md) rather than
+  inferred. Also blocked: only a local PostgreSQL run (no PG16/root), since CI covers the gate; live AWS (not
+  authorised). `gh` is unauthenticated, but the public run and commit pages are readable.
 - The stale `integration/beta-polish-20261109` branch has a failed run
   [42673683274](https://github.com/denis-petruk/MuscleCuties/actions/runs/42673683274) on `4ee9b4f`; it is unrelated to
   this work, has no PR, and must not be used. Delete the branch.

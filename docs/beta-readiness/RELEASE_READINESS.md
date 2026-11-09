@@ -8,8 +8,8 @@ run locally in this task; nothing was deployed, migrated on a shared target, sig
 This revision is `integration/beta-polish-20261109-v2` from `a99fd80c`. It adds the E-04…E-07 code fixes, the
 localization repairs and the A11 repository half; it does not change backend, schema or policy behaviour. CI is green at
 `1f71f83` (run 42675311877: 10 successful, 0 failing, 0 pending, including `verify_ios_compile` on `xcode-27`), so the UI
-compiles — but no simulator or device journey was run, PostgreSQL compatibility was exercised only by CI
-(`postgres_verify`, green), and the live AWS posture is unchanged. The owner product decisions (`S-03`, `S-04`, `S-05`) and physical-device QA01 remain open.
+compiles — but simulator acceptance is **not run** ([dated record](../release-audit/2026-11-09/SIMULATOR_ACCEPTANCE_2026-11-09.md)),
+PostgreSQL compatibility was exercised only by CI (`postgres_verify`, green), and the live AWS posture is unchanged. The owner product decisions (`S-03`, `S-04`, `S-05`) and physical-device QA01 remain open.
 Internal TestFlight becomes possible after the simulator checks and owner actions below; external testers additionally
 need the live AWS items.
 
@@ -41,7 +41,7 @@ need the live AWS items.
 | G09 Apply | PASS (tests + simulator first-plan auto-apply) | Replacement and reduced-volume plans require Apply; accept is transactional and idempotent |
 | G10 Logging | PASS | Simulator per-set log persisted as observed rows in PostgreSQL |
 | G11 Integration | PASS (CI) | `postgres_verify / verify_postgres_compatibility` green in runs 42675311877 and 42676415439; last local full run: `c7b3a1ff` (PostgreSQL 16.15, all five CI fixture variables set): **105 passed, 0 failed, 0 skipped**. The earlier 102/3 result was missing fixture provisioning, not product defects: `mc_test_nutrition_ci` (a clone of the seeded head-7 database) satisfies `GeneratedMealPostgresTests`' `mc_test_nutrition_` prefix, `mc_retry_disposable` satisfies the retry guard, and `mc_pg09_disposable` owned by non-superuser `mc_ci_migrator` satisfies `Pg09LeastPrivilegeAndLoadTests`, which also runs its 3-minute bounded-pool load; `MC_SCHEMA_COMPATIBILITY_POSTGRES` enables the disposable template fixture. Provisioning mirrors `.github/workflows/db-verify.yml`, whose `postgres_verify` job runs this same suite on PostgreSQL 17. `WorkoutSwapAndRescheduleSafetyTests` 3 passed; `CanonicalOccurrenceAdjustmentPersistenceTests` 2; `StrengthStyleOfferStoreIntegrationTests` 1; `WorkoutExperiencePromotionStoreTests` 1. Both swap and reschedule translate the day exercise's `ENGINE_<planningId>` code through the persisted `source_exercise_id` (migration 006; 59/60 definitions mapped, planning ids 101–182); before `5d7477ae` the reschedule validator filtered the definition-keyed muscle contributions by planning id and rejected every strength day. Migration chain contract 7/7 and model schema 4/4. Follow-up `7ca46512` removed the duplicate runtime localization key the copy change introduced: `LocalizationCatalogTests` 8/8 and `BetaPlanningCopyContractTests` 10/10 at that head |
-| G12 Simulator | NOT RUN at this head (BLOCKED) | Prior run: journeys 1, 2, 3, 5 pass; 4 and 6–15 not run ([SIMULATOR_QA.md](SIMULATOR_QA.md)) |
+| G12 Simulator | NOT RUN — BLOCKED (no macOS/Xcode) | Dated record [SIMULATOR_ACCEPTANCE_2026-11-09.md](../release-audit/2026-11-09/SIMULATOR_ACCEPTANCE_2026-11-09.md): every check NOT RUN, with the captured Linux blocker (`NETSDK1147`; no `xcrun`/`simctl`/`xcodebuild`) and the exact Mac procedure. CI `verify_ios_compile` at `91886e2` is compile evidence only. Prior run: journeys 1, 2, 3, 5 pass; 4 and 6–15 not run ([SIMULATOR_QA.md](SIMULATOR_QA.md)) |
 | G13 Persistence | NOT RUN | Restart/retry/offline journeys not exercised on device |
 | G14 Security | PASS (repo) / FAIL (live) | No secrets in tracked files; Debug cannot target Beta; live Lambda secrets in plaintext env (A6) |
 | G15 Migrations | PASS (local disposable) | Empty DB bootstrap applies 7 ordered scripts (001–007); the ledger reports 7 applied, head 7, tree `746`, re-run applies 0. `ops.schema_metadata` records `schema_version=7` with fingerprint `25ff237d…8c982c4b`. `dbcheck` at head 7 and live Beta adoption are not proven (A4) |
@@ -76,7 +76,10 @@ Run `bash scripts/beta-release-wizard.sh` on the Mac checkout first: it opens th
 records the simulator checks in `docs/release-audit/2026-11-09/OWNER_SIMULATOR_QA_<date>.md`, walks the live alarm
 subscription, and captures the four policy answers. It writes nothing until you confirm each stage.
 
-1. Build the branch on a Mac and run the simulator build (`net10.0-ios`, `iossimulator-arm64`); the cloud workspace cannot.
+1. Run stage 3 of `scripts/beta-release-wizard.sh` on a Mac (or follow the commands in the dated record). It builds the
+   branch, installs and launches it, and fills `OWNER_SIMULATOR_QA_<date>.md`. The dated record
+   [SIMULATOR_ACCEPTANCE_2026-11-09.md](../release-audit/2026-11-09/SIMULATOR_ACCEPTANCE_2026-11-09.md) already lists every
+   check and the exact commands; replace its `NOT RUN` values with real results and fold them into `G12`.
 2. Re-check E-04 (validation visible under Continue), E-05 (Today shows the quiz phase), E-06 (no "Heavy" on a beginner
    general-strength day), E-07 (no empty-state flash) on the smallest iPhone and iPhone 17 Pro, light and dark, EN and RU.
 3. Answer the four batched decisions in
