@@ -779,6 +779,12 @@ public static class MixedActivityWeekScheduleRule
             return false;
         if (IsStrengthChoice(incoming) && dayState.Activities.Any(IsStrengthChoice))
             return false;
+        // Same exclusion WorkoutScheduleValidationRule enforces later: HIIT never shares a day with
+        // strength or climbing, so placement moves HIIT to another day or reduces it instead of
+        // producing a schedule the validator would reject.
+        if (incoming == WorkoutActivityType.Hiit && dayState.Activities.Any(IsStrengthOrClimbing) ||
+            IsStrengthOrClimbing(incoming) && dayState.Activities.Contains(WorkoutActivityType.Hiit))
+            return false;
         if (!isHard)
             return true;
         if (dayState.HardSessionCount >= MaximumHardSessionsOnAdjustedDay)
@@ -789,6 +795,9 @@ public static class MixedActivityWeekScheduleRule
         return SameDayDemandAdjustmentRule.Adjust(dayState.Decision!.Prescription) is not null ||
                SameDayDemandAdjustmentRule.Adjust(decision.Prescription) is not null;
     }
+
+    private static bool IsStrengthOrClimbing(WorkoutActivityType activity) =>
+        IsStrengthChoice(activity) || activity == WorkoutActivityType.RockClimbing;
 
     private static bool IsStrengthCompanion(WorkoutActivityType activity, bool isHard) =>
         !isHard && !IsStrengthChoice(activity) && activity != WorkoutActivityType.RestDay;

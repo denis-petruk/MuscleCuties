@@ -795,6 +795,36 @@ public sealed class MixedActivityWeekScheduleRuleTests
             Decision(result, WorkoutActivityType.GeneralStrength).Disposition);
     }
 
+    [Theory]
+    [InlineData(2)]
+    [InlineData(3)]
+    public void Hiit_is_never_placed_on_a_strength_day_and_strength_is_not_cut_for_it(int dayCount)
+    {
+        const WorkoutActivityType underlyingActivity = WorkoutActivityType.Cycling;
+        var days = new[] { DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday }.Take(dayCount).ToArray();
+        var result = Evaluate(
+            [WorkoutActivityType.GeneralStrength, underlyingActivity, WorkoutActivityType.Hiit],
+            days,
+            Durations((WorkoutActivityType.GeneralStrength, StrengthSessionMinutes),
+                (underlyingActivity, ExtendedSelectedCardioSessionMinutes)),
+            Evidence((WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength)),
+                (underlyingActivity, EvidenceFor(underlyingActivity, ActivityExperience.Established,
+                    existingBaselineMinutes: ActivityPrescriptionRule.EstablishedCardioMainMinutesWithoutBaseline)),
+                (WorkoutActivityType.Hiit, EvidenceFor(WorkoutActivityType.Hiit, hiitEvidence: EligibleHiitEvidence()))),
+            hiitUnderlyingCardioActivity: underlyingActivity,
+            chosenStrengthActivity: WorkoutActivityType.GeneralStrength);
+
+        Assert.DoesNotContain(WorkoutScheduleValidationRule.HiitConflict, result.InputReasons);
+        Assert.Empty(result.InputReasons);
+        Assert.All(result.Sessions.GroupBy(session => session.Day), day =>
+            Assert.False(day.Any(session => session.Activity == WorkoutActivityType.Hiit) &&
+                         day.Any(session => session.Activity == WorkoutActivityType.GeneralStrength)));
+        var strength = Decision(result, WorkoutActivityType.GeneralStrength);
+        Assert.Equal(strength.TargetSessionsPerWeek, strength.ScheduledSessionsPerWeek);
+        Assert.True(strength.ScheduledSessionsPerWeek >= GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek);
+        Assert.NotEqual(MixedActivityScheduleDisposition.Blocked, Decision(result, WorkoutActivityType.Hiit).Disposition);
+    }
+
     private static MixedActivityWeekScheduleResult Evaluate(
         IReadOnlyList<WorkoutActivityType> selectedActivities,
         IReadOnlyList<DayOfWeek> availableDays,
