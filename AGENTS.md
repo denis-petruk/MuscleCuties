@@ -14,6 +14,7 @@ Proposed 2026-11-04. Hard gates below are mandatory within the current user's au
 - GitHub `denis-petruk/MuscleCuties` is the sole target for reviewed integration, PRs and releases. Until history reconciliation is complete, the owner-designated Rider checkout is the latest implementation baseline; GitHub `main` must not overwrite it. Preserve all relevant remote history through the reviewed reconciliation plan.
 - Work through PRs into protected `main`; never push directly, force-push, bypass required checks, or write to GitLab without explicit owner authorization. After cutover, GitLab is read-only historical evidence and must not remain a hidden deployment dependency or bidirectional mirror.
 - Suggested branches: `product/<package-id>-<topic>`, `platform/<package-id>-<topic>`, `integration/<candidate>`. Never invent an owner/reviewer identity or count a bot's self-review as independent approval.
+- **No agent attribution in Git or GitHub.** Commit messages, author/committer/co-author fields, PR titles and descriptions, review comments and code comments must not name an AI agent, assistant, tool or model (e.g. Claude, Codex, Codebuff, Gemini, Copilot) or link to an agent session. Commit as the owner's Git identity, never an agent default identity; omit `Co-Authored-By`, `Generated with` and session trailers or footers, even when a tool adds them by default. Files that configure agents (`AGENTS.md`, `CLAUDE.md`, `.claude/`, `.codex/`) may exist and be named.
 
 ## Two orchestrators and one integration authority
 
