@@ -12,7 +12,7 @@ Status: **FIXED** (implemented + tested on this branch), **OPEN** (not fixed), *
 | ID | Finding | Status | Evidence |
 | --- | --- | --- | --- |
 | B1 | MAUI 10.0.60 lacks the `Button.LayoutButton` null guard (CR01 native crash); guard ships in 10.0.90 | FIXED `bbecb7c6` | Upstream source compared at tags 10.0.60/10.0.90; iOS simulator build succeeds on 10.0.90 |
-| G-07 | In-session exercise swap bypassed canonical eligibility (injury restrictions, experience, equipment; bodyweight Pull-Up without bar) | FIXED `ca31448b` | Core tests + integration test `WorkoutSwapAndRescheduleSafetyTests` |
+| G-07 | In-session exercise swap bypassed canonical eligibility (injury restrictions, experience, equipment; bodyweight Pull-Up without bar) | REOPENED 2026-11-09 (was FIXED `ca31448b`) | Eligibility rule itself is reviewed and unit-tested, but the store never reaches it: `GetSwapCandidatesAsync` compares the day exercise's planning id (`ENGINE_142` → 142) with `WorkoutExerciseDefinitions.Id` (1..60) and returns an empty list for every real catalog, so the swap UI offers nothing. `SwapAsync`'s `targetCode`/`e.Id == request.NewExerciseId` fallback can also resolve a different catalog row. Integration test stays skipped with the measured reason |
 | D1 | "Bodyweight only" plans lack squat/lunge/pull | FIXED for Beta (OD-2 b) `1e558571`, guard `e51633ee` | Option withdrawn for new selections with disclosure; verified on simulator |
 | D2 | Production dose authority cited the test fixture `MC-PLANNING-REVIEW-TEST` | FIXED `5803c071` (OD-8) | `PlanningReleaseApprovalTests` |
 | A1–A5 | Live stack serves `$LATEST`, named Staging, 1-day backups, schema adoption unproven, alarms unsubscribed | OWNER | Out of scope: no live AWS changes were made |
