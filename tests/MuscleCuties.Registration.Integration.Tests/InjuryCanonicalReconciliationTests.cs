@@ -66,7 +66,7 @@ public sealed class InjuryCanonicalReconciliationTests
                     Username = $"ic_{user.ToString("N")[..UsernameSuffixLength]}", CredentialType = "Password",
                     PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
                 db.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = user, Name = "Synthetic",
-                    DateOfBirth = BirthDate, Height = SyntheticHeight, Weight = SyntheticWeight, Goal = "BuildMuscle",
+                    DateOfBirth = BirthDate, Height = SyntheticHeight, Weight = SyntheticWeight, Goal = "MuscleTone",
                     WeightGoalPace = "Maintain", TrainingExperienceLevel = "Beginner", WorkoutDaysPerWeek = WorkoutDays,
                     CycleLength = CycleLength, EquipmentLevel = "FullGym", ConcurrencyVersion = 1, UpdatedAt = now,
                     PreferredWorkoutActivityTypes = "GeneralStrength", AvailableWorkoutWeekdaysJson = JsonSerializer.Serialize(selectedDays),
@@ -259,7 +259,7 @@ public sealed class InjuryCanonicalReconciliationTests
                     Username = $"ic_{user.ToString("N")[..UsernameSuffixLength]}", CredentialType = "Password",
                     PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
                 db.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = user, Name = "Synthetic",
-                    DateOfBirth = BirthDate, Height = SyntheticHeight, Weight = SyntheticWeight, Goal = "BuildMuscle",
+                    DateOfBirth = BirthDate, Height = SyntheticHeight, Weight = SyntheticWeight, Goal = "MuscleTone",
                     WeightGoalPace = "Maintain", TrainingExperienceLevel = "Beginner", WorkoutDaysPerWeek = WorkoutDays,
                     CycleLength = CycleLength, EquipmentLevel = "FullGym", ConcurrencyVersion = 1, UpdatedAt = now,
                     PreferredWorkoutActivityTypes = "GeneralStrength", AvailableWorkoutWeekdaysJson = JsonSerializer.Serialize(selectedDays),
