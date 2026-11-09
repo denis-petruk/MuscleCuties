@@ -214,27 +214,51 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
 
             var sourceDay = days.FirstOrDefault(d => ToStableWorkoutIntId(d.Id) == request.WorkoutDayId)
                 ?? throw new KeyNotFoundException("Workout session was not found or does not belong to the user.");
+            if (sourceDay.WorkoutType == RestWorkoutType || sourceDay.Date is not { } sourceDate)
+                throw new WorkoutRescheduleRejectedException(WorkoutRescheduleRejectedException.SessionNotMovableCode);
+            // Only real calendar dates of the active plan are targets; no weekday guess picks a session.
+            var targetRows = days.Where(d => d.Date == request.TargetDate).ToArray();
+            if (targetRows.Length == 0)
+                throw new InvalidOperationException("Specified schedule dates are not in the active plan.");
 
-            var targetDay = days.FirstOrDefault(d => d.Date == request.TargetDate)
-                ?? days.FirstOrDefault(d => d.DayOfWeek == (int)request.TargetDate.DayOfWeek)
-                ?? throw new InvalidOperationException("Specified schedule dates are not in the active plan.");
-
-            if (sourceDay.Id != targetDay.Id)
+            if (sourceDate != request.TargetDate)
             {
-                (sourceDay.WorkoutType, targetDay.WorkoutType) = (targetDay.WorkoutType, sourceDay.WorkoutType);
-                (sourceDay.Name, targetDay.Name) = (targetDay.Name, sourceDay.Name);
+                if (await dbContext.WorkoutSessionLogs.AsNoTracking().AnyAsync(log => log.UserId == userId &&
+                        log.PlannedWorkoutDayId == sourceDay.Id, cancellationToken).ConfigureAwait(false))
+                    throw new WorkoutRescheduleRejectedException(WorkoutRescheduleRejectedException.SessionAlreadyStartedCode);
 
-                var exercises = await dbContext.WorkoutDayExercises
-                    .Where(e => e.UserId == userId && (e.WorkoutDayId == sourceDay.Id || e.WorkoutDayId == targetDay.Id))
-                    .ToListAsync(cancellationToken)
-                    .ConfigureAwait(false);
-
-                foreach (var exercise in exercises)
+                // The whole occurrence moves: activity, prescription, duration and exercises stay with
+                // the row; only its date, weekday, week and same-day order change.
+                var targetRest = targetRows.Where(d => d.WorkoutType == RestWorkoutType).ToArray();
+                var sourceWeekIndex = sourceDay.WeekIndex;
+                sourceDay.Date = request.TargetDate;
+                sourceDay.DayOfWeek = (int)request.TargetDate.DayOfWeek;
+                sourceDay.WeekIndex = targetRows[0].WeekIndex;
+                var sourceDateEmpty = !days.Any(d => d.Id != sourceDay.Id && d.Date == sourceDate &&
+                                                     d.WorkoutType != RestWorkoutType);
+                foreach (var rest in targetRest)
                 {
-                    exercise.WorkoutDayId = exercise.WorkoutDayId == sourceDay.Id
-                        ? targetDay.Id
-                        : sourceDay.Id;
+                    if (sourceDateEmpty)
+                    {
+                        // The vacated date keeps its rest placeholder.
+                        rest.Date = sourceDate;
+                        rest.DayOfWeek = (int)sourceDate.DayOfWeek;
+                        rest.WeekIndex = sourceWeekIndex;
+                        sourceDateEmpty = false;
+                    }
+                    else
+                    {
+                        dbContext.WorkoutDays.Remove(rest);
+                        days.Remove(rest);
+                    }
                 }
+
+                ReorderDay(days, request.TargetDate);
+                ReorderDay(days, sourceDate);
+                var reasons = await ValidateRescheduledWindowAsync(userId, days, request.TargetDate, cancellationToken)
+                    .ConfigureAwait(false);
+                if (reasons.Count > 0)
+                    throw new WorkoutRescheduleRejectedException(reasons);
 
                 await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             }
@@ -1196,6 +1220,80 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         }
 
         session.TotalVolumeKg = Math.Round(totalVolume, 1);
+    }
+
+    private const string RestWorkoutType = "Rest";
+    private const int RescheduleValidationRadiusDays = 3;
+
+    private static void ReorderDay(IEnumerable<WorkoutDayRecord> days, DateOnly date)
+    {
+        var sessions = days.Where(day => day.Date == date && day.WorkoutType != RestWorkoutType &&
+                                         day.ActivityTypeId is { } activity &&
+                                         Enum.IsDefined(typeof(WorkoutActivityType), activity))
+            .OrderBy(day => day.DayOrder ?? int.MaxValue).ToArray();
+        var ordered = WorkoutSessionOrderingRule.Assign(sessions.Select(day => new MixedActivityScheduledSession(
+            (WorkoutActivityType)day.ActivityTypeId!.Value, date.DayOfWeek, day.PlannedMainDurationMinutes ?? 0m,
+            false)).ToArray());
+        foreach (var day in sessions)
+            day.DayOrder = ordered.First(item => item.Activity == (WorkoutActivityType)day.ActivityTypeId!.Value).DayOrder;
+    }
+
+    /// <summary>
+    /// Validates the seven consecutive dates around the target as one week with the shared schedule
+    /// rule (two activities per day, one strength, hard-day and HIIT limits, muscle recovery). A
+    /// session whose activity or muscles cannot be read fails closed.
+    /// </summary>
+    private async Task<IReadOnlyList<string>> ValidateRescheduledWindowAsync(Guid userId,
+        IReadOnlyCollection<WorkoutDayRecord> days, DateOnly target, CancellationToken cancellationToken)
+    {
+        var window = days.Where(day => day.Date is { } date && day.WorkoutType != RestWorkoutType &&
+                                       date >= target.AddDays(-RescheduleValidationRadiusDays) &&
+                                       date <= target.AddDays(RescheduleValidationRadiusDays)).ToArray();
+        if (window.Any(day => day.ActivityTypeId is not { } activity ||
+                              !Enum.IsDefined(typeof(WorkoutActivityType), activity)))
+            return [WorkoutRescheduleRejectedException.ScheduleUnknownCode];
+        var dayIds = window.Select(day => day.Id).ToArray();
+        var exercises = await dbContext.WorkoutDayExercises.AsNoTracking()
+            .Where(row => row.UserId == userId && dayIds.Contains(row.WorkoutDayId))
+            .Select(row => new { row.WorkoutDayId, row.ExerciseId })
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        var exerciseIds = exercises.Select(row => row.ExerciseId).Distinct().ToArray();
+        var planningIdByExerciseId = (await dbContext.Exercises.AsNoTracking()
+                .Where(row => exerciseIds.Contains(row.Id))
+                .Select(row => new { row.Id, row.Code })
+                .ToListAsync(cancellationToken).ConfigureAwait(false))
+            .ToDictionary(row => row.Id, row => ExtractPlanningId(row.Code) ?? row.Id);
+        var planningIds = planningIdByExerciseId.Values.Distinct().ToArray();
+        var musclesByPlanningId = (await dbContext.ExerciseMuscleContributions.AsNoTracking()
+                .Where(row => planningIds.Contains(row.ExerciseId) && row.Fraction > 0)
+                .Select(row => new { row.ExerciseId, row.MuscleGroupId })
+                .ToListAsync(cancellationToken).ConfigureAwait(false))
+            .GroupBy(row => row.ExerciseId)
+            .ToDictionary(group => group.Key, group => group
+                .Select(row => row.MuscleGroupId.ToString(CultureInfo.InvariantCulture)).ToHashSet(StringComparer.Ordinal));
+        var sessions = window.Select(day =>
+        {
+            var activity = (WorkoutActivityType)day.ActivityTypeId!.Value;
+            IReadOnlySet<string>? groups = null;
+            if (WorkoutPreferencesRule.IsStrengthStyle(activity))
+            {
+                var dayExercises = exercises.Where(row => row.WorkoutDayId == day.Id).ToArray();
+                var set = new HashSet<string>(StringComparer.Ordinal);
+                var complete = dayExercises.Length > 0;
+                foreach (var row in dayExercises)
+                {
+                    if (planningIdByExerciseId.TryGetValue(row.ExerciseId, out var planningId) &&
+                        musclesByPlanningId.TryGetValue(planningId, out var values) && values.Count > 0)
+                        set.UnionWith(values);
+                    else
+                        complete = false;
+                }
+                groups = complete ? set : null;
+            }
+            return new WorkoutScheduleValidationSession(day.Date!.Value.DayOfWeek, activity,
+                MixedActivityWeekScheduleRule.IsHardActivity(activity), groups, day.PlannedMainDurationMinutes);
+        }).ToArray();
+        return WorkoutScheduleValidationRule.Validate(sessions);
     }
 
     private async Task<int?> LoadWorkoutActivityTypeIdAsync(
