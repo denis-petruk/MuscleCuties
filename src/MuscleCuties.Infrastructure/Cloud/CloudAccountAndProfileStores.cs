@@ -763,14 +763,14 @@ public sealed class CloudProfilePersonalInfoStore(
 {
     private const string ProfileRoute = "/api/v1/profile";
     private const string PasswordChangeRoute = "/api/v1/auth/password/change";
-    private const int DefaultCycleLengthDays = 28;
-    private const int DefaultAdultAgeYears = 25;
 
     public async Task<LoadPersonalInfoResult> LoadAsync(CancellationToken cancellationToken)
     {
         var response = await apiClient.GetAsync<ServerProfileSnapshot>(ProfileRoute, cancellationToken).ConfigureAwait(false);
         var snapshot = CloudStoreResponse.RequireData(response, "personal info profile");
-        var birthDate = snapshot.DateOfBirth?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Today.AddYears(-DefaultAdultAgeYears);
+        // S-02: a missing date of birth stays missing (default) so the population gate keeps
+        // asking for it; never substitute an invented adult age.
+        var birthDate = snapshot.DateOfBirth?.ToDateTime(TimeOnly.MinValue) ?? default;
         var goal = Enum.TryParse<UserGoal>(snapshot.Goal, true, out var parsedGoal) && Enum.IsDefined(parsedGoal)
             ? (int)parsedGoal
             : (int)UserGoal.MaintainHealth;
@@ -780,7 +780,7 @@ public sealed class CloudProfilePersonalInfoStore(
         var experience = Enum.TryParse<TrainingExperienceLevel>(snapshot.TrainingExperienceLevel, true, out var parsedExp) &&
                          Enum.IsDefined(parsedExp)
             ? (int)parsedExp
-            : (int)TrainingExperienceLevel.Intermediate;
+            : (int)TrainingExperienceLevel.Unknown;
         var context = ReproductiveContextCodec.Parse(snapshot.ReproductiveContextJson);
 
         var profile = new PersonalInfoProfileDto(
@@ -791,7 +791,7 @@ public sealed class CloudProfilePersonalInfoStore(
             goal,
             pace,
             experience,
-            snapshot.CycleLength > 0 ? snapshot.CycleLength : DefaultCycleLengthDays,
+            snapshot.CycleLength > 0 ? snapshot.CycleLength : 0,
             (int)context.Pregnancy,
             (int)context.Contraception);
 
@@ -811,9 +811,13 @@ public sealed class CloudProfilePersonalInfoStore(
         var pace = Enum.IsDefined(typeof(WeightGoalPace), request.WeightGoalPace)
             ? ((WeightGoalPace)request.WeightGoalPace).ToString()
             : currentResponse.Data.WeightGoalPace;
-        var experience = Enum.IsDefined(typeof(TrainingExperienceLevel), request.TrainingExperienceLevel)
+        var experience = Enum.IsDefined(typeof(TrainingExperienceLevel), request.TrainingExperienceLevel) &&
+                         request.TrainingExperienceLevel != (int)TrainingExperienceLevel.Unknown
             ? ((TrainingExperienceLevel)request.TrainingExperienceLevel).ToString()
             : currentResponse.Data.TrainingExperienceLevel;
+        // Only write a birth date or cycle length the user actually has; never persist a placeholder.
+        var hasBirthDate = request.BirthDate != default;
+        var cycleLength = request.CycleLength > 0 ? request.CycleLength : currentResponse.Data.CycleLength;
         var pregnancy = Enum.IsDefined(typeof(PregnancyStatus), request.PregnancyStatus)
             ? (PregnancyStatus)request.PregnancyStatus
             : PregnancyStatus.Unknown;
@@ -829,14 +833,14 @@ public sealed class CloudProfilePersonalInfoStore(
             {
                 expectedVersion = currentResponse.Data.Version,
                 name = request.Name.Trim(),
-                dateOfBirth = DateOnly.FromDateTime(request.BirthDate),
-                setDateOfBirth = true,
+                dateOfBirth = hasBirthDate ? DateOnly.FromDateTime(request.BirthDate) : (DateOnly?)null,
+                setDateOfBirth = hasBirthDate,
                 height = (decimal)request.Height,
                 weight = (decimal)request.Weight,
                 goal,
                 weightGoalPace = pace,
                 trainingExperienceLevel = experience,
-                cycleLength = request.CycleLength,
+                cycleLength,
                 reproductiveContextJson
             },
             idempotencyKey: Guid.NewGuid().ToString("N"),
