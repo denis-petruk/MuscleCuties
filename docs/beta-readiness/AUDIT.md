@@ -52,8 +52,9 @@ Status: **FIXED** (implemented + tested on this branch), **OPEN** (not fixed), *
 | T-01..T-15 | Dead DI/gating code, GitLab stub, retired release scripts, .gitignore | FIXED `eafa3cee`, `927e336d`, `e41bece8` |
 | U-08 | Idempotency header name mismatch | FIXED `d8315788` |
 | S-05 | Seven-day post-clearance window exists only in code; preview drops cleared injury on day 1 | OPEN / OWNER (no approved basis) |
-| S-07 | Possible double decrement in deload window | OPEN |
-| G-10/G-11 | Style offer created on every revision; promotion store-level tests | OPEN |
+| S-07 | Possible double decrement in deload window | FIXED `314f4be2` | `workout_account_planning_states.deload_applied_plan_id` (migration 007) records the adjusted plan, so a retried materialization of the same plan returns before reducing again. `CanonicalOccurrenceAdjustmentPersistenceTests` 2 passed, including a reapply test that asserts identical sets, RIR and optional sets |
+| G-10/G-11 | Style offer created on every revision; promotion store-level tests | FIXED `314f4be2` | One active offer per plan is enforced by a partial unique index and an idempotent create that absorbs a duplicate insert. Promotion is exercised through `CreditPlannedSessionAsync`: 20 distinct days promote once and a same-day retry does not credit again. `StrengthStyleOfferStoreIntegrationTests` and `WorkoutExperiencePromotionStoreTests` pass on disposable PostgreSQL |
+| C2/C3 | Server-authored rest copy, duplicated by client fallbacks; copy did not meet the adult-language direction | FIXED `314f4be2` | Rest copy is now "Recovery day" / "A full day away from training."; the client no longer authors fallback text; RU runtime mappings cover the rest, dashboard and nutrition strings. Localization and beta-copy contract suites pass |
 | E-03 | Username field auto-capitalizes | FIXED `286cda4c` | Username entry uses `Keyboard="Plain"`; `net10.0-ios` simulator build succeeds (exit 0) |
 | E-04 | Validation message off-screen on onboarding Continue | OPEN |
 | E-05 | Today tab shows "Set your cycle phase" while Train shows the quiz phase | OPEN |
