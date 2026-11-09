@@ -28,7 +28,7 @@ public partial class ProfileSetupPage : ContentPage
 
     private void OnBirthDateSelected(object? sender, DateChangedEventArgs e)
     {
-        ((ProfileSetupViewModel)BindingContext).MarkBirthDateSelected();
+        ((ProfileSetupViewModel)BindingContext).MarkBirthDateSelected(e.OldDate, e.NewDate);
     }
 
     private async void OnProfileImageButtonClicked(object? sender, EventArgs e)
