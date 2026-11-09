@@ -119,6 +119,9 @@ public static class StrengthPlanPreviewRule
     public const string MissingWarmupOrCooldownCode = "StrengthWarmupOrCooldownDurationMissing";
     public const string ReducedVolumeNotice = "StrengthVolumeReducedToFitDurationOrSchedule";
     public const string MovementOmittedForDurationCode = "MovementOmittedForDuration";
+    /// <summary>Advisory prefix for a session removed because no permitted strength block remained.</summary>
+    public const string SessionWithheldCodePrefix = "SessionWithheld:";
+    public const string NoSafeStrengthContentRemainingCode = "NoSafeStrengthContentRemaining";
 
     private const int NoMinutes = 0;
     private const int FirstPositiveIdentifier = 1;
@@ -244,6 +247,7 @@ public static class StrengthPlanPreviewRule
         var weeklySetsByMuscle = new Dictionary<string, int>(StringComparer.Ordinal);
         var limitations = new List<string>();
         var movementOmissions = new List<string>();
+        var withheldSessions = new List<string>();
         var anyVolumeReduced = false;
         var totalOriginalWorkingSets = 0;
         var totalActualWorkingSets = 0;
@@ -292,6 +296,19 @@ public static class StrengthPlanPreviewRule
                 var safeOmission = resolution.Status == "Limited" && unresolvedSlots.Length > 0 &&
                     unresolvedSlots.All(slot => slot.Outcome == StrengthSlotResolutionOutcome.NoSafeCandidate) &&
                     resolution.Slots.Any(slot => slot.ExerciseId.HasValue);
+                // Owner requirement: a session the reviewed rules empty for safety is removed and
+                // disclosed, and the rest of the week is kept. Missing review data still blocks.
+                var safetyEmptied = resolution.Status == "Limited" && unresolvedSlots.Length > 0 &&
+                    unresolvedSlots.All(slot => slot.Outcome == StrengthSlotResolutionOutcome.NoSafeCandidate) &&
+                    !resolution.Slots.Any(slot => slot.ExerciseId.HasValue);
+                if (safetyEmptied)
+                {
+                    withheldSessions.Add($"{SessionWithheldCodePrefix}{template.TemplateId}");
+                    totalOriginalWorkingSets += resolution.Slots.Where(slot => slot.IsRequired)
+                        .Sum(slot => slot.Sets.GetValueOrDefault());
+                    anyVolumeReduced = true;
+                    continue;
+                }
                 if (!safeOmission)
                 {
                     limitations.AddRange(resolution.LimitationCodes);
@@ -408,6 +425,9 @@ public static class StrengthPlanPreviewRule
             AddSessionMuscles(sessionSlots, data.MuscleGroupsByExerciseId, weeklySessionMuscles);
         }
 
+        if (sessions.Count == NoSessions && withheldSessions.Count > NoSessions)
+            limitations.Add(NoSafeStrengthContentRemainingCode);
+
         // Review data must remain a hard prerequisite even when an initial weekday assignment fails.
         if (sessions.SelectMany(session => session.Slots).Where(slot => slot.ExerciseId.HasValue)
             .Any(slot => data.MuscleGroupsByExerciseId is null ||
@@ -469,6 +489,7 @@ public static class StrengthPlanPreviewRule
         advisories.AddRange(LowerBodyCoverageRule.Evaluate(weeklySessionMuscles).BelowMinimum
             .Select(LowerBodyCoverageRule.GapCode));
         advisories.AddRange(movementOmissions);
+        advisories.AddRange(withheldSessions);
         if (scheduledSessionsPerWeek == OneSession)
             advisories.Add("OneDayFullBodyHasLimitedWeeklyCoverage");
         if (activity == WorkoutActivityType.GeneralStrength &&

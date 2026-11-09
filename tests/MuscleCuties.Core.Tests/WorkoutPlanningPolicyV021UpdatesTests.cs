@@ -684,11 +684,14 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
 
         var result = StrengthPlanPreviewRule.EvaluateWithFallback(choices, data);
 
-        Assert.Equal(StrengthPlanPreviewStatus.Limited, result.Status);
+        // G-04 owner requirement: the emptied session is withheld and disclosed; the rest of the
+        // week stays applicable with reduced volume instead of turning the whole plan Limited.
+        Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
         Assert.Equal(WorkoutActivityType.HighVolumeStrength, result.EffectiveActivity);
         Assert.Null(result.FallbackSource);
         Assert.Null(result.FallbackReasonCode);
-        Assert.Contains("RequiredMovementSlotUnresolved", result.LimitationCodes);
+        Assert.Contains(result.AdvisoryCodes, code => code.StartsWith(StrengthPlanPreviewRule.SessionWithheldCodePrefix, StringComparison.Ordinal));
+        Assert.True(result.RequiresReducedVolumeAcknowledgment);
     }
 
     [Fact]
@@ -931,9 +934,10 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
 
         var result = StrengthPlanPreviewRule.EvaluateWithFallback(choices, data);
 
-        Assert.Equal(StrengthPlanPreviewStatus.Limited, result.Status);
+        // G-04: the emptied session is withheld; the remaining sessions keep the plan applicable.
+        Assert.Equal(StrengthPlanPreviewStatus.Feasible, result.Status);
         Assert.Equal(WorkoutActivityType.HighVolumeStrength, result.EffectiveActivity);
-        Assert.Contains("RequiredMovementSlotUnresolved", result.LimitationCodes);
+        Assert.Contains(result.AdvisoryCodes, code => code.StartsWith(StrengthPlanPreviewRule.SessionWithheldCodePrefix, StringComparison.Ordinal));
         Assert.Null(result.FallbackReasonCode);
     }
 
