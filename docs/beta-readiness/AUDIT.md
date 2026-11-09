@@ -11,32 +11,32 @@ Status: **FIXED** (implemented + tested on this branch), **OPEN** (not fixed), *
 
 | ID | Finding | Status | Evidence |
 | --- | --- | --- | --- |
-| B1 | MAUI 10.0.60 lacks the `Button.LayoutButton` null guard (CR01 native crash); guard ships in 10.0.90 | FIXED `bbecb7c6` | Upstream source compared at tags 10.0.60/10.0.90; iOS simulator build succeeds on 10.0.90 |
-| G-07 | In-session exercise swap bypassed canonical eligibility (injury restrictions, experience, equipment; bodyweight Pull-Up without bar) | FIXED `e0adcaf9` (REOPENED 2026-11-09 when the store was found to return no candidates) | The store now translates the day exercise's `ENGINE_<planningId>` code through the persisted `source_exercise_id` (migration 006) into the reviewed definition id space, in both `GetSwapCandidatesAsync` and `SwapAsync`. Candidates and saved preferences stay in definition ids, matching their foreign keys; the target catalog row is resolved by the derived `ENGINE_` code alone and the id fallback is gone. `WorkoutSwapAndRescheduleSafetyTests` 3 passed, 0 skipped on disposable PostgreSQL 16.15 (`mc_test_beta_rc`), 59/60 definitions mapped to planning ids 101–182 |
-| D1 | "Bodyweight only" plans lack squat/lunge/pull | FIXED for Beta (OD-2 b) `1e558571`, guard `e51633ee` | Option withdrawn for new selections with disclosure; verified on simulator |
-| D2 | Production dose authority cited the test fixture `MC-PLANNING-REVIEW-TEST` | FIXED `5803c071` (OD-8) | `PlanningReleaseApprovalTests` |
+| B1 | MAUI 10.0.60 lacks the `Button.LayoutButton` null guard (CR01 native crash); guard ships in 10.0.90 | FIXED `95b3785b` | Upstream source compared at tags 10.0.60/10.0.90; iOS simulator build succeeds on 10.0.90 |
+| G-07 | In-session exercise swap bypassed canonical eligibility (injury restrictions, experience, equipment; bodyweight Pull-Up without bar) | FIXED `fe3f2356` (REOPENED 2026-11-09 when the store was found to return no candidates) | The store now translates the day exercise's `ENGINE_<planningId>` code through the persisted `source_exercise_id` (migration 006) into the reviewed definition id space, in both `GetSwapCandidatesAsync` and `SwapAsync`. Candidates and saved preferences stay in definition ids, matching their foreign keys; the target catalog row is resolved by the derived `ENGINE_` code alone and the id fallback is gone. `WorkoutSwapAndRescheduleSafetyTests` 3 passed, 0 skipped on disposable PostgreSQL 16.15 (`mc_test_beta_rc`), 59/60 definitions mapped to planning ids 101–182 |
+| D1 | "Bodyweight only" plans lack squat/lunge/pull | FIXED for Beta (OD-2 b) `5923749d`, guard `4e812a30` | Option withdrawn for new selections with disclosure; verified on simulator |
+| D2 | Production dose authority cited the test fixture `MC-PLANNING-REVIEW-TEST` | FIXED `cb776984` (OD-8) | `PlanningReleaseApprovalTests` |
 | A1–A5 | Live stack serves `$LATEST`, named Staging, 1-day backups, schema adoption unproven, alarms unsubscribed | OWNER | Out of scope: no live AWS changes were made |
 
 ## P1
 
 | ID | Finding | Status | Evidence |
 | --- | --- | --- | --- |
-| G-01 | Foreground regenerate auto-activated replacement plans (CLAUDE.md requires explicit replacement acceptance) | FIXED `8758cd9c` | `StrengthPlanActivationAndApplyTests`, updated activation rule tests |
-| G-02 | Reduced-volume first plans auto-applied; coverage not re-checked after recovery-spacing cuts | FIXED `8758cd9c`, `da6a744a` | Core + Contracts tests |
-| G-03 | Up to 4 activities/day; owner requirement is 2 | FIXED `290ff2b4` | Schedule rule tests |
-| G-04 / U-04 | One safety-emptied session withheld the whole plan → disabled Apply with no adjacent reason | FIXED `f206f22e`, `8758cd9c` | `SessionWithheld:` disclosure; footer reason when Apply is disabled |
-| G-06 | Reschedule mutated plan rows partially without schedule validation; every strength day was also rejected as missing muscle metadata | FIXED `a57d04a2`, metadata defect `80ec4d20` | `exercise_muscle_contributions` is keyed by reviewed definition id, but `ValidateRescheduledWindowAsync` filtered it by the planning id from the `ENGINE_<n>` code, so no strength day could ever validate. It now translates through `source_exercise_id`. `WorkoutSwapAndRescheduleSafetyTests` 3 passed, 0 skipped on disposable PostgreSQL 16.15 (`mc_test_beta_rc`) |
-| S-01 | Energy cancelled out of the readiness score (stress aliased to energy) | FIXED `6f44dcf5` | `TodayCheckInScoreEnergyTests`; ruleset `MC-CHECKIN-SCORE-0.3` |
-| S-02 | Profile store invented DOB (today−25y), Intermediate experience and 28-day cycle, and saved them | FIXED `184d1b11` | `PersonalInfoNoFabricationTests` |
-| E-01 | Onboarding birthday picker saved today−18y untouched (simulator: `date_of_birth=2008-11-09`), passing the 18–64 gate | FIXED `dc72cd42` | Found on simulator; device re-check pending a rebuild |
-| S-08 | Check-in submitted untouched defaults (pain 0, soreness 1, sleep 7 h) as self-reported | FIXED `3508ab1e` | Contracts tests |
-| C1 | Beginners could pick history-restricted styles → zero exercises | FIXED `1e558571` (OD-7 a) | Eligibility projection tests |
-| U-01 | Expired session never returned to sign-in | FIXED `d8315788` | Contracts test |
-| U-03 | Debug build could silently route to Beta via a persisted override | FIXED `bbecb7c6` | `AppEndpointConfigurationTests` (loopback-only, IPv6 fix) |
-| B3/B4/B5/B6 | HealthKit entitlement without feature; no export-compliance key; empty privacy manifest; landscape enabled | FIXED `bbecb7c6` | OD-4 a; `ITSAppUsesNonExemptEncryption=false` needs owner confirmation (OD-5) |
-| E-02 | Session screen showed raw key `Workout_Recommendation_StartingWeight` (no EN/RU copy for 6 codes) | FIXED `f53918bb` | Found on simulator |
-| T-17 | CI had no iOS compile, no vulnerable-package check | FIXED `ad747af6` | Verified only once CI runs on GitHub |
-| T-19/T-20 | Release workflows: broad OIDC, no ref guard, optional smoke endpoint | FIXED `ad747af6` | YAML parsed locally |
+| G-01 | Foreground regenerate auto-activated replacement plans (CLAUDE.md requires explicit replacement acceptance) | FIXED `b5f42e7a` | `StrengthPlanActivationAndApplyTests`, updated activation rule tests |
+| G-02 | Reduced-volume first plans auto-applied; coverage not re-checked after recovery-spacing cuts | FIXED `b5f42e7a`, `f92be90f` | Core + Contracts tests |
+| G-03 | Up to 4 activities/day; owner requirement is 2 | FIXED `715f44b4` | Schedule rule tests |
+| G-04 / U-04 | One safety-emptied session withheld the whole plan → disabled Apply with no adjacent reason | FIXED `f64270bb`, `b5f42e7a` | `SessionWithheld:` disclosure; footer reason when Apply is disabled |
+| G-06 | Reschedule mutated plan rows partially without schedule validation; every strength day was also rejected as missing muscle metadata | FIXED `9002c0b8`, metadata defect `5d7477ae` | `exercise_muscle_contributions` is keyed by reviewed definition id, but `ValidateRescheduledWindowAsync` filtered it by the planning id from the `ENGINE_<n>` code, so no strength day could ever validate. It now translates through `source_exercise_id`. `WorkoutSwapAndRescheduleSafetyTests` 3 passed, 0 skipped on disposable PostgreSQL 16.15 (`mc_test_beta_rc`) |
+| S-01 | Energy cancelled out of the readiness score (stress aliased to energy) | FIXED `48e55709` | `TodayCheckInScoreEnergyTests`; ruleset `MC-CHECKIN-SCORE-0.3` |
+| S-02 | Profile store invented DOB (today−25y), Intermediate experience and 28-day cycle, and saved them | FIXED `7aa53789` | `PersonalInfoNoFabricationTests` |
+| E-01 | Onboarding birthday picker saved today−18y untouched (simulator: `date_of_birth=2008-11-09`), passing the 18–64 gate | FIXED `bbc27ada` | Found on simulator; device re-check pending a rebuild |
+| S-08 | Check-in submitted untouched defaults (pain 0, soreness 1, sleep 7 h) as self-reported | FIXED `b1568b8e` | Contracts tests |
+| C1 | Beginners could pick history-restricted styles → zero exercises | FIXED `5923749d` (OD-7 a) | Eligibility projection tests |
+| U-01 | Expired session never returned to sign-in | FIXED `e8d85469` | Contracts test |
+| U-03 | Debug build could silently route to Beta via a persisted override | FIXED `95b3785b` | `AppEndpointConfigurationTests` (loopback-only, IPv6 fix) |
+| B3/B4/B5/B6 | HealthKit entitlement without feature; no export-compliance key; empty privacy manifest; landscape enabled | FIXED `95b3785b` | OD-4 a; `ITSAppUsesNonExemptEncryption=false` needs owner confirmation (OD-5) |
+| E-02 | Session screen showed raw key `Workout_Recommendation_StartingWeight` (no EN/RU copy for 6 codes) | FIXED `438de156` | Found on simulator |
+| T-17 | CI had no iOS compile, no vulnerable-package check | FIXED `0999c966` | Verified only once CI runs on GitHub |
+| T-19/T-20 | Release workflows: broad OIDC, no ref guard, optional smoke endpoint | FIXED `0999c966` | YAML parsed locally |
 | S-03 | Policy decisions 4/5 (load step-down, cycle reps/extra set) not in the production dose path | OPEN / OWNER | Production only removes an optional set; owner decides amend-policy vs implement |
 | S-04 | No way to report pain mid-session (injury save blocked while a session is open) | OPEN / OWNER | Product decision needed for the in-session pain action |
 | A6–A11 | Plaintext secrets in Lambda env, log retention, throttling, concurrency, smoke, AASA | OWNER | Live AWS, not touched |
@@ -45,17 +45,17 @@ Status: **FIXED** (implemented + tested on this branch), **OPEN** (not fixed), *
 
 | ID | Finding | Status |
 | --- | --- | --- |
-| G-05 | HIIT placed on strength days | FIXED `d8d85b5f` |
-| G-08 | Missing equipment/goal defaulted to FullGym/MuscleTone | FIXED (partial) `22b68ccf` |
-| G-09 | Registration did not require a strength style server-side; docs said 1–7 days | FIXED `06a3a3de` |
-| OD-6 | Load decreased after one under-target session | FIXED `c56e08e9` (two consecutive) |
-| T-01..T-15 | Dead DI/gating code, GitLab stub, retired release scripts, .gitignore | FIXED `eafa3cee`, `927e336d`, `e41bece8` |
-| U-08 | Idempotency header name mismatch | FIXED `d8315788` |
+| G-05 | HIIT placed on strength days | FIXED `a4b9a556` |
+| G-08 | Missing equipment/goal defaulted to FullGym/MuscleTone | FIXED (partial) `7f1ea2ee` |
+| G-09 | Registration did not require a strength style server-side; docs said 1–7 days | FIXED `60b56c37` |
+| OD-6 | Load decreased after one under-target session | FIXED `008e74ce` (two consecutive) |
+| T-01..T-15 | Dead DI/gating code, GitLab stub, retired release scripts, .gitignore | FIXED `0cc85e21`, `393d89d9`, `b8c560fc` |
+| U-08 | Idempotency header name mismatch | FIXED `e8d85469` |
 | S-05 | Seven-day post-clearance window exists only in code; preview drops cleared injury on day 1 | OPEN / OWNER (no approved basis) |
-| S-07 | Possible double decrement in deload window | FIXED `314f4be2` | `workout_account_planning_states.deload_applied_plan_id` (migration 007) records the adjusted plan, so a retried materialization of the same plan returns before reducing again. `CanonicalOccurrenceAdjustmentPersistenceTests` 2 passed, including a reapply test that asserts identical sets, RIR and optional sets. Full integration suite with the CI fixture set: 105/105 |
-| G-10/G-11 | Style offer created on every revision; promotion store-level tests | FIXED `314f4be2` | One active offer per plan is enforced by a partial unique index and an idempotent create that absorbs a duplicate insert. Promotion is exercised through `CreditPlannedSessionAsync`: 20 distinct days promote once and a same-day retry does not credit again. `StrengthStyleOfferStoreIntegrationTests` and `WorkoutExperiencePromotionStoreTests` pass on disposable PostgreSQL; the three fix-specific integration classes re-ran together at 4/4 in the full-fixture session |
-| C2/C3 | Server-authored rest copy, duplicated by client fallbacks; copy did not meet the adult-language direction | FIXED `314f4be2` / `23bb4d92` | Rest copy is now "Recovery day" / "A full day away from training."; the client no longer authors fallback text; RU runtime mappings cover the rest, dashboard and nutrition strings. `23bb4d92` removes the duplicate runtime key the copy change introduced (the "Recovery day" entry already existed), which `LocalizationCatalogTests.Runtime_map_has_no_duplicate_english_values` caught. `LocalizationCatalogTests` 8/8 and `BetaPlanningCopyContractTests` 10/10 at that head, re-run after fixture provisioning |
-| E-03 | Username field auto-capitalizes | FIXED `286cda4c` | Username entry uses `Keyboard="Plain"`; `net10.0-ios` simulator build succeeds (exit 0) |
+| S-07 | Possible double decrement in deload window | FIXED `a4078485` | `workout_account_planning_states.deload_applied_plan_id` (migration 007) records the adjusted plan, so a retried materialization of the same plan returns before reducing again. `CanonicalOccurrenceAdjustmentPersistenceTests` 2 passed, including a reapply test that asserts identical sets, RIR and optional sets. Full integration suite with the CI fixture set: 105/105 |
+| G-10/G-11 | Style offer created on every revision; promotion store-level tests | FIXED `a4078485` | One active offer per plan is enforced by a partial unique index and an idempotent create that absorbs a duplicate insert. Promotion is exercised through `CreditPlannedSessionAsync`: 20 distinct days promote once and a same-day retry does not credit again. `StrengthStyleOfferStoreIntegrationTests` and `WorkoutExperiencePromotionStoreTests` pass on disposable PostgreSQL; the three fix-specific integration classes re-ran together at 4/4 in the full-fixture session |
+| C2/C3 | Server-authored rest copy, duplicated by client fallbacks; copy did not meet the adult-language direction | FIXED `a4078485` / `7ca46512` | Rest copy is now "Recovery day" / "A full day away from training."; the client no longer authors fallback text; RU runtime mappings cover the rest, dashboard and nutrition strings. `7ca46512` removes the duplicate runtime key the copy change introduced (the "Recovery day" entry already existed), which `LocalizationCatalogTests.Runtime_map_has_no_duplicate_english_values` caught. `LocalizationCatalogTests` 8/8 and `BetaPlanningCopyContractTests` 10/10 at that head, re-run after fixture provisioning |
+| E-03 | Username field auto-capitalizes | FIXED `c97254b7` | Username entry uses `Keyboard="Plain"`; `net10.0-ios` simulator build succeeds (exit 0) |
 | E-04 | Validation message off-screen on onboarding Continue | OPEN |
 | E-05 | Today tab shows "Set your cycle phase" while Train shows the quiz phase | OPEN |
 | E-06 | Beginner General-strength card labelled "Intensity: Heavy" | OPEN (copy/product review) |

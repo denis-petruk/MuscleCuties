@@ -2,7 +2,7 @@
 
 | Field | Value |
 | --- | --- |
-| Binary | Debug `net10.0-ios`, `iossimulator-arm64`, MAUI 10.0.90, built from `integration/beta-rc-20261108` at `184d1b11` (before `dc72cd42`/`f53918bb`) |
+| Binary | Debug `net10.0-ios`, `iossimulator-arm64`, MAUI 10.0.90, built from `integration/beta-rc-20261108` at `7aa53789` (before `bbc27ada`/`438de156`) |
 | Device | iPhone 17 Pro simulator `678048F6-C4C7-406C-A970-7104AED3E00A`, iOS 26.3, dark appearance, EN |
 | Backend | Local API `http://127.0.0.1:5080` (Development), disposable PostgreSQL 16 `mc_local` on `127.0.0.1:55461`, `schema_version=5`, 746 seed rows, `dbcheck` compatible |
 | Account | Synthetic `qa.beta1@example.test`; OTP from the development log delivery; no Beta data used |
@@ -23,8 +23,8 @@
 
 | ID | Sev | Defect | Status |
 | --- | --- | --- | --- |
-| E-01 | P1 | Untouched birthday picker saved `date_of_birth = today − 18y` and passed the age gate | FIXED `dc72cd42`, needs device re-check |
-| E-02 | P1 | Raw key `Workout_Recommendation_StartingWeight` on the session screen | FIXED `f53918bb`, needs device re-check |
+| E-01 | P1 | Untouched birthday picker saved `date_of_birth = today − 18y` and passed the age gate | FIXED `bbc27ada`, needs device re-check |
+| E-02 | P1 | Raw key `Workout_Recommendation_StartingWeight` on the session screen | FIXED `438de156`, needs device re-check |
 | E-03 | P3 | Username field auto-capitalizes ("Qabeta1") | OPEN |
 | E-04 | P2 | Onboarding Continue shows its validation message below the fold | OPEN |
 | E-05 | P2 | Today shows "Set your cycle phase" while Train shows the answered phase | OPEN |
