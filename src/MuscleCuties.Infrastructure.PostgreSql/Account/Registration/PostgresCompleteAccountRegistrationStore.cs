@@ -327,6 +327,9 @@ public sealed class PostgresCompleteAccountRegistrationStore(
             !TryMapEquipment(equipmentChoice, out var equipmentLevel))
             return null;
 
+        if (!WorkoutPreferencesRule.HasAtLeastOneStrengthStyle(request.Profile.SelectedActivityTypes))
+            return null;
+
         var availableWeekdays = byType.GetValueOrDefault(QuizQuestionType.AvailableWeekdays) ?? [];
         var weekdays = availableWeekdays.Select(answer => answer.MappedValue).Distinct().ToArray();
         if (weekdays.Length is < WorkoutPreferencesRule.MinimumDaysPerWeek or > WorkoutPreferencesRule.MaximumDaysPerWeek ||

@@ -7,25 +7,26 @@ namespace MuscleCuties.Core.Domain.Workout.Planning;
 public static class PlanningReleaseApproval
 {
     /// <summary>
-    /// Reference of the provisional internal review that activated this gate. It is deliberately the
-    /// fixture reference already used by the rule tests, because no clinical sign-off exists yet. The
-    /// in-app health and privacy notices state that limitation to the user, and a real reviewed
-    /// record replaces this reference when one exists.
+    /// The owner-approved Beta workout policy (docs/release-audit/2026-11-05/WORKOUT_POLICY.md). It is a
+    /// product decision, not a clinical sign-off; the in-app notices describe workout estimates and their
+    /// limits. Test fixtures use their own references and never appear in production code.
     /// </summary>
-    public const string ProvisionalApprovalReference = "MC-PLANNING-REVIEW-TEST";
+    public const string BetaWorkoutPolicyReference = "MC-BETA-WORKOUT-1";
 
-    private static readonly DateTimeOffset ProvisionalApprovedAtUtc =
-        new(2026, 10, 31, 0, 0, 0, TimeSpan.Zero);
+    /// <summary>Date the owner approved <see cref="BetaWorkoutPolicyReference"/>.</summary>
+    public static readonly DateTimeOffset BetaWorkoutPolicyApprovedAtUtc =
+        new(2026, 11, 5, 0, 0, 0, TimeSpan.Zero);
 
     /// <summary>
     /// Active approval record. It covers exactly the two sections that authorise a dose change:
     /// prescribed training and automated progression. Symptom stop logic and injury substitution
-    /// deliberately need no approval because they never change a dose.
+    /// deliberately need no approval because they never change a dose. The reference is only
+    /// checked in memory; no persisted row, fingerprint or provenance column carries it.
     /// </summary>
     public static readonly PlanningReviewApproval? CycleReadinessPrescription = new(
         TodayCheckInScoreRule.RulesetVersion,
-        ProvisionalApprovalReference,
-        ProvisionalApprovedAtUtc,
+        BetaWorkoutPolicyReference,
+        BetaWorkoutPolicyApprovedAtUtc,
         new HashSet<PlanningReviewSection>
         {
             PlanningReviewSection.TrainingPrescriptions,

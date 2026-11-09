@@ -347,6 +347,27 @@ public class CleanArchitectureBoundaryTests
             $"Found {violations.Count} forbidden duplicate workout planner occurrences:\n" + string.Join("\n", violations));
     }
 
+    [Fact]
+    public void Production_assemblies_do_not_contain_retired_gating_engine_types()
+    {
+        // The retired gating path selected HIIT on high readiness and must never be re-wired.
+        var assemblies = new[]
+        {
+            typeof(CyclePredictionEstimate).Assembly,
+            Assembly.Load("MuscleCuties.UseCases"),
+            Assembly.Load("MuscleCuties.Infrastructure")
+        };
+        string[] retired = ["GatingEngine", "IGatingEngine", "WorkoutGatingRule"];
+
+        foreach (var assembly in assemblies)
+        {
+            foreach (var type in assembly.GetTypes())
+            {
+                Assert.DoesNotContain(type.Name, retired);
+            }
+        }
+    }
+
     private static string FindRepositoryRoot()
     {
         var current = AppContext.BaseDirectory;

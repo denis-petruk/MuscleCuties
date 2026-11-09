@@ -100,3 +100,8 @@ Thumbs.db
 *.orig
 *.rej
 *~
+
+# CI/local tooling and artifacts
+.tools/
+test-results/
+*.dSYM

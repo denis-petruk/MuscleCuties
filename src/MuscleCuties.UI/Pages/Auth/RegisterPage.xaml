@@ -58,6 +58,7 @@
                             AutomationId="RegisterUsername"
                             Placeholder="{loc:LocalizedText Auth_Register_UsernamePlaceholder}"
                             Text="{Binding Username}"
+                            Keyboard="Plain"
                             ReturnType="Next"
                             Completed="OnUsernameCompleted"
                             SemanticProperties.Description="{loc:LocalizedText Auth_Register_UsernameLabel}"
@@ -148,7 +149,7 @@
             <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                 <Button Style="{StaticResource ButtonPrimary}"
                     Text="{loc:LocalizedText Auth_CreateAccount}"
-                    Command="{Binding RegisterCommand}"
+                    AutomationId="RegisterButton" Command="{Binding RegisterCommand}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     LineBreakMode="WordWrap"
                     SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreateYourAccount}" />

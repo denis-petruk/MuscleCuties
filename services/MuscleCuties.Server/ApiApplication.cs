@@ -228,13 +228,9 @@ public static class ApiApplication
         builder.Services.AddScoped<PostgresRecipeStore>();
         builder.Services.AddScoped<IRecipeStore>(sp => sp.GetRequiredService<PostgresRecipeStore>());
         builder.Services.AddScoped<ICreateRecipeUseCase, CreateRecipeUseCase>();
-        builder.Services.AddScoped<CreateRecipeUseCase>();
         builder.Services.AddScoped<IPreviewRecipePortionUseCase, PreviewRecipePortionUseCase>();
-        builder.Services.AddScoped<PreviewRecipePortionUseCase>();
         builder.Services.AddScoped<IGetRecipesAndTemplatesUseCase, GetRecipesAndTemplatesUseCase>();
-        builder.Services.AddScoped<GetRecipesAndTemplatesUseCase>();
         builder.Services.AddScoped<ISaveMealTemplateUseCase, SaveMealTemplateUseCase>();
-        builder.Services.AddScoped<SaveMealTemplateUseCase>();
         builder.Services.AddScoped<PostgresNutritionOverviewStore>();
         builder.Services.AddScoped<IServerNutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
         builder.Services.AddScoped<INutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
@@ -285,7 +281,6 @@ public static class ApiApplication
         builder.Services.AddScoped<ChangeWaterIntakeUseCase>();
         builder.Services.AddScoped<GetWaterReminderConfigurationUseCase>();
         builder.Services.AddScoped<SaveWaterReminderConfigurationUseCase>();
-        builder.Services.AddScoped<PreviewWaterReminderUseCase>();
         builder.Services.AddScoped<IBodyMeasurementSession, HttpContextBodyMeasurementSession>();
         builder.Services.AddScoped<IBodyMeasurementStore, PostgresBodyMeasurementStore>();
         builder.Services.AddScoped<CreateBodyMeasurementUseCase>();
@@ -320,7 +315,6 @@ public static class ApiApplication
                 MuscleCuties.Core.Models.Workout.Planning.WorkoutPlanningConfig.CreateDefault(),
                 "v1.0-clinical"));
         builder.Services.AddScoped<MuscleCuties.UseCases.Features.Workout.Readiness.Contracts.IEvaluateReadinessUseCase, MuscleCuties.UseCases.Features.Workout.Readiness.EvaluateReadinessUseCase>();
-        builder.Services.AddScoped<MuscleCuties.UseCases.Features.Workout.Readiness.EvaluateReadinessUseCase>();
         var appleKeys = builder.Configuration.GetSection("AppleSignIn:PublicKeys").GetChildren()
             .Where(section => !string.IsNullOrWhiteSpace(section.Value))
             .ToDictionary(section => section.Key, section => section.Value!, StringComparer.Ordinal);
@@ -354,6 +348,11 @@ public static class ApiApplication
                 var resendClient = serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("ResendEmailDelivery");
                 return new ResendEmailChallengeDelivery(resendClient, resendApiKey, fromEmail);
             }
+
+            // A local, disposable backend has no provider credentials; log the code so registration stays
+            // testable end to end in Development. Every other environment keeps the relay-only path.
+            if (builder.Environment.IsDevelopment())
+                return new LocalDevelopmentEmailChallengeDelivery();
 
             return new FirstPartyEmailChallengeDelivery(
                 serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("FirstPartyEmailChallengeRelay"),

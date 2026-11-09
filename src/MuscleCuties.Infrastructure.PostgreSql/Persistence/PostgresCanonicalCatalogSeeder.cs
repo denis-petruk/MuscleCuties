@@ -9,6 +9,8 @@ using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+
 namespace MuscleCuties.Infrastructure.PostgreSql.Persistence;
 
 public sealed record CanonicalCatalogSeedSummary(
@@ -70,7 +72,21 @@ public static class PostgresCanonicalCatalogSeeder
             ?? throw new InvalidOperationException("The canonical catalog seed manifest is not embedded in this assembly.");
         using var buffer = new MemoryStream();
         await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
-        return await IngestAsync(context, buffer.ToArray(), cancellationToken).ConfigureAwait(false);
+        var summary = await IngestAsync(context, buffer.ToArray(), cancellationToken).ConfigureAwait(false);
+        // The manifest creates the catalog rows; the reviewed snapshot is what makes them usable by
+        // the v020 planner. Without this the columns stay empty and every exercise is ineligible.
+        var reviewPath = await PostgresReviewedExerciseCatalogImporterV020
+            .WriteEmbeddedReviewToTempAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await new PostgresReviewedExerciseCatalogImporterV020(context)
+                .ApplyAsync(reviewPath, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            File.Delete(reviewPath);
+        }
+        return summary;
     }
 
     private static async Task<CanonicalCatalogSeedSummary> IngestAsync(

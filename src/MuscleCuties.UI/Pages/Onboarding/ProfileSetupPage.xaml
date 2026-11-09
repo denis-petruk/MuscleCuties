@@ -298,7 +298,7 @@
             HorizontalOptions="Center"
             SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_SavingProfilePleaseWait}" />
         <Button Style="{StaticResource ButtonPrimary}"
-            Text="{loc:LocalizedText Common_Continue}"
+            AutomationId="ProfileSetupContinueButton" Text="{loc:LocalizedText Common_Continue}"
             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
             Clicked="OnContinueClicked"
             SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ContinueToPersonalizedQuestions}"

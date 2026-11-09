@@ -43,22 +43,37 @@ public static class WorkoutPlanningFlowRule
     public static WorkoutPlanningSuccessDestination Success(bool replacesExistingPlan) => replacesExistingPlan
         ? WorkoutPlanningSuccessDestination.Workout : WorkoutPlanningSuccessDestination.Dashboard;
 
+    /// <summary>
+    /// The source's tested first-plan exception: a generated first plan that is feasible, persisted,
+    /// complete and needs no further decision is applied without an Apply tap. A plan that fits only
+    /// with reduced volume needs the user's acceptance, which Apply carries, so it is never applied
+    /// automatically (G-02).
+    /// </summary>
     public static bool CanAutomaticallyApplyFirstPlan(bool replacesExistingPlan, bool feasible, bool persisted,
-        bool missingRequiredAnswers, bool styleChoiceRequired, bool hasOmissions) =>
+        bool missingRequiredAnswers, bool styleChoiceRequired, bool hasOmissions, bool reducedVolume) =>
         !replacesExistingPlan && feasible && persisted && !missingRequiredAnswers && !styleChoiceRequired &&
-        !hasOmissions;
+        !hasOmissions && !reducedVolume;
 
     /// <summary>
-    /// PG01: a foreground Generate or Regenerate action is one intent to generate and activate. The
-    /// consequence of replacing the active plan is disclosed on that initiating action, so an
-    /// eligible replacement activates without a second confirmation. Everything that cannot be
-    /// activated safely stays in the draft and returns the person to editable details instead.
+    /// A foreground Generate/Regenerate may only activate the result without an Apply tap under the
+    /// first-plan exception. An existing active plan is never replaced without explicit acceptance:
+    /// the initiating control discloses the replacement consequence up front and the replacement
+    /// stays in the preview until the user taps Apply plan (G-01). A reduced-volume plan likewise
+    /// waits for Apply, which carries that acknowledgment (G-02).
     /// </summary>
-    public static bool CanAutoActivateRequestedPlan(bool userRequested, bool replacementDisclosed,
-        bool replacesExistingPlan, bool feasible, bool persisted, bool hasLease, bool missingRequiredAnswers,
-        bool styleChoiceRequired) =>
-        userRequested && feasible && persisted && hasLease && !missingRequiredAnswers &&
-        !styleChoiceRequired && (!replacesExistingPlan || replacementDisclosed);
+    public static bool CanAutoActivateRequestedPlan(bool userRequested, bool replacesExistingPlan,
+        bool feasible, bool persisted, bool hasLease, bool missingRequiredAnswers, bool styleChoiceRequired,
+        bool reducedVolume) =>
+        userRequested && !replacesExistingPlan && feasible && persisted && hasLease &&
+        !missingRequiredAnswers && !styleChoiceRequired && !reducedVolume;
+
+    /// <summary>
+    /// Apply is the user's acceptance of a replacement. A second confirmation is only needed when the
+    /// replacement consequence was not disclosed on an initiating Generate/Regenerate action.
+    /// </summary>
+    public static bool RequiresReplacementConfirmation(bool replacesExistingPlan,
+        bool replacementDisclosedUpFront) =>
+        replacesExistingPlan && !replacementDisclosedUpFront;
 
     /// <summary>
     /// CR01/PG01: an in-flight generation may only publish its result, start a lease or accept a plan

@@ -157,10 +157,16 @@ public partial class ProfileSetupViewModel : ObservableObject
         OnPropertyChanged(nameof(UseImperialSystem));
     }
 
+    partial void OnBirthDateChanged(DateTime oldValue, DateTime newValue)
+    {
+        // The iOS date picker pushes its initial value back through the two-way binding; only a
+        // real change of calendar date counts as the user answering (never invent an adult age).
+        if (!_loadingBirthDate && oldValue.Date != newValue.Date)
+            _birthDateWasSelected = true;
+    }
+
     partial void OnBirthDateChanged(DateTime value)
     {
-        if (!_loadingBirthDate)
-            _birthDateWasSelected = true;
         var today = DateTime.Today;
         var age = today.Year - value.Year;
         if (value.Date > today.AddYears(-age))
@@ -172,11 +178,14 @@ public partial class ProfileSetupViewModel : ObservableObject
             ErrorMessage = string.Empty;
     }
 
-    public void MarkBirthDateSelected()
+    public void MarkBirthDateSelected(DateTime? oldDate, DateTime? newDate)
     {
-        if (!_loadingBirthDate)
+        if (!_loadingBirthDate && newDate is { } picked && oldDate?.Date != picked.Date)
             _birthDateWasSelected = true;
     }
+
+    /// <summary>True only after the user picked a birth date (or one was loaded from a saved profile).</summary>
+    public bool HasSelectedBirthDate => _birthDateWasSelected;
 
     private void ApplyLoadedBirthDate(DateTime birthDate)
     {

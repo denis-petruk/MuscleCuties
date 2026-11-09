@@ -50,7 +50,7 @@
                             Style="{StaticResource ButtonSecondary}" />
                     <Button Grid.Column="1"
                             Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
-                            Command="{Binding SaveInjuryCommand}"
+                            AutomationId="InjurySaveButton" Command="{Binding SaveInjuryCommand}"
                             Style="{StaticResource ButtonPrimary}" />
                 </Grid>
             </Grid>

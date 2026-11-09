@@ -9,6 +9,7 @@ using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.ViewModels.Common;
+using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
@@ -26,6 +27,9 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly IProfileWorkoutPreferencesUseCase _useCase;
     private readonly INavigationContextService? _navigationContext;
+    private readonly IProfilePersonalInfoUseCase? _personalInfo;
+    private int? _trainingExperienceLevel;
+    internal const string StyleNeedsHistoryKey = "Workout_Generation_StyleNeedsHistory";
     internal const string DraftPreferencesContextKey = "workout-planning-draft-preferences";
     private readonly GetReviewedExerciseExclusionCatalogV020UseCase _exerciseExclusionCatalog;
     private Dictionary<int, int> _savedActivitySessionDurationsMinutes = new();
@@ -56,9 +60,11 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         IProfileRefreshNotifier refreshNotifier,
         Func<Task> navigateBackAsync,
         Func<Task> navigateAfterSaveAsync,
-        INavigationContextService? navigationContext = null)
+        INavigationContextService? navigationContext = null,
+        IProfilePersonalInfoUseCase? personalInfo = null)
     {
         _useCase = useCase;
+        _personalInfo = personalInfo;
         _navigationContext = navigationContext;
         _exerciseExclusionCatalog = exerciseExclusionCatalog;
         _refreshNotifier = refreshNotifier;
@@ -68,18 +74,42 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
         ToggleWeekdayCommand = new RelayCommand<WorkoutWeekdayOptionItem>(ToggleWeekday);
+        SwitchToGeneralStrengthCommand = new RelayCommand(SwitchToGeneralStrength);
         WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(new HashSet<WorkoutActivityDto>());
         AvailableWeekdays = new ObservableCollection<WorkoutWeekdayOptionItem>(CreateWeekdays()
             .Select(day => new WorkoutWeekdayOptionItem(day)));
         SelectedEquipmentOption = EquipmentOptions.First(option => option.Value == FullGymEquipmentValue);
     }
 
-    public IReadOnlyList<SelectionOption<string>> EquipmentOptions { get; } =
-    [
-        new(FullGymEquipmentValue, "Profile_WorkoutPrefs_EquipmentFullGym"),
-        new(HomeDumbbellsBandsEquipmentValue, "Profile_WorkoutPrefs_EquipmentHome"),
-        new(BodyweightEquipmentValue, "Profile_WorkoutPrefs_EquipmentBodyweight")
-    ];
+
+    private static readonly SelectionOption<string> BodyweightEquipmentOption =
+        new(BodyweightEquipmentValue, "Profile_WorkoutPrefs_EquipmentBodyweight");
+
+    /// <summary>
+    /// D1/OD-2: "Bodyweight only" is not offered for new selections in the beta (the reviewed catalog
+    /// has no bodyweight squat, lunge or pull). A saved bodyweight setting is still listed so it is
+    /// displayed and preserved; the server keeps planning it.
+    /// </summary>
+    [ObservableProperty]
+    private IReadOnlyList<SelectionOption<string>> _equipmentOptions = OfferedEquipmentOptions(null);
+
+    internal static IReadOnlyList<SelectionOption<string>> OfferedEquipmentOptions(string? savedEquipmentLevel)
+    {
+        List<SelectionOption<string>> options =
+        [
+            new(FullGymEquipmentValue, "Profile_WorkoutPrefs_EquipmentFullGym"),
+            new(HomeDumbbellsBandsEquipmentValue, "Profile_WorkoutPrefs_EquipmentHome")
+        ];
+        if (string.Equals(savedEquipmentLevel, BodyweightEquipmentValue, StringComparison.OrdinalIgnoreCase))
+            options.Add(BodyweightEquipmentOption);
+        return options;
+    }
+
+    /// <summary>C1/OD-7: a saved strength style that is no longer offered for this profile.</summary>
+    public bool HasIneligibleSavedStyle =>
+        WorkoutActivityOptions.Any(option => option.IsSelected && option.HasUnavailableReason);
+
+    public RelayCommand SwitchToGeneralStrengthCommand { get; }
 
     public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions =>
         ProfileWorkoutActivityOptions.BuildGroups(WorkoutActivityOptions);
@@ -131,6 +161,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                                    .Select(value => (WorkoutActivityDto)value).ToHashSet()
                                ?? new HashSet<WorkoutActivityDto>();
             WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(selectedTypes);
+            _trainingExperienceLevel = await TryLoadTrainingExperienceLevelAsync();
+            ApplyStyleEligibility();
             _savedActivitySessionDurationsMinutes = (preferences?.ActivitySessionDurationsMinutes ??
                     new Dictionary<int, int>())
                 .Where(pair => Enum.IsDefined(typeof(WorkoutActivityDto), pair.Key) &&
@@ -159,6 +191,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                     IsSelected = selectedDays.Contains(day)
                 }));
 
+            EquipmentOptions = OfferedEquipmentOptions(preferences?.EquipmentLevel);
             SelectedEquipmentOption = EquipmentOptions.FirstOrDefault(option =>
                                           string.Equals(option.Value, preferences?.EquipmentLevel,
                                               StringComparison.OrdinalIgnoreCase)) ??
@@ -319,6 +352,50 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                 : toggleResult;
         OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
         OnPropertyChanged(nameof(HasUnsavedChanges));
+        OnPropertyChanged(nameof(HasIneligibleSavedStyle));
+    }
+
+    private void SwitchToGeneralStrength()
+    {
+        foreach (var option in WorkoutActivityOptions)
+        {
+            if (option.ActivityType == WorkoutActivityDto.GeneralStrength)
+                option.IsSelected = true;
+            else if (option.IsSelected && option.HasUnavailableReason)
+                option.IsSelected = false;
+        }
+
+        StatusMessage = string.Empty;
+        OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+        OnPropertyChanged(nameof(HasIneligibleSavedStyle));
+    }
+
+    private async Task<int?> TryLoadTrainingExperienceLevelAsync()
+    {
+        if (_personalInfo is null)
+            return null;
+        try
+        {
+            return (await _personalInfo.LoadAsync()).Profile?.TrainingExperienceLevel;
+        }
+        catch (Exception exception)
+        {
+            // The server stays authoritative; an unavailable profile restricts nothing here.
+            Trace.WriteLine($"[ProfileWorkoutPreferencesViewModel] Experience load failed ({exception.GetType().Name}).");
+            return null;
+        }
+    }
+
+    private void ApplyStyleEligibility()
+    {
+        foreach (var option in WorkoutActivityOptions.Where(option =>
+                     WorkoutPlanningConstants.IsStrengthActivity(option.ActivityType)))
+            option.UnavailableReason = StrengthStyleChoiceEligibilityProjection.IsOffered(
+                option.ActivityType, _trainingExperienceLevel)
+                ? string.Empty
+                : UiTextCatalog.Get(StyleNeedsHistoryKey);
+        OnPropertyChanged(nameof(HasIneligibleSavedStyle));
     }
 
     private void ToggleWeekday(WorkoutWeekdayOptionItem? item)
@@ -379,8 +456,11 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         DayOfWeek.Sunday
     ];
 
-    partial void OnWorkoutActivityOptionsChanged(ObservableCollection<WorkoutActivityOptionItem> value) =>
+    partial void OnWorkoutActivityOptionsChanged(ObservableCollection<WorkoutActivityOptionItem> value)
+    {
         OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
+        OnPropertyChanged(nameof(HasIneligibleSavedStyle));
+    }
 
     partial void OnExerciseExclusionOptionsChanged(ObservableCollection<WorkoutExerciseExclusionOptionItem> value)
     {

@@ -3,14 +3,13 @@ namespace MuscleCuties.UI.Services.Configuration;
 public enum AppTargetEnvironment
 {
     Local = 0,
-    Staging = 1,
+    // Beta keeps its historical value so no persisted environment identity shifts.
     Beta = 2
 }
 
 public static class AppEndpointConfiguration
 {
     public const string LocalBaseUrl = "http://127.0.0.1:5080";
-    public const string StagingBaseUrl = "https://staging-api.musclecuties.app";
     public const string BetaBaseUrl = "https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com";
 
     private static readonly HashSet<string> AllowlistedHosts = new(StringComparer.OrdinalIgnoreCase)
@@ -18,7 +17,6 @@ public static class AppEndpointConfiguration
         "127.0.0.1",
         "localhost",
         "::1",
-        "staging-api.musclecuties.app",
         "y2ejsgrc6l.execute-api.us-east-2.amazonaws.com"
     };
 
@@ -29,13 +27,11 @@ public static class AppEndpointConfiguration
 #if DEBUG
             // Safe debug default is always Local to prevent accidental queries against shared data
             return AppTargetEnvironment.Local;
-#elif APP_ENV_STAGING
-            return AppTargetEnvironment.Staging;
 #elif APP_ENV_BETA
             return AppTargetEnvironment.Beta;
 #else
             throw new InvalidOperationException(
-                "Release builds must explicitly define either APP_ENV_STAGING or APP_ENV_BETA. Implicit fallback to Beta is disabled for release safety.");
+                "Release builds must explicitly define APP_ENV_BETA. Implicit fallback to Beta is disabled for release safety.");
 #endif
         }
     }
@@ -43,7 +39,6 @@ public static class AppEndpointConfiguration
     public static string GetDefaultBaseUrl(AppTargetEnvironment environment) => environment switch
     {
         AppTargetEnvironment.Local => LocalBaseUrl,
-        AppTargetEnvironment.Staging => StagingBaseUrl,
         AppTargetEnvironment.Beta => BetaBaseUrl,
         _ => throw new ArgumentOutOfRangeException(nameof(environment), environment, "Unsupported target environment.")
     };
@@ -57,7 +52,26 @@ public static class AppEndpointConfiguration
         if (uri.Scheme != Uri.UriSchemeHttp && uri.Scheme != Uri.UriSchemeHttps)
             return false;
 
-        if (!AllowlistedHosts.Contains(uri.Host))
+        // DnsSafeHost strips IPv6 brackets ([::1] -> ::1) so the loopback entry can match.
+        if (!AllowlistedHosts.Contains(uri.DnsSafeHost))
+            return false;
+
+        validatedUri = uri;
+        return true;
+    }
+
+    /// <summary>
+    /// A debug override may only move the local endpoint to another loopback port. A persisted
+    /// override that names Beta (or any non-loopback host) is ignored, so a Debug build can never
+    /// silently write synthetic test data into the shared Beta environment.
+    /// </summary>
+    public static bool IsLoopbackOverride(string? urlString, out Uri? validatedUri)
+    {
+        validatedUri = null;
+        if (string.IsNullOrWhiteSpace(urlString) || !IsAllowlisted(urlString, out var uri) || uri is null)
+            return false;
+
+        if (!uri.IsLoopback)
             return false;
 
         validatedUri = uri;
@@ -67,7 +81,7 @@ public static class AppEndpointConfiguration
     public static string ResolveBackendBaseUrl(string? overrideUrl = null)
     {
 #if DEBUG
-        if (!string.IsNullOrWhiteSpace(overrideUrl) && IsAllowlisted(overrideUrl, out var validOverride))
+        if (IsLoopbackOverride(overrideUrl, out var validOverride))
         {
             return validOverride!.ToString().TrimEnd('/');
         }

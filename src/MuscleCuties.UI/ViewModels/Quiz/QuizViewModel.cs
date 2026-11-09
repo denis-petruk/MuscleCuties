@@ -113,6 +113,17 @@ public partial class QuizViewModel : ObservableObject
         QuizQuestionType.DietaryPreference or QuizQuestionType.AvailableWeekdays;
     public bool IsCurrentQuestionAvailableWeekdays =>
         CurrentQuestion?.QuestionType == QuizQuestionType.AvailableWeekdays;
+    public bool IsCurrentQuestionEquipment => CurrentQuestion?.QuestionType == QuizQuestionType.Equipment;
+
+    /// <summary>
+    /// D1/OD-2: the server quiz catalog still seeds the "Bodyweight only" equipment answer (mapped
+    /// value 3, seed urn:musclecuties:seed:v1:2c50cf03-f689-4e36-ace3-770ce3c924eb). It is not offered
+    /// for new selections in the beta; stored bodyweight profiles keep working server-side.
+    /// </summary>
+    internal const int BodyweightOnlyEquipmentMappedValue = 3;
+
+    internal static bool IsOfferedAnswer(QuizQuestionType questionType, QuizAnswerDto answer) =>
+        questionType != QuizQuestionType.Equipment || answer.MappedValue != BodyweightOnlyEquipmentMappedValue;
     public bool IsCurrentQuestionPhasePair => IsPainQuestion(CurrentQuestion?.QuestionType);
     public bool IsStandardAnswerListVisible =>
         !IsCurrentQuestionPhasePair;
@@ -370,6 +381,7 @@ public partial class QuizViewModel : ObservableObject
 
         CurrentAnswers = new ObservableCollection<SelectableQuizAnswer>(
             question.Answers
+                .Where(answer => IsOfferedAnswer(question.QuestionType, answer))
                 .OrderBy(answer => answer.OrderIndex)
                 .ThenBy(answer => answer.Id)
                 .Select(answer => new SelectableQuizAnswer
@@ -659,6 +671,7 @@ public partial class QuizViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
         OnPropertyChanged(nameof(IsCurrentQuestionAvailableWeekdays));
+        OnPropertyChanged(nameof(IsCurrentQuestionEquipment));
         OnPropertyChanged(nameof(IsCurrentQuestionPhasePair));
         OnPropertyChanged(nameof(IsStandardAnswerListVisible));
         OnPropertyChanged(nameof(SelectedWeekdayCount));

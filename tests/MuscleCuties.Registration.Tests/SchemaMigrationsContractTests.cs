@@ -59,7 +59,7 @@ public sealed class SchemaMigrationsContractTests
     public void MigrationScripts_MatchesExpectedCleanMigrationChain()
     {
         var scripts = PostgresSchemaMigrations.Scripts;
-        Assert.Equal(5, scripts.Count);
+        Assert.Equal(7, scripts.Count);
 
         Assert.Equal(1, scripts[0].Version);
         Assert.Equal("001_base_schema.sql", scripts[0].ScriptName);
@@ -80,6 +80,29 @@ public sealed class SchemaMigrationsContractTests
         Assert.Equal(5, scripts[4].Version);
         Assert.Equal("005_observed_set_actuals.sql", scripts[4].ScriptName);
         Assert.Equal(PostgresSchemaMigrations.ObservedSetActualsResourceName, scripts[4].ResourceName);
+
+        Assert.Equal(6, scripts[5].Version);
+        Assert.Equal("006_exercise_definition_source_id.sql", scripts[5].ScriptName);
+        Assert.Equal(PostgresSchemaMigrations.ExerciseDefinitionSourceIdResourceName, scripts[5].ResourceName);
+
+        Assert.Equal(7, scripts[6].Version);
+        Assert.Equal("007_deload_offer_idempotency.sql", scripts[6].ScriptName);
+        Assert.Equal(PostgresSchemaMigrations.DeloadOfferIdempotencyResourceName, scripts[6].ResourceName);
+    }
+
+    [Fact]
+    public async Task DeloadOfferMigrationIsAdditiveAndKeepsOneActiveOfferPerPlan()
+    {
+        var script = PostgresSchemaMigrations.Scripts.Single(candidate => candidate.Version == 7);
+        await using var stream = typeof(PostgresSchemaMigrations).Assembly
+            .GetManifestResourceStream(script.ResourceName);
+        Assert.NotNull(stream);
+        using var reader = new StreamReader(stream, Encoding.UTF8);
+        var sql = await reader.ReadToEndAsync();
+
+        Assert.Contains("ADD COLUMN IF NOT EXISTS deload_applied_plan_id uuid", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("CREATE UNIQUE INDEX IF NOT EXISTS", sql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("WHERE dismissed_at_utc IS NULL", sql, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
@@ -116,10 +139,10 @@ public sealed class SchemaMigrationsContractTests
     [Fact]
     public async Task RehearseChainAsync_ProducesVerifiedChecksumsAndMonotonicOrder()
     {
-        // QA00: Rehearse clean migration chain (001 -> 002 -> 003 -> 004 -> 005)
+        // QA00: Rehearse clean migration chain (001 -> ... -> 007)
         var rehearsal = await PostgresSchemaMigrations.RehearseChainAsync();
 
-        Assert.Equal(5, rehearsal.Count);
+        Assert.Equal(7, rehearsal.Count);
         for (var i = 0; i < rehearsal.Count; i++)
         {
             Assert.Equal(i + 1, rehearsal[i].Version);

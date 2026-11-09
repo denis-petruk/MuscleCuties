@@ -4,27 +4,37 @@ using Xunit;
 namespace MuscleCuties.Core.Tests;
 
 /// <summary>
-/// PG01: one foreground Generate/Regenerate intent activates an eligible plan. A replacement is only
-/// activated when its consequence was disclosed on the initiating action, and an injury-excluded
-/// No per-exercise acknowledgment gate exists; eligibility is decided by the reviewed rules.
+/// G-01/G-02: activation without an Apply tap is limited to the source's tested first-plan exception.
+/// An existing active plan is replaced only through Apply plan; the initiating Generate/Regenerate
+/// discloses that consequence up front but never activates the replacement by itself. A plan that
+/// fits only with reduced volume waits for Apply, which carries that acknowledgment.
 /// </summary>
 public sealed class WorkoutPlanningActivationRuleTests
 {
     [Fact]
-    public void RequestedFeasiblePlanActivatesWithoutASecondConfirmation()
+    public void RequestedFeasibleFirstPlanActivatesWithoutASecondTap()
     {
         Assert.True(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            userRequested: true, replacementDisclosed: false, replacesExistingPlan: false, feasible: true,
-            persisted: true, hasLease: true, missingRequiredAnswers: false, styleChoiceRequired: false));
+            userRequested: true, replacesExistingPlan: false, feasible: true, persisted: true,
+            hasLease: true, missingRequiredAnswers: false, styleChoiceRequired: false, reducedVolume: false));
     }
 
     [Fact]
-    public void ReplacementActivatesOnlyWhenItsConsequenceWasDisclosedUpFront()
+    public void ReplacementNeverActivatesWithoutApplyEvenWhenRequestedInTheForeground()
+    {
+        // The replacement consequence is disclosed on the initiating action, but that disclosure is not
+        // acceptance: the replacement stays in the preview until the user taps Apply plan.
+        Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
+            userRequested: true, replacesExistingPlan: true, feasible: true, persisted: true,
+            hasLease: true, missingRequiredAnswers: false, styleChoiceRequired: false, reducedVolume: false));
+    }
+
+    [Fact]
+    public void ReducedVolumeFirstPlanWaitsForApply()
     {
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, replacementDisclosed: false, replacesExistingPlan: true, true, true, true, false, false));
-        Assert.True(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, replacementDisclosed: true, replacesExistingPlan: true, true, true, true, false, false));
+            userRequested: true, replacesExistingPlan: false, feasible: true, persisted: true,
+            hasLease: true, missingRequiredAnswers: false, styleChoiceRequired: false, reducedVolume: true));
     }
 
     [Theory]
@@ -33,25 +43,25 @@ public sealed class WorkoutPlanningActivationRuleTests
     public void BackgroundWorkNeverActivatesAPlan(bool userRequested)
     {
         var activated = WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            userRequested, true, false, true, true, true, false, false);
+            userRequested, false, true, true, true, false, false, false);
         Assert.Equal(userRequested, activated);
     }
 
     [Fact]
     public void IneligibleRequestsStayInTheDraft()
     {
-        // Missing required answers, a strength-style choice, no lease, an unpersisted proposal, a
-        // pending acknowledgment or an infeasible preview must not activate anything.
+        // Missing required answers, a strength-style choice, no lease, an unpersisted proposal or an
+        // infeasible preview must not activate anything.
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, true, true, true, missingRequiredAnswers: true, false));
+            true, false, true, true, true, missingRequiredAnswers: true, false, false));
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, true, true, true, false, styleChoiceRequired: true));
+            true, false, true, true, true, false, styleChoiceRequired: true, false));
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, true, true, hasLease: false, false, false));
+            true, false, true, true, hasLease: false, false, false, false));
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, true, persisted: false, true, false, false));
+            true, false, true, persisted: false, true, false, false, false));
         Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
-            true, true, false, feasible: false, true, true, false, false));
+            true, false, feasible: false, true, true, false, false, false));
     }
 
     [Fact]
@@ -60,10 +70,22 @@ public sealed class WorkoutPlanningActivationRuleTests
         // The source's tested first-plan exception is unchanged for a non-user-started load.
         Assert.True(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
             replacesExistingPlan: false, feasible: true, persisted: true, missingRequiredAnswers: false,
-            styleChoiceRequired: false, hasOmissions: false));
+            styleChoiceRequired: false, hasOmissions: false, reducedVolume: false));
         Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
             replacesExistingPlan: true, feasible: true, persisted: true, missingRequiredAnswers: false,
-            styleChoiceRequired: false, hasOmissions: false));
+            styleChoiceRequired: false, hasOmissions: false, reducedVolume: false));
+    }
+
+    [Theory]
+    [InlineData(false, false, false)] // first plan: nothing to replace
+    [InlineData(false, true, false)]
+    [InlineData(true, true, false)] // disclosed on Generate: the Apply tap is the acceptance
+    [InlineData(true, false, true)] // never disclosed: Apply still states the replacement first
+    public void ReplacementConfirmationIsOnlyAskedWhenTheConsequenceWasNotDisclosed(
+        bool replacesExistingPlan, bool disclosedUpFront, bool expected)
+    {
+        Assert.Equal(expected, WorkoutPlanningFlowRule.RequiresReplacementConfirmation(
+            replacesExistingPlan, disclosedUpFront));
     }
 
     [Theory]

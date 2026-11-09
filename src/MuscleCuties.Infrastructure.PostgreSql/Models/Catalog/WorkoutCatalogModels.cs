@@ -56,6 +56,8 @@ public sealed class WorkoutExerciseDefinition : ICatalogSeedRecord
     public byte SupineOrProne { get; set; }
     public byte ValsalvaDemand { get; set; }
     public int? SubstituteGroupId { get; set; }
+    /// <summary>Planning-catalog identity: the <c>ENGINE_&lt;n&gt;</c> source exercise this definition mirrors.</summary>
+    public int? SourceExerciseId { get; set; }
     public string? TrainingCatalogVersionV020 { get; set; }
     public string? SupportedExperiencesV020Json { get; set; }
     public string? DemandTagsV020Json { get; set; }

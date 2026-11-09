@@ -22,6 +22,11 @@ internal static class PostgresCanonicalOccurrenceAdjustment
             cancellationToken).ConfigureAwait(false);
         if (state is null || state.TimeZoneId != zone.Id || previousPlanId is null) return;
         var dates = days.Where(d => d.Date.HasValue).ToDictionary(d => d.Id, d => d.Date!.Value);
+        var planIds = days.Select(day => day.WorkoutPlanId).Distinct().ToArray();
+        if (planIds.Length != 1) return;
+        var planId = planIds[0];
+        // A retried materialization of the same plan must not reduce the same prescription twice.
+        if (state.DeloadAppliedPlanId == planId) return;
         // An unknown effort target cannot be silently replaced with an invented one.
         if (exercises.Any(e => !dates.ContainsKey(e.WorkoutDayId) || e.TargetRepetitionsInReserve is null ||
             e.TargetRepetitionsInReserve < 0 || e.Sets <= 0)) return;
@@ -48,14 +53,16 @@ internal static class PostgresCanonicalOccurrenceAdjustment
             state.DeloadStartDate = start;
             state.DeloadEndExclusive = end;
         }
-        foreach (var exercise in exercises.Where(e => CanonicalOccurrenceAdjustmentRule.IsInDeloadWindow(
-            dates[e.WorkoutDayId], start, end)))
+        var adjustedExercises = exercises.Where(e => CanonicalOccurrenceAdjustmentRule.IsInDeloadWindow(
+            dates[e.WorkoutDayId], start, end)).ToArray();
+        foreach (var exercise in adjustedExercises)
         {
             var adjusted = CanonicalOccurrenceAdjustmentRule.Deload(exercise.Sets, exercise.TargetRepetitionsInReserve!.Value);
             exercise.Sets = adjusted.Sets;
             exercise.TargetRepetitionsInReserve = adjusted.TargetRir;
             exercise.OptionalSets = Math.Min(exercise.OptionalSets, exercise.Sets - 1);
         }
+        if (adjustedExercises.Length > 0) state.DeloadAppliedPlanId = planId;
         var strengthDates = exercises.Select(exercise => dates[exercise.WorkoutDayId]).ToHashSet();
         days.RemoveAll(day => day.Date is { } date && day.ActivityTypeId is { } activity &&
             CanonicalOccurrenceAdjustmentRule.RemoveOptionalHardCompanion(day.IsOptional,

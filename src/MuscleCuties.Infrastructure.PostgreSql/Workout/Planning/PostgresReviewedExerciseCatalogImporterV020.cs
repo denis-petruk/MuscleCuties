@@ -35,6 +35,23 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
     private const string ExpectedCatalogSnapshot = "REPO-SEED-SNAPSHOT-2026-10-23";
 
 
+    /// <summary>
+    /// Writes the embedded, reviewed catalog snapshot to a temporary file so the seed path can apply
+    /// the same review the tests use instead of leaving the v020 review columns empty.
+    /// </summary>
+    public static async Task<string> WriteEmbeddedReviewToTempAsync(CancellationToken cancellationToken = default)
+    {
+        const string resourceName =
+            "MuscleCuties.Infrastructure.PostgreSql.Workout.Planning.ReviewData.ReviewedExerciseCatalogV020.json";
+        using var stream = typeof(PostgresReviewedExerciseCatalogImporterV020).Assembly
+            .GetManifestResourceStream(resourceName)
+            ?? throw new InvalidOperationException("The reviewed exercise catalog snapshot is not embedded.");
+        var path = Path.Combine(Path.GetTempPath(), $"mc-reviewed-catalog-{Guid.NewGuid():N}.json");
+        await using var file = File.Create(path);
+        await stream.CopyToAsync(file, cancellationToken).ConfigureAwait(false);
+        return path;
+    }
+
     public async Task<ReviewedCatalogImportDryRunV020> DryRunAsync(string manifestPath,
         CancellationToken cancellationToken = default)
     {
@@ -68,6 +85,9 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
             {
                 var record = bySeedCode[entry.GetProperty("seedCode").GetString()!];
                 record.TrainingCatalogVersionV020 = result.CatalogSnapshot;
+                // The swap translates a day exercise's ENGINE_<planningId> code into this table's id
+                // space, so the review's source identity is persisted alongside the reviewed fields.
+                record.SourceExerciseId = entry.GetProperty("sourceExerciseId").GetInt32();
                 record.SupportedExperiencesV020Json = entry.GetProperty("supportedExperiences").GetRawText();
                 record.DemandTagsV020Json = entry.GetProperty("demandTags").GetRawText();
                 record.DemandTagsReviewedV020 = true;

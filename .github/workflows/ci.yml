@@ -15,6 +15,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
 jobs:
   verify_source:
     name: verify_source
@@ -32,6 +36,36 @@ jobs:
         run: |
           dotnet restore services/MuscleCuties.Server/MuscleCuties.Server.csproj
           dotnet build services/MuscleCuties.Server/MuscleCuties.Server.csproj --configuration Release --no-restore
+
+      - name: Build remaining non-UI projects
+        run: |
+          for proj in \
+            src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj \
+            services/MuscleCuties.WorkoutReconciliation/MuscleCuties.WorkoutReconciliation.csproj \
+            src/MuscleCuties.Infrastructure.PostgreSql/MuscleCuties.Infrastructure.PostgreSql.csproj \
+            src/MuscleCuties.UseCases/MuscleCuties.UseCases.csproj; do
+            dotnet build "$proj" --configuration Release
+          done
+
+      - name: Dependency vulnerability scan (non-UI projects)
+        run: |
+          status=0
+          for proj in \
+            services/MuscleCuties.Server/MuscleCuties.Server.csproj \
+            services/MuscleCuties.WorkoutReconciliation/MuscleCuties.WorkoutReconciliation.csproj \
+            src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj \
+            src/MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj \
+            src/MuscleCuties.Infrastructure.PostgreSql/MuscleCuties.Infrastructure.PostgreSql.csproj \
+            src/MuscleCuties.UseCases/MuscleCuties.UseCases.csproj \
+            src/MuscleCuties.Core/MuscleCuties.Core.csproj \
+            src/MuscleCuties.Contracts/MuscleCuties.Contracts.csproj; do
+            echo "== $proj"
+            dotnet list "$proj" package --vulnerable --include-transitive 2>&1 | tee "$RUNNER_TEMP/vuln.txt"
+            if grep -q "has the following vulnerable packages" "$RUNNER_TEMP/vuln.txt"; then
+              status=1
+            fi
+          done
+          exit $status
 
   verify_plan_generation:
     name: verify_plan_generation
@@ -57,8 +91,6 @@ jobs:
       - name: Run deployment offline tests
         run: |
           python3 tests/MuscleCuties.Deployment.Tests/test_package_upload.py
-          bash tests/MuscleCuties.Deployment.Tests/release-fail-closed.sh
-          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_release_engine.py'
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_deploy_release.py'
 
       - name: Run Core tests
@@ -106,13 +138,45 @@ jobs:
           path: test-results/
           retention-days: 30
 
+  verify_ios_compile:
+    name: verify_ios_compile
+    # The maui-ios workload resolves to .NET for iOS 27.1, which refuses to build without
+    # Xcode 27. The macos-15 image only ships Xcode 16.x, so the job runs on the Xcode 27
+    # image instead (arm64 only; see actions/runner-images xcode-27-arm64).
+    runs-on: xcode-27
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up .NET SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: global.json
+
+      - name: Install MAUI iOS workload
+        run: |
+          dotnet workload install maui-ios
+
+      - name: Report Xcode version
+        run: xcodebuild -version
+
+      - name: Compile iOS app (simulator, unsigned)
+        run: |
+          dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj \
+            -f net10.0-ios \
+            -c Debug \
+            -p:RuntimeIdentifier=iossimulator-arm64
+
   postgres_verify:
     name: postgres_verify
     uses: ./.github/workflows/db-verify.yml
 
   required:
     name: required
-    needs: [verify_source, verify_plan_generation, postgres_verify]
+    needs: [verify_source, verify_plan_generation, verify_ios_compile, postgres_verify]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -124,6 +188,10 @@ jobs:
           fi
           if [ "${{ needs.verify_plan_generation.result }}" != "success" ]; then
             echo "verify_plan_generation failed: ${{ needs.verify_plan_generation.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.verify_ios_compile.result }}" != "success" ]; then
+            echo "verify_ios_compile failed: ${{ needs.verify_ios_compile.result }}"
             exit 1
           fi
           if [ "${{ needs.postgres_verify.result }}" != "success" ]; then

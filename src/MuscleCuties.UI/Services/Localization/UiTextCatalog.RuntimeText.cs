@@ -611,6 +611,11 @@ public static partial class UiTextCatalog
         ["Light"] = "Скудные",
         ["Light bleeding"] = "Скудные выделения",
         ["Listen to your natural rhythms and align training and nutrition accordingly."] = "Прислушивайтесь к своим естественным ритмам и согласуйте тренировки и питание соответственно.",
+        ["A full day away from training."] = "Полный день без тренировок.",
+        ["Scheduled for today"] = "Запланировано на сегодня",
+        ["Nutrition focus"] = "Питание",
+        ["Balanced nutrition guidance."] = "Сбалансированные рекомендации по питанию.",
+        // Plans materialized before this change can still carry the old title.
         ["Living happy life"] = "Живи счастливой жизнью",
         ["Load"] = "Загрузить",
         ["Loading application"] = "Загрузка приложения",

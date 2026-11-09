@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Dashboard;
@@ -20,19 +21,21 @@ public partial class DailyCheckInViewModel : ObservableObject
     [ObservableProperty] private double? _bodyWeight;
     [ObservableProperty] private int? _energyLevel;
     [ObservableProperty] private string _errorMessage = string.Empty;
-    [ObservableProperty] private bool _hasBloating;
+    [ObservableProperty] private bool? _hasBloating;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isCompleted;
-    [ObservableProperty] private int _painLevel;
+    [ObservableProperty] private int? _painLevel;
     [ObservableProperty] private int? _planningSleepQuality;
-    [ObservableProperty] private int? _planningSoreness = MinimumPlanningScaleValue;
+    [ObservableProperty] private int? _planningSoreness;
     [ObservableProperty] private double _planningSorenessSlider = MinimumPlanningScaleValue;
     [ObservableProperty] private int? _planningStress;
     [ObservableProperty] private string _readinessScoreText = string.Empty;
     [ObservableProperty] private string _readinessTierText = string.Empty;
     [ObservableProperty] private string _sessionSummaryText = string.Empty;
 
-    [ObservableProperty] private double _sleepHours = 7.0;
+    // The slider starts at its minimum and counts as an answer only once the person moves it.
+    [ObservableProperty] private double _sleepHours;
+    private bool _isSleepHoursAnswered;
 
     public DailyCheckInViewModel(
         IDailyCheckInUseCase checkIn,
@@ -43,11 +46,18 @@ public partial class DailyCheckInViewModel : ObservableObject
         _isReadinessScoreDisplayEnabled = checkIn.PresentationSettings.IsReadinessScoreDisplayEnabled;
         _invalidateDashboard = invalidateDashboard;
         _onCompletedAsync = onCompletedAsync;
-        SubmitCommand = new AsyncRelayCommand(SubmitAsync, () => !IsBusy && !IsCompleted);
+        SubmitCommand = new AsyncRelayCommand(SubmitAsync, () => !IsBusy && !IsCompleted && Answers.IsComplete);
         SkipCommand = new AsyncRelayCommand(SkipAsync);
     }
 
-    public string SleepDisplay => $"{SleepHours:F1}h";
+    public string SleepDisplay => _isSleepHoursAnswered ? $"{SleepHours:F1}h" : "—";
+
+    /// <summary>True once every required check-in question has an explicit answer.</summary>
+    public bool AreAllAnswersProvided => Answers.IsComplete;
+
+    private DailyCheckInAnswers Answers => new(
+        _isSleepHoursAnswered ? SleepHours : null, PlanningSleepQuality, EnergyLevel, PlanningSoreness,
+        PainLevel, HasBloating, BodyWeight);
     public string EnergyDisplay => EnergyLevel is { } value ? $"{value} / 5" : "— / 5";
     public string PlanningSleepDisplay => FormatPlanningRating(PlanningSleepQuality);
     public string PlanningSorenessDisplay => FormatPlanningRating(PlanningSoreness);
@@ -61,7 +71,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         1 => "Mild",
         2 => "Moderate",
         3 => "Severe",
-        _ => "None"
+        _ => "—"
     };
 
     public bool HasSessionSummary => !string.IsNullOrWhiteSpace(SessionSummaryText);
@@ -79,9 +89,9 @@ public partial class DailyCheckInViewModel : ObservableObject
             var readiness = status.TodayReadiness;
             EnergyLevel = readiness?.Energy;
             PlanningSleepQuality = readiness?.SleepQuality;
-            PlanningSoreness = readiness?.Soreness ?? MinimumPlanningScaleValue;
-            PlanningSorenessSlider = PlanningSoreness.Value;
-            PlanningStress = readiness?.Stress ?? readiness?.Energy;
+            PlanningSoreness = readiness?.Soreness;
+            // Display only what was stored; stress is never derived from energy here.
+            PlanningStress = readiness?.Stress;
             IsCompleted = readiness is { Status: "Available" };
             ReadinessScoreText = IsReadinessScoreDisplayEnabled && readiness is { Status: "Available", RawScore: { } }
                 ? readiness!.RawScore!.Value.ToString("0.##", CultureInfo.CurrentCulture)
@@ -104,15 +114,8 @@ public partial class DailyCheckInViewModel : ObservableObject
         if (IsBusy || IsCompleted)
             return;
 
-        PlanningStress = EnergyLevel;
-        PlanningSoreness ??= (int)Math.Round(
-            Math.Clamp(PlanningSorenessSlider, MinimumPlanningScaleValue, MaximumPlanningScaleValue),
-            MidpointRounding.AwayFromZero);
-
-        if (EnergyLevel is not (>= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue) ||
-            PlanningSleepQuality is not (>= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue) ||
-            PlanningSoreness is not (>= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue) ||
-            PlanningStress is not (>= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue))
+        var request = Answers.ToRequest(DateOnly.FromDateTime(DateTime.Today), TimeZoneInfo.Local.Id);
+        if (request is null)
         {
             ErrorMessage = "Dashboard_CheckIn_IncompleteAllFourRatings";
             return;
@@ -122,10 +125,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         ErrorMessage = string.Empty;
         try
         {
-            var result = await _checkIn.SubmitAsync(new SubmitDailyCheckInRequest(
-                DateOnly.FromDateTime(DateTime.Today), SleepHours, EnergyLevel.Value,
-                PainLevel, HasBloating, BodyWeight, PlanningSleepQuality, PlanningSoreness, PlanningStress,
-                TimeZoneInfo.Local.Id));
+            var result = await _checkIn.SubmitAsync(request);
             ReadinessScoreText = IsReadinessScoreDisplayEnabled && result.TodayReadiness?.RawScore is { } rawScore
                 ? rawScore.ToString("0.##", CultureInfo.CurrentCulture)
                 : string.Empty;
@@ -153,17 +153,23 @@ public partial class DailyCheckInViewModel : ObservableObject
 
     partial void OnSleepHoursChanged(double value)
     {
-        SleepHours = Math.Clamp(value, 0, 14);
+        SleepHours = Math.Clamp(value, DailyCheckInAnswers.MinimumSleepHours, DailyCheckInAnswers.MaximumSleepHours);
+        _isSleepHoursAnswered = true;
         OnPropertyChanged(nameof(SleepDisplay));
+        OnAnswerChanged();
     }
 
     partial void OnEnergyLevelChanged(int? value)
     {
-        PlanningStress = value;
         OnPropertyChanged(nameof(EnergyDisplay));
+        OnAnswerChanged();
     }
 
-    partial void OnPlanningSleepQualityChanged(int? value) => OnPropertyChanged(nameof(PlanningSleepDisplay));
+    partial void OnPlanningSleepQualityChanged(int? value)
+    {
+        OnPropertyChanged(nameof(PlanningSleepDisplay));
+        OnAnswerChanged();
+    }
 
     partial void OnPlanningSorenessChanged(int? value)
     {
@@ -174,6 +180,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(PlanningSorenessDisplay));
+        OnAnswerChanged();
     }
 
     partial void OnPlanningSorenessSliderChanged(double value)
@@ -190,10 +197,20 @@ public partial class DailyCheckInViewModel : ObservableObject
 
     partial void OnPlanningStressChanged(int? value) => OnPropertyChanged(nameof(PlanningStressDisplay));
 
-    partial void OnPainLevelChanged(int value)
+    partial void OnPainLevelChanged(int? value)
     {
-        PainLevel = Math.Clamp(value, 0, 3);
+        if (value is { } level)
+            PainLevel = Math.Clamp(level, DailyCheckInAnswers.MinimumPainLevel, DailyCheckInAnswers.MaximumPainLevel);
         OnPropertyChanged(nameof(PainDisplay));
+        OnAnswerChanged();
+    }
+
+    partial void OnHasBloatingChanged(bool? value) => OnAnswerChanged();
+
+    private void OnAnswerChanged()
+    {
+        OnPropertyChanged(nameof(AreAllAnswersProvided));
+        SubmitCommand?.NotifyCanExecuteChanged();
     }
 
     partial void OnSessionSummaryTextChanged(string value)

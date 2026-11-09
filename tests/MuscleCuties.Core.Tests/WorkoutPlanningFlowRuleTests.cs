@@ -64,13 +64,14 @@ public sealed class WorkoutPlanningFlowRuleTests
     }
 
     [Theory]
-    [InlineData(false, true, true, false, false, false, true)]
-    [InlineData(true, true, true, false, false, false, false)]
-    [InlineData(false, false, true, false, false, false, false)]
-    [InlineData(false, true, false, false, false, false, false)]
-    [InlineData(false, true, true, true, false, false, false)]
-    [InlineData(false, true, true, false, true, false, false)]
-    [InlineData(false, true, true, false, false, true, false)]
+    [InlineData(false, true, true, false, false, false, false, true)]
+    [InlineData(true, true, true, false, false, false, false, false)]
+    [InlineData(false, false, true, false, false, false, false, false)]
+    [InlineData(false, true, false, false, false, false, false, false)]
+    [InlineData(false, true, true, true, false, false, false, false)]
+    [InlineData(false, true, true, false, true, false, false, false)]
+    [InlineData(false, true, true, false, false, true, false, false)]
+    [InlineData(false, true, true, false, false, false, true, false)]
     public void FirstPlanAutoApplyRequiresCompleteFeasiblePersistedProposal(
         bool replacesExistingPlan,
         bool feasible,
@@ -78,6 +79,7 @@ public sealed class WorkoutPlanningFlowRuleTests
         bool missingRequiredAnswers,
         bool styleChoiceRequired,
         bool hasOmissions,
+        bool reducedVolume,
         bool expectedCanAutoApply)
     {
         var canAutoApply = WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
@@ -86,27 +88,32 @@ public sealed class WorkoutPlanningFlowRuleTests
             persisted,
             missingRequiredAnswers,
             styleChoiceRequired,
-            hasOmissions);
+            hasOmissions,
+            reducedVolume);
 
         Assert.Equal(expectedCanAutoApply, canAutoApply);
     }
 
     [Fact]
-    public void FirstPlanAutoApplyDoesNotRequireReducedVolumeAcknowledgment()
+    public void ReducedVolumeFirstPlanIsNotAutoAppliedAndApplyCarriesTheAcknowledgment()
     {
-        Assert.True(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
+        // G-02: a first plan that fits only with reduced volume waits for the user's Apply tap...
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
             replacesExistingPlan: false,
             feasible: true,
             persisted: true,
             missingRequiredAnswers: false,
             styleChoiceRequired: false,
-            hasOmissions: false));
+            hasOmissions: false,
+            reducedVolume: true));
 
+        // ...and that Apply is what supplies the reduced-volume acknowledgment.
         var acceptance = WorkoutPlanningFlowRule.AcceptanceAcknowledgments(
             replacesExistingPlan: false,
             reducedVolumeRequired: true);
 
         Assert.True(acceptance.ReducedVolumeAcknowledged);
+        Assert.False(acceptance.ReplacementConfirmed);
     }
 
     [Fact]

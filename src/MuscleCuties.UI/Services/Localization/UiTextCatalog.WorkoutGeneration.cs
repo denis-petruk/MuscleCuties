@@ -144,7 +144,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_ReplacementSummary"] = "Your current plan will be replaced with this schedule:";
         English["Workout_Generation_ReplacementCancel"] = "Cancel";
         English["Workout_Generation_ReplacesActivePlanNotice"] =
-            "Generating a new plan replaces your current active plan once the server confirms it.";
+            "Generating creates a preview. Your current plan stays active until you tap Apply plan.";
         English["Workout_Generation_KeepCurrentPlan"] = "Keep current plan";
         English["Workout_Generation_EditDetails"] = "Edit details";
         English["Workout_Generation_Loading"] = "Loading workout preferences";
@@ -302,6 +302,14 @@ public static partial class UiTextCatalog
         English["Workout_Generation_PromptNoPlanSubtitle"] = "Set up your workout preferences and generate your personalized strength training plan.";
         English["Workout_Generation_PromptGeneratePlanButton"] = "Generate plan";
         English["Workout_Generation_ReducedVolumeNotice"] = "Plan volume reduced for your schedule.";
+        English["Workout_Generation_ApplyReplacesActivePlan"] = "Apply plan replaces your current plan. Until then, your current plan stays active.";
+        English["Workout_Generation_ApplyUnavailableNoStrengthSessions"] = "This week has no strength sessions to apply. Use Edit details to change your activities or days.";
+        English["Workout_Generation_SessionWithheldOne"] = "One session was removed because no safe exercises remain for it.";
+        English["Workout_Generation_SessionWithheldManyFormat"] = "{0} sessions were removed because no safe exercises remain for them.";
+        English["Workout_Generation_StyleNeedsHistory"] = "Needs an established strength training history. Start with General strength instead.";
+        English["Workout_Generation_SwitchToGeneralStrength"] = "Switch to General strength";
+        English["Workout_Generation_SwitchStyleFailed"] = "Could not switch your strength style. Please try again.";
+        English["Workout_Generation_EquipmentBetaNotice"] = "Bodyweight-only plans aren't offered in the beta yet. Dumbbell-and-band plans don't include a vertical pull yet.";
     }
 }
 

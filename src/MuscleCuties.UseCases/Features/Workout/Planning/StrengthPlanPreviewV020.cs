@@ -111,6 +111,13 @@ public sealed record StrengthPlanPreviewSourceV020(
     /// <summary>Movement patterns blocked by recorded injury safety answers. Null means no
     /// answer-driven evidence, not that no injury exists.</summary>
     public IReadOnlySet<MovementPattern>? BlockedMovementPatterns { get; init; }
+
+    /// <summary>True when the saved equipment answer is missing or unreadable. <see cref="Equipment"/>
+    /// then holds a placeholder that planning never uses; a draft equipment level can supply it.</summary>
+    public bool EquipmentAnswerMissing { get; init; }
+
+    /// <summary>True when the saved goal answer is missing or unreadable; <see cref="Goal"/> is a placeholder.</summary>
+    public bool GoalAnswerMissing { get; init; }
 }
 
 public sealed record ReviewedTemplateFloorDto(string TemplateId, int MinimumWorkingSets, int MinimumExercises,

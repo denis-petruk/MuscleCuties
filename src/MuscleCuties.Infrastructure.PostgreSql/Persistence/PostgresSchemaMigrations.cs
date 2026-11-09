@@ -99,6 +99,12 @@ public static class PostgresSchemaMigrations
     public const string ObservedSetActualsResourceName =
         "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.005_observed_set_actuals.sql";
 
+    public const string ExerciseDefinitionSourceIdResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.006_exercise_definition_source_id.sql";
+
+    public const string DeloadOfferIdempotencyResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.007_deload_offer_idempotency.sql";
+
     public static readonly MigrationScriptDefinition BaselineScript =
         new(0, "000_model_baseline.sql", BaselineScriptResourceName);
 
@@ -108,7 +114,9 @@ public static class PostgresSchemaMigrations
         new(2, "002_schema_fingerprint.sql", SchemaFingerprintResourceName),
         new(3, "003_schedule_seam.sql", ScheduleSeamResourceName),
         new(4, "004_session_distance.sql", SessionDistanceResourceName),
-        new(5, "005_observed_set_actuals.sql", ObservedSetActualsResourceName)
+        new(5, "005_observed_set_actuals.sql", ObservedSetActualsResourceName),
+        new(6, "006_exercise_definition_source_id.sql", ExerciseDefinitionSourceIdResourceName),
+        new(7, "007_deload_offer_idempotency.sql", DeloadOfferIdempotencyResourceName)
     ];
 
     /// <summary>

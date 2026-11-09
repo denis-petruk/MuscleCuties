@@ -20,40 +20,39 @@ public static class ObservedSetProgressionHistoryBuilder
 
     /// <summary>
     /// Builds the two most recent qualifying weeks for one exercise. A session with any
-    /// missing RIR or no working sets is omitted rather than filled with aggregate values.
+    /// missing RIR or no working sets is omitted rather than filled with aggregate values, and it
+    /// does not displace older complete sessions: skipped or incomplete logs preserve prior valid
+    /// progress instead of counting as a result.
     /// </summary>
     public static IReadOnlyList<DoubleProgressionWeekPerformance> Build(IEnumerable<ObservedSetHistoryRow> rows)
     {
         ArgumentNullException.ThrowIfNull(rows);
 
-        var sessions = rows
+        var completeSessions = rows
             .GroupBy(row => row.SessionId)
             .Select(group => new
             {
-                SessionId = group.Key,
                 CompletedAt = group.Max(row => row.CompletedAt),
-                Sets = group.OrderBy(row => row.SetNumber).ToList()
+                WorkingSets = group
+                    .Where(set => !set.IsWarmup && set.RepsCompleted > 0)
+                    .OrderBy(set => set.SetNumber)
+                    .ToList()
             })
+            // Do not silently drop a set with a missing RIR: that would turn an incomplete
+            // week into a fabricated qualifying week.
+            .Where(session => session.WorkingSets.Count > 0 &&
+                              session.WorkingSets.All(set => set.RirActual.HasValue))
             .OrderByDescending(session => session.CompletedAt)
             .Take(RequiredConsecutiveWeeks)
             .OrderBy(session => session.CompletedAt)
             .ToList();
 
-        var weeks = new List<DoubleProgressionWeekPerformance>(sessions.Count);
-        foreach (var session in sessions)
+        var weeks = new List<DoubleProgressionWeekPerformance>(completeSessions.Count);
+        foreach (var session in completeSessions)
         {
-            var workingSets = session.Sets
-                .Where(set => !set.IsWarmup && set.RepsCompleted > 0)
-                .ToList();
-
-            // Do not silently drop a set with a missing RIR: that would turn an incomplete
-            // week into a fabricated qualifying week.
-            if (workingSets.Count == 0 || workingSets.Any(set => !set.RirActual.HasValue))
-                continue;
-
             weeks.Add(new DoubleProgressionWeekPerformance(
                 weeks.Count + 1,
-                workingSets.Select(set => new CompletedWorkingSet(
+                session.WorkingSets.Select(set => new CompletedWorkingSet(
                     set.RepsCompleted,
                     set.LoadKg,
                     set.RirActual!.Value,

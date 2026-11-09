@@ -105,7 +105,7 @@
                     </ScrollView>
                     <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}">
                         <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_StartButton}"
-                                Command="{Binding StartActivityCommand}" IsEnabled="{Binding CanStartActivity}" IsVisible="{Binding ShowStartButton}"
+                                AutomationId="WorkoutSessionStartButton" Command="{Binding StartActivityCommand}" IsEnabled="{Binding CanStartActivity}" IsVisible="{Binding ShowStartButton}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}" />
                         <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Workout_Session_AbandonActivity}"
                                 Command="{Binding AbandonPlannedSessionCommand}" IsVisible="{Binding CanAbandonPlannedSession}" />
@@ -199,7 +199,7 @@
                     <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}"
                                          Padding="{StaticResource UiInsets0_16_0_8}">
                         <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_FinishTimedActivity}"
-                                Command="{Binding FinishTimedActivityCommand}"
+                                AutomationId="WorkoutSessionFinishTimedButton" Command="{Binding FinishTimedActivityCommand}"
                                 IsEnabled="{Binding CanInteract}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_FinishTimedActivityAccessibility}" />
                         <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Workout_Session_PauseButton}"
@@ -393,7 +393,7 @@
                                         </BindableLayout.ItemTemplate>
                                     </VerticalStackLayout>
                                     <Button Text="{loc:LocalizedText Workout_Session_AddSet}"
-                                            Command="{Binding AddSetCommand}"
+                                            AutomationId="WorkoutSessionAddSetButton" Command="{Binding AddSetCommand}"
                                             Style="{StaticResource ButtonSecondary}"
                                             HorizontalOptions="Start" />
                                 </VerticalStackLayout>
@@ -625,7 +625,7 @@
                                 Command="{Binding SkipExerciseCommand}" Style="{StaticResource ButtonSecondary}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SkipExerciseAccessibility}" />
                         <Button Style="{StaticResource ButtonPrimary}" Grid.Row="1" Grid.ColumnSpan="3" Text="{loc:LocalizedText Workout_Session_NextExerciseButton}"
-                                Command="{Binding NextExerciseCommand}"
+                                AutomationId="WorkoutSessionNextExerciseButton" Command="{Binding NextExerciseCommand}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SaveAndNextAccessibility}" />
                     </Grid>
                 </Grid>
@@ -731,10 +731,10 @@
                         </VerticalStackLayout>
                     </ScrollView>
                     <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
-                        <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_ContinueButton}" Command="{Binding FinishActivityCommand}"
+                        <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Workout_Session_ContinueButton}" AutomationId="WorkoutSessionFinishButton" Command="{Binding FinishActivityCommand}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_ReturnToActivitiesAccessibility}" />
                         <Button Grid.Row="1" Text="{loc:LocalizedText Workout_Session_FinishSessionButton}"
-                                Command="{Binding CompleteSessionCommand}" Style="{StaticResource ButtonSecondary}"
+                                AutomationId="WorkoutSessionCompleteButton" Command="{Binding CompleteSessionCommand}" Style="{StaticResource ButtonSecondary}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_EndSessionAccessibility}" />
                     </Grid>
                 </Grid>

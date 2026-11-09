@@ -108,4 +108,78 @@ public sealed class CanonicalOccurrenceAdjustmentPersistenceTests
         Assert.Equal(OriginalOptionalSets, unchanged.OptionalSets);
         await transaction.RollbackAsync();
     }
+
+    // S-07: a retried materialization of the same plan must not reduce the same dose twice.
+    [Fact]
+    public async Task ReapplyingTheDeloadToTheSamePlanKeepsTheAdjustedDose()
+    {
+        var connection = Environment.GetEnvironmentVariable(ConnectionVariable);
+        Assert.False(string.IsNullOrWhiteSpace(connection));
+        var parsed = new NpgsqlConnectionStringBuilder(connection);
+        Assert.Equal(DisposableHost, parsed.Host);
+        Assert.StartsWith(DisposableDatabasePrefix, parsed.Database, StringComparison.Ordinal);
+        await using var database = new PostgresDbContext(new DbContextOptionsBuilder<PostgresDbContext>()
+            .UseNpgsql(connection).Options);
+        await using var transaction = await database.Database.BeginTransactionAsync();
+        var userId = Guid.NewGuid();
+        await SyntheticTenantSession.SetAsync(database, userId);
+        var now = DateTime.UtcNow;
+        var previousPlanId = Guid.NewGuid();
+        var planId = Guid.NewGuid();
+        var dayId = Guid.NewGuid();
+        var endExclusive = DeloadStart.AddDays(CanonicalOccurrenceAdjustmentRule.DeloadDurationDays);
+        database.Users.Add(new UserRecord
+        {
+            Id = userId, Email = $"deload-retry-{userId:N}@example.invalid",
+            Username = $"deload_{userId.ToString("N")[..SyntheticUsernameIdentifierLength]}",
+            CredentialType = SyntheticCredentialType, PasswordHash = SyntheticPasswordHash,
+            CreatedAt = now, UpdatedAt = now
+        });
+        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+        {
+            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id,
+            DeloadEvidenceThroughExclusive = DeloadStart,
+            DeloadStartDate = DeloadStart, DeloadEndExclusive = endExclusive
+        });
+        database.WorkoutPlans.AddRange(
+            new WorkoutPlanRecord { Id = previousPlanId, UserId = userId, Name = SyntheticPlanName,
+                IsActive = false, CyclePhaseTarget = SyntheticCyclePhase, CreatedAt = now },
+            new WorkoutPlanRecord { Id = planId, UserId = userId, Name = SyntheticPlanName,
+                IsActive = true, CyclePhaseTarget = SyntheticCyclePhase, CreatedAt = now });
+        await database.SaveChangesAsync();
+        var exerciseId = await database.WorkoutExerciseDefinitions.AsNoTracking()
+            .Select(exercise => exercise.Id).FirstAsync();
+
+        var day = new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
+            Date = DeloadStart, DayOfWeek = (int)DeloadStart.DayOfWeek,
+            WorkoutType = StrengthWorkoutType, Name = SyntheticDayName };
+        var dose = new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
+            WorkoutDayId = dayId, ExerciseId = exerciseId, Sets = OriginalSets, Reps = OriginalReps,
+            OptionalSets = OriginalOptionalSets, TargetRepetitionsInReserve = OriginalTargetRir };
+
+        await PostgresCanonicalOccurrenceAdjustment.ApplyAsync(database, userId, previousPlanId,
+            DeloadStart, DeloadStart, TimeZoneInfo.Utc, [], [day], [dose], CancellationToken.None);
+        database.WorkoutDays.Add(day);
+        database.WorkoutDayExercises.Add(dose);
+        await database.SaveChangesAsync();
+        Assert.Equal(ExpectedDeloadSets, dose.Sets);
+        Assert.Equal(ExpectedDeloadRir, dose.TargetRepetitionsInReserve);
+        database.ChangeTracker.Clear();
+
+        // A fresh retry reads the plan's rows back and applies the same adjustment again.
+        var retriedDay = await database.WorkoutDays.SingleAsync(row => row.Id == dayId);
+        var retriedDose = await database.WorkoutDayExercises.SingleAsync(row => row.Id == dose.Id);
+        await PostgresCanonicalOccurrenceAdjustment.ApplyAsync(database, userId, previousPlanId,
+            DeloadStart, DeloadStart, TimeZoneInfo.Utc, [], [retriedDay], [retriedDose], CancellationToken.None);
+        await database.SaveChangesAsync();
+        database.ChangeTracker.Clear();
+
+        var persisted = await database.WorkoutDayExercises.AsNoTracking().SingleAsync(row => row.Id == dose.Id);
+        Assert.Equal(ExpectedDeloadSets, persisted.Sets);
+        Assert.Equal(ExpectedDeloadRir, persisted.TargetRepetitionsInReserve);
+        Assert.Equal(ExpectedDeloadOptionalSets, persisted.OptionalSets);
+        var state = await database.WorkoutAccountPlanningStates.AsNoTracking().SingleAsync(row => row.UserId == userId);
+        Assert.Equal(planId, state.DeloadAppliedPlanId);
+        await transaction.RollbackAsync();
+    }
 }

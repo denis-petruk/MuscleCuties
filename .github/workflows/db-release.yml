@@ -12,7 +12,6 @@ on:
           - beta
 
 permissions:
-  id-token: write
   contents: read
 
 concurrency:
@@ -22,6 +21,7 @@ concurrency:
 jobs:
   db_release:
     name: db_release_${{ inputs.target_environment }}
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     environment: ${{ inputs.target_environment }}
     steps:
