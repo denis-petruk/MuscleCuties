@@ -37,6 +37,8 @@ No crash occurred in any transition exercised (CR01 path: plan → session → b
 
 Branch `integration/beta-polish-20261109` (base `a99fd80c`) was **not** built or driven here: the workspace is Linux
 and has no Xcode/CoreSimulator. The E-04…E-07 fixes are code-only evidence until the owner builds the branch on a Mac.
+Stage 3 of `scripts/beta-release-wizard.sh` runs the build, walks E-04…E-07 and journeys 4 and 6–15, and writes the
+dated record this section should be replaced with.
 
 | ID | Change | Commit | Status |
 | --- | --- | --- | --- |

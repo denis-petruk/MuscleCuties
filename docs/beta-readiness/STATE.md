@@ -5,11 +5,14 @@
 - Branch `integration/beta-polish-20261109` from `origin/main` = `a99fd80c` (PR #46 merge), in
   `.agent-worktrees/beta-polish-20261109`. The parent checkout's uncommitted delta was not touched.
 - Commits: `ecf556a` E-04 footer validation; `17e5be0` session empty-state gate (E-07); `afb459a` intensity label +
-  Today phase copy localization (E-06, E-05 copy half); `4cc0ddb` alarm SNS subscription (A11 repo half); docs commit
-  follows this file.
+  Today phase copy localization (E-06, E-05 copy half); `4cc0ddb` alarm SNS subscription (A11 repo half); `4ad99a2`
+  audit/readiness refresh; `5a752d8` featured-card and count-tile localization (U-09/U-10) plus
+  `scripts/beta-release-wizard.sh`; docs update follows this file.
 - Verified in this environment: non-UI projects build with the MSBuild recipe; Core 1325/1325, Mobile Contracts
   183/183, Registration 54/54, Deployment policy tests 17/17 — all 0 failed, 0 skipped. `Core.Tests` still emits 4
-  xUnit analyzer warnings (T-21). Edited XAML parses as XML; `observability.yaml` parses with CloudFormation tags.
+  xUnit analyzer warnings (T-21). `LocalizationCatalogTests` 8/8 after the U-09/U-10 keys; a full EN/RU scan is
+  2036/2036 keys with 0 missing, 0 extra and 0 format-argument mismatches. Edited XAML parses as XML;
+  `observability.yaml` parses with CloudFormation tags; the wizard passes `bash -n`.
 - **BLOCKED here**: iOS build and simulator journeys (Linux, no Xcode); PostgreSQL integration suite (no PG16 and no
   root); `gh` (sandbox TLS); live AWS (not authorised). CI on this branch has not run yet.
 - Owner decisions requested in `docs/release-audit/2026-11-09/WORKOUT_POLICY_RESEARCH.md`: S-03 load step vs set-only,

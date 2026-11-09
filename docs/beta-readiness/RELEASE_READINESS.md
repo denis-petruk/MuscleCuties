@@ -20,6 +20,9 @@ re-checked on a simulator.
 | Build, non-UI | `DOTNET_CLI_USE_MSBUILD_SERVER=0 MSBUILDDISABLENODEREUSE=1 dotnet build <project> -m:1 -nodeReuse:false` | Core.Tests / Mobile.Contracts.Tests / Registration.Tests / Server.Tests / Deployment.Tests projects: success. Core.Tests reports 4 xUnit analyzer warnings (T-21) |
 | Unit suites | `dotnet test <project> --no-build` | Core 1325/1325; Mobile Contracts 183/183; Registration 54/54; all 0 failed, 0 skipped |
 | Deployment policy | `python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests` | 17/17 OK |
+| Localization | `dotnet test tests/MuscleCuties.Core.Tests --no-build --filter FullyQualifiedName~LocalizationCatalogTests` | 8/8 passed, 0 failed |
+| Catalog parity | Python scan of all EN/RU family partials at this head | 2036 EN / 2036 RU keys; 0 missing, 0 extra, 0 format-argument mismatches; every key referenced by the edited view models resolves |
+| Owner wizard | `bash -n scripts/beta-release-wizard.sh` | syntax OK; 5 stages, no secret entry |
 | Edited XAML | `python3 -c "xml.etree.ElementTree.parse(...)"` | `ProfileSetupPage.xaml` OK |
 | Changed template | PyYAML with CloudFormation tag constructors | `observability.yaml` parses; 8 resources, subscription present |
 
@@ -68,6 +71,10 @@ re-checked on a simulator.
    feedback email.
 
 ### This branch, `integration/beta-polish-20261109`
+
+Run `bash scripts/beta-release-wizard.sh` on the Mac checkout first: it opens the PR, watches this branch's CI,
+records the simulator checks in `docs/release-audit/2026-11-09/OWNER_SIMULATOR_QA_<date>.md`, walks the live alarm
+subscription, and captures the four policy answers. It writes nothing until you confirm each stage.
 
 1. Build the branch on a Mac and run the simulator build (`net10.0-ios`, `iossimulator-arm64`); the cloud workspace cannot.
 2. Re-check E-04 (validation visible under Continue), E-05 (Today shows the quiz phase), E-06 (no "Heavy" on a beginner
