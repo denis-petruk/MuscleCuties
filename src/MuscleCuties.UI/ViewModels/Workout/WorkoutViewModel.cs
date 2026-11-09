@@ -650,7 +650,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             FeaturedWorkoutIsRestDay = true;
             FeaturedWorkoutHasAction = false;
             FeaturedWorkoutIsEditAction = false;
-            FeaturedWorkoutBadgeText = $"{selectedDay.DayLabel} rest";
+            FeaturedWorkoutBadgeText = UiTextCatalog.Format(
+                "Workout_Featured_RestBadgeFormat",
+                UiTextCatalog.TranslateRuntimeText(selectedDay.DayLabel));
             FeaturedWorkoutTitle = selectedDay.WorkoutTitle;
             FeaturedWorkoutSubtitle = UiTextCatalog.Get("Dashboard_Workout_RecoverySubtitle");
             FeaturedWorkoutDurationText = UiTextCatalog.Get("Dashboard_Workout_RestDay");
@@ -699,21 +701,24 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         FeaturedWorkoutActivityBackground = featuredWorkout.ActivityBackground;
         FeaturedWorkoutActivityTextColor = featuredWorkout.ActivityTextColor;
         var featuredDayLabel = selectedDay is { IsToday: false }
-            ? selectedDay.DayLabel
-            : "Today";
+            ? UiTextCatalog.TranslateRuntimeText(selectedDay.DayLabel)
+            : UiTextCatalog.Get("Common_Today");
         FeaturedWorkoutBadgeText = featuredWorkout.IsCompleted
-            ? "Workout completed"
-            : $"{featuredDayLabel} {FormatActivityTag(featuredWorkout.Tag)}";
+            ? UiTextCatalog.Get("Workout_Featured_CompletedBadge")
+            : UiTextCatalog.Format(
+                "Workout_Featured_DayActivityFormat",
+                featuredDayLabel,
+                LocalizedActivityTag(featuredWorkout.Tag));
         FeaturedWorkoutTitle = featuredWorkout.Title;
         FeaturedWorkoutSubtitle = featuredWorkout.DetailsText;
         FeaturedWorkoutDurationText = featuredWorkout.Duration;
         FeaturedWorkoutExercisesCount = featuredWorkout.ExerciseCount.ToString(CultureInfo.InvariantCulture);
         FeaturedWorkoutIntensity = BuildFeaturedIntensity(featuredWorkout.Tag);
         FeaturedWorkoutActionText = featuredWorkout.IsCompleted
-            ? "Edit workout"
+            ? UiTextCatalog.Get("Workout_Featured_EditWorkout")
             : featuredWorkout.IsRestDay
-                ? "Log rest day"
-                : "Start workout";
+                ? UiTextCatalog.Get("Workout_Featured_LogRestDay")
+                : UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
 
         var sections = BuildFeaturedActivitySections(featuredWorkout);
         FeaturedWorkoutActivitySections = new ObservableCollection<WorkoutActivitySection>(sections);
@@ -812,14 +817,14 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             WorkoutPresentationPalette.Text(activity.Tag))).ToArray();
     }
 
-    private static string FormatActivityTag(string tag)
+    private static string LocalizedActivityTag(string tag)
     {
         return tag switch
         {
-            "CARDIO" => "cardio",
-            "RECOVERY" => "recovery",
-            "REST" => "rest",
-            "STRENGTH" => "strength",
+            "CARDIO" => UiTextCatalog.Get("Workout_Featured_TagCardio"),
+            "RECOVERY" => UiTextCatalog.Get("Workout_Featured_TagRecovery"),
+            "REST" => UiTextCatalog.Get("Workout_Featured_TagRest"),
+            "STRENGTH" => UiTextCatalog.Get("Workout_Featured_TagStrength"),
             _ => tag.ToLowerInvariant()
         };
     }

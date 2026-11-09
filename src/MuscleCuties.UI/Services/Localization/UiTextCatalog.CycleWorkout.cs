@@ -474,6 +474,15 @@ public static partial class UiTextCatalog
         English["Workout_Featured_Duration"] = "Duration";
         English["Workout_Featured_Exercises"] = "Exercises";
         English["Workout_Featured_Intensity"] = "Intensity";
+        English["Workout_Featured_RestBadgeFormat"] = "{0} · rest day";
+        English["Workout_Featured_DayActivityFormat"] = "{0} · {1}";
+        English["Workout_Featured_CompletedBadge"] = "Workout completed";
+        English["Workout_Featured_EditWorkout"] = "Edit workout";
+        English["Workout_Featured_LogRestDay"] = "Log rest day";
+        English["Workout_Featured_TagCardio"] = "cardio";
+        English["Workout_Featured_TagRecovery"] = "recovery";
+        English["Workout_Featured_TagRest"] = "rest";
+        English["Workout_Featured_TagStrength"] = "strength";
         English["Workout_Overview_RescheduleButton"] = "Reschedule";
         English["Workout_Reschedule_ButtonHint"] = "Move this planned session to another available date";
         English["Workout_Reschedule_Title"] = "Reschedule Workout";

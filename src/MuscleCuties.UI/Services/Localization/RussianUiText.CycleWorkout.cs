@@ -474,6 +474,15 @@ internal static partial class RussianUiText
         Values["Workout_Featured_Duration"] = "Длительность";
         Values["Workout_Featured_Exercises"] = "Упражнения";
         Values["Workout_Featured_Intensity"] = "Интенсивность";
+        Values["Workout_Featured_RestBadgeFormat"] = "{0} · день отдыха";
+        Values["Workout_Featured_DayActivityFormat"] = "{0} · {1}";
+        Values["Workout_Featured_CompletedBadge"] = "Тренировка завершена";
+        Values["Workout_Featured_EditWorkout"] = "Редактировать тренировку";
+        Values["Workout_Featured_LogRestDay"] = "Записать день отдыха";
+        Values["Workout_Featured_TagCardio"] = "кардио";
+        Values["Workout_Featured_TagRecovery"] = "восстановление";
+        Values["Workout_Featured_TagRest"] = "отдых";
+        Values["Workout_Featured_TagStrength"] = "силовая";
         Values["Workout_Overview_RescheduleButton"] = "Перенести";
         Values["Workout_Reschedule_ButtonHint"] = "Перенести эту запланированную тренировку на другую доступную дату";
         Values["Workout_Reschedule_Title"] = "Перенос тренировки";

@@ -227,13 +227,13 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
                 "Dashboard_Phase_StatusSelectedFormat", LocalizedCurrentPhaseName);
 
     public string WorkoutCountLabel => IsRestDay
-        ? "Activity"
+        ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_CountActivity")
         : WorkoutExercisesCount.Contains("sets", StringComparison.OrdinalIgnoreCase)
-            ? "Sets"
-            : "Exercises";
+            ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_CountSets")
+            : MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_CountExercises");
 
     public string WorkoutCountValue => IsRestDay
-        ? "Recovery"
+        ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_CountRecovery")
         : int.TryParse(WorkoutExercisesCount.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(),
             out var count)
             ? count.ToString(CultureInfo.CurrentCulture)
