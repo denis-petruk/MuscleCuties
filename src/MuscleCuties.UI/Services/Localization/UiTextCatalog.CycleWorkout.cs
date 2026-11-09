@@ -491,5 +491,11 @@ public static partial class UiTextCatalog
         English["Workout_Session_ClearNoteButton"] = "Clear Note";
         English["Workout_Session_NoteSaved"] = "Note saved.";
         English["Workout_Session_NoteSaveFailed"] = "Could not save movement note.";
+        English["Workout_Recommendation_StartingWeight"] = "Start light: pick a weight you can lift for every rep with 2–3 reps left in reserve.";
+        English["Workout_Recommendation_Endurance"] = "Keep a steady, comfortable pace you can sustain for the whole set.";
+        English["Workout_Recommendation_LogEachSet"] = "Log each set's weight, reps and reps in reserve so your next targets can adapt.";
+        English["Workout_Recommendation_EarnedFormat"] = "You earned a step up: try {0} kg today.";
+        English["Workout_Recommendation_MaintainFormat"] = "Stay at {0} kg today.";
+        English["Workout_Recommendation_ReduceFormat"] = "Ease back to {0} kg today.";
     }
 }

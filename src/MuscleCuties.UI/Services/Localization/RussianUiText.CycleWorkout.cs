@@ -491,5 +491,11 @@ internal static partial class RussianUiText
         Values["Workout_Session_ClearNoteButton"] = "Очистить заметку";
         Values["Workout_Session_NoteSaved"] = "Заметка сохранена.";
         Values["Workout_Session_NoteSaveFailed"] = "Не удалось сохранить заметку к упражнению.";
+        Values["Workout_Recommendation_StartingWeight"] = "Начните с лёгкого веса: каждое повторение с запасом 2–3 повторения.";
+        Values["Workout_Recommendation_Endurance"] = "Держите ровный, комфортный темп, который сможете сохранить весь подход.";
+        Values["Workout_Recommendation_LogEachSet"] = "Записывайте вес, повторения и запас повторений в каждом подходе, чтобы следующие цели подстраивались.";
+        Values["Workout_Recommendation_EarnedFormat"] = "Вы заработали шаг вперёд: сегодня попробуйте {0} кг.";
+        Values["Workout_Recommendation_MaintainFormat"] = "Сегодня оставайтесь на {0} кг.";
+        Values["Workout_Recommendation_ReduceFormat"] = "Сегодня снизьте вес до {0} кг.";
     }
 }
