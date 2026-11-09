@@ -35,4 +35,9 @@
 - 2026-11-09 `23bb4d92` removes the duplicate runtime localization key the C2/C3 copy change introduced (the
   "Recovery day" entry already existed), the only defect the re-run gates surfaced after `314f4be2`.
   `LocalizationCatalogTests` 8/8, `BetaPlanningCopyContractTests` 10/10; docs-only commits follow at this code head.
+- 2026-11-09 full integration suite at `a925e358` with all five CI fixture variables on PostgreSQL 16.15:
+  **105 passed, 0 failed, 0 skipped**. The former 102/3 result was fixture provisioning, not product code:
+  `mc_test_nutrition_ci`, `mc_retry_disposable` and `mc_pg09_disposable` (owner `mc_ci_migrator`, NOSUPERUSER
+  NOBYPASSRLS) plus `MC_SCHEMA_COMPATIBILITY_POSTGRES`, mirroring `.github/workflows/db-verify.yml`. Proofs re-ran
+  in the same session: S-07/G-10/G-11 integration classes 4/4, DOB 2/2, localization 8/8, copy contract 10/10.
 - Next action: owner review of PR #46 and the owner-only actions in RELEASE_READINESS.md.
