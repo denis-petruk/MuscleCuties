@@ -45,8 +45,8 @@ public sealed record TodaysWorkoutSummary(
 
     public static TodaysWorkoutSummary RestDay { get; } =
         new(
-            "Living happy life",
-            "Pure rest day",
+            string.Empty,
+            string.Empty,
             "Rest day",
             "0",
             "None",

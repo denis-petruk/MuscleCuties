@@ -61,13 +61,14 @@ public sealed class ModelSchemaContractTests
     public async Task MigrationChain_ContainsBaseSchemaFingerprintAndScheduleSeam()
     {
         var rehearsal = await PostgresSchemaMigrations.RehearseChainAsync();
-        Assert.Equal(6, rehearsal.Count);
+        Assert.Equal(7, rehearsal.Count);
         Assert.Equal("001_base_schema.sql", rehearsal[0].ScriptName);
         Assert.Equal("002_schema_fingerprint.sql", rehearsal[1].ScriptName);
         Assert.Equal("003_schedule_seam.sql", rehearsal[2].ScriptName);
         Assert.Equal("004_session_distance.sql", rehearsal[3].ScriptName);
         Assert.Equal("005_observed_set_actuals.sql", rehearsal[4].ScriptName);
         Assert.Equal("006_exercise_definition_source_id.sql", rehearsal[5].ScriptName);
+        Assert.Equal("007_deload_offer_idempotency.sql", rehearsal[6].ScriptName);
     }
 
     private static PostgresDbContext CreateContext()

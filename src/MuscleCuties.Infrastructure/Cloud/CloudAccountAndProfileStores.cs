@@ -874,7 +874,6 @@ public sealed class CloudProfileNutritionSettingsStore(
     private const string NutritionPreferencesRoute = "/api/v1/profile/nutrition-preferences";
     private const string NutritionTargetsRoute = "/api/v1/profile/nutrition-targets";
     private const string CycleOverviewRoute = "/api/v1/cycle/overview";
-    private const int DefaultAdultAgeYears = 25;
 
     public async Task<NutritionSettingsProfileDto?> LoadAsync(CancellationToken cancellationToken)
     {
@@ -897,7 +896,8 @@ public sealed class CloudProfileNutritionSettingsStore(
             ? parsedPhase
             : CyclePhase.Unknown;
 
-        var dob = snapshot.DateOfBirth?.ToDateTime(TimeOnly.MinValue) ?? DateTime.Today.AddYears(-DefaultAdultAgeYears);
+        // S-02: a missing date of birth stays missing, exactly as the personal-info store returns it.
+        var dob = snapshot.DateOfBirth?.ToDateTime(TimeOnly.MinValue) ?? default;
         var goal = Enum.TryParse<UserGoal>(snapshot.Goal, true, out var g) && Enum.IsDefined(g)
             ? g
             : UserGoal.MaintainHealth;

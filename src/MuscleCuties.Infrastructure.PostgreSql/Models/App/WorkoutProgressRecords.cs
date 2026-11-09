@@ -14,6 +14,8 @@ public sealed class WorkoutAccountPlanningStateRecord : ITenantRecord
     public DateOnly? DeloadEvidenceThroughExclusive { get; set; }
     public DateOnly? DeloadStartDate { get; set; }
     public DateOnly? DeloadEndExclusive { get; set; }
+    /// <summary>The plan whose prescriptions were already reduced for the active deload window.</summary>
+    public Guid? DeloadAppliedPlanId { get; set; }
     public bool PromotionPending { get; set; }
     public bool SafetyRegenerationPending { get; set; }
     public bool CycleReadinessPending { get; set; }

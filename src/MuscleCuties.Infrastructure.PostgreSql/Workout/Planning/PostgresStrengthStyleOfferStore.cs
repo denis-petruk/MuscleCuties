@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Npgsql;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
@@ -18,14 +19,27 @@ public sealed class PostgresStrengthStyleOfferStore(PostgresDbContext context) :
             StrengthStyleSelectionRule.IsStrengthStyle((WorkoutActivityType)id)).ToArray();
         var alternatives = styles.Where(id => id != currentStyleId).ToArray();
         if (alternatives.Length == 0) return;
-        if (await context.Set<StrengthStyleOfferRecord>().AnyAsync(row => row.UserId == userId && row.RevisionId == revisionId,
+        // One active offer per plan: another revision must not stack a second prompt, and a
+        // concurrent insert is absorbed by the partial unique index instead of failing the caller.
+        if (await context.Set<StrengthStyleOfferRecord>().AnyAsync(row => row.UserId == userId &&
+                ((row.PlanId == planId && row.DismissedAtUtc == null) || row.RevisionId == revisionId),
                 cancellationToken).ConfigureAwait(false)) return;
-        context.Set<StrengthStyleOfferRecord>().Add(new StrengthStyleOfferRecord
+        var offer = new StrengthStyleOfferRecord
         {
             Id = Guid.NewGuid(), UserId = userId, PlanId = planId, RevisionId = revisionId,
             CurrentStyleId = currentStyleId, AlternativeStyleIds = alternatives
-        });
-        await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        };
+        context.Set<StrengthStyleOfferRecord>().Add(offer);
+        try
+        {
+            await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (DbUpdateException exception) when (
+            exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation })
+        {
+            // Another writer created the equivalent offer first; the operation is still satisfied.
+            context.Entry(offer).State = EntityState.Detached;
+        }
     }
 
     public Task<StrengthStyleOfferDto?> GetCurrentAsync(Guid userId, CancellationToken cancellationToken) =>

@@ -25,7 +25,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
     [ObservableProperty] private string _statusMessage = string.Empty;
     private bool _hasStoredBirthDate;
     private bool _birthDateWasExplicitlyChanged;
-    [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-PersonalInfoConstraints.MinimumEligibleAgeYears);
+    [ObservableProperty] private DateTime _birthDate;
     [ObservableProperty] private string _cycleLength = string.Empty;
     [ObservableProperty] private string _email = string.Empty;
     [ObservableProperty] private UserGoal _goal;
@@ -120,7 +120,10 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
 
             Name = profile.Name;
             _hasStoredBirthDate = profile.DateOfBirth != default;
-            BirthDate = _hasStoredBirthDate ? profile.DateOfBirth : MaxBirthDate;
+            // Mirror the onboarding picker: an unset date stays unset instead of showing an
+            // invented adult date that the user never chose.
+            if (_hasStoredBirthDate)
+                BirthDate = profile.DateOfBirth;
             _birthDateWasExplicitlyChanged = false;
             HeightCm = FormatNumber((float)UnitsFormatter.ToDisplayHeight(profile.Height, _useMetricSystem));
             WeightKg = FormatNumber((float)UnitsFormatter.ToDisplayWeight(profile.Weight, _useMetricSystem));

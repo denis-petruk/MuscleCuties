@@ -79,7 +79,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         UiTextCatalog.Get("Dashboard_Workout_IntensityLight");
     [ObservableProperty] private string _featuredWorkoutSubtitle =
         UiTextCatalog.Get("Dashboard_Workout_RecoverySubtitle");
-    [ObservableProperty] private string _featuredWorkoutTitle = "Living happy life";
+    // C2: the rest-day copy is authored by the server; the client never substitutes its own.
+    [ObservableProperty] private string _featuredWorkoutTitle = string.Empty;
     [ObservableProperty] private ObservableCollection<FilterChipItem> _filters = new();
 
     // The week picker uses the same chip item and the same shared card selection state as the
