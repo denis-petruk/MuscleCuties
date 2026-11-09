@@ -32,4 +32,7 @@
   store-level promotion coverage), the two DOB paths and C2/C3 (server-owned rest copy, no client fallback, RU
   mappings). Integration 102 passed / 3 fixture guards / 0 skipped; registration 54/54; iOS simulator build exit 0;
   schema head 7 with fingerprint `25ff237d…8c982c4b`.
+- 2026-11-09 `23bb4d92` removes the duplicate runtime localization key the C2/C3 copy change introduced (the
+  "Recovery day" entry already existed), the only defect the re-run gates surfaced after `314f4be2`.
+  `LocalizationCatalogTests` 8/8, `BetaPlanningCopyContractTests` 10/10; docs-only commits follow at this code head.
 - Next action: owner review of PR #46 and the owner-only actions in RELEASE_READINESS.md.
