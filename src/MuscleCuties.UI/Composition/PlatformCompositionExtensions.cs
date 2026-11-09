@@ -100,7 +100,7 @@ public static class PlatformCompositionExtensions
         services.AddSingleton<IPlatformSignInService>(sp => sp.GetRequiredService<AppleSignInService>());
 #endif
 
-        // Health synchronization stays dormant until the owner authorizes its scope (CLAUDE.md,
+        // Health synchronization stays dormant until the owner authorizes its scope (AGENTS.md,
         // OD-4). The Beta binary carries no HealthKit entitlement or provider.
         services.AddSingleton<IHealthSyncService, DisabledHealthSyncService>();
         services.AddScoped<ICyclePhaseNotificationService>(sp =>

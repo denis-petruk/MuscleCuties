@@ -24,7 +24,7 @@
 
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">18.0</SupportedOSPlatformVersion>
         <EnableAppleSignInEntitlements>true</EnableAppleSignInEntitlements>
-        <!-- Health synchronization is dormant for Beta (CLAUDE.md; OD-4): no HealthKit
+        <!-- Health synchronization is dormant for Beta (AGENTS.md; OD-4): no HealthKit
              entitlement, no HealthKit provider compiled, DisabledHealthSyncService on iOS. -->
         <!-- SourceGen XAML inflation. Keep the Shell TabBar navigation check in the owner
              device pass. -->
