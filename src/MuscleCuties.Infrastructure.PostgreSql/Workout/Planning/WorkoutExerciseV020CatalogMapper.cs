@@ -59,7 +59,7 @@ public static class WorkoutExerciseV020CatalogMapper
             substituteIds,
             definition.Contraindications,
             conditions.Experience,
-            conditions.General,
+            null,
             conditions.Present,
             conditions.Substitutions,
             definition.UnilateralDoublesTime);

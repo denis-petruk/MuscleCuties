@@ -57,9 +57,8 @@ public static class WorkoutPlanningFlow
             missingRequiredAnswers, styleChoiceRequired, hasOmissions);
 
     public static PlanAcceptanceAcknowledgments AcceptanceAcknowledgments(bool replacesExistingPlan,
-        bool reducedVolumeRequired, IEnumerable<int> exerciseConditionIds) =>
-        WorkoutPlanningFlowRule.AcceptanceAcknowledgments(replacesExistingPlan, reducedVolumeRequired,
-            exerciseConditionIds);
+        bool reducedVolumeRequired) =>
+        WorkoutPlanningFlowRule.AcceptanceAcknowledgments(replacesExistingPlan, reducedVolumeRequired);
 
     public static WorkoutPlanningStateDto Transition(WorkoutPlanningStateDto current, WorkoutPlanningEventDto trigger) =>
         (WorkoutPlanningStateDto)WorkoutPlanningFlowRule.Transition(
@@ -74,19 +73,10 @@ public static class WorkoutPlanningFlow
 
     public static bool CanAutoActivateRequestedPlan(bool userRequested, bool replacementDisclosed,
         bool replacesExistingPlan, bool feasible, bool persisted, bool hasLease, bool missingRequiredAnswers,
-        bool styleChoiceRequired, bool acknowledgmentUnavailable) =>
+        bool styleChoiceRequired) =>
         WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(userRequested, replacementDisclosed,
             replacesExistingPlan, feasible, persisted, hasLease, missingRequiredAnswers,
-            styleChoiceRequired, acknowledgmentUnavailable);
-
-    public static bool RequiresInjuryAcknowledgment(int exerciseReviewConditionCount,
-        int acknowledgedConditionCount) =>
-        WorkoutPlanningFlowRule.RequiresInjuryAcknowledgment(exerciseReviewConditionCount,
-            acknowledgedConditionCount);
-
-    public static bool AdaptationChanged(IEnumerable<int> acknowledgedConditionIds,
-        IEnumerable<int> returnedConditionIds) =>
-        WorkoutPlanningFlowRule.AdaptationChanged(acknowledgedConditionIds, returnedConditionIds);
+            styleChoiceRequired);
 
     public static bool IsCurrentGeneration(bool appearanceIsCurrent, long requestVersion,
         long activeRequestVersion) =>

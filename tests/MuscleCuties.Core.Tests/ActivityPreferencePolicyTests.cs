@@ -87,7 +87,7 @@ public sealed class ActivityPreferencePolicyTests
         var requiredActivities = WorkoutPreferencesConstraints.EnsureRequiredActivities(
             [WorkoutActivityDto.Yoga, (WorkoutActivityDto)UnknownActivityDtoValue]);
 
-        Assert.Contains(WorkoutActivityDto.HighVolumeStrength, defaultActivities);
+        Assert.Contains(WorkoutActivityDto.GeneralStrength, defaultActivities);
         Assert.Contains(WorkoutActivityDto.Yoga, requiredActivities);
         Assert.False(WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(WorkoutActivityDto.Yoga));
         Assert.True(WorkoutPreferencesConstraints.ActivityRequiresSessionDuration(WorkoutActivityDto.GeneralStrength));

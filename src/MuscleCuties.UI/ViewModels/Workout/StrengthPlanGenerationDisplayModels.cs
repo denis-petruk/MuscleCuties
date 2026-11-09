@@ -51,7 +51,17 @@ public sealed record MixedActivityDecisionDisplay(string Activity, string Status
 
 public sealed record StrengthPlanSlotDisplay(string Name, string Details, bool IsRequired)
 {
-    /// <summary>Why this movement was selected for the slot, in the user's language.</summary>
-    public string Rationale { get; init; } = string.Empty;
-    public bool HasRationale => !string.IsNullOrWhiteSpace(Rationale);
+    private readonly string _rationale = string.Empty;
+
+    /// <summary>Why this movement was selected for the slot, in the user's language. A blank
+    /// source value (null, empty or whitespace-only) is normalized to an empty string, so the
+    /// rationale row can never render empty text and <see cref="HasRationale"/> can never be true
+    /// for a movement without genuine rationale content.</summary>
+    public string Rationale
+    {
+        get => _rationale;
+        init => _rationale = string.IsNullOrWhiteSpace(value) ? string.Empty : value;
+    }
+
+    public bool HasRationale => _rationale.Length > 0;
 }

@@ -145,16 +145,6 @@ public static partial class UiTextCatalog
         English["Workout_Generation_ReplacementCancel"] = "Cancel";
         English["Workout_Generation_ReplacesActivePlanNotice"] =
             "Generating a new plan replaces your current active plan once the server confirms it.";
-        English["Workout_Generation_InjuryTitle"] = "Adjustment for your injury";
-        English["Workout_Generation_InjuryContinue"] = "Continue";
-        English["Workout_Generation_InjurySummaryFormat"] =
-            "Because of your recorded injury, these exercises are excluded: {0}. The plan uses a safe alternative, and the excluded exercise stays blocked. Continue activates the adjusted plan; Cancel keeps your current plan.";
-        English["Workout_Generation_InjuryCancelled"] =
-            "Kept your current plan. The excluded exercise stays blocked.";
-        English["Workout_Generation_InjuryChanged"] =
-            "The injury adjustment changed while it was being confirmed. Review the plan details before continuing.";
-        English["Workout_Generation_InjuryUnavailable"] =
-            "This plan needs an injury adjustment that could not be confirmed. Review your details and generate again.";
         English["Workout_Generation_KeepCurrentPlan"] = "Keep current plan";
         English["Workout_Generation_EditDetails"] = "Edit details";
         English["Workout_Generation_Loading"] = "Loading workout preferences";

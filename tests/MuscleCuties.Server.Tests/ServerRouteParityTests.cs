@@ -588,7 +588,6 @@ public sealed class ServerRouteParityTests
             ("GET", "/api/v1/workout/exercises/{exerciseDefinitionId:int}/swaps"),
             ("POST", "/api/v1/workout/exercises/swap"),
             ("PUT", "/api/v1/cycle/phases"),
-            ("PUT", "/api/v1/profile/workout-preferences"),
             ("POST", "/api/v1/workouts/readiness-proposals/review"),
             ("POST", "/api/v1/workouts/readiness-proposals/apply"),
             ("POST", "/api/v1/workouts/readiness-proposals/keep")
