@@ -785,7 +785,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            var currentDef = allDefinitions.FirstOrDefault(d => d.Id == currentPlanningId.Value);
+            // The day exercise's catalog code carries the planning id; definition rows keep that
+            // identity in their own column because their ids are assigned by the database.
+            var currentDef = allDefinitions.FirstOrDefault(d => d.SourceExerciseId == currentPlanningId.Value);
             if (currentDef is null || currentDef.MuscleContributions.Count == 0)
             {
                 await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -800,7 +802,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             // Candidates come only from the reviewed directed substitutions of this exercise, filtered
             // by the planner's own eligibility context. Unknown equipment yields no candidates.
             var eligibility = await ExerciseSwapEligibilitySource.EvaluateAsync(dbContext, userId,
-                currentPlanningId.Value, allDefinitions,
+                currentDef.Id, allDefinitions,
                 await LoadWorkoutActivityTypeIdAsync(userId, dayExercise.WorkoutDayId, cancellationToken)
                     .ConfigureAwait(false),
                 cancellationToken).ConfigureAwait(false);
@@ -814,7 +816,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
             return allDefinitions
-                .Where(e => e.Id != currentPlanningId.Value && eligibleIds.Contains(e.Id))
+                .Where(e => e.Id != currentDef.Id && e.SourceExerciseId is not null && eligibleIds.Contains(e.Id))
                 .Select(e =>
                 {
                     var matchScore = ComputeMuscleMatchScore(
@@ -880,8 +882,10 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             var allDefinitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
+            var originalDef = allDefinitions.FirstOrDefault(d => d.SourceExerciseId == originalPlanningId.Value)
+                ?? throw new InvalidOperationException(ExerciseSwapEligibilityRule.OriginalExerciseNotReviewedCode);
             var eligibility = await ExerciseSwapEligibilitySource.EvaluateAsync(dbContext, userId,
-                originalPlanningId.Value, allDefinitions,
+                originalDef.Id, allDefinitions,
                 await LoadWorkoutActivityTypeIdAsync(userId, dayExercise.WorkoutDayId, cancellationToken)
                     .ConfigureAwait(false),
                 cancellationToken).ConfigureAwait(false);
@@ -889,26 +893,27 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 throw new InvalidOperationException(eligibility.ReasonCodes.FirstOrDefault() ??
                     ExerciseSwapEligibilityRule.SubstituteNotEligibleCode);
 
-            var targetCode = $"ENGINE_{request.NewExerciseId}";
-            // Prefer the row whose code names the validated planning exercise.
+            // The reviewed definition names the planning exercise it mirrors; resolve that code alone
+            // so an id collision can never bind a different catalog row.
+            var targetPlanningId = newExerciseDef.SourceExerciseId
+                ?? throw new InvalidOperationException(ExerciseSwapEligibilityRule.NoEligibleReviewedSubstituteCode);
+            var targetCode = $"ENGINE_{targetPlanningId}";
             var catalogExercise = await dbContext.Exercises.AsNoTracking()
-                .Where(e => e.Code == targetCode || e.Id == request.NewExerciseId)
-                .OrderByDescending(e => e.Code == targetCode)
-                .FirstOrDefaultAsync(cancellationToken)
+                .SingleOrDefaultAsync(e => e.Code == targetCode, cancellationToken)
                 .ConfigureAwait(false)
-                ?? throw new InvalidOperationException($"Catalog exercise for planning ID {request.NewExerciseId} was not found.");
+                ?? throw new InvalidOperationException($"Catalog exercise for planning ID {targetPlanningId} was not found.");
 
             dayExercise.ExerciseId = catalogExercise.Id;
 
-            if (request.SavePreference && originalPlanningId is not null)
+            if (request.SavePreference)
             {
                 var existingPref = await dbContext.UserExercisePreferences
-                    .FirstOrDefaultAsync(p => p.UserId == userId && p.OriginalExerciseId == originalPlanningId.Value, cancellationToken)
+                    .FirstOrDefaultAsync(p => p.UserId == userId && p.OriginalExerciseId == originalDef.Id, cancellationToken)
                     .ConfigureAwait(false);
 
                 if (existingPref is not null)
                 {
-                    existingPref.PreferredExerciseId = request.NewExerciseId;
+                    existingPref.PreferredExerciseId = newExerciseDef.Id;
                     existingPref.CreatedAt = DateTime.UtcNow;
                 }
                 else
@@ -917,8 +922,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     {
                         Id = Guid.CreateVersion7(),
                         UserId = userId,
-                        OriginalExerciseId = originalPlanningId.Value,
-                        PreferredExerciseId = request.NewExerciseId,
+                        OriginalExerciseId = originalDef.Id,
+                        PreferredExerciseId = newExerciseDef.Id,
                         CreatedAt = DateTime.UtcNow
                     });
                 }

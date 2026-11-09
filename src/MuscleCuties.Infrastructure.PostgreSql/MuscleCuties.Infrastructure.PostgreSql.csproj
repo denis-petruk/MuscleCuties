@@ -34,6 +34,7 @@
         <EmbeddedResource Include="Persistence/Schema/003_schedule_seam.sql"/>
         <EmbeddedResource Include="Persistence/Schema/004_session_distance.sql"/>
         <EmbeddedResource Include="Persistence/Schema/005_observed_set_actuals.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/006_exercise_definition_source_id.sql"/>
         <EmbeddedResource Include="Persistence/Schema/security.sql"/>
         <EmbeddedResource Include="Persistence/Schema/schema_supplement.sql"/>
         <EmbeddedResource Include="Persistence/Seed/CanonicalCatalogManifest.json"/>

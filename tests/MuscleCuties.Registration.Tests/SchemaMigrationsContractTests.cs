@@ -59,7 +59,7 @@ public sealed class SchemaMigrationsContractTests
     public void MigrationScripts_MatchesExpectedCleanMigrationChain()
     {
         var scripts = PostgresSchemaMigrations.Scripts;
-        Assert.Equal(5, scripts.Count);
+        Assert.Equal(6, scripts.Count);
 
         Assert.Equal(1, scripts[0].Version);
         Assert.Equal("001_base_schema.sql", scripts[0].ScriptName);
@@ -80,6 +80,10 @@ public sealed class SchemaMigrationsContractTests
         Assert.Equal(5, scripts[4].Version);
         Assert.Equal("005_observed_set_actuals.sql", scripts[4].ScriptName);
         Assert.Equal(PostgresSchemaMigrations.ObservedSetActualsResourceName, scripts[4].ResourceName);
+
+        Assert.Equal(6, scripts[5].Version);
+        Assert.Equal("006_exercise_definition_source_id.sql", scripts[5].ScriptName);
+        Assert.Equal(PostgresSchemaMigrations.ExerciseDefinitionSourceIdResourceName, scripts[5].ResourceName);
     }
 
     [Fact]
@@ -116,10 +120,10 @@ public sealed class SchemaMigrationsContractTests
     [Fact]
     public async Task RehearseChainAsync_ProducesVerifiedChecksumsAndMonotonicOrder()
     {
-        // QA00: Rehearse clean migration chain (001 -> 002 -> 003 -> 004 -> 005)
+        // QA00: Rehearse clean migration chain (001 -> 002 -> 003 -> 004 -> 005 -> 006)
         var rehearsal = await PostgresSchemaMigrations.RehearseChainAsync();
 
-        Assert.Equal(5, rehearsal.Count);
+        Assert.Equal(6, rehearsal.Count);
         for (var i = 0; i < rehearsal.Count; i++)
         {
             Assert.Equal(i + 1, rehearsal[i].Version);

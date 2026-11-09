@@ -85,6 +85,9 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
             {
                 var record = bySeedCode[entry.GetProperty("seedCode").GetString()!];
                 record.TrainingCatalogVersionV020 = result.CatalogSnapshot;
+                // The swap translates a day exercise's ENGINE_<planningId> code into this table's id
+                // space, so the review's source identity is persisted alongside the reviewed fields.
+                record.SourceExerciseId = entry.GetProperty("sourceExerciseId").GetInt32();
                 record.SupportedExperiencesV020Json = entry.GetProperty("supportedExperiences").GetRawText();
                 record.DemandTagsV020Json = entry.GetProperty("demandTags").GetRawText();
                 record.DemandTagsReviewedV020 = true;

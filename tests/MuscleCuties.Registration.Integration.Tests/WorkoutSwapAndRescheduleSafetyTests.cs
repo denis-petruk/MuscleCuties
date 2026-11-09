@@ -20,11 +20,9 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
     private const int LatPulldownId = 142;
     private const int PullUpId = 141;
 
-    // OPEN: PostgresWorkoutPlanAndSessionStore.SwapAsync resolves request.NewExerciseId against
-    // WorkoutExerciseDefinitions.Id (serial 1..59) but then builds ENGINE_<that id> for the catalog,
-    // while this scenario addresses exercises by planning id (ENGINE_141/142). The id space must be
-    // reconciled before this can assert swap safety; see docs/beta-readiness/AUDIT.md G-07.
-    [Xunit.Fact(Skip = "Swap request id space is unresolved: the store matches WorkoutExerciseDefinitions.Id but looks the exercise up as ENGINE_<id>, while planning ids are 141/142.")]
+    // The swap API speaks reviewed definition ids; the day exercise carries the planning id in its
+    // ENGINE_<id> catalog code and the store translates it through the persisted source id.
+    [Xunit.Fact]
     public async Task BodyweightProfileSwapNeverOffersOrAcceptsAPullUp()
     {
         await using var database = Open();
@@ -32,13 +30,14 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
         try
         {
             var dayExerciseId = await SeedStrengthDayAsync(database, userId, LatPulldownId);
+            var pullUpDefinitionId = await DefinitionIdAsync(database, PullUpId);
             var store = new PostgresWorkoutPlanAndSessionStore(database);
 
             var candidates = await store.GetSwapCandidatesAsync(userId, dayExerciseId, CancellationToken.None);
-            Xunit.Assert.DoesNotContain(candidates, candidate => candidate.ExerciseId == PullUpId);
+            Xunit.Assert.DoesNotContain(candidates, candidate => candidate.ExerciseId == pullUpDefinitionId);
 
             var failure = await Xunit.Assert.ThrowsAsync<InvalidOperationException>(() => store.SwapAsync(userId,
-                new SwapWorkoutExerciseRequest(dayExerciseId, PullUpId, true), CancellationToken.None));
+                new SwapWorkoutExerciseRequest(dayExerciseId, pullUpDefinitionId, true), CancellationToken.None));
             Xunit.Assert.Equal(ExerciseSwapEligibilityRule.NoEligibleReviewedSubstituteCode, failure.Message);
             Xunit.Assert.False(await database.UserExercisePreferences.AsNoTracking()
                 .AnyAsync(row => row.UserId == userId));
@@ -49,7 +48,7 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
         }
     }
 
-    [Xunit.Fact(Skip = "Swap request id space is unresolved: the store matches WorkoutExerciseDefinitions.Id but looks the exercise up as ENGINE_<id>, while planning ids are 141/142.")]
+    [Xunit.Fact]
     public async Task MissingEquipmentProfileYieldsNoSwapCandidates()
     {
         await using var database = Open();
@@ -57,11 +56,12 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
         try
         {
             var dayExerciseId = await SeedStrengthDayAsync(database, userId, LatPulldownId);
+            var pullUpDefinitionId = await DefinitionIdAsync(database, PullUpId);
             var store = new PostgresWorkoutPlanAndSessionStore(database);
 
             Xunit.Assert.Empty(await store.GetSwapCandidatesAsync(userId, dayExerciseId, CancellationToken.None));
             var failure = await Xunit.Assert.ThrowsAsync<InvalidOperationException>(() => store.SwapAsync(userId,
-                new SwapWorkoutExerciseRequest(dayExerciseId, PullUpId, false), CancellationToken.None));
+                new SwapWorkoutExerciseRequest(dayExerciseId, pullUpDefinitionId, false), CancellationToken.None));
             Xunit.Assert.Equal(ExerciseSwapEligibilityRule.EquipmentProfileMissingCode, failure.Message);
         }
         finally
@@ -135,6 +135,11 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
         Name = activity.ToString(), PlannedMainDurationMinutes = 30m,
         PlannedActivityPrescriptionJson = $"{{\"synthetic\":\"{activity}\"}}"
     };
+
+    private static async Task<int> DefinitionIdAsync(PostgresDbContext database, int planningId) =>
+        await database.WorkoutExerciseDefinitions.AsNoTracking()
+            .Where(definition => definition.SourceExerciseId == planningId)
+            .Select(definition => definition.Id).SingleAsync();
 
     private static async Task<int> SeedStrengthDayAsync(PostgresDbContext database, Guid userId, int planningId)
     {
