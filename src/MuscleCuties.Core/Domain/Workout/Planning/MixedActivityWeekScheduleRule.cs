@@ -58,7 +58,9 @@ public static class MixedActivityWeekScheduleRule
     public const int MaximumHardDaysPerWeek = 6;
     public const int MaximumRequestedSessionsPerWeek = MaximumAvailableWeekdays;
     public const int MaximumStrengthSessionsPerDay = 1;
-    public const int MaximumStrengthCompanionsPerDay = 3;
+    // Owner requirement (2026-11-08): at most two activities per day — one strength session and
+    // at most one companion. This supersedes the 3–4 per day planned in ACTIVITY_EXPERIENCE.md.
+    public const int MaximumStrengthCompanionsPerDay = 1;
     public const int MaximumHardSessionsPerDay = 2;
     public const int MaximumHardSessionsOnAdjustedDay = 3;
     public const int MinimumHardSessionsForAdjustment = MaximumHardSessionsOnAdjustedDay;

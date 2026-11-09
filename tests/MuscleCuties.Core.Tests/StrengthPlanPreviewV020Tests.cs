@@ -8,6 +8,7 @@ namespace MuscleCuties.Core.Tests;
 
 public sealed class StrengthPlanPreviewV020Tests
 {
+    private const int OwnerMaximumActivitiesPerDay = 2;
     private const int HistoryConsistentWeeks = 1;
     private const int HistoryAverageSessions = 1;
     private const int PreviousSessionDays = 1;
@@ -371,7 +372,7 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.All(schedule.Sessions.GroupBy(session => session.Weekday), day =>
         {
             Assert.InRange(day.Count(), 1,
-                MixedActivityWeekScheduleRule.MaximumSessionsPerDay);
+                OwnerMaximumActivitiesPerDay);
             if (day.Count() > 1)
             {
                 var sessions = day.ToArray();

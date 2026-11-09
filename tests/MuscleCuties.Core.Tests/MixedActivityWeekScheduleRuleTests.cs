@@ -26,6 +26,8 @@ public sealed class MixedActivityWeekScheduleRuleTests
     private const int StrengthSessionMinutes = ActivityPrescriptionRule.BeginnerClimbingVisitMinutes;
     private const int ExpectedTwoCardioSessions = 2;
     private const int ExpectedSingleSession = 1;
+    // Owner requirement: at most two activities per day (strength plus one companion).
+    private const int OwnerMaximumActivitiesPerDay = 2;
     private const int ExpectedContinuousSessionsAfterHiit =
         ActivityPrescriptionRule.EstablishedCardioSessionsPerWeekWithoutBaseline - ExpectedSingleSession;
     private const int ExplicitOtherActivityMinutes = 17;
@@ -87,7 +89,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
     }
 
     [Fact]
-    public void AllowsTwoCompanionsPerStrengthDayWithoutDailyTimeLimit()
+    public void TwoRequestedCompanionsAreReducedToOneCompanionPerStrengthDay()
     {
         var twoDays = new[] { DayOfWeek.Monday, DayOfWeek.Thursday };
         var activities = new[]
@@ -114,17 +116,18 @@ public sealed class MixedActivityWeekScheduleRuleTests
 
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
             Decision(result, WorkoutActivityType.GeneralStrength).ScheduledSessionsPerWeek);
-        Assert.Equal(ExpectedTwoCardioSessions,
+        // Owner requirement: two activities per day, so the companions share the two free slots.
+        Assert.Equal(ExpectedSingleSession,
             Decision(result, WorkoutActivityType.Cycling).ScheduledSessionsPerWeek);
-        Assert.Equal(ExpectedTwoCardioSessions,
+        Assert.Equal(ExpectedSingleSession,
             Decision(result, WorkoutActivityType.Yoga).ScheduledSessionsPerWeek);
-        Assert.DoesNotContain(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
+        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
             Decision(result, WorkoutActivityType.Cycling).Reasons);
-        Assert.DoesNotContain(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
+        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
             Decision(result, WorkoutActivityType.Yoga).Reasons);
         Assert.All(result.Sessions.GroupBy(session => session.Day), day =>
         {
-            Assert.Equal(activities.Length, day.Count());
+            Assert.Equal(OwnerMaximumActivitiesPerDay, day.Count());
             var strength = Assert.Single(day, session =>
                 session.Activity == WorkoutActivityType.GeneralStrength);
             Assert.All(day.Where(session => session.Activity != WorkoutActivityType.GeneralStrength), session =>
@@ -649,7 +652,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
         Assert.Equal(ExpectedTwoCardioSessions,
             result.Sessions.Count(session => session.Activity == WorkoutActivityType.Swimming));
         Assert.All(result.Sessions.GroupBy(session => session.Day), day =>
-            Assert.InRange(day.Count(), ExpectedSingleSession, MixedActivityWeekScheduleRule.MaximumSessionsPerDay));
+            Assert.InRange(day.Count(), ExpectedSingleSession, OwnerMaximumActivitiesPerDay));
         Assert.Empty(result.InputReasons);
     }
 
@@ -756,6 +759,40 @@ public sealed class MixedActivityWeekScheduleRuleTests
             runningSession.DurationMinutes);
         Assert.Equal((decimal)CardioSessionDurationRule.PostStrengthCardioOrRecoveryMaximumMinutes,
             walkingSession.DurationMinutes);
+    }
+
+    [Fact]
+    public void Three_companions_over_two_days_keep_strength_and_at_most_two_activities_per_day()
+    {
+        var twoDays = new[] { DayOfWeek.Monday, DayOfWeek.Thursday };
+        var mobilityMinutes = (decimal)WorkoutPreferencesRule.DefaultSessionDurationMinutes(WorkoutActivityType.Mobility)!.Value;
+        var result = Evaluate(
+            [WorkoutActivityType.GeneralStrength, WorkoutActivityType.Walking, WorkoutActivityType.Cycling,
+                WorkoutActivityType.Mobility],
+            twoDays,
+            Durations((WorkoutActivityType.GeneralStrength, StrengthSessionMinutes),
+                (WorkoutActivityType.Walking, SelectedCardioSessionMinutes),
+                (WorkoutActivityType.Cycling, SelectedCardioSessionMinutes),
+                (WorkoutActivityType.Mobility, mobilityMinutes)),
+            Evidence((WorkoutActivityType.GeneralStrength, EvidenceFor(WorkoutActivityType.GeneralStrength)),
+                (WorkoutActivityType.Walking, EvidenceFor(WorkoutActivityType.Walking)),
+                (WorkoutActivityType.Cycling, EvidenceFor(WorkoutActivityType.Cycling)),
+                (WorkoutActivityType.Mobility, EvidenceFor(WorkoutActivityType.Mobility))),
+            RequestedFrequencies((WorkoutActivityType.Mobility, ExpectedSingleSession)),
+            chosenStrengthActivity: WorkoutActivityType.GeneralStrength);
+
+        Assert.Equal(OwnerMaximumActivitiesPerDay, MixedActivityWeekScheduleRule.MaximumSessionsPerDay);
+        Assert.Empty(result.InputReasons);
+        Assert.All(result.Sessions.GroupBy(session => session.Day), day =>
+            Assert.InRange(day.Count(), ExpectedSingleSession, OwnerMaximumActivitiesPerDay));
+        Assert.Equal(twoDays.Length, result.Sessions.Count(session => session.Activity == WorkoutActivityType.GeneralStrength));
+        Assert.Equal(twoDays.Length * OwnerMaximumActivitiesPerDay, result.Sessions.Count);
+        var companions = result.Activities.Where(decision => decision.Activity != WorkoutActivityType.GeneralStrength).ToArray();
+        Assert.Contains(companions, decision =>
+            decision.Reasons.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays) ||
+            decision.Disposition == MixedActivityScheduleDisposition.Omitted);
+        Assert.Equal(MixedActivityScheduleDisposition.Scheduled,
+            Decision(result, WorkoutActivityType.GeneralStrength).Disposition);
     }
 
     private static MixedActivityWeekScheduleResult Evaluate(
