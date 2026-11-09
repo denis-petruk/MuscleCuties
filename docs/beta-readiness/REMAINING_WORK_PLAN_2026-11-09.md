@@ -74,3 +74,24 @@ clinical approvals; the owner ratifies each before C-8…C-10 start (CLAUDE.md: 
 - **P0:** E-1, E-2 (simulator gate); L-1…L-3 and P-1 for external testers.
 - **P1:** C-1, C-8, C-9; E-3.
 - **P2:** C-2, C-3, C-4, C-6, C-7, C-10. **P3:** C-5.
+
+## Run 2 additions (Rider-attached simulator, fix branch `1a4ca7dd`)
+
+Evidence: [OWNER_SIMULATOR_QA_2026-11-09_RUN2.md](../release-audit/2026-11-09/OWNER_SIMULATOR_QA_2026-11-09_RUN2.md).
+
+| ID | Sev | Item | Hypothesis / area | Approach | Acceptance | Effort |
+| --- | --- | --- | --- | --- | --- | --- |
+| R-1 | P0 | E-01 still saves today−18y; height/weight defaults saved untouched | `ProfileSetupViewModel` initialises `BirthDate`, `SelectedHeightCm`, `SelectedWeightKg` to real values; `_birthDateWasSelected` flips without user input (iOS initial date push or the C-3 `Unfocused` hook) | Make DOB/height/weight unset until entered (nullable or explicit "set" flags); drop the C-3 `Unfocused` shortcut and add an explicit "Confirm date" when the picker is unchanged; server rejects a DOB equal to the request date −18y only if the client marks it untouched | Untouched form blocks with "birth date required"; DB has no row until the user answers | M (1 d) |
+| R-2 | P0 | CR01: resume → Start → "Could not save this exercise", back at exercise 1, inputs missing; `PUT /workouts/optional-exercise` 400 | Resume replays skipped/pain-stopped exercises as an optional-exercise mutation the server rejects | Do not send optional-exercise for skipped/stopped items; resume at the first unlogged exercise | 20× plan→session→back with no error and position kept | M (1–2 d) |
+| R-3 | P0 | Train tab content missing from the accessibility tree after the session sheet | `AnimatedModalView` isolation not released on close (hides siblings) | Restore `AccessibilityElementsHidden`/modal flags on close; add a UI test that inspects the tree after open/close | Maestro/VoiceOver sees Train content after closing any sheet | S–M |
+| R-4 | P1 | Fabricated observed set (2nd set saved as 0 kg × reps, `is_observed = true`) | Next persists every prescribed set row, including ones never shown or edited | Persist only rows the user confirmed; unconfirmed rows stay planned/unobserved | DB contains only confirmed sets | M |
+| R-5 | P1 | Archive lists in-progress session as completed | Archive query includes sessions without an end timestamp | Filter by completed state | In-progress sessions absent from "Past Completed" | S |
+| R-6 | P1 | Today card in progress: "High", "Upcoming" + "In Progress", Start instead of Resume | Dashboard in-progress branch maps intensity from activity tag; status copy not unified | Reuse the E-06 mapping; one status; Resume CTA | Today and Train agree | S |
+| R-7 | P1 | RU leftovers on Today/Train (plan titles, badges, "In Progress", "High", "min", readiness copy) | Server-authored strings / runtime map gaps | Key these strings; localize unit suffixes | RU screens show no English UI copy (exercise names excepted, per catalog decision) | M |
+| R-8 | P1 | J14: mid-word breaks and clipped actions at XXXL RU; Dynamic Type not live | Fixed icon columns + single-line buttons | Allow wrap / stack icon above text at large sizes; buttons wrap; respond to content-size change | XXXL RU walk with no clipping | M |
+| R-9 | P1 | C-9 follow-ups: empty swap panel says "keep it" in pain flow; card squeezes content; four-row bar clips set rows | Pain card in action bar grid | Move the pain report into a sheet or above the scroll; pain-context empty-swap copy "Stop it for today" | Pain flow readable on iPhone 17/SE; no clipped set rows | S–M |
+| R-10 | P1 | Readiness/recovery 65/70 shown before any check-in, labelled Apple Health | Baseline defaults rendered as scores | Show "Check in to see readiness" with no number until data exists | No score without input | S |
+| R-11 | P1 | You page fails when the S3 bucket setting is absent; infrastructure copy shown to users | Photo vault eager construction; dev/ops copy in catalog | Lazy/optional photo vault; remove infra wording | You loads without S3; copy user-facing | S |
+| R-12 | P2 | Styling: system-blue checkboxes (wellness, set rows), duplicate Notes, two primary CTAs on Train, destructive action style, Quick Log single chip, tab bar under sheets, stale acknowledgment error, "Order 1" ordinal | Various XAML | Converge on role tokens and DESIGN rules | Styling re-audit | M |
+
+Sequence update: R-1, R-2, R-3 before any further simulator pass; then R-4…R-11; then rerun the full 21-row matrix (including J06, J07, J08, J15, CR01 ×20, iPhone SE, VoiceOver, Reduce Motion), which this run did not finish.

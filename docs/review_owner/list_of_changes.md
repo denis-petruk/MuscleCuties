@@ -190,3 +190,20 @@ owner's phone-QA deprecation (item 9).
    E-01…E-07, J04 and J08 (pain action), CR01, then the dark/RU and iPhone SE configurations for J14.
 4. Ratify or reject A-4…A-7. A rejected A-7 is a one-line revert (`OptionalCalendarDaysIncludingClearance = 7`) plus
    restoring the two test files from the base.
+
+## Simulator verification of these changes (run 2, 2026-11-09)
+
+Rendered on the iPhone 17 simulator via Rider's native configuration. The full record is
+`docs/release-audit/2026-11-09/OWNER_SIMULATOR_QA_2026-11-09_RUN2.md`.
+
+| Change | Observed |
+| --- | --- |
+| C-1 contrast | Not reached on screen (preview count / "Required" tag); unverified |
+| C-2 stale age error | Not reachable (picker max); unverified |
+| C-3 confirm pre-filled birthday | **Regression or no protection:** an untouched picker still let Continue proceed, and DB saved 2008-11-09. Revert or replace (plan R-1) |
+| C-4 error semantics | Errors render above Continue/Next; VoiceOver itself not driven |
+| C-5 RU copy | Not reached |
+| C-7 test warnings | Not built by the agent |
+| C-9 pain action | Works (card, Switch → swap panel, Stop → skipped, nothing logged). Follow-ups: pain-context copy in the empty swap panel, layout squeeze, clipped set rows (plan R-9) |
+| C-10 no clearance window | Not exercised in UI (no cleared injury) |
+| Rider wiring | Owner's native Rider configuration works; the agent's shell `.run` configuration failed (F-17). `run-local-api.sh` was not used; the agent ran the API with the same settings plus a dummy `Storage__S3__BucketName` |
