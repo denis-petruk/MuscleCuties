@@ -204,24 +204,27 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     }
 
     [Fact]
-    public void FlowRule_CanAutomaticallyApplyFirstPlan_RequiresAllSixPreconditionsSatisfied()
+    public void FlowRule_CanAutomaticallyApplyFirstPlan_RequiresAllSevenPreconditionsSatisfied()
     {
-        // All conditions satisfied: first plan, feasible, persisted, no missing answers, no style choice required, no omissions.
+        // All conditions satisfied: first plan, feasible, persisted, no missing answers, no style choice
+        // required, no omissions and no reduced-volume acceptance pending.
         Assert.True(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
             replacesExistingPlan: false,
             feasible: true,
             persisted: true,
             missingRequiredAnswers: false,
             styleChoiceRequired: false,
-            hasOmissions: false));
+            hasOmissions: false,
+            reducedVolume: false));
 
         // Violations individually block auto-apply:
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(true, true, true, false, false, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, false, true, false, false, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, false, false, false, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, true, false, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, true, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, false, true));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(true, true, true, false, false, false, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, false, true, false, false, false, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, false, false, false, false, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, true, false, false, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, true, false, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, false, true, false));
+        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, false, false, true));
     }
 
     [Theory]

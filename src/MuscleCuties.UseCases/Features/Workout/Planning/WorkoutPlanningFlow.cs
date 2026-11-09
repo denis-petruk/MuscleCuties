@@ -52,9 +52,9 @@ public static class WorkoutPlanningFlow
             hasLease, feasible, uncertainAcceptance);
 
     public static bool CanAutomaticallyApplyFirstPlan(bool replacesExistingPlan, bool feasible, bool persisted,
-        bool missingRequiredAnswers, bool styleChoiceRequired, bool hasOmissions) =>
+        bool missingRequiredAnswers, bool styleChoiceRequired, bool hasOmissions, bool reducedVolume) =>
         WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(replacesExistingPlan, feasible, persisted,
-            missingRequiredAnswers, styleChoiceRequired, hasOmissions);
+            missingRequiredAnswers, styleChoiceRequired, hasOmissions, reducedVolume);
 
     public static PlanAcceptanceAcknowledgments AcceptanceAcknowledgments(bool replacesExistingPlan,
         bool reducedVolumeRequired) =>
@@ -71,12 +71,16 @@ public static class WorkoutPlanningFlow
     public static bool RequiresReplacementConsentPrompt(WorkoutPlanningStateDto state, bool replacesExistingPlan) =>
         WorkoutPlanningFlowRule.RequiresReplacementConsentPrompt((WorkoutPlanningState)state, replacesExistingPlan);
 
-    public static bool CanAutoActivateRequestedPlan(bool userRequested, bool replacementDisclosed,
-        bool replacesExistingPlan, bool feasible, bool persisted, bool hasLease, bool missingRequiredAnswers,
-        bool styleChoiceRequired) =>
-        WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(userRequested, replacementDisclosed,
-            replacesExistingPlan, feasible, persisted, hasLease, missingRequiredAnswers,
-            styleChoiceRequired);
+    public static bool CanAutoActivateRequestedPlan(bool userRequested, bool replacesExistingPlan,
+        bool feasible, bool persisted, bool hasLease, bool missingRequiredAnswers, bool styleChoiceRequired,
+        bool reducedVolume) =>
+        WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(userRequested, replacesExistingPlan, feasible,
+            persisted, hasLease, missingRequiredAnswers, styleChoiceRequired, reducedVolume);
+
+    public static bool RequiresReplacementConfirmation(bool replacesExistingPlan,
+        bool replacementDisclosedUpFront) =>
+        WorkoutPlanningFlowRule.RequiresReplacementConfirmation(replacesExistingPlan,
+            replacementDisclosedUpFront);
 
     public static bool IsCurrentGeneration(bool appearanceIsCurrent, long requestVersion,
         long activeRequestVersion) =>

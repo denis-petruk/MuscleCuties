@@ -144,7 +144,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_ReplacementSummary"] = "Ваш текущий план будет заменён этим расписанием:";
         Values["Workout_Generation_ReplacementCancel"] = "Отмена";
         Values["Workout_Generation_ReplacesActivePlanNotice"] =
-            "Новый план заменит текущий активный план, как только сервер его подтвердит.";
+            "Будет создан черновик. Текущий план остаётся активным, пока вы не нажмёте «Применить план».";
         Values["Workout_Generation_KeepCurrentPlan"] = "Оставить текущий план";
         Values["Workout_Generation_EditDetails"] = "Изменить данные";
         Values["Workout_Generation_Loading"] = "Загрузка предпочтений тренировок";
@@ -302,6 +302,14 @@ internal static partial class RussianUiText
         Values["Workout_Generation_PromptNoPlanSubtitle"] = "Настройте параметры тренировок и создайте персональный план силовых тренировок.";
         Values["Workout_Generation_PromptGeneratePlanButton"] = "Создать план";
         Values["Workout_Generation_ReducedVolumeNotice"] = "Объём плана снижен под ваше расписание.";
+        Values["Workout_Generation_ApplyReplacesActivePlan"] = "«Применить план» заменит ваш текущий план. До этого текущий план остаётся активным.";
+        Values["Workout_Generation_ApplyUnavailableNoStrengthSessions"] = "На этой неделе нет силовых тренировок для применения. Нажмите «Изменить данные», чтобы изменить занятия или дни.";
+        Values["Workout_Generation_SessionWithheldOne"] = "Одна тренировка удалена: для неё не осталось безопасных упражнений.";
+        Values["Workout_Generation_SessionWithheldManyFormat"] = "Удалено тренировок: {0} — для них не осталось безопасных упражнений.";
+        Values["Workout_Generation_StyleNeedsHistory"] = "Нужен опыт регулярных силовых тренировок. Начните с общей силовой.";
+        Values["Workout_Generation_SwitchToGeneralStrength"] = "Перейти на общую силовую";
+        Values["Workout_Generation_SwitchStyleFailed"] = "Не удалось сменить силовой стиль. Попробуйте ещё раз.";
+        Values["Workout_Generation_EquipmentBetaNotice"] = "Планы только с весом тела пока недоступны в бета-версии. В планах с гантелями и резинками пока нет вертикальной тяги.";
     }
 }
 
