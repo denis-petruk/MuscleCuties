@@ -24,13 +24,13 @@ that has not been run on a physical iPhone.
 | G08 Onboarding | PASS on simulator with fixes pending device re-check | Journey 1 end to end; E-01 fixed after the run |
 | G09 Apply | PASS (tests + simulator first-plan auto-apply) | Replacement and reduced-volume plans require Apply; accept is transactional and idempotent |
 | G10 Logging | PASS | Simulator per-set log persisted as observed rows in PostgreSQL |
-| G11 Integration | PASS (local) | PostgreSQL integration 97 pass, 0 fail, 3 skipped (fixture catalog mismatch, see AUDIT G-06/G-07), 2 host-building classes excluded locally |
+| G11 Integration | PASS (local) | PostgreSQL integration 97 pass, 0 fail, 3 skipped. Re-checked 2026-11-09 on a freshly seeded disposable DB: the fixture now seeds canonical `ENGINE_141/142`, so the skip cause is not the catalog. `SwapAsync` resolves `NewExerciseId` against `WorkoutExerciseDefinitions.Id` (serial 1–59) and then looks the exercise up as `ENGINE_<id>`, while planning ids are 141/142; the reschedule guard fails closed with `ScheduleStrengthMuscleMetadataMissing`. Both are recorded in the skip reasons and remain open (G-06/G-07) |
 | G12 Simulator | PARTIAL | Journeys 1, 2, 3, 5 pass; 4 and 6–15 not run ([SIMULATOR_QA.md](SIMULATOR_QA.md)) |
 | G13 Persistence | NOT RUN | Restart/retry/offline journeys not exercised on device |
 | G14 Security | PASS (repo) / FAIL (live) | No secrets in tracked files; Debug cannot target Beta; live Lambda secrets in plaintext env (A6) |
 | G15 Migrations | PASS (local disposable) | Empty DB → `schema_version=5`, 6 scripts, seed 746, `dbcheck` compatible, fingerprint `ea4c7a60…a2b9`, re-run applies 0. Live Beta adoption unproven (A4) |
 | G16 Cleanup | PASS | Dead DI/gating/readiness code, GitLab stub, retired release scripts, Android/Windows/MacCatalyst trees removed; suites green |
-| G17 CI | NOT VERIFIED | Workflows updated and YAML-parsed; first GitHub run pending on the PR |
+| G17 CI | NOT VERIFIED | First GitHub run: `verify_source`, `verify_plan_generation` and `postgres_verify` pass; `verify_ios_compile` failed before compiling because the `maui-ios` workload resolves to .NET for iOS 27.1, which requires Xcode 27.1, while `macos-15` ships Xcode 16.4. `6cce5fc8` moves the Apple jobs to the `xcode-27` runner and prints the selected Xcode; the re-run is pending |
 | G18 GitHub | See PR | Branch pushed and PR opened only after owner-authorized push |
 
 ## Owner actions
