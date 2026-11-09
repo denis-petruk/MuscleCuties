@@ -237,7 +237,8 @@ public static class MauiProgram
                 UiTextCatalog.Get("Workout_Generation_ReplacementCancel"))),
             () => NavigateToAsync("//DashboardPage"),
             sp.GetRequiredService<IWorkoutAccountCalendarClient>(),
-            overview: sp.GetRequiredService<IWorkoutOverviewUseCase>()));
+            overview: sp.GetRequiredService<IWorkoutOverviewUseCase>(),
+            personalInfo: sp.GetService<IProfilePersonalInfoUseCase>()));
 
         services.AddTransient<WorkoutSessionViewModel>(sp => new WorkoutSessionViewModel(
             sp.GetRequiredService<IWorkoutSessionActionUseCase>(),
@@ -303,7 +304,8 @@ public static class MauiProgram
             sp.GetRequiredService<IProfileRefreshNotifier>(),
             () => NavigateToAsync(".."),
             () => NavigateToAsync(nameof(StrengthPlanGenerationPage)),
-            sp.GetRequiredService<INavigationContextService>()));
+            sp.GetRequiredService<INavigationContextService>(),
+            personalInfo: sp.GetService<IProfilePersonalInfoUseCase>()));
 
         services.AddTransient<ProfileUnitsDisplayViewModel>(sp => new ProfileUnitsDisplayViewModel(
             sp.GetRequiredService<IProfileUnitsUseCase>(),

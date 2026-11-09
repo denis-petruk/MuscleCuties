@@ -129,6 +129,12 @@ public static class WorkoutActivityOptionCatalog
             }
         }
 
+        else if (!item.IsOffered)
+        {
+            // Not offered as a new selection; the card shows the reason and the alternative.
+            return string.Empty;
+        }
+
         item.IsSelected = !item.IsSelected;
         return string.Empty;
     }

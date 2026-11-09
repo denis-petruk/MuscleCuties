@@ -73,6 +73,19 @@
                                LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
 
+                    <!-- C1/OD-7: a saved style restricted to established history states why and offers
+                         the General strength alternative. -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                         IsVisible="{Binding HasIneligibleSavedStyle}">
+                        <Label Text="{loc:LocalizedText Workout_Generation_StyleNeedsHistory}"
+                               Style="{StaticResource MutedLabel}"
+                               LineBreakMode="WordWrap" />
+                        <Button Text="{loc:LocalizedText Workout_Generation_SwitchToGeneralStrength}"
+                                Command="{Binding SwitchToGeneralStrengthCommand}"
+                                Style="{StaticResource ButtonSecondary}"
+                                AutomationId="StrengthPlanSwitchToGeneralStrengthButton" />
+                    </VerticalStackLayout>
+
                 </VerticalStackLayout>
             </Border>
 

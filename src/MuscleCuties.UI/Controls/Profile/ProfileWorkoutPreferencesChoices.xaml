@@ -23,7 +23,23 @@
                     ItemDisplayBinding="{Binding Label, Converter={StaticResource LocalizedStringConverter}, x:DataType=commonModels:ILabeledOption}"
                     SelectedItem="{Binding SelectedEquipmentOption, Mode=TwoWay}" />
             </Border>
+            <!-- D1/OD-2: bodyweight-only is not offered for new selections in the beta. -->
+            <Label Text="{loc:LocalizedText Workout_Generation_EquipmentBetaNotice}"
+                   Style="{StaticResource MutedLabel}"
+                   LineBreakMode="WordWrap" />
         </VerticalStackLayout>
+
+         <!-- C1/OD-7: a saved style the reviewed templates restrict states why and offers the switch. -->
+         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                              IsVisible="{Binding HasIneligibleSavedStyle}">
+             <Label Text="{loc:LocalizedText Workout_Generation_StyleNeedsHistory}"
+                    Style="{StaticResource MutedLabel}"
+                    LineBreakMode="WordWrap" />
+             <Button Text="{loc:LocalizedText Workout_Generation_SwitchToGeneralStrength}"
+                     Command="{Binding SwitchToGeneralStrengthCommand}"
+                     Style="{StaticResource ButtonSecondary}"
+                     AutomationId="WorkoutPrefsSwitchToGeneralStrengthButton" />
+         </VerticalStackLayout>
 
          <workoutControls:WorkoutActivityPreferencePicker
              ActivityGroups="{Binding GroupedWorkoutActivityOptions}"

@@ -199,6 +199,12 @@
                         Style="{StaticResource MutedLabel}"
                         LineBreakMode="WordWrap"
                         IsVisible="{Binding IsCurrentQuestionAvailableWeekdays}" />
+                    <!-- D1/OD-2: bodyweight-only is not offered in the beta. -->
+                    <Label
+                        Text="{loc:LocalizedText Workout_Generation_EquipmentBetaNotice}"
+                        Style="{StaticResource MutedLabel}"
+                        LineBreakMode="WordWrap"
+                        IsVisible="{Binding IsCurrentQuestionEquipment}" />
                     <VerticalStackLayout
                         Spacing="{StaticResource UiSpacing10}"
                         BindableLayout.ItemsSource="{Binding CurrentAnswers}">
@@ -206,6 +212,7 @@
                         <DataTemplate x:DataType="quizModels:SelectableQuizAnswer">
                             <Border
     Style="{StaticResource CardSecondary}"
+    AutomationId="{Binding AutomationId}"
     SemanticProperties.Description="{Binding Answer.Text, Converter={StaticResource LocalizedStringConverter}}"
     SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
     
@@ -380,6 +387,7 @@
                     Grid.Row="3"
                     Grid.Column="0"
                     Style="{StaticResource HeaderIconButton}"
+                    AutomationId="QuizBackButton"
                     IsVisible="{Binding ShowQuizBackButton}"
                     WidthRequest="{StaticResource PresentationMinimumTouchSize}"
                     HeightRequest="{StaticResource PresentationMinimumTouchSize}"
@@ -408,6 +416,7 @@
                     Grid.Column="1"
                     Text="{Binding NextButtonText, Converter={StaticResource LocalizedStringConverter}}"
                     Clicked="OnNextClicked"
+                    AutomationId="QuizNextButton"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     IsVisible="{Binding AccountCreatedNeedsLogin, Converter={StaticResource InvertedBoolConverter}}"
                     SemanticProperties.Description="{Binding NextButtonText, Converter={StaticResource LocalizedStringConverter}}"
