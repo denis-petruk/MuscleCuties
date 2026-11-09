@@ -14,11 +14,11 @@
 - Open: S-03, S-04, S-05, S-07, G-10, G-11, E-03…E-07, live AWS A1–A14, simulator journeys 4 and 6–15, device QA01.
 - 2026-11-09: CI is green at `39053ecd` — `gh pr checks 46` reports 10 successful, 0 failing, 0 pending on both push
   and PR, including `verify_ios_compile` (3m28s push / 2m47s PR) on the `xcode-27` runner.
-- Corrected swap diagnosis (AUDIT G-07 is REOPENED, not FIXED): definition ids are 1..60 with URN seed codes, and the
-  reviewed importer already translates review source ids 141/142 into those definition ids via `databaseIdBySourceId`.
-  `GetSwapCandidatesAsync` instead compares the day exercise's *source* id with `WorkoutExerciseDefinitions.Id`, so the
-  candidate list is empty for every real plan; `SwapAsync` also keeps an `e.Id == request.NewExerciseId` fallback that
-  can select a different catalog row (definition 31 → `ENGINE_141` Pull-Up). A persisted source-id mapping is a schema
-  decision that must precede un-skipping the two guards.
-- Next action: handoff handed to Claude in `docs/beta-readiness/HANDOFF-2026-11-09.md`; first item there is the swap
-  contract decision, then the reschedule metadata seed, then owner review of PR #46.
+- 2026-11-09 `e0adcaf9` fixes G-07: `catalog.workout_exercise_definitions.source_exercise_id` is now persisted
+  (migration 006, nullable unique, 59/60 rows mapped to planning ids 101–182) and written by the reviewed catalog
+  import. `GetSwapCandidatesAsync` and `SwapAsync` translate the day exercise's `ENGINE_<planningId>` code through it
+  into the reviewed definition id space; candidates and saved preferences stay in definition ids (their foreign keys)
+  and the target catalog row resolves by the derived `ENGINE_` code alone. Evidence: swap guards 2 passed, 1 skipped;
+  migration chain contract 7/7; model schema 4/4; planning fingerprint inputs unchanged.
+- Next action: seed reviewed muscle metadata for the reschedule guard (still skipped), then the Phase 2 findings, then
+  owner review of PR #46 and the owner actions in RELEASE_READINESS.md.
