@@ -146,10 +146,20 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
             HasActiveInjuries = ActiveInjuryCount > 0;
             ActiveInjuryBadgeText = UiTextCatalog.Format(
                 "Profile_Summary_ActiveInjuryFormat", ActiveInjuryCount);
-            VaultPhotoCount = overview.VaultPhotoCount;
-            VaultPhotoCountText = VaultPhotoCount == 1 ? "1 photo" : $"{VaultPhotoCount} photos";
-            LatestVaultPhotoPath = overview.LatestVaultPhotoPath;
-            HasVaultPhotos = VaultPhotoCount > 0;
+            if (overview.VaultPhotoCount < 0)
+            {
+                VaultPhotoCount = 0;
+                VaultPhotoCountText = UiTextCatalog.Get("Profile_PhotoJourney_PhotoUnavailable");
+                LatestVaultPhotoPath = string.Empty;
+                HasVaultPhotos = false;
+            }
+            else
+            {
+                VaultPhotoCount = overview.VaultPhotoCount;
+                VaultPhotoCountText = VaultPhotoCount == 1 ? "1 photo" : $"{VaultPhotoCount} photos";
+                LatestVaultPhotoPath = overview.LatestVaultPhotoPath;
+                HasVaultPhotos = VaultPhotoCount > 0;
+            }
             OnPropertyChanged(nameof(UserInitial));
             OnPropertyChanged(nameof(UserName));
         }

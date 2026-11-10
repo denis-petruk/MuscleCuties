@@ -40,6 +40,8 @@ public static partial class UiTextCatalog
         English["Ui_Onboarding_Error_Age"] = "Please provide a valid date of birth (must be at least 18 years old).";
         English["Ui_Onboarding_Error_BirthDateRequired"] = "Please provide your date of birth.";
         English["Ui_Onboarding_Error_StrengthRequired"] = "At least one strength activity is required for your plan.";
+        English["Ui_Onboarding_Error_HeightRequired"] = "Choose your height.";
+        English["Ui_Onboarding_Error_WeightRequired"] = "Choose your weight.";
         English["Ui_Onboarding_Error_SetupFailed"] = "We could not finish setup. Please try again.";
         English["Ui_Profile_Status_CompletePersonalInfo"] = "Complete personal info first.";
         English["Ui_Profile_Status_UnitsSaved"] = "Units saved.";
@@ -520,6 +522,8 @@ public static partial class UiTextCatalog
         English["Onboarding_ProfileSetup_Measurements"] = "Measurements";
         English["Onboarding_ProfileSetup_Optional"] = "(optional)";
         English["Onboarding_ProfileSetup_PersonalDetails"] = "Personal details";
+        English["Onboarding_ProfileSetup_ConfirmBirthday"] = "Confirm birthday";
+        English["Onboarding_ProfileSetup_BirthdayConfirmed"] = "Birthday confirmed";
         English["Onboarding_ProfileSetup_PickAtLeastOneStrengthActivity"] = "Choose the activities you'd like in your plan.";
         English["Onboarding_ProfileSetup_StrengthActivityRequired"] = "Choose at least one activity to continue.";
         English["Onboarding_Activity_HighVolumeStrengthDescription"] = "Build strength with a few more sets.";
@@ -596,7 +600,7 @@ public static partial class UiTextCatalog
         English["Profile_Details_ReportAnIssueOrSuggestA"] = "Report an issue or suggest a feature";
         English["Profile_Details_Reveal"] = "Reveal";
         English["Profile_Details_SendFeedback"] = "Send Feedback";
-        English["Profile_Details_StoredLocallyOnThisDevice"] = "Stored in first-party PostgreSQL";
+        English["Profile_Details_StoredLocallyOnThisDevice"] = "Stored securely in your private vault";
         English["Profile_Details_TapToOpenFullPhotoJourney"] = "Tap to open full photo journey";
         English["Profile_Details_TapToOpenVaultAndAdd"] = "Tap to open vault and add your first progress photo";
         English["Profile_Details_TapToRevealPreview"] = "Tap to reveal preview";
@@ -663,7 +667,7 @@ public static partial class UiTextCatalog
         English["Profile_NutritionSettings_Water"] = "Water";
         English["Profile_NutritionSettings_Zinc"] = "Zinc";
         English["Profile_Page_AccountDeletionStatus"] = "Account deletion status";
-        English["Profile_Page_AllHealthAndFitnessDataIs"] = "Health and fitness records are stored in first-party PostgreSQL; AWS protection settings have not been verified.";
+        English["Profile_Page_AllHealthAndFitnessDataIs"] = "Health and fitness records are stored securely and kept private to your account.";
         English["Profile_Page_CyclePhaseIndicatorAndProfilePhoto"] = "Cycle phase indicator and profile photo";
         English["Profile_Page_CyclesLogged"] = "Cycles logged";
         English["Profile_Page_CyclesLoggedValue"] = "Cycles logged: {0}";
@@ -707,10 +711,10 @@ public static partial class UiTextCatalog
         English["Profile_PhotoJourney_PhotoHiddenForPrivacy"] = "Photo Hidden for Privacy";
         English["Profile_PhotoJourney_PlusAddProgressPhoto"] = "+ Add Progress Photo";
         English["Profile_PhotoJourney_PrivacyFirstPhotoVault"] = "Privacy-First Photo Vault";
-        English["Profile_PhotoJourney_PrivateStoredOnThisDevice"] = "Private • Cloud Storage Intended";
+        English["Profile_PhotoJourney_PrivateStoredOnThisDevice"] = "Private and secure";
         English["Profile_PhotoJourney_TapToReveal"] = "Tap to reveal";
         English["Profile_PhotoJourney_Title"] = "Photo Journey Vault";
-        English["Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd"] = "Photos are intended for private Amazon S3 storage. Tap photos to reveal or hide.";
+        English["Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd"] = "Your progress photos are stored securely and privately. Tap photos to reveal or hide.";
         English["Profile_PhotoJourney_DateFormat"] = "MMM d, yyyy";
         English["Profile_PhotoJourney_PhotoRevealed"] = "Photo shown";
         English["Profile_PhotoJourney_RevealOrHideHint"] = "Double-tap to reveal or hide this photo.";

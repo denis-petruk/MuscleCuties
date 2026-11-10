@@ -337,7 +337,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     public string ReadinessSubtitleText => HasTodayReadinessRecord
         ? "Dashboard_Readiness_SelfReportedSubtitle"
-        : "Dashboard_Readiness_HealthOrBaselineSubtitle";
+        : "Dashboard_Readiness_CheckInPrompt";
 
     public float ReadinessProgress =>
         Math.Clamp(ReadinessScore / MaximumScoreProgressDivisor, 0f, 1f);
@@ -557,10 +557,20 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             HydrationConsumed = summary.HydrationConsumed;
             HydrationGoal = summary.HydrationGoal;
             SleepGoal = summary.SleepGoal;
-            ReadinessScore = summary.ReadinessScore;
-            ReadinessLabel = summary.ReadinessLabel;
-            RecoveryScore = summary.RecoveryScore;
-            RecoveryLabel = summary.RecoveryLabel;
+            if (summary.TodayReadiness is not null)
+            {
+                ReadinessScore = summary.ReadinessScore;
+                ReadinessLabel = summary.ReadinessLabel;
+                RecoveryScore = summary.RecoveryScore;
+                RecoveryLabel = summary.RecoveryLabel;
+            }
+            else
+            {
+                ReadinessScore = 0;
+                ReadinessLabel = string.Empty;
+                RecoveryScore = 0;
+                RecoveryLabel = string.Empty;
+            }
             ApplyTodayReadiness(summary.TodayReadiness);
             NeedsDailyCheckIn = summary.TodayReadiness is not { Status: "Available" };
             TrendPoints = (summary.TrendPoints ?? []).Select(point =>
@@ -650,6 +660,13 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
                         MinimumScoreValue, MaximumScoreValue),
                     MidpointRounding.AwayFromZero);
             }
+        }
+        else if (!HasTodayReadinessRecord)
+        {
+            ReadinessScore = 0;
+            RecoveryScore = 0;
+            ReadinessLabel = string.Empty;
+            RecoveryLabel = string.Empty;
         }
 
         TodayReadinessScoreText = HasTodayReadinessScore

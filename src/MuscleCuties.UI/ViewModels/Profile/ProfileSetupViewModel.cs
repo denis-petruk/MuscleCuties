@@ -23,6 +23,8 @@ public partial class ProfileSetupViewModel : ObservableObject
     private readonly IProfileSetupUseCase _useCase;
     [ObservableProperty] private DateTime _birthDate = DateTime.Today.AddYears(-18);
     private bool _birthDateWasSelected;
+    private bool _birthDatePickerFocused;
+    [ObservableProperty] private bool _birthDateConfirmed;
     private bool _loadingBirthDate;
     [ObservableProperty] private int _cycleLength = 28;
     [ObservableProperty] private string _errorMessage = string.Empty;
@@ -31,14 +33,14 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private string _profileImagePath = string.Empty;
-    [ObservableProperty] private int _selectedFeet = 5;
+    [ObservableProperty] private int _selectedFeet;
     [ObservableProperty] private SelectionOption<UserGoal>? _selectedGoalOption;
 
-    [ObservableProperty] private int _selectedHeightCm = 165;
+    [ObservableProperty] private int _selectedHeightCm;
     [ObservableProperty] private int _selectedInches = 6;
 
-    [ObservableProperty] private int _selectedWeightKg = 65;
-    [ObservableProperty] private int _selectedWeightLbs = 143;
+    [ObservableProperty] private int _selectedWeightKg;
+    [ObservableProperty] private int _selectedWeightLbs;
 
     [ObservableProperty] private bool _useMetricSystem = true;
     [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
@@ -51,6 +53,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         _navigateToQuizAsync = navigateToQuizAsync;
         ContinueCommand = new AsyncRelayCommand(ContinueAsync);
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
+        ConfirmBirthDateCommand = new RelayCommand(ConfirmBirthDate);
         SelectMetricUnitsCommand = new RelayCommand(() => UseMetricSystem = true);
         SelectImperialUnitsCommand = new RelayCommand(() => UseMetricSystem = false);
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
@@ -76,6 +79,10 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     public bool UseImperialSystem => !UseMetricSystem;
 
+    // Measurements start unanswered so an untouched form can never save the old seeded defaults.
+    public bool HasAnsweredHeight => UseMetricSystem ? SelectedHeightCm > 0 : SelectedFeet > 0;
+    public bool HasAnsweredWeight => UseMetricSystem ? SelectedWeightKg > 0 : SelectedWeightLbs > 0;
+
     public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions { get; private set; } = [];
 
     public string WeightUnit => UseMetricSystem ? "kg" : "lbs";
@@ -97,6 +104,7 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     public AsyncRelayCommand ContinueCommand { get; }
     public AsyncRelayCommand LoadDataCommand { get; }
+    public RelayCommand ConfirmBirthDateCommand { get; }
     public RelayCommand SelectMetricUnitsCommand { get; }
     public RelayCommand SelectImperialUnitsCommand { get; }
     public RelayCommand<WorkoutActivityOptionItem> ToggleWorkoutActivityCommand { get; }
@@ -184,18 +192,44 @@ public partial class ProfileSetupViewModel : ObservableObject
     /// <summary>
     /// The picker was opened and dismissed. On iOS, closing it with Done on the pre-filled date raises no
     /// DateSelected event, so a user whose 18th birthday is today could otherwise never confirm it.
-    /// Opening and confirming the picker counts as answering; an untouched picker still does not.
+    /// Only a picker that actually received focus counts: the initial two-way binding also raises
+    /// Unfocused on some iOS versions, and that must never count as the user answering.
     /// </summary>
-    public void MarkBirthDateConfirmedFromPicker()
+    public void MarkBirthDatePickerFocused()
     {
         if (!_loadingBirthDate)
-            _birthDateWasSelected = true;
+            _birthDatePickerFocused = true;
+    }
+
+    public void MarkBirthDateConfirmedFromPicker()
+    {
+        if (!_loadingBirthDate && _birthDatePickerFocused)
+            MarkBirthDateAnswered();
     }
 
     public void MarkBirthDateSelected(DateTime? oldDate, DateTime? newDate)
     {
-        if (!_loadingBirthDate && newDate is { } picked && oldDate?.Date != picked.Date)
-            _birthDateWasSelected = true;
+        if (!_loadingBirthDate && _birthDatePickerFocused && newDate is { } picked && oldDate?.Date != picked.Date)
+            MarkBirthDateAnswered();
+    }
+
+    /// <summary>
+    /// Explicit answer for the pre-filled date, so the turning-18-today case never depends on a
+    /// platform focus event firing.
+    /// </summary>
+    private void ConfirmBirthDate()
+    {
+        if (_loadingBirthDate)
+            return;
+        MarkBirthDateAnswered();
+    }
+
+    private void MarkBirthDateAnswered()
+    {
+        _birthDateWasSelected = true;
+        BirthDateConfirmed = true;
+        if (ErrorMessage == "Ui_Onboarding_Error_BirthDateRequired")
+            ErrorMessage = string.Empty;
     }
 
     /// <summary>True only after the user picked a birth date (or one was loaded from a saved profile).</summary>
@@ -209,6 +243,7 @@ public partial class ProfileSetupViewModel : ObservableObject
             if (birthDate != default)
                 BirthDate = birthDate;
             _birthDateWasSelected = birthDate != default;
+            BirthDateConfirmed = birthDate != default;
         }
         finally
         {
@@ -225,6 +260,18 @@ public partial class ProfileSetupViewModel : ObservableObject
             if (!_birthDateWasSelected || BirthDate == default)
             {
                 ErrorMessage = "Ui_Onboarding_Error_BirthDateRequired";
+                return;
+            }
+
+            if (!HasAnsweredHeight)
+            {
+                ErrorMessage = "Ui_Onboarding_Error_HeightRequired";
+                return;
+            }
+
+            if (!HasAnsweredWeight)
+            {
+                ErrorMessage = "Ui_Onboarding_Error_WeightRequired";
                 return;
             }
 

@@ -32,6 +32,9 @@ public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
     private readonly string _secretKey;
     private readonly string? _sessionToken;
 
+    public static bool IsConfigured(IConfiguration? configuration) =>
+        S3StorageConfiguration.HasBucketName(configuration);
+
     public DefaultS3PresignedUrlService(IConfiguration configuration)
     {
         _bucket = S3StorageConfiguration.RequireBucketName(configuration);

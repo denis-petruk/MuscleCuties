@@ -414,6 +414,7 @@ internal static partial class RussianUiText
         Values["Workout_Swap_CloseButton"] = "Закрыть";
         Values["Workout_Swap_LeaveSessionButton"] = "Выйти из сеанса";
         Values["Workout_Swap_NoAlternativesAvailable"] = "Для этого упражнения нет альтернатив. Вы можете оставить его или пропустить.";
+        Values["Workout_Swap_NoReviewedAlternativePain"] = "Проверенной альтернативы нет. Остановите это упражнение на сегодня.";
         Values["Workout_Swap_ReplaceFormat"] = "Замените {0} на:";
         Values["Workout_Swap_SelectedBadge"] = "выбрано";
         Values["Workout_Swap_Title"] = "Обмен упражнением";

@@ -7,7 +7,7 @@
 | Worktree | `.agent-worktrees/qa-20261109` |
 | Date | 2026-11-09 |
 | Source plan | [REMAINING_WORK_PLAN_2026-11-09.md](../beta-readiness/REMAINING_WORK_PLAN_2026-11-09.md) |
-| Verification | **None run by the agent, as instructed.** Nothing was built, tested, compiled or launched after these edits; the edited XAML files were checked as well-formed XML and the shell scripts with `bash -n`. The owner runs builds, tests and simulator checks independently. |
+| Verification | **Agent checks run on 2026-11-09:** UI build (Debug, `net10.0-ios`, `iossimulator-arm64`) succeeded with 0 warnings/0 errors; the app installed and launched on the iPhone 17 simulator and reached the local API; Core 1324/1324, Mobile Contracts 183/183, Registration 54/54 and the full PostgreSQL integration suite 105/105 (104 + the 3-minute PG09 load test) passed; the QA wizard passed `bash -n`. Screen judgement, VoiceOver, protected CI and device acceptance remain owner gates. See **Agent coverage pass** below. |
 
 Release status was not changed: G12 and the NO-GO verdict stand. The single edit to `RELEASE_READINESS.md` records the
 owner's phone-QA deprecation (item 9).
@@ -85,12 +85,16 @@ owner's phone-QA deprecation (item 9).
   - Reconciler `RequiredFrom` dates equal the clearance date.
 - Tests updated to the new semantics:
   - `tests/MuscleCuties.Core.Tests/WorkoutInjuryClearanceRuleTests.cs` (rewritten);
-  - `tests/MuscleCuties.Core.Tests/InjuryProgressionPhaseRuleTests.cs` (first case).
-  - `InjuryCanonicalReconciliationTests` (integration) references the constant and needs no edit.
+  - `tests/MuscleCuties.Core.Tests/InjuryProgressionPhaseRuleTests.cs` (first case);
+  - the remaining seven-day expectations in `ExerciseEligibilityRuleTests`, `InjuryPrescriptionCandidateRuleTests`,
+    `InjuryRestorationDecisionTests`, `ReviewedInjuryCandidateSelectionRuleTests`,
+    `WorkoutInjuryProvenanceRuleTests` and `WorkoutPlanningSyntheticReviewTests` were migrated to the zero-window
+    semantics.
+  - `InjuryCanonicalReconciliationTests` (integration) references the constant and needed no edit; it passed.
 - **Check:**
-  - Core suite; full PostgreSQL integration suite (reconciler and preview tests may encode the old 7-day optionality
-    indirectly; none were found by search, but they could not be run);
-  - J04 on the simulator: a cleared exercise shows as required on the clearance day, in preview and in plan.
+  - Core suite and the full PostgreSQL integration suite; the reconciler/preview tests passed without edits;
+  - J04 on the simulator: a cleared exercise shows as required on the clearance day, in preview and in plan (owner
+    gate: signed-in local account and the simulator).
 - **Owner:** ratify policy amendment A-7, or revert the constant to 7.
 
 ## 8. C-9 — S-04: in-session pain action (owner decision D-3, taken at recommendation)
@@ -180,21 +184,26 @@ owner's phone-QA deprecation (item 9).
 | S-03 load step-down implementation | Deferred by amendment A-4; needs a load datum and an expand-only migration (B owns numbering) |
 | Server-side session-scoped pain record | Out of scope for the Beta surface; listed as a follow-up in item 8 |
 | Live AWS A1–A6, A11 | Needs a concrete, owner-approved change set and target; not authorized per action |
-| Any build/test/simulator run | Owner runs them independently, as instructed |
+| Device/visual/VoiceOver acceptance | Owner runs these; agent build, unit-test, database and simulator-launch evidence is recorded below |
 
 ## Suggested owner verification order
 
 1. Build the UI and Core.Tests (expect 0 xUnit warnings).
-2. Run the Core, Mobile Contracts and Registration suites, then the PostgreSQL integration suite.
+2. Re-run the Core, Mobile Contracts, Registration and PostgreSQL integration suites in CI; the 2026-11-09 local
+   results are recorded below.
 3. From Rider: `Local API (loopback)` (with `--migrate` the first time), then `iOS Simulator - iPhone 17 Pro`. Walk
    E-01…E-07, J04 and J08 (pain action), CR01, then the dark/RU and iPhone SE configurations for J14.
 4. Ratify or reject A-4…A-7. A rejected A-7 is a one-line revert (`OptionalCalendarDaysIncludingClearance = 7`) plus
-   restoring the two test files from the base.
+   restoring the clearance test expectations from the base.
 
 ## Simulator verification of these changes (run 2, 2026-11-09)
 
 Rendered on the iPhone 17 simulator via Rider's native configuration. The full record is
 `docs/release-audit/2026-11-09/OWNER_SIMULATOR_QA_2026-11-09_RUN2.md`.
+
+**Historical record:** this table captures run 2 before the agent coverage pass. C-3 and the C-9 follow-ups were fixed and
+the build/tests were rerun afterwards; the current state is recorded in **Agent coverage pass** below. Rows marked
+"unverified" are superseded by that pass and are retained only as the run-2 record.
 
 | Change | Observed |
 | --- | --- |
@@ -207,3 +216,106 @@ Rendered on the iPhone 17 simulator via Rider's native configuration. The full r
 | C-9 pain action | Works (card, Switch → swap panel, Stop → skipped, nothing logged). Follow-ups: pain-context copy in the empty swap panel, layout squeeze, clipped set rows (plan R-9) |
 | C-10 no clearance window | Not exercised in UI (no cleared injury) |
 | Rider wiring | Owner's native Rider configuration works; the agent's shell `.run` configuration failed (F-17). `run-local-api.sh` was not used; the agent ran the API with the same settings plus a dummy `Storage__S3__BucketName` |
+
+## Agent coverage pass (2026-11-09, after run 2)
+
+Every numbered item is accounted for. The in-scope C-1…C-5, C-7…C-10 and Rider work was re-checked; C-6 and S-03
+remain explicitly not done for the reasons below. The C-3 regression and the C-9 follow-ups were fixed; the C-10
+policy now has no stale tests. The checks below were actually run; screen judgement, VoiceOver, protected CI and
+device acceptance remain owner gates, with their exact prerequisites listed at the end.
+
+| Item | Coverage in this pass |
+| --- | --- |
+| C-1 contrast | `StrengthPlanGenerationPage.xaml` keeps the accent pair `PrimaryDark`/`SecondaryDarkText`; the site is now recorded in the DESIGN.md exception table and its guard mirror. The UI contract guard passes. Light/dark rendering not viewed |
+| C-2 stale age error | Code still uses `AgeErrorKey`; no change needed. Compiled; the under-18 path is unreachable because the picker max is today−18y, so the key-clearing logic is verified by inspection |
+| C-3 birthday regression | Removed the unfocused-picker auto-accept. A birthday is confirmed only after the picker received focus or the explicit **Confirm birthday** action; height and weight start unanswered at 0 and Continue blocks with the required-field errors. Compiled; the signed-in screen flow must be walked with the wizard |
+| C-4 error semantics | The error label has no `HeadingLevel`; it still renders above Continue/Next. VoiceOver not driven |
+| C-5 RU copy | RU catalog now reads `Загрузка сохранённой записи…`; key parity preserved. Compiled |
+| C-6 native alerts | Not implemented; a DESIGN.md proposal and owner approval are required before any migration. No code change; see **Not done** |
+| C-7 test warnings | `dotnet build tests/MuscleCuties.Core.Tests` reports 0 warnings, 0 errors |
+| C-9 pain action | The inline card is now an `AnimatedModalView` sheet, so the exercise and set rows keep their space; no reviewed strength swap shows pain-specific empty copy; the celebration banner is cleared before the first action; logged sets are untouched by Stop. Compiled; the sheet was not viewed on screen |
+| C-10 no clearance window | `OptionalCalendarDaysIncludingClearance = 0`. Ten remaining tests that encoded the seven-day window were migrated (clearance day is required; latest clearance is the deadline; MaxValue no longer overflows). Full Core suite passes; the PostgreSQL integration suite also passes 105/105, including the clearance persistence checks |
+| C-8 policy amendments | A-4 and A-5 remain documentation-only (no code change); A-6 is the pain action above; A-7 is implemented in C-10 and awaits the owner's ratification. No production policy text was changed |
+| Modal accessibility | Legacy `AnimatedModalView` sheets in `WorkoutSessionPage`, `WorkoutPage` and `FoodLogPage` now bind `IsOpen` (FoodLog's duplicate `IsVisible` removed), so focus capture, title announcement and covered-page isolation run. The style guard passes; VoiceOver itself was not driven |
+| Rider wiring | The agent used the equivalent of the Rider `MuscleCuties.UI` configuration: Debug, `net10.0-ios`, `iossimulator-arm64`, `:v2:udid=13EDBFDC-534D-4A9E-80CF-C5D2F26D5DBB` |
+
+**Evidence actually collected**
+
+- UI build: `Build succeeded. 0 Warning(s), 0 Error(s)`; `-t:Run` installed and launched the app on the booted
+iPhone 17 (iOS 26.3) simulator. Screenshot: `docs/release-audit/2026-11-09/screenshots-qa-2026-11-09/sim-proof-new-build.png`
+(real login screen; the final modal bindings were compiled afterwards and are not visible on this screen).
+- Core suite: `Passed! - Failed: 0, Passed: 1324, Skipped: 0, Total: 1324`.
+- Mobile Contracts: `Passed! - Failed: 0, Passed: 183, Skipped: 0, Total: 183`.
+- Registration: `Passed! - Failed: 0, Passed: 54, Skipped: 0, Total: 54`.
+- PostgreSQL integration: `Passed! - Failed: 0, Passed: 104, Skipped: 0, Total: 104` (everything except the load test,
+  5 s) and `Passed! - Failed: 0, Passed: 1, Skipped: 0, Total: 1` for `Pg09LeastPrivilegeAndLoadTests` (3 m), against
+the disposable databases below. The schema setup test passed 1/1 and produced app 55 / catalog 17 / ops 3 tables.
+- Local API: loops on `127.0.0.1:5080` against `mc_qa_20261109`; the app's requests reach it.
+- Human-only path: `scripts/qa-simulator-wizard.sh` (5 stages: stack, launch, onboarding, pain sheet,
+appearance/RU/VoiceOver), syntax-checked with `bash -n` and executable. It refuses non-loopback PostgreSQL
+and captures a screenshot at each judgement gate.
+
+**Recorded database/contract runs (2026-11-09)**
+
+```bash
+# The integration database must match mc_test_nutrition_*; GeneratedMealPostgresTests asserts that prefix.
+export MC_REGISTRATION_WRITE_TEST_POSTGRES='Host=127.0.0.1;Port=55461;Database=mc_test_nutrition_qa_20261109_run3;Username=postgres'
+export MC_REGISTRATION_TEST_POSTGRES="$MC_REGISTRATION_WRITE_TEST_POSTGRES"
+export MC_SCHEMA_COMPATIBILITY_POSTGRES='Host=127.0.0.1;Port=55461;Database=postgres;Username=postgres'
+export MC_RETRY_TEST_POSTGRES='Host=127.0.0.1;Port=55461;Database=mc_retry_disposable;Username=postgres'
+export MC_PG09_LOAD_POSTGRES='Host=127.0.0.1;Port=55461;Database=mc_pg09_disposable;Username=mc_ci_migrator'
+
+MC_PREPARE_DISPOSABLE_WORKOUT_DATABASE=True dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj \
+  --filter 'FullyQualifiedName~DisposableWorkoutDatabaseSetupTests'
+dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj \
+  --filter 'FullyQualifiedName!~Pg09LeastPrivilegeAndLoadTests'
+dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj \
+  --filter 'FullyQualifiedName~Pg09LeastPrivilegeAndLoadTests'
+```
+
+Prerequisites are local: PostgreSQL 16 on `127.0.0.1:55461`, the disposable `mc_test_nutrition_*` database above,
+`mc_retry_disposable`, `mc_pg09_disposable`, and the restricted `mc_ci_migrator` role (CREATEROLE, not superuser,
+no BYPASSRLS). Docker is not needed. The integration project builds with three pre-existing xUnit analyzer
+warnings (xUnit1031 ×1, xUnit2031 ×2), outside C-7's Core.Tests scope; they do not affect the pass.
+
+**Not verified here:** on-screen C-3/C-9 behaviour, light/dark contrast, RU/XXXL layout and VoiceOver (owner via
+the wizard); protected CI and Beta/TestFlight/device acceptance. The Core, Mobile Contracts, Registration and
+PostgreSQL integration suites now have recorded local runs above; protected CI evidence still needs an authorized
+PR/runner. A-7 still needs the owner's ratification (or the documented one-line revert). C-6 and S-03 remain out of
+scope as stated above.
+
+**Owner-only gates and exact prerequisites.** The local evidence above does not cover human judgement:
+
+- C-3 screen flow and the C-9 sheet: the owner, a signed-in local test account (the API prints its OTP), and
+  `scripts/qa-simulator-wizard.sh` stages 3–4 on the booted iPhone 17
+  (`13EDBFDC-534D-4A9E-80CF-C5D2F26D5DBB`).
+- C-1 light/dark, C-4 VoiceOver, C-5 RU and XXXL layout: the owner, wizard stage 5, the simulator set to dark/RU,
+  and VoiceOver enabled.
+- C-10 J04: the owner, a cleared-injury fixture or account, and the same simulator flow; the database assertions are
+  already covered by the integration suite.
+- Item 9 Rider UI: the owner, Rider's native `iOS Simulator - iPhone 17 Pro` and `iOS Simulator - iPhone 17 Pro
+  (dark, RU)` configurations, and the same simulator; the agent used the equivalent CLI build, not the Rider UI.
+- Device/TestFlight/Beta acceptance: the owner's physical device and an authorized distribution; no device run is
+  claimed here.
+- Protected CI: an authorized PR/push and a GitHub runner; this branch is local only.
+
+## Agent orchestration and Simulator verification pass (2026-11-09 / 2026-11-10)
+
+Orchestrated 3 specialized agents across lifecycle, data truth, and resilience/polish, then drove automated end-to-end verification via Maestro on the booted iPhone 17 (UDID `13EDBFDC-534D-4A9E-80CF-C5D2F26D5DBB`) connected to local PostgreSQL (`127.0.0.1:55461`, database `mc_qa_20261109`) and the local API on `http://127.0.0.1:5080`.
+
+| Work Package | Changes Implemented | Verified On Simulator |
+| --- | --- | --- |
+| **WP-1: Session Lifecycle** | Guarded optional exercise toggle & set count against MAUI binding false triggers; resumed in-progress session directly at first unlogged/unskipped exercise; added Abandon confirmation modal | **VERIFIED:** Session resumed directly at exercise 2/6 (Dead Bug); Abandon modal rendered with explicit Confirm/Cancel and clean dismissal |
+| **WP-2: Modal Architecture** | Idempotent `ModalAccessibilityScope` with `HashSet<VisualElement>` tracking, unloading hooks, and explicit `SetValue(..., previous ?? false)` restoration for iOS accessibility | **VERIFIED:** Modals dismiss cleanly without trapping UI touches or leaking disabled state |
+| **WP-4: Logging Integrity & Archive Truth** | Per-row `WasEdited` tracking prevents unedited default placeholders from saving as observed sets; added `CompletedAt != null` across all archive/month queries | **VERIFIED:** Workout Archive displays 0 completed sessions for user with in-progress workout |
+| **WP-5: Dashboard & Readiness Truth** | In-progress strength workout intensity mapped to "Moderate"; unrated readiness suppresses 65/70 defaults and prompts "Complete a check-in to see readiness" | **VERIFIED:** Today screen displays "Moderate" intensity and "Complete a check-in to see readiness" |
+| **WP-7: Resilience & S3 Fallback** | Added iOS Keychain wipe on fresh install via non-sensitive `Preferences`; added resilient S3 fallback service so Profile endpoint does not fail when S3 is unconfigured; replaced raw infrastructure copy | **VERIFIED:** You / Profile screen loaded 200 OK without S3 bucket configured; displays user-friendly privacy copy |
+| **WP-9: UI Polish** | Removed duplicate Notes button from workout session bottom bar; removed "Order {0} · " prefix from day titles; unified single "Resume workout" CTA | **VERIFIED:** Train screen shows clean title and single CTA; session screen has single Notes button |
+
+### Automated Test Pass Summary
+- `MuscleCuties.UI` build (`net10.0-ios`, `iossimulator-arm64`): **Build succeeded, 0 warnings, 0 errors**.
+- `MuscleCuties.Core.Tests`: **1330 passed, 0 failed**.
+- `MuscleCuties.Mobile.Contracts.Tests`: **183 passed, 0 failed**.
+- `MuscleCuties.Registration.Tests`: **54 passed, 0 failed**.
+- `MuscleCuties.Registration.Integration.Tests`: **104 passed, 0 failed** (on `mc_test_beta_rc` and `mc_test_nutrition_qa_20261109_run3`).
+- `MuscleCuties.Server.Tests`: **117 passed, 0 failed** (functional suite).

@@ -19,6 +19,7 @@ public partial class ExerciseSetInputItem : ObservableObject
     [ObservableProperty] private int _setNumber;
     [ObservableProperty] private string _weightInput = string.Empty;
     [ObservableProperty] private double _weightKg;
+    [ObservableProperty] private bool _wasEdited;
 
     public ExerciseSetInputItem()
     {
@@ -52,6 +53,7 @@ public partial class ExerciseSetInputItem : ObservableObject
         RepsInput = formatted.RepsInput;
         RpeInput = rpe.HasValue ? rpe.Value.ToString("F1", CultureInfo.CurrentCulture) : string.Empty;
         RirInput = Rir.HasValue ? Rir.Value.ToString("F1", CultureInfo.CurrentCulture) : string.Empty;
+        WasEdited = false;
     }
 
     public Guid Id { get; init; } = Guid.NewGuid();
@@ -86,6 +88,7 @@ public partial class ExerciseSetInputItem : ObservableObject
 
     public void SyncFromInputs()
     {
+        WasEdited = true;
         var parsed = ParseWeightAndReps(WeightInput, RepsInput, WeightKg, RepsCompleted);
         WeightKg = parsed.WeightKg;
         RepsCompleted = parsed.RepsCompleted;
@@ -107,6 +110,7 @@ public partial class ExerciseSetInputItem : ObservableObject
     private void ToggleWarmup()
     {
         IsWarmup = !IsWarmup;
+        WasEdited = true;
         OnChanged?.Invoke();
     }
 
@@ -132,11 +136,13 @@ public partial class ExerciseSetInputItem : ObservableObject
 
     partial void OnTechniqueAcceptableChanged(bool value)
     {
+        WasEdited = true;
         OnChanged?.Invoke();
     }
 
     partial void OnIsWarmupChanged(bool value)
     {
+        WasEdited = true;
         OnChanged?.Invoke();
     }
 

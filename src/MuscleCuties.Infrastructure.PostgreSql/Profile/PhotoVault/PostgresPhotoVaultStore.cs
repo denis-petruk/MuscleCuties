@@ -33,6 +33,9 @@ public sealed class PostgresPhotoVaultStore(
         PhotoUploadUrlRequest request,
         CancellationToken cancellationToken = default)
     {
+        if (!S3StorageConfiguration.HasBucketName(configuration))
+            throw new InvalidOperationException("Photo storage is unavailable because Storage:S3:BucketName is not configured.");
+
         if (request.ContentType?.Trim().ToLowerInvariant() is not ("image/jpeg" or "image/png"))
             throw new ArgumentException("Only still JPEG and PNG photos are supported.", nameof(request));
         var nowUtc = DateTime.UtcNow;
@@ -260,6 +263,9 @@ public sealed class PostgresPhotoVaultStore(
         CancellationToken cancellationToken = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync<PhotoHistoryResponse>(async () =>
         {
+            if (!S3StorageConfiguration.HasBucketName(configuration))
+                return new PhotoHistoryResponse([], 0);
+
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -310,6 +316,9 @@ public sealed class PostgresPhotoVaultStore(
         CancellationToken cancellationToken = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync<PhotoDownloadUrlResponse?>(async () =>
         {
+            if (!S3StorageConfiguration.HasBucketName(configuration))
+                return null;
+
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken)
                 .ConfigureAwait(false);

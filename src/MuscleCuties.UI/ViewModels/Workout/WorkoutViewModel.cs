@@ -208,6 +208,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     partial void OnIsRescheduleModalVisibleChanged(bool value) =>
         OnPropertyChanged(nameof(IsTabBarVisible));
 
+    partial void OnInProgressWorkoutChanged(WorkoutListEntry? value) =>
+        ApplyFeaturedWorkout(SelectedScheduleDay);
+
     public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
 
@@ -371,9 +374,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                 WorkoutDayId = item.WorkoutDayId,
                 Tag = item.Tag,
                 DayLabel = item.DayLabel,
-                Title = item.DayOrder is { } order
-                    ? UiTextCatalog.Format("Workout_Overview_OrderedTitleFormat", order, item.Title)
-                    : item.Title,
+                Title = item.Title,
                 Duration = item.Duration,
                 ExerciseCount = item.ExerciseCount,
                 ActivityCount = item.ActivityCount,
@@ -694,9 +695,13 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             return;
         }
 
+        var isFeaturedInProgress = HasInProgressWorkout &&
+            featuredWorkout.WorkoutDayId == InProgressWorkout?.WorkoutDayId;
+
         _featuredWorkout = featuredWorkout;
         FeaturedWorkoutIsRestDay = featuredWorkout.IsRestDay;
-        FeaturedWorkoutHasAction = !featuredWorkout.IsRestDay;
+        FeaturedWorkoutHasAction = !featuredWorkout.IsRestDay &&
+            (!HasInProgressWorkout || featuredWorkout.IsCompleted || isFeaturedInProgress);
         FeaturedWorkoutIsEditAction = featuredWorkout.IsCompleted;
         FeaturedWorkoutActivityBackground = featuredWorkout.ActivityBackground;
         FeaturedWorkoutActivityTextColor = featuredWorkout.ActivityTextColor;
@@ -718,7 +723,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             ? UiTextCatalog.Get("Workout_Featured_EditWorkout")
             : featuredWorkout.IsRestDay
                 ? UiTextCatalog.Get("Workout_Featured_LogRestDay")
-                : UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
+                : isFeaturedInProgress
+                    ? UiTextCatalog.Get("Workout_Overview_ResumeWorkout")
+                    : UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
 
         var sections = BuildFeaturedActivitySections(featuredWorkout);
         FeaturedWorkoutActivitySections = new ObservableCollection<WorkoutActivitySection>(sections);
@@ -831,6 +838,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     private async Task OpenFeaturedWorkoutAsync()
     {
+        if (HasInProgressWorkout && _featuredWorkout?.WorkoutDayId == InProgressWorkout?.WorkoutDayId)
+        {
+            await ResumeInProgressWorkoutAsync();
+            return;
+        }
+
         if (_featuredWorkout is not null)
             await OpenWorkoutAsync(_featuredWorkout);
     }

@@ -6,11 +6,12 @@ namespace MuscleCuties.Core.Tests;
 public sealed class WorkoutInjuryProvenanceRuleTests
 {
     [Fact]
-    public void OverlappingInjuriesUseLatestClearanceWithoutResettingOnDelayedRestoration()
+    public void OverlappingInjuriesUseTheLatestClearanceWithoutAWindow()
     {
         var first = new DateOnly(2026, 2, 1);
         var second = new DateOnly(2026, 2, 4);
-        var requiredFrom = new DateOnly(2026, 2, 11);
+        // S-05: no optional window; the latest clearance is the required date.
+        var requiredFrom = second;
         DateOnly?[] clearances = [first, second];
 
         Assert.Equal(requiredFrom, WorkoutInjuryClearanceRule.RequiredFromForAllClearances(clearances));

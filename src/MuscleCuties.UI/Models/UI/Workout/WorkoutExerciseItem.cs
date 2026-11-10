@@ -13,6 +13,31 @@ public partial class WorkoutExerciseItem : ObservableObject
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanMarkOptional))] private bool _isLogged;
     [ObservableProperty] private bool _isOptional;
     [ObservableProperty] private int _optionalSets;
+    private bool _lastSavedIsOptional;
+    private int _lastSavedOptionalSets;
+    public bool LastSavedIsOptional => _lastSavedIsOptional;
+    public int LastSavedOptionalSets => _lastSavedOptionalSets;
+
+    public void SyncSavedOptionalState()
+    {
+        _lastSavedIsOptional = IsOptional;
+        _lastSavedOptionalSets = OptionalSets;
+    }
+
+    public void RevertOptionalState()
+    {
+        IsOptional = _lastSavedIsOptional;
+        OptionalSets = _lastSavedOptionalSets;
+    }
+
+    public bool ShouldInvokeOptionalApi()
+    {
+        if (IsLogged || !CanMarkOptional)
+            return false;
+        if (IsOptional == _lastSavedIsOptional && OptionalSets == _lastSavedOptionalSets)
+            return false;
+        return true;
+    }
     private string _loggedEffortText = string.Empty;
     [ObservableProperty] private string _loggedRepsText = string.Empty;
     [ObservableProperty] private string _loggedSetsText = string.Empty;
@@ -142,7 +167,8 @@ public partial class WorkoutExerciseItem : ObservableObject
         {
             OnChanged = () => UpdateAggregatesFromSets(fromUser: true),
             RemoveCommand = RemoveSetCommand,
-            ShowWeight = UsesWeight
+            ShowWeight = UsesWeight,
+            WasEdited = true
         };
         Sets.Add(set);
         UpdateAggregatesFromSets(fromUser: true);
@@ -192,7 +218,7 @@ public partial class WorkoutExerciseItem : ObservableObject
 
     public void UpdateAggregatesFromSets(bool fromUser = false)
     {
-        SetsWereEdited |= fromUser;
+        SetsWereEdited |= fromUser || Sets.Any(s => s.WasEdited);
         if (Sets.Count == 0) return;
         LoggedSetsText = Sets.Count.ToString(CultureInfo.InvariantCulture);
         var workingSets = Sets.Where(s => !s.IsWarmup).ToList();

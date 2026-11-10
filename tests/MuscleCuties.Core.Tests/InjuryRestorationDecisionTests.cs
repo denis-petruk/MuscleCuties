@@ -6,18 +6,19 @@ namespace MuscleCuties.Core.Tests;
 public sealed class InjuryRestorationDecisionTests
 {
     [Fact]
-    public void OverlappingEpisodesUseLatestOriginalDeadlineEvenWhenRestorationIsDelayed()
+    public void OverlappingEpisodesUseTheLatestClearanceWithoutAWindow()
     {
         var first = Guid.NewGuid();
         var second = Guid.NewGuid();
         var latestClearance = new DateOnly(2026, 2, 4);
-        var requiredFrom = new DateOnly(2026, 2, 11);
+        // S-05: the latest clearance is the required date; a delayed run does not move it.
+        var requiredFrom = latestClearance;
         var input = new InjuryRestorationInput(latestClearance, true, true, true, true,
             [first, second], [new(first, new DateOnly(2026, 2, 1)), new(second, latestClearance)]);
-        var optional = InjuryRestorationRule.Decide(input);
-        Assert.Equal(InjuryRestorationDisposition.OriginalOptional, optional.Disposition);
-        Assert.Equal(requiredFrom, optional.OriginalRequiredFrom);
-        var delayed = InjuryRestorationRule.Decide(input with { EffectiveDate = requiredFrom });
+        var restored = InjuryRestorationRule.Decide(input);
+        Assert.Equal(InjuryRestorationDisposition.OriginalRequired, restored.Disposition);
+        Assert.Equal(requiredFrom, restored.OriginalRequiredFrom);
+        var delayed = InjuryRestorationRule.Decide(input with { EffectiveDate = latestClearance.AddDays(7) });
         Assert.Equal(InjuryRestorationDisposition.OriginalRequired, delayed.Disposition);
         Assert.Equal(requiredFrom, delayed.OriginalRequiredFrom);
     }

@@ -103,6 +103,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowNoSwapCandidates))]
     private bool _isSwapLoading;
 
+    [ObservableProperty] private string _swapEmptyTextKey = "Workout_Swap_NoAlternativesAvailable";
+
     [ObservableProperty] private bool _isSwapPanelVisible;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(TipsButtonText))]
@@ -269,28 +271,22 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     public async Task SaveOptionalExerciseAsync(WorkoutExerciseItem item)
     {
-        if (item.WorkoutDayExerciseId <= 0) return;
+        if (item is null || item.WorkoutDayExerciseId <= 0) return;
+        if (item.IsLogged || !item.CanMarkOptional) return;
         if (!item.IsOptional) item.OptionalSets = 0;
+        if (item.IsOptional == item.LastSavedIsOptional && item.OptionalSets == item.LastSavedOptionalSets)
+            return;
+
         try
         {
             await _session.SetExerciseOptionalAsync(new SetWorkoutExerciseOptionalRequest(
                 item.WorkoutDayExerciseId, item.IsOptional, item.IsOptional ? item.OptionalSets : 0));
+            item.SyncSavedOptionalState();
         }
         catch (Exception ex)
         {
-            ApplyFailure(ApiFailurePresenter.FromException(ex, "Ui_Workout_Error_SaveExercise"));
-            try
-            {
-                var detail = await _session.GetDetailAsync(_workoutDayId);
-                var saved = detail.Exercises.FirstOrDefault(e => e.WorkoutDayExerciseId == item.WorkoutDayExerciseId);
-                if (saved is not null)
-                {
-                    item.IsOptional = saved.IsOptional;
-                    item.OptionalSets = saved.OptionalSets;
-                }
-            }
-            catch { }
-            throw;
+            Trace.WriteLine($"[WorkoutSessionViewModel] Failed to save optional exercise state ({ex.GetType().Name}): {ex.Message}");
+            item.RevertOptionalState();
         }
     }
     [ObservableProperty]
@@ -497,11 +493,50 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             RefreshActivityCards();
             CyclePhaseNote = phaseNote;
             IsBusy = false;
-            var requestedActivity = !string.IsNullOrWhiteSpace(activityTag)
+            var isResuming = _sessionCreated || ActivityCards.SelectMany(a => a.Exercises).Any(e => e.IsLogged);
+            var targetActivity = !string.IsNullOrWhiteSpace(activityTag)
                 ? ActivityCards.FirstOrDefault(item =>
                     string.Equals(item.Tag, activityTag, StringComparison.OrdinalIgnoreCase))
-                : null;
-            SelectActivity(requestedActivity ?? ActivityCards.FirstOrDefault());
+                : isResuming
+                    ? ActivityCards.FirstOrDefault(a => a.Exercises.Any(e => !e.IsLogged && !_skippedIds.Contains(e.WorkoutDayExerciseId)))
+                    : null;
+            SelectActivity(targetActivity ?? ActivityCards.FirstOrDefault());
+
+            if (isResuming && SelectedActivity is not null)
+            {
+                if (SelectedActivity.IsTimedActivity)
+                {
+                    if (!_activityTimers.TryGetValue(SelectedActivity, out var timer))
+                        _activityTimers[SelectedActivity] = timer = new Stopwatch();
+                    timer.Start();
+                    IsTimedActivityRunning = true;
+                    IsTimedActivityPaused = false;
+                    CurrentScreen = SessionScreen.TimedActivity;
+                    StartTimedActivityDisplay();
+                    if (_plannedSessionId.HasValue)
+                    {
+                        _ = ResumeTimingAsync(_plannedSessionId.Value);
+                    }
+                }
+                else
+                {
+                    var firstPending = SelectedActivity.Exercises
+                        .Select((item, index) => (item, index))
+                        .FirstOrDefault(p => !p.item.IsLogged && !_skippedIds.Contains(p.item.WorkoutDayExerciseId));
+                    if (firstPending.item is not null)
+                    {
+                        if (!_activityTimers.TryGetValue(SelectedActivity, out var timer))
+                            _activityTimers[SelectedActivity] = timer = new Stopwatch();
+                        timer.Start();
+                        CurrentScreen = SessionScreen.ExerciseFlow;
+                        SetCurrentExercise(firstPending.index);
+                        if (_plannedSessionId.HasValue)
+                        {
+                            _ = ResumeTimingAsync(_plannedSessionId.Value);
+                        }
+                    }
+                }
+            }
         }
         catch (Exception exception)
         {
@@ -665,7 +700,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             return;
         }
         CurrentScreen = SessionScreen.ExerciseFlow;
-        SetCurrentExercise(0);
+        var firstUnlogged = SelectedActivity.Exercises
+            .Select((item, index) => (item, index))
+            .FirstOrDefault(pair => !pair.item.IsLogged && !_skippedIds.Contains(pair.item.WorkoutDayExerciseId));
+        SetCurrentExercise(firstUnlogged.item is not null ? firstUnlogged.index : 0);
     }
 
     private const string StartFailedTextKey = "Workout_Session_StartFailed";
@@ -791,6 +829,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private void ReportPain()
     {
         if (!CanChangeExercise() || CurrentExercise is null) return;
+        Celebration = CelebrationType.None;
         _painReportedIds.Add(CurrentExercise.WorkoutDayExerciseId);
         OnPropertyChanged(nameof(HasPainReports));
         IsPainReportVisible = true;
@@ -800,7 +839,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private async Task PainSwapAsync()
     {
         IsPainReportVisible = false;
-        await OpenSwapPanelAsync();
+        SwapEmptyTextKey = "Workout_Swap_NoReviewedAlternativePain";
+        await OpenSwapPanelCoreAsync();
     }
 
     [RelayCommand]
@@ -1220,21 +1260,21 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private void AbandonPlannedSession()
+    public void AbandonPlannedSession()
     {
         if (_pendingCompletionAtUtc is not null)
         {
             ErrorText = "Workout_Session_ConnectionRetry";
             return;
         }
-        if (IsBusy || _plannedSessionId is null) return;
+        if (IsBusy) return;
         // Abandon is destructive for the session record, so it always needs an explicit confirmation.
         ErrorText = string.Empty;
         IsAbandonConfirmationVisible = true;
     }
 
     [RelayCommand]
-    private void CancelAbandonPlannedSession()
+    public void CancelAbandonPlannedSession()
     {
         // Cancelling keeps the active state and any confirmed time; nothing is sent to the server.
         if (IsBusy) return;
@@ -1242,7 +1282,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private async Task ConfirmAbandonPlannedSessionAsync()
+    public async Task ConfirmAbandonPlannedSessionAsync()
     {
         if (_pendingCompletionAtUtc is not null)
         {
@@ -1520,9 +1560,16 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     }
 
     [RelayCommand]
-    private async Task OpenSwapPanelAsync()
+    private Task OpenSwapPanelAsync()
+    {
+        SwapEmptyTextKey = "Workout_Swap_NoAlternativesAvailable";
+        return OpenSwapPanelCoreAsync();
+    }
+
+    private async Task OpenSwapPanelCoreAsync()
     {
         if (!CanChangeExercise() || CurrentExercise is not { UsesStrengthMetrics: true } exercise) return;
+        Celebration = CelebrationType.None;
         var version = ++_swapVersion;
         IsSwapPanelVisible = true;
         IsSwapLoading = true;
@@ -1826,9 +1873,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     private static WorkoutExerciseLogDto BuildLogInput(WorkoutExerciseItem item)
     {
+        var editedSets = item.Sets.Where(set => set.WasEdited).ToList();
         var observedSets = ObservedSetInputMapping.Build(
-            item.UsesStrengthMetrics && item.SetsWereEdited,
-            item.Sets.Select(set => new EditableObservedSet(
+            item.UsesStrengthMetrics && editedSets.Count > 0,
+            editedSets.Select(set => new EditableObservedSet(
                 set.SetNumber,
                 set.RepsCompleted,
                 item.UsesWeight ? (decimal)set.WeightKg : 0m,

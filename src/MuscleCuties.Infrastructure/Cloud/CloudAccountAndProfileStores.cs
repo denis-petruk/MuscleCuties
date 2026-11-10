@@ -656,12 +656,13 @@ public sealed class CloudProfileOverviewStore(
             await workoutCountTask.ConfigureAwait(false), "profile overview workout count").Count;
         var activeInjuryCount = CloudStoreResponse.RequireData(
             await injuriesTask.ConfigureAwait(false), "profile overview injuries").Count(injury => injury.IsActive);
-        var photos = CloudStoreResponse.RequireData(await photosTask.ConfigureAwait(false), "profile overview photos");
-        var vaultPhotoCount = photos.TotalCount;
+        var photosResponse = await photosTask.ConfigureAwait(false);
+        var isVaultAvailable = photosResponse.Status == BackendApiStatus.Success && photosResponse.Data is not null;
+        var vaultPhotoCount = isVaultAvailable ? photosResponse.Data!.TotalCount : -1;
         var latestVaultPhotoPath = string.Empty;
-        if (photos.Photos.Count > 0)
+        if (isVaultAvailable && photosResponse.Data!.Photos.Count > 0)
         {
-            var latestPhoto = photos.Photos[0];
+            var latestPhoto = photosResponse.Data!.Photos[0];
             var downloadResponse = await apiClient.GetAsync<PhotoDownloadUrlResponse>(
                 $"{PhotosRoute}/{latestPhoto.Id:D}/download-url",
                 cancellationToken).ConfigureAwait(false);

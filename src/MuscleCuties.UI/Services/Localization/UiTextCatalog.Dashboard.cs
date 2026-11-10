@@ -111,6 +111,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Phase_SemanticCurrentPhase"] = "Current cycle phase: {0}. Tap to view cycle details.";
         English["Dashboard_Readiness_AverageScores"] = "Average of both scores";
         English["Dashboard_Readiness_DailyBalanceMax"] = "Daily balance / 100";
+        English["Dashboard_Readiness_CheckInPrompt"] = "Complete a check-in to see readiness";
         English["Dashboard_Readiness_SelfReportedSubtitle"] = "Based on your daily check-in";
         English["Dashboard_Readiness_HealthOrBaselineSubtitle"] = "Apple Health & baseline";
         English["Dashboard_Readiness_CheckInNeeded"] = "Check-in needed";

@@ -414,6 +414,7 @@ public static partial class UiTextCatalog
         English["Workout_Swap_CloseButton"] = "Close";
         English["Workout_Swap_LeaveSessionButton"] = "Leave session";
         English["Workout_Swap_NoAlternativesAvailable"] = "No alternatives are available for this exercise. You can keep it or skip it.";
+        English["Workout_Swap_NoReviewedAlternativePain"] = "No reviewed alternative is available. Stop this exercise for today.";
         English["Workout_Swap_ReplaceFormat"] = "Replace {0} with:";
         English["Workout_Swap_SelectedBadge"] = "Selected";
         English["Workout_Swap_Title"] = "Swap exercise";

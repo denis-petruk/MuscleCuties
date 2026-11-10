@@ -32,7 +32,18 @@
                 </Border>
             </Grid>
 
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_4}">
+            <Border Style="{StaticResource CardSecondary}"
+                    IsVisible="{Binding HasTodayReadinessRecord, Converter={StaticResource InvertedBoolConverter}}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
+                    <Label Text="{loc:LocalizedText Dashboard_Readiness_CheckInPrompt}"
+                           Style="{StaticResource BodyStrong}"
+                           HorizontalOptions="Center"
+                           HorizontalTextAlignment="Center" />
+                </VerticalStackLayout>
+            </Border>
+
+            <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_4}"
+                  IsVisible="{Binding HasTodayReadinessRecord}">
                 <Border Style="{StaticResource CardSecondary}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
                         <Grid WidthRequest="{StaticResource UiDimension88}" HeightRequest="{StaticResource UiDimension88}" HorizontalOptions="Center">

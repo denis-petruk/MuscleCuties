@@ -1103,19 +1103,15 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     // =========================================================================
 
     [Fact]
-    public void InjuryClearance_RestoredExerciseIsOptionalForSevenDaysIncludingClearance()
+    public void InjuryClearance_RestoredExerciseIsRequiredFromTheClearanceDay()
     {
         var clearanceDate = new DateOnly(ReferenceYear, ReferenceMonth, OneDay);
         var requiredFromDate = WorkoutInjuryClearanceRule.RequiredFromLocalDate(clearanceDate);
 
         Assert.NotNull(requiredFromDate);
-        Assert.Equal(new DateOnly(ReferenceYear, ReferenceMonth, EightDays), requiredFromDate.Value);
-
-        // Clearance day is optional
-        Assert.True(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(clearanceDate, clearanceDate));
-        // Day seven includes the clearance date.
-        Assert.True(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(clearanceDate, requiredFromDate.Value.AddDays(-OneDay)));
-        Assert.False(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(clearanceDate, requiredFromDate.Value));
+        Assert.Equal(clearanceDate, requiredFromDate.Value);
+        Assert.False(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(clearanceDate, clearanceDate));
+        Assert.False(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(clearanceDate, clearanceDate.AddDays(7)));
     }
 
     [Fact]
@@ -1164,12 +1160,13 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     }
 
     [Fact]
-    public void InjuryClearance_RequiredFromLocalDate_NearDateOnlyMaxValue_FailsClosed()
+    public void InjuryClearance_RequiredFromLocalDate_AtDateOnlyMaxValue_ReturnsTheClearanceDate()
     {
         var maxClearance = DateOnly.MaxValue;
         var requiredFrom = WorkoutInjuryClearanceRule.RequiredFromLocalDate(maxClearance);
 
-        Assert.Null(requiredFrom);
+        // A zero-day window cannot overflow; the clearance date is the required date.
+        Assert.Equal(maxClearance, requiredFrom);
     }
 
     // =========================================================================

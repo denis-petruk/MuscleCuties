@@ -115,6 +115,7 @@ public partial class WorkoutSessionPage : ContentPage
     private async void OnOptionalExerciseToggled(object? sender, ToggledEventArgs e)
     {
         if (sender is not Microsoft.Maui.Controls.Switch { BindingContext: WorkoutExerciseItem exercise }) return;
+        if (_viewModel.IsBusy || !exercise.ShouldInvokeOptionalApi()) return;
         try { await _viewModel.SaveOptionalExerciseAsync(exercise); }
         catch (Exception exception)
         {
@@ -125,6 +126,7 @@ public partial class WorkoutSessionPage : ContentPage
     private async void OnOptionalSetsChanged(object? sender, ValueChangedEventArgs e)
     {
         if (sender is not Stepper { BindingContext: WorkoutExerciseItem exercise }) return;
+        if (_viewModel.IsBusy || !exercise.ShouldInvokeOptionalApi()) return;
         try { await _viewModel.SaveOptionalExerciseAsync(exercise); }
         catch (Exception exception)
         {

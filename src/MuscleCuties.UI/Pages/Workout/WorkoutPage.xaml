@@ -454,7 +454,7 @@
         <!-- Reschedule Workout Modal -->
         <sharedControls:AnimatedModalView Grid.RowSpan="{StaticResource WorkoutOverlayRowSpan}"
                                           ZIndex="12"
-                                          IsVisible="{Binding IsRescheduleModalVisible}">
+                                          IsOpen="{Binding IsRescheduleModalVisible}">
             <Grid>
                 <BoxView BackgroundColor="{StaticResource ModalScrim}">
                     <BoxView.GestureRecognizers>

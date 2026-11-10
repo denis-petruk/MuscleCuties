@@ -289,9 +289,17 @@ public static class ApiApplication
         builder.Services.AddScoped<ReadBodyMeasurementHistoryUseCase>();
         builder.Services.AddScoped<IFastingSessionStore, PostgresFastingStore>();
         builder.Services.AddScoped<FastingSessionUseCase>();
-        builder.Services.AddSingleton<IS3PresignedUrlService, DefaultS3PresignedUrlService>();
+        if (DefaultS3PresignedUrlService.IsConfigured(builder.Configuration))
+        {
+            builder.Services.AddSingleton<IS3PresignedUrlService, DefaultS3PresignedUrlService>();
+            builder.Services.AddHttpClient<IS3PhotoObjectInspector, DefaultS3PhotoObjectInspector>();
+        }
+        else
+        {
+            builder.Services.AddSingleton<IS3PresignedUrlService, UnavailableS3PresignedUrlService>();
+            builder.Services.AddSingleton<IS3PhotoObjectInspector, UnavailableS3PhotoObjectInspector>();
+        }
         builder.Services.AddScoped<IPhotoUploadIntentStore, PostgresPhotoUploadIntentStore>();
-        builder.Services.AddHttpClient<IS3PhotoObjectInspector, DefaultS3PhotoObjectInspector>();
         builder.Services.AddSingleton<IPhotoByteSanitizer, SkiaPhotoByteSanitizer>();
         builder.Services.AddScoped<IServerPhotoVaultStore, PostgresPhotoVaultStore>();
         builder.Services.AddScoped<ServerPhotoVaultUseCase>();

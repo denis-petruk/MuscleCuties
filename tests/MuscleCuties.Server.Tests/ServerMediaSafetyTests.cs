@@ -39,6 +39,17 @@ public sealed class ServerMediaSafetyTests
     }
 
     [Fact]
+    public void MissingBucketGracefullyMarksServiceUnconfigured()
+    {
+        var missingBucket = Configuration(includeBucket: false);
+        Assert.False(DefaultS3PresignedUrlService.IsConfigured(missingBucket));
+
+        var unavailable = new UnavailableS3PresignedUrlService();
+        var ex = Assert.Throws<InvalidOperationException>(() => unavailable.GeneratePresignedDownloadUrl("test", TimeSpan.FromMinutes(1)));
+        Assert.Contains("Storage:S3:BucketName", ex.Message);
+    }
+
+    [Fact]
     public async Task CleanupProcessorRequiresBucketBeforeClaimingDatabaseWork()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()

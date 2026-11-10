@@ -96,12 +96,13 @@
                         </Border>
                     </Grid>
             
-                    <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                    <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                         <Label Text="{loc:LocalizedText Profile_PersonalInfo_Birthday}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                         <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                             <DatePicker
                                 AutomationId="ProfileSetupBirthDatePicker"
                                 Date="{Binding BirthDate}"
+                                Focused="OnBirthDatePickerFocused"
                                 DateSelected="OnBirthDateSelected"
                                 Unfocused="OnBirthDatePickerUnfocused"
                                 MinimumDate="{Binding MinBirthDate}"
@@ -110,6 +111,18 @@
                                 SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_Birthday}"
                                 SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_SelectYourDateOfBirth}" />
                         </Border>
+                        <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceMicro}">
+                            <Button Text="{loc:LocalizedText Onboarding_ProfileSetup_ConfirmBirthday}"
+                                    AutomationId="ProfileSetupConfirmBirthDateButton"
+                                    Command="{Binding ConfirmBirthDateCommand}"
+                                    Style="{StaticResource ButtonSecondary}"
+                                    HorizontalOptions="Start"
+                                    IsVisible="{Binding BirthDateConfirmed, Converter={StaticResource InvertedBoolConverter}}" />
+                            <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_BirthdayConfirmed}"
+                                   Style="{StaticResource AccentLabel}"
+                                   LineBreakMode="WordWrap"
+                                   IsVisible="{Binding BirthDateConfirmed}" />
+                        </VerticalStackLayout>
                     </Grid>
             
                     <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
@@ -264,6 +277,8 @@
                 <CheckBox
                     x:Name="WellnessAcknowledgment"
                     AutomationId="WellnessAcknowledgmentCheckBox"
+                    Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
+                    CheckedChanged="OnWellnessAcknowledgmentCheckedChanged"
                     MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                     MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
                     VerticalOptions="Center"

@@ -19,6 +19,7 @@ public class AnimatedModalView : ContentView
 
     private VisualElement? _capturedFocusTarget;
     private ContentPage? _isolationPage;
+    private Page? _hookedPage;
     private long _transitionVersion;
     private bool _focusEntryPending;
     private bool _announcementDelivered;
@@ -29,6 +30,7 @@ public class AnimatedModalView : ContentView
         InputTransparent = true;
         CascadeInputTransparent = true;
         Loaded += OnLoaded;
+        Unloaded += OnUnloaded;
     }
 
     public bool IsOpen
@@ -58,8 +60,56 @@ public class AnimatedModalView : ContentView
             CompleteOpen(_transitionVersion);
     }
 
+    private void HookPage(Page? page)
+    {
+        if (ReferenceEquals(_hookedPage, page))
+            return;
+
+        UnhookPage(_hookedPage);
+        if (page is null)
+            return;
+
+        _hookedPage = page;
+        page.Disappearing += OnPageDisappearing;
+    }
+
+    private void UnhookPage(Page? page)
+    {
+        if (page is not null)
+        {
+            page.Disappearing -= OnPageDisappearing;
+        }
+
+        if (ReferenceEquals(_hookedPage, page))
+            _hookedPage = null;
+    }
+
+    private void OnUnloaded(object? sender, EventArgs e)
+    {
+        ReleaseScope();
+        UnhookPage(_hookedPage ?? _isolationPage ?? HostPage());
+    }
+
+    private void OnPageDisappearing(object? sender, EventArgs e)
+    {
+        ReleaseScope();
+    }
+
+    private void ReleaseScope()
+    {
+        var page = _isolationPage ?? _hookedPage ?? HostPage();
+        if (page is not null)
+        {
+            ModalAccessibilityScope.Release(page, this);
+            _isolationPage = null;
+        }
+    }
+
     private void OnLoaded(object? sender, EventArgs e)
     {
+        var page = HostPage();
+        HookPage(page);
+
         if (!IsOpen)
         {
             IsVisible = false;
@@ -72,7 +122,7 @@ public class AnimatedModalView : ContentView
         // page tree as soon as the sheet is loaded.
         if (_isolationPage is null)
         {
-            _isolationPage = HostPage();
+            _isolationPage = page;
             ModalAccessibilityScope.Acquire(_isolationPage, this);
         }
 
@@ -108,6 +158,7 @@ public class AnimatedModalView : ContentView
         InputTransparent = false;
         CascadeInputTransparent = false;
         _isolationPage = HostPage();
+        HookPage(_isolationPage);
         ModalAccessibilityScope.Acquire(_isolationPage, this);
         ModalTransition.PlayShow(this);
 
@@ -120,8 +171,7 @@ public class AnimatedModalView : ContentView
     {
         InputTransparent = true;
         CascadeInputTransparent = true;
-        ModalAccessibilityScope.Release(_isolationPage);
-        _isolationPage = null;
+        ReleaseScope();
         ModalTransition.PlayHide(this, () =>
         {
             // A hide that lost a race with a newer open/close must not restore stale state.
@@ -294,6 +344,7 @@ public class AnimatedModalView : ContentView
 /// <summary>
 /// Reference-counts covered-content isolation per page. Two overlapping sheets share one set of
 /// captured siblings, so closing either one cannot make the page reachable while the other is open.
+/// Scope acquisition and release are instance-tracked and idempotent.
 /// </summary>
 internal static class ModalAccessibilityScope
 {
@@ -301,31 +352,54 @@ internal static class ModalAccessibilityScope
 
     internal static void Acquire(Page? page, VisualElement modal)
     {
-        if (page is null)
+        if (page is null || modal is null)
             return;
 
         var scope = Scopes.GetValue(page, static _ => new Scope());
-        if (scope.Count++ == 0)
-            scope.Isolate(modal);
+        scope.Acquire(modal);
     }
 
-    internal static void Release(Page? page)
+    internal static void Release(Page? page, VisualElement? modal = null)
     {
-        if (page is null || !Scopes.TryGetValue(page, out var scope) || scope.Count == 0)
+        if (page is null || !Scopes.TryGetValue(page, out var scope))
             return;
 
-        scope.Count--;
-        if (scope.Count == 0)
-            scope.Restore();
+        scope.Release(modal);
     }
 
     private sealed class Scope
     {
+        private readonly HashSet<VisualElement> _activeModals = new();
         private readonly List<(VisualElement Element, bool? Excluded)> _isolated = new();
 
-        internal int Count { get; set; }
+        internal int Count => _activeModals.Count;
 
-        internal void Isolate(VisualElement modal)
+        internal void Acquire(VisualElement modal)
+        {
+            if (!_activeModals.Add(modal))
+                return;
+
+            if (_activeModals.Count == 1)
+                Isolate(modal);
+        }
+
+        internal void Release(VisualElement? modal)
+        {
+            if (modal is not null)
+            {
+                if (!_activeModals.Remove(modal))
+                    return;
+            }
+            else
+            {
+                _activeModals.Clear();
+            }
+
+            if (_activeModals.Count == 0)
+                Restore();
+        }
+
+        private void Isolate(VisualElement modal)
         {
             Element child = modal;
             Element? parent = modal.Parent;
@@ -346,15 +420,12 @@ internal static class ModalAccessibilityScope
             }
         }
 
-        internal void Restore()
+        private void Restore()
         {
             for (var index = _isolated.Count - 1; index >= 0; index--)
             {
                 var (element, previous) = _isolated[index];
-                if (previous is { } value)
-                    element.SetValue(AutomationProperties.ExcludedWithChildrenProperty, value);
-                else
-                    element.ClearValue(AutomationProperties.ExcludedWithChildrenProperty);
+                element.SetValue(AutomationProperties.ExcludedWithChildrenProperty, previous ?? false);
             }
 
             _isolated.Clear();

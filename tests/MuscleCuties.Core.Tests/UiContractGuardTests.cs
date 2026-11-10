@@ -285,6 +285,7 @@ public sealed class UiContractGuardTests
             ["Pages/Cycle/CyclePhaseDetailPage.xaml"] = 3,
             ["Pages/Workout/WorkoutPage.xaml"] = 2,
             ["Pages/Profile/ProfilePage.xaml"] = 1,
+            ["Pages/Workout/StrengthPlanGenerationPage.xaml"] = 1,
         };
 
         var inlineColour = new Regex("TextColor=\"\\{AppThemeBinding", RegexOptions.Compiled | RegexOptions.CultureInvariant);

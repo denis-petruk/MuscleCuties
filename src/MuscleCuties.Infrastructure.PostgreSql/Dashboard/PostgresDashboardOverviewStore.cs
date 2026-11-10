@@ -595,7 +595,7 @@ public sealed class PostgresDashboardOverviewStore(
                 isFinished ? "Completed Today" : "In Progress",
                 $"{durationMinutes} min",
                 $"{setsCount} sets completed",
-                "High",
+                "Moderate",
                 isFinished ? $"Completed ({todaySession.TotalVolumeKg:N0} kg volume)" : "Active Session",
                 "Strength",
                 1,

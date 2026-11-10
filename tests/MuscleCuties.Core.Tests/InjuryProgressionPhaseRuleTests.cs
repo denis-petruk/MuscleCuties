@@ -24,6 +24,9 @@ public sealed class InjuryProgressionPhaseRuleTests
         Assert.Equal(InjuryProgressionPhase.Unknown, InjuryProgressionPhaseRule.Classify(new(true, Clearance), Clearance));
         Assert.Equal(InjuryProgressionPhase.Unknown, InjuryProgressionPhaseRule.Classify(new(false, Clearance), null));
         Assert.Equal(InjuryProgressionPhase.Unknown, InjuryProgressionPhaseRule.Classify(new(false, FirstRequiredDate), Clearance));
-        Assert.Equal(InjuryProgressionPhase.Unknown, InjuryProgressionPhaseRule.Classify(new(false, DateOnly.MaxValue), DateOnly.MaxValue));
+        // S-05 has no post-clearance window, so the sentinel maximum date is the boundary of the
+        // new window rather than an overflow. Missing or future clearance still classifies Unknown.
+        Assert.Equal(InjuryProgressionPhase.ClearedAfterWindow,
+            InjuryProgressionPhaseRule.Classify(new(false, DateOnly.MaxValue), DateOnly.MaxValue));
     }
 }

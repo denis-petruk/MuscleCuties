@@ -27,6 +27,11 @@ public partial class ProfileSetupPage : ContentPage
         await ShowProfileImageActionsAsync();
     }
 
+    private void OnBirthDatePickerFocused(object? sender, FocusEventArgs e)
+    {
+        ((ProfileSetupViewModel)BindingContext).MarkBirthDatePickerFocused();
+    }
+
     private void OnBirthDateSelected(object? sender, DateChangedEventArgs e)
     {
         ((ProfileSetupViewModel)BindingContext).MarkBirthDateSelected(e.OldDate, e.NewDate);
@@ -35,6 +40,12 @@ public partial class ProfileSetupPage : ContentPage
     private void OnBirthDatePickerUnfocused(object? sender, FocusEventArgs e)
     {
         ((ProfileSetupViewModel)BindingContext).MarkBirthDateConfirmedFromPicker();
+    }
+
+    private void OnWellnessAcknowledgmentCheckedChanged(object? sender, CheckedChangedEventArgs e)
+    {
+        if (e.Value)
+            AcknowledgmentError.IsVisible = false;
     }
 
     private async void OnProfileImageButtonClicked(object? sender, EventArgs e)
