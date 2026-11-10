@@ -22,7 +22,6 @@ public sealed class TodayCheckInScoreEnergyTests
 
     [Theory]
     [InlineData(null)]
-    [InlineData(1)]
     [InlineData(Minimum)]
     public void Very_low_energy_with_great_sleep_and_no_soreness_is_not_feeling_ready(int? stress)
     {

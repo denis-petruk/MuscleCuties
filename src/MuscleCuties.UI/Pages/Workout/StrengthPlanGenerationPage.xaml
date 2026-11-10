@@ -733,7 +733,7 @@
                                                                        Text="{loc:LocalizedText Workout_Generation_Required}"
                                                                        IsVisible="{Binding IsRequired}"
                                                                        Style="{StaticResource CaptionStrong}"
-                                                                       TextColor="{StaticResource Primary}"
+                                                                       TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                                                                        VerticalOptions="Center" />
                                                             </Grid>
                                                         </DataTemplate>

@@ -385,6 +385,13 @@ public static partial class UiTextCatalog
         English["Workout_Session_Start60SecRestAccessibility"] = "Start 60-second rest";
         English["Workout_Session_StartButton"] = "Start";
         English["Workout_Session_SwapButton"] = "Swap";
+        English["Workout_Session_PainButton"] = "This hurts";
+        English["Workout_Session_PainAccessibility"] = "Report pain and stop this exercise";
+        English["Workout_Session_PainTitle"] = "Stop this movement";
+        English["Workout_Session_PainBody"] = "Pain means this exercise stops for today. Switch to a reviewed alternative or stop it. Nothing is added to make up for it.";
+        English["Workout_Session_PainSwap"] = "Switch exercise";
+        English["Workout_Session_PainStop"] = "Stop this exercise";
+        English["Workout_Session_PainLogReminder"] = "You reported pain during this workout. Add it to your injury log so your next sessions adjust.";
         English["Workout_Session_SwapExerciseAccessibility"] = "Swap this exercise for an alternative";
         English["Workout_Session_TimeFormat"] = "Time: {0}";
         English["Workout_Session_TimeLabel"] = "Time";
@@ -407,6 +414,7 @@ public static partial class UiTextCatalog
         English["Workout_Swap_CloseButton"] = "Close";
         English["Workout_Swap_LeaveSessionButton"] = "Leave session";
         English["Workout_Swap_NoAlternativesAvailable"] = "No alternatives are available for this exercise. You can keep it or skip it.";
+        English["Workout_Swap_NoReviewedAlternativePain"] = "No reviewed alternative is available. Stop this exercise for today.";
         English["Workout_Swap_ReplaceFormat"] = "Replace {0} with:";
         English["Workout_Swap_SelectedBadge"] = "Selected";
         English["Workout_Swap_Title"] = "Swap exercise";
@@ -474,6 +482,15 @@ public static partial class UiTextCatalog
         English["Workout_Featured_Duration"] = "Duration";
         English["Workout_Featured_Exercises"] = "Exercises";
         English["Workout_Featured_Intensity"] = "Intensity";
+        English["Workout_Featured_RestBadgeFormat"] = "{0} · rest day";
+        English["Workout_Featured_DayActivityFormat"] = "{0} · {1}";
+        English["Workout_Featured_CompletedBadge"] = "Workout completed";
+        English["Workout_Featured_EditWorkout"] = "Edit workout";
+        English["Workout_Featured_LogRestDay"] = "Log rest day";
+        English["Workout_Featured_TagCardio"] = "cardio";
+        English["Workout_Featured_TagRecovery"] = "recovery";
+        English["Workout_Featured_TagRest"] = "rest";
+        English["Workout_Featured_TagStrength"] = "strength";
         English["Workout_Overview_RescheduleButton"] = "Reschedule";
         English["Workout_Reschedule_ButtonHint"] = "Move this planned session to another available date";
         English["Workout_Reschedule_Title"] = "Reschedule Workout";

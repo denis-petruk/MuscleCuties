@@ -108,6 +108,7 @@
                                 AutomationId="WorkoutSessionStartButton" Command="{Binding StartActivityCommand}" IsEnabled="{Binding CanStartActivity}" IsVisible="{Binding ShowStartButton}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_BeginActivityAccessibility}" />
                         <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Workout_Session_AbandonActivity}"
+                                AutomationId="WorkoutSessionAbandonActivityButton"
                                 Command="{Binding AbandonPlannedSessionCommand}" IsVisible="{Binding CanAbandonPlannedSession}" />
                     </VerticalStackLayout>
                 </Grid>
@@ -211,6 +212,7 @@
                                 IsEnabled="{Binding CanResumeTimedActivity}"
                                 IsVisible="{Binding IsTimedActivityPaused}" />
                         <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Workout_Session_AbandonActivity}"
+                                AutomationId="WorkoutSessionAbandonActivityButton"
                                 Command="{Binding AbandonPlannedSessionCommand}" IsVisible="{Binding CanAbandonPlannedSession}" />
                     </VerticalStackLayout>
                 </Grid>
@@ -612,19 +614,20 @@
                         </VerticalStackLayout>
                     </VerticalStackLayout>
 
-                    <!-- Bottom action bar: Swap / Notes / Skip / Next -->
-                    <Grid Grid.Row="3" RowDefinitions="Auto,Auto" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
+                    <!-- Bottom action bar: Swap / Skip / This hurts / Next -->
+                    <Grid Grid.Row="3" RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
                         <Button Text="{loc:LocalizedText Workout_Session_SwapButton}" Command="{Binding OpenSwapPanelCommand}"
                                 Style="{StaticResource ButtonSecondary}"
                                 IsVisible="{Binding CurrentExercise.UsesStrengthMetrics}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SwapExerciseAccessibility}" />
-                        <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_NoteButton}" Command="{Binding OpenMovementNoteCommand}"
-                                Style="{StaticResource ButtonSecondary}"
-                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_NoteEditorTitle}" />
-                        <Button Grid.Column="2" Text="{loc:LocalizedText Workout_Session_SkipButton}"
+                        <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_SkipButton}"
                                 Command="{Binding SkipExerciseCommand}" Style="{StaticResource ButtonSecondary}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SkipExerciseAccessibility}" />
-                        <Button Style="{StaticResource ButtonPrimary}" Grid.Row="1" Grid.ColumnSpan="3" Text="{loc:LocalizedText Workout_Session_NextExerciseButton}"
+                        <Button Grid.Row="1" Grid.ColumnSpan="2" Text="{loc:LocalizedText Workout_Session_PainButton}"
+                                AutomationId="WorkoutSessionReportPainButton"
+                                Command="{Binding ReportPainCommand}" Style="{StaticResource ButtonSecondary}"
+                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_PainAccessibility}" />
+                        <Button Style="{StaticResource ButtonPrimary}" Grid.Row="2" Grid.ColumnSpan="2" Text="{loc:LocalizedText Workout_Session_NextExerciseButton}"
                                 AutomationId="WorkoutSessionNextExerciseButton" Command="{Binding NextExerciseCommand}"
                                 SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SaveAndNextAccessibility}" />
                     </Grid>
@@ -656,6 +659,8 @@
                                     Text="{Binding SummaryStatusText, Converter={StaticResource LocalizedStringConverter}}"
                                     Style="{StaticResource CaptionCentered}"
                                     SemanticProperties.Description="{Binding SummaryStatusText, Converter={StaticResource LocalizedStringConverter}}" />
+                                <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_PainLogReminder}"
+                                       Style="{StaticResource CaptionCentered}" IsVisible="{Binding HasPainReports}" />
                             </VerticalStackLayout>
                             <!-- Strength metrics: volume, PRs and time. Timed activities use the row below
                                  instead, so the two sets never share a column. -->
@@ -753,10 +758,49 @@
                                SemanticProperties.Description="{loc:LocalizedText Workout_Session_SavingLoadingAccessibility}" />
         </Grid>
 
+        <!-- S-04 pain report: a sheet, so the exercise and its set rows keep their room. Stopping the
+             movement is primary; logged sets are never erased and nothing is added to make up for it. -->
+        <sharedControls:AnimatedModalView Grid.RowSpan="2"
+                                          ZIndex="34"
+                                          IsOpen="{Binding IsPainReportVisible}">
+            <Grid>
+                <BoxView BackgroundColor="{StaticResource ModalScrim}">
+                    <BoxView.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding CancelPainReportCommand}" />
+                    </BoxView.GestureRecognizers>
+                </BoxView>
+                <Border Style="{StaticResource ModalSurface}"
+                        Padding="{DynamicResource PresentationModalPagePadding}"
+                        MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
+                        VerticalOptions="End">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                        <Label LineBreakMode="WordWrap"
+                               Text="{loc:LocalizedText Workout_Session_PainTitle}"
+                               Style="{StaticResource ModalTitle}"
+                               SemanticProperties.HeadingLevel="Level1" />
+                        <Label LineBreakMode="WordWrap"
+                               Text="{loc:LocalizedText Workout_Session_PainBody}"
+                               Style="{StaticResource BodyLabel}" />
+                        <Button Text="{loc:LocalizedText Workout_Session_PainSwap}"
+                                Command="{Binding PainSwapCommand}"
+                                Style="{StaticResource ButtonSecondary}"
+                                IsVisible="{Binding CurrentExercise.UsesStrengthMetrics}" />
+                        <Button Text="{loc:LocalizedText Workout_Session_PainStop}"
+                                Command="{Binding PainStopExerciseCommand}"
+                                Style="{StaticResource ButtonPrimary}" />
+                        <Button Text="{loc:LocalizedText Common_Cancel}"
+                                Command="{Binding CancelPainReportCommand}"
+                                Style="{StaticResource ButtonSecondary}" />
+                    </VerticalStackLayout>
+                </Border>
+            </Grid>
+        </sharedControls:AnimatedModalView>
+
         <!-- Abandon confirmation: keeps the active state unless the user confirms -->
         <sharedControls:AnimatedModalView Grid.RowSpan="2"
                                           ZIndex="35"
-                                          IsVisible="{Binding IsAbandonConfirmationVisible}">
+                                          AutomationId="WorkoutSessionAbandonConfirmationModal"
+                                          IsOpen="{Binding IsAbandonConfirmationVisible}">
             <Grid>
                 <BoxView BackgroundColor="{StaticResource ModalScrim}">
                     <BoxView.GestureRecognizers>
@@ -776,9 +820,11 @@
                                Text="{loc:LocalizedText Workout_Session_AbandonConfirmBody}"
                                Style="{StaticResource BodyLabel}" />
                         <Button Style="{StaticResource ButtonPrimary}"
+                                AutomationId="WorkoutSessionAbandonConfirmButton"
                                 Text="{loc:LocalizedText Workout_Session_AbandonConfirmAction}"
                                 Command="{Binding ConfirmAbandonPlannedSessionCommand}" />
                         <Button Style="{StaticResource ButtonSecondary}"
+                                AutomationId="WorkoutSessionAbandonCancelButton"
                                 Text="{loc:LocalizedText Workout_Session_AbandonCancel}"
                                 Command="{Binding CancelAbandonPlannedSessionCommand}" />
                     </VerticalStackLayout>
@@ -789,7 +835,7 @@
         <!-- Movement Note Editor Modal -->
         <sharedControls:AnimatedModalView Grid.RowSpan="2"
                                           ZIndex="30"
-                                          IsVisible="{Binding IsMovementNoteOpen}">
+                                          IsOpen="{Binding IsMovementNoteOpen}">
             <Grid>
                 <BoxView BackgroundColor="{StaticResource ModalScrim}">
                     <BoxView.GestureRecognizers>

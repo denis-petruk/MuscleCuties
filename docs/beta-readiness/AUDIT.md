@@ -5,7 +5,12 @@ Evidence at its recorded revision, not live deployment truth. Base `main` `4ee9b
 [CLOSED_BETA_AUDIT_AND_PLAN.md](../release-audit/2026-11-08/CLOSED_BETA_AUDIT_AND_PLAN.md) (IDs A*, B*, C*, D*).
 New IDs below: G (generation), S (safety/personalization), U (UX/contracts), T (debt/CI), E (simulator).
 
-Status: **FIXED** (implemented + tested on this branch), **OPEN** (not fixed), **OWNER** (needs owner/external action).
+Status: **FIXED** (implemented + tested on this branch), **OPEN** (not fixed), **OWNER** (needs owner/external action),
+**BLOCKED** (cannot progress without an owner decision or an environment the run does not have).
+
+Refresh 2026-11-09 on `integration/beta-polish-20261109-v2` (base `a99fd80c`): every open row below was re-derived from
+code at this revision. New IDs: U-09, U-10 (localization), T-21 (build warnings). Policy evidence and recommendations:
+[WORKOUT_POLICY_RESEARCH.md](../release-audit/2026-11-09/WORKOUT_POLICY_RESEARCH.md).
 
 ## P0
 
@@ -37,8 +42,8 @@ Status: **FIXED** (implemented + tested on this branch), **OPEN** (not fixed), *
 | E-02 | Session screen showed raw key `Workout_Recommendation_StartingWeight` (no EN/RU copy for 6 codes) | FIXED `438de156` | Found on simulator |
 | T-17 | CI had no iOS compile, no vulnerable-package check | FIXED `0999c966` | Verified only once CI runs on GitHub |
 | T-19/T-20 | Release workflows: broad OIDC, no ref guard, optional smoke endpoint | FIXED `0999c966` | YAML parsed locally |
-| S-03 | Policy decisions 4/5 (load step-down, cycle reps/extra set) not in the production dose path | OPEN / OWNER | Production only removes an optional set; owner decides amend-policy vs implement |
-| S-04 | No way to report pain mid-session (injury save blocked while a session is open) | OPEN / OWNER | Product decision needed for the in-session pain action |
+| S-03 | Policy decisions 4/5 (load step-down, cycle reps/extra set) not in the production dose path | OPEN / BLOCKED (owner) | Verified from code: `ComposedReadinessCycleDoseRule` is referenced by tests only (`tests/MuscleCuties.Core.Tests/ComposedReadinessCycleDoseRuleTests.cs`); the production path reduces one optional set only, approval-gated (`PostgresCycleReadinessPrescription.cs:142`, `CycleReadinessPrescriptionRule.cs:60`). `PlannedExerciseSnapshot` carries sets/reps but **no load** (`Postgres/Session/PlannedPrescriptionSnapshot.cs:20-24`), so decision 4's "one available load step down" has no datum to step from. Research and recommendation: [WORKOUT_POLICY_RESEARCH.md](../release-audit/2026-11-09/WORKOUT_POLICY_RESEARCH.md). |
+| S-04 | No way to report pain mid-session (injury save blocked while a session is open) | OPEN / BLOCKED (owner) | Verified: `InjuryLogViewModel.cs:379` refuses a save while a session is open; `WorkoutSessionPage.xaml` has no in-session pain action. Policy decision 6 is already adopted; only the surface is undecided. |
 | A6–A11 | Plaintext secrets in Lambda env, log retention, throttling, concurrency, smoke, AASA | OWNER | Live AWS, not touched |
 
 ## P2/P3 (selected)
@@ -51,15 +56,18 @@ Status: **FIXED** (implemented + tested on this branch), **OPEN** (not fixed), *
 | OD-6 | Load decreased after one under-target session | FIXED `008e74ce` (two consecutive) |
 | T-01..T-15 | Dead DI/gating code, GitLab stub, retired release scripts, .gitignore | FIXED `0cc85e21`, `393d89d9`, `b8c560fc` |
 | U-08 | Idempotency header name mismatch | FIXED `e8d85469` |
-| S-05 | Seven-day post-clearance window exists only in code; preview drops cleared injury on day 1 | OPEN / OWNER (no approved basis) |
+| S-05 | Seven-day post-clearance window exists only in code; preview drops cleared injury on day 1 | OPEN / BLOCKED (owner) | `WorkoutInjuryClearanceRule.OptionalCalendarDaysIncludingClearance = 7` (`WorkoutInjuryClearanceRule.cs:10`); the preview's optionality projection still uses that window (`InjuryProgressionPhaseRule.cs:14`), so a cleared exercise is optional for a week in the rule but not in the preview. No primary source supports a fixed seven-day window; owner must delete it or state the product rationale. |
 | S-07 | Possible double decrement in deload window | FIXED `a4078485` | `workout_account_planning_states.deload_applied_plan_id` (migration 007) records the adjusted plan, so a retried materialization of the same plan returns before reducing again. `CanonicalOccurrenceAdjustmentPersistenceTests` 2 passed, including a reapply test that asserts identical sets, RIR and optional sets. Full integration suite with the CI fixture set: 105/105 |
 | G-10/G-11 | Style offer created on every revision; promotion store-level tests | FIXED `a4078485` | One active offer per plan is enforced by a partial unique index and an idempotent create that absorbs a duplicate insert. Promotion is exercised through `CreditPlannedSessionAsync`: 20 distinct days promote once and a same-day retry does not credit again. `StrengthStyleOfferStoreIntegrationTests` and `WorkoutExperiencePromotionStoreTests` pass on disposable PostgreSQL; the three fix-specific integration classes re-ran together at 4/4 in the full-fixture session |
 | C2/C3 | Server-authored rest copy, duplicated by client fallbacks; copy did not meet the adult-language direction | FIXED `a4078485` / `7ca46512` | Rest copy is now "Recovery day" / "A full day away from training."; the client no longer authors fallback text; RU runtime mappings cover the rest, dashboard and nutrition strings. `7ca46512` removes the duplicate runtime key the copy change introduced (the "Recovery day" entry already existed), which `LocalizationCatalogTests.Runtime_map_has_no_duplicate_english_values` caught. `LocalizationCatalogTests` 8/8 and `BetaPlanningCopyContractTests` 10/10 at that head, re-run after fixture provisioning |
 | E-03 | Username field auto-capitalizes | FIXED `c97254b7` | Username entry uses `Keyboard="Plain"`; `net10.0-ios` simulator build succeeds (exit 0) |
-| E-04 | Validation message off-screen on onboarding Continue | OPEN |
-| E-05 | Today tab shows "Set your cycle phase" while Train shows the quiz phase | OPEN |
-| E-06 | Beginner General-strength card labelled "Intensity: Heavy" | OPEN (copy/product review) |
-| E-07 | Empty-state text flashes during session page push | OPEN |
+| E-04 | Validation message off-screen on onboarding Continue | FIXED (code) `c3f050a`; device check pending | `ProfileSetupPage.xaml:280-296` moves both messages into the fixed row-2 footer above Continue, matching the quiz page. XAML parses; CI compiled the branch at `47f045f` (run 42686088233). No simulator in this environment. |
+| E-05 | Today tab shows "Set your cycle phase" while Train shows the quiz phase | PARTIAL `ced0478`; device re-check needed | Copy half fixed: the hardcoded English header/status/title/advice now come from `UiTextCatalog` with the localized phase name (`DashboardViewModel.cs:203-282`, keys in EN and RU). Data half is **not reproducible from code**: the dashboard store already anchors the quiz phase and falls back to the profile phase (`PostgresDashboardOverviewStore.cs:90-127`), and the VM re-notifies every phase property after load (`DashboardViewModel.cs:673-690`). CI compiled the branch at `47f045f` (run 42686088233); a simulator run decides the data half. |
+| E-06 | Beginner General-strength card labelled "Intensity: Heavy" | FIXED (code) `ced0478`; device check pending | `WorkoutViewModel.cs:1028-1042`: strength now reports the localized "Moderate" effort instead of inferring "Heavy" from the activity tag; Light/Steady/None are keys too. A plan-level intensity claim would need a server style field and was not invented. CI compiled the branch at `47f045f` (run 42686088233). |
+| E-07 | Empty-state text flashes during session page push | FIXED (code) `7718179`; device check pending | `WorkoutSessionViewModel.cs:300-301,406,508`: empty/choice states require a completed load attempt, and a failed load still shows the error card. CI compiled the branch at `47f045f` (run 42686088233). |
+| U-09 | Featured card bypassed localization: raw badge/action text and English-only tag words | FIXED (code) `516ee75`; device check pending | The card binds `BadgeText`/`ActionText` without the string converter, and `FormatActivityTag` returned English lowercase words, so RU showed "Workout completed", "Edit workout", "Today strength". Now keyed (`Workout_Featured_*`) with the day label resolved through the runtime map (`WorkoutViewModel.cs:653-660,705-722,815-827`). |
+| U-10 | Workout count tile used English "Activity"/"Exercises", which the runtime text map does not contain | FIXED (code) `516ee75` | `Dashboard_Workout_CountActivity/CountSets/CountExercises/CountRecovery` already existed; the VM now uses them (`DashboardViewModel.cs:229-241`). Correction to the first draft of this row: the hormonal summary literals **are** runtime-mapped (`UiTextCatalog.RuntimeText.cs:412-417,921`) and render in Russian; they remain catalog debt, not a user-visible defect. |
+| T-21 | `MuscleCuties.Core.Tests` build emits xUnit analyzer warnings (xUnit1031 ×4, xUnit1030, xUnit1025 duplicate theory row) | OPEN | `dotnet build tests/MuscleCuties.Core.Tests` at this head: 4 warnings, so the "0 warnings" build gate is not met for that project. |
 
 ## Requirement traceability (owner prompt §6)
 

@@ -1,5 +1,46 @@
 # State checkpoint — 2026-11-09
 
+## integration/beta-polish-20261109-v2 (this run)
+
+- Branch `integration/beta-polish-20261109-v2` from `origin/main` = `a99fd80c` (PR #46 merge), in
+  `.agent-worktrees/beta-polish-20261109`. The parent checkout's uncommitted delta was not touched. Reviewer-facing
+  summary: [REVIEW_PACKET.md](REVIEW_PACKET.md).
+- **Stale branch removed:** the earlier `integration/beta-polish-20261109` branch is gone from GitHub; its local ref
+  was removed. It held `4ee9b4f`, the session checkout's snapshot, and failed run 42673683274. Do not recreate it or
+  open a PR from it; the reviewed commits live on `-v2`.
+- Commits: `c3f050a` E-04 footer validation; `7718179` session empty-state gate (E-07); `ced0478` intensity label +
+  Today phase copy localization (E-06, E-05 copy half); `b649a54` alarm SNS subscription (A11 repo half); `82b33c4`
+  audit/readiness refresh; `516ee75` featured-card and count-tile localization (U-09/U-10) plus
+  `scripts/beta-release-wizard.sh`; `d269c0b` localization corrections + owner wizard; `d9974e1` dedicated branch
+  publish; `bbb791c` CI evidence; `ed9a23e` G11 CI evidence; `d81519c` dated simulator acceptance record. The
+  `REVIEW_PACKET.md` commit is `47f045f`; a final docs-only correction sits on top.
+- Verified in this environment: non-UI projects build with the MSBuild recipe; Core 1325/1325, Mobile Contracts
+  183/183, Registration 54/54, Deployment policy tests 17/17 — all 0 failed, 0 skipped. `Core.Tests` still emits 4
+  xUnit analyzer warnings (T-21). `LocalizationCatalogTests` 8/8 after the U-09/U-10 keys; a full EN/RU scan is
+  2036/2036 keys with 0 missing, 0 extra and 0 format-argument mismatches. Edited XAML parses as XML;
+  `observability.yaml` parses with CloudFormation tags; the wizard passes `bash -n`.
+- **CI**: run [42686088233](https://github.com/denis-petruk/MuscleCuties/actions/runs/42686088233) at `47f045f`
+  completed successfully; `verify_source`, `verify_plan_generation`, `verify_ios_compile` (xcode-27),
+  `postgres_verify / verify_postgres_compatibility` and `required` are present and the branch badge reads `passing`.
+  The `CI` workflow triggers on `integration/**` pushes, so the final docs-only correction is covered; see the live
+  branch run list.
+- **BLOCKED here**: simulator/device journeys (Linux, no Xcode). Attempting the simulator build fails with
+  `NETSDK1147` (no workloads; no `xcrun`/`simctl`/`xcodebuild`), so acceptance is recorded as NOT RUN in
+  [SIMULATOR_ACCEPTANCE_2026-11-09.md](../release-audit/2026-11-09/SIMULATOR_ACCEPTANCE_2026-11-09.md) rather than
+  inferred. Also blocked: only a local PostgreSQL run (no PG16/root), since CI covers the gate; live AWS (not
+  authorised). `gh` is unauthenticated, but the public run and commit pages are readable.
+- The stale `integration/beta-polish-20261109` branch has been removed. It had failed run
+  [42673683274](https://github.com/denis-petruk/MuscleCuties/actions/runs/42673683274) on `4ee9b4f`; it was unrelated to
+  this work, has no PR, and must not be recreated.
+- Owner decisions requested in `docs/release-audit/2026-11-09/WORKOUT_POLICY_RESEARCH.md`: S-03 load step vs set-only,
+  decision 5 cycle dose (recommend amend to symptoms/readiness only), S-04 pain surface, S-05 seven-day window.
+- Next action: the owner opens the PR from `-v2` (none exists) using REVIEW_PACKET.md, then runs wizard stage 3 on a
+  Mac and folds the dated record into G12; S-03/S-04/S-05 and the live AWS items remain owner decisions.
+
+---
+
+# State checkpoint — 2026-11-09 (PR #46 run)
+
 - Branch `integration/beta-rc-20261108`, base `main` `4ee9b4f2`; merges the six Phase 0 branches (PRs #40–#45) and
   four worker branches (W2 safety/dose, W3 planning UX/client, W4 CI/cleanup, W5 engine/stores) plus orchestrator
   fixes (`95b3785b`, `7aa53789`, `bbc27ada`, `438de156`, `3f45639e`).

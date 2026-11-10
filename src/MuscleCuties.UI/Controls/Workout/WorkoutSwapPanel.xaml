@@ -38,7 +38,7 @@
                 <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}">
                     <Label LineBreakMode="WordWrap" Text="{Binding SwapErrorText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource ErrorLabel}" IsVisible="{Binding HasSwapError}" />
-                    <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Swap_NoAlternativesAvailable}"
+                    <Label LineBreakMode="WordWrap" Text="{Binding SwapEmptyTextKey, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource BodyLabel}" IsVisible="{Binding ShowNoSwapCandidates}" />
                 </VerticalStackLayout>
                 <CollectionView Grid.Row="3" ItemsSource="{Binding SwapCandidates}"

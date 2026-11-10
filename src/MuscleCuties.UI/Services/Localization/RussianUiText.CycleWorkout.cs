@@ -234,7 +234,7 @@ internal static partial class RussianUiText
         Values["Cycle_QuickLog_FlowIntensityFormat"] = "Интенсивность потока: {0}";
         Values["Cycle_QuickLog_FlowIntensitySectionTitle"] = "ИНТЕНСИВНОСТЬ ВЫДЕЛЕНИЙ";
         Values["Cycle_QuickLog_HeaderTitle"] = "Быстрая запись";
-        Values["Cycle_QuickLog_LoadingSavedEntry"] = "Загрузка сохраненного входа…";
+        Values["Cycle_QuickLog_LoadingSavedEntry"] = "Загрузка сохранённой записи…";
         Values["Cycle_QuickLog_LogPeriodStartAction"] = "Отметить начало менструации";
         Values["Cycle_QuickLog_PeriodEnded"] = "Менструация закончилась";
         Values["Cycle_QuickLog_PeriodStarted"] = "Менструация началась";
@@ -385,6 +385,13 @@ internal static partial class RussianUiText
         Values["Workout_Session_Start60SecRestAccessibility"] = "Начните 60-секундный отдых";
         Values["Workout_Session_StartButton"] = "Начать";
         Values["Workout_Session_SwapButton"] = "Обменять";
+        Values["Workout_Session_PainButton"] = "Больно";
+        Values["Workout_Session_PainAccessibility"] = "Сообщить о боли и остановить это упражнение";
+        Values["Workout_Session_PainTitle"] = "Остановите это движение";
+        Values["Workout_Session_PainBody"] = "Боль — сигнал прекратить это упражнение на сегодня. Замените его проверенной альтернативой или остановите. Ничего не добавится взамен.";
+        Values["Workout_Session_PainSwap"] = "Заменить упражнение";
+        Values["Workout_Session_PainStop"] = "Остановить упражнение";
+        Values["Workout_Session_PainLogReminder"] = "Во время тренировки вы отметили боль. Добавьте её в журнал травм, чтобы следующие тренировки это учли.";
         Values["Workout_Session_SwapExerciseAccessibility"] = "Заменить это упражнение на альтернативу";
         Values["Workout_Session_TimeFormat"] = "Время: {0}";
         Values["Workout_Session_TimeLabel"] = "Время";
@@ -407,6 +414,7 @@ internal static partial class RussianUiText
         Values["Workout_Swap_CloseButton"] = "Закрыть";
         Values["Workout_Swap_LeaveSessionButton"] = "Выйти из сеанса";
         Values["Workout_Swap_NoAlternativesAvailable"] = "Для этого упражнения нет альтернатив. Вы можете оставить его или пропустить.";
+        Values["Workout_Swap_NoReviewedAlternativePain"] = "Проверенной альтернативы нет. Остановите это упражнение на сегодня.";
         Values["Workout_Swap_ReplaceFormat"] = "Замените {0} на:";
         Values["Workout_Swap_SelectedBadge"] = "выбрано";
         Values["Workout_Swap_Title"] = "Обмен упражнением";
@@ -474,6 +482,15 @@ internal static partial class RussianUiText
         Values["Workout_Featured_Duration"] = "Длительность";
         Values["Workout_Featured_Exercises"] = "Упражнения";
         Values["Workout_Featured_Intensity"] = "Интенсивность";
+        Values["Workout_Featured_RestBadgeFormat"] = "{0} · день отдыха";
+        Values["Workout_Featured_DayActivityFormat"] = "{0} · {1}";
+        Values["Workout_Featured_CompletedBadge"] = "Тренировка завершена";
+        Values["Workout_Featured_EditWorkout"] = "Редактировать тренировку";
+        Values["Workout_Featured_LogRestDay"] = "Записать день отдыха";
+        Values["Workout_Featured_TagCardio"] = "кардио";
+        Values["Workout_Featured_TagRecovery"] = "восстановление";
+        Values["Workout_Featured_TagRest"] = "отдых";
+        Values["Workout_Featured_TagStrength"] = "силовая";
         Values["Workout_Overview_RescheduleButton"] = "Перенести";
         Values["Workout_Reschedule_ButtonHint"] = "Перенести эту запланированную тренировку на другую доступную дату";
         Values["Workout_Reschedule_Title"] = "Перенос тренировки";

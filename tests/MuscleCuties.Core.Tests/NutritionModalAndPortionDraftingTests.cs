@@ -126,7 +126,7 @@ public sealed class NutritionModalAndPortionDraftingTests
 
         // Verify inline edit modal is guarded against touch interception
         Assert.Contains("InputTransparent=\"{Binding IsEditModalVisible, Converter={StaticResource InvertedBoolConverter}}\"", content);
-        Assert.Contains("IsVisible=\"{Binding IsEditModalVisible}\"", content);
+        Assert.Contains("IsOpen=\"{Binding IsEditModalVisible}\"", content);
 
         // Verify breakdown modal is guarded against touch interception
         Assert.Contains("InputTransparent=\"{Binding Breakdown.IsVisible, Converter={StaticResource InvertedBoolConverter}}\"", content);

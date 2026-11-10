@@ -3,10 +3,15 @@ namespace MuscleCuties.Core.Domain.Workout.Planning;
 public sealed record InjuryRestorationEpisode(bool IsActive, DateOnly? ClearedOn);
 public enum InjuryClearanceRestorationDisposition { Blocked, RestoreOptional, RestoreRequired }
 
-/// <summary>Restoration never resets the window anchored to the original clearance date.</summary>
+/// <summary>
+/// S-05 (2026-11-09, pending owner ratification): no fixed post-clearance window. No primary source supports a
+/// seven-day optional period for healthy adult trainees, and the preview never showed it. A cleared exercise is
+/// restored as prescribed from its clearance date, and only when current eligibility permits; unknown or future
+/// clearance still blocks. The window length stays a single constant so the earlier behaviour can be restored.
+/// </summary>
 public static class WorkoutInjuryClearanceRule
 {
-    public const int OptionalCalendarDaysIncludingClearance = 7;
+    public const int OptionalCalendarDaysIncludingClearance = 0;
 
     /// <summary>All related episodes and current eligibility must be known before restoration.</summary>
     public static InjuryClearanceRestorationDisposition EvaluateRestoration(bool originalWasOptional,

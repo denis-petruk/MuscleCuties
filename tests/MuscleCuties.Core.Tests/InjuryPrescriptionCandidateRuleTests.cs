@@ -16,10 +16,11 @@ public sealed class InjuryPrescriptionCandidateRuleTests
         true, true, true, true, false, WithinWindow);
 
     [Fact]
-    public void RestoredOriginalUsesOriginalClearanceAndOptionality()
+    public void RestoredOriginalUsesOriginalClearanceAndOptionalityWithoutAWindow()
     {
         var evidence = Evidence();
-        Assert.Equal(InjuryPrescriptionCandidateDisposition.OriginalOptional, InjuryPrescriptionCandidateRule.Evaluate(evidence));
+        // S-05: no optional window; the clearance day is already required.
+        Assert.Equal(InjuryPrescriptionCandidateDisposition.OriginalRequired, InjuryPrescriptionCandidateRule.Evaluate(evidence));
         Assert.Equal(InjuryPrescriptionCandidateDisposition.OriginalRequired,
             InjuryPrescriptionCandidateRule.Evaluate(evidence with { EffectiveDate = AfterWindow }));
         Assert.Equal(InjuryPrescriptionCandidateDisposition.OriginalOptional,
@@ -60,14 +61,14 @@ public sealed class InjuryPrescriptionCandidateRuleTests
     }
 
     [Fact]
-    public void OverlappingClearancesKeepOriginalOptionalUntilLastWindowEnds()
+    public void OverlappingClearancesUseTheLatestClearanceWithoutAWindow()
     {
         var evidence = Evidence() with
         {
             Episodes = [new(false, Clearance), new(false, WithinWindow)],
             EffectiveDate = AfterWindow
         };
-        Assert.Equal(InjuryPrescriptionCandidateDisposition.OriginalOptional, InjuryPrescriptionCandidateRule.Evaluate(evidence));
+        Assert.Equal(InjuryPrescriptionCandidateDisposition.OriginalRequired, InjuryPrescriptionCandidateRule.Evaluate(evidence));
         Assert.Equal(InjuryPrescriptionCandidateDisposition.Blocked,
             InjuryPrescriptionCandidateRule.Evaluate(evidence with { Episodes = [new(false, Clearance), new(true, null)] }));
         Assert.Equal(InjuryPrescriptionCandidateDisposition.Blocked,
@@ -77,10 +78,10 @@ public sealed class InjuryPrescriptionCandidateRuleTests
     }
 
     [Fact]
-    public void ClearanceDayStartsOptionalWindowAndAnActiveOverlapStillBlocksOriginal()
+    public void ClearanceDayRestoresOriginalAsRequiredAndAnActiveOverlapStillBlocksIt()
     {
         var evidence = Evidence() with { EffectiveDate = Clearance };
-        Assert.Equal(InjuryPrescriptionCandidateDisposition.OriginalOptional, InjuryPrescriptionCandidateRule.Evaluate(evidence));
+        Assert.Equal(InjuryPrescriptionCandidateDisposition.OriginalRequired, InjuryPrescriptionCandidateRule.Evaluate(evidence));
         Assert.Equal(InjuryPrescriptionCandidateDisposition.Blocked,
             InjuryPrescriptionCandidateRule.Evaluate(evidence with { Episodes = [new(false, Clearance), new(true, null)] }));
         Assert.Equal(InjuryPrescriptionCandidateDisposition.Alternative,

@@ -5,15 +5,14 @@ namespace MuscleCuties.Core.Tests;
 public sealed class InjuryProgressionPhaseRuleTests
 {
     private static readonly DateOnly Clearance = new(2024, 2, 28);
-    private static readonly DateOnly LastOptionalDate = new(2024, 3, 5);
-    private static readonly DateOnly FirstRequiredDate = new(2024, 3, 6);
+    private static readonly DateOnly FirstRequiredDate = new(2024, 2, 29);
 
     [Fact]
-    public void SevenDatesIncludingClearanceRemainInOptionalWindow()
+    public void ClearanceDayIsAlreadyAfterTheWindow()
     {
+        // S-05: no post-clearance optional window.
         var episode = new InjuryRestorationEpisode(false, Clearance);
-        Assert.Equal(InjuryProgressionPhase.ClearedOptionalWindow, InjuryProgressionPhaseRule.Classify(episode, Clearance));
-        Assert.Equal(InjuryProgressionPhase.ClearedOptionalWindow, InjuryProgressionPhaseRule.Classify(episode, LastOptionalDate));
+        Assert.Equal(InjuryProgressionPhase.ClearedAfterWindow, InjuryProgressionPhaseRule.Classify(episode, Clearance));
         Assert.Equal(InjuryProgressionPhase.ClearedAfterWindow, InjuryProgressionPhaseRule.Classify(episode, FirstRequiredDate));
     }
 
@@ -25,6 +24,9 @@ public sealed class InjuryProgressionPhaseRuleTests
         Assert.Equal(InjuryProgressionPhase.Unknown, InjuryProgressionPhaseRule.Classify(new(true, Clearance), Clearance));
         Assert.Equal(InjuryProgressionPhase.Unknown, InjuryProgressionPhaseRule.Classify(new(false, Clearance), null));
         Assert.Equal(InjuryProgressionPhase.Unknown, InjuryProgressionPhaseRule.Classify(new(false, FirstRequiredDate), Clearance));
-        Assert.Equal(InjuryProgressionPhase.Unknown, InjuryProgressionPhaseRule.Classify(new(false, DateOnly.MaxValue), DateOnly.MaxValue));
+        // S-05 has no post-clearance window, so the sentinel maximum date is the boundary of the
+        // new window rather than an overflow. Missing or future clearance still classifies Unknown.
+        Assert.Equal(InjuryProgressionPhase.ClearedAfterWindow,
+            InjuryProgressionPhaseRule.Classify(new(false, DateOnly.MaxValue), DateOnly.MaxValue));
     }
 }

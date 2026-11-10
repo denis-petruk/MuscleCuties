@@ -19,8 +19,8 @@ public sealed class ReviewedInjuryCandidateSelectionRuleTests
         [new(Original, Sets, Repetitions, null, false, true, true, true)]);
 
     [Fact]
-    public void OriginalRemainsOptionalDuringClearanceWindow() =>
-        Assert.Equal(ReviewedCandidateSelectionStatus.OriginalOptional, ReviewedInjuryCandidateSelectionRule.Evaluate(Input()).Status);
+    public void OriginalBecomesRequiredFromTheClearanceDay() =>
+        Assert.Equal(ReviewedCandidateSelectionStatus.OriginalRequired, ReviewedInjuryCandidateSelectionRule.Evaluate(Input()).Status);
 
     [Fact]
     public void MissingCandidateCoverageAndUnknownReviewBlock()

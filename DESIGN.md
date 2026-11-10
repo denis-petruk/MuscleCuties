@@ -23,6 +23,7 @@ A shared style for these combinations is **not available**. The style-count limi
 | `Pages/Cycle/CyclePhaseDetailPage.xaml` | 3 | warning section title and chevron, warning card title |
 | `Pages/Workout/WorkoutPage.xaml` | 2 | phase name and rehab heading accent |
 | `Pages/Profile/ProfilePage.xaml` | 1 | phase pill primary emphasis |
+| `Pages/Workout/StrengthPlanGenerationPage.xaml` | 1 | required tag accent emphasis |
 
 Rule: a new exception site must be added to this table in the same change that introduces it. `UiContractGuardTests.Inline_text_colours_match_the_documented_exception_list` fails when the per-file counts drift from this table. It also resolves each site's applied style — including `BasedOn` chains and the implicit label style — and fails when an override repeats the colour pair that style already sets, so the table cannot drift into duplicate colouring. `Page_and_control_xaml_use_tokens_for_dimensions` keeps numeric sizes out of page and control XAML, and the card-budget assertion accepts no Card-family style beyond `CardPrimary` and `CardSecondary`.
 

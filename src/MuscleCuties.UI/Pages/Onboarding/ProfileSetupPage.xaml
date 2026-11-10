@@ -5,6 +5,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:workoutControls="clr-namespace:MuscleCuties.UI.Controls.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileSetupViewModel"
@@ -95,19 +96,33 @@
                         </Border>
                     </Grid>
             
-                    <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                    <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                         <Label Text="{loc:LocalizedText Profile_PersonalInfo_Birthday}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                         <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                             <DatePicker
                                 AutomationId="ProfileSetupBirthDatePicker"
                                 Date="{Binding BirthDate}"
+                                Focused="OnBirthDatePickerFocused"
                                 DateSelected="OnBirthDateSelected"
+                                Unfocused="OnBirthDatePickerUnfocused"
                                 MinimumDate="{Binding MinBirthDate}"
                                 MaximumDate="{Binding MaxBirthDate}"
                                 Format="d"
                                 SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_Birthday}"
                                 SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_SelectYourDateOfBirth}" />
                         </Border>
+                        <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceMicro}">
+                            <Button Text="{loc:LocalizedText Onboarding_ProfileSetup_ConfirmBirthday}"
+                                    AutomationId="ProfileSetupConfirmBirthDateButton"
+                                    Command="{Binding ConfirmBirthDateCommand}"
+                                    Style="{StaticResource ButtonSecondary}"
+                                    HorizontalOptions="Start"
+                                    IsVisible="{Binding BirthDateConfirmed, Converter={StaticResource InvertedBoolConverter}}" />
+                            <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_BirthdayConfirmed}"
+                                   Style="{StaticResource AccentLabel}"
+                                   LineBreakMode="WordWrap"
+                                   IsVisible="{Binding BirthDateConfirmed}" />
+                        </VerticalStackLayout>
                     </Grid>
             
                     <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
@@ -258,18 +273,12 @@
                     ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
             </VerticalStackLayout>
 
-            <Label
-                Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
-                Style="{StaticResource ErrorLabel}"
-                LineBreakMode="WordWrap"
-                IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
-                SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
-                SemanticProperties.HeadingLevel="Level3" />
-
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing10}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
                 <CheckBox
                     x:Name="WellnessAcknowledgment"
                     AutomationId="WellnessAcknowledgmentCheckBox"
+                    Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
+                    CheckedChanged="OnWellnessAcknowledgmentCheckedChanged"
                     MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                     MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
                     VerticalOptions="Center"
@@ -282,15 +291,26 @@
                     VerticalOptions="Center" />
             </Grid>
 
-            <Label
-                x:Name="AcknowledgmentError"
-                IsVisible="False"
-                Text="{loc:LocalizedText Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo}"
-                Style="{StaticResource ErrorLabel}"
-                LineBreakMode="WordWrap" />
         </VerticalStackLayout>
     </ScrollView>
     <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <!-- Validation stays beside the action that raised it, never inside the scrolling form. -->
+        <Label
+            Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
+            Style="{StaticResource ErrorLabel}"
+            LineBreakMode="WordWrap"
+            IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
+            SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}">
+            <Label.Behaviors>
+                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+            </Label.Behaviors>
+        </Label>
+        <Label
+            x:Name="AcknowledgmentError"
+            IsVisible="False"
+            Text="{loc:LocalizedText Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo}"
+            Style="{StaticResource ErrorLabel}"
+            LineBreakMode="WordWrap" />
         <ActivityIndicator
                         Style="{StaticResource StateBusyInline}"
             IsRunning="{Binding IsBusy}"

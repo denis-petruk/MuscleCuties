@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
+using Microsoft.Maui.Storage;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Notifications;
@@ -165,6 +166,22 @@ public partial class App : Application, IDisposable
         var unlockingData = false;
         try
         {
+            if (!Preferences.Default.ContainsKey("mc_has_run_before"))
+            {
+                try
+                {
+                    SecureStorage.Default.RemoveAll();
+                }
+                catch (Exception ex)
+                {
+                    Trace.WriteLine($"[Startup] SecureStorage.RemoveAll on fresh install failed ({ex.GetType().Name}).");
+                }
+                finally
+                {
+                    Preferences.Default.Set("mc_has_run_before", true);
+                }
+            }
+
             using var scope = _services.CreateScope();
             var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
             var currentUser = await DataLoadScheduler.RunAsync(authService.GetCurrentUserStateAsync);

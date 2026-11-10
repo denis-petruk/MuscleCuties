@@ -31,7 +31,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 .ConfigureAwait(false);
 
             var sessions = await dbContext.WorkoutSessionLogs.AsNoTracking()
-                .Where(w => w.UserId == userId && !w.IsDeleted)
+                .Where(w => w.UserId == userId && !w.IsDeleted && w.CompletedAt != null)
                 .OrderByDescending(w => w.StartedAt)
                 .ThenByDescending(w => w.Id)
                 .Skip(offset)
@@ -63,7 +63,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 .ConfigureAwait(false);
 
             var sessions = await dbContext.WorkoutSessionLogs.AsNoTracking()
-                .Where(w => w.UserId == userId && !w.IsDeleted && w.StartedAt >= start && w.StartedAt < end)
+                .Where(w => w.UserId == userId && !w.IsDeleted && w.CompletedAt != null && w.StartedAt >= start && w.StartedAt < end)
                 .OrderByDescending(w => w.StartedAt)
                 .ThenByDescending(w => w.Id)
                 .Skip(offset)
@@ -241,7 +241,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 .ConfigureAwait(false);
 
             var count = await dbContext.WorkoutSessionLogs
-                .CountAsync(w => w.UserId == userId && !w.IsDeleted, cancellationToken)
+                .CountAsync(w => w.UserId == userId && !w.IsDeleted && w.CompletedAt != null, cancellationToken)
                 .ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -260,7 +260,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 .ConfigureAwait(false);
 
             var dates = await dbContext.WorkoutSessionLogs.AsNoTracking()
-                .Where(w => w.UserId == userId && !w.IsDeleted)
+                .Where(w => w.UserId == userId && !w.IsDeleted && w.CompletedAt != null)
                 .Select(w => w.StartedAt)
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -291,7 +291,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 .ConfigureAwait(false);
 
             var count = await dbContext.WorkoutSessionLogs
-                .CountAsync(w => w.UserId == userId && !w.IsDeleted && w.StartedAt >= start && w.StartedAt < end, cancellationToken)
+                .CountAsync(w => w.UserId == userId && !w.IsDeleted && w.CompletedAt != null && w.StartedAt >= start && w.StartedAt < end, cancellationToken)
                 .ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);

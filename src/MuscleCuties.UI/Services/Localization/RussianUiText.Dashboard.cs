@@ -111,6 +111,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Phase_SemanticCurrentPhase"] = "Текущая фаза цикла: {0}. Нажмите, чтобы просмотреть подробности цикла.";
         Values["Dashboard_Readiness_AverageScores"] = "Среднее значение обоих баллов";
         Values["Dashboard_Readiness_DailyBalanceMax"] = "Ежедневный баланс / 100";
+        Values["Dashboard_Readiness_CheckInPrompt"] = "Заполните отметку, чтобы увидеть готовность";
         Values["Dashboard_Readiness_SelfReportedSubtitle"] = "На основе ежедневной самооценки";
         Values["Dashboard_Readiness_HealthOrBaselineSubtitle"] = "Apple Health и база";
         Values["Dashboard_Readiness_CheckInNeeded"] = "Нужна отметка";
@@ -158,6 +159,18 @@ internal static partial class RussianUiText
         Values["Dashboard_Targets_SleepFormat"] = "Оценка сна: {0}";
         Values["Dashboard_Targets_Title"] = "Плановые оценки";
         Values["Dashboard_Phase_MissingHeader"] = "На этой неделе · Укажите фазу цикла";
+        Values["Dashboard_Phase_HeaderFormat"] = "На этой неделе · {0}";
+        Values["Dashboard_Phase_StatusDayFormat"] = "{0} · День {1} / {2}";
+        Values["Dashboard_Phase_StatusSelectedFormat"] = "{0} · Фаза выбрана";
+        Values["Dashboard_Phase_TitleRecovery"] = "Ритм восстановления";
+        Values["Dashboard_Phase_TitleBuild"] = "Набирайте темп";
+        Values["Dashboard_Phase_TitlePower"] = "Ваше окно силы";
+        Values["Dashboard_Phase_TitleSteady"] = "Стабильное окно силы";
+        Values["Dashboard_Phase_TitleCycle"] = "Окно цикла";
+        Values["Dashboard_Phase_AdviceMenstrual"] = "Снизьте нагрузку, приоритет — отдых";
+        Values["Dashboard_Phase_AdviceFollicular"] = "Энергия растёт, хорошее время для тренировок";
+        Values["Dashboard_Phase_AdviceOvulatory"] = "Пик энергии и силы";
+        Values["Dashboard_Phase_AdviceLuteal"] = "Умеренная интенсивность, слушайте тело";
         Values["Dashboard_Phase_MissingStatus"] = "Укажите фазу цикла, чтобы начать";
         Values["Dashboard_Phase_MissingInsight"] = "Укажите фазу цикла, чтобы увидеть рекомендации";
         Values["Dashboard_Phase_SelectedInsight"] = "Выбранная фаза цикла сохранена";
@@ -206,6 +219,8 @@ internal static partial class RussianUiText
         Values["Dashboard_Workout_IntensityLow"] = "Низкая";
         Values["Dashboard_Workout_IntensityLight"] = "Лёгкая";
         Values["Dashboard_Workout_IntensityNone"] = "Нет";
+        Values["Dashboard_Workout_IntensityModerate"] = "Умеренная";
+        Values["Dashboard_Workout_IntensitySteady"] = "Ровная";
         Values["Dashboard_Prompt_NoActivePlan"] = "Нет активного плана";
         Values["Dashboard_Prompt_NoPlanBody"] = "Тренировки появятся после создания плана.";
         Values["Dashboard_Readiness_TrendEmpty"] = "Отметьтесь, чтобы увидеть историю готовности";

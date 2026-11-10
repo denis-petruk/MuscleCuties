@@ -7,6 +7,9 @@ internal static class S3StorageConfiguration
     private const string BucketNameSetting = "Storage:S3:BucketName";
     private const string RegionSetting = "Storage:S3:Region";
 
+    public static bool HasBucketName(IConfiguration? configuration) =>
+        !string.IsNullOrWhiteSpace(configuration?[BucketNameSetting]);
+
     public static string RequireBucketName(IConfiguration configuration) =>
         Require(configuration, BucketNameSetting);
 

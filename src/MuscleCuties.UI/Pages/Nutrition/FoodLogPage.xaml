@@ -434,7 +434,6 @@
         <sharedControls:AnimatedModalView
             Grid.RowSpan="2"
             IsOpen="{Binding IsEditModalVisible}"
-            IsVisible="{Binding IsEditModalVisible}"
             InputTransparent="{Binding IsEditModalVisible, Converter={StaticResource InvertedBoolConverter}}">
             <Grid>
             <BoxView Style="{StaticResource ModalBackdrop}">

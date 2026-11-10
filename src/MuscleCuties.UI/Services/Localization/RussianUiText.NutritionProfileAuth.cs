@@ -40,6 +40,8 @@ internal static partial class RussianUiText
         Values["Ui_Onboarding_Error_Age"] = "Укажите корректную дату рождения (не младше 18 лет).";
         Values["Ui_Onboarding_Error_BirthDateRequired"] = "Укажите дату рождения.";
         Values["Ui_Onboarding_Error_StrengthRequired"] = "Для плана нужна хотя бы одна силовая активность.";
+        Values["Ui_Onboarding_Error_HeightRequired"] = "Выберите рост.";
+        Values["Ui_Onboarding_Error_WeightRequired"] = "Выберите вес.";
         Values["Ui_Onboarding_Error_SetupFailed"] = "Не удалось завершить настройку. Повторите попытку.";
         Values["Ui_Profile_Status_CompletePersonalInfo"] = "Сначала заполните личные данные.";
         Values["Ui_Profile_Status_UnitsSaved"] = "Единицы сохранены.";
@@ -520,6 +522,8 @@ internal static partial class RussianUiText
         Values["Onboarding_ProfileSetup_Measurements"] = "Параметры тела";
         Values["Onboarding_ProfileSetup_Optional"] = "(необязательно)";
         Values["Onboarding_ProfileSetup_PersonalDetails"] = "Личные данные";
+        Values["Onboarding_ProfileSetup_ConfirmBirthday"] = "Подтвердить дату рождения";
+        Values["Onboarding_ProfileSetup_BirthdayConfirmed"] = "Дата рождения подтверждена";
         Values["Onboarding_ProfileSetup_PickAtLeastOneStrengthActivity"] = "Выберите занятия, которые хотите включить в свой план.";
         Values["Onboarding_ProfileSetup_StrengthActivityRequired"] = "Чтобы продолжить, выберите хотя бы одно занятие.";
         Values["Onboarding_Activity_HighVolumeStrengthDescription"] = "Развивайте силу, выполняя немного больше подходов.";
@@ -596,7 +600,7 @@ internal static partial class RussianUiText
         Values["Profile_Details_ReportAnIssueOrSuggestA"] = "Сообщить о проблеме или предложить функцию";
         Values["Profile_Details_Reveal"] = "Показать";
         Values["Profile_Details_SendFeedback"] = "Отправить отзыв";
-        Values["Profile_Details_StoredLocallyOnThisDevice"] = "Хранится в собственной базе PostgreSQL";
+        Values["Profile_Details_StoredLocallyOnThisDevice"] = "Надежно сохранено в вашем личном хранилище";
         Values["Profile_Details_TapToOpenFullPhotoJourney"] = "Нажмите, чтобы открыть полную фотогалерею";
         Values["Profile_Details_TapToOpenVaultAndAdd"] = "Нажмите, чтобы открыть сейф и добавить первое фото прогресса";
         Values["Profile_Details_TapToRevealPreview"] = "Нажмите, чтобы показать";
@@ -663,7 +667,7 @@ internal static partial class RussianUiText
         Values["Profile_NutritionSettings_Water"] = "Вода";
         Values["Profile_NutritionSettings_Zinc"] = "Цинк";
         Values["Profile_Page_AccountDeletionStatus"] = "Статус удаления аккаунта";
-        Values["Profile_Page_AllHealthAndFitnessDataIs"] = "Записи о здоровье и фитнесе хранятся в собственной базе PostgreSQL; настройки защиты AWS не проверены.";
+        Values["Profile_Page_AllHealthAndFitnessDataIs"] = "Записи о здоровье и тренировках надежно защищены и доступны только вам.";
         Values["Profile_Page_CyclePhaseIndicatorAndProfilePhoto"] = "Индикатор фазы цикла и фотография профиля";
         Values["Profile_Page_CyclesLogged"] = "Записанные циклы";
         Values["Profile_Page_CyclesLoggedValue"] = "Записанные циклы: {0}";
@@ -707,10 +711,10 @@ internal static partial class RussianUiText
         Values["Profile_PhotoJourney_PhotoHiddenForPrivacy"] = "Фото скрыто для конфиденциальности";
         Values["Profile_PhotoJourney_PlusAddProgressPhoto"] = "+ Добавить фото прогресса";
         Values["Profile_PhotoJourney_PrivacyFirstPhotoVault"] = "Личный фотоальбом";
-        Values["Profile_PhotoJourney_PrivateStoredOnThisDevice"] = "Личное • облачное хранение планируется";
+        Values["Profile_PhotoJourney_PrivateStoredOnThisDevice"] = "Лично и безопасно";
         Values["Profile_PhotoJourney_TapToReveal"] = "Нажмите, чтобы показать";
         Values["Profile_PhotoJourney_Title"] = "Фотоальбом путешествия";
-        Values["Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd"] = "Для фотографий планируется приватное хранилище Amazon S3. Нажмите на фото, чтобы скрыть или показать.";
+        Values["Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd"] = "Ваши фотографии прогресса хранятся безопасно и конфиденциально. Нажмите на фото, чтобы скрыть или показать.";
         Values["Profile_PhotoJourney_DateFormat"] = "d MMM yyyy";
         Values["Profile_PhotoJourney_PhotoRevealed"] = "Фото показано";
         Values["Profile_PhotoJourney_RevealOrHideHint"] = "Дважды коснитесь, чтобы показать или скрыть фото.";

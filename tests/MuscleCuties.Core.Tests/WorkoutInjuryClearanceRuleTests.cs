@@ -3,22 +3,22 @@ using Xunit;
 
 namespace MuscleCuties.Core.Tests;
 
+// S-05: no post-clearance optional window. Restoration is decided by current eligibility from the clearance date.
 public sealed class WorkoutInjuryClearanceRuleTests
 {
-    private const int LastDayBeforeRequiredOffset = -1;
     private const int LaterClearanceOffset = 2;
+    private static readonly DateOnly DayBeforeClearance = DateOnly.Parse("2026-09-30");
     private static readonly DateOnly ClearanceDate = DateOnly.Parse("2026-10-01");
-    private static readonly DateOnly LastOptionalDate = DateOnly.Parse("2026-10-07");
-    private static readonly DateOnly RequiredDate = DateOnly.Parse("2026-10-08");
+    private static readonly DateOnly NextDay = DateOnly.Parse("2026-10-02");
     private static readonly DateOnly DelayedRestorationDate = DateOnly.Parse("2026-10-20");
 
     [Fact]
-    public void ClearanceDayThroughDaySevenAreOptionalAndDayEightIsRequired()
+    public void ClearanceDayIsRequiredWithoutAnOptionalWindow()
     {
-        Assert.Equal(RequiredDate, WorkoutInjuryClearanceRule.RequiredFromLocalDate(ClearanceDate));
-        Assert.True(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(ClearanceDate, ClearanceDate));
-        Assert.True(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(ClearanceDate, LastOptionalDate));
-        Assert.False(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(ClearanceDate, RequiredDate));
+        Assert.Equal(0, WorkoutInjuryClearanceRule.OptionalCalendarDaysIncludingClearance);
+        Assert.Equal(ClearanceDate, WorkoutInjuryClearanceRule.RequiredFromLocalDate(ClearanceDate));
+        Assert.False(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(ClearanceDate, ClearanceDate));
+        Assert.False(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(ClearanceDate, NextDay));
     }
 
     [Fact]
@@ -31,35 +31,29 @@ public sealed class WorkoutInjuryClearanceRuleTests
     [Fact]
     public void OverlappingRestrictionOrUnknownProvenanceBlocksRestoration()
     {
-        Assert.False(WorkoutInjuryClearanceRule.CanRestore(false, ClearanceDate, RequiredDate));
-        Assert.False(WorkoutInjuryClearanceRule.CanRestore(true, null, RequiredDate));
-        Assert.Null(WorkoutInjuryClearanceRule.RequiredFromLocalDate(DateOnly.MaxValue));
-    }
-    [Fact]
-    public void CalendarWindowCrossesLeapDayWithoutRestarting()
-    {
-        var cleared = DateOnly.Parse("2028-02-26");
-        var requiredFrom = DateOnly.Parse("2028-03-04");
-        Assert.Equal(requiredFrom, WorkoutInjuryClearanceRule.RequiredFromLocalDate(cleared));
-        Assert.True(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(cleared, requiredFrom.AddDays(LastDayBeforeRequiredOffset)));
-        Assert.False(WorkoutInjuryClearanceRule.IsRestoredExerciseOptional(cleared, requiredFrom));
+        Assert.False(WorkoutInjuryClearanceRule.CanRestore(false, ClearanceDate, NextDay));
+        Assert.False(WorkoutInjuryClearanceRule.CanRestore(true, null, NextDay));
+        Assert.False(WorkoutInjuryClearanceRule.CanRestore(true, ClearanceDate, DayBeforeClearance));
+        Assert.Equal(DateOnly.MaxValue, WorkoutInjuryClearanceRule.RequiredFromLocalDate(DateOnly.MaxValue));
     }
 
     [Fact]
-    public void OverlappingEpisodesUseLatestClearanceWithoutResettingIt()
+    public void OverlappingEpisodesRestoreOnlyAfterEveryClearance()
     {
         var laterClearance = ClearanceDate.AddDays(LaterClearanceOffset);
         var episodes = new[] { new InjuryRestorationEpisode(false, ClearanceDate), new InjuryRestorationEpisode(false, laterClearance) };
-        Assert.Equal(InjuryClearanceRestorationDisposition.RestoreOptional,
-            WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, episodes, RequiredDate));
+        Assert.Equal(InjuryClearanceRestorationDisposition.Blocked,
+            WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, episodes, NextDay));
         Assert.Equal(InjuryClearanceRestorationDisposition.RestoreRequired,
-            WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, episodes, laterClearance.AddDays(WorkoutInjuryClearanceRule.OptionalCalendarDaysIncludingClearance)));
+            WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, episodes, laterClearance));
         Assert.Equal(InjuryClearanceRestorationDisposition.RestoreOptional,
             WorkoutInjuryClearanceRule.EvaluateRestoration(true, true, episodes, DelayedRestorationDate));
         Assert.Equal(InjuryClearanceRestorationDisposition.Blocked,
             WorkoutInjuryClearanceRule.EvaluateRestoration(false, true, [new(true, null)], DelayedRestorationDate));
         Assert.Equal(InjuryClearanceRestorationDisposition.Blocked,
             WorkoutInjuryClearanceRule.EvaluateRestoration(false, false, episodes, DelayedRestorationDate));
+        Assert.Equal(laterClearance,
+            WorkoutInjuryClearanceRule.RequiredFromForAllClearances([ClearanceDate, laterClearance]));
     }
 
     [Fact]
@@ -73,14 +67,12 @@ public sealed class WorkoutInjuryClearanceRuleTests
     }
 
     [Fact]
-    public void ActiveAndRecentlyClearedRestrictionsAreNotDropped()
+    public void ActiveUnknownOrFutureRestrictionsAreNotDropped()
     {
         Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(false, ClearanceDate, DelayedRestorationDate));
-        Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, ClearanceDate, LastOptionalDate));
-        Assert.False(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, ClearanceDate, RequiredDate));
-        Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, null, RequiredDate));
+        Assert.False(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, ClearanceDate, ClearanceDate));
+        Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, null, NextDay));
         Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, ClearanceDate, null));
-        Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, RequiredDate, ClearanceDate));
+        Assert.True(WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, NextDay, ClearanceDate));
     }
-
 }

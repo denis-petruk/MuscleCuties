@@ -163,12 +163,14 @@ public sealed class ExerciseEligibilityRuleTests
     }
 
     [Fact]
-    public void RecentlyClearedSiteStillBlocksContraindicatedExercise()
+    public void UnclearedSiteStillBlocksContraindicatedExercise()
     {
         var cleared = DateOnly.Parse("2026-10-01");
-        var duringWindow = DateOnly.Parse("2026-10-07");
+        // S-05 removes the post-clearance window: only a clearance that has not happened yet
+        // keeps the conservative restriction.
+        var beforeClearance = cleared.AddDays(-1);
         var injury = InjuryFlag.Knee;
-        var restrict = WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, cleared, duringWindow);
+        var restrict = WorkoutInjuryClearanceRule.RequiresConservativeRestriction(true, cleared, beforeClearance);
         var context = Context() with { ActiveInjuryFlags = restrict ? injury : InjuryFlag.None };
         var result = ExerciseEligibilityRule.Filter([Candidate(FirstExerciseId) with { Contraindications = injury }], context);
         Assert.Equal(ExerciseEligibilityStatus.Blocked, result.Status);

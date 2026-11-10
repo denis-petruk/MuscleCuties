@@ -240,7 +240,7 @@
                                TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                VerticalOptions="Center" />
                         <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Text="{Binding ExercisePreviewsCountText, Source={x:Reference Root}}"
-                               TextColor="{StaticResource Primary}" VerticalOptions="Center" />
+                               TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" VerticalOptions="Center" />
                     </HorizontalStackLayout>
                     <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Grid.Column="1" Text="{Binding PreviewChevron, Source={x:Reference Root}}"
                            TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"

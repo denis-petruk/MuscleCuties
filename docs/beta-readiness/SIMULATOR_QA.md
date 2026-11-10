@@ -25,10 +25,30 @@
 | --- | --- | --- | --- |
 | E-01 | P1 | Untouched birthday picker saved `date_of_birth = today − 18y` and passed the age gate | FIXED `bbc27ada`, needs device re-check |
 | E-02 | P1 | Raw key `Workout_Recommendation_StartingWeight` on the session screen | FIXED `438de156`, needs device re-check |
-| E-03 | P3 | Username field auto-capitalizes ("Qabeta1") | OPEN |
+| E-03 | P3 | Username field auto-capitalizes ("Qabeta1") | FIXED `c97254b7`, needs device re-check |
 | E-04 | P2 | Onboarding Continue shows its validation message below the fold | OPEN |
 | E-05 | P2 | Today shows "Set your cycle phase" while Train shows the answered phase | OPEN |
 | E-06 | P2 | Beginner plan card says "Intensity: Heavy" | OPEN (copy/product) |
 | E-07 | P3 | Empty-state text flashes during the session page push | OPEN |
 
 No crash occurred in any transition exercised (CR01 path: plan → session → back not stress-tested 20×).
+
+## 2026-11-09 branch refresh — not run in the cloud workspace
+
+Branch `integration/beta-polish-20261109-v2` (base `a99fd80c`) was **not** built or driven here: the workspace is Linux
+and has no Xcode/CoreSimulator. CI's `verify_ios_compile` compiled the branch at the published tip `47f045f` (run 42686088233), so the E-04…E-07 fixes build; runtime and visual evidence still needs the owner. The reviewer
+summary is [REVIEW_PACKET.md](REVIEW_PACKET.md).
+Stage 3 of `scripts/beta-release-wizard.sh` runs the build, walks E-04…E-07 and journeys 4 and 6–15, and writes the
+dated record this section should be replaced with. The current dated checklist is
+[SIMULATOR_ACCEPTANCE_2026-11-09.md](../release-audit/2026-11-09/SIMULATOR_ACCEPTANCE_2026-11-09.md); every row there is
+`NOT RUN` because this workspace has no macOS/Xcode, and the file records the exact `NETSDK1147` blocker.
+
+| ID | Change | Commit | Status |
+| --- | --- | --- | --- |
+| E-04 | Validation + acknowledgment messages moved to the fixed action footer | `c3f050a` | Build + device check pending |
+| E-05 | Today phase copy localized (header, status, title, advice) with the localized phase name | `ced0478` | Data half needs a device run |
+| E-06 | Strength days report Moderate, not Heavy; intensity strings localized | `ced0478` | Build + device check pending |
+| E-07 | Empty/choice states gated on a completed load attempt | `7718179` | Build + device check pending |
+
+Journeys 4 and 6–15 remain **NOT RUN**; journeys 1, 2, 3 and 5 retain their 2026-11-09 result above at the older head.
+CR01 and QA01 remain unrun.
