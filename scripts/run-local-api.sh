@@ -36,6 +36,13 @@ export EmailReceipts__ActiveKeyId=local EmailReceipts__Issuer=MuscleCutiesServer
 export EmailReceipts__PrivateKeyPem="$(cat "$KEYS/receipt.pem")" EmailReceipts__PublicKeys__local="$(cat "$KEYS/receipt.pub")"
 export EmailChallenges__ActiveHmacKeyId=local EmailChallenges__HmacKeys__local="$(openssl rand -hex 32)"
 
+if [[ -f .env && -z "${FDC_API_KEY:-}" ]]; then
+  FDC_KEY_FROM_ENV="$(grep -E '^[ \t]*FDC_API_KEY[ \t]*=' .env | head -n 1 | sed -E 's/^[ \t]*FDC_API_KEY[ \t]*=[ \t]*["'\'']?([^"'\'']*)["'\'']?/\1/' || true)"
+  if [[ -n "$FDC_KEY_FROM_ENV" ]]; then
+    export FDC_API_KEY="$FDC_KEY_FROM_ENV"
+  fi
+fi
+
 # Run from the project folder so appsettings.Development.json is the content root.
 cd services/MuscleCuties.Server
 dotnet run --no-launch-profile

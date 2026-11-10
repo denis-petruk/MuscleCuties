@@ -28,7 +28,7 @@ Baseline `f1918e138634ba39c2483bde3e1194b6d346f2a8`. Inputs: [OWNER_SIMULATOR_QA
 | D-6 | Live AWS change set (A1–A6, A11) | Repo-only evidence | Approve the concrete change set and its target account/stack in INFRA_RULES_2026-11-09 | L-1…L-3 | owner 0.5 d |
 
 The resolutions above are the evidence-backed recommendations, adopted here as the **planning default**. They are not
-clinical approvals; the owner ratifies each before C-8…C-10 start (CLAUDE.md: no invented health rules).
+clinical approvals; the owner ratifies each before C-8…C-10 start (contract: no invented health rules).
 
 ## Code fixes
 

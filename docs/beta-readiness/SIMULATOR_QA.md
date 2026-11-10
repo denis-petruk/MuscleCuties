@@ -6,7 +6,7 @@
 | Device | iPhone 17 Pro simulator `678048F6-C4C7-406C-A970-7104AED3E00A`, iOS 26.3, dark appearance, EN |
 | Backend | Local API `http://127.0.0.1:5080` (Development), disposable PostgreSQL 16 `mc_local` on `127.0.0.1:55461`, `schema_version=5`, 746 seed rows, `dbcheck` compatible |
 | Account | Synthetic `qa.beta1@example.test`; OTP from the development log delivery; no Beta data used |
-| Driver | Claude Code built-in iOS simulator control (tap/type/screenshot); Maestro not used |
+| Driver | Automated built-in iOS simulator control (tap/type/screenshot); Maestro not used |
 
 ## Journeys
 

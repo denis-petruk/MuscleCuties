@@ -49,8 +49,8 @@ _ReSharper*/
 /artifacts/
 
 # Shared development instructions, skills, reports, templates and run configurations
-# are versioned by default, including AGENTS.md, DESIGN.md, PRODUCT.md, CLAUDE.md,
-# .agents/, .codex/, .claude/, .impeccable/critique/ and .run/.
+# are versioned by default, including AGENTS.md, DESIGN.md, PRODUCT.md,
+# .agents/, .codex/, .impeccable/critique/ and .run/.
 # Ignore only private imported context and per-machine agent state.
 /.cloud-attachments/
 **/.codex/hooks.json
@@ -59,7 +59,7 @@ _ReSharper*/
 **/.codex/sessions/
 **/.codex/cache/
 **/.codex/logs/
-**/.claude/settings.local.json
+**/*settings.local.json
 **/.impeccable/config.local.json
 **/.impeccable/hook.cache.json
 **/.impeccable/hook.pending.json

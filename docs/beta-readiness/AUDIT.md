@@ -26,7 +26,7 @@ code at this revision. New IDs: U-09, U-10 (localization), T-21 (build warnings)
 
 | ID | Finding | Status | Evidence |
 | --- | --- | --- | --- |
-| G-01 | Foreground regenerate auto-activated replacement plans (CLAUDE.md requires explicit replacement acceptance) | FIXED `b5f42e7a` | `StrengthPlanActivationAndApplyTests`, updated activation rule tests |
+| G-01 | Foreground regenerate auto-activated replacement plans (contract requires explicit replacement acceptance) | FIXED `b5f42e7a` | `StrengthPlanActivationAndApplyTests`, updated activation rule tests |
 | G-02 | Reduced-volume first plans auto-applied; coverage not re-checked after recovery-spacing cuts | FIXED `b5f42e7a`, `f92be90f` | Core + Contracts tests |
 | G-03 | Up to 4 activities/day; owner requirement is 2 | FIXED `715f44b4` | Schedule rule tests |
 | G-04 / U-04 | One safety-emptied session withheld the whole plan → disabled Apply with no adjacent reason | FIXED `f64270bb`, `b5f42e7a` | `SessionWithheld:` disclosure; footer reason when Apply is disabled |

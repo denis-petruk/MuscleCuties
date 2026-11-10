@@ -6,6 +6,7 @@
 #
 # Usage: bash scripts/run-ios-simulator.sh [simulator name or UDID]   (default: "iPhone 17 Pro")
 # Env:   MC_SIM_APPEARANCE=light|dark   MC_SIM_LANGUAGE=en|ru   MC_LOCAL_API=http://127.0.0.1:5080
+#        FDC_API_KEY (or repo-root .env) is forwarded to the app by the project build; see docs/FDC_API_SETUP.md.
 set -euo pipefail
 
 PROJECT="src/MuscleCuties.UI/MuscleCuties.UI.csproj"
@@ -15,6 +16,13 @@ TARGET="${1:-iPhone 17 Pro}"
 API="${MC_LOCAL_API:-http://127.0.0.1:5080}"
 
 cd "$(dirname "$0")/.."
+
+if [[ -f .env && -z "${FDC_API_KEY:-}" ]]; then
+  FDC_KEY_FROM_ENV="$(grep -E '^[ \t]*FDC_API_KEY[ \t]*=' .env | head -n 1 | sed -E 's/^[ \t]*FDC_API_KEY[ \t]*=[ \t]*["'\'']?([^"'\'']*)["'\'']?/\1/' || true)"
+  if [[ -n "$FDC_KEY_FROM_ENV" ]]; then
+    export FDC_API_KEY="$FDC_KEY_FROM_ENV"
+  fi
+fi
 
 case "$API" in
   http://127.0.0.1:*|http://localhost:*|http://\[::1\]:*) ;;

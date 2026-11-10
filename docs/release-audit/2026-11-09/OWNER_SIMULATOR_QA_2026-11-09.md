@@ -27,11 +27,11 @@ used as reference only.
 | Synthetic accounts | `qa.sim<5-digit>@example.test` / `qasim<5-digit>` (5 accounts; OTP via development log delivery). No Beta data, no Beta endpoint. |
 | Screenshot folder | None — no app was rendered. |
 | Evidence folder | [evidence-owner-qa-2026-11-09/](evidence-owner-qa-2026-11-09/) (redacted logs) |
-| Tester / date | Claude Code (agent) for the owner, 2026-11-09 |
+| Tester / date | Automated agent for the owner, 2026-11-09 |
 
 ## Why the build failed (blocker, not a product defect)
 
-The Claude Code session sandbox denies `AF_UNIX` sockets (`bind` → `EPERM`; probe in
+The agent session sandbox denies `AF_UNIX` sockets (`bind` → `EPERM`; probe in
 `evidence-owner-qa-2026-11-09/sandbox-unix-socket-probe.txt`). MSBuild needs them:
 
 1. Default build: worker-node handshake never completes; the build ends `Build FAILED`, 0 errors, after 5 minutes
@@ -46,7 +46,7 @@ The Claude Code session sandbox denies `AF_UNIX` sockets (`bind` → `EPERM`; pr
 was used. The sandbox settings belong to the owner and were not changed or worked around.
 
 **To unblock:** run the build command above in a normal terminal on this Mac (or in Rider), or allow Unix sockets in
-the Claude Code sandbox settings, then re-run this record. Not attempted: building in the user's own terminal tab,
+the agent sandbox settings, then re-run this record. Not attempted: building in the user's own terminal tab,
 which would have bypassed the sandbox.
 
 ## Checklist rows (from SIMULATOR_ACCEPTANCE_2026-11-09.md)
@@ -96,7 +96,7 @@ Counts: **PASS 0 · FAIL 0 · BLOCKED 21 · NOT RUN 0.**
 
 | ID | Sev | Finding | Reproduction | Status |
 | --- | --- | --- | --- | --- |
-| Q-01 | P0 (gate) | Simulator acceptance cannot run in the agent sandbox (MSBuild needs Unix sockets) | Run the build command inside Claude Code's sandbox | Environment; owner unblocks |
+| Q-01 | P0 (gate) | Simulator acceptance cannot run in the agent sandbox (MSBuild needs Unix sockets) | Run the build command inside the agent sandbox | Environment; owner unblocks |
 | Q-02 | P2 | Stale age error: `OnBirthDateChanged` sets `ErrorMessage = "Ui_Onboarding_Error_Age"` but clears only when it equals the old English sentence, so the error never clears when the date is corrected | `ProfileSetupViewModel.cs:170-178`; reachable only if an under-18 date reaches the VM (the picker max is today−18y) | Code-level; needs device check |
 | Q-03 | P2 | A user whose 18th birthday is today cannot confirm the pre-filled default date: selection registers only on a change, and Continue rejects an untouched picker | `ProfileSetupViewModel.cs:24,160-166,211`; leave the picker untouched and tap Continue | Hypothesis; needs device check |
 | Q-04 | P1 | Caption text uses bare `Primary` #C85A87 (no dark variant): 3.99:1 on light card, 3.42:1 on dark card, below 4.5:1 | `FeaturedWorkoutCard.xaml:243`, `StrengthPlanGenerationPage.xaml:736` | Static; see styling audit S-01 |

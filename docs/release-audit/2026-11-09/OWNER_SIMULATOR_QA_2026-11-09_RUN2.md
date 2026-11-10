@@ -7,7 +7,7 @@
 | Device | iPhone 17 simulator `13EDBFDC-534D-4A9E-80CF-C5D2F26D5DBB`, iOS 26.3, light, English, default text size |
 | Backend | Local API `http://127.0.0.1:5080` (Development, per-run keys); disposable PostgreSQL 16.15 `127.0.0.1:55461/mc_qa_20261109`, schema 7, dbcheck compatible |
 | Account | Synthetic `qa.sim1109a@example.test` / `qasimtester`; OTP from the development log |
-| Driver | Claude Code iOS simulator control (tap/type/screenshot), `xcrun simctl io` captures, Maestro for the accessibility tree |
+| Driver | Automated iOS simulator control (tap/type/screenshot), `xcrun simctl io` captures, Maestro for the accessibility tree |
 | Screenshots | [screenshots-qa-2026-11-09/](screenshots-qa-2026-11-09/) |
 
 ## Results so far (light, EN, iPhone 17)
