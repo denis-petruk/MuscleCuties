@@ -69,6 +69,20 @@
         <CodesignEntitlements>Platforms/iOS/Entitlements.plist</CodesignEntitlements>
     </PropertyGroup>
 
+    <!-- USDA FoodData Central key for local Debug simulator runs (docs/FDC_API_SETUP.md).
+         Source order: FDC_API_KEY in the build environment, then the gitignored repo-root .env.
+         The key is passed to the launched simulator process as an environment variable only;
+         it is never compiled into the app, and Release builds ignore it. -->
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
+        <McEnvFile Condition="'$(McEnvFile)' == ''">$(MSBuildThisFileDirectory)../../.env</McEnvFile>
+        <_McEnvText Condition="Exists('$(McEnvFile)')">$([System.IO.File]::ReadAllText('$(McEnvFile)'))</_McEnvText>
+        <_McFdcApiKey>$(FDC_API_KEY)</_McFdcApiKey>
+        <_McFdcApiKey Condition="'$(_McFdcApiKey)' == '' and '$(_McEnvText)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(_McEnvText), `(?m)^[ \t]*FDC_API_KEY[ \t]*=[ \t]*["']?([A-Za-z0-9]+)`).Groups.get_Item(1).Value)</_McFdcApiKey>
+    </PropertyGroup>
+    <ItemGroup Condition="'$(_McFdcApiKey)' != ''">
+        <MlaunchEnvironmentVariables Include="FDC_API_KEY=$(_McFdcApiKey)"/>
+    </ItemGroup>
+
     <ItemGroup>
         <MauiIcon Include="Resources\AppIcon\appicon.png" Color="#FFF8FB" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>
         <MauiSplashScreen Include="Resources\Splash\splash.png" Color="#FFF8FB" BaseSize="320,180" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>
