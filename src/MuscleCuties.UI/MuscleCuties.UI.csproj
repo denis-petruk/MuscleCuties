@@ -77,7 +77,7 @@
         <McEnvFile Condition="'$(McEnvFile)' == ''">$(MSBuildThisFileDirectory)../../.env</McEnvFile>
         <_McEnvText Condition="Exists('$(McEnvFile)')">$([System.IO.File]::ReadAllText('$(McEnvFile)'))</_McEnvText>
         <_McFdcApiKey>$(FDC_API_KEY)</_McFdcApiKey>
-        <_McFdcApiKey Condition="'$(_McFdcApiKey)' == '' and '$(_McEnvText)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(_McEnvText), `(?m)^[ \t]*FDC_API_KEY[ \t]*=[ \t]*["']?([A-Za-z0-9_\-]+)`).Groups.get_Item(1).Value)</_McFdcApiKey>
+        <_McFdcApiKey Condition="'$(_McFdcApiKey)' == '' and '$(_McEnvText)' != ''">$([System.Text.RegularExpressions.Regex]::Match($(_McEnvText), `(?m)^[ \t]*FDC_API_KEY[ \t]*=[ \t]*["']?([A-Za-z0-9]+)`).Groups.get_Item(1).Value)</_McFdcApiKey>
     </PropertyGroup>
     <ItemGroup Condition="'$(_McFdcApiKey)' != ''">
         <MlaunchEnvironmentVariables Include="FDC_API_KEY=$(_McFdcApiKey)"/>
