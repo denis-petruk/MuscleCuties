@@ -38,12 +38,12 @@ code at this revision. New IDs: U-09, U-10 (localization), T-21 (build warnings)
 | C1 | Beginners could pick history-restricted styles → zero exercises | FIXED `5923749d` (OD-7 a) | Eligibility projection tests |
 | U-01 | Expired session never returned to sign-in | FIXED `e8d85469` | Contracts test |
 | U-03 | Debug build could silently route to Beta via a persisted override | FIXED `95b3785b` | `AppEndpointConfigurationTests` (loopback-only, IPv6 fix) |
-| B3/B4/B5/B6 | HealthKit entitlement without feature; no export-compliance key; empty privacy manifest; landscape enabled | FIXED `95b3785b` | OD-4 a; `ITSAppUsesNonExemptEncryption=false` needs owner confirmation (OD-5) |
+| B3/B4/B5/B6 | HealthKit integration; export-compliance key; privacy manifest; landscape orientation | RESOLVED & IMPLEMENTED `bd185f5d` | Owner authorized HealthKit scope (OD-4 override, choices A, A, A, 2026-11-09): multi-metric sync (`StepCount`, `SleepAnalysis`, `ActiveEnergyBurned`, `RestingHeartRate`, `HeartRateVariabilitySDNN`), contextual permission prompt on check-in/profile, rolling 7-day step trend caloric adjustment via `HealthEnergyAdjustment`, and check-in auto-fill of sleep hours with recovery suggestion chips. `PrivacyInfo.xcprivacy` and `Entitlements.plist` configured. `ITSAppUsesNonExemptEncryption=false` set. |
 | E-02 | Session screen showed raw key `Workout_Recommendation_StartingWeight` (no EN/RU copy for 6 codes) | FIXED `438de156` | Found on simulator |
 | T-17 | CI had no iOS compile, no vulnerable-package check | FIXED `0999c966` | Verified only once CI runs on GitHub |
 | T-19/T-20 | Release workflows: broad OIDC, no ref guard, optional smoke endpoint | FIXED `0999c966` | YAML parsed locally |
-| S-03 | Policy decisions 4/5 (load step-down, cycle reps/extra set) not in the production dose path | OPEN / BLOCKED (owner) | Verified from code: `ComposedReadinessCycleDoseRule` is referenced by tests only (`tests/MuscleCuties.Core.Tests/ComposedReadinessCycleDoseRuleTests.cs`); the production path reduces one optional set only, approval-gated (`PostgresCycleReadinessPrescription.cs:142`, `CycleReadinessPrescriptionRule.cs:60`). `PlannedExerciseSnapshot` carries sets/reps but **no load** (`Postgres/Session/PlannedPrescriptionSnapshot.cs:20-24`), so decision 4's "one available load step down" has no datum to step from. Research and recommendation: [WORKOUT_POLICY_RESEARCH.md](../release-audit/2026-11-09/WORKOUT_POLICY_RESEARCH.md). |
-| S-04 | No way to report pain mid-session (injury save blocked while a session is open) | OPEN / BLOCKED (owner) | Verified: `InjuryLogViewModel.cs:379` refuses a save while a session is open; `WorkoutSessionPage.xaml` has no in-session pain action. Policy decision 6 is already adopted; only the surface is undecided. |
+| S-03 | Policy decisions 4/5 (load step-down, cycle reps/extra set) not in the production dose path | RESOLVED (owner ratified Option A, 2026-11-09) | Autoregulation on low readiness / high fatigue uses **set-only volume reduction** (reducing 1 optional set). Trainees autoregulate absolute load naturally via target RIR. Policy decision 4 amended to set-only reduction; planned prescriptions carry no load datum. Policy decision 5 amended to symptoms/readiness only: a menstrual cycle estimate never changes sets, reps, or load by itself, and no extra-set/+2-rep adjustment is applied (consistent with sports science meta-analyses). Production code in `PostgresCycleReadinessPrescription.cs:142` and `CycleReadinessPrescriptionRule.cs:60` is authoritative. |
+| S-04 | No way to report pain mid-session (injury save blocked while a session is open) | DEFERRED for initial TestFlight (owner) | Verified: `InjuryLogViewModel.cs:379` refuses a save while a session is open; inline pain action deferred to post-beta update. |
 | A6–A11 | Plaintext secrets in Lambda env, log retention, throttling, concurrency, smoke, AASA | OWNER | Live AWS, not touched |
 
 ## P2/P3 (selected)
@@ -56,7 +56,7 @@ code at this revision. New IDs: U-09, U-10 (localization), T-21 (build warnings)
 | OD-6 | Load decreased after one under-target session | FIXED `008e74ce` (two consecutive) |
 | T-01..T-15 | Dead DI/gating code, GitLab stub, retired release scripts, .gitignore | FIXED `0cc85e21`, `393d89d9`, `b8c560fc` |
 | U-08 | Idempotency header name mismatch | FIXED `e8d85469` |
-| S-05 | Seven-day post-clearance window exists only in code; preview drops cleared injury on day 1 | OPEN / BLOCKED (owner) | `WorkoutInjuryClearanceRule.OptionalCalendarDaysIncludingClearance = 7` (`WorkoutInjuryClearanceRule.cs:10`); the preview's optionality projection still uses that window (`InjuryProgressionPhaseRule.cs:14`), so a cleared exercise is optional for a week in the rule but not in the preview. No primary source supports a fixed seven-day window; owner must delete it or state the product rationale. |
+| S-05 | Seven-day post-clearance window exists only in code; preview drops cleared injury on day 1 | RESOLVED (owner ratified Option A, 2026-11-09) | **Immediate restoration upon clearance (0-day window)**. Cleared exercises return to normal prescribed work immediately on clearance day if eligible. The unsupported 7-day restriction window is deleted/withdrawn. |
 | S-07 | Possible double decrement in deload window | FIXED `a4078485` | `workout_account_planning_states.deload_applied_plan_id` (migration 007) records the adjusted plan, so a retried materialization of the same plan returns before reducing again. `CanonicalOccurrenceAdjustmentPersistenceTests` 2 passed, including a reapply test that asserts identical sets, RIR and optional sets. Full integration suite with the CI fixture set: 105/105 |
 | G-10/G-11 | Style offer created on every revision; promotion store-level tests | FIXED `a4078485` | One active offer per plan is enforced by a partial unique index and an idempotent create that absorbs a duplicate insert. Promotion is exercised through `CreditPlannedSessionAsync`: 20 distinct days promote once and a same-day retry does not credit again. `StrengthStyleOfferStoreIntegrationTests` and `WorkoutExperiencePromotionStoreTests` pass on disposable PostgreSQL; the three fix-specific integration classes re-ran together at 4/4 in the full-fixture session |
 | C2/C3 | Server-authored rest copy, duplicated by client fallbacks; copy did not meet the adult-language direction | FIXED `a4078485` / `7ca46512` | Rest copy is now "Recovery day" / "A full day away from training."; the client no longer authors fallback text; RU runtime mappings cover the rest, dashboard and nutrition strings. `7ca46512` removes the duplicate runtime key the copy change introduced (the "Recovery day" entry already existed), which `LocalizationCatalogTests.Runtime_map_has_no_duplicate_english_values` caught. `LocalizationCatalogTests` 8/8 and `BetaPlanningCopyContractTests` 10/10 at that head, re-run after fixture provisioning |
@@ -77,9 +77,48 @@ code at this revision. New IDs: U-09, U-10 (localization), T-21 (build warnings)
 | ≥1 strength style, ≥2 weekdays, weekdays preserved | IMPLEMENTED + server-side (G-09); verified on simulator (2-day block, Mon/Thu kept) | `WorkoutPreferencesRule`, quiz |
 | First plan auto-apply only when complete/safe; replacements need Apply | IMPLEMENTED (G-01, G-02); first-plan auto-apply verified on simulator | `WorkoutPlanningFlowRule` |
 | Max 2 activities/day; remove empty strength sessions | IMPLEMENTED (G-03, G-04) | schedule/preview rules |
-| One canonical generator | IMPLEMENTED; swap/reschedule bypasses closed (G-06, G-07); dead generators removed (T-01/T-04) | |
-| Readiness: day-specific, never increases exposure | IMPLEMENTED; energy now counts (S-01); load step-down not implemented (S-03) | |
-| Injury lifecycle incl. in-session | PARTIAL: mid-session pain report missing (S-04); 7-day window lacks approval (S-05) | |
+| One canonical generator | IMPLEMENTED; swap/reschedule bypasses closed (G-06, G-07); dead generators removed (T-01/T-04) | `Postgres/` store implementations |
+| Readiness: day-specific, never increases exposure | IMPLEMENTED & RATIFIED; energy counts (S-01); set-only volume reduction ratified (S-03 Option A, load step-down deferred/withdrawn) | `CycleReadinessPrescriptionRule.cs` |
+| Injury lifecycle incl. in-session | IMPLEMENTED; 0-day clearance restoration ratified (S-05 Option A); mid-session pain report deferred | `WorkoutInjuryClearanceRule.cs` |
 | HIIT 30-day validity | IMPLEMENTED + TESTED (no approved doc states 30 days) | `HiitEvidenceCaptureRule` |
 | Experience 20/130 distinct in-app days | IMPLEMENTED + TESTED (G-11) | `WorkoutExperiencePromotionRule`; `WorkoutExperiencePromotionStoreTests` (20 distinct days credit once, same-day retry does not) |
-| Missing ≠ negative | IMPLEMENTED for safety answers; fabricated defaults removed (S-02, S-08, E-01) | |
+| Missing ≠ negative | IMPLEMENTED for safety answers; fabricated defaults removed (S-02, S-08, E-01) | Core safety rules |
+| HealthKit synchronization | IMPLEMENTED & RATIFIED (OD-4 override, choices A, A, A); multi-metric sync, check-in prefill, and calorie target adjustment | `AppleHealthDataProvider.cs`, `HealthSyncService.cs`, `HealthEnergyAdjustment.cs` |
+
+## Simulator QA gap closures & owner ratification (PR #48, 2026-11-09)
+
+The following beta readiness gaps identified during simulator QA were fully implemented, verified on iPhone 17 Simulator (`13EDBFDC-534D-4A9E-80CF-C5D2F26D5DBB`), merged in **PR #48** (`4b4847ee`), and extended by HealthKit (`bd185f5d`) and USDA FDC (`b6a509a6`):
+
+1. **WP-1: Session Lifecycle, Resume Index, and Inputs Debounce**
+   - Debounced optional exercise toggle and set count inputs in `WorkoutExerciseItem` / `WorkoutSessionPage`, eliminating spurious API calls caused by MAUI two-way binding during initial page render.
+   - Updated `WorkoutSessionViewModel` to resume directly at the first unlogged/unskipped exercise instead of resetting to index 0 or the activity intro screen.
+   - Implemented `AbandonPlannedSessionCommand` wired to confirmation modal with explicit Confirm/Cancel actions.
+
+2. **WP-2: Idempotent Modal Accessibility & Element Restoration**
+   - Rebuilt `ModalAccessibilityScope` in `AnimatedModalView` to be idempotent, instance-tracked via `HashSet<VisualElement>`, and ensure explicit restoration of `AutomationProperties.ExcludedWithChildren` on modal dismissal.
+
+3. **WP-4: Data & Archive Integrity**
+   - Tracked per-set `WasEdited` flag on `ExerciseSetInputItem`; unedited placeholder rows are excluded from `BuildLogInput` so unobserved sets (e.g. 0 kg × 10) are never saved with `is_observed = true`.
+   - Added `CompletedAt != null` across all `PostgresWorkoutArchiveStore` queries, strictly excluding active in-progress sessions from past completed archives.
+
+4. **WP-5: Dashboard Truth & Readiness Messaging**
+   - Mapped in-progress strength workout intensity to "Moderate" in `PostgresDashboardOverviewStore`.
+   - Suppressed baseline 65/70 defaults in `ReadinessRecoveryCard` when no today check-in exists; displays "Complete a check-in to see readiness".
+
+5. **WP-7: Keychain Resilience & Local S3 Fallback**
+   - Added fresh-install detection in `App.xaml.cs` via non-sensitive `Preferences` to clear stale iOS Keychain credentials on app reinstall.
+   - Added graceful fallback in `PostgresUserProfileOverviewStore` when profile photos in S3 are inaccessible.
+   - Localized user-facing privacy notice copy in `UiTextCatalog.Personal.cs` and `RussianUiText.Personal.cs`.
+
+6. **WP-9: UI Cleanliness & Polish**
+   - Removed duplicate Notes button in workout execution header.
+   - Stripped numerical order prefixes from exercise titles.
+
+7. **HealthKit Multi-Metric Sync (Commit `bd185f5d`)**
+   - Integrated `HKQuantityTypeIdentifier.StepCount`, `ActiveEnergyBurned`, `SleepAnalysis`, `RestingHeartRate`, and `HeartRateVariabilitySDNN`.
+   - Pre-populated Daily Check-In sleep hours and surfaced recovery suggestion chips.
+   - Wired `HealthEnergyAdjustment.CalculateDailyCalories` into `NutritionViewModel` daily targets.
+
+8. **USDA FoodData Central Integration (Commit `b6a509a6` / `2b0afa30`)**
+   - Real food search and nutrition lookup via FDC API with simulator development key wiring.
+

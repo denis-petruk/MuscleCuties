@@ -148,8 +148,8 @@ The full gate table, including its open items, is in [RELEASE_READINESS.md](RELE
 3. Run stage 3 of `scripts/beta-release-wizard.sh` on a Mac, fill the dated record with real results, and fold them into
    `G12`.
 4. Re-check E-01, E-02 and E-04…E-07 on the smallest supported iPhone and iPhone 17 Pro, light and dark, EN and RU.
-5. Answer S-03 (load step vs set-only), policy 5 (cycle dose), S-04 (pain surface) and S-05 (seven-day window) in
-   [WORKOUT_POLICY_RESEARCH.md](../release-audit/2026-11-09/WORKOUT_POLICY_RESEARCH.md).
+5. Ratified owner decisions: S-03 (set-only volume reduction, Option A), policy 5 (symptoms/readiness only, no cycle dose override, Option A), S-05 (0-day clearance restoration, Option A), and HealthKit sync (OD-4 override, choices A, A, A). S-04 (pain surface) deferred for initial TestFlight.
+
 6. If authorized, deploy `observability.yaml`, confirm the change set adds only `AlarmEmailSubscription`, and click the
    SNS confirmation email. No live AWS change was made here.
 7. Before internal TestFlight: confirm OD-5 encryption, the OD-2/3/4/6/7/8 decisions, rebuild/re-check E-01 and E-02,
