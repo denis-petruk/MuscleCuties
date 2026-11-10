@@ -40,6 +40,19 @@ The rules below govern plan acceptance and safety. The [approved Beta workout po
 - Progression uses the exercise's real major muscle group and the user's real effective experience tier. Hardcoded defaults are not acceptable inputs to a load decision.
 - Recommendation, progression and skipped-summary copy is localized for EN and RU.
 
+## Readiness autoregulation and cycle policy (S-03 / S-05)
+
+- **Readiness autoregulation (S-03):** When a trainee reports poor sleep, elevated soreness, or marked fatigue, readiness autoregulation applies a **set-only volume reduction** (reducing one optional set where present). Trainees autoregulate absolute resistance load naturally through their prescribed RIR targets; no automatic load step-down is applied.
+- **Cycle-related adjustments (S-03):** Menstrual cycle phase estimates inform reported symptoms and readiness, but a cycle estimate alone never changes reps, sets, or load by itself. No cycle-specific rep or set dosing overrides exist.
+- **Injury clearance (S-05):** When an injury is cleared, **immediate restoration** applies from the clearance date (0-day window). Cleared exercises return to normal prescribed work immediately on clearance day whenever current eligibility permits.
+
+## HealthKit synchronization
+
+- Apple HealthKit synchronization is authorized for iOS (`net10.0-ios`).
+- Metric queries: daily and 7-day average steps (`HKQuantityTypeIdentifier.StepCount`), active energy burned (`HKQuantityTypeIdentifier.ActiveEnergyBurned`), last-night and 7-day sleep duration (`HKCategoryTypeIdentifier.SleepAnalysis`), resting heart rate (`HKQuantityTypeIdentifier.RestingHeartRate`), and HRV (`HKQuantityTypeIdentifier.HeartRateVariabilitySDNN`).
+- Check-in pre-fill: Objective `SleepHours` auto-fills directly from HealthKit. Subjective recovery metrics provide a `"Suggest from Apple Health"` chip for one-tap trainee review and confirmation.
+- Calorie adjustment: Rolling 7-day average step trends calculate a bounded daily caloric offset via `HealthEnergyAdjustment.CalculateDailyCalories` (smooth, deterministic, clamped -180 to +260 kcal).
+
 ## Deliberately deferred surfaces
 
 - **Fasting:** domain, use-case and PostgreSQL storage exist, but there is no client surface. It is deferred, not shipped, and no screen or copy presents it as available.
@@ -49,4 +62,5 @@ The rules below govern plan acceptance and safety. The [approved Beta workout po
 
 - Missing or stale injury answers remain distinct from "no injury"; absence never relaxes a restriction or increases intensity.
 - A session with no permitted strength block is withheld with a review reason rather than replaced by unsafe work.
-- Health synchronization stays dormant unless the owner authorizes its scope.
+- Trainee privacy: Health data is read locally via `AppleHealthDataProvider` on iOS, processed in memory, and never sent to third-party AI services.
+

@@ -1,4 +1,26 @@
-# State checkpoint — 2026-11-09
+# State checkpoint — 2026-11-10 (PR #48 + HealthKit + FDC)
+
+- Candidate: `main` at `4b4847ee` (PR #48 merge), extended by commit `bd185f5d` (HealthKit multi-metric sync) and `b6a509a6` (USDA FoodData Central integration).
+- Simulator QA Gap Closures (PR #48):
+  * WP-1: Session lifecycle debounced, resume at first unlogged/unskipped exercise, explicit session abandonment with modal confirmation.
+  * WP-2: AnimatedModalView accessibility scope idempotent with instance tracking and explicit restoration of `AutomationProperties.ExcludedWithChildren`.
+  * WP-4: `WasEdited` set tracking prevents unedited default rows from saving with `is_observed = true`; archive queries filtered by `CompletedAt != null`.
+  * WP-5: In-progress strength workouts mapped to "Moderate"; unrated readiness prompt displayed when check-in is uncompleted.
+  * WP-7: Reinstall Keychain cleanup via Preferences fresh-install check; graceful S3 photo fallback; localized privacy copy.
+  * WP-9: Duplicate Notes button removed; numerical order prefixes stripped from exercise names.
+- Ratified Owner Decisions:
+  * S-03 / D-1: Ratified Option A (set-only volume reduction on poor readiness; trainees naturally autoregulate load via target RIR).
+  * S-03 / Decision 5: Ratified Option A (cycle phase estimate alone never changes reps, sets, or load).
+  * S-05 / D-4 / A-7: Ratified Option A (immediate restoration upon clearance: 0-day window).
+  * HealthKit (OD-4 override): Ratified choices A, A, A (contextual check-in prompt, rolling 7-day step trend caloric adjustment via `HealthEnergyAdjustment`, check-in sleep pre-fill with recovery suggestion chips).
+- Verification:
+  * Verified on iPhone 17 Simulator (`13EDBFDC-534D-4A9E-80CF-C5D2F26D5DBB`), iOS 26.3, against PostgreSQL 16 (`mc_qa_20261109`) and loopback API (`http://127.0.0.1:5080`).
+  * GitHub Actions CI: 10/10 checks green on PR #48.
+  * .NET 10 iOS build (`net10.0-ios`) compiles with 0 errors.
+
+---
+
+# State checkpoint — 2026-11-09 (PR #48 run)
 
 ## integration/beta-polish-20261109-v2 (this run)
 
