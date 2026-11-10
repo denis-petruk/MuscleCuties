@@ -122,17 +122,6 @@ public sealed class HealthSyncService : IHealthSyncService, IDisposable
             }
 
             var summary = await provider.ReadWeeklySummaryAsync(DateTime.Today, syncToken);
-            if (summary is not null && source == HealthDataSource.AppleHealth)
-                summary = summary with
-                {
-                    AverageSleepHours = 0,
-                    SleepQualityScore = 0,
-                    RestingHeartRate = 0,
-                    HrvScore = 0,
-                    LastNightSleepHours = null,
-                    AverageActiveEnergyKcal = null,
-                    AverageSleep3dHours = null
-                };
             if (summary is null)
             {
                 _tokenStorage.Remove(SummaryKey(userId));
@@ -240,11 +229,10 @@ public sealed class HealthSyncService : IHealthSyncService, IDisposable
             state.SelectedSource.Value.ToDisplayName(),
             summary.MovementSummary
         };
-        if (state.SelectedSource != HealthDataSource.AppleHealth)
-            parts.Add(summary.SleepSummary);
-        if (state.SelectedSource != HealthDataSource.AppleHealth && summary.RestingHeartRate > 0)
+        parts.Add(summary.SleepSummary);
+        if (summary.RestingHeartRate > 0)
             parts.Add($"{summary.RestingHeartRate} bpm RHR");
-        if (state.SelectedSource != HealthDataSource.AppleHealth && summary.AverageActiveEnergyKcal is > 0)
+        if (summary.AverageActiveEnergyKcal is > 0)
             parts.Add($"{summary.AverageActiveEnergyKcal.Value:N0} kcal active");
 
         return string.Join(" · ", parts);

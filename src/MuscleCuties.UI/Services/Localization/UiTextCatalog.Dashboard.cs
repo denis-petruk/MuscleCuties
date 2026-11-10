@@ -48,6 +48,7 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_EnergySectionTitle"] = "ENERGY";
         English["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Very high";
         English["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Very low";
+        English["Dashboard_CheckIn_HealthKitSleepBadge"] = "Auto-filled from Apple Health ({0}h)";
         English["Dashboard_CheckIn_PlanningTitle"] = "Workout planning";
         English["Dashboard_CheckIn_PlanningSleepQuality"] = "Sleep quality";
         English["Dashboard_CheckIn_PlanningSoreness"] = "Muscle soreness";
@@ -84,6 +85,7 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_SubmitHint"] = "Save your daily check-in";
         English["Dashboard_CheckIn_Subtitle"] = "How are you feeling today?";
         English["Dashboard_CheckIn_SuccessMessage"] = "Check-in saved";
+        English["Dashboard_CheckIn_SuggestFromAppleHealth"] = "Suggest ratings from Apple Health";
         English["Dashboard_CheckIn_WeightA11y"] = "Optional body weight in kilograms";
         English["Dashboard_CheckIn_WeightHint"] = "Leave empty to skip weight entry";
         English["Dashboard_CheckIn_WeightPlaceholderKg"] = "kg";

@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 using MuscleCuties.UI.Resources.Styles;
+using IHealthSyncService = MuscleCuties.Core.Services.Health.IHealthSyncService;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
@@ -20,6 +21,7 @@ using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
@@ -45,6 +47,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private readonly IDashboardOverviewUseCase _overview;
     private readonly ICyclePhaseProjectionUseCase _cyclePhaseProjection;
     private readonly IProfileUnitsUseCase _profileUnits;
+    private readonly IHealthSyncService? _healthSync;
+    private readonly ICurrentProfileUserIdProvider? _userIdProvider;
 
     // F06: the dashboard renders weights and distances in the saved measurement system.
     private bool _useMetricUnits = true;
@@ -165,7 +169,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         Func<Task> openNutritionAsync,
         Action invalidateDashboard,
         INutritionChangeNotifier? changeNotifier = null,
-        Func<Task>? openPhotoVaultAsync = null)
+        Func<Task>? openPhotoVaultAsync = null,
+        IHealthSyncService? healthSync = null,
+        ICurrentProfileUserIdProvider? userIdProvider = null)
     {
         _overview = overview;
         _cyclePhaseProjection = cyclePhaseProjection;
@@ -179,6 +185,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         _openNutritionAsync = openNutritionAsync;
         _invalidateDashboard = invalidateDashboard;
         _openPhotoVaultAsync = openPhotoVaultAsync;
+        _healthSync = healthSync;
+        _userIdProvider = userIdProvider;
         if (changeNotifier is not null)
             changeNotifier.NutritionChanged += OnNutritionChanged;
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
@@ -195,7 +203,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     public bool IsAnyModalVisible => IsInjuryModalVisible || IsCheckInModalVisible;
 
     public DailyCheckInViewModel CheckInVm => _checkInVm ??= new DailyCheckInViewModel(
-        _dailyCheckIn, _invalidateDashboard, CloseCheckInAfterCompletionAsync);
+        _dailyCheckIn, _invalidateDashboard, CloseCheckInAfterCompletionAsync, _healthSync, _userIdProvider);
 
     public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);

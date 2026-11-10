@@ -10,6 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
@@ -21,6 +22,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Workout\WorkoutAccountCalendarClient.cs" Link="WorkoutAccountCalendarClient.cs" />
+    <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Dashboard\DailyCheckInViewModel.cs" Link="DailyCheckInViewModel.cs" />
     <ProjectReference Include="..\..\src\MuscleCuties.Core\MuscleCuties.Core.csproj" />
     <ProjectReference Include="..\..\src\MuscleCuties.UseCases\MuscleCuties.UseCases.csproj" />
     <ProjectReference Include="..\..\src\MuscleCuties.Infrastructure\MuscleCuties.Infrastructure.csproj" />

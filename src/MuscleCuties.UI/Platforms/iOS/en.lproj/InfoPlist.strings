@@ -1,1 +1,3 @@
 "NSPhotoLibraryUsageDescription" = "MuscleCuties opens your photo library when you choose a profile or progress photo.";
+"NSHealthShareUsageDescription" = "MuscleCuties reads your steps, active energy, sleep, and heart metrics from Apple Health to pre-populate your daily check-in and customize your daily nutrition targets.";
+"NSHealthUpdateUsageDescription" = "MuscleCuties reads your steps, active energy, sleep, and heart metrics from Apple Health to pre-populate your daily check-in and customize your daily nutrition targets.";

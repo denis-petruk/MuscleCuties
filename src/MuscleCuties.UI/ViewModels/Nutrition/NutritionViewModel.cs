@@ -16,8 +16,11 @@ using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
+using MuscleCuties.Core.Services.Health;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
@@ -32,6 +35,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     private readonly FoodPortionCatalog _foodPortionCatalog;
     private readonly ISaveMealTemplateUseCase? _saveMealTemplateUseCase;
     private readonly IGetRecipesAndTemplatesUseCase? _getRecipesAndTemplatesUseCase;
+    private readonly IHealthSyncService? _healthSync;
+    private readonly ICurrentProfileUserIdProvider? _userIdProvider;
+    private readonly IProfilePersonalInfoUseCase? _personalInfoUseCase;
     private NutritionMealDistribution? _mealDistribution;
     [ObservableProperty] private string _addFoodMessage = string.Empty;
     [ObservableProperty] private BreakfastPreference _breakfastPreference = BreakfastPreference.Savoury;
@@ -127,7 +133,10 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         MuscleCuties.UseCases.Features.Nutrition.Barcode.ILookupBarcodeUseCase? barcodeUseCase = null,
         IBarcodeScannerHardwareService? barcodeHardwareService = null,
         ISaveMealTemplateUseCase? saveMealTemplateUseCase = null,
-        IGetRecipesAndTemplatesUseCase? getRecipesAndTemplatesUseCase = null)
+        IGetRecipesAndTemplatesUseCase? getRecipesAndTemplatesUseCase = null,
+        IHealthSyncService? healthSync = null,
+        ICurrentProfileUserIdProvider? userIdProvider = null,
+        IProfilePersonalInfoUseCase? personalInfoUseCase = null)
     {
         _overviewUseCase = overviewUseCase;
         _searchUseCase = searchUseCase;
@@ -139,6 +148,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         _barcodeHardwareService = barcodeHardwareService;
         _saveMealTemplateUseCase = saveMealTemplateUseCase;
         _getRecipesAndTemplatesUseCase = getRecipesAndTemplatesUseCase;
+        _healthSync = healthSync;
+        _userIdProvider = userIdProvider;
+        _personalInfoUseCase = personalInfoUseCase;
         if (_changeNotifier is not null) _changeNotifier.NutritionChanged += OnNutritionChanged;
 
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
@@ -442,6 +454,47 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             TargetCarbs = response.Targets.Carbs;
             TargetFats = response.Targets.Fats;
             _mealDistribution = NutritionPresentationMapper.FromMealDistribution(response.Targets.MealDistribution);
+
+            if (_healthSync is not null && _userIdProvider is not null)
+            {
+                var userId = await _userIdProvider.GetCurrentUserIdAsync();
+                if (userId > 0)
+                {
+                    var healthSummary = await _healthSync.GetCachedWeeklySummaryAsync(userId);
+                    if (healthSummary is not null && healthSummary.HasMovementData)
+                    {
+                        var weightKg = 65f;
+                        var age = 28;
+                        if (_personalInfoUseCase is not null)
+                        {
+                            var info = await _personalInfoUseCase.LoadAsync();
+                            if (info.Profile is not null)
+                            {
+                                if (info.Profile.Weight > 0) weightKg = info.Profile.Weight;
+                                if (info.Profile.DateOfBirth != default)
+                                {
+                                    age = DateTime.Today.Year - info.Profile.DateOfBirth.Year;
+                                    if (info.Profile.DateOfBirth.Date > DateTime.Today.AddYears(-age)) age--;
+                                }
+                            }
+                        }
+                        var adjustment = HealthEnergyAdjustment.CalculateDailyCalories(
+                            healthSummary, weightKg, age, 3, CurrentPhase);
+                        ActivityAdjustmentCalories = adjustment;
+                        HasActivityAdjustment = adjustment != 0f;
+                        ActivityAdjustmentText = HasActivityAdjustment
+                            ? (adjustment > 0 ? $"+{adjustment:N0} kcal" : $"{adjustment:N0} kcal")
+                            : string.Empty;
+                        TargetCalories += adjustment;
+                    }
+                    else
+                    {
+                        HasActivityAdjustment = false;
+                        ActivityAdjustmentText = string.Empty;
+                        ActivityAdjustmentCalories = 0f;
+                    }
+                }
+            }
 
             ConsumedCalories = response.Consumed.Calories;
             ConsumedProtein = response.Consumed.Protein;

@@ -68,6 +68,11 @@
                     <Label
                         Text="{Binding TargetCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_TargetCaloriesValueKcal}"
                         Style="{StaticResource CaptionLabel}" />
+                    <Label
+                        Text="{Binding ActivityAdjustmentText, StringFormat='{0} activity'}"
+                        IsVisible="{Binding HasActivityAdjustment}"
+                        Style="{StaticResource CaptionLabel}"
+                        TextColor="{StaticResource Primary}" />
                 </VerticalStackLayout>
             </Grid>
 

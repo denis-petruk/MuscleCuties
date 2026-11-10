@@ -26,6 +26,13 @@
                     IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
             </VerticalStackLayout>
 
+            <Button
+                Style="{StaticResource ButtonSecondary}"
+                Text="{loc:LocalizedText Dashboard_CheckIn_SuggestFromAppleHealth}"
+                Command="{Binding SuggestFromAppleHealthCommand}"
+                IsVisible="{Binding HasHealthKitSuggestions}"
+                HorizontalOptions="Fill" />
+
             <!-- Sleep last night + sleep quality -->
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpacing14}">
@@ -66,6 +73,12 @@
                                 HorizontalOptions="End" />
                         </Grid>
                     </Grid>
+
+                    <Label
+                        Text="{Binding SleepAutoFilledBadgeText}"
+                        IsVisible="{Binding IsSleepAutoFilled}"
+                        Style="{StaticResource CaptionLabel}"
+                        TextColor="{StaticResource Primary}" />
 
                     <BoxView Style="{StaticResource ModalDivider}" />
 

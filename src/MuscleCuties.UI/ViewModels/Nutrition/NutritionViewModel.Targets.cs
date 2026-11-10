@@ -24,6 +24,9 @@ public partial class NutritionViewModel
     [ObservableProperty] private string _phaseAdjustmentText = string.Empty;
     [ObservableProperty] private string _calculatedTargetText = string.Empty;
     [ObservableProperty] private string _savedCalorieRequestText = string.Empty;
+    [ObservableProperty] private bool _hasActivityAdjustment;
+    [ObservableProperty] private string _activityAdjustmentText = string.Empty;
+    [ObservableProperty] private float _activityAdjustmentCalories;
 
     private void ApplyTargetBreakdown(NutritionTargetBreakdown? breakdown)
     {

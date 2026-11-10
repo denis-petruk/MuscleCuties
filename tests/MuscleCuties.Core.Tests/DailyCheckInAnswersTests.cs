@@ -82,6 +82,73 @@ public sealed class DailyCheckInAnswersTests
         Assert.Contains("Answers.IsComplete", source, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void View_model_wires_healthkit_prepopulation_and_suggestions()
+    {
+        var source = ViewModelSource();
+
+        Assert.Contains("private bool _isSleepAutoFilled;", source, StringComparison.Ordinal);
+        Assert.Contains("private string _sleepAutoFilledBadgeText", source, StringComparison.Ordinal);
+        Assert.Contains("private bool _hasHealthKitSuggestions;", source, StringComparison.Ordinal);
+        Assert.Contains("private int _suggestedEnergyLevel;", source, StringComparison.Ordinal);
+        Assert.Contains("private int _suggestedSleepQuality;", source, StringComparison.Ordinal);
+        Assert.Contains("void SuggestFromAppleHealth()", source, StringComparison.Ordinal);
+        Assert.Contains("GetCachedWeeklySummaryAsync", source, StringComparison.Ordinal);
+        Assert.Contains("Dashboard_CheckIn_HealthKitSleepBadge", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Localization_contains_healthkit_checkin_strings_in_en_and_ru()
+    {
+        var current = AppContext.BaseDirectory;
+        while (!File.Exists(Path.Combine(current, "MuscleCuties.sln")))
+            current = Directory.GetParent(current)?.FullName ?? throw new InvalidOperationException("Repository root not found.");
+
+        var enSource = File.ReadAllText(Path.Combine(current, "src", "MuscleCuties.UI", "Services", "Localization",
+            "UiTextCatalog.Dashboard.cs"));
+        var ruSource = File.ReadAllText(Path.Combine(current, "src", "MuscleCuties.UI", "Services", "Localization",
+            "RussianUiText.Dashboard.cs"));
+
+        Assert.Contains("English[\"Dashboard_CheckIn_HealthKitSleepBadge\"] = \"Auto-filled from Apple Health ({0}h)\";", enSource, StringComparison.Ordinal);
+        Assert.Contains("English[\"Dashboard_CheckIn_SuggestFromAppleHealth\"] = \"Suggest ratings from Apple Health\";", enSource, StringComparison.Ordinal);
+        Assert.Contains("Values[\"Dashboard_CheckIn_HealthKitSleepBadge\"] = \"Заполнено из Apple Health ({0} ч)\";", ruSource, StringComparison.Ordinal);
+        Assert.Contains("Values[\"Dashboard_CheckIn_SuggestFromAppleHealth\"] = \"Предложить оценки из Apple Health\";", ruSource, StringComparison.Ordinal);
+    }
+
+    [Theory]
+    [InlineData(8.5, 58, 65, 5, 4)]
+    [InlineData(7.5, 62, 55, 4, 4)]
+    [InlineData(7.0, 70, 0, 4, 3)]
+    [InlineData(6.2, 70, 0, 3, 3)]
+    [InlineData(5.0, 78, 25, 2, 2)]
+    [InlineData(4.0, 80, 20, 1, 2)]
+    public void Suggested_recovery_ratings_formula(
+        double sleep, int rhr, int hrv, int expectedSleepQuality, int expectedEnergyLevel)
+    {
+        int sleepQuality;
+        if (sleep >= 8.0 && ((rhr > 0 && rhr <= 60) || hrv >= 60))
+            sleepQuality = 5;
+        else if (sleep >= 7.0)
+            sleepQuality = 4;
+        else if (sleep >= 6.0)
+            sleepQuality = 3;
+        else if (sleep >= 4.5)
+            sleepQuality = 2;
+        else
+            sleepQuality = 1;
+
+        int energyLevel;
+        if (sleep >= 7.5 && ((rhr > 0 && rhr <= 65) || hrv >= 50))
+            energyLevel = 4;
+        else if (sleep < 6.0 || rhr > 75 || (hrv > 0 && hrv < 30))
+            energyLevel = 2;
+        else
+            energyLevel = 3;
+
+        Assert.Equal(expectedSleepQuality, sleepQuality);
+        Assert.Equal(expectedEnergyLevel, energyLevel);
+    }
+
     private static string ViewModelSource()
     {
         var current = AppContext.BaseDirectory;

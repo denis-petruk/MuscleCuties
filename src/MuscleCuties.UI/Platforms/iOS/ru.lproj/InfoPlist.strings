@@ -1,1 +1,3 @@
 "NSPhotoLibraryUsageDescription" = "MuscleCuties открывает вашу медиатеку, когда вы выбираете фото профиля или прогресса.";
+"NSHealthShareUsageDescription" = "MuscleCuties считывает шаги, активную энергию, сон и показатели пульса из Apple Health для автозаполнения чекина и расчета суточных калорий.";
+"NSHealthUpdateUsageDescription" = "MuscleCuties считывает шаги, активную энергию, сон и показатели пульса из Apple Health для автозаполнения чекина и расчета суточных калорий.";

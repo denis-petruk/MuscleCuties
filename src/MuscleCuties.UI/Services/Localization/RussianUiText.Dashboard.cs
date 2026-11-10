@@ -48,6 +48,7 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_EnergySectionTitle"] = "ЭНЕРГИЯ";
         Values["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Очень высокая";
         Values["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Очень низкий";
+        Values["Dashboard_CheckIn_HealthKitSleepBadge"] = "Заполнено из Apple Health ({0} ч)";
         Values["Dashboard_CheckIn_PlanningTitle"] = "Для планирования тренировок";
         Values["Dashboard_CheckIn_PlanningSleepQuality"] = "Качество сна";
         Values["Dashboard_CheckIn_PlanningSoreness"] = "Болезненность мышц";
@@ -84,6 +85,7 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_SubmitHint"] = "Сохранить ежедневную отметку";
         Values["Dashboard_CheckIn_Subtitle"] = "Как вы себя чувствуете сегодня?";
         Values["Dashboard_CheckIn_SuccessMessage"] = "Запись сохранена";
+        Values["Dashboard_CheckIn_SuggestFromAppleHealth"] = "Предложить оценки из Apple Health";
         Values["Dashboard_CheckIn_WeightA11y"] = "Дополнительный вес тела в килограммах";
         Values["Dashboard_CheckIn_WeightHint"] = "Оставить пустым, чтобы пропустить ввод веса";
         Values["Dashboard_CheckIn_WeightPlaceholderKg"] = "кг";
