@@ -1,2 +1,4 @@
 "NSPhotoLibraryUsageDescription" = "MuscleCuties открывает вашу медиатеку, когда вы выбираете фото профиля или прогресса.";
+"NSCameraUsageDescription" = "MuscleCuties использует камеру для сканирования штрихкодов на упаковках продуктов офлайн на вашем устройстве.";
 "NSHealthShareUsageDescription" = "MuscleCuties считывает шаги, активную энергию, сон и показатели пульса из Apple Health для автозаполнения чекина и расчета суточных калорий.";
+"NSHealthUpdateUsageDescription" = "MuscleCuties записывает завершенные тренировки и показатели активности в Apple Health для синхронизации данных о тренировках и восстановлении.";
