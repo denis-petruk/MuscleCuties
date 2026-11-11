@@ -127,3 +127,24 @@ Release gates: bundle id/signing/entitlements, App Privacy copy, archive/upload/
 - App Privacy answers recorded in `APP_PRIVACY_ANSWERS_2026-11-11.md`; not submitted.
 - AWS read-only: one available RDS instance `musclecuties-staging-db`; no Beta designation, alias, backup or secret action was taken because no target stack was named.
 - Security: `.claude/qa-evidence/healthsync_keys.txt`, `deleted-checkin-row-backup.txt` and `deadbug-reopen-backup.txt` were committed in `167a32da`, then untracked in `d2341f85`; they remain in pushed history and should be treated as exposed.
+
+
+## Reproducible QA and signed package — 2026-11-11
+
+- `scripts/prepare-integration-postgres.sh` now creates and seeds `mc_test_nutrition_seeded`,
+  `mc_retry_disposable`, and `mc_pg09_disposable`, and creates the restricted
+  `mc_pg09_migrator` role. `docs/INTEGRATION_POSTGRES.md` records the env-var contract and
+  the unchanged 1000 ms latency budget. The generated `.env.integration` is ignored by Git.
+- Fresh-shell PostgreSQL run: Core 1378/1378, Mobile Contracts 183/183, Registration 54/54,
+  Server 120/120, Registration.Integration 105/105, Deployment 17/17. The Server suite
+  measured the real all-route cold/warm p95; the budget remains 1000 ms.
+- Without the PostgreSQL marker, the integration assembly reports 82 skipped and 1 passed
+  instead of connection-error failures; the latency gate fails with an explicit
+  `MC_LATENCY_POSTGRES` message.
+- `MC_IOS_BUILD=3 ./scripts/archive-ios-testflight.sh` completed with 0 warnings and 0 errors,
+  producing a signed Release IPA for `com.musclecuties.app` at version 1.0 (3). The signed
+  entitlements include HealthKit and Sign in with Apple.
+- Remaining Apple-account gate: the installed App Store distribution profile
+  `MuscleCuties App Store Connect` has no HealthKit entitlement. The signed binary requests it,
+  so the profile must be regenerated before App Store Connect will accept the upload. No
+  signing profile, certificate, or App Store Connect key was added to the repository.
