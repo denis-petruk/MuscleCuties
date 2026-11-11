@@ -66,7 +66,7 @@ clinical approvals; the owner ratifies each before C-8…C-10 start (contract: n
 | ID | Item | Deps | Effort |
 | --- | --- | --- | --- |
 | P-1 | ~~QA01 on a real iPhone~~ **Deprecated (owner, 2026-11-09):** QA01 runs on the Rider-attached simulator (`.run/`, `scripts/run-ios-simulator.sh`): EN/RU, VoiceOver, Dynamic Type, CR01 | E-2 green | 1 d |
-| T-1 | Internal TestFlight: PR merged, D-5, E-01/E-02 device re-check, archive/sign (distribution profile; remove HealthKit capability from App ID), upload, internal group | E-2, PR/CI | 0.5–1 d |
+| T-1 | Internal TestFlight: PR merged, D-5, E-01/E-02 device re-check, archive/sign (distribution profile with HealthKit capability), upload, internal group | E-2, PR/CI | 0.5–1 d |
 | T-2 | External: App Privacy answers matching `PrivacyInfo.xcprivacy`, beta description, demo account, feedback email | L-1…L-3, P-1, C-8…C-10 | 0.5 d |
 
 ## Priority roll-up

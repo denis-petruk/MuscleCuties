@@ -22,9 +22,9 @@ App Store Connect has never received it.
 - A valid **Apple Distribution** identity in the login keychain.
 - An App Store distribution provisioning profile for `com.musclecuties.app` that contains the
   HealthKit entitlement. A profile without HealthKit cannot produce a valid TestFlight build
-  for this app even if it signs the binary. The profile currently installed on this workstation,
-  `MuscleCuties App Store Connect`, does **not** contain HealthKit; it must be regenerated before
-  upload.
+  for this app even if it signs the binary. The installed `MuscleCuties App Store Connect`
+  profile was decoded from the fresh-clone IPA and does contain HealthKit and Sign in with
+  Apple; see the reconciliation below.
 
 Inspect the local state without changing it:
 
@@ -107,9 +107,28 @@ src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/MuscleCuties.UI.ipa
 ```
 
 The generated bundle reports `CFBundleIdentifier=com.musclecuties.app`,
-`CFBundleShortVersionString=1.0`, `CFBundleVersion=3`. `codesign -d --entitlements` reports
-`com.apple.developer.healthkit=true` and Sign in with Apple. This MAUI target emitted the signed
-IPA directly; no `.xcarchive` was produced by the `ArchiveOnBuild=true`/`BuildIpa=true` path.
-The IPA is the TestFlight upload artifact. The installed distribution profile still lacks the
-HealthKit entitlement, so App Store Connect upload is expected to reject this package until the
-Apple-account profile is regenerated.
+`CFBundleShortVersionString=1.0`, `CFBundleVersion=3`. This MAUI target emitted the signed IPA
+directly; no `.xcarchive` was produced by the `ArchiveOnBuild=true`/`BuildIpa=true` path. The
+IPA is the TestFlight upload artifact.
+
+### Fresh-clone signing reconciliation
+
+The same archive command was run from a throwaway clone of
+`origin/product/qa-fixes-20261109` with no build artifacts. The IPA's
+`Payload/MuscleCuties.UI.app/embedded.mobileprovision` was decoded with `security cms -D` and
+compared with `codesign -d --entitlements :-`:
+
+```text
+Profile:             MuscleCuties App Store Connect
+Profile UUID:        0fdd4b45-bbbe-44c3-8cb4-2c515917ac8d
+Profile HealthKit:   true
+Profile Sign in:     ["Default"]
+App HealthKit:       true
+App Sign in:         ["Default"]
+```
+
+The profile and binary agree, so HealthKit and Sign in with Apple are backed by the profile
+that signed the IPA. The earlier claim that the profile lacked HealthKit was a `plutil` key-path
+error, not a signing result. The remaining Apple-account action is authentication for upload:
+install an App Store Connect API key or sign in through Xcode, then upload and assign the build
+to the internal TestFlight group.

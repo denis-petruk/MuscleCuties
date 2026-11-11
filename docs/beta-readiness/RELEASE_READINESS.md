@@ -123,7 +123,7 @@ Release gates: bundle id/signing/entitlements, App Privacy copy, archive/upload/
 ## Unblocked release actions 2026-11-11
 - Cycle policy advanced to `MC-CYCLE-READINESS-0.3`; approval record doc cites owner amendments A-4/A-5 (2026-11-09). Commits `167a32da` and `d2341f85` pushed to `origin/product/qa-fixes-20261109`.
 - Tests run after unblocking: Core 1367 passed / 11 failed (legacy provisional-feeling and repeated-pattern tests for behavior removed by the 0.3 decision); Contracts 183/183; Registration 54/54; Server 119/120 (measured-latency budget); Registration.Integration 47/105 (DB-backed suite; no local PostgreSQL); Deployment 17/17. Suite is **not green**.
-- Signing: distribution identity and `MuscleCuties App Store Connect` profile match `com.musclecuties.app`, but the profile has no HealthKit entitlement and no ASC API key is installed. Archive/publish did not complete; upload/TestFlight was not attempted.
+- Signing: distribution identity and the `MuscleCuties App Store Connect` profile match `com.musclecuties.app`. An earlier note said the profile lacked HealthKit, but that check used a dotted `plutil` path that treated the entitlement name as nested keys. The 2026-11-11 IPA decode shows both the profile and the signed app contain HealthKit and Sign in with Apple. Archive/publish now completes; no ASC API key is installed and upload/TestFlight was not attempted.
 - App Privacy answers recorded in `APP_PRIVACY_ANSWERS_2026-11-11.md`; not submitted.
 - AWS read-only: one available RDS instance `musclecuties-staging-db`; no Beta designation, alias, backup or secret action was taken because no target stack was named.
 - Security: `.claude/qa-evidence/healthsync_keys.txt`, `deleted-checkin-row-backup.txt` and `deadbug-reopen-backup.txt` were committed in `167a32da`, then untracked in `d2341f85`; they remain in pushed history and should be treated as exposed.
@@ -144,7 +144,33 @@ Release gates: bundle id/signing/entitlements, App Privacy copy, archive/upload/
 - `MC_IOS_BUILD=3 ./scripts/archive-ios-testflight.sh` completed with 0 warnings and 0 errors,
   producing a signed Release IPA for `com.musclecuties.app` at version 1.0 (3). The signed
   entitlements include HealthKit and Sign in with Apple.
-- Remaining Apple-account gate: the installed App Store distribution profile
-  `MuscleCuties App Store Connect` has no HealthKit entitlement. The signed binary requests it,
-  so the profile must be regenerated before App Store Connect will accept the upload. No
-  signing profile, certificate, or App Store Connect key was added to the repository.
+- Signing reconciliation: the clone-built IPA's embedded profile is
+  `MuscleCuties App Store Connect` (`0fdd4b45-bbbe-44c3-8cb4-2c515917ac8d`); it contains
+  `com.apple.developer.healthkit=true` and `com.apple.developer.applesignin=["Default"]`. The
+  app's effective entitlements contain the same two values, so the binary is backed by the
+  profile that signed it. No signing profile, certificate, or App Store Connect key was added
+  to the repository. Upload still requires Apple-account authentication and was not attempted.
+
+
+## Fresh-clone proof — 2026-11-11
+
+A throwaway clone of `origin/product/qa-fixes-20261109` was created outside the working copy
+with no `.env.integration` and no build artifacts. All three fixture databases and the
+`mc_pg09_migrator` role were removed before the run. `./scripts/prepare-integration-postgres.sh`
+then exited 0 and recreated the databases and role.
+
+From that clone, in a non-interactive shell sourcing `.env.integration`:
+
+```text
+Core:         Failed: 0, Passed: 1378, Skipped: 0, Total: 1378
+Mobile:       Failed: 0, Passed: 183,  Skipped: 0, Total: 183
+Registration: Failed: 0, Passed: 54,   Skipped: 0, Total: 54
+Server:       Failed: 0, Passed: 120,  Skipped: 0, Total: 120
+Integration:  Failed: 0, Passed: 105,  Skipped: 0, Total: 105
+Deployment:   Ran 17 tests, OK
+```
+
+The server suite used `MC_LATENCY_POSTGRES` against the fresh PostgreSQL fixture; the 1000 ms
+budget was unchanged. The clone-built TestFlight package also completed with 0 warnings and
+0 errors and reconciled HealthKit / Sign in with Apple against the embedded profile as recorded
+above.
