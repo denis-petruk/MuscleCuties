@@ -17,12 +17,7 @@ API="${MC_LOCAL_API:-http://127.0.0.1:5080}"
 
 cd "$(dirname "$0")/.."
 
-if [[ -f .env && -z "${FDC_API_KEY:-}" ]]; then
-  FDC_KEY_FROM_ENV="$(grep -E '^[ \t]*FDC_API_KEY[ \t]*=' .env | head -n 1 | sed -E 's/^[ \t]*FDC_API_KEY[ \t]*=[ \t]*["'\'']?([^"'\'']*)["'\'']?/\1/' || true)"
-  if [[ -n "$FDC_KEY_FROM_ENV" ]]; then
-    export FDC_API_KEY="$FDC_KEY_FROM_ENV"
-  fi
-fi
+
 
 case "$API" in
   http://127.0.0.1:*|http://localhost:*|http://\[::1\]:*) ;;
