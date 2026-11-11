@@ -70,9 +70,13 @@ route inventory/shape gate; the test measures the current tree and does not rewr
 unless `MC_WRITE_LATENCY_REPORT=1` is set.
 
 
-## Verified fresh-shell run — 2026-11-11
+## Verified fresh-clone run — 2026-11-11
 
-The bootstrap and suites were run from a non-interactive shell after sourcing `.env.integration`:
+A throwaway clone of `origin/product/qa-fixes-20261109` was created with no `.env.integration`
+and no build artifacts. All disposable fixture databases and the `mc_pg09_migrator` role were
+removed first. The committed bootstrap then exited 0, recreated the three databases and the
+role, and the suites were run from that clone in a non-interactive shell after sourcing
+`.env.integration`:
 
 ```bash
 ./scripts/prepare-integration-postgres.sh
