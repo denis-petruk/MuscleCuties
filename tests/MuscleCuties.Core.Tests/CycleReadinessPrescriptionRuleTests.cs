@@ -37,9 +37,9 @@ public sealed class CycleReadinessPrescriptionRuleTests
         var decision = CycleReadinessPrescriptionRule.Evaluate(Input(phase,
             PhaseReviewProvenance.UserConfirmed, new PhaseBaseline(RelevantDiscomfort, LowEnergy)));
 
-        Assert.Equal(AccessoryId, decision.AdjustedPrescriptionId);
-        Assert.Equal(OneOptionalSet, decision.AdjustedSets);
-        Assert.Equal(CycleReadinessPrescriptionRule.ProvisionalPhaseAdjustment, decision.ReasonCode);
+        Assert.Null(decision.AdjustedPrescriptionId);
+        Assert.Null(decision.AdjustedSets);
+        Assert.Equal(CycleReadinessPrescriptionRule.NoAdjustment, decision.ReasonCode);
         Assert.Equal(phase, decision.EvidencedPhase);
     }
 
@@ -154,9 +154,8 @@ public sealed class CycleReadinessPrescriptionRuleTests
             PatternObservations = [Pattern("cycle-a", "check-a"), Pattern("cycle-b", "check-b"), Pattern("cycle-c", "check-c")]
         });
 
-        Assert.Equal(OneOptionalSet, decision.AdjustedSets);
-        Assert.Equal(CycleReadinessPrescriptionRule.RepeatedPhaseAdjustment, decision.ReasonCode);
-        Assert.Equal(CycleReadinessConfidence.Repeated, decision.Confidence);
+        Assert.Null(decision.AdjustedSets);
+        Assert.Equal(CycleReadinessPrescriptionRule.NoAdjustment, decision.ReasonCode);
     }
 
     [Fact]
@@ -197,8 +196,8 @@ public sealed class CycleReadinessPrescriptionRuleTests
             EvaluationDate = Today,
             PatternObservations = [Pattern("cycle-a", "check-a"), Pattern("cycle-b", "check-b"), Pattern("cycle-c", "check-c")]
         });
-        Assert.Equal(CycleReadinessPrescriptionRule.RepeatedPhaseAdjustment, decision.ReasonCode);
-        Assert.Equal(CycleReadinessConfidence.Repeated, decision.Confidence);
+        Assert.Null(decision.AdjustedSets);
+        Assert.Equal(CycleReadinessPrescriptionRule.NoAdjustment, decision.ReasonCode);
     }
 
     [Theory]
@@ -213,7 +212,8 @@ public sealed class CycleReadinessPrescriptionRuleTests
         {
             PhaseEstimateReliable = true
         });
-        Assert.Equal(CycleReadinessPrescriptionRule.ProvisionalPhaseAdjustment, decision.ReasonCode);
+        Assert.Null(decision.AdjustedSets);
+        Assert.Equal(CycleReadinessPrescriptionRule.NoAdjustment, decision.ReasonCode);
         Assert.Equal(phase, decision.EvidencedPhase);
     }
 
@@ -260,13 +260,13 @@ public sealed class CycleReadinessPrescriptionRuleTests
     public void Shipped_release_approval_authorizes_the_automatic_reduction()
     {
         var decision = CycleReadinessPrescriptionRule.Evaluate(Input(CyclePhase.Luteal,
-            PhaseReviewProvenance.UserConfirmed, new PhaseBaseline(RelevantDiscomfort, LowEnergy)) with
+            PhaseReviewProvenance.UserConfirmed, null, CheckInScoreBand.ConsiderEasierDay) with
         {
             Approval = PlanningReleaseApproval.CycleReadinessPrescription
         });
 
         Assert.Equal(AccessoryId, decision.AdjustedPrescriptionId);
-        Assert.Equal(CycleReadinessPrescriptionRule.ProvisionalPhaseAdjustment, decision.ReasonCode);
+        Assert.Equal(CycleReadinessPrescriptionRule.DailyReadinessAdjustment, decision.ReasonCode);
     }
 
     [Fact]
