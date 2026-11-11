@@ -102,8 +102,20 @@ public static class PlatformCompositionExtensions
 
 #if IOS
         services.AddSingleton<Platforms.iOS.AppleHealthDataProvider>();
-        services.AddSingleton<IHealthDataProvider>(sp => sp.GetRequiredService<Platforms.iOS.AppleHealthDataProvider>());
-        services.AddSingleton<IHealthAuthorizationProvider>(sp => sp.GetRequiredService<Platforms.iOS.AppleHealthDataProvider>());
+#if DEBUG
+        if (MuscleCuties.UI.Services.Health.SyntheticHealthDataProvider.IsRequested)
+        {
+            // Simulator QA only: synthetic fixture instead of HealthKit (see SyntheticHealthDataProvider).
+            services.AddSingleton<MuscleCuties.UI.Services.Health.SyntheticHealthDataProvider>();
+            services.AddSingleton<IHealthDataProvider>(sp => sp.GetRequiredService<MuscleCuties.UI.Services.Health.SyntheticHealthDataProvider>());
+            services.AddSingleton<IHealthAuthorizationProvider>(sp => sp.GetRequiredService<MuscleCuties.UI.Services.Health.SyntheticHealthDataProvider>());
+        }
+        else
+#endif
+        {
+            services.AddSingleton<IHealthDataProvider>(sp => sp.GetRequiredService<Platforms.iOS.AppleHealthDataProvider>());
+            services.AddSingleton<IHealthAuthorizationProvider>(sp => sp.GetRequiredService<Platforms.iOS.AppleHealthDataProvider>());
+        }
         services.AddSingleton<IHealthSyncService, HealthSyncService>();
 #else
         services.AddSingleton<IHealthSyncService, DisabledHealthSyncService>();

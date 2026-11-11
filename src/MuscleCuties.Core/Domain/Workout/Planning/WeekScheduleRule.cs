@@ -39,7 +39,16 @@ public static class WeekScheduleRule
         if (distinctAvailableDays.Length < strengthSlots.Length)
             distinctAvailableDays = DefaultDays(Math.Max(distinctAvailableDays.Length, strengthSlots.Length));
 
-        var dayCombinations = Combinations(distinctAvailableDays, strengthSlots.Length);
+        // WP10: a template with fewer strength archetypes than the user's requested days used to
+        // schedule only the template slot count, silently dropping a requested weekday. Fill every
+        // requested day by cycling the template's archetype rotation instead.
+        var scheduledSlots = distinctAvailableDays.Length > strengthSlots.Length && strengthSlots.Length > 0
+            ? Enumerable.Range(0, distinctAvailableDays.Length)
+                .Select(index => strengthSlots[index % strengthSlots.Length])
+                .ToArray()
+            : strengthSlots;
+
+        var dayCombinations = Combinations(distinctAvailableDays, scheduledSlots.Length);
         var relaxedConstraints = new HashSet<string>();
         foreach (var relaxation in new[] { "", "H5", "H3", "H2" })
         {
@@ -47,9 +56,9 @@ public static class WeekScheduleRule
             var bestScore = double.MinValue;
             List<(int ArchetypeId, DayOfWeek Day)>? bestMap = null;
             foreach (var days in dayCombinations)
-            foreach (var permutation in Permutations(strengthSlots))
+            foreach (var permutation in Permutations(scheduledSlots))
             {
-                var candidate = Enumerable.Range(0, strengthSlots.Length)
+                var candidate = Enumerable.Range(0, scheduledSlots.Length)
                     .Select(index => (ArchetypeId: permutation[index], Day: days[index])).ToList();
                 if (!PassesConstraints(candidate, archetypes, exposureMap, tierABMuscles,
                         hasRunningOrClimbing, daysPerWeek, relaxedConstraints)) continue;
@@ -60,7 +69,7 @@ public static class WeekScheduleRule
         }
 
         var sortedDays = distinctAvailableDays.OrderBy(DayIndex).ToArray();
-        return strengthSlots.Select((id, index) => (id, sortedDays[index % sortedDays.Length])).ToList();
+        return scheduledSlots.Select((id, index) => (id, sortedDays[index % sortedDays.Length])).ToList();
     }
 
     private static bool PassesConstraints(List<(int ArchetypeId, DayOfWeek Day)> map,

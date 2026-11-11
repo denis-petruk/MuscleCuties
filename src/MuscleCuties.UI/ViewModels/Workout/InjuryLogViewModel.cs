@@ -131,7 +131,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     }
 
     public bool IsEditing => EditingInjuryId is not null;
-    public string FormTitle => IsEditing ? "Edit injury" : "New injury";
+    public string FormTitle => UiTextCatalog.Get(IsEditing ? "Injury_Log_FormEdit" : "Injury_Log_FormNew");
     public string PainLabelText => PainLabelFor(NewPainLevel);
 
     public IReadOnlyList<InjuryWorseningOption> WorseningTriggerOptions { get; }
@@ -158,13 +158,13 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public bool ShowEmptyState => _hasLoaded && !IsBusy && !IsLoadError &&
                                   !ShowAddForm && ActiveInjuries.Count == 0;
 
-    public string EmptyStateTitle => ClearedInjuries.Count == 0
-        ? "No injuries logged"
-        : "No active injuries";
+    public string EmptyStateTitle => UiTextCatalog.Get(ClearedInjuries.Count == 0
+        ? "Injury_Log_EmptyNone_Title"
+        : "Injury_Log_EmptyCleared_Title");
 
-    public string EmptyStateDetail => ClearedInjuries.Count == 0
-        ? "No active injuries are recorded."
-        : "Cleared injuries are saved in History below.";
+    public string EmptyStateDetail => UiTextCatalog.Get(ClearedInjuries.Count == 0
+        ? "Injury_Log_EmptyNone_Detail"
+        : "Injury_Log_EmptyCleared_Detail");
 
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
     public bool ClinicianAdvisedAvoid
@@ -419,7 +419,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
     private async Task DeleteInjuryAsync(int id)
     {
-        await ExecuteInjuryActionAsync(id, "Couldn't delete this injury. Try again.", "Delete",
+        await ExecuteInjuryActionAsync(id, UiTextCatalog.Get("Injury_Log_DeleteFailed"), "Delete",
             () => _injuries.DeleteInjuryAsync(id));
     }
 
@@ -428,7 +428,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         if (item is not { IsActive: true } || IsBusy)
             return;
 
-        await ExecuteInjuryActionAsync(item.Id, "Couldn't clear this injury. Try again.", "Clear",
+        await ExecuteInjuryActionAsync(item.Id, UiTextCatalog.Get("Injury_Log_ClearFailed"), "Clear",
             () => _injuries.ClearInjuryAsync(item.Id));
     }
 
@@ -478,6 +478,11 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
     private void CancelEdit()
     {
+        // A cancelled edit must not leave the previous save/reconcile error on screen.
+        ErrorText = string.Empty;
+        IsLoadError = false;
+        IsPlanRefreshError = false;
+        IsPageRefreshError = false;
         EditingInjuryId = null;
         _editingClinicianAdvisedAvoid = null;
 
@@ -595,16 +600,16 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 
     private static string PainLabelFor(int level)
     {
-        return level switch
+        var key = level switch
         {
-            0 => "None",
-            1 => "Minimal",
-            2 => "Mild",
-            3 => "Moderate",
-            4 => "Strong",
-            5 => "Severe",
-            _ => "None"
+            1 => "Injury_Pain_1",
+            2 => "Injury_Pain_2",
+            3 => "Injury_Pain_3",
+            4 => "Injury_Pain_4",
+            5 => "Injury_Pain_5",
+            _ => "Injury_Pain_0"
         };
+        return UiTextCatalog.Get(key);
     }
 
     internal static string DisplayNameFor(WorkoutInjurySite site)

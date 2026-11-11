@@ -7,7 +7,8 @@ namespace MuscleCuties.Core.Services.Health;
 
 public sealed class HealthSyncService : IHealthSyncService, IDisposable
 {
-    private const int StepCountStateVersion = 1;
+    // 2: seven completed-day step baseline and merged sleep intervals (2026-11-10). Version-1 summaries are discarded.
+    private const int StepCountStateVersion = 2;
     private static readonly TimeSpan SyncTimeout = TimeSpan.FromSeconds(45);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private readonly IReadOnlyList<IHealthDataProvider> _providers;

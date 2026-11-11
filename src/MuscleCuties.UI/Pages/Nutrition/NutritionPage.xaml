@@ -16,10 +16,6 @@
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid RowDefinitions="Auto,*">
-        <Grid Padding="{DynamicResource PresentationPageHeaderPadding}" VerticalOptions="Center">
-            <sharedControls:PageHeader Title="{loc:LocalizedText Nutrition_Page_Nutrition}" ShowBack="False" />
-        </Grid>
-
         <CollectionView
             Grid.Row="1"
             Margin="{DynamicResource PresentationCollectionHorizontalInset}"

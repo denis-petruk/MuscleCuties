@@ -174,7 +174,8 @@ public static class MauiProgram
             sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>(),
             () => NavigateToAsync(nameof(PhotoJourneyVaultPage)),
             healthSync: sp.GetService<IHealthSyncService>(),
-            userIdProvider: sp.GetService<ICurrentProfileUserIdProvider>()));
+            userIdProvider: sp.GetService<ICurrentProfileUserIdProvider>(),
+            personalInfo: sp.GetService<IProfilePersonalInfoUseCase>()));
 
         services.AddSingleton<CycleViewModel>(sp => new CycleViewModel(
             sp.GetRequiredService<ICycleOverviewUseCase>(),
@@ -359,6 +360,9 @@ public static class MauiProgram
         services.AddTransient<ProfileWorkoutPreferencesPage>();
         services.AddTransient<ProfileUnitsDisplayPage>();
         services.AddTransient<ProfileFeedbackPage>();
+        services.AddTransient<ProfileHealthSyncViewModel>(sp => new ProfileHealthSyncViewModel(
+            sp.GetService<IHealthSyncService>(),
+            sp.GetService<ICurrentProfileUserIdProvider>()));
         services.AddTransient<ProfilePrivacyPage>();
         services.AddTransient<FoodLogPage>();
         services.AddTransient<WorkoutHistoryPage>();

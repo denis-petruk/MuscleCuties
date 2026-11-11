@@ -11,7 +11,8 @@ using MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
 namespace MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
 
 /// <summary>Owner-scoped unified diary adapter. Snapshot and grouped meal rows retain separate identities.</summary>
-public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvider timeProvider, PostgresIdempotencyExecutor? idempotencyExecutor = null) : INutritionDiaryStore, INutritionDiaryCommandEventStore
+public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvider timeProvider, PostgresIdempotencyExecutor? idempotencyExecutor = null,
+    MuscleCuties.UseCases.Features.Nutrition.Targets.IServerNutritionTargetProjectionStore? targetStore = null) : INutritionDiaryStore, INutritionDiaryCommandEventStore
 {
     private const string SnapshotPrefix = "snapshot:";
     private const string MealPrefix = "meal:";
@@ -22,6 +23,10 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         CancellationToken cancellationToken)
     {
         var cursor = ParsePageToken(pageToken);
+        // Day with no stored targets uses the same projected target as the Nutrition overview and Today (one source),
+        // instead of the client's hard-coded 2000/130/220/65 fallback.
+        var projected = targetStore is null ? null
+            : await targetStore.LoadAsync(userId, date, cancellationToken).ConfigureAwait(false);
         return await WithTenant(userId, cancellationToken, async () =>
         {
             var log = await db.DailyNutritionLogs.AsNoTracking().Where(x => x.UserId == userId && x.LocalDate == date && !x.IsDeleted)
@@ -52,8 +57,11 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
             var page = remaining.Take(pageSize).ToArray();
             var next = remaining.Length > pageSize && page.Length > 0 ? CreatePageToken(page[^1]) : null;
             return new NutritionDiaryDay(log?.Id ?? Guid.Empty, date, log?.WaterIntakeMl ?? DefaultWaterMillilitres,
-                log?.Notes, log?.TargetCalories ?? 0, log?.TargetProtein ?? 0, log?.TargetCarbs ?? 0,
-                log?.TargetFat ?? 0, page, next, log?.CreatedAt, log?.UpdatedAt);
+                log?.Notes,
+                log is { TargetCalories: > 0 } ? log.TargetCalories : (decimal)(projected?.Calories ?? 0),
+                log is { TargetProtein: > 0 } ? log.TargetProtein : (decimal)(projected?.Protein ?? 0),
+                log is { TargetCarbs: > 0 } ? log.TargetCarbs : (decimal)(projected?.Carbs ?? 0),
+                log is { TargetFat: > 0 } ? log.TargetFat : (decimal)(projected?.Fats ?? 0), page, next, log?.CreatedAt, log?.UpdatedAt);
         }).ConfigureAwait(false);
     }
 

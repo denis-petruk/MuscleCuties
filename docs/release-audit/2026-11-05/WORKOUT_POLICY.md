@@ -37,7 +37,7 @@ Ratified at the evidence-backed recommendations in [WORKOUT_POLICY_RESEARCH.md](
 | --- | --- |
 | Two qualifying workouts, then an incomplete or corrected log | Eligible progression uses the smallest available step. Incomplete work creates no new qualifying result. Corrections affect only future recommendations. |
 | Short session with a coverage conflict | Optional work is removed first. The resulting plan reports any remaining coverage gap. |
-| Poor sleep with a normal warm-up | One automatic session load reduction with baseline preserved. |
+| Poor sleep with a normal warm-up | One optional set removed; load unchanged (ratified A-4, 2026-11-09). |
 | Estimated phase, normal check-in and warm-up | Planned session remains as scheduled. |
-| Cycle adjustment with good recovery, then with unknown or poor recovery | Eligible current response adjusts reps and load once. The extra set is available only with a fresh positive recovery signal. |
+| Cycle adjustment with good recovery, then with unknown or poor recovery | Phase alone leaves the dose as scheduled. Symptoms or readiness follow decision 4 (one optional set removed; reps and load unchanged, ratified A-5, 2026-11-09). The extra set is available only with a fresh positive recovery signal. |
 | Pain and no eligible alternative | The provoking exercise stops and the reason is shown. The strength prescription is withheld if no permitted block remains. |

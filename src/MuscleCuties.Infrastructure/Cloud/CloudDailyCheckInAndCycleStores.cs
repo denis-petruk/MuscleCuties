@@ -80,9 +80,8 @@ public sealed class CloudDailyCheckInStore(
             ? existingRecords[^1].Id
             : Guid.CreateVersion7();
 
-        var effectiveSleepHours = request.SleepHours > 0
-            ? request.SleepHours
-            : (healthSummary?.LastNightSleepHours is > 0 ? healthSummary.LastNightSleepHours.Value : request.SleepHours);
+        // The check-in view model is the single pre-fill owner; what is saved equals what the user saw and confirmed.
+        var effectiveSleepHours = request.SleepHours;
 
         var body = new
         {
@@ -271,9 +270,9 @@ public sealed class CloudWorkoutInjuryStore(
         var response = await apiClient.SendMutationAsync<object, WorkoutReconciliationResponse>(
             HttpMethod.Post, ReconcileRoute, new { },
             idempotencyKey: Guid.NewGuid().ToString("N"), ct).ConfigureAwait(false);
-        var result = CloudStoreResponse.RequireData(response, "refresh workout plan after injury change");
-        if (string.Equals(result.Status, nameof(WorkoutReconciliationOutcome.NeedsReview), StringComparison.Ordinal))
-            throw new InvalidOperationException("The workout plan needs review after the injury change.");
+        // F08: NeedsReview is a successful reconcile that flags days for review, not a failure.
+        // Throwing here made the injury screen claim the plan was not updated after it had been.
+        CloudStoreResponse.RequireData(response, "refresh workout plan after injury change");
     }
 
     private async Task<InjuryObservationRecord?> TryResolveRecordAsync(int injuryId, CancellationToken ct)

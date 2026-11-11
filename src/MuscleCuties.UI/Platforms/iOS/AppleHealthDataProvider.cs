@@ -77,6 +77,10 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
         }
     }
 
+    /// <summary>Owner-ratified calorie baseline window (2026-11-10 DK5): seven completed days, at least four with data.</summary>
+    internal const int CompletedStepDays = 7;
+    internal const int MinimumStepDays = 4;
+
     public async Task<HealthWeeklySummary?> ReadWeeklySummaryAsync(DateTime today, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -103,9 +107,9 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
         var hrvType = HKQuantityType.Create(HKQuantityTypeIdentifier.HeartRateVariabilitySdnn);
         var sleepType = HKCategoryType.Create(HKCategoryTypeIdentifier.SleepAnalysis);
 
-        var steps7dPredicate = HKQuery.GetPredicateForSamples(ToNSDate(start7d), ToNSDate(end7d), HKQueryOptions.None);
         var stepsYesterdayPredicate = HKQuery.GetPredicateForSamples(ToNSDate(yesterdayStart), ToNSDate(yesterdayEnd), HKQueryOptions.None);
-        var energy7dPredicate = HKQuery.GetPredicateForSamples(ToNSDate(start7d), ToNSDate(end7d), HKQueryOptions.None);
+        // Same completed-day window as the calorie step baseline (today-7 .. today-1).
+        var energy7dPredicate = HKQuery.GetPredicateForSamples(ToNSDate(today.Date.AddDays(-CompletedStepDays)), ToNSDate(today.Date), HKQueryOptions.None);
         var lastNightSleepPredicate = HKQuery.GetPredicateForSamples(ToNSDate(lastNightStart), ToNSDate(lastNightEnd), HKQueryOptions.None);
         var sleep7dPredicate = HKQuery.GetPredicateForSamples(ToNSDate(start7d), ToNSDate(end7d), HKQueryOptions.None);
 
@@ -115,7 +119,15 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
         var bpmUnit = HKUnit.Count.UnitDividedBy(HKUnit.Minute);
         var msUnit = HKUnit.CreateSecondUnit(HKMetricPrefix.Milli);
 
-        var taskSteps7d = QuerySumAsync(stepType, steps7dPredicate, HKUnit.Count, cancellationToken);
+        // Calorie baseline uses seven COMPLETED days (today-7 .. today-1). Each day is queried separately so a
+        // missing day is "no data", not zero steps, and today's partial day never lowers the average.
+        var completedDayStepTasks = Enumerable.Range(1, CompletedStepDays).Select(daysAgo =>
+        {
+            var dayStart = today.Date.AddDays(-daysAgo);
+            var predicate = HKQuery.GetPredicateForSamples(ToNSDate(dayStart), ToNSDate(dayStart.AddDays(1)), HKQueryOptions.None);
+            return QuerySumAsync(stepType, predicate, HKUnit.Count, cancellationToken);
+        }).ToArray();
+        var taskSteps7d = Task.WhenAll(completedDayStepTasks);
         var taskStepsYesterday = QuerySumAsync(stepType, stepsYesterdayPredicate, HKUnit.Count, cancellationToken);
         var taskEnergy7d = QuerySumAsync(energyType, energy7dPredicate, HKUnit.Kilocalorie, cancellationToken);
         var taskLastNightSleep = QuerySamplesAsync(sleepType, lastNightSleepPredicate, 0, null, cancellationToken);
@@ -134,7 +146,10 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
 
         cancellationToken.ThrowIfCancellationRequested();
 
-        var totalSteps7d = await taskSteps7d;
+        var completedDaySteps = (await taskSteps7d)
+            .Where(value => value.HasValue && value.Value > 0)
+            .Select(value => value!.Value)
+            .ToArray();
         var totalStepsYesterday = await taskStepsYesterday;
         var totalEnergy7d = await taskEnergy7d;
         var lastNightSamples = await taskLastNightSleep;
@@ -142,7 +157,10 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
         var recentRhr = await taskRhr;
         var recentHrv = await taskHrv;
 
-        int averageSteps = totalSteps7d.HasValue ? (int)Math.Round(totalSteps7d.Value / 7.0) : 0;
+        // Fewer than MinimumStepDays days with data means no reliable average: report none, not a low one.
+        int averageSteps = completedDaySteps.Length >= MinimumStepDays
+            ? (int)Math.Round(completedDaySteps.Average())
+            : 0;
         int? yesterdaySteps = totalStepsYesterday.HasValue ? (int)Math.Round(totalStepsYesterday.Value) : null;
         double? averageActiveEnergyKcal = totalEnergy7d.HasValue ? Math.Round(totalEnergy7d.Value / 7.0, 1) : null;
 
@@ -386,7 +404,7 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
 
         var windowStartUtc = ToUtcDateTime(windowStart);
         var windowEndUtc = ToUtcDateTime(windowEnd);
-        double totalSeconds = 0.0;
+        var intervals = new List<(DateTime Start, DateTime End)>();
 
         foreach (var s in samples)
         {
@@ -398,12 +416,43 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
 
                 var start = sampleStart < windowStartUtc ? windowStartUtc : sampleStart;
                 var end = sampleEnd > windowEndUtc ? windowEndUtc : sampleEnd;
-
                 if (end > start)
                 {
-                    totalSeconds += (end - start).TotalSeconds;
+                    intervals.Add((start, end));
                 }
             }
+        }
+
+        // Overlapping asleep samples from several sources (watch, phone, third-party apps) must not be double counted.
+        return MergedHours(intervals);
+    }
+
+    /// <summary>Total hours covered by the union of the intervals (pure; no HealthKit types).</summary>
+    internal static double MergedHours(IEnumerable<(DateTime Start, DateTime End)> intervals)
+    {
+        var ordered = intervals.OrderBy(i => i.Start).ToList();
+        double totalSeconds = 0.0;
+        DateTime? currentStart = null;
+        DateTime currentEnd = DateTime.MinValue;
+        foreach (var (start, end) in ordered)
+        {
+            if (currentStart is null || start > currentEnd)
+            {
+                if (currentStart is not null)
+                {
+                    totalSeconds += (currentEnd - currentStart.Value).TotalSeconds;
+                }
+                currentStart = start;
+                currentEnd = end;
+            }
+            else if (end > currentEnd)
+            {
+                currentEnd = end;
+            }
+        }
+        if (currentStart is not null)
+        {
+            totalSeconds += (currentEnd - currentStart.Value).TotalSeconds;
         }
 
         var hours = totalSeconds / 3600.0;

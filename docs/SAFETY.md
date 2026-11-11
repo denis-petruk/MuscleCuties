@@ -8,7 +8,7 @@ Read this reference for health-related behavior, sensitive data, authentication,
 - Do not fabricate cycle dates, readiness measurements, injury details, or physiological readings. Represent uncertainty explicitly.
 - Missing, stale, or contradictory safety information must not silently remove a restriction or increase workout load or intensity.
 - Apply established injury restrictions and safe alternatives. If the existing rules cannot determine a safe result, request the needed information or withhold the unsafe prescription.
-- Keep health synchronization disabled unless the user explicitly authorizes a defined integration and data scope. Any approved HealthKit integration must stay within the approved permissions.
+- Keep health synchronization disabled unless the user explicitly authorizes a defined integration and data scope. Apple Health read-only sync is authorized (2026-11-10) for steps, active energy, resting heart rate, HRV and sleep, with backend storage of step and sleep averages owner-approved; see docs/PRODUCT_WORKFLOWS.md. Any approved HealthKit integration must stay within the approved permissions.
 
 ## Privacy and data handling
 

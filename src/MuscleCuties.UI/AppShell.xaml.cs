@@ -252,18 +252,30 @@ public partial class AppShell : Shell
         string? redirectRoute = null;
         try
         {
-            var currentUser = await DataLoadScheduler.RunAsync(async () =>
+            var authState = await DataLoadScheduler.RunAsync(async () =>
             {
                 using var scope = _services.CreateScope();
                 var authService = scope.ServiceProvider.GetRequiredService<IAuthService>();
-                return await authService.GetCurrentUserStateAsync();
+                var state = await authService.GetCurrentUserStateAsync();
+                // F07r: distinguish "no account" from "cached onboarding flag, valid session".
+                return (State: state, HasSession: state is not null && await authService.IsLoggedInAsync());
             });
-            if (currentUser is null)
+            var currentUser = authState.State;
+            var decision = StartupRoutingRule.Resolve(
+                stateReadFailed: currentUser is null && authState.HasSession,
+                hasSession: authState.HasSession,
+                onboardingIncomplete: currentUser is not null && !currentUser.IsOnboardingComplete);
+            if (decision == StartupRoute.StartupError)
+            {
+                args.Cancel();
+                redirectRoute = "//AppStartupPage";
+            }
+            else if (decision == StartupRoute.Login)
             {
                 args.Cancel();
                 redirectRoute = "//LoginPage";
             }
-            else if (!currentUser.IsOnboardingComplete && !AllowsOnboardingRoute(targetRoute))
+            else if (decision == StartupRoute.ProfileSetup && !AllowsOnboardingRoute(targetRoute))
             {
                 args.Cancel();
                 redirectRoute = $"//{nameof(ProfileSetupPage)}";
