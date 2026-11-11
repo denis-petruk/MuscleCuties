@@ -92,18 +92,23 @@
                         </DataTrigger>
                     </Border.Triggers>
 
-                    <Label
-                        Text="{loc:LocalizedText Dashboard_Workout_PillRest}"
-                        IsVisible="{Binding IsRestDay}"
-                        TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
-                        Style="{StaticResource CaptionLabel}"
-                        VerticalOptions="Center" />
-                    <Label
-                        Text="{loc:LocalizedText Dashboard_Workout_PillTraining}"
-                        IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
-                        TextColor="{Binding WorkoutActivityTextColor}"
-                        Style="{StaticResource CaptionLabel}"
-                        VerticalOptions="Center" />
+                    <Border>
+                        <Grid>
+                            <Label
+                                Text="{loc:LocalizedText Dashboard_Workout_PillRest}"
+                                IsVisible="{Binding IsRestDay}"
+                                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                Style="{StaticResource CaptionLabel}"
+                                VerticalOptions="Center" />
+
+                            <Label
+                                Text="{loc:LocalizedText Dashboard_Workout_PillTraining}"
+                                IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
+                                TextColor="{Binding WorkoutActivityTextColor}"
+                                Style="{StaticResource CaptionLabel}"
+                                VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
                 </Border>
             </Grid>
 

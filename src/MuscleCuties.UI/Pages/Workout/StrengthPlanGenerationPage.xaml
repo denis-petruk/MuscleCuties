@@ -591,46 +591,77 @@
                                    LineBreakMode="WordWrap" />
                             <Border IsVisible="{Binding HasMixedActivitySessions}"
                                     Style="{StaticResource CardSecondary}">
-                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding MixedActivityDays}"
-                                                     Spacing="{StaticResource UiSpaceCompact}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+
+                                <VerticalStackLayout
+                                    BindableLayout.ItemsSource="{Binding MixedActivityDays}"
+                                    Spacing="{StaticResource UiSpaceCompact}">
+
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="vm:MixedActivityDayDisplay">
-                                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                                                <Label Text="{Binding Day}"
-                                                       Style="{StaticResource CaptionLabel}"
-                                                       VerticalOptions="Start" />
-                                                <VerticalStackLayout Grid.Column="1"
-                                                                     BindableLayout.ItemsSource="{Binding Sessions}"
-                                                                     Spacing="{StaticResource UiSpaceMicro}">
+
+                                            <Grid ColumnDefinitions="Auto,*"
+                                                  ColumnSpacing="{StaticResource UiSpaceCompact}">
+
+                                                <Label
+                                                    Text="{Binding Day}"
+                                                    Style="{StaticResource CaptionLabel}"
+                                                    VerticalOptions="Start" />
+
+                                                <VerticalStackLayout
+                                                    Grid.Column="1"
+                                                    BindableLayout.ItemsSource="{Binding Sessions}"
+                                                    Spacing="{StaticResource UiSpaceMicro}">
+
                                                     <BindableLayout.ItemTemplate>
                                                         <DataTemplate x:DataType="vm:MixedActivitySessionDisplay">
-                                                            <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto"
-                                                                  ColumnSpacing="{StaticResource UiSpaceTight}"
-                                                                  RowSpacing="{StaticResource UiSpaceMicro}">
-                                                                <Label Text="{Binding Activity}"
-                                                                       Style="{StaticResource BodyLabel}" />
-                                                                <Label Grid.Column="1"
-                                                                       Text="{Binding Duration}"
-                                                                       Style="{StaticResource MutedLabel}"
-                                                                       HorizontalTextAlignment="End"
-                                                                       VerticalOptions="Start" />
-                                                                <Label Grid.Row="1" Grid.ColumnSpan="2"
-                                                                       LineBreakMode="WordWrap"
-                                                                       Text="{Binding PhaseDetail}"
-                                                                       IsVisible="{Binding HasPhaseDetail}"
-                                                                       Style="{StaticResource CaptionLabel}" />
+
+                                                            <Grid
+                                                                ColumnDefinitions="*,Auto"
+                                                                RowDefinitions="Auto,Auto"
+                                                                ColumnSpacing="{StaticResource UiSpaceTight}"
+                                                                RowSpacing="{StaticResource UiSpaceMicro}">
+
+                                                                <Label
+                                                                    Text="{Binding Activity}"
+                                                                    Style="{StaticResource BodyLabel}" />
+
+                                                                <Label
+                                                                    Grid.Column="1"
+                                                                    Text="{Binding Duration}"
+                                                                    Style="{StaticResource MutedLabel}"
+                                                                    HorizontalTextAlignment="End"
+                                                                    VerticalOptions="Start" />
+
+                                                                <Label
+                                                                    Grid.Row="1"
+                                                                    Grid.ColumnSpan="2"
+                                                                    LineBreakMode="WordWrap"
+                                                                    Text="{Binding PhaseDetail}"
+                                                                    IsVisible="{Binding HasPhaseDetail}"
+                                                                    Style="{StaticResource CaptionLabel}" />
+
                                                             </Grid>
+
                                                         </DataTemplate>
                                                     </BindableLayout.ItemTemplate>
+
                                                 </VerticalStackLayout>
+
                                             </Grid>
+
                                         </DataTemplate>
                                     </BindableLayout.ItemTemplate>
+
                                 </VerticalStackLayout>
-                                <Label Text="{Binding RestDaysSummary}"
-                                       IsVisible="{Binding HasRestDays}"
-                                       Style="{StaticResource MutedLabel}"
-                                       LineBreakMode="WordWrap" />
+
+                                <Label
+                                    Text="{Binding RestDaysSummary}"
+                                    IsVisible="{Binding HasRestDays}"
+                                    Style="{StaticResource MutedLabel}"
+                                    LineBreakMode="WordWrap" />
+
+                            </VerticalStackLayout>
                             </Border>
                         </VerticalStackLayout>
 
