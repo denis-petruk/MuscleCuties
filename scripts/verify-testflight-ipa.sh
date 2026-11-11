@@ -33,6 +33,10 @@ else:
     print(f"bundle_id={info.get('CFBundleIdentifier')} version={info.get('CFBundleShortVersionString')} build={info.get('CFBundleVersion')}")
     if info.get('get-task-allow') is True:
         failures.append('Info.plist enables get-task-allow')
+    if not info.get('NSHealthShareUsageDescription'):
+        failures.append('Info.plist missing NSHealthShareUsageDescription')
+    if not info.get('NSHealthUpdateUsageDescription'):
+        failures.append('Info.plist missing NSHealthUpdateUsageDescription')
 
 for n in names:
     if n.endswith('.plist'):
