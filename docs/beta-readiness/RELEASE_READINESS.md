@@ -119,3 +119,11 @@ Release gates: bundle id/signing/entitlements, App Privacy copy, archive/upload/
 
 ## Production overview-chain proof 2026-11-10
 - `PostgresWorkoutPlanAndSessionStore.WorkoutOverviewBuilder.Build` is the extracted pure overview assembly; `LoadOverviewAsync` delegates to it after its queries. In-memory harness: Mon/Wed/Thu -> 3 non-rest scheduled days -> `"3 training days - 4 full rest days"`.
+
+## Unblocked release actions 2026-11-11
+- Cycle policy advanced to `MC-CYCLE-READINESS-0.3`; approval record doc cites owner amendments A-4/A-5 (2026-11-09). Commits `167a32da` and `d2341f85` pushed to `origin/product/qa-fixes-20261109`.
+- Tests run after unblocking: Core 1367 passed / 11 failed (legacy provisional-feeling and repeated-pattern tests for behavior removed by the 0.3 decision); Contracts 183/183; Registration 54/54; Server 119/120 (measured-latency budget); Registration.Integration 47/105 (DB-backed suite; no local PostgreSQL); Deployment 17/17. Suite is **not green**.
+- Signing: distribution identity and `MuscleCuties App Store Connect` profile match `com.musclecuties.app`, but the profile has no HealthKit entitlement and no ASC API key is installed. Archive/publish did not complete; upload/TestFlight was not attempted.
+- App Privacy answers recorded in `APP_PRIVACY_ANSWERS_2026-11-11.md`; not submitted.
+- AWS read-only: one available RDS instance `musclecuties-staging-db`; no Beta designation, alias, backup or secret action was taken because no target stack was named.
+- Security: `.claude/qa-evidence/healthsync_keys.txt`, `deleted-checkin-row-backup.txt` and `deadbug-reopen-backup.txt` were committed in `167a32da`, then untracked in `d2341f85`; they remain in pushed history and should be treated as exposed.
