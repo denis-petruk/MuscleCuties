@@ -29,6 +29,11 @@ open(p, 'wb').write(data[i:])
 PY
 
 python3 scripts/sanitize-ipa-paths.py "$APP"
+for fw in "$APP"/Frameworks/*.framework; do
+  if [[ -d "$fw" ]]; then
+    codesign --force --timestamp --sign "$IDENTITY" "$fw"
+  fi
+done
 codesign --force --timestamp --sign "$IDENTITY" --entitlements "$ENT" "$APP"
 codesign --verify --deep --strict "$APP"
 

@@ -23,7 +23,7 @@ markers = 0
 for dirpath, dirnames, filenames in os.walk(root):
     dirnames[:] = [d for d in dirnames if d not in skip_dirs]
     for name in filenames:
-        if name in skip_names or name.endswith('.mobileprovision'):
+        if name in skip_names or name.endswith('.mobileprovision') or name.endswith('.plist'):
             continue
         path = os.path.join(dirpath, name)
         try:
