@@ -31,11 +31,28 @@ The SDK is pinned by global.json. Install a compatible .NET 10 SDK before buildi
 | MuscleCuties.Registration.Integration.Tests | Database-backed flows; requires disposable PostgreSQL. |
 | MuscleCuties.Mobile.Contracts.Tests | Client and backend contract shapes. |
 
+### PostgreSQL-backed suites
+
+`MuscleCuties.Registration.Integration.Tests` and the all-route latency gate in
+`MuscleCuties.Server.Tests` require real PostgreSQL fixtures. From a fresh checkout:
+
+```bash
+brew services start postgresql@16
+./scripts/prepare-integration-postgres.sh
+source .env.integration
+```
+
+The bootstrap creates and seeds the disposable databases and the restricted Pg09 role, then
+writes an ignored `.env.integration` file containing only loopback connection strings. See
+[docs/INTEGRATION_POSTGRES.md](docs/INTEGRATION_POSTGRES.md) for the fixture/env-var table,
+the exact suite commands, the clear skip behavior when PostgreSQL is absent, and why the
+latency budget remains 1000 ms.
+
 The backend needs PostgreSQL connection and JWT signing settings from configuration or environment variables. Keep credentials, signing files, and database connections out of the repository. Start the local API with:
 
     dotnet run --project services/MuscleCuties.Server
 
-The MAUI client is iOS-only. Agents do not build, run, or screenshot it unless the user authorizes that check for the task; see [docs/VERIFICATION_GATES.md](docs/VERIFICATION_GATES.md).
+The MAUI client is iOS-only. Agents do not build, run, or screenshot it unless the user authorizes that check for the task; see [docs/VERIFICATION_GATES.md](docs/VERIFICATION_GATES.md). TestFlight archive, signing, and export steps are in [docs/beta-readiness/TESTFLIGHT_BUILD_2026-11-11.md](docs/beta-readiness/TESTFLIGHT_BUILD_2026-11-11.md).
 
 ## CI/CD and Automation
 
