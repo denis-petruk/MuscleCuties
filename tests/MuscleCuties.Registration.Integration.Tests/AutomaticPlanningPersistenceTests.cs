@@ -28,7 +28,7 @@ public sealed class AutomaticPlanningPersistenceTests
     private const int FollowingDayOffset = 2;
     private const string SyntheticCardio = "Cardio";
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task DiscoveryRolePagesOnlyPendingOwnersWithoutDirectTableAccess()
     {
         await using var database = CreateContext();
@@ -78,7 +78,7 @@ public sealed class AutomaticPlanningPersistenceTests
         return owners;
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task AcceptanceRejectsProposalFromOtherOriginBeforeAnyPlanMutation()
     {
         await using var database = CreateContext();
@@ -109,7 +109,7 @@ public sealed class AutomaticPlanningPersistenceTests
         await transaction.RollbackAsync();
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task ActivePreviewDefersPendingUpdatesWithoutClearingEitherFlag()
     {
         await using var database = CreateContext();
@@ -139,7 +139,7 @@ public sealed class AutomaticPlanningPersistenceTests
         await transaction.RollbackAsync();
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task PromotionRejectsMalformedLegacyAndRetiredActiveSessionsButAllowsFrozenCardio()
     {
         await using var database = CreateContext();
@@ -182,7 +182,7 @@ public sealed class AutomaticPlanningPersistenceTests
         await transaction.RollbackAsync();
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task ActiveSessionKeepsBothAutomaticUpdatesPending()
     {
         await using var database = CreateContext();
@@ -218,7 +218,7 @@ public sealed class AutomaticPlanningPersistenceTests
         await transaction.RollbackAsync();
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task NextScheduledDateUsesTodayOnlyWhenNoActivityCompletedAndSkipsSuppressedDays()
     {
         await using var database = CreateContext();
@@ -250,7 +250,7 @@ public sealed class AutomaticPlanningPersistenceTests
         await transaction.RollbackAsync();
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task SameDayPromotionRequiresMatchingOrderedCurrentPlanSessions()
     {
         await using var database = CreateContext();

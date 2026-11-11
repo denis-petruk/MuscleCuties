@@ -19,7 +19,7 @@ public sealed class WorkoutExperiencePromotionStoreTests
     private const int IntermediatePromotionDays = 20;
     private static readonly DateTime FirstCompletionUtc = new(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
 
-    [Fact]
+    [PostgresFact]
     public async Task TwentyCreditedDaysPromoteOnceAndASameDayRetryDoesNotCreditAgain()
     {
         await using var database = Open();

@@ -14,7 +14,7 @@ public sealed class SessionLockRunnerTests(DisposableDatabaseFixture fixture)
     private const int RunnerExitWaitSeconds = 10;
     private const int LockPollMilliseconds = 100;
 
-    [Fact]
+    [PostgresFact]
     public async Task TerminatesChildWhenAdvisoryLockSessionIsLost()
     {
         if (!fixture.Available || OperatingSystem.IsWindows()) return;

@@ -20,7 +20,7 @@ public sealed class PlanningLeasePersistenceTests
     private const long FirstTakeoverFence = InitialFence + 1;
     private const long SecondTakeoverFence = FirstTakeoverFence + 1;
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task ConcurrentTakeoversFencePreviousDevicesAndRejectTheirApply()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()

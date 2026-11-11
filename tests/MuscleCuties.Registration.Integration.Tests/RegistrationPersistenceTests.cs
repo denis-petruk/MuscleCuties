@@ -38,7 +38,7 @@ public sealed class RegistrationPersistenceTests
     private static readonly DayOfWeek[] TestAvailableWeekdays =
         [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday];
 
-    [Xunit.Theory]
+    [PostgresTheory]
     [Xunit.InlineData(FullGymAnswerValue)]
     [Xunit.InlineData(BodyweightAnswerValue)]
     public async Task NewAccountCompletesWithoutGeneratingAnUnconfirmedPlan(int equipmentAnswer)

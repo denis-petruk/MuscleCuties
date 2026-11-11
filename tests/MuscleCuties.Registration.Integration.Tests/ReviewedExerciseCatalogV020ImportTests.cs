@@ -8,7 +8,7 @@ namespace MuscleCuties.Registration.Integration.Tests;
 
 public sealed class ReviewedExerciseCatalogV020ImportTests
 {
-    [Fact]
+    [PostgresFact]
     public void Supplied_Review_Matches_Repository_Snapshot_Without_Claiming_Database_Match()
     {
         using var review = ReadJson("src/MuscleCuties.Infrastructure.PostgreSql/Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json");
@@ -35,7 +35,7 @@ public sealed class ReviewedExerciseCatalogV020ImportTests
             review.RootElement.GetProperty("ownerDirectVerification").GetProperty("scope").GetString());
     }
 
-    [Fact]
+    [PostgresFact]
     public void Changed_Or_Missing_Catalog_Row_Blocks_Import()
     {
         using var review = ReadJson("src/MuscleCuties.Infrastructure.PostgreSql/Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json");
@@ -56,7 +56,7 @@ public sealed class ReviewedExerciseCatalogV020ImportTests
         Assert.False(missing.CanImport);
     }
 
-    [Fact]
+    [PostgresFact]
     public void Directed_Reviews_Do_Not_Approve_All_Pairs_As_Automatic_Equivalents()
     {
         using var review = ReadJson("src/MuscleCuties.Infrastructure.PostgreSql/Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json");

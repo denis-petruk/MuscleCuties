@@ -29,7 +29,7 @@ public sealed class PlanningAcceptanceTransactionTests
 
     // This exercises persistence with a synthetic strength session; it does not claim
     // catalog or clinical review of a real workout.
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task ApplyCommitsDraftAndRevisionOnceAndPreservesPriorSession()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);

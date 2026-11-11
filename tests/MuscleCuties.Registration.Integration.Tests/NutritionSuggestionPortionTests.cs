@@ -29,7 +29,7 @@ public sealed class NutritionSuggestionPortionTests
     private const float BrownRiceCaloriesPer100Grams = 123f;
     private const float OilCaloriesPer100Grams = 884f;
 
-    [Theory]
+    [PostgresTheory]
     [InlineData("Breakfast", SmallMealCalories)]
     [InlineData("Breakfast", MediumMealCalories)]
     [InlineData("Breakfast", LargeMealCalories)]
@@ -52,7 +52,7 @@ public sealed class NutritionSuggestionPortionTests
         Assert.Contains(first.Suggestion.Components, IsOil);
     }
 
-    [Theory]
+    [PostgresTheory]
     [InlineData(0f)]
     [InlineData(LowFatBudget)]
     public async Task OilRespectsRemainingFatBudget(float fats)
@@ -67,7 +67,7 @@ public sealed class NutritionSuggestionPortionTests
             Assert.InRange(Assert.Single(result.Suggestion!.Components, IsOil).Grams, 0f, fats);
     }
 
-    [Theory]
+    [PostgresTheory]
     [InlineData(SmallMealCalories)]
     [InlineData(MediumMealCalories)]
     [InlineData(LargeMealCalories)]
@@ -84,7 +84,7 @@ public sealed class NutritionSuggestionPortionTests
                 DailyCarbs * shares.Dinner, DailyFats * shares.Dinner, dailyCalories, false, suggestion));
     }
 
-    [Fact]
+    [PostgresFact]
     public async Task TurkeyChiliUsesIngredientSpecificPortionsAndNutrients()
     {
         var suggestions = await CreateStore().GetMealSuggestionsAsync(Guid.NewGuid(), "Dinner", "Savoury");
@@ -101,7 +101,7 @@ public sealed class NutritionSuggestionPortionTests
         AssertClose(chili.Calories, chili.Components.Sum(component => ForPortion(component.Calories, component.Grams)));
     }
 
-    [Theory]
+    [PostgresTheory]
     [InlineData("Breakfast", "Sweet")]
     [InlineData("Breakfast", "Savoury")]
     [InlineData("Lunch", "Savoury")]
@@ -119,7 +119,7 @@ public sealed class NutritionSuggestionPortionTests
         });
     }
 
-    [Theory]
+    [PostgresTheory]
     [InlineData("Sweet", "Berry Protein Oatmeal", "Greek Yogurt Parfait")]
     [InlineData("Savoury", "Scrambled Eggs with Toast", "Tofu Scramble with Vegetables")]
     public async Task BreakfastPreferenceUsesMatchingCatalogAndPersonalTargets(
