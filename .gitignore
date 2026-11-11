@@ -105,3 +105,7 @@ Thumbs.db
 .tools/
 test-results/
 *.dSYM
+
+.claude/qa-evidence/healthsync_keys.txt
+.claude/qa-evidence/deleted-checkin-row-backup.txt
+.claude/qa-evidence/deadbug-reopen-backup.txt
