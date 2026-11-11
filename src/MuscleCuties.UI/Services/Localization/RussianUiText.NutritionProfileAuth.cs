@@ -455,6 +455,8 @@ internal static partial class RussianUiText
         Values["Nutrition_PhaseFocus_CurrentCyclePhaseIcon"] = "Текущая фаза цикла";
         Values["Nutrition_PhaseUnavailable_Title"] = "Фаза цикла недоступна";
         Values["Nutrition_PhaseUnavailable_Copy"] = "Запишите цикл, чтобы увидеть рекомендации по фазам.";
+        Values["Nutrition_Meal_LogButton"] = "Приём пищи";
+        Values["Nutrition_Meal_SaveButton"] = "Сохранить";
         Values["Nutrition_ProfileSetup_Title"] = "Завершите настройку профиля";
         Values["Nutrition_ProfileSetup_Copy"] = "Настройте профиль, чтобы увидеть персональные цели питания.";
         Values["Nutrition_TargetSource_Default"] = "Общие начальные цели";
@@ -730,7 +732,17 @@ internal static partial class RussianUiText
         Values["Profile_Privacy_FoodLabel"] = "Поиск продуктов";
         Values["Profile_Privacy_FoodBody"] = "В USDA могут передаваться общие названия, но не ваши записи.";
         Values["Profile_Privacy_HealthLabel"] = "Apple Health";
-        Values["Profile_Privacy_HealthBody"] = "Шаги считываются только с вашего разрешения.";
+        Values["Profile_HealthSync_Title"] = "Синхронизация с Apple Health";
+        Values["Profile_HealthSync_Connect"] = "Подключить Apple Health";
+        Values["Profile_HealthSync_Refresh"] = "Обновить данные";
+        Values["Profile_HealthSync_Disconnect"] = "Отключить Apple Health";
+        Values["Profile_HealthSync_Connected"] = "Подключено. {0}";
+        Values["Profile_HealthSync_Connected_Updated"] = "Подключено и обновлено.";
+        Values["Profile_HealthSync_NotConnected"] = "Не подключено. Разрешите доступ в Здоровье > Доступ > Приложения, чтобы учитывать шаги и сон.";
+        Values["Profile_HealthSync_NoData"] = "Нет данных или доступ выключен. Проверьте Здоровье > Доступ > Приложения.";
+        Values["Profile_HealthSync_Unavailable"] = "Apple Health недоступен на этом устройстве.";
+        Values["Profile_HealthSync_Error"] = "Синхронизация не удалась. Попробуйте позже.";
+        Values["Profile_Privacy_HealthBody"] = "Шаги, сон, пульс и ВСР считываются из Apple Health только с вашего разрешения. Только чтение: ничего не записывается обратно.";
         Values["Profile_Privacy_ChoicesTitle"] = "Ваш выбор";
         Values["Profile_Privacy_ChoicesBody"] = "Удалить аккаунт и локальные данные можно в профиле.";
         Values["Profile_Privacy_ReadPolicy"] = "Читать политику конфиденциальности";

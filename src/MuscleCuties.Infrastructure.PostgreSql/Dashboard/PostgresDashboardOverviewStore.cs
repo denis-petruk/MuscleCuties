@@ -158,32 +158,52 @@ public sealed class PostgresDashboardOverviewStore(
                 .SingleOrDefaultAsync(l => l.UserId == userId && l.LocalDate == today && !l.IsDeleted, cancellationToken)
                 .ConfigureAwait(false);
 
-            float consumedCalories;
-            float consumedProtein;
-            float consumedCarbs;
-            float consumedFats;
-            var hydrationConsumed = "0.0 L";
+            // Consumed food comes from the same sources as the Nutrition tab (food snapshots + logged meals,
+            // meal rows scaled by grams per 100 g). The daily log is used only for water, so Today and Nutrition agree.
+            var foodEntries = await dbContext.FoodItemEntries.AsNoTracking()
+                .Where(e => e.UserId == userId && e.LocalDate == today && !e.IsDeleted)
+                .ToListAsync(cancellationToken)
+                .ConfigureAwait(false);
+            float consumedCalories = (float)foodEntries.Sum(e => e.Calories);
+            float consumedProtein = (float)foodEntries.Sum(e => e.Protein);
+            float consumedCarbs = (float)foodEntries.Sum(e => e.Carbs);
+            float consumedFats = (float)foodEntries.Sum(e => e.Fat);
 
-            if (dailyNutritionLog is not null)
+            var mealIds = await dbContext.LoggedMeals.AsNoTracking()
+                .Where(m => m.UserId == userId && m.Date == today)
+                .Select(m => m.Id)
+                .ToArrayAsync(cancellationToken)
+                .ConfigureAwait(false);
+            if (mealIds.Length > 0)
             {
-                consumedCalories = (float)dailyNutritionLog.TotalCalories;
-                consumedProtein = (float)dailyNutritionLog.TotalProtein;
-                consumedCarbs = (float)dailyNutritionLog.TotalCarbs;
-                consumedFats = (float)dailyNutritionLog.TotalFat;
-                hydrationConsumed = $"{dailyNutritionLog.WaterIntakeMl / MillilitersPerLiter:F1} L";
+                var catalogMealRows = await (
+                    from entry in dbContext.LoggedMealEntries.AsNoTracking()
+                    join food in dbContext.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
+                    where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
+                    select new { entry.Grams, Calories = (float)(food.Calories ?? 0), Protein = (float)(food.Protein ?? 0),
+                        Carbs = (float)(food.Carbs ?? 0), Fats = (float)(food.Fats ?? 0) })
+                    .ToListAsync(cancellationToken).ConfigureAwait(false);
+                var userMealRows = await (
+                    from entry in dbContext.LoggedMealEntries.AsNoTracking()
+                    join food in dbContext.UserFoodItems.AsNoTracking()
+                        on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
+                    where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
+                    select new { entry.Grams, Calories = (float)(food.Calories ?? 0), Protein = (float)(food.Protein ?? 0),
+                        Carbs = (float)(food.Carbs ?? 0), Fats = (float)(food.Fats ?? 0) })
+                    .ToListAsync(cancellationToken).ConfigureAwait(false);
+                foreach (var row in catalogMealRows.Concat(userMealRows))
+                {
+                    var factor = (float)row.Grams / 100f;
+                    consumedCalories += row.Calories * factor;
+                    consumedProtein += row.Protein * factor;
+                    consumedCarbs += row.Carbs * factor;
+                    consumedFats += row.Fats * factor;
+                }
             }
-            else
-            {
-                var foodEntries = await dbContext.FoodItemEntries.AsNoTracking()
-                    .Where(e => e.UserId == userId && e.LocalDate == today && !e.IsDeleted)
-                    .ToListAsync(cancellationToken)
-                    .ConfigureAwait(false);
 
-                consumedCalories = (float)foodEntries.Sum(e => e.Calories);
-                consumedProtein = (float)foodEntries.Sum(e => e.Protein);
-                consumedCarbs = (float)foodEntries.Sum(e => e.Carbs);
-                consumedFats = (float)foodEntries.Sum(e => e.Fat);
-            }
+            var hydrationConsumed = dailyNutritionLog is not null
+                ? $"{dailyNutritionLog.WaterIntakeMl / MillilitersPerLiter:F1} L"
+                : "0.0 L";
 
             // 4. Streaks
             var nutritionStreakDays = await ComputeNutritionStreakAsync(userId, today, cancellationToken)

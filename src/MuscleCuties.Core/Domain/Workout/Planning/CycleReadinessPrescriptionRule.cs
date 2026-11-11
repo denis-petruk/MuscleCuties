@@ -47,7 +47,7 @@ public sealed record CycleReadinessPrescriptionDecision(
 /// </summary>
 public static class CycleReadinessPrescriptionRule
 {
-    public const string PolicyVersion = "MC-CYCLE-READINESS-0.2";
+    public const string PolicyVersion = "MC-CYCLE-READINESS-0.3";
     public const string NoAdjustment = "CycleReadinessNormalDose";
     public const string DailyReadinessAdjustment = "DailyReadinessOptionalSetReduced";
     public const string ProvisionalPhaseAdjustment = "ConfirmedPhaseProvisionalFeelingOptionalSetReduced";
@@ -88,15 +88,11 @@ public static class CycleReadinessPrescriptionRule
             CyclePhase.Ovulatory or CyclePhase.Luteal) &&
             (input.PhaseProvenance == PhaseReviewProvenance.UserConfirmed ||
              input.PhaseProvenance == PhaseReviewProvenance.Estimated && input.PhaseEstimateReliable);
-        var phaseFeeling = reliablePhase && input.ProvisionalPhaseFeeling is { } baseline &&
-            PhaseAdjustmentRule.SelectTier(baseline, PhaseBaselineScale.QuizMappedOneToFive) is
-                PhaseAdjustmentTier.Lighter or PhaseAdjustmentTier.EasierDay;
-        var repeatedFeeling = reliablePhase && HasRepeatedPattern(input);
-        var checkInFeelingReady = currentCheckIn && score!.Band == CheckInScoreBand.FeelingReady;
-        var shouldReduce = dailyReduction || input.RoutineSymptoms || (phaseFeeling || repeatedFeeling) && !checkInFeelingReady;
-        var reason = dailyReduction || input.RoutineSymptoms ? DailyReadinessAdjustment : repeatedFeeling ? RepeatedPhaseAdjustment : ProvisionalPhaseAdjustment;
-        var confidence = dailyReduction || input.RoutineSymptoms ? CycleReadinessConfidence.Current : repeatedFeeling
-            ? CycleReadinessConfidence.Repeated : CycleReadinessConfidence.Provisional;
+        // Owner decision S-03 / Decision 5 (2026-11-09): a cycle phase or estimate alone never changes the dose.
+        // Only a current check-in signal (short sleep, lighter/easier band) or routine symptoms reduce one set.
+        var shouldReduce = dailyReduction || input.RoutineSymptoms;
+        const string reason = DailyReadinessAdjustment;
+        const CycleReadinessConfidence confidence = CycleReadinessConfidence.Current;
         if (!shouldReduce)
             return new(null, null, NoAdjustment,
                 reliablePhase ? input.Phase : null,
@@ -123,42 +119,4 @@ public static class CycleReadinessPrescriptionRule
         approval.CoveredSections is not null &&
         approval.CoveredSections.Contains(PlanningReviewSection.TrainingPrescriptions) &&
         approval.CoveredSections.Contains(PlanningReviewSection.AutomatedProgression);
-
-    private static bool HasRepeatedPattern(CycleReadinessPrescriptionInput input)
-    {
-        if (input.EvaluationDate is not { } evaluationDate || input.PatternObservations is null)
-            return false;
-        var eligible = input.PatternObservations.Where(observation => observation is not null &&
-            observation.Phase == input.Phase && observation.Date < evaluationDate &&
-            evaluationDate.DayNumber - observation.Date.DayNumber <= PatternObservationWindowDays &&
-            observation.TrustedCompletedWorkout && observation.LowReadiness &&
-            !string.IsNullOrWhiteSpace(observation.CycleId) && !string.IsNullOrWhiteSpace(observation.CheckInId)).ToArray();
-        // Each cycle must have its own check-in; repeated rows are not additional evidence.
-        var candidates = eligible.GroupBy(observation => observation.CycleId, StringComparer.Ordinal)
-            .Select(group => group.Select(observation => observation.CheckInId).Distinct(StringComparer.Ordinal).ToArray())
-            .ToArray();
-        var assignedCycles = new Dictionary<string, int>(StringComparer.Ordinal);
-        var matched = 0;
-        for (var index = 0; index < candidates.Length; index++)
-        {
-            if (AssignCheckIn(candidates, index, assignedCycles, new HashSet<string>(StringComparer.Ordinal)) &&
-                ++matched >= MinimumDistinctCyclesForPattern)
-                return true;
-        }
-        return false;
-    }
-
-    private static bool AssignCheckIn(string[][] candidates, int index, Dictionary<string, int> assignedCycles,
-        HashSet<string> visited)
-    {
-        foreach (var checkInId in candidates[index])
-        {
-            if (!visited.Add(checkInId)) continue;
-            if (assignedCycles.TryGetValue(checkInId, out var previousCycle) &&
-                !AssignCheckIn(candidates, previousCycle, assignedCycles, visited)) continue;
-            assignedCycles[checkInId] = index;
-            return true;
-        }
-        return false;
-    }
 }

@@ -192,9 +192,23 @@ public partial class App : Application, IDisposable
                 var shell = Shell.Current as AppShell ?? _services.GetRequiredService<AppShell>();
                 shell.MarkAuthenticationVerified();
 
-                if (!currentUser.IsOnboardingComplete)
+                var startupRoute = StartupRoutingRule.Resolve(
+                    stateReadFailed: false,
+                    hasSession: await authService.IsLoggedInAsync(),
+                    onboardingIncomplete: !currentUser.IsOnboardingComplete);
+                if (startupRoute == StartupRoute.ProfileSetup)
                 {
                     await ActivateRootAsync(nameof(ProfileSetupPage));
+                    return;
+                }
+                if (startupRoute == StartupRoute.Dashboard && !currentUser.IsOnboardingComplete)
+                {
+                    await NavigateToDashboardAsync(currentUser.UserId);
+                    return;
+                }
+                if (startupRoute == StartupRoute.Login)
+                {
+                    await ActivateRootAsync("LoginPage");
                     return;
                 }
 
@@ -214,6 +228,14 @@ public partial class App : Application, IDisposable
                 }
 
                 await NavigateToDashboardAsync(currentUser.UserId);
+                return;
+            }
+
+            if (await authService.IsLoggedInAsync())
+            {
+                // A stored session whose state cannot be resolved is a failed verification.
+                _startupFailed = true;
+                _startupPage?.ShowStartupError(false);
                 return;
             }
 

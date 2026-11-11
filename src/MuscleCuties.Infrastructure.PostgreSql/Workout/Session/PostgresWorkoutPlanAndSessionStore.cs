@@ -151,6 +151,31 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
             var scheduledDays = workoutDays.Where(day => activeScheduledDayIds.Contains(day.Id)).ToList();
+            return WorkoutOverviewBuilder.Build(
+                activePlan?.Name, phase.ToString(), startMonday, today,
+                workoutDays, scheduledDays, exercisesByDayId, exercisesById, workoutLogs, inProgressDayId);
+        }).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    ///     Pure overview assembly, extracted from LoadOverviewAsync so it can be driven with
+    ///     materialized records. No database access happens here.
+    /// </summary>
+    public static class WorkoutOverviewBuilder
+    {
+        public static WorkoutOverviewResponse Build(
+            string? planName,
+            string phase,
+            DateOnly startMonday,
+            DateOnly today,
+            IReadOnlyList<WorkoutDayRecord> workoutDays,
+            IReadOnlyList<WorkoutDayRecord> scheduledDays,
+            IReadOnlyDictionary<Guid, IReadOnlyList<WorkoutDayExerciseRecord>> exercisesByDayId,
+            IReadOnlyDictionary<int, Exercise>? exercisesById,
+            IReadOnlyList<WorkoutLogRecord> workoutLogs,
+            Guid? inProgressDayId)
+        {
+            exercisesById ??= new Dictionary<int, Exercise>();
             var workouts = BuildWorkoutListEntries(scheduledDays, exercisesByDayId, exercisesById, workoutLogs);
             var schedule = BuildScheduleEntries(startMonday, today, scheduledDays, exercisesByDayId, exercisesById, workoutLogs);
             var previews = workoutDays.Select(day =>
@@ -176,13 +201,11 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     exercisesByDayId, exercisesById, workoutLogs)
                     .FirstOrDefault(entry => entry.WorkoutDayId == ToStableWorkoutIntId(currentId))
                 : null;
-            return new WorkoutOverviewResponse(
-                activePlan?.Name,
-                phase.ToString(),
-                workouts,
-                schedule,
-                previews) { InProgressWorkout = inProgressWorkout is null ? null : inProgressWorkout with { IsInProgress = true } };
-        }).ConfigureAwait(false);
+            return new WorkoutOverviewResponse(planName, phase, workouts, schedule, previews)
+            {
+                InProgressWorkout = inProgressWorkout is null ? null : inProgressWorkout with { IsInProgress = true }
+            };
+        }
     }
 
     public async Task RescheduleAsync(
@@ -355,6 +378,15 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     .ToDictionaryAsync(e => e.Id, cancellationToken)
                     .ConfigureAwait(false);
 
+            // Bodyweight movements (no required equipment) are logged as 0 kg; see BuildExerciseDetailDto.
+            var bodyweightExerciseIds = exerciseIds.Length == 0
+                ? new HashSet<int>()
+                : (await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
+                    .Where(d => exerciseIds.Contains(d.Id) && d.Required == EquipmentSet.None)
+                    .Select(d => d.Id)
+                    .ToListAsync(cancellationToken)
+                    .ConfigureAwait(false)).ToHashSet();
+
             var currentLogs = dbContext.WorkoutLogs.AsNoTracking()
                 .Where(l => l.UserId == userId && l.WorkoutDayId == day.Id);
             currentLogs = recordedSession is null
@@ -442,7 +474,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 var observedWeeks = observedWeeksByExerciseId.GetValueOrDefault(
                     dayEx.ExerciseId.ToString(CultureInfo.InvariantCulture));
                 return BuildExerciseDetailDto(dayEx, day.WorkoutType, catalogEx, prevLog, currLog, movementNote,
-                    progressionTier, observedWeeks);
+                    progressionTier, observedWeeks, bodyweightExerciseIds.Contains(dayEx.ExerciseId));
             }).ToArray();
 
             var activities = BuildActivityDetails(day, orderedExercises, exercisesById, exerciseDtos);
@@ -1514,7 +1546,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         WorkoutExerciseLogRecord? currentLog,
         string movementNotes,
         EffectiveExperienceTier progressionTier = EffectiveExperienceTier.Tier1BeginnerOrNew,
-        IReadOnlyList<DoubleProgressionWeekPerformance>? observedWeeks = null)
+        IReadOnlyList<DoubleProgressionWeekPerformance>? observedWeeks = null,
+        bool isBodyweight = false)
     {
         var name = exercise?.Name ?? "Exercise";
         var usesEndurance = UsesEnduranceMetrics(dayExercise, name);
@@ -1591,7 +1624,10 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 ? $"{currentLog.WeightKg.Value:0.#}"
                 : (progressedLoad is > 0m
                     ? $"{progressedLoad.Value:0.#}"
-                    : (previousLog?.WeightKg is > 0m ? $"{previousLog.WeightKg.Value:0.#}" : string.Empty)),
+                    : (previousLog?.WeightKg is > 0m ? $"{previousLog.WeightKg.Value:0.#}"
+                        // Bodyweight movements are logged as 0 kg. Showing it as a value (not a placeholder) keeps the
+                        // weight box truthful and lets "Next" validate; weighted lifts still need an explicit load.
+                        : isBodyweight ? "0" : string.Empty)),
             LoggedDurationMinutesText = currentLog?.CompletedDurationSeconds is >= 0
                 ? $"{Math.Ceiling(currentLog.CompletedDurationSeconds.Value / 60d):0}"
                 : (dayExercise.DurationSeconds is > 0 ? $"{Math.Ceiling(dayExercise.DurationSeconds.Value / 60d):0}" : string.Empty),

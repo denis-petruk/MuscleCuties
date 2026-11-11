@@ -50,6 +50,10 @@ The rules below govern plan acceptance and safety. The [approved Beta workout po
 
 - Apple HealthKit synchronization is authorized for iOS (`net10.0-ios`).
 - Metric queries: daily and 7-day average steps (`HKQuantityTypeIdentifier.StepCount`), active energy burned (`HKQuantityTypeIdentifier.ActiveEnergyBurned`), last-night and 7-day sleep duration (`HKCategoryTypeIdentifier.SleepAnalysis`), resting heart rate (`HKQuantityTypeIdentifier.RestingHeartRate`), and HRV (`HKQuantityTypeIdentifier.HeartRateVariabilitySDNN`).
+- Authorized scope (2026-11-10): five read-only types (steps, active energy, resting heart rate, HRV, sleep). Data is used on device; step and sleep averages may be stored on the backend (owner-approved).
+- Permission: a rationale is shown on the check-in screen before the system sheet; Profile offers Connect, Refresh and Disconnect. No sheet opens on app launch or from onboarding.
+- No adjustment when step coverage is under 4 completed days or weight/age is unknown. Calorie baseline uses seven completed days (today-7 to today-1). Phase factor 0.95/1.05 kept (owner, 2026-11-10).
+- Simulator QA uses synthetic data only (DEBUG build, `MC_SYNTHETIC_HEALTH=1`).
 - Check-in pre-fill: Objective `SleepHours` auto-fills directly from HealthKit. Subjective recovery metrics provide a `"Suggest from Apple Health"` chip for one-tap trainee review and confirmation.
 - Calorie adjustment: Rolling 7-day average step trends calculate a bounded daily caloric offset via `HealthEnergyAdjustment.CalculateDailyCalories` (smooth, deterministic, clamped -180 to +260 kcal).
 

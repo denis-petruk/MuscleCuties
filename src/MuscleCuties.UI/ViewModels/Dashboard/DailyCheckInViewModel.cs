@@ -63,6 +63,45 @@ public partial class DailyCheckInViewModel : ObservableObject
         _userIdProvider = userIdProvider;
         SubmitCommand = new AsyncRelayCommand(SubmitAsync, () => !IsBusy && !IsCompleted && Answers.IsComplete);
         SkipCommand = new AsyncRelayCommand(SkipAsync);
+        ConnectHealthCommand = new AsyncRelayCommand(ConnectHealthAsync);
+        NotNowHealthCommand = new AsyncRelayCommand(NotNowHealthAsync);
+    }
+
+    [ObservableProperty] private bool _showHealthRationale;
+
+    public AsyncRelayCommand ConnectHealthCommand { get; }
+    public AsyncRelayCommand NotNowHealthCommand { get; }
+
+    private async Task ConnectHealthAsync()
+    {
+        ShowHealthRationale = false;
+        if (_healthSync is null || _userIdProvider is null) return;
+        try
+        {
+            var userId = await _userIdProvider.GetCurrentUserIdAsync();
+            // The only action that opens the Apple Health sheet on this screen.
+            await _healthSync.SyncAsync(userId, _healthSync.DeviceHealthSource);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[DailyCheckInViewModel] Connect failed ({ex.GetType().Name}).");
+        }
+        await CheckIfAlreadyCompletedAsync();
+    }
+
+    private async Task NotNowHealthAsync()
+    {
+        ShowHealthRationale = false;
+        if (_healthSync is null || _userIdProvider is null) return;
+        try
+        {
+            var userId = await _userIdProvider.GetCurrentUserIdAsync();
+            await _healthSync.DismissPromptAsync(userId);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[DailyCheckInViewModel] Dismiss failed ({ex.GetType().Name}).");
+        }
     }
 
     public string SleepDisplay => _isSleepHoursAnswered ? $"{SleepHours:F1}h" : "—";
@@ -125,18 +164,29 @@ public partial class DailyCheckInViewModel : ObservableObject
                     var summary = await _healthSync.GetCachedWeeklySummaryAsync(userId);
                     if (summary is null && _healthSync.IsAvailable)
                     {
-                        try
+                        var healthStatus = await _healthSync.GetStatusAsync(userId);
+                        if (healthStatus.IsConnected)
                         {
-                            var syncResult = await _healthSync.SyncAsync(userId, _healthSync.DeviceHealthSource);
-                            summary = syncResult.Summary ?? await _healthSync.GetCachedWeeklySummaryAsync(userId);
+                            // Already authorized earlier: refresh silently. This never shows the system sheet.
+                            try
+                            {
+                                var syncResult = await _healthSync.SyncAsync(userId, _healthSync.DeviceHealthSource);
+                                summary = syncResult.Summary ?? await _healthSync.GetCachedWeeklySummaryAsync(userId);
+                            }
+                            catch (Exception ex)
+                            {
+                                Trace.WriteLine($"[DailyCheckInViewModel] Contextual health sync failed ({ex.GetType().Name}).");
+                            }
                         }
-                        catch (Exception ex)
+                        else if (!healthStatus.PromptDismissed)
                         {
-                            Trace.WriteLine($"[DailyCheckInViewModel] Contextual health sync failed ({ex.GetType().Name}).");
+                            // First time: explain first; the system sheet only follows an explicit Connect tap.
+                            ShowHealthRationale = true;
                         }
                     }
 
-                    if (summary?.LastNightSleepHours is > 0)
+                    // Never replace a value the user already entered (modal reopen).
+                    if (summary?.LastNightSleepHours is > 0 && !_isSleepHoursAnswered)
                     {
                         SleepHours = Math.Clamp(summary.LastNightSleepHours.Value, 0.0, 16.0);
                         _isSleepHoursAnswered = true;
@@ -150,45 +200,35 @@ public partial class DailyCheckInViewModel : ObservableObject
 
                     if (summary is not null && (summary.LastNightSleepHours is > 0 || summary.RestingHeartRate > 0 || summary.HrvScore > 0))
                     {
+                        // Unknown sleep is not "0 hours": without a sleep sample no sleep-quality rating is
+                        // suggested and sleep never counts toward the energy suggestion.
+                        var sleepKnown = summary.LastNightSleepHours is > 0;
                         var sleep = summary.LastNightSleepHours ?? 0.0;
                         var rhr = summary.RestingHeartRate;
                         var hrv = summary.HrvScore;
 
-                        int sleepQuality;
-                        if (sleep >= 8.0 && ((rhr > 0 && rhr <= 60) || hrv >= 60))
+                        int sleepQuality = 0;
+                        if (sleepKnown)
                         {
-                            sleepQuality = 5;
-                        }
-                        else if (sleep >= 7.0)
-                        {
-                            sleepQuality = 4;
-                        }
-                        else if (sleep >= 6.0)
-                        {
-                            sleepQuality = 3;
-                        }
-                        else if (sleep >= 4.5)
-                        {
-                            sleepQuality = 2;
-                        }
-                        else
-                        {
-                            sleepQuality = 1;
+                            if (sleep >= 8.0 && ((rhr > 0 && rhr <= 60) || hrv >= 60))
+                                sleepQuality = 5;
+                            else if (sleep >= 7.0)
+                                sleepQuality = 4;
+                            else if (sleep >= 6.0)
+                                sleepQuality = 3;
+                            else if (sleep >= 4.5)
+                                sleepQuality = 2;
+                            else
+                                sleepQuality = 1;
                         }
 
                         int energyLevel;
-                        if (sleep >= 7.5 && ((rhr > 0 && rhr <= 65) || hrv >= 50))
-                        {
+                        if (sleepKnown && sleep >= 7.5 && ((rhr > 0 && rhr <= 65) || hrv >= 50))
                             energyLevel = 4;
-                        }
-                        else if (sleep < 6.0 || rhr > 75 || (hrv > 0 && hrv < 30))
-                        {
+                        else if ((sleepKnown && sleep < 6.0) || rhr > 75 || (hrv > 0 && hrv < 30))
                             energyLevel = 2;
-                        }
                         else
-                        {
                             energyLevel = 3;
-                        }
 
                         SuggestedEnergyLevel = energyLevel;
                         SuggestedSleepQuality = sleepQuality;
@@ -208,7 +248,9 @@ public partial class DailyCheckInViewModel : ObservableObject
     private void SuggestFromAppleHealth()
     {
         EnergyLevel = SuggestedEnergyLevel;
-        PlanningSleepQuality = SuggestedSleepQuality;
+        // 0 means "no sleep sample, nothing to suggest"; leave the user's own rating untouched.
+        if (SuggestedSleepQuality > 0)
+            PlanningSleepQuality = SuggestedSleepQuality;
         OnPropertyChanged(nameof(EnergyDisplay));
         OnPropertyChanged(nameof(PlanningSleepDisplay));
         OnAnswerChanged();
@@ -260,6 +302,8 @@ public partial class DailyCheckInViewModel : ObservableObject
     {
         SleepHours = Math.Clamp(value, DailyCheckInAnswers.MinimumSleepHours, DailyCheckInAnswers.MaximumSleepHours);
         _isSleepHoursAnswered = true;
+        // Any change here is a manual edit; the auto-fill block sets the flag again right after it assigns the value.
+        IsSleepAutoFilled = false;
         OnPropertyChanged(nameof(SleepDisplay));
         OnAnswerChanged();
     }

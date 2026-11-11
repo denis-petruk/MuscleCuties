@@ -455,6 +455,8 @@ public static partial class UiTextCatalog
         English["Nutrition_PhaseFocus_CurrentCyclePhaseIcon"] = "Current cycle phase icon";
         English["Nutrition_PhaseUnavailable_Title"] = "Cycle phase unavailable";
         English["Nutrition_PhaseUnavailable_Copy"] = "Log a cycle to see phase-based suggestions.";
+        English["Nutrition_Meal_LogButton"] = "Log meal";
+        English["Nutrition_Meal_SaveButton"] = "Save meal";
         English["Nutrition_ProfileSetup_Title"] = "Complete profile setup";
         English["Nutrition_ProfileSetup_Copy"] = "Set up your profile to see personal nutrition targets.";
         English["Nutrition_TargetSource_Default"] = "General starting targets";
@@ -730,7 +732,17 @@ public static partial class UiTextCatalog
         English["Profile_Privacy_FoodLabel"] = "Food search";
         English["Profile_Privacy_FoodBody"] = "Generic names may go to USDA, never your logs.";
         English["Profile_Privacy_HealthLabel"] = "Apple Health";
-        English["Profile_Privacy_HealthBody"] = "Step count is read-only with your permission.";
+        English["Profile_HealthSync_Title"] = "Apple Health sync";
+        English["Profile_HealthSync_Connect"] = "Connect Apple Health";
+        English["Profile_HealthSync_Refresh"] = "Refresh data";
+        English["Profile_HealthSync_Disconnect"] = "Disconnect Apple Health";
+        English["Profile_HealthSync_Connected"] = "Connected. {0}";
+        English["Profile_HealthSync_Connected_Updated"] = "Connected and updated.";
+        English["Profile_HealthSync_NotConnected"] = "Not connected. Allow access in Health > Sharing > Apps if you want steps and sleep.";
+        English["Profile_HealthSync_NoData"] = "No data or access is off. Check Health > Sharing > Apps.";
+        English["Profile_HealthSync_Unavailable"] = "Apple Health is not available on this device.";
+        English["Profile_HealthSync_Error"] = "Health sync failed. Try again later.";
+        English["Profile_Privacy_HealthBody"] = "Steps, sleep, heart rate and HRV are read from Apple Health only with your permission. Read-only: nothing is written back.";
         English["Profile_Privacy_ChoicesTitle"] = "Your choices";
         English["Profile_Privacy_ChoicesBody"] = "Delete your account and local data from Profile.";
         English["Profile_Privacy_ReadPolicy"] = "Read privacy policy";

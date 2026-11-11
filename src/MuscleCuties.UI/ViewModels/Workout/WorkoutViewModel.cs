@@ -46,6 +46,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private string? _activePlanName;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasInProgressWorkout))]
     private WorkoutListEntry? _inProgressWorkout;
+    private MuscleCuties.UseCases.Features.Workout.Overview.Contracts.WorkoutOverviewResponse? _lastOverview;
     private bool _hasLoadedOverview;
     private List<WorkoutItem> _allWorkouts = new();
     [ObservableProperty] private ObservableCollection<string> _blockedCardioNames = new();
@@ -221,47 +222,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public bool HasNoWorkouts => !IsBusy && !IsLoadError && Workouts.Count == 0;
     public string ActivePlanTitle => ActivePlanName ?? "No active plan";
 
-    public string PlanSummaryText
-    {
-        get
-        {
-            var weekSchedule = _datedSchedule.Where(day => day.WeekIndex == SelectedWeekIndex).ToArray();
-            var selectedWeekIds = GetSelectedWeekWorkoutIds();
-            var weekWorkouts = weekSchedule.Length > NoScheduledDays
-                ? _allWorkouts.Where(workout => selectedWeekIds.Contains(workout.WorkoutDayId)).ToArray()
-                : _allWorkouts.ToArray();
-            var trainingDayCount = weekSchedule.Length > NoScheduledDays
-                ? weekSchedule.Count(day => !day.IsRestDay)
-                : weekWorkouts
-                .Where(workout => !workout.IsRestDay)
-                .Select(workout => workout.DayLabel)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Count();
-            if (trainingDayCount == NoScheduledDays)
-                return "No sessions scheduled yet";
-
-            var fullRestDayCount = weekSchedule.Length > NoScheduledDays
-                ? weekSchedule.Count(day => day.IsRestDay)
-                : weekWorkouts
-                .Where(workout => workout.IsRestDay)
-                .Select(workout => workout.DayLabel)
-                .Distinct(StringComparer.OrdinalIgnoreCase)
-                .Count();
-            var activityCount = weekWorkouts
-                .Where(workout => !workout.IsRestDay)
-                .Sum(workout => workout.ActivityCount);
-            var parts = new List<string>
-            {
-                $"{trainingDayCount} training {(trainingDayCount == 1 ? "day" : "days")}",
-                $"{fullRestDayCount} full rest {(fullRestDayCount == 1 ? "day" : "days")}"
-            };
-
-            if (activityCount > trainingDayCount)
-                parts.Add($"{activityCount} activities");
-
-            return string.Join(" - ", parts);
-        }
-    }
+    public string PlanSummaryText => _lastOverview is null
+        ? "No sessions scheduled yet"
+        : MuscleCuties.Infrastructure.Workout.Overview.PlanSummaryFormatter.Format(
+            _lastOverview, SelectedWeekIndex);
 
     public string EmptyWorkoutsTitle => HasNoPlan
         ? "Workout_Generation_PromptNoPlanTitle"
@@ -305,7 +269,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand RefreshCommand { get; }
-    public bool IsPageLoading => IsBusy || IsPlanStale;
+    // The spinner shows only while a load is actually running. A stale plan is refreshed on the next appearance;
+    // showing a spinner for staleness alone could stay on screen when no reload starts (F04).
+    public bool IsPageLoading => IsBusy;
 
     [RelayCommand]
     private async Task OpenInjuryModalAsync()
@@ -351,7 +317,6 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public void Invalidate()
     {
         _loadGate.MarkStale();
-        IsPlanStale = true;
     }
 
     private async Task LoadDataCoreAsync()
@@ -364,6 +329,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             await LoadStrengthStyleOfferAsync();
             var summary = await _overview.LoadAsync(new WorkoutOverviewRequest(
                 DateOnly.FromDateTime(DateTime.Today)));
+            _lastOverview = summary;
             _hasLoadedOverview = true;
             WriteLoadStage("overview", loadStarted);
             CurrentPhaseName = summary.PhaseName;

@@ -48,6 +48,8 @@
 
 ---
 
+> **Implementation status (2026-11-10):** Decision 2 note: the code still contained a phase-driven reduction (DK1); it is being removed to match this decision. Decision 4 note: the Profile sync settings surface is now built; the check-in rationale card is built; no device or simulator evidence yet.
+
 ### Decision 4: HealthKit Synchronization Scope & Behavior (OD-4 Override)
 - **Question:** What metrics should HealthKit read, when should permissions be prompted, and how should data integrate into the app?
 - **Owner Ratification:** **Authorized (Choices A, A, A, 2026-11-09)**.
@@ -86,4 +88,4 @@
 ## 4. TestFlight Build Readiness Status
 - **ApplicationVersion:** Bumped to `3` (Build #3).
 - **Entitlements & Privacy:** `Entitlements.plist` configured with HealthKit; `PrivacyInfo.xcprivacy` declares health/fitness data; `ITSAppUsesNonExemptEncryption=false` confirmed.
-- **Status:** **SAFE TO PROMOTE & ARCHIVE FOR INTERNAL TESTFLIGHT**.
+- **Status:** **BLOCKED** pending DK1 (code still phase-driven, being removed), DK3–DK5 (HealthKit UI and coverage), and the MASTER P1s (F01, F04, F05, F06, cycle labelling). Not safe to promote.

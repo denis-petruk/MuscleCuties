@@ -323,7 +323,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         }
     }
 
-    public string LogMealButtonText => IsEditingMeal ? "Save meal" : "Log meal";
+    public string LogMealButtonText => MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(IsEditingMeal ? "Nutrition_Meal_SaveButton" : "Nutrition_Meal_LogButton");
     public bool IsMealContextEditorVisible => !IsMealChoiceLocked && IsMealContextExpanded;
     public bool IsMealContextSummaryVisible => IsMealChoiceLocked || !IsMealContextExpanded;
     public bool CanChangeMealContext => !IsMealChoiceLocked;
@@ -463,8 +463,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
                     var healthSummary = await _healthSync.GetCachedWeeklySummaryAsync(userId);
                     if (healthSummary is not null && healthSummary.HasMovementData)
                     {
-                        var weightKg = 65f;
-                        var age = 28;
+                        // No invented defaults: without a known weight and age there is no activity adjustment.
+                        var weightKg = 0f;
+                        var age = 0;
                         if (_personalInfoUseCase is not null)
                         {
                             var info = await _personalInfoUseCase.LoadAsync();
@@ -478,8 +479,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
                                 }
                             }
                         }
-                        var adjustment = HealthEnergyAdjustment.CalculateDailyCalories(
-                            healthSummary, weightKg, age, 3, CurrentPhase);
+                        var adjustment = weightKg > 0f && age > 0
+                            ? HealthEnergyAdjustment.CalculateDailyCalories(healthSummary, weightKg, age, 3, CurrentPhase)
+                            : 0f;
                         ActivityAdjustmentCalories = adjustment;
                         HasActivityAdjustment = adjustment != 0f;
                         ActivityAdjustmentText = HasActivityAdjustment

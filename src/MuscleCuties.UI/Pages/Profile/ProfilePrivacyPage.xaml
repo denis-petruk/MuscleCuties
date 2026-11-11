@@ -7,7 +7,9 @@
     xmlns:local="clr-namespace:MuscleCuties.UI.Pages.Profile"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:profile="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="local:ProfilePrivacyPage"
+    x:Name="PrivacyRoot"
     Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
@@ -62,6 +64,21 @@
                             <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Privacy_HealthBody}"
                                    Style="{StaticResource BodyLabel}" />
                         </Grid>
+                    </VerticalStackLayout>
+                </Border>
+
+                <Border Style="{StaticResource CardPrimary}" x:DataType="profile:ProfileHealthSyncViewModel" IsVisible="{Binding HealthSync.IsAvailable, Source={x:Reference PrivacyRoot}}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" BindingContext="{Binding HealthSync, Source={x:Reference PrivacyRoot}}">
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_HealthSync_Title}"
+                                                          IconGlyph="HeartCircle24" />
+                        <Label Text="{Binding StatusText}" Style="{StaticResource BodyLabel}" />
+                        <Label Text="{Binding ErrorText}" IsVisible="{Binding HasError}" Style="{StaticResource ErrorLabel}" />
+                        <Button Text="{loc:LocalizedText Profile_HealthSync_Connect}" Style="{StaticResource ButtonPrimary}"
+                                Command="{Binding ConnectCommand}" IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}" HorizontalOptions="Fill" />
+                        <Button Text="{loc:LocalizedText Profile_HealthSync_Refresh}" Style="{StaticResource ButtonSecondary}"
+                                Command="{Binding ConnectCommand}" IsVisible="{Binding IsConnected}" HorizontalOptions="Fill" />
+                        <Button Text="{loc:LocalizedText Profile_HealthSync_Disconnect}" Style="{StaticResource ButtonSecondary}"
+                                Command="{Binding DisconnectCommand}" IsVisible="{Binding IsConnected}" HorizontalOptions="Fill" />
                     </VerticalStackLayout>
                 </Border>
 

@@ -61,6 +61,9 @@ public sealed class DashboardProgressRing : GraphicsView, IDrawable
             return;
         }
 
-        canvas.DrawArc(x, y, diameter, diameter, 90f, 90f + 360f * progress, true, false);
+        // Angles are counter-clockwise from 3 o'clock. Start at the top (90) and sweep clockwise by progress * 360,
+        // so the end angle is 90 - sweep. The previous end angle (90 + sweep) drew the complement (inverted fill).
+        var endAngle = (90f - 360f * progress + 360f) % 360f;
+        canvas.DrawArc(x, y, diameter, diameter, 90f, endAngle, true, false);
     }
 }

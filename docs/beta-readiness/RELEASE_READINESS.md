@@ -2,7 +2,7 @@
 
 Candidate `main` at `4b4847ee` (the PR #48 merge: QA gap closures, session lifecycle, modal accessibility, set logging integrity) plus commit `bd185f5d` (HealthKit multi-metric sync) and `b6a509a6` (USDA FoodData Central integration).
 
-## Verdict: **GO for internal TestFlight (Build #3). Owner decisions S-03, S-05, and HealthKit are RATIFIED; Simulator QA gaps are CLOSED and merged into `main`.**
+## Verdict: **NO-GO for internal TestFlight: owner decisions ratified; implementation open.** Owner decisions S-03, S-05 and HealthKit (A/A/A) are ratified and implemented in the worktree (uncommitted, not build-verified). Open P1 from the 2026-11-10 simulator audit: F03 (S-04 pain-in-session decision, deferred), F04 (spinner after finishing a session, not traced), F05 (Today calories 0 vs Nutrition 130; Today and Nutrition must agree), cycle labelling (ovulation shown as fact while cycle length is unset), the Apple Health sync card and synthetic-data simulator path (not yet exercised), and the 7-completed-day step window (not implemented). See `.claude/qa-evidence/MASTER_IMPLEMENTATION_PLAN.md` and `DECISIONS_INJECTION_PLAN.md`.
 
 This revision incorporates the full beta simulator gap closure suite (PR #48), multi-metric HealthKit synchronization (`bd185f5d`), and USDA FoodData Central (`b6a509a6`). Simulator acceptance was executed and verified on iPhone 17 (iOS 26.3, UDID: `13EDBFDC-534D-4A9E-80CF-C5D2F26D5DBB`) against local PostgreSQL 16 (`mc_qa_20261109`) and loopback API (`http://127.0.0.1:5080`). All owner decisions on workout policy (S-03, S-05) and HealthKit have been ratified. Internal TestFlight packaging is unblocked.
 
@@ -60,11 +60,11 @@ This revision incorporates the full beta simulator gap closure suite (PR #48), m
 
 2. Confirm OD-5: the app uses only standard OS/HTTPS encryption (`ITSAppUsesNonExemptEncryption=false` is set).
 3. Confirm the delegated decisions implemented at their recommendation: OD-2 (no Bodyweight-only for Beta), OD-3
-   (inline disclosure replaces native injury alert), OD-4 (HealthKit off), OD-6 (two consecutive deficits),
+   (inline disclosure replaces native injury alert), OD-4 (HealthKit: superseded 2026-11-10, sync authorized for read-only scope), OD-6 (two consecutive deficits),
    OD-7 (history-restricted styles disabled with reason), OD-8 (`MC-BETA-WORKOUT-1` as dose approval).
 4. Rebuild on device and re-check E-01 (birthday picker) and E-02 (recommendation copy).
-5. Archive and sign in Xcode/App Store Connect with the distribution profile (HealthKit capability can be removed
-   from the App ID); upload; internal group only.
+5. Archive and sign in Xcode/App Store Connect with the distribution profile (HealthKit capability is required for the
+   authorized read-only sync); upload; internal group only.
 
 ### Before external testers
 6. AWS (A1–A6): designate the live stack as Beta (OD-1), 14-day backups + deletion protection + restore drill,
@@ -80,3 +80,42 @@ This revision incorporates the full beta simulator gap closure suite (PR #48), m
 The local sandbox blocked socket binding, SysV shared memory, CoreSimulator XPC and two Xcode paths; the owner
 approved project-local sandbox settings for them during this task. Tests that start an ASP.NET host hang under the
 sandbox's file watcher restrictions and were excluded locally only.
+
+## Implementation status — 2026-11-10 (QA worktree, uncommitted)
+
+Verdict remains **NO-GO** for internal TestFlight. Changes below are compiled but not yet committed or simulator-verified end to end.
+
+Closed in code:
+- **F08** — `CloudDailyCheckInAndCycleStores.RefreshPlanAfterInjuryChangeAsync` treated a `NeedsReview` reconcile (HTTP 200, plan applied with review flags) as an exception; the injury screen then reported "the plan did not update". The throw was removed; a NeedsReview reconcile is now a successful reconcile.
+- **Injury log copy** — empty state, add/edit title, delete/clear failures now resolve through `Injury_Log_*` catalog keys (EN + RU). `CancelEdit` clears stale save/reconcile errors.
+- **Cycle estimate labelling (partial)** — Today's phase status states the day count as an estimate when the prediction source is assumed; ovulation date prose remains unlabelled (see open).
+- **F06/F01/F05/F09 target** — verified earlier on the simulator (see `.claude/qa-evidence/ORCHESTRATOR_CHECKPOINT.md`).
+- Catalog parity: 2077 EN keys / 2077 RU keys, zero one-sided keys (regex audit of `UiTextCatalog*.cs` / `RussianUiText*.cs`).
+
+Open P1:
+- **F04** — code path no longer leaves the spinner (loading binds to `IsBusy` only); a clean end-to-end finish is still unverified because the previously finished session returns 409 after the manual DB reopen.
+- **C01** — ovulation date/phase is still asserted as fact in `DashboardSupportRule.BuildCycleInsightText`; the fix needs an estimate flag on the cycle metrics/DTO.
+- **S-04 / F03** — owner-deferred; in-session pain reporting stays post-Beta.
+
+Open P2:
+- Remaining English in the RU UI: `PainLabelFor` literals, meal-sheet truncated title, duplicate "Назад" on the exercise screen, duplicate "Питание" header, check-in required-field hint, 12 h time in RU.
+- `F07r` offline startup, `WP10` weekday/training-day mismatch: not closed (evidence needed, see checkpoint).
+
+Release gates: bundle id/signing/entitlements, App Privacy copy, archive/upload/TestFlight and AWS/Beta remain owner-only and untouched.
+
+## Addendum 2026-11-10
+- RU formatting now follows the selected language (`LocalizationService.SetLanguage` sets `ru-RU`/`en-US` process and thread cultures), fixing 12-hour times.
+- WP10 closed: `WeekScheduleRule.MapArchetypesToDays` now cycles the archetype rotation to fill every requested weekday. Harness: Mon/Wed/Thu requested, HEAD scheduled 2, patched schedules 3.
+- F07r closed at the decision layer: `StartupRoutingRule.Resolve` is shared by startup and the shell guard; a stored session routes to the dashboard, and a failed state read routes to the startup error.
+
+## End-to-end verification 2026-11-10
+- WP10: `WeekPlanRule.BuildWeek` with an in-memory two-archetype template and a Mon/Wed/Thu request returns 3 scheduled days (HEAD: 2). Fix lives in `WeekScheduleRule.MapArchetypesToDays`; no downstream cap observed in the generation path.
+- F07r: HEAD routed token + onboarding-incomplete to ProfileSetup; `StartupRoutingRule.Resolve` routes it to Dashboard, and a failed token to StartupError (App: `ShowStartupError`; Shell: `//AppStartupPage`). First run without a session still resolves to ProfileSetup.
+- Chrome: redundant Nutrition page header deleted; no second back-control source exists in styles, templates, handlers, shell bindings or modal hosts.
+
+## Overview proof 2026-11-10
+- `PlanSummaryFormatter` now produces the Workouts summary from `WorkoutOverviewResponse`; `WorkoutViewModel.PlanSummaryText` delegates to it. In-memory harness: Mon/Wed/Thu generation yields `3 training days - 4 full rest days` (HEAD: `2 training days - 5 full rest days`).
+- Nutrition page contains zero in-page header controls; the one visible label is the shell tab title (`AppShell.xaml.cs:195`).
+
+## Production overview-chain proof 2026-11-10
+- `PostgresWorkoutPlanAndSessionStore.WorkoutOverviewBuilder.Build` is the extracted pure overview assembly; `LoadOverviewAsync` delegates to it after its queries. In-memory harness: Mon/Wed/Thu -> 3 non-rest scheduled days -> `"3 training days - 4 full rest days"`.

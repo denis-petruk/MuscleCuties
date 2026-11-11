@@ -59,8 +59,6 @@
         <string>MuscleCuties uses your camera to scan barcodes on food packaging completely offline on your device.</string>
         <key>NSHealthShareUsageDescription</key>
         <string>MuscleCuties reads your steps, active energy, sleep, and heart metrics from Apple Health to pre-populate your daily check-in and customize your daily nutrition targets.</string>
-        <key>NSHealthUpdateUsageDescription</key>
-        <string>MuscleCuties reads your steps, active energy, sleep, and heart metrics from Apple Health to pre-populate your daily check-in and customize your daily nutrition targets.</string>
         <key>CFBundleURLTypes</key>
         <array>
             <dict>

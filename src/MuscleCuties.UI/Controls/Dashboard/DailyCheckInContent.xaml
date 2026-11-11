@@ -26,6 +26,17 @@
                     IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
             </VerticalStackLayout>
 
+            <Border Style="{StaticResource CardPrimary}" IsVisible="{Binding ShowHealthRationale}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpacing10}">
+                    <Label Text="{loc:LocalizedText Dashboard_CheckIn_HealthRationaleTitle}" Style="{StaticResource SectionTitle}" />
+                    <Label Text="{loc:LocalizedText Dashboard_CheckIn_HealthRationaleBody}" Style="{StaticResource MutedLabel}" />
+                    <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Dashboard_CheckIn_HealthConnect}"
+                            Command="{Binding ConnectHealthCommand}" HorizontalOptions="Fill" />
+                    <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Dashboard_CheckIn_HealthNotNow}"
+                            Command="{Binding NotNowHealthCommand}" HorizontalOptions="Fill" />
+                </VerticalStackLayout>
+            </Border>
+
             <Button
                 Style="{StaticResource ButtonSecondary}"
                 Text="{loc:LocalizedText Dashboard_CheckIn_SuggestFromAppleHealth}"

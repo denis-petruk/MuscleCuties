@@ -4,10 +4,10 @@ public sealed record InjuryRestorationEpisode(bool IsActive, DateOnly? ClearedOn
 public enum InjuryClearanceRestorationDisposition { Blocked, RestoreOptional, RestoreRequired }
 
 /// <summary>
-/// S-05 (2026-11-09, pending owner ratification): no fixed post-clearance window. No primary source supports a
+/// S-05 (2026-11-09, owner ratified Option A): no fixed post-clearance window. No primary source supports a
 /// seven-day optional period for healthy adult trainees, and the preview never showed it. A cleared exercise is
 /// restored as prescribed from its clearance date, and only when current eligibility permits; unknown or future
-/// clearance still blocks. The window length stays a single constant so the earlier behaviour can be restored.
+/// clearance still blocks. The 0-day window is the ratified policy; the constant is kept only so legacy rows and the persisted vocabulary stay readable.
 /// </summary>
 public static class WorkoutInjuryClearanceRule
 {

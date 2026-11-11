@@ -6,6 +6,8 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 using MuscleCuties.UI.Resources.Styles;
+using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
+using MuscleCuties.UI.Services.Localization;
 using IHealthSyncService = MuscleCuties.Core.Services.Health.IHealthSyncService;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
@@ -103,6 +105,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Photo_CheckInAction");
     [ObservableProperty] private string _photoCheckInText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Photo_AddToday");
+    private bool _isCycleLengthEstimated;
     [ObservableProperty] private int _predictedCycleLength = 28;
     [ObservableProperty] private string _readinessLabel = string.Empty;
     [ObservableProperty]
@@ -171,8 +174,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         INutritionChangeNotifier? changeNotifier = null,
         Func<Task>? openPhotoVaultAsync = null,
         IHealthSyncService? healthSync = null,
-        ICurrentProfileUserIdProvider? userIdProvider = null)
+        ICurrentProfileUserIdProvider? userIdProvider = null,
+        IProfilePersonalInfoUseCase? personalInfo = null)
     {
+        _personalInfo = personalInfo;
         _overview = overview;
         _cyclePhaseProjection = cyclePhaseProjection;
         _profileUnits = profileUnits;
@@ -228,7 +233,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Phase_MissingStatus")
         : CurrentCycleDay > 0
             ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
-                "Dashboard_Phase_StatusDayFormat", LocalizedCurrentPhaseName,
+                _isCycleLengthEstimated
+                    ? "Dashboard_Phase_StatusDayEstimateFormat"
+                    : "Dashboard_Phase_StatusDayFormat",
+                LocalizedCurrentPhaseName,
                 CurrentCycleDay.ToString(CultureInfo.CurrentCulture),
                 PredictedCycleLength.ToString(CultureInfo.CurrentCulture))
             : MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
@@ -319,10 +327,28 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     public string WorkoutBadgeText => IsTodaysWorkoutCompleted
         ? "Workout completed"
-        : $"Today · {SessionProgressText}";
+        : IsWorkoutInProgress
+            ? "Today · In Progress"
+            : $"Today · {SessionProgressText}";
 
+    // The store reports "Completed (<volume> kg volume)" for a finished session, so match the prefix.
     public bool IsTodaysWorkoutCompleted =>
-        string.Equals(SessionProgressText, "Completed", StringComparison.OrdinalIgnoreCase);
+        SessionProgressText.StartsWith("Completed", StringComparison.OrdinalIgnoreCase);
+
+    // The store reports "Active Session" for a session that has started but not finished.
+    public bool IsWorkoutInProgress =>
+        string.Equals(SessionProgressText, "Active Session", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(SessionProgressText, "In Progress", StringComparison.OrdinalIgnoreCase) ||
+        string.Equals(WorkoutSubtitle, "In Progress", StringComparison.OrdinalIgnoreCase);
+
+    // One label for the Today primary action, so a finished or running session is never offered as "Start".
+    public string WorkoutActionText => IsRestDay
+        ? UiTextCatalog.Get("Dashboard_Workout_ViewRestDay")
+        : IsTodaysWorkoutCompleted
+            ? UiTextCatalog.Get("Dashboard_Workout_ViewCompleted")
+            : IsWorkoutInProgress
+                ? UiTextCatalog.Get("Workout_Overview_ResumeWorkout")
+                : UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
 
     public string WorkoutStreakText => WorkoutStreakDays == 1
         ? "1 day session streak"
@@ -373,6 +399,42 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     public AsyncRelayCommand OpenCycleCommand { get; }
     public AsyncRelayCommand OpenWorkoutCommand { get; }
     public AsyncRelayCommand StartWorkoutCommand { get; }
+
+    private readonly IProfilePersonalInfoUseCase? _personalInfo;
+
+    private async Task<float> ApplyHealthCalorieAdjustmentAsync(float baseTarget)
+    {
+        if (_healthSync is null || _userIdProvider is null || _personalInfo is null)
+            return baseTarget;
+        try
+        {
+            var userId = await _userIdProvider.GetCurrentUserIdAsync();
+            if (userId <= 0) return baseTarget;
+            var healthSummary = await _healthSync.GetCachedWeeklySummaryAsync(userId);
+            if (healthSummary is null || !healthSummary.HasMovementData) return baseTarget;
+
+            var info = await _personalInfo.LoadAsync();
+            var weightKg = info.Profile is { Weight: > 0 } profile ? profile.Weight : 0f;
+            var age = 0;
+            if (info.Profile is { } p && p.DateOfBirth != default)
+            {
+                age = DateTime.Today.Year - p.DateOfBirth.Year;
+                if (p.DateOfBirth.Date > DateTime.Today.AddYears(-age)) age--;
+            }
+            // No invented defaults: unknown weight or age means no activity adjustment.
+            if (weightKg <= 0f || age <= 0) return baseTarget;
+
+            return baseTarget + MuscleCuties.Core.Services.Health.HealthEnergyAdjustment.CalculateDailyCalories(
+                healthSummary, weightKg, age, 3,
+                Enum.TryParse<MuscleCuties.Core.Models.Enums.Cycle.CyclePhase>(CurrentPhase.ToString(), out var corePhase)
+                    ? corePhase : MuscleCuties.Core.Models.Enums.Cycle.CyclePhase.Unknown);
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[DashboardViewModel] Calorie adjustment skipped ({ex.GetType().Name}).");
+            return baseTarget;
+        }
+    }
     public AsyncRelayCommand OpenNutritionCommand { get; }
     public void Dispose()
     {
@@ -536,6 +598,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             DisplayName = summary.DisplayName;
             HasActiveInjuries = summary.HasActiveInjuries;
             HasActiveCycle = summary.HasActiveCycle;
+            // A baseline prediction is an estimate, not a measured cycle length.
+            _isCycleLengthEstimated =
+                !string.Equals(summary.PredictionSource, "manual phase log", StringComparison.OrdinalIgnoreCase) &&
+                !string.Equals(summary.PredictionSource, "profile phase", StringComparison.OrdinalIgnoreCase);
             CurrentPhase = Enum.TryParse<CyclePhase>(summary.CurrentPhase, true, out var phase) && Enum.IsDefined(phase)
                 ? phase
                 : CyclePhase.Unknown;
@@ -552,7 +618,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             ConsumedProtein = summary.ConsumedProtein;
             ConsumedCarbs = summary.ConsumedCarbs;
             ConsumedFats = summary.ConsumedFats;
-            TargetCalories = summary.TargetCalories;
+            // Same calorie target as the Nutrition tab: server target plus the on-device Health adjustment.
+            TargetCalories = await ApplyHealthCalorieAdjustmentAsync(summary.TargetCalories);
             TargetProtein = summary.TargetProtein;
             TargetCarbs = summary.TargetCarbs;
             TargetFats = summary.TargetFats;
@@ -611,6 +678,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
                         string.Equals(summary.WorkoutActivityTag, "Recovery", StringComparison.OrdinalIgnoreCase);
             OnPropertyChanged(nameof(WorkoutCountLabel));
             OnPropertyChanged(nameof(WorkoutCountValue));
+            OnPropertyChanged(nameof(WorkoutActionText));
             WorkoutActivitySections = new ObservableCollection<WorkoutActivitySection>(
                 (summary.WorkoutActivitySections ?? []).Select(section => new WorkoutActivitySection(
                     section.Tag, section.Title, section.ExerciseCount,
@@ -731,6 +799,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     {
         OnPropertyChanged(nameof(Greetings));
         OnPropertyChanged(nameof(PhaseShortAdvice));
+        // The session state arrives after the badge is first evaluated.
+        OnPropertyChanged(nameof(IsWorkoutInProgress));
+        OnPropertyChanged(nameof(WorkoutBadgeText));
     }
 
 
@@ -847,8 +918,17 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OnPropertyChanged(nameof(PhaseShortAdvice));
     }
 
+    partial void OnWorkoutSubtitleChanged(string value)
+    {
+        if (_isBulkLoading) return;
+        OnPropertyChanged(nameof(IsWorkoutInProgress));
+        OnPropertyChanged(nameof(WorkoutBadgeText));
+    }
+
     partial void OnSessionProgressTextChanged(string value)
     {
+        OnPropertyChanged(nameof(WorkoutActionText));
+        OnPropertyChanged(nameof(IsWorkoutInProgress));
         if (_isBulkLoading) return;
         OnPropertyChanged(nameof(WorkoutBadgeText));
         OnPropertyChanged(nameof(IsTodaysWorkoutCompleted));
