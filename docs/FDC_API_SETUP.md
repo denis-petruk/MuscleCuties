@@ -1,58 +1,21 @@
-# USDA FoodData Central (FDC) API — local setup
+# USDA FoodData Central (FDC) API — server-side configuration
 
-The mobile client calls `https://api.nal.usda.gov/fdc/v1/foods/search` for generic food-name search only.
-The key is supplied through the environment; it is never committed and never compiled into the app.
+FoodData Central generic food search is handled exclusively by the backend API (`MuscleCuties.Server`) via `FdcExternalFoodSource`.
+The client (`MuscleCuties.UI`) never communicates with FoodData Central directly, never holds third-party API credentials, and never compiles or stores the FDC API key.
 
-## Configure (once per machine)
+## Architecture & Boundary
 
-1. Get a free key: <https://fdc.nal.usda.gov/api-key-signup>.
-2. From the repository root:
+- **Mobile client:** Sends authenticated catalog search queries to the backend endpoint `/api/v1/nutrition/catalog/search`. The client has zero direct FDC dependencies.
+- **Backend server:** `MuscleCuties.Server` queries `https://api.nal.usda.gov/fdc/v1/` using the server-side `FDC_API_KEY` in a secure `X-Api-Key` request header (never in the URL).
+- **Caching & fallback:** Results are parsed, ranked, and persisted by `PostgresExternalFoodImportStore` so subsequent searches are served directly from the canonical database.
 
-   ```bash
-   cp .env.example .env
-   ```
+## Local development setup
 
-3. Set `FDC_API_KEY=<your key>` in `.env` (`.env` is gitignored).
-4. Run the app on a simulator:
+1. Get a free API key at <https://fdc.nal.usda.gov/api-key-signup>.
+2. Place `FDC_API_KEY=<your key>` in your root `.env` (gitignored).
+3. `scripts/run-local-api.sh` automatically exports `FDC_API_KEY` from `.env` to the server process.
+4. If running `MuscleCuties.Server` directly from Rider/IDE, add `FDC_API_KEY=<your key>` in the Server Run Configuration environment variables.
 
-   ```bash
-   bash scripts/run-ios-simulator.sh "iPhone 17"
-   ```
+## Deployed environments (AWS / Staging / Production)
 
-An exported `FDC_API_KEY` in the shell overrides `.env`. CI and Release builds read neither.
-
-## Where it lives
-
-| Piece | Location |
-|-------|----------|
-| Key template | `.env.example` (tracked) → `.env` (local, ignored) |
-| Build wiring | `src/MuscleCuties.UI/MuscleCuties.UI.csproj` — Debug + iOS only; resolves `FDC_API_KEY` from the build environment, then `.env`, and passes it to the launched simulator process via `MlaunchEnvironmentVariables` |
-| Runtime read | `src/MuscleCuties.UI/Infrastructure/Network/SecureStorageFdcApiKeyProvider.cs` — SecureStorage `fdc_api_key` first; in Debug, falls back to the `FDC_API_KEY` process variable and stores it in SecureStorage |
-| Request policy | `FdcAirGapHandler.cs` (HTTPS GET to the search path only, headers stripped, generic query enforced, appends `api_key`) |
-| Client / DI | `FdcApiClient.cs`; registered in `Composition/TransportCompositionExtensions.cs` |
-| TLS pinning | `FdcCertificatePinningPolicy.cs` — extra pins via `FDC_CERT_PIN_SHA256` (`;`-separated); Debug-only bypass `FDC_DISABLE_PIN=1` |
-
-## Launching from Rider
-
-- Shared `.run/iOS Simulator - …` configurations call `scripts/run-ios-simulator.sh`, so `.env` applies automatically.
-- The native `MuscleCuties.UI` project configuration launches through Rider's own runner. If the key is not picked
-  up there, add `FDC_API_KEY=<key>` under *Run | Edit Configurations | MuscleCuties.UI | Environment variables*
-  (stored in your local `.idea` workspace, not in the repository).
-
-After one successful launch the key is cached in the simulator's SecureStorage. To rotate it, update `.env` and
-erase the app from the simulator (or reset the simulator keychain).
-
-## Verify
-
-```bash
-dotnet msbuild src/MuscleCuties.UI/MuscleCuties.UI.csproj -p:Configuration=Debug -p:TargetFramework=net10.0-ios -getProperty:_McFdcApiKey
-```
-
-Prints the resolved key (empty means `.env`/environment is not set). In the app, search a generic food
-(for example "oats") in Nutrition → Add food; without a key FDC rejects the request and only catalog results appear.
-
-## Not covered
-
-Release/TestFlight builds do not receive a key from this mechanism: the provider reads SecureStorage only and
-nothing provisions it. Shipping FDC search to testers needs a separate owner decision (for example proxying
-search through the backend so no key ships in the binary).
+The deployed backend receives `FDC_API_KEY` via AWS Secrets Manager or Lambda environment variables. The key is never committed, never packaged in the iOS bundle, and never shipped in the IPA.

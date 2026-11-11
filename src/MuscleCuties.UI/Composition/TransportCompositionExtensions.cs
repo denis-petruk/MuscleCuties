@@ -29,15 +29,7 @@ public static class TransportCompositionExtensions
 
     public static IServiceCollection RegisterTransportServices(this IServiceCollection services)
     {
-        services.AddSingleton<IFdcApiKeyProvider, SecureStorageFdcApiKeyProvider>();
-        services.AddTransient<FdcAirGapHandler>();
-        services.AddHttpClient<IFdcApiClient, FdcApiClient>(client =>
-            {
-                client.BaseAddress = FdcApiClient.BaseUri;
-                client.Timeout = TimeSpan.FromSeconds(8);
-            })
-            .ConfigurePrimaryHttpMessageHandler(PlatformCompositionExtensions.CreateFdcHttpHandler)
-            .AddHttpMessageHandler<FdcAirGapHandler>();
+
 
         services.AddHttpClient<IWgerApiClient, WgerApiClient>(client =>
         {

@@ -138,20 +138,7 @@ public static class PlatformCompositionExtensions
         return builder;
     }
 
-    // Enforces TLS 1.3 and SPKI certificate pinning for USDA FoodData Central requests with cookies disabled.
-    internal static HttpMessageHandler CreateFdcHttpHandler()
-    {
-        return new SocketsHttpHandler
-        {
-            AllowAutoRedirect = false,
-            SslOptions =
-            {
-                EnabledSslProtocols = SslProtocols.Tls13,
-                RemoteCertificateValidationCallback = FdcCertificatePinningPolicy.Validate
-            },
-            UseCookies = false
-        };
-    }
+
 
     private enum AuthFieldKind
     {
