@@ -7,13 +7,13 @@ certificates, provisioning profiles, passwords, or App Store Connect keys.
 
 - Bundle: `com.musclecuties.app`
 - Marketing version: **1.0**
-- Build number: **3** (`ApplicationVersion` in `src/MuscleCuties.UI/MuscleCuties.UI.csproj`)
+- Build number: **4** (`ApplicationVersion` in `src/MuscleCuties.UI/MuscleCuties.UI.csproj`)
 - Target: `net10.0-ios`, `ios-arm64`, Release, `AppTargetEnvironment=Beta`
 - Entitlements checked in at `src/MuscleCuties.UI/Platforms/iOS/Entitlements.plist`:
   Sign in with Apple, Associated Domains, keychain access, HealthKit, and health-data access.
 
 The archive script accepts `MC_IOS_VERSION` and `MC_IOS_BUILD`. Use a new positive integer
-build number for every upload; build **3** is the checked-in candidate value, not a claim that
+build number for every upload; build **4** is the checked-in candidate value, not a claim that
 App Store Connect has never received it.
 
 ## Prerequisites

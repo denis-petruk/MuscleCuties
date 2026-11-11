@@ -18,7 +18,7 @@
         <ApplicationTitle>MuscleCuties</ApplicationTitle>
         <ApplicationId>com.musclecuties.app</ApplicationId>
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-        <ApplicationVersion>3</ApplicationVersion>
+        <ApplicationVersion>4</ApplicationVersion>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <AnalysisLevel>latest-recommended</AnalysisLevel>
 

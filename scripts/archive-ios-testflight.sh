@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 VERSION="${MC_IOS_VERSION:-1.0}"
-BUILD="${MC_IOS_BUILD:-3}"
+BUILD="${MC_IOS_BUILD:-4}"
 PROFILE="${MC_PROVISIONING_PROFILE:-MuscleCuties App Store Connect}"
 IDENTITY="${MC_CODESIGN_IDENTITY:-$(security find-identity -v -p codesigning 2>/dev/null | sed -n 's/.*"\(Apple Distribution[^"]*\)".*/\1/p' | head -1)}"
 
