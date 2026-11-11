@@ -34,6 +34,13 @@ else:
     if info.get('get-task-allow') is True:
         failures.append('Info.plist enables get-task-allow')
 
+for n in names:
+    if n.endswith('.plist'):
+        try:
+            plistlib.loads(z.read(n))
+        except Exception as e:
+            failures.append(f'corrupted plist {n}: {e}')
+
 expected_profile = f'{app}/embedded.mobileprovision' if app else None
 profiles = [n for n in names if n.endswith('/embedded.mobileprovision')]
 if expected_profile is None or profiles != [expected_profile]:
