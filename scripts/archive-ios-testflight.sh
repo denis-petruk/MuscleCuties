@@ -29,8 +29,8 @@ dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj \
   -p:CodesignProvision="$PROFILE" \
   -m:1 -nodeReuse:false
 
-IPA="$(find src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64 -maxdepth 1 -name '*.ipa' -print -quit 2>/dev/null || true)"
-[[ -n "$IPA" ]] || { echo "No IPA produced." >&2; exit 1; }
+IPA="src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/MuscleCuties.UI.ipa"
+[[ -f "$IPA" ]] || { echo "No IPA produced: $IPA" >&2; exit 1; }
 scripts/sanitize-testflight-ipa.sh "$IPA" "$IDENTITY"
 scripts/verify-testflight-ipa.sh "$IPA"
 echo "Archive outputs:"
