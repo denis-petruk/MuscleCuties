@@ -46,7 +46,8 @@ jobs:
 
       - name: Install MAUI iOS workload
         run: |
-          dotnet workload install maui-ios
+          # Keep the iOS SDK compatible with the xcode-27 image's Xcode 27.1.
+          dotnet workload install maui-ios --version 10.0.100
 
       - name: Report Xcode version
         run: xcodebuild -version
