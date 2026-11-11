@@ -20,7 +20,7 @@ public sealed class ModelSchemaContractTests
         PostgresSchemas.Operations
     ];
 
-    [Fact]
+    [PostgresFact]
     public void EveryMappedTableLivesInARegisteredSchema()
     {
         using var context = CreateContext();
@@ -36,7 +36,7 @@ public sealed class ModelSchemaContractTests
         }
     }
 
-    [Fact]
+    [PostgresFact]
     public void ModelFingerprintIsDeterministic()
     {
         using var first = CreateContext();
@@ -47,7 +47,7 @@ public sealed class ModelSchemaContractTests
             PostgresSchemaBootstrap.ComputeModelFingerprint(second));
     }
 
-    [Fact]
+    [PostgresFact]
     public void SecurityScriptDeclaresTenantPolicies()
     {
         var script = PostgresSchemaBootstrap.ReadSecurityScriptAsync().GetAwaiter().GetResult();
@@ -57,7 +57,7 @@ public sealed class ModelSchemaContractTests
         Assert.Contains("CREATE OR REPLACE FUNCTION", script, StringComparison.Ordinal);
     }
 
-    [Fact]
+    [PostgresFact]
     public async Task MigrationChain_ContainsBaseSchemaFingerprintAndScheduleSeam()
     {
         var rehearsal = await PostgresSchemaMigrations.RehearseChainAsync();

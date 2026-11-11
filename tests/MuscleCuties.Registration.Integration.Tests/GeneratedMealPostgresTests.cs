@@ -22,7 +22,7 @@ public sealed class GeneratedMealPostgresTests
     private const float OilCaloriesPer100Grams = 900f;
     private const decimal SyntheticFiber = 7m;
 
-    [Fact]
+    [PostgresFact]
     public async Task GeneratedOilAmountSurvivesMealLoggingAndReadback()
     {
         var connection = new NpgsqlConnectionStringBuilder(Environment.GetEnvironmentVariable(ConnectionVariable));

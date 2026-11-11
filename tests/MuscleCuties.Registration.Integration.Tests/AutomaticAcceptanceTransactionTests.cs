@@ -31,7 +31,7 @@ public sealed class AutomaticAcceptanceTransactionTests
     private static readonly DateOnly SyntheticBirthDate = new(1990, 1, 1);
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task AutomaticAcceptanceUsesNextScheduledBoundaryAndRollsBackWithCaller()
     {
         var options = Options();

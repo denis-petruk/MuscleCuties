@@ -37,7 +37,7 @@ public sealed class InjuryCanonicalReconciliationTests
     private const int UsernameSuffixLength = 10;
     private static readonly DateOnly BirthDate = new(1990, 1, 1);
 
-    [Theory]
+    [PostgresTheory]
     [InlineData(false)]
     [InlineData(true)]
     public async Task AcceptedConfirmationsPermitClearanceOnlyWithUnchangedCatalog(bool catalogChanged)
@@ -234,7 +234,7 @@ public sealed class InjuryCanonicalReconciliationTests
         }
     }
 
-    [Fact]
+    [PostgresFact]
     public async Task BeginnerWithoutAcknowledgmentGetsFeasibleWeekAndHistoryIsPreserved()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);

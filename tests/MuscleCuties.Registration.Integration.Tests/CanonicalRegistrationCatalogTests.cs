@@ -20,7 +20,7 @@ public sealed class CanonicalRegistrationCatalogTests
     private const int SevenWorkoutDaysPerWeek = 7;
     private const int SevenDayMuscleBudgetCount = 13;
 
-    [Xunit.Theory]
+    [PostgresTheory]
     [Xunit.InlineData("(int)UserGoal.MaintainHealth", (int)UserGoal.MaintainHealth)]
     [Xunit.InlineData("(int)CyclePhase.Luteal", (int)CyclePhase.Luteal)]
     [Xunit.InlineData("(int)WeightGoalPace.Aggressive", (int)WeightGoalPace.Aggressive)]
@@ -32,7 +32,7 @@ public sealed class CanonicalRegistrationCatalogTests
         Xunit.Assert.Equal(expected, PostgresCanonicalCatalogSeeder.ParseMappedValue(document.RootElement));
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public void InvalidCanonicalQuizAnswerMappingCannotSilentlyUseAnswerOrder()
     {
         using var document = JsonDocument.Parse("\"(int)UserGoal.Unknown\"");
@@ -41,7 +41,7 @@ public sealed class CanonicalRegistrationCatalogTests
             PostgresCanonicalCatalogSeeder.ParseMappedValue(document.RootElement));
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task CanonicalCatalogHasValidRegistrationAndPlanningReferenceData()
     {
         var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
@@ -99,7 +99,7 @@ public sealed class CanonicalRegistrationCatalogTests
 
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task CanonicalCatalogHasSevenDayReferenceData()
     {
         var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);

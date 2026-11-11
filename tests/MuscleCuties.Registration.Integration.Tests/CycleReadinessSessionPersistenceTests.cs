@@ -37,7 +37,7 @@ public sealed class CycleReadinessSessionPersistenceTests
     private const int ReportedPain = 1;
     private const int NoPain = 0;
 
-    [Fact]
+    [PostgresFact]
     public async Task CheckInAndPhaseWritesPersistPendingWhilePreviewDefersRetry()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);
@@ -170,7 +170,7 @@ public sealed class CycleReadinessSessionPersistenceTests
         }
     }
 
-    [Fact]
+    [PostgresFact]
     public async Task OnlyExplicitLinkedPhaseCanAdjustSnapshotAndOptionalSetsStayValid()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);

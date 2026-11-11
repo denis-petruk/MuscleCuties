@@ -33,7 +33,7 @@ public sealed class CanonicalOccurrenceAdjustmentPersistenceTests
     private const int SyntheticStartDay = 26;
     private static readonly DateOnly DeloadStart = new(SyntheticStartYear, SyntheticStartMonth, SyntheticStartDay);
 
-    [Fact]
+    [PostgresFact]
     public async Task ActiveDeloadChangesOnlyNewOccurrencesInWindowAndPersistsAdjustedDose()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);
@@ -110,7 +110,7 @@ public sealed class CanonicalOccurrenceAdjustmentPersistenceTests
     }
 
     // S-07: a retried materialization of the same plan must not reduce the same dose twice.
-    [Fact]
+    [PostgresFact]
     public async Task ReapplyingTheDeloadToTheSamePlanKeepsTheAdjustedDose()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);

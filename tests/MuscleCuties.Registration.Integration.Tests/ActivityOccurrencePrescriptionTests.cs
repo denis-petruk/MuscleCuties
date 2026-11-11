@@ -14,7 +14,7 @@ public sealed class ActivityOccurrencePrescriptionTests
     private const decimal OriginalMinutes = ActivitySessionDurationRule.DemandingYogaMaximumMinutes;
     private const decimal ReducedMinutes = ActivitySessionDurationRule.DemandingYogaMinimumMinutes;
 
-    [Fact]
+    [PostgresFact]
     public void UnchangedOccurrenceUsesOriginalPrescriptionAndSurvivesSnapshotRoundTrip()
     {
         var original = Prescription(OriginalMinutes);
@@ -38,7 +38,7 @@ public sealed class ActivityOccurrencePrescriptionTests
             ActivityOccurrencePrescription.Deserialize(restored.ActivityPrescriptionJson)!.MainMinutes);
     }
 
-    [Fact]
+    [PostgresFact]
     public void ReducedOccurrenceRetainsItsDoseAcrossSerializationAndRejectsTampering()
     {
         var original = Prescription(OriginalMinutes);
@@ -57,7 +57,7 @@ public sealed class ActivityOccurrencePrescriptionTests
         Assert.Throws<InvalidOperationException>(() => ActivityOccurrencePrescription.Deserialize("{"));
     }
 
-    [Fact]
+    [PostgresFact]
     public void HistoricalProposalsRemainCompatibleButPartialEvidenceFailsClosed()
     {
         var session = Session(OriginalMinutes);

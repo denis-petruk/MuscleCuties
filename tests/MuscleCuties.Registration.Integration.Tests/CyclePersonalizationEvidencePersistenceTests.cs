@@ -35,7 +35,7 @@ public sealed class CyclePersonalizationEvidencePersistenceTests
         },
         CycleReadinessPrescriptionRule.PolicyVersion);
 
-    [Fact]
+    [PostgresFact]
     public async Task Loader_requires_distinct_explicit_cycles_and_check_in_before_completed_session()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);

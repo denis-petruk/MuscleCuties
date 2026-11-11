@@ -30,7 +30,7 @@ public sealed class InjurySuppressionLinkPersistenceTests
     private const string Policy = "synthetic-policy";
     private const string Evidence = "{\"ownerRestrictionAssessmentAssertion\":true,\"exercise\":{\"effectiveRestrictionAssessmentStatus\":\"OwnerAssessedClearanceSubjectToExistingContraindications\",\"experienceConditions\":\"synthetic\",\"conditionsAndExclusions\":\"synthetic\"},\"resolvedDirectedSubstitutionReviews\":[]}";
 
-    [Xunit.Theory]
+    [PostgresTheory]
     [Xunit.InlineData(true)]
     [Xunit.InlineData(false)]
     public async Task InjuryLinksOnlyUnloggedUnambiguousReviewedPrescriptions(bool knownSnapshot)

@@ -23,7 +23,7 @@ public sealed class InjuryClearancePersistenceTests
     private static readonly DateTimeOffset LaterInstant = new(2026, 2, 5, 12, 0, 0, TimeSpan.Zero);
     private static readonly DateTimeOffset SecondClearanceInstant = new(2026, 2, 7, 2, 0, 0, TimeSpan.Zero);
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task InjurySafetyAnswersPersistAcrossSaveReadEditAndClear()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
@@ -81,7 +81,7 @@ public sealed class InjuryClearancePersistenceTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task ClearanceUsesAccountDateAndPreservesItUntilReinjury()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()

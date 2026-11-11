@@ -18,7 +18,7 @@ public sealed class PostgreSqlTransientRetryIntegrationTests
     private const string DeleteProbeSql = "DELETE FROM public.mc_retry_probe WHERE id = @id";
     private const int ExpectedAttemptCount = 2;
 
-    [Fact]
+    [PostgresFact]
     public async Task ExplicitTransactionRetriesAfterPostgreSqlDropsItsConnection()
     {
         var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
