@@ -1,0 +1,55 @@
+# AI Agent & IDE Indexing Ignore Rules (MuscleCuties)
+# Reduces token usage by excluding build outputs, worktrees, large assets, and historical logs.
+
+# Build & IDE artifacts
+bin/
+obj/
+packages/
+*.binlog
+*.trx
+*.coverage
+*.coveragexml
+coverage/
+*.cobertura.xml
+[Tt]est[Rr]esults/
+.idea/
+.vs/
+_ReSharper*/
+DerivedData/
+xcuserdata/
+*.xcarchive
+*.ipa
+
+# Agent worktrees & local state
+.agent-worktrees/
+.claude/
+.cloud-attachments/
+.impeccable/
+.freebuff/
+artifacts/
+graphify-out/
+.foundation-baselines/
+.scratch/
+
+# Large localization lookup table (read only when tasked with localization)
+**/UiTextCatalog.RuntimeText.cs
+
+# Historical / dated audit & design logs
+docs/release-audit/
+docs/design/
+docs/architecture/github-transition/
+AUDIT.md
+
+# Binary / media / secrets
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.pdf
+*.p8
+*.p12
+*.pfx
+*.key
+*.mobileprovision
+.env
+.env.*
