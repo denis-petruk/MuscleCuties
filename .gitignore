@@ -53,6 +53,8 @@ _ReSharper*/
 # .agents/, .codex/, .impeccable/critique/ and .run/.
 # Ignore only private imported context and per-machine agent state.
 /.cloud-attachments/
+/.agent-worktrees/
+/.claude/
 **/.codex/hooks.json
 **/.codex/auth.json
 **/.codex/*.local.*

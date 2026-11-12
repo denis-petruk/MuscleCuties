@@ -24,8 +24,11 @@ public sealed class ProfilePersonalInfoUseCase(IProfilePersonalInfoStore store) 
         if (birthDateEligibility == BirthDateEligibility.Underage)
             return new SavePersonalInfoResult(PersonalInfoSaveError.Underage);
 
-        if (!ProfileUpdateValidationRule.IsValidRequiredMeasurements(
-                request.Height, request.Weight, request.CycleLength))
+        var measurementsValid = request.CycleLength == PersonalInfoConstraints.UnsetCycleLength
+            ? ProfileUpdateValidationRule.IsValidRequiredBodyMeasurements(request.Height, request.Weight)
+            : ProfileUpdateValidationRule.IsValidRequiredMeasurements(
+                request.Height, request.Weight, request.CycleLength);
+        if (!measurementsValid)
             return new SavePersonalInfoResult(PersonalInfoSaveError.InvalidInput);
 
         var saved = await store.SaveWithSnapshotAsync(request, cancellationToken).ConfigureAwait(false);

@@ -1,6 +1,6 @@
 # MuscleCuties — agent operating contract
 
-Read this file and the task card. Open other docs only when the card names them: `DESIGN.md` for UI work, `docs/PRODUCT_WORKFLOWS.md` for workout or nutrition behaviour, `CONTEXT.md` for localization terms, `README.md` for build and test commands. Do not read `bin/`, `obj/`, `artifacts/`, logs or images unless the task requires it.
+Read this file and the task card. Open other docs only when the card names them: `DESIGN.md` for UI work, `docs/PRODUCT_WORKFLOWS.md` for workout or nutrition behaviour, `CONTEXT.md` for localization terms, `README.md` for build and test commands. Scope `rg`/`find` searches to `src/`, `tests/`, and `services/` by default. Do not read `bin/`, `obj/`, `artifacts/`, `UiTextCatalog.RuntimeText.cs`, logs, or images unless the task explicitly requires it. Keep git worktrees outside the repository (e.g., `../MuscleCuties-worktrees/`).
 
 ## 1. Source of truth
 

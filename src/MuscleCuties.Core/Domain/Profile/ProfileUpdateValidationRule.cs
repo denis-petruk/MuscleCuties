@@ -22,6 +22,10 @@ public static class ProfileUpdateValidationRule
         IsValidWeight(weightKg) &&
         IsValidCycleLength(cycleLength);
 
+    /// <summary>Height and weight only, for a save that leaves an unset cycle length untouched.</summary>
+    public static bool IsValidRequiredBodyMeasurements(float heightCm, float weightKg) =>
+        IsValidHeight(heightCm) && IsValidWeight(weightKg);
+
     public static bool IsValid(ProfileUpdateObservation? update, DateOnly today)
     {
         if (update is null)
