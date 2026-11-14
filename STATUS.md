@@ -59,7 +59,7 @@ Light and dark for the surfaces the closed defects cite:
   `Белки / Углеводы / Жир`, `/ 2080 ккал`.
 - Meal detail (suggestions): `meal-suggestions-light.png`, `meal-suggestions-dark.png` —
   `582 ккал`, `Б 32,8 г · У 45,2 г · Ж 30,0 г`.
-- Meal entry sheet / 24-hour time: `meal-entry-light.png` — `00:57`.
+- Meal entry sheet / 24-hour time: `meal-entry-light.png` — `01:01`.
 - Archive list: `archive-list-light.png`, `archive-list-dark.png` — `30 мин`, `1 подход`,
   `Чт, 12 нояб. 2026`.
 - Archive detail: `archive-detail-light.png`, `archive-detail-dark.png` — header
