@@ -100,9 +100,26 @@ public static class PlatformCompositionExtensions
         services.AddSingleton<IPlatformSignInService>(sp => sp.GetRequiredService<AppleSignInService>());
 #endif
 
-        // Health synchronization stays dormant until the owner authorizes its scope (AGENTS.md,
-        // OD-4). The Beta binary carries no HealthKit entitlement or provider.
+#if IOS
+        services.AddSingleton<Platforms.iOS.AppleHealthDataProvider>();
+#if DEBUG
+        if (MuscleCuties.UI.Services.Health.SyntheticHealthDataProvider.IsRequested)
+        {
+            // Simulator QA only: synthetic fixture instead of HealthKit (see SyntheticHealthDataProvider).
+            services.AddSingleton<MuscleCuties.UI.Services.Health.SyntheticHealthDataProvider>();
+            services.AddSingleton<IHealthDataProvider>(sp => sp.GetRequiredService<MuscleCuties.UI.Services.Health.SyntheticHealthDataProvider>());
+            services.AddSingleton<IHealthAuthorizationProvider>(sp => sp.GetRequiredService<MuscleCuties.UI.Services.Health.SyntheticHealthDataProvider>());
+        }
+        else
+#endif
+        {
+            services.AddSingleton<IHealthDataProvider>(sp => sp.GetRequiredService<Platforms.iOS.AppleHealthDataProvider>());
+            services.AddSingleton<IHealthAuthorizationProvider>(sp => sp.GetRequiredService<Platforms.iOS.AppleHealthDataProvider>());
+        }
+        services.AddSingleton<IHealthSyncService, HealthSyncService>();
+#else
         services.AddSingleton<IHealthSyncService, DisabledHealthSyncService>();
+#endif
         services.AddScoped<ICyclePhaseNotificationService>(sp =>
             new CyclePhaseNotificationService(
                 sp.GetRequiredService<ICycleOverviewUseCase>(),
@@ -121,20 +138,7 @@ public static class PlatformCompositionExtensions
         return builder;
     }
 
-    // Enforces TLS 1.3 and SPKI certificate pinning for USDA FoodData Central requests with cookies disabled.
-    internal static HttpMessageHandler CreateFdcHttpHandler()
-    {
-        return new SocketsHttpHandler
-        {
-            AllowAutoRedirect = false,
-            SslOptions =
-            {
-                EnabledSslProtocols = SslProtocols.Tls13,
-                RemoteCertificateValidationCallback = FdcCertificatePinningPolicy.Validate
-            },
-            UseCookies = false
-        };
-    }
+
 
     private enum AuthFieldKind
     {

@@ -25,7 +25,7 @@ public sealed class HydrationDiaryPersistenceTests(DisposableDatabaseFixture fix
 {
     private const string LegacyTotalConflict = "hydrationLegacyTotalConflict";
 
-    [Fact]
+    [PostgresFact]
     public async Task RichIntakeMirrorsLegacyDiaryAndKeepsOneRowOnConcurrentFirstWrite()
     {
         if (!fixture.Available)

@@ -17,12 +17,16 @@ public class AnimatedModalView : ContentView
     public static readonly BindableProperty RestoreFocusTargetProperty =
         BindableProperty.Create(nameof(RestoreFocusTarget), typeof(VisualElement), typeof(AnimatedModalView));
 
+    /// <summary>Bottom strip a sheet always keeps for its pinned footer.</summary>
+    private const double SheetFooterReserve = 12;
+
     private VisualElement? _capturedFocusTarget;
     private ContentPage? _isolationPage;
     private Page? _hookedPage;
     private long _transitionVersion;
     private bool _focusEntryPending;
     private bool _announcementDelivered;
+    private Action<double>? _keyboardHandler;
 
     public AnimatedModalView()
     {
@@ -101,6 +105,8 @@ public class AnimatedModalView : ContentView
         if (page is not null)
         {
             ModalAccessibilityScope.Release(page, this);
+            ModalTabBar.Release(page);
+            DetachKeyboard();
             _isolationPage = null;
         }
     }
@@ -109,6 +115,7 @@ public class AnimatedModalView : ContentView
     {
         var page = HostPage();
         HookPage(page);
+        ApplyBottomSafeAreaBleed();
 
         if (!IsOpen)
         {
@@ -124,10 +131,202 @@ public class AnimatedModalView : ContentView
         {
             _isolationPage = page;
             ModalAccessibilityScope.Acquire(_isolationPage, this);
+            ModalTabBar.Acquire(_isolationPage);
         }
 
         _capturedFocusTarget ??= RestoreFocusTarget ?? FocusedOutsideSheet();
         CompleteOpen(_transitionVersion);
+    }
+
+    /// <summary>
+    /// Lets the sheet reach the physical bottom edge.
+    /// </summary>
+    /// <remarks>
+    /// Pages that set <c>SafeAreaEdges="All"</c> inset their content above the home indicator, and a
+    /// sheet anchored to the bottom of that content stops one indicator-height short of the screen.
+    /// Negative bottom margin extends the host over that strip; the shared footer inset keeps the
+    /// footer content clear of the indicator. Pages without the inset get the same treatment, so the
+    /// frame reaches the edge identically everywhere.
+    /// </remarks>
+    private void ApplyBottomSafeAreaBleed()
+    {
+#if IOS
+        var bottom = 0.0;
+        foreach (var scene in UIKit.UIApplication.SharedApplication.ConnectedScenes)
+        {
+            if (scene is not UIKit.UIWindowScene windowScene)
+                continue;
+
+            foreach (var window in windowScene.Windows)
+            {
+                if (window.IsKeyWindow)
+                {
+                    bottom = window.SafeAreaInsets.Bottom;
+                    break;
+                }
+            }
+
+            if (bottom > 0)
+                break;
+        }
+
+        if (bottom > 0)
+            Margin = new Thickness(Margin.Left, Margin.Top, Margin.Right, -bottom);
+#endif
+    }
+
+    /// <summary>
+    /// Shortens the sheet by the keyboard overlap so the sheet's own scroll body stays reachable.
+    /// </summary>
+    /// <remarks>
+    /// The sheet is anchored to the bottom of the window; without this the keys covered the lower
+    /// part of every modal, which is where a picker's results and a sheet's commit button live. The
+    /// work is done on the surface border rather than per sheet, so every modal gets the same
+    /// behaviour from the same numbers (see <see cref="ModalKeyboardInset"/>).
+    /// </remarks>
+    private void AttachKeyboard()
+    {
+        _keyboardHandler ??= OnKeyboardInsetChanged;
+        ModalKeyboardInset.Subscribe(_keyboardHandler);
+    }
+
+    private void DetachKeyboard()
+    {
+        if (_keyboardHandler is not null)
+            ModalKeyboardInset.Unsubscribe(_keyboardHandler);
+
+        ApplySheetHeight(0);
+    }
+
+    private void OnKeyboardInsetChanged(double inset) => ApplySheetHeight(inset);
+
+    private void ApplySheetHeight(double keyboardInset)
+    {
+        var surface = SheetSurface();
+        if (surface is null)
+            return;
+
+        var body = EnsureScrollBody(surface);
+        if (body is null)
+            return;
+
+        // Padding grows the scrollable extent by the covered strip plus the footer reserve, so the
+        // last row and any pinned footer can always be scrolled clear of the keys.
+        body.Padding = new Thickness(
+            body.Padding.Left,
+            body.Padding.Top,
+            body.Padding.Right,
+            Math.Max(0, keyboardInset) + SheetFooterReserve);
+
+        // The body padding keeps scrolled rows reachable; the surface padding is what lifts a pinned
+        // footer row above the keyboard toolbar. Pages such as archive detail draw their footer in the
+        // sheet grid, outside the scroll body, so padding only the body left the save bar under the keys.
+        var surfaceInset = keyboardInset > 0 ? keyboardInset + SheetFooterReserve : 0;
+        surface.Padding = new Thickness(
+            surface.Padding.Left,
+            surface.Padding.Top,
+            surface.Padding.Right,
+            surfaceInset);
+
+        if (keyboardInset > 0)
+            RevealContentBelowFocusedField(body);
+    }
+
+    /// <summary>
+    /// Scrolls the body so the row under the focused field is visible, not just the field itself.
+    /// </summary>
+    /// <remarks>
+    /// MAUI scrolls a focused entry into view, which for the food picker put the field at the bottom
+    /// of the visible strip and left the result list behind the keyboard. Anchoring the focused row at
+    /// the top of the body gives the picker its first result back and keeps a pinned footer reachable.
+    /// </remarks>
+    private static void RevealContentBelowFocusedField(ScrollView body)
+    {
+        var focused = FindFocusedDescendant(body);
+        if (focused is null)
+            return;
+
+        body.Dispatcher.Dispatch(async () =>
+        {
+            try
+            {
+                await body.ScrollToAsync(focused, ScrollToPosition.Start, true);
+            }
+            catch (Exception)
+            {
+                // A body that is being replaced while the keyboard animates must not crash the sheet.
+            }
+        });
+    }
+
+    private static VisualElement? FindFocusedDescendant(IVisualTreeElement root)
+    {
+        foreach (var child in root.GetVisualChildren())
+        {
+            if (child is VisualElement { IsFocused: true } focused)
+                return focused;
+
+            if (FindFocusedDescendant(child) is { } nested)
+                return nested;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Guarantees the sheet has one scrollable body.
+    /// </summary>
+    /// <remarks>
+    /// Nine sheets drew their content straight into the surface with no scroll view, so shortening the
+    /// sheet for the keyboard had nowhere to scroll and their last rows stayed unreachable. The frame
+    /// wraps the surface content once, on first open, instead of each sheet repeating the wrapper; a
+    /// sheet that already ships its own body (the food picker) keeps it.
+    /// </remarks>
+    private static ScrollView? EnsureScrollBody(Border surface)
+    {
+        if (surface.Content is null)
+            return null;
+
+        // A sheet that already owns a body keeps it — wrapping it again gives the sheet two
+        // scroll views and the inner one stops scrolling. The check-in sheet is the case that
+        // matters: it draws a header, its own ScrollView and a pinned footer into the surface.
+        var ownBody = FindScrollBody(surface.Content);
+        if (ownBody is not null)
+            return ownBody;
+
+        var body = new ScrollView
+        {
+            Content = surface.Content,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Never
+        };
+
+        surface.Content = body;
+        return body;
+    }
+
+    private static ScrollView? FindScrollBody(IVisualTreeElement root)
+    {
+        foreach (var child in root.GetVisualChildren())
+        {
+            if (child is ScrollView scroll)
+                return scroll;
+
+            if (FindScrollBody(child) is { } nested)
+                return nested;
+        }
+
+        return null;
+    }
+
+    private Border? SheetSurface()
+    {
+        var style = Application.Current?.Resources.TryGetValue("ModalSurface", out var resource) == true
+            ? resource as Style
+            : null;
+
+        return Descendants()
+            .OfType<Border>()
+            .FirstOrDefault(border => style is null || ReferenceEquals(border.Style, style));
     }
 
     private static void OnIsOpenChanged(BindableObject bindable, object oldValue, object newValue)
@@ -160,6 +359,8 @@ public class AnimatedModalView : ContentView
         _isolationPage = HostPage();
         HookPage(_isolationPage);
         ModalAccessibilityScope.Acquire(_isolationPage, this);
+        ModalTabBar.Acquire(_isolationPage);
+        AttachKeyboard();
         ModalTransition.PlayShow(this);
 
         // Layout of a content-sized sheet completes after this property change. Focus and the

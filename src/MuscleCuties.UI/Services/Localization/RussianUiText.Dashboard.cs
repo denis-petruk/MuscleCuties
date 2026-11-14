@@ -48,6 +48,7 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_EnergySectionTitle"] = "ЭНЕРГИЯ";
         Values["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Очень высокая";
         Values["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Очень низкий";
+        Values["Dashboard_CheckIn_HealthKitSleepBadge"] = "Заполнено из Apple Health ({0} ч)";
         Values["Dashboard_CheckIn_PlanningTitle"] = "Для планирования тренировок";
         Values["Dashboard_CheckIn_PlanningSleepQuality"] = "Качество сна";
         Values["Dashboard_CheckIn_PlanningSoreness"] = "Болезненность мышц";
@@ -82,8 +83,10 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_StorageNotice"] = "Сохранено в вашей личной учётной записи";
         Values["Dashboard_CheckIn_SubmitButton"] = "Сохранить отметку";
         Values["Dashboard_CheckIn_SubmitHint"] = "Сохранить ежедневную отметку";
+        Values["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Ответьте на все обязательные вопросы, чтобы сохранить отметку.";
         Values["Dashboard_CheckIn_Subtitle"] = "Как вы себя чувствуете сегодня?";
         Values["Dashboard_CheckIn_SuccessMessage"] = "Запись сохранена";
+        Values["Dashboard_CheckIn_SuggestFromAppleHealth"] = "Предложить оценки из Apple Health";
         Values["Dashboard_CheckIn_WeightA11y"] = "Дополнительный вес тела в килограммах";
         Values["Dashboard_CheckIn_WeightHint"] = "Оставить пустым, чтобы пропустить ввод веса";
         Values["Dashboard_CheckIn_WeightPlaceholderKg"] = "кг";
@@ -161,6 +164,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Phase_MissingHeader"] = "На этой неделе · Укажите фазу цикла";
         Values["Dashboard_Phase_HeaderFormat"] = "На этой неделе · {0}";
         Values["Dashboard_Phase_StatusDayFormat"] = "{0} · День {1} / {2}";
+        Values["Dashboard_Phase_StatusDayEstimateFormat"] = "{0} · День {1} из ~{2} · оценка";
         Values["Dashboard_Phase_StatusSelectedFormat"] = "{0} · Фаза выбрана";
         Values["Dashboard_Phase_TitleRecovery"] = "Ритм восстановления";
         Values["Dashboard_Phase_TitleBuild"] = "Набирайте темп";
@@ -203,6 +207,8 @@ internal static partial class RussianUiText
         Values["Dashboard_Trend_WeightMedian"] = "Вес · скользящая медиана";
         Values["Dashboard_Workout_Duration"] = "Продолжительность";
         Values["Dashboard_Workout_CountActivity"] = "Активность";
+        Values["Dashboard_Workout_PillRest"] = "ДЕНЬ ОТДЫХА";
+        Values["Dashboard_Workout_PillTraining"] = "ТРЕНИРОВКА";
         Values["Dashboard_Workout_CountSets"] = "Подходы";
         Values["Dashboard_Workout_CountExercises"] = "Упражнения";
         Values["Dashboard_Workout_CountRecovery"] = "Восстановление";
@@ -232,5 +238,10 @@ internal static partial class RussianUiText
         Values["Dashboard_Workout_RestGuidance"] =
             "День отдыха: двигайтесь легко, а сон и вода помогут восстановиться.";
         Values["Dashboard_Workout_ViewRestDay"] = "Открыть день отдыха";
+        Values["Dashboard_CheckIn_HealthRationaleTitle"] = "Использовать Apple Health для сегодняшней отметки?";
+        Values["Dashboard_CheckIn_HealthRationaleBody"] = "MuscleCuties читает шаги, сон, пульс и ВСР из Apple Health только для предложения значений отметки и целей по калориям. Только чтение; отключить можно в Профиле.";
+        Values["Dashboard_CheckIn_HealthConnect"] = "Подключить Apple Health";
+        Values["Dashboard_CheckIn_HealthNotNow"] = "Не сейчас";
+        Values["Dashboard_Workout_ViewCompleted"] = "Открыть тренировку";
     }
 }

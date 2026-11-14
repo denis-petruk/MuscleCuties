@@ -204,8 +204,23 @@ public static class ApiApplication
         builder.Services.AddScoped<ICheckInAndInjuryStore, PostgresCheckInAndInjuryStore>();
         builder.Services.AddScoped<CheckInAndInjuryUseCase>();
         builder.Services.AddScoped<PostgresFoodCatalogStore>();
-        builder.Services.AddScoped<IFoodCatalogSearchStore>(serviceProvider =>
-            serviceProvider.GetRequiredService<PostgresFoodCatalogStore>());
+        // Optional USDA FoodData Central fallback for sparse catalog searches. Enabled only when
+        // FDC_API_KEY (or Fdc:ApiKey) is configured; see docs/FDC_API_SETUP.md.
+        var fdcApiKey = builder.Configuration["FDC_API_KEY"] ?? builder.Configuration["Fdc:ApiKey"];
+        builder.Services.AddHttpClient(nameof(FdcExternalFoodSource), client =>
+        {
+            client.BaseAddress = FdcExternalFoodSource.BaseUri;
+            client.Timeout = TimeSpan.FromSeconds(4);
+        });
+        builder.Services.AddScoped<IExternalFoodSource>(serviceProvider => new FdcExternalFoodSource(
+            serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(FdcExternalFoodSource)),
+            fdcApiKey,
+            serviceProvider.GetService<ILogger<FdcExternalFoodSource>>()));
+        builder.Services.AddScoped<IExternalFoodImportStore, PostgresExternalFoodImportStore>();
+        builder.Services.AddScoped<IFoodCatalogSearchStore>(serviceProvider => new ExternalFoodFallbackSearchStore(
+            serviceProvider.GetRequiredService<PostgresFoodCatalogStore>(),
+            serviceProvider.GetRequiredService<IExternalFoodSource>(),
+            serviceProvider.GetRequiredService<IExternalFoodImportStore>()));
         builder.Services.AddScoped<IBarcodeFoodLookupStore>(serviceProvider =>
             serviceProvider.GetRequiredService<PostgresFoodCatalogStore>());
         builder.Services.AddScoped<IFoodCatalogSearchUseCase, FoodCatalogSearchUseCase>();

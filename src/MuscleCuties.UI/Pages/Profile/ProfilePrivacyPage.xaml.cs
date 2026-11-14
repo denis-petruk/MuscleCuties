@@ -1,5 +1,6 @@
 using System.Windows.Input;
 using MuscleCuties.UI.Services.Localization;
+using MuscleCuties.UI.ViewModels.Profile;
 
 namespace MuscleCuties.UI.Pages.Profile;
 
@@ -8,10 +9,13 @@ public partial class ProfilePrivacyPage : ContentPage
     public const string PrivacyPolicyUrl = "https://musclecuties.app/privacy";
 
     public ICommand BackCommand { get; }
+    public ProfileHealthSyncViewModel HealthSync { get; }
 
-    public ProfilePrivacyPage()
+    public ProfilePrivacyPage(ProfileHealthSyncViewModel healthSync)
     {
+        HealthSync = healthSync;
         BackCommand = new Command(async () => await NavigateBackAsync());
+        Appearing += async (_, _) => { await HealthSync.RefreshAsync(); };
         BindingContext = this;
         this.InitializeWithTiming(InitializeComponent);
     }

@@ -166,6 +166,10 @@ public sealed class ServerRouteParityTests
         const int warmSamples = 20;
         const string reportEnvironmentVariable = "MC_WRITE_LATENCY_REPORT";
         var databaseConnectionString = Environment.GetEnvironmentVariable("MC_LATENCY_POSTGRES");
+        Assert.True(!string.IsNullOrWhiteSpace(databaseConnectionString),
+            "MC_LATENCY_POSTGRES is required for the all-route latency gate. Run " +
+            "./scripts/prepare-integration-postgres.sh, source .env.integration, and rerun. " +
+            "The synthetic unreachable-DB fallback is intentionally not measured.");
         var owner = Guid.NewGuid();
 
         await using var mapFixture = await ServerFixture.StartAsync(databaseConnectionString: databaseConnectionString);

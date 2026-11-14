@@ -18,14 +18,14 @@
         <ApplicationTitle>MuscleCuties</ApplicationTitle>
         <ApplicationId>com.musclecuties.app</ApplicationId>
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-        <ApplicationVersion>2</ApplicationVersion>
+        <ApplicationVersion>4</ApplicationVersion>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <AnalysisLevel>latest-recommended</AnalysisLevel>
 
         <SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">18.0</SupportedOSPlatformVersion>
         <EnableAppleSignInEntitlements>true</EnableAppleSignInEntitlements>
-        <!-- Health synchronization is dormant for Beta (AGENTS.md; OD-4): no HealthKit
-             entitlement, no HealthKit provider compiled, DisabledHealthSyncService on iOS. -->
+        <!-- Health synchronization is active for TestFlight delivery: HealthKit entitlement enabled,
+             AppleHealthDataProvider compiled on iOS, HealthSyncService active. -->
         <!-- SourceGen XAML inflation. Keep the Shell TabBar navigation check in the owner
              device pass. -->
         <MauiXamlInflator>SourceGen</MauiXamlInflator>
@@ -68,6 +68,8 @@
         <CodesignKey>-</CodesignKey>
         <CodesignEntitlements>Platforms/iOS/Entitlements.plist</CodesignEntitlements>
     </PropertyGroup>
+
+
 
     <ItemGroup>
         <MauiIcon Include="Resources\AppIcon\appicon.png" Color="#FFF8FB" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>

@@ -32,7 +32,7 @@ public sealed class ObservedSetArchiveProvenanceIntegrationTests(ITestOutputHelp
         "recovery", "breathing", "pilates", "walk"
     ];
 
-    [Fact]
+    [PostgresFact]
     public async Task ObservedSetsPersistProvenanceWhileAggregateRowsRemainUnobserved()
     {
         var connectionString = RequireLocalTestConnectionString();

@@ -32,6 +32,19 @@ public partial class NutritionPage : ContentPage
         this.BeginDeferredLoad(LoadDeferredCardsAsync);
     }
 
+    private async void OnOpenDailyFoodLogClicked(object? sender, EventArgs e)
+    {
+        try
+        {
+            await Shell.Current.GoToAsync(NutritionNavigation.FoodLogRoute);
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceError($"[Nutrition] Diary navigation failed: {exception.GetType().Name}");
+            _viewModel.ReportDiaryNavigationFailure();
+        }
+    }
+
     private async Task LoadDeferredCardsAsync()
     {
         await PhaseFocusLazy.LoadIfNeededAsync(true);

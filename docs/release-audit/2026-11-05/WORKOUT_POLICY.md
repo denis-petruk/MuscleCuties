@@ -17,24 +17,15 @@ Beta acceptance requires the recorded product decision, independent engineering 
 
 **Progression and Apply.** Automatically choose the smallest available load increase after two comparable, fully logged workouts with every required working set at the top of the prescribed rep range and at the intended effort. Skipped sessions and incomplete logs preserve prior valid progress and the current baseline. Use corrected actuals for future recommendations and preserve historical session records and accepted plans. Routine adjustments work automatically within established safety rules. Keep the first-plan automatic acceptance exception. For plan replacements, an upfront confirmation disclosure informs the user that regenerating will replace the active plan; upon user confirmation, eligible replacement plans are automatically activated (eliminating redundant secondary Apply taps), with native alerts provided for any injury adaptations (per MISSION.md:109 / PG01, approved 2026-11-05).
 
-## Proposed amendments — 2026-11-09 (pending owner ratification)
+## Ratified amendments — 2026-11-09 (owner ratified)
 
-Taken at the evidence-backed recommendations in
-[WORKOUT_POLICY_RESEARCH.md](../2026-11-09/WORKOUT_POLICY_RESEARCH.md) so Beta work can proceed. The adopted text above
-stays authoritative until the owner ratifies or rejects each item. No item increases load or exposure, and missing data
-still never means "no".
+Ratified at the evidence-backed recommendations in [WORKOUT_POLICY_RESEARCH.md](../2026-11-09/WORKOUT_POLICY_RESEARCH.md) by the owner on 2026-11-09:
 
-- **A-4 (decision 4, S-03).** For Beta, readiness reduces volume only: with marked fatigue, remove one optional set
-  where one exists, once per session. The "one available load step down" is deferred, because planned prescriptions
-  carry no load datum to step down from. Re-adopt it once a prescription load source exists.
-- **A-5 (decision 5, S-03).** A cycle estimate never changes reps, sets or load by itself. Cycle context informs
-  symptoms and readiness only, which then act through decision 4. The extra-set and +2-rep adjustment is withdrawn:
-  current evidence shows no consistent phase effect on strength.
-- **A-6 (decision 6, S-04).** In a session, "This hurts" stops the movement immediately. It then offers only reviewed
-  substitutes (canonical eligibility) or stopping the exercise; nothing is added to make up for it. The injury is
-  recorded in the injury log after the session.
-- **A-7 (S-05).** No fixed post-clearance window. A cleared exercise returns as prescribed from its clearance date, only
-  when current eligibility permits. Unknown or future clearance keeps the restriction.
+- **A-4 (decision 4, S-03) — RATIFIED (Option A).** For Beta, readiness reduces volume only: with marked fatigue, remove one optional set where one exists, once per session. Trainees autoregulate absolute load naturally through their target RIR. The "one available load step down" is withdrawn/deferred; planned prescriptions carry no load datum to step down from. Matches production code.
+- **A-5 (decision 5, S-03) — RATIFIED (Option A).** A cycle estimate never changes reps, sets, or load by itself. Cycle context informs symptoms and readiness only, which then act through decision 4. The extra-set and +2-rep adjustment is withdrawn (current evidence shows no consistent phase effect on acute strength performance).
+- **A-6 (decision 6, S-04) — DEFERRED.** In-session pain reporting and substitution is deferred for initial TestFlight and planned for the subsequent update.
+- **A-7 (S-05) — RATIFIED (Option A).** No fixed 7-day post-clearance window. Immediate restoration on clearance day (0-day window): a cleared exercise returns as prescribed from its clearance date when current eligibility permits. Unknown or future clearance keeps the restriction.
+
 
 ## Implementation acceptance
 
@@ -46,7 +37,7 @@ still never means "no".
 | --- | --- |
 | Two qualifying workouts, then an incomplete or corrected log | Eligible progression uses the smallest available step. Incomplete work creates no new qualifying result. Corrections affect only future recommendations. |
 | Short session with a coverage conflict | Optional work is removed first. The resulting plan reports any remaining coverage gap. |
-| Poor sleep with a normal warm-up | One automatic session load reduction with baseline preserved. |
+| Poor sleep with a normal warm-up | One optional set removed; load unchanged (ratified A-4, 2026-11-09). |
 | Estimated phase, normal check-in and warm-up | Planned session remains as scheduled. |
-| Cycle adjustment with good recovery, then with unknown or poor recovery | Eligible current response adjusts reps and load once. The extra set is available only with a fresh positive recovery signal. |
+| Cycle adjustment with good recovery, then with unknown or poor recovery | Phase alone leaves the dose as scheduled. Symptoms or readiness follow decision 4 (one optional set removed; reps and load unchanged, ratified A-5, 2026-11-09). The extra set is available only with a fresh positive recovery signal. |
 | Pain and no eligible alternative | The provoking exercise stops and the reason is shown. The strength prescription is withheld if no permitted block remains. |

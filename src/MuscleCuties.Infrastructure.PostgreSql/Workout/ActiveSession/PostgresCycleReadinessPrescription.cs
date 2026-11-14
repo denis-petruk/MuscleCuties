@@ -92,7 +92,8 @@ internal static class PostgresCycleReadinessPrescription
                 }
             }
         }
-        PhaseBaseline? baseline = null;
+        // Owner decision S-03 / Decision 5 (2026-11-09): only the consent/eligibility of cycle-phase use matters here.
+        // Phase baselines and cycle pattern history are no longer read: no rule uses them to change a dose.
         if (phase != CyclePhase.Unknown)
         {
             var profile = await db.UserProfiles.AsNoTracking()
@@ -104,13 +105,6 @@ internal static class PostgresCycleReadinessPrescription
                 phase = CyclePhase.Unknown;
                 phaseProvenance = PhaseReviewProvenance.Unknown;
             }
-            try
-            {
-                if (phase != CyclePhase.Unknown && !string.IsNullOrWhiteSpace(profile?.PhaseBaselinesJson))
-                    baseline = JsonSerializer.Deserialize<CyclePhaseBaselines>(profile.PhaseBaselinesJson, JsonOptions)
-                        ?.ForPhase(phase);
-            }
-            catch (JsonException) { /* Missing personal evidence retains normal dosage. */ }
         }
 
         var fromDate = localDate.AddDays(-CycleReadinessPrescriptionRule.PatternObservationWindowDays);
@@ -141,13 +135,12 @@ internal static class PostgresCycleReadinessPrescription
             .ToDictionaryAsync(row => row.Id, cancellationToken).ConfigureAwait(false);
         var decision = CycleReadinessPrescriptionRule.Evaluate(new CycleReadinessPrescriptionInput(
             phase, phaseProvenance,
-            baseline, score, hasSafetyConcern,
+            null, score, hasSafetyConcern,
             prescription.Exercises.Select(exercise => new CycleReadinessExercise(
                 exercise.Id, exercise.Sets, exercise.OptionalSets, exercise.IsOptional,
                 exerciseRecords.TryGetValue(exercise.Id, out var record) &&
                 record.PlanningSlotId is not null)).ToArray(),
-            PatternObservations: phase == CyclePhase.Unknown ? null :
-                await PostgresCyclePersonalizationEvidence.LoadAsync(db, userId, localDate, timeZoneId, cancellationToken).ConfigureAwait(false),
+            PatternObservations: null,
             EvaluationDate: localDate, SleepHours: checkIn?.SleepHours, RoutineSymptoms: safety.RoutineSymptoms,
             PhaseEstimateReliable: phaseProvenance == PhaseReviewProvenance.Estimated,
             Approval: PlanningReleaseApproval.CycleReadinessPrescription));

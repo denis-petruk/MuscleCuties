@@ -100,12 +100,10 @@
                                             WidthRequest="{StaticResource UiDimension26}"
                                             HeightRequest="{StaticResource UiDimension26}"
                                             VerticalOptions="Center" />
-                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}"
-                                              VerticalOptions="Center">
-                                            <Label Text="{loc:LocalizedText Profile_Details_PreviewHiddenForPrivacy}" Style="{StaticResource MutedLabel}" />
-                                            <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToRevealPreview}"
-                                                   Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
-                                        </Grid>
+                                        <Label Grid.Column="1"
+                                               Text="{loc:LocalizedText Profile_Details_PreviewHiddenForPrivacy}"
+                                               Style="{StaticResource MutedLabel}"
+                                               VerticalOptions="Center" />
                                         <Button
                                             Grid.Column="2"
                                             Text="{loc:LocalizedText Profile_Details_Reveal}"

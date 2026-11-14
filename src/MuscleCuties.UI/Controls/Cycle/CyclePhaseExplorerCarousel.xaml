@@ -53,14 +53,18 @@
                                     Aspect="AspectFit"
                                     VerticalOptions="Center" />
 
-                                <Grid Grid.Column="1" ColumnDefinitions="*, Auto" VerticalOptions="Center">
+                                <!-- The phase name is one long word and the "now" badge is a second block:
+                                     a two-column row broke the name inside the word at accessibility
+                                     sizes, so the row wraps and the badge drops below when it must. -->
+                                <FlexLayout Grid.Column="1" Direction="Row" Wrap="Wrap"
+                                            AlignItems="Center" VerticalOptions="Center">
                                         <Label
+                                            Margin="{StaticResource UiInsets0_0_8_0}"
                                             Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource BodyStrong}"
                                             TextColor="{Binding TextColor}"
                                             LineBreakMode="WordWrap" />
                                         <Border
-                                            Grid.Column="1"
                                             IsVisible="{Binding IsActivePhase}"
                                             BackgroundColor="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}"
                                             StrokeShape="{StaticResource UiRoundRectangleRadius6}"
@@ -72,7 +76,7 @@
                                                 TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                                 LineBreakMode="WordWrap" />
                                         </Border>
-                                </Grid>
+                                </FlexLayout>
                             </Grid>
                         </Border>
                     </DataTemplate>

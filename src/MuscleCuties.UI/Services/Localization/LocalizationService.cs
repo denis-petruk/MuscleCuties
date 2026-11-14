@@ -25,5 +25,14 @@ public sealed class LocalizationService : ILocalizationService
             ? RussianLanguageCode
             : EnglishLanguageCode;
         ActiveLanguage = CurrentLanguage;
+
+        // Date/number/time formatting must follow the selected language, not the OS locale.
+        // Without this, RU copy rendered with a 12-hour clock from an en-US process culture.
+        var culture = CultureInfo.GetCultureInfo(
+            CurrentLanguage == RussianLanguageCode ? "ru-RU" : "en-US");
+        CultureInfo.DefaultThreadCurrentCulture = culture;
+        CultureInfo.DefaultThreadCurrentUICulture = culture;
+        CultureInfo.CurrentCulture = culture;
+        CultureInfo.CurrentUICulture = culture;
     }
 }

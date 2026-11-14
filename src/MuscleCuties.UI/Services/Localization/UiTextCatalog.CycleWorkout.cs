@@ -23,6 +23,20 @@ public static partial class UiTextCatalog
         English["Workout_Overview_Status_Today"] = "Today";
         English["Workout_Overview_Status_Upcoming"] = "Upcoming";
         English["Injury_Log_ReloadAfterChangeFailed"] = "Your change was saved, but the injury log couldn't reload. Try again before training.";
+        English["Injury_Log_EmptyNone_Title"] = "No injuries logged";
+        English["Injury_Log_EmptyNone_Detail"] = "No active injuries are recorded.";
+        English["Injury_Log_EmptyCleared_Title"] = "No active injuries";
+        English["Injury_Log_EmptyCleared_Detail"] = "Cleared injuries are saved in History below.";
+        English["Injury_Pain_0"] = "None";
+        English["Injury_Pain_1"] = "Minimal";
+        English["Injury_Pain_2"] = "Mild";
+        English["Injury_Pain_3"] = "Moderate";
+        English["Injury_Pain_4"] = "Strong";
+        English["Injury_Pain_5"] = "Severe";
+        English["Injury_Log_DeleteFailed"] = "Couldn't delete this injury. Try again.";
+        English["Injury_Log_ClearFailed"] = "Couldn't clear this injury. Try again.";
+        English["Injury_Log_FormNew"] = "New injury";
+        English["Injury_Log_FormEdit"] = "Edit injury";
         English["Injury_Log_ActiveWorkoutPreventsInjury"] = "End or abandon the active workout before recording an injury. Your logged sets will be preserved.";
         English["Injury_Log_WorseningTrigger_Label"] = "Do any movements make it worse?";
         English["Injury_Log_WorseningTrigger_NotAnswered"] = "Not sure yet";
@@ -176,6 +190,7 @@ public static partial class UiTextCatalog
         English["Cycle_PhaseSummary_LutealRecovery"] = "Make room for sleep and recovery when you need it.";
         English["Cycle_PhaseSummary_LutealQuickRule"] = "Record symptoms instead of assuming the phase predicts how you feel.";
         English["Cycle_Calendar_CardAccessibility"] = "Cycle calendar card showing current phase and monthly overview";
+        English["Cycle_Calendar_LastLogFormat"] = "Logged {0}";
         English["Cycle_Calendar_CurrentPhaseFormat"] = "Current phase: {0}";
         English["Cycle_Calendar_LegendAccessibility"] = "Calendar legend: solid fill means recorded observation; border and asterisk mean predicted or estimated phase";
         English["Cycle_Calendar_NextMonthAccessibility"] = "Next month";
@@ -272,9 +287,16 @@ public static partial class UiTextCatalog
         English["Workout_History_DistanceFormat"] = "{0:0.##} km";
         English["Workout_History_DistanceHeader"] = "Distance";
         English["Workout_History_DurationMinutesFormat"] = "{0} min";
+        English["Workout_History_DurationValueFormat"] = "{0} min";
+        English["Workout_History_SetsOneFormat"] = "{0} set";
+        English["Workout_History_SetsFewFormat"] = "{0} sets";
+        English["Workout_History_SetsManyFormat"] = "{0} sets";
         English["Workout_History_NotRecorded"] = "Not recorded";
         English["Workout_History_NoSetDetailsNote"] = "Set details were not recorded.";
         English["Workout_History_NotesUpdatedMessage"] = "Notes and RPE updated.";
+        English["Workout_History_VolumeSummaryFormat"] = "Sets: {0} · Volume: {1} kg";
+        English["Cycle_QuickLog_SaveRequiresInputHint"] =
+            "Mark the period start or end, flow intensity, or a symptom.";
         English["Workout_History_OpenSessionHint"] = "Opens session details";
         English["Workout_History_RpeValueFormat"] = "{0}/10";
         English["Workout_History_SetUpdatedFormat"] = "Set #{0} updated ({1:F1} kg × {2} reps)";

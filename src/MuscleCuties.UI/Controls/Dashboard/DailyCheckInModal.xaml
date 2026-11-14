@@ -36,7 +36,7 @@
                 <dashboardControls:DailyCheckInContent Grid.Row="2" />
                 <!-- Actions stay on the sheet edge instead of riding the end of the scroll. -->
                 <Grid Grid.Row="3"
-                      RowDefinitions="Auto,Auto,Auto" ColumnDefinitions="*,*"
+                      RowDefinitions="Auto,Auto,Auto,Auto"
                       ColumnSpacing="{StaticResource UiSpaceTight}"
                       Padding="{DynamicResource PresentationActionFooterPadding}"
                       IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}"
@@ -46,15 +46,26 @@
                         Style="{StaticResource StateBusyInline}" Grid.Row="1" Grid.ColumnSpan="2"
                         IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                         SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_SavingA11y}" />
-                    <Button Style="{StaticResource ButtonSecondary}" Grid.Row="2" Grid.Column="0"
+                    <!-- Shared footer row: the two actions stack at accessibility sizes instead of
+                         squeezing "Сохранить отметку" into half the sheet. -->
+                    <sharedControls:AdaptiveRow Grid.Row="2" Columns="2">
+                    <Button Style="{StaticResource ButtonSecondary}"
                             Text="{loc:LocalizedText Dashboard_CheckIn_SkipButton}"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                             Command="{Binding SkipCommand}"
                             SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_SkipHint}" />
-                    <Button Style="{StaticResource ButtonPrimary}" Grid.Row="2" Grid.Column="1"
+                    <Button Style="{StaticResource ButtonPrimary}"
                             Text="{loc:LocalizedText Dashboard_CheckIn_SubmitButton}"
                             Command="{Binding SubmitCommand}"
-                            SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_SubmitHint}" />
+                            IsEnabled="{Binding CanSubmit}"
+                            SemanticProperties.Hint="{Binding SubmitHint}" />
+                    </sharedControls:AdaptiveRow>
+                    <Label Grid.Row="3"
+                           Text="{Binding SubmitHint}"
+                           IsVisible="{Binding CanSubmit, Converter={StaticResource InvertedBoolConverter}}"
+                           Style="{StaticResource CaptionLabel}"
+                           HorizontalTextAlignment="Center"
+                           LineBreakMode="WordWrap" />
                 </Grid>
             </Grid>
         </Border>

@@ -10,14 +10,15 @@
     x:DataType="vm:NutritionViewModel">
 
     <Border Style="{StaticResource CardPrimary}">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto, *, Auto"
+        <!-- One column. The header used to share a row with the "Микроэлементы" button in an Auto
+             column; at accessibility sizes that button is wider than the card, which collapsed the
+             text column to a sliver and made the card grow into an empty wall. -->
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto"
               RowSpacing="{StaticResource UiSpacing14}">
 
-            <!-- Row 0: Section header + Micros button -->
+            <!-- Row 0: Section header + Micros button, wrapping when the button needs its own line -->
+            <FlexLayout Grid.Row="0" Direction="Row" Wrap="Wrap" AlignItems="Center">
             <Grid
-                Grid.Row="0"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
                 ColumnDefinitions="24,*"
                 ColumnSpacing="{StaticResource UiSpaceTight}"
                 VerticalOptions="Center">
@@ -35,17 +36,16 @@
                     LineBreakMode="WordWrap"
                     VerticalOptions="Center" />
             </Grid>
-            <Button Grid.Row="0" Grid.Column="2"
+            <Button
                     Style="{StaticResource ButtonSecondary}"
                     Text="{loc:LocalizedText Nutrition_Balance_Micros}"
                     Command="{Binding OpenMicronutrientsModalCommand}"
                     SemanticProperties.Description="{loc:LocalizedText Nutrition_Balance_ViewMicronutrientTargets}" />
+            </FlexLayout>
 
             <!-- Row 2: Calorie icon + value + goal (In-line) -->
             <Grid
                 Grid.Row="1"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
                 ColumnDefinitions="Auto, *"
                 ColumnSpacing="{StaticResource UiSpacing10}"
                 VerticalOptions="Center">
@@ -68,14 +68,17 @@
                     <Label
                         Text="{Binding TargetCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_TargetCaloriesValueKcal}"
                         Style="{StaticResource CaptionLabel}" />
+                    <Label
+                        Text="{Binding ActivityAdjustmentText, StringFormat='{0} activity'}"
+                        IsVisible="{Binding HasActivityAdjustment}"
+                        Style="{StaticResource CaptionLabel}"
+                        TextColor="{StaticResource Primary}" />
                 </VerticalStackLayout>
             </Grid>
 
             <!-- Row 4: Progress bar -->
             <ProgressBar
                 Grid.Row="2"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
                 Progress="{Binding CaloriesProgress}"
                 ProgressColor="{StaticResource Primary}"
                 BackgroundColor="{AppThemeBinding Light={StaticResource TrackMutedLight}, Dark={StaticResource TrackMutedDark}}"
@@ -84,8 +87,6 @@
             <!-- Row 6: Macro grid -->
             <sharedControls:MacroProgressGrid
                 Grid.Row="3"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
                 ProteinText="{Binding ProteinText}"
                 ProteinProgress="{Binding ProteinProgress}"
                 CarbsText="{Binding CarbsText}"

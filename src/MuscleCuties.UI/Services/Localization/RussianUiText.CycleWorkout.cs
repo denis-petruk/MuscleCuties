@@ -23,6 +23,20 @@ internal static partial class RussianUiText
         Values["Workout_Overview_Status_Today"] = "Сегодня";
         Values["Workout_Overview_Status_Upcoming"] = "Предстоит";
         Values["Injury_Log_ReloadAfterChangeFailed"] = "Изменение сохранено, но журнал травм не загрузился. Попробуйте снова перед тренировкой.";
+        Values["Injury_Log_EmptyNone_Title"] = "Травмы не записаны";
+        Values["Injury_Log_EmptyNone_Detail"] = "Активных травм нет.";
+        Values["Injury_Log_EmptyCleared_Title"] = "Нет активных травм";
+        Values["Injury_Log_EmptyCleared_Detail"] = "Завершённые травмы сохранены в истории ниже.";
+        Values["Injury_Pain_0"] = "Нет";
+        Values["Injury_Pain_1"] = "Минимальная";
+        Values["Injury_Pain_2"] = "Лёгкая";
+        Values["Injury_Pain_3"] = "Умеренная";
+        Values["Injury_Pain_4"] = "Сильная";
+        Values["Injury_Pain_5"] = "Очень сильная";
+        Values["Injury_Log_DeleteFailed"] = "Не удалось удалить травму. Попробуйте снова.";
+        Values["Injury_Log_ClearFailed"] = "Не удалось завершить травму. Попробуйте снова.";
+        Values["Injury_Log_FormNew"] = "Новая травма";
+        Values["Injury_Log_FormEdit"] = "Изменить травму";
         Values["Injury_Log_ActiveWorkoutPreventsInjury"] = "Завершите или прервите активную тренировку перед записью травмы. Записанные подходы сохранятся.";
         Values["Injury_Log_WorseningTrigger_Label"] = "Какие движения усиливают боль?";
         Values["Injury_Log_WorseningTrigger_NotAnswered"] = "Пока не знаю";
@@ -176,6 +190,7 @@ internal static partial class RussianUiText
         Values["Cycle_PhaseSummary_LutealRecovery"] = "Уделяйте время сну и восстановлению, когда это нужно.";
         Values["Cycle_PhaseSummary_LutealQuickRule"] = "Записывайте симптомы, а не предполагайте самочувствие по фазе.";
         Values["Cycle_Calendar_CardAccessibility"] = "Календарь цикла с текущей фазой и ежемесячным обзором";
+        Values["Cycle_Calendar_LastLogFormat"] = "Запись от {0}";
         Values["Cycle_Calendar_CurrentPhaseFormat"] = "Текущая фаза: {0}";
         Values["Cycle_Calendar_LegendAccessibility"] = "Обозначения календаря: сплошная заливка — записанное наблюдение; контур и звёздочка — прогноз или оценка фазы.";
         Values["Cycle_Calendar_NextMonthAccessibility"] = "На следующий месяц";
@@ -272,9 +287,16 @@ internal static partial class RussianUiText
         Values["Workout_History_DistanceFormat"] = "{0:0.##} км";
         Values["Workout_History_DistanceHeader"] = "Дистанция";
         Values["Workout_History_DurationMinutesFormat"] = "{0} мин";
+        Values["Workout_History_DurationValueFormat"] = "{0} мин";
+        Values["Workout_History_SetsOneFormat"] = "{0} подход";
+        Values["Workout_History_SetsFewFormat"] = "{0} подхода";
+        Values["Workout_History_SetsManyFormat"] = "{0} подходов";
         Values["Workout_History_NotRecorded"] = "Не записано";
         Values["Workout_History_NoSetDetailsNote"] = "Детали подходов не записаны.";
         Values["Workout_History_NotesUpdatedMessage"] = "Заметки и РПЭ обновлены.";
+        Values["Workout_History_VolumeSummaryFormat"] = "Подходы: {0} · Объём: {1} кг";
+        Values["Cycle_QuickLog_SaveRequiresInputHint"] =
+            "Отметьте начало или конец менструации, интенсивность выделений или симптом.";
         Values["Workout_History_OpenSessionHint"] = "Открывает подробности тренировки";
         Values["Workout_History_RpeValueFormat"] = "{0}/10";
         Values["Workout_History_SetUpdatedFormat"] = "Подход №{0} обновлён ({1:F1} кг × {2} повторений)";

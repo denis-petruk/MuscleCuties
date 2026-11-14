@@ -41,7 +41,7 @@ public sealed class InjuryUiHttpPostgresRoundTripTests
     private const int EditedPain = 5;
     private const int TokenLifetimeMinutes = 5;
 
-    [Fact]
+    [PostgresFact]
     public async Task InjuryAnswersSurviveViewModelSaveReadEditAndClearThroughHttpAndPostgres()
     {
         var configured = Environment.GetEnvironmentVariable(ConnectionVariable);

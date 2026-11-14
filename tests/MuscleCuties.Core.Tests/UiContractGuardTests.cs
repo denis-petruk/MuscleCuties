@@ -271,6 +271,673 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// D7: the same fact was stated two or three times on Today, Food Log, Cycle and Profile. Each
+    /// surface keeps one status and, at most, one explanation.
+    /// </summary>
+    [Fact]
+    public void D7_surfaces_state_each_fact_once()
+    {
+        var root = RepositoryRoot();
+        string Read(params string[] parts) => File.ReadAllText(Path.Combine(root, Path.Combine(parts)));
+
+        var readiness = Read("src", "MuscleCuties.UI", "Controls", "Dashboard", "ReadinessRecoveryCard.xaml");
+        Assert.DoesNotContain("Dashboard_Readiness_CheckInPrompt", readiness, StringComparison.Ordinal);
+
+        var workout = Read("src", "MuscleCuties.UI", "Controls", "Dashboard", "DashboardWorkoutCard.xaml");
+        Assert.DoesNotContain("Dashboard_Workout_PillRest", workout, StringComparison.Ordinal);
+
+        var foodLog = Read("src", "MuscleCuties.UI", "Pages", "Nutrition", "FoodLogPage.xaml");
+        Assert.Equal(1, Regex.Matches(foodLog, "FormattedSelectedDate").Count);
+        Assert.DoesNotContain("Nutrition_FoodLog_NoFoodsLoggedYet", foodLog, StringComparison.Ordinal);
+
+        var profile = Read("src", "MuscleCuties.UI", "Controls", "Profile", "ProfileDetailsContent.xaml");
+        Assert.DoesNotContain("Profile_Details_TapToRevealPreview", profile, StringComparison.Ordinal);
+
+        var cycle = Read("src", "MuscleCuties.UI", "ViewModels", "Cycle", "CycleViewModel.cs");
+        Assert.DoesNotContain("log.Phase} logged", cycle, StringComparison.Ordinal);
+
+        var calendar = Read("src", "MuscleCuties.UI", "Controls", "Cycle", "CycleCalendarCard.xaml");
+        Assert.DoesNotContain("Text=\"{Binding PhaseLabel, Converter={StaticResource LocalizedStringConverter}}\"",
+            calendar, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// D13: the water card was a shelf for the yesterday diary and the nutrient breakdown. Those
+    /// actions must live in their own card, not inside the Border that hosts HydrationLogView.
+    /// </summary>
+    [Fact]
+    public void D13_water_card_does_not_host_unrelated_actions()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Pages", "Nutrition", "FoodLogPage.xaml");
+        var document = XDocument.Load(path);
+        var hydration = document.Descendants()
+            .FirstOrDefault(element => element.Name.LocalName == "HydrationLogView");
+        Assert.NotNull(hydration);
+        var card = hydration!.Ancestors()
+            .FirstOrDefault(ancestor => ancestor.Name.LocalName == "Border");
+        Assert.NotNull(card);
+        var labels = card!.Descendants()
+            .Where(element => element.Name.LocalName is "Button" or "Label")
+            .Select(element => (string?)element.Attribute("Text"))
+            .Where(text => text is not null)
+            .ToArray();
+        Assert.DoesNotContain(labels, text => text!.Contains("OpenBreakdown", StringComparison.Ordinal));
+        Assert.DoesNotContain(labels, text => text!.Contains("CopyYesterday", StringComparison.Ordinal));
+        Assert.DoesNotContain(labels, text => text!.Contains("YesterdayDiary", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// D11/D36/D49: a selected option is one filled treatment everywhere, with no second outline
+    /// recipe in a page or a sheet. Selection state is projected through the one shared attached
+    /// property so the shared style owns every colour and semantic change.
+    /// </summary>
+    [Fact]
+    public void D11_D36_D49_selection_uses_one_filled_recipe()
+    {
+        var root = RepositoryRoot();
+        var uiRoot = Path.Combine(root, "src", "MuscleCuties.UI");
+        var stylesPath = Path.Combine(uiRoot, "Resources", "Styles", "Styles.xaml");
+        var styles = XDocument.Load(stylesPath);
+        XElement Style(string key) => styles.Descendants()
+            .Single(element => element.Name.LocalName == "Style" &&
+                (string?)element.Attribute(XName.Get("Key", "http://schemas.microsoft.com/winfx/2009/xaml")) == key);
+
+        var choice = Style("ChoiceCell");
+        var selected = choice.Descendants()
+            .First(element => element.Name.LocalName == "DataTrigger" &&
+                ((string?)element.Attribute("Binding"))?.Contains("IsSelected", StringComparison.Ordinal) == true);
+        var setters = selected.Descendants()
+            .Where(element => element.Name.LocalName == "Setter")
+            .ToDictionary(element => (string?)element.Attribute("Property") ?? string.Empty,
+                element => (string?)element.Attribute("Value") ?? string.Empty, StringComparer.Ordinal);
+
+        Assert.Contains("PrimaryDark", setters.GetValueOrDefault("BackgroundColor"), StringComparison.Ordinal);
+        Assert.DoesNotContain("ChoiceSelectedSurface", setters.GetValueOrDefault("BackgroundColor"), StringComparison.Ordinal);
+        Assert.True(
+            !setters.TryGetValue("Stroke", out var selectedStroke) ||
+            selectedStroke.Contains("Transparent", StringComparison.Ordinal),
+            $"A filled selection cell must not draw a second outline: {selectedStroke}");
+        Assert.True(
+            !setters.TryGetValue("StrokeThickness", out var selectedThickness) ||
+            selectedThickness.Contains("UiStrokeWidth0", StringComparison.Ordinal),
+            $"A filled selection cell must have no stroke width: {selectedThickness}");
+
+        var dayStrip = Style("DayStripCell");
+        Assert.Contains("ChoiceCell", (string?)dayStrip.Attribute("BasedOn"), StringComparison.Ordinal);
+
+        // The cell that paints the fill also owns the label ink: an item-flag trigger left
+        // selected chips with dark text on the dark accent.
+        var choiceLabel = Style("ChoiceCellLabel");
+        var choiceLabelTrigger = choiceLabel.Descendants()
+            .Single(element => element.Name.LocalName == "DataTrigger");
+        Assert.Contains(
+            "AncestorType={x:Type sharedControls:SelectionCell}",
+            (string?)choiceLabelTrigger.Attribute("Binding"),
+            StringComparison.Ordinal);
+
+        string[] migratedSurfaces =
+        [
+            Path.Combine("Controls", "Nutrition", "MealEntryModal.xaml"),
+            Path.Combine("Controls", "Nutrition", "MealEditorModal.xaml"),
+            Path.Combine("Controls", "Cycle", "CycleQuickLogBottomSheet.xaml"),
+            Path.Combine("Pages", "Workout", "WorkoutPage.xaml"),
+            Path.Combine("Pages", "Workout", "WorkoutHistoryPage.xaml"),
+            Path.Combine("Pages", "Nutrition", "FoodLogPage.xaml")
+        ];
+        var violations = new List<string>();
+        foreach (var relative in migratedSurfaces)
+        {
+            var text = File.ReadAllText(Path.Combine(uiRoot, relative));
+            if (text.Contains("ChoiceSelectedSurface", StringComparison.Ordinal) ||
+                text.Contains("ChoiceSelectedStroke", StringComparison.Ordinal))
+                violations.Add($"{relative}: restates the selected surface or stroke instead of using ChoiceCell");
+            if (!text.Contains("SelectionCell", StringComparison.Ordinal) ||
+                !text.Contains("IsSelected=", StringComparison.Ordinal))
+                violations.Add($"{relative}: does not project selection through the shared SelectionCell");
+        }
+
+        var mealEntry = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Nutrition", "MealEntryModal.xaml"));
+        var mealEditor = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Nutrition", "MealEditorModal.xaml"));
+        Assert.Contains("sharedControls:ModalSheetHeader", mealEntry, StringComparison.Ordinal);
+        Assert.Contains("shared:ModalSheetHeader", mealEditor, StringComparison.Ordinal);
+        Assert.DoesNotContain("PillBadge", mealEditor, StringComparison.Ordinal);
+        Assert.Contains("SelectedMealDateText", mealEditor, StringComparison.Ordinal);
+        Assert.Contains("SelectedMealTime, StringFormat", mealEditor, StringComparison.Ordinal);
+        Assert.DoesNotContain("UiInsets6_0_0_0", mealEditor, StringComparison.Ordinal);
+
+        var workoutPage = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Workout", "WorkoutPage.xaml"));
+        Assert.Contains("StringFormat='{0:dd}'", workoutPage, StringComparison.Ordinal);
+        Assert.DoesNotContain("StringFormat='{0:dd MMM}'", workoutPage, StringComparison.Ordinal);
+
+        Assert.True(
+            violations.Count == 0,
+            $"{violations.Count} surface(s) still own a selection recipe:\n" + string.Join("\n", violations));
+    }
+
+    /// <summary>
+    /// D14: a disabled commit states what is missing, both to a screen reader and as visible text
+    /// next to the action. Busy-only guards are not prerequisites and are outside this contract.
+    /// </summary>
+    [Fact]
+    public void D14_disabled_commits_publish_a_prerequisite_hint()
+    {
+        var root = RepositoryRoot();
+        var checkIn = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "Controls", "Dashboard", "DailyCheckInModal.xaml"));
+        Assert.Contains("SemanticProperties.Hint=\"{Binding SubmitHint}\"", checkIn, StringComparison.Ordinal);
+        Assert.Contains("Text=\"{Binding SubmitHint}\"", checkIn, StringComparison.Ordinal);
+
+        var editor = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealEditorModal.xaml"));
+        Assert.Contains("SemanticProperties.Hint=\"{Binding LogMealHint}\"", editor, StringComparison.Ordinal);
+        Assert.Contains("Text=\"{Binding LogMealHint}\"", editor, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// D12: an empty meal group is one quiet row, not a card shell nested in the list. The card
+    /// surface must be reserved for groups with food; the empty row must not contain a Border,
+    /// calorie/macro blocks or the template action.
+    /// </summary>
+    [Fact]
+    public void D12_empty_meal_group_is_one_row_without_a_card_surface()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealCardView.xaml");
+        var document = XDocument.Load(path);
+
+        var cardSurface = document.Descendants()
+            .SingleOrDefault(element => element.Name.LocalName == "Border" &&
+                ((string?)element.Attribute("Style"))?.Contains("CardPrimary", StringComparison.Ordinal) == true);
+        Assert.NotNull(cardSurface);
+        Assert.Contains("HasContent", (string?)cardSurface!.Attribute("IsVisible"), StringComparison.Ordinal);
+
+        var emptyRow = document.Descendants()
+            .SingleOrDefault(element => (string?)element.Attribute(XName.Get(
+                "Name", "http://schemas.microsoft.com/winfx/2009/xaml")) == "EmptyMealRow");
+        Assert.NotNull(emptyRow);
+        Assert.Contains("IsEmpty", (string?)emptyRow!.Attribute("IsVisible"), StringComparison.Ordinal);
+        Assert.DoesNotContain(emptyRow.Descendants(), element => element.Name.LocalName == "Border");
+
+        var values = emptyRow.Descendants()
+            .SelectMany(element => element.Attributes())
+            .Select(attribute => attribute.Value)
+            .ToArray();
+        Assert.DoesNotContain(values, value => value.Contains("CaloriesText", StringComparison.Ordinal));
+        Assert.DoesNotContain(values, value => value.Contains("MacrosText", StringComparison.Ordinal));
+        Assert.DoesNotContain(values, value => value.Contains("IngredientsText", StringComparison.Ordinal));
+        Assert.DoesNotContain(values, value => value.Contains("BelowContent", StringComparison.Ordinal));
+        Assert.DoesNotContain(values, value => value.Contains("ShowTemplate", StringComparison.Ordinal));
+        Assert.Single(values, value => value.Contains("{Binding MealName", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The archive card split `Продолжительность` mid-word. The metric header must not wrap at the
+    /// card width the app produces.
+    /// </summary>
+    [Fact]
+    public void Archive_duration_header_does_not_wrap_mid_word()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Pages", "Workout", "WorkoutHistoryPage.xaml");
+        var document = XDocument.Load(path);
+        var label = document.Descendants()
+            .FirstOrDefault(element => element.Name.LocalName == "Label" &&
+                (string?)element.Attribute("Text") == "{loc:LocalizedText Workout_History_DurationHeader}");
+        Assert.NotNull(label);
+        Assert.Equal("NoWrap", (string?)label!.Attribute("LineBreakMode"));
+    }
+
+    /// <summary>
+    /// Archive detail kept its pinned save bar behind the keyboard toolbar (D33): padding only the
+    /// scroll body left the surface's footer row at the screen edge. The frame must inset the whole
+    /// surface, so any pinned footer sits above the keys.
+    /// </summary>
+    [Fact]
+    public void Modal_frame_insets_the_surface_so_a_pinned_footer_clears_the_keyboard()
+    {
+        var frame = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Shared", "AnimatedModalView.cs"));
+        Assert.Contains("surface.Padding = new Thickness", frame, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The modal frame owns the keyboard inset and every sheet body scrolls inside it. A sheet that
+    /// skipped either would put its fields back under the keys, which is the defect the frame fixes
+    /// for all of them at once.
+    /// </summary>
+    [Fact]
+    public void Modal_frame_owns_the_keyboard_inset_and_every_sheet_body_scrolls()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var frame = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Shared", "AnimatedModalView.cs"));
+
+        Assert.Contains("ModalKeyboardInset.Subscribe", frame, StringComparison.Ordinal);
+        Assert.Contains("ApplySheetHeight", frame, StringComparison.Ordinal);
+
+        // A sheet may ship its own body, but the frame must wrap the rest: wrapping is what lets the
+        // shortened sheet scroll instead of clipping its last rows behind the keys.
+        Assert.Contains("EnsureScrollBody", frame, StringComparison.Ordinal);
+        Assert.Contains("new ScrollView", frame, StringComparison.Ordinal);
+
+        // One body only: a sheet that already owns a ScrollView — even nested under its header grid,
+        // as the check-in sheet does — must reuse it rather than nesting a second.
+        Assert.Contains("FindScrollBody(surface.Content)", frame, StringComparison.Ordinal);
+        Assert.DoesNotContain("if (surface.Content is ScrollView existing)", frame, StringComparison.Ordinal);
+        Assert.Contains(
+            "if (FindScrollBody(child) is { } nested)",
+            frame,
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Shortening the sheet and padding its body keeps the focused field above the keys, but the rows
+    /// under it — the picker's first result — stayed behind the keyboard (D51). The frame must therefore
+    /// move the body so the content below the focused field is on screen, not just the field itself.
+    /// </summary>
+    [Fact]
+    public void Modal_frame_reveals_the_content_below_the_focused_field()
+    {
+        var frame = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Shared", "AnimatedModalView.cs"));
+
+        Assert.Contains("RevealContentBelowFocusedField", frame, StringComparison.Ordinal);
+        Assert.Contains("ScrollToAsync(focused, ScrollToPosition.Start", frame, StringComparison.Ordinal);
+        Assert.Contains("SheetFooterReserve", frame, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The floating tab bar is 49 pt plus the 34 pt home inset, and it is drawn over page content.
+    /// With a 32 pt bottom padding the last card scrolls under the bar, which hid the check-in action
+    /// on Today (D37). The shared page padding must therefore clear the bar.
+    /// </summary>
+    [Fact]
+    public void Page_content_padding_clears_the_floating_tab_bar()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Resources", "Styles", "Styles.xaml");
+        var document = XDocument.Load(path);
+        XNamespace maui = "http://schemas.microsoft.com/dotnet/2021/maui";
+
+        var padding = document.Descendants(maui + "Thickness")
+            .FirstOrDefault(element => (string?)element.Attribute(XName.Get("Key", "http://schemas.microsoft.com/winfx/2009/xaml")) ==
+                                      "PresentationPageContentPadding");
+
+        Assert.True(padding is not null, "Styles.xaml no longer declares PresentationPageContentPadding.");
+
+        var bottom = double.Parse(((string)padding!).Split(',')[3], System.Globalization.CultureInfo.InvariantCulture);
+        Assert.True(
+            bottom >= 92,
+            $"PresentationPageContentPadding bottom is {bottom:0} pt; the tab bar covers the last 83 pt of the page, " +
+            "so the final card's action is unreachable (D37).");
+    }
+
+    /// <summary>
+    /// `Дневник питания` is a real button in the section header beside `Еда`, not a tap gesture, and it
+    /// routes through the page's click handler, which reports a visible message instead of failing
+    /// silently. The entry is checked by a cold-launch simulator run; this guard fails if it regresses.
+    /// </summary>
+    [Fact]
+    public void The_daily_log_entry_is_a_real_button_that_routes()
+    {
+        var root = RepositoryRoot();
+        var pagePath = Path.Combine(root, "src", "MuscleCuties.UI", "Pages", "Nutrition", "NutritionPage.xaml");
+        var document = XDocument.Load(pagePath);
+        XNamespace maui = "http://schemas.microsoft.com/dotnet/2021/maui";
+
+        var entry = document.Descendants()
+            .Single(element =>
+                string.Equals((string?)element.Attribute("AutomationId"), "OpenFoodLog", StringComparison.Ordinal));
+
+        Assert.Equal("Button", entry.Name.LocalName);
+        Assert.Equal("OnOpenDailyFoodLogClicked", (string?)entry.Attribute("Clicked"));
+        Assert.Equal("1", (string?)entry.Attributes().Single(attribute => attribute.Name.LocalName == "Grid.Column"));
+
+        // The design position: the section header beside `Еда`.
+        var header = entry.Parent;
+        Assert.NotNull(header);
+        Assert.Contains(
+            header!.Elements(),
+            sibling => sibling.Name.LocalName == "IconSectionHeader");
+
+        Assert.DoesNotContain(
+            document.Descendants(maui + "TapGestureRecognizer")
+                .Select(gesture => (string?)gesture.Attribute("Command")),
+            command => command?.Contains("NavigateToFoodLog", StringComparison.Ordinal) == true);
+
+        var codeBehind = File.ReadAllText(
+            Path.Combine(root, "src", "MuscleCuties.UI", "Pages", "Nutrition", "NutritionPage.xaml.cs"));
+        Assert.Contains("OnOpenDailyFoodLogClicked", codeBehind, StringComparison.Ordinal);
+        Assert.Contains("GoToAsync(NutritionNavigation.FoodLogRoute)", codeBehind, StringComparison.Ordinal);
+        Assert.Contains("ReportDiaryNavigationFailure", codeBehind, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The archive detail summary must speak the app's language: the QA audit read
+    /// `1 working sets · 200 kg vol` in an otherwise Russian sheet (D33).
+    /// </summary>
+    [Fact]
+    public void The_archive_volume_summary_uses_localized_copy()
+    {
+        var root = RepositoryRoot();
+        var modelPath = Path.Combine(
+            root, "src", "MuscleCuties.UI", "Models", "UI", "Workout", "WorkoutArchiveUiModels.cs");
+        var model = File.ReadAllText(modelPath);
+
+        Assert.DoesNotContain("working sets", model, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("kg vol", model, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Workout_History_VolumeSummaryFormat", model, StringComparison.Ordinal);
+
+        Assert.Contains(
+            "Workout_History_VolumeSummaryFormat",
+            File.ReadAllText(Path.Combine(
+                root, "src", "MuscleCuties.UI", "Services", "Localization", "RussianUiText.CycleWorkout.cs")),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "Workout_History_VolumeSummaryFormat",
+            File.ReadAllText(Path.Combine(
+                root, "src", "MuscleCuties.UI", "Services", "Localization", "UiTextCatalog.CycleWorkout.cs")),
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// `Сохранить запись` saved nothing and said nothing when no period mark, flow or symptom was chosen
+    /// (D32). It must be disabled without input and state the prerequisite through its semantics hint.
+    /// </summary>
+    [Fact]
+    public void The_quick_log_save_states_its_prerequisite_when_disabled()
+    {
+        var root = RepositoryRoot();
+        var sheet = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Controls", "Cycle", "CycleQuickLogBottomSheet.xaml"));
+        Assert.Contains(
+            "SemanticProperties.Hint=\"{Binding SaveQuickLogHint}\"", sheet, StringComparison.Ordinal);
+
+        var viewModel = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Cycle", "CycleViewModel.QuickLog.cs"));
+        Assert.Contains("HasQuickLogInput", viewModel, StringComparison.Ordinal);
+        Assert.Contains("&& HasQuickLogInput", viewModel, StringComparison.Ordinal);
+        Assert.Contains("Cycle_QuickLog_SaveRequiresInputHint", viewModel, StringComparison.Ordinal);
+
+        Assert.Contains(
+            "Cycle_QuickLog_SaveRequiresInputHint",
+            File.ReadAllText(Path.Combine(
+                root, "src", "MuscleCuties.UI", "Services", "Localization", "RussianUiText.CycleWorkout.cs")),
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The QA audit read `32g` against `33г` on two screens and `P 32,8g` inside a Russian sheet (D3, D10,
+    /// D26, D28, D38, D43). Every quantity string must come from NutritionFormat; no file may rebuild one
+    /// from a number and an English unit literal.
+    /// </summary>
+    [Fact]
+    public void Quantity_strings_come_from_one_formatter()
+    {
+        var root = RepositoryRoot();
+        var files = new[]
+        {
+            Path.Combine("src", "MuscleCuties.UI", "ViewModels", "Nutrition", "NutritionViewModel.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "ViewModels", "Nutrition", "NutritionViewModel.Suggestions.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "ViewModels", "Nutrition", "FoodLogViewModel.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "ViewModels", "Dashboard", "DashboardViewModel.Trends.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "MealItem.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "NutritionPresentationModels.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "FoodLogUiModels.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "MealSuggestionItem.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "MacroBreakdownItem.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "HistoryIngredientEditor.cs")
+        };
+
+        foreach (var relative in files)
+        {
+            var content = File.ReadAllText(Path.Combine(root, relative));
+            Assert.Contains("NutritionFormat.", content, StringComparison.Ordinal);
+            Assert.DoesNotMatch(@":N[01]\s*}?\s*(kcal|g\b)", content);
+        }
+    }
+
+    /// <summary>
+    /// Meal detail printed `314,2г` beside `32,8 г` on the same sheet. The short form must keep the
+    /// same space-before-unit shape as the long form (D3).
+    /// </summary>
+    [Fact]
+    public void Grams_short_form_keeps_space_before_unit()
+    {
+        var root = RepositoryRoot();
+        var ru = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Services", "Localization",
+            "RussianUiText.NutritionProfileAuth.cs"));
+        Assert.Contains(
+            "Values[\"Nutrition_Format_GramsShort\"] = \"{0:N1} г\";",
+            ru,
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The suggestion sheet printed `Remaining: Б 99,0 г ...` inside the Russian sheet (D3/D38). The
+    /// label belongs to the catalogue, with the formatter owning only the numbers.
+    /// </summary>
+    [Fact]
+    public void Suggestion_remaining_label_is_localized()
+    {
+        var root = RepositoryRoot();
+        var source = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Nutrition",
+            "NutritionViewModel.Suggestions.cs"));
+        Assert.Contains("Nutrition_Breakdown_RemainingFormat", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"Remaining: {", source, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The archive card printed `1800s` and `1 sets` (D26). Duration and set count must render through
+    /// the localized converters that own their plural and unit shapes.
+    /// </summary>
+    [Fact]
+    public void Archive_metrics_use_localized_duration_and_plural()
+    {
+        var root = RepositoryRoot();
+        var page = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Pages", "Workout", "WorkoutHistoryPage.xaml"));
+        Assert.Contains("Converter={StaticResource ArchiveDurationConverter}", page, StringComparison.Ordinal);
+        Assert.Contains("Converter={StaticResource ArchiveSetsConverter}", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("{Binding DurationLabel", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("{Binding SetCountLabel", page, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The archive list row printed `Чт, нояб. 12, 2026` while the detail sheet printed
+    /// `четверг, 12 ноября 2026 г. 09:00` for the same session (D33). Both must read one helper.
+    /// </summary>
+    [Fact]
+    public void Archive_dates_come_from_one_formatter()
+    {
+        var root = RepositoryRoot();
+        var page = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Pages", "Workout", "WorkoutHistoryPage.xaml"));
+        Assert.Contains(
+            "Converter={StaticResource SessionDateConverter}", page, StringComparison.Ordinal);
+
+        var converter = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Resources", "Converters", "SessionDateConverter.cs"));
+        Assert.Contains("DateText.SessionDate", converter, StringComparison.Ordinal);
+
+        var viewModel = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Workout", "WorkoutHistoryViewModel.cs"));
+        Assert.Contains("DateText.SessionStamp", viewModel, StringComparison.Ordinal);
+        Assert.DoesNotContain("ToString(\"D\"", viewModel, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// A Debug build points at `http://127.0.0.1:5080`. When that API is down or has no migrated
+    /// catalogue it answers with an empty page, and the picker showed a permanent no-match state with
+    /// no rows to tap (D51's root cause). The loopback store must therefore be able to fill the gap.
+    /// </summary>
+    [Fact]
+    public void The_debug_picker_has_a_catalogue_when_the_loopback_api_is_empty()
+    {
+        var composition = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Composition", "ApplicationCompositionExtensions.cs"));
+        var store = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Services", "Nutrition", "LoopbackFoodCatalogSearchStore.cs"));
+
+        Assert.Contains("LoopbackFoodCatalogSearchStore", composition, StringComparison.Ordinal);
+        Assert.Contains("AppTargetEnvironment.Local", composition, StringComparison.Ordinal);
+        Assert.Contains("DevelopmentFoodCatalog.Search(query)", store, StringComparison.Ordinal);
+        Assert.Contains("cloud.Count > 0", store, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Results used to appear only after the keyboard was dismissed, because the search ran on submit
+    /// and unfocused the field. Typing now schedules a debounced search, so a hit is visible while the
+    /// keys are still up (D51).
+    /// </summary>
+    [Fact]
+    public void Food_search_runs_while_the_field_stays_focused()
+    {
+        var root = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "ViewModels", "Nutrition");
+        var notifications = File.ReadAllText(Path.Combine(root, "NutritionViewModel.Notifications.cs"));
+        var search = File.ReadAllText(Path.Combine(root, "NutritionViewModel.Search.cs"));
+        var modal = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealEditorModal.xaml.cs"));
+
+        Assert.Contains("ScheduleFoodSearch(value)", notifications, StringComparison.Ordinal);
+        Assert.Contains("SearchDebounceMilliseconds", search, StringComparison.Ordinal);
+        Assert.Contains("Task.Delay(SearchDebounceMilliseconds, cancellationToken)", search, StringComparison.Ordinal);
+        Assert.Contains("SearchEntry.Focused", modal, StringComparison.Ordinal);
+        Assert.Contains("SearchEntry.Unfocused", modal, StringComparison.Ordinal);
+
+        // The old behaviour unfocused the field on submit and hid the results with the keyboard.
+        Assert.DoesNotContain("SearchEntry.Unfocus();", modal, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The sheet has roughly 250 pt above the keyboard. Header + source tabs + ingredient list spend more
+    /// than that, which pushed the picker's result row behind the keys even after the frame learned to
+    /// shorten itself (D51). While the search field is focused the editor therefore drops the rows that
+    /// are not part of the search, and restores them when focus leaves.
+    /// </summary>
+    [Fact]
+    public void Food_picker_collapses_the_rows_that_do_not_belong_to_the_search()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition");
+        var xaml = File.ReadAllText(Path.Combine(uiRoot, "MealEditorModal.xaml"));
+        var code = File.ReadAllText(Path.Combine(uiRoot, "MealEditorModal.xaml.cs"));
+
+        Assert.Contains("x:Name=\"EditorHeaderRow\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"SourceTabsRow\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"IngredientListRow\"", xaml, StringComparison.Ordinal);
+
+        Assert.Contains("SearchEntry.Focused", code, StringComparison.Ordinal);
+        Assert.Contains("SearchEntry.Unfocused", code, StringComparison.Ordinal);
+
+        // Search mode has to hide all three rows, and restore all three.
+        Assert.Contains("EditorHeaderRow.IsVisible = !active;", code, StringComparison.Ordinal);
+        Assert.Contains("SourceTabsRow.IsVisible = !active;", code, StringComparison.Ordinal);
+        Assert.Contains("IngredientListRow.IsVisible = !active;", code, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The toast host floats over the page, and the floating tab bar is 49 pt plus the home inset. A
+    /// toast that keeps the old 20 pt bottom margin sits under the bar (D5/D50), so every toast host has
+    /// to clear the bar through the shared token rather than its own number.
+    /// </summary>
+    [Fact]
+    public void Toast_hosts_clear_the_floating_tab_bar()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var styles = File.ReadAllText(Path.Combine(uiRoot, "Resources", "Styles", "Styles.xaml"));
+
+        Assert.Contains("x:Key=\"UiInsets20_0_20_72\"", styles, StringComparison.Ordinal);
+
+        var hosts = Directory
+            .EnumerateFiles(Path.Combine(uiRoot, "Pages"), "*.xaml", SearchOption.AllDirectories)
+            .Where(path => File.ReadAllText(path).Contains("StatusToastSurface", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.NotEmpty(hosts);
+
+        foreach (var host in hosts)
+        {
+            var text = File.ReadAllText(host);
+            Assert.True(
+                text.Contains("UiInsets20_0_20_72", StringComparison.Ordinal),
+                $"{Path.GetFileName(host)} hosts a status toast without the UiInsets20_0_20_72 clearance; " +
+                "the floating tab bar covers its bottom 49 pt.");
+            Assert.DoesNotContain(
+                "Margin=\"{StaticResource UiInsets20_0_20_20}\"",
+                text,
+                StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
+    /// The meal card header is a three-part row: type icon, meal type, calorie block at the trailing
+    /// edge. A wrapped FlexLayout defaults to Start, which put the calories straight after the word
+    /// (`Завтрак0 ккал`) instead of at the far edge, so the header must state its distribution.
+    /// </summary>
+    [Fact]
+    public void Meal_card_header_pushes_the_calorie_block_to_the_trailing_edge()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealCardView.xaml");
+
+        var document = XDocument.Load(path);
+        XNamespace maui = "http://schemas.microsoft.com/dotnet/2021/maui";
+
+        var header = document.Descendants(maui + "FlexLayout")
+            .FirstOrDefault(element => element.Elements(maui + "Path").Any());
+
+        Assert.True(header is not null, "MealCardView.xaml no longer has the icon + heading header row.");
+
+        var justify = (string?)header!.Attribute("JustifyContent");
+        Assert.True(
+            string.Equals(justify, "SpaceBetween", StringComparison.Ordinal),
+            $"The meal card header must use JustifyContent=\"SpaceBetween\" so the calorie block sits at the\\n" +
+            $"trailing edge; it declares \"{justify ?? "<none>"}\", which renders as `Затронуто0 ккал`.\\n".Replace("Затронуто", "Завтрак"));
+    }
+
+    /// <summary>
+    /// A meal time is a clock reading, not a locale greeting: the Russian interface renders one
+    /// 24-hour value in the field and in the summary chip beside it. The culture-short pattern
+    /// ("t" / ":t}") prints "8:58 PM" under an English device locale, so the field and the chip
+    /// disagreed inside one sheet.
+    /// </summary>
+    [Fact]
+    public void Meal_times_render_one_24_hour_clock_instead_of_the_culture_short_pattern()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var violations = new List<string>();
+
+        var cultureShortPatterns = new[]
+        {
+            "Format=\"t\"",
+            ":t}",
+            "ToString(\"t\""
+        };
+
+        var files = SourceFiles(uiRoot, "*.xaml")
+            .Concat(SourceFiles(uiRoot, "*.cs"));
+
+        foreach (var file in files)
+        {
+            var relative = Relative(file, uiRoot).Replace('\\', '/');
+            if (!relative.Contains("Nutrition", StringComparison.Ordinal))
+                continue;
+
+            var source = File.ReadAllText(file);
+            foreach (var pattern in cultureShortPatterns)
+            {
+                if (source.Contains(pattern, StringComparison.Ordinal))
+                    violations.Add($"{relative}: renders a meal time with the culture-short pattern {pattern}");
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} culture-short meal time(s). Render them through MealTime.Text (HH:mm):\n"
+            + string.Join("\n", violations));
+    }
+
+    /// <summary>
     /// Mirrors the sanctioned colour-exception table in DESIGN.md. A site may only be added by
     /// updating that table, so the documentation and the markup cannot drift apart.
     /// </summary>
@@ -536,6 +1203,10 @@ public sealed class UiContractGuardTests
         var titleStyle = Regex.Match(stylesSource, "<Style x:Key=\"ModalTitle\"[\\s\\S]*?</Style>");
         Assert.True(titleStyle.Success, "ModalTitle style is missing from Styles.xaml.");
         Assert.Contains("SemanticProperties.HeadingLevel", titleStyle.Value);
+        Assert.Contains(
+            "Style=\"{StaticResource ModalTitle}\"",
+            File.ReadAllText(Path.Combine(uiRoot, "Controls", "Shared", "ModalSheetHeader.xaml")),
+            StringComparison.Ordinal);
 
         var missingTitle = new List<string>();
         foreach (var file in SourceFiles(uiRoot, "*.xaml"))
@@ -544,7 +1215,10 @@ public sealed class UiContractGuardTests
             if (document.Root?.Name.LocalName != "AnimatedModalView")
                 continue;
 
+            // A shared ModalSheetHeader owns the title Label and its heading semantics; the
+            // sheet itself only names the control, so accept that one shared wrapper.
             var hasHeading = document.Descendants().Any(element =>
+                element.Name.LocalName == "ModalSheetHeader" ||
                 element.Name.LocalName == "Label" &&
                 (element.Attribute("Style")?.Value.Contains("ModalTitle", StringComparison.Ordinal) == true ||
                  element.Attribute("SemanticProperties.HeadingLevel") is not null));

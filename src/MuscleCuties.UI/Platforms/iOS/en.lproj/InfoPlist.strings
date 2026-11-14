@@ -1,1 +1,4 @@
 "NSPhotoLibraryUsageDescription" = "MuscleCuties opens your photo library when you choose a profile or progress photo.";
+"NSCameraUsageDescription" = "MuscleCuties uses your camera to scan barcodes on food packaging completely offline on your device.";
+"NSHealthShareUsageDescription" = "MuscleCuties reads your steps, active energy, sleep, and heart metrics from Apple Health to pre-populate your daily check-in and customize your daily nutrition targets.";
+"NSHealthUpdateUsageDescription" = "MuscleCuties writes your completed workouts and activity metrics to Apple Health to keep your fitness and recovery data up to date.";

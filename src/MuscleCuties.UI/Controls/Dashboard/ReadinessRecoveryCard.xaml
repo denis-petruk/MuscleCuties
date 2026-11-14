@@ -6,13 +6,17 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:dashboard="clr-namespace:MuscleCuties.UI.Controls.Dashboard"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="{x:Type vm:DashboardViewModel}">
 
     <Border Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
-            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
-                <VerticalStackLayout Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
+            <!-- Title and the check-in pill wrap: the pill is a whole phrase, and beside it the title
+                 broke inside its words at accessibility sizes. -->
+            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                <VerticalStackLayout Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center"
+                                     FlexLayout.Grow="1">
                     <Label Text="{loc:LocalizedText Dashboard_Readiness_Title}"
                            Style="{StaticResource SectionTitle}"
                            />
@@ -20,7 +24,7 @@
                            Style="{StaticResource CaptionSmall}"
                            LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
-                <Border Grid.Column="1"
+                <Border
                         Style="{StaticResource PillBadge}"
                         IsVisible="{Binding NeedsDailyCheckIn}"
                         Padding="{StaticResource UiInsets10_4}"
@@ -30,19 +34,11 @@
                            Style="{StaticResource CaptionLabel}"
                            TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}" />
                 </Border>
-            </Grid>
+            </FlexLayout>
 
-            <Border Style="{StaticResource CardSecondary}"
-                    IsVisible="{Binding HasTodayReadinessRecord, Converter={StaticResource InvertedBoolConverter}}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
-                    <Label Text="{loc:LocalizedText Dashboard_Readiness_CheckInPrompt}"
-                           Style="{StaticResource BodyStrong}"
-                           HorizontalOptions="Center"
-                           HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-            </Border>
-
-            <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_4}"
+            <!-- Readiness and recovery rings. "Восстановление" cannot fit a half width at accessibility
+                 sizes, so the shared row gives each ring its own row there. -->
+            <sharedControls:AdaptiveRow Columns="2"
                   IsVisible="{Binding HasTodayReadinessRecord}">
                 <Border Style="{StaticResource CardSecondary}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
@@ -62,7 +58,7 @@
                             </VerticalStackLayout>
                         </Grid>
                         <Label Text="{loc:LocalizedText Dashboard_Readiness_ReadinessLabel}"
-                               Style="{StaticResource BodyStrong}"
+                               Style="{StaticResource CaptionStrong}"
                                HorizontalOptions="Center"
                                HorizontalTextAlignment="Center" />
                         <Label Text="{Binding ReadinessLabel, Converter={StaticResource LocalizedStringConverter}}"
@@ -72,7 +68,7 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Border Grid.Column="1" Style="{StaticResource CardSecondary}">
+                <Border Style="{StaticResource CardSecondary}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
                         <Grid WidthRequest="{StaticResource UiDimension88}" HeightRequest="{StaticResource UiDimension88}" HorizontalOptions="Center">
                             <dashboard:DashboardProgressRing WidthRequest="{StaticResource UiDimension88}"
@@ -90,7 +86,7 @@
                             </VerticalStackLayout>
                         </Grid>
                         <Label Text="{loc:LocalizedText Dashboard_Readiness_RecoveryLabel}"
-                               Style="{StaticResource BodyStrong}"
+                               Style="{StaticResource CaptionStrong}"
                                HorizontalOptions="Center"
                                HorizontalTextAlignment="Center" />
                         <Label Text="{Binding RecoveryLabel, Converter={StaticResource LocalizedStringConverter}}"
@@ -99,7 +95,7 @@
                                LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
                 </Border>
-            </Grid>
+            </sharedControls:AdaptiveRow>
 
             <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" IsVisible="{Binding HasTodayReadinessScore}">
                 <Label Text="{Binding TodayReadinessBandText, Converter={StaticResource LocalizedStringConverter}}"
@@ -109,7 +105,7 @@
                        LineBreakMode="WordWrap" />
             </VerticalStackLayout>
 
-            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+            <sharedControls:AdaptiveRow Columns="3"
                   IsVisible="{Binding HasTodayReadinessRecord}">
                 <Border Style="{StaticResource CardSecondary}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
@@ -119,7 +115,7 @@
                                FontAttributes="{StaticResource UiFontAttributesBold}" />
                     </Grid>
                 </Border>
-                <Border Grid.Column="1" Style="{StaticResource CardSecondary}">
+                <Border Style="{StaticResource CardSecondary}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                         <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingEnergy}"
                                Style="{StaticResource CaptionLabel}" />
@@ -127,7 +123,7 @@
                                FontAttributes="{StaticResource UiFontAttributesBold}" />
                     </Grid>
                 </Border>
-                <Border Grid.Column="2" Style="{StaticResource CardSecondary}">
+                <Border Style="{StaticResource CardSecondary}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
                         <Label Text="{loc:LocalizedText Dashboard_Readiness_RatingSoreness}"
                                Style="{StaticResource CaptionLabel}" />
@@ -135,7 +131,7 @@
                                FontAttributes="{StaticResource UiFontAttributesBold}" />
                     </Grid>
                 </Border>
-            </Grid>
+            </sharedControls:AdaptiveRow>
 
             <Label Text="{loc:LocalizedText Dashboard_Readiness_ScoreExplanation}"
                    Style="{StaticResource CaptionTiny}"

@@ -7,11 +7,15 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:controls="clr-namespace:MuscleCuties.UI.Controls.Nutrition"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="controls:MealCardView">
 
-    <Border
-        Style="{StaticResource CardPrimary}"
-        SemanticProperties.Description="{Binding SemanticDescription, Source={x:Reference Root}}">
+    <Grid>
+        <Border
+            x:Name="MealCardSurface"
+            IsVisible="{Binding HasContent, Source={x:Reference Root}}"
+            Style="{StaticResource CardPrimary}"
+            SemanticProperties.Description="{Binding SemanticDescription, Source={x:Reference Root}}">
         <Border.GestureRecognizers>
             <TapGestureRecognizer
                 Command="{Binding OpenCommand, Source={x:Reference Root}}"
@@ -19,7 +23,9 @@
         </Border.GestureRecognizers>
 
         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+            <!-- Icon, meal type and calorie block. At accessibility sizes the calorie block is as wide as
+                 the heading, so the row wraps instead of crushing the heading into single letters. -->
+            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center" JustifyContent="SpaceBetween">
                 <Path
                     Data="{Binding MealTypeIconData, Source={x:Reference Root}, Converter={StaticResource StringToGeometryConverter}}"
                     Style="{StaticResource NutritionLineIcon}"
@@ -30,17 +36,19 @@
                     VerticalOptions="Center" />
 
                 <Label
-                    Grid.Column="1"
                     Text="{Binding Heading, Source={x:Reference Root}}"
+                    Margin="{StaticResource UiInsets12_0_0_0}"
                     Style="{StaticResource BodyStrong}"
                     LineBreakMode="WordWrap"
+                    HorizontalTextAlignment="Start"
+                    FlexLayout.Grow="1"
                     VerticalOptions="Center" />
 
                 <VerticalStackLayout
-                    Grid.Column="2"
                     Spacing="{StaticResource UiSpaceMicro}"
-                    HorizontalOptions="End"
-                    VerticalOptions="Center">
+                    Margin="{StaticResource UiInsets12_0_0_0}"
+                    VerticalOptions="Center"
+                    IsVisible="{Binding HasContent, Source={x:Reference Root}}">
                     <Label
                         Text="{Binding CaloriesText, Source={x:Reference Root}}"
                         Style="{StaticResource BodyStrong}"
@@ -52,7 +60,7 @@
                         HorizontalTextAlignment="End"
                         IsVisible="{Binding HasTargetShare, Source={x:Reference Root}}" />
                 </VerticalStackLayout>
-            </Grid>
+            </FlexLayout>
 
             <Label
                 Text="{Binding MealName, Source={x:Reference Root}}"
@@ -69,25 +77,25 @@
             <Label
                 Text="{Binding MacrosText, Source={x:Reference Root}}"
                 Style="{StaticResource MutedLabel}"
-                LineBreakMode="WordWrap" />
+                LineBreakMode="WordWrap"
+                IsVisible="{Binding HasContent, Source={x:Reference Root}}" />
 
             <!-- One action row on every meal card: Edit meal when the meal is editable as one
                  block, then the save-template star. Actions never share the macro line, so the
-                 block keeps the same anatomy with or without the edit action. -->
-            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                 block keeps the same anatomy with or without the edit action. The action is
+                 secondary: the page's own primary action (add food) stays the only dominant one,
+                 which a stack of equally loud primary buttons per card would break. -->
+            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center" JustifyContent="End"
                   IsVisible="{Binding HasActions, Source={x:Reference Root}}">
-                    <Button
-                        Grid.Column="1"
+                    <sharedControls:MealEditAction
+                        Margin="{StaticResource UiInsets0_0_8_0}"
                         Text="{loc:LocalizedText Nutrition_Breakdown_EditMeal}"
-                        Style="{StaticResource ButtonPrimary}"
                         Command="{Binding EditCommand, Source={x:Reference Root}}"
                         CommandParameter="{Binding EditCommandParameter, Source={x:Reference Root}}"
-                        HorizontalOptions="End"
                         IsVisible="{Binding ShowEdit, Source={x:Reference Root}}"
                         SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_EditMeal}" />
 
                     <Border
-                        Grid.Column="2"
                         Style="{StaticResource ModalIconButton}"
                         IsVisible="{Binding ShowTemplate, Source={x:Reference Root}}"
                         SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_SaveMealTemplate}">
@@ -107,9 +115,41 @@
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>
-            </Grid>
+            </FlexLayout>
 
             <ContentView Content="{Binding BelowContent, Source={x:Reference Root}}" />
         </VerticalStackLayout>
-    </Border>
+        </Border>
+
+        <!-- An empty meal group is a row, not a card. Keeping the icon and meal type gives it a
+             place in the list; the only content is the one empty statement. -->
+        <Grid
+            x:Name="EmptyMealRow"
+            IsVisible="{Binding IsEmpty, Source={x:Reference Root}}"
+            ColumnDefinitions="Auto,*,Auto"
+            ColumnSpacing="{StaticResource UiSpaceTight}"
+            Padding="{StaticResource UiInsets0_8}">
+            <Path
+                Data="{Binding MealTypeIconData, Source={x:Reference Root}, Converter={StaticResource StringToGeometryConverter}}"
+                Style="{StaticResource NutritionLineIcon}"
+                Stroke="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                StrokeThickness="{StaticResource UiStrokeWidth1_8}"
+                WidthRequest="{StaticResource UiDimension20}"
+                HeightRequest="{StaticResource UiDimension20}"
+                VerticalOptions="Center" />
+            <Label
+                Grid.Column="1"
+                Text="{Binding Heading, Source={x:Reference Root}}"
+                Style="{StaticResource BodyStrong}"
+                LineBreakMode="WordWrap"
+                VerticalOptions="Center" />
+            <Label
+                Grid.Column="2"
+                Text="{Binding MealName, Source={x:Reference Root}}"
+                Style="{StaticResource MutedLabel}"
+                HorizontalTextAlignment="End"
+                LineBreakMode="WordWrap"
+                VerticalOptions="Center" />
+        </Grid>
+    </Grid>
 </ContentView>

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MuscleCuties.UI.Services.Formatting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Workout;
@@ -312,9 +313,9 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             DetailDistanceFormatted = detail.DistanceKm is { } distanceKm
                 ? UiTextCatalog.Format("Workout_History_DistanceFormat", distanceKm)
                 : string.Empty;
-            var startedText = detail.StartedAt.ToString(
-                detail.StartedAt.TimeOfDay == TimeSpan.Zero ? "D" : "f",
-                CultureInfo.CurrentCulture);
+            var startedText = detail.StartedAt.TimeOfDay == TimeSpan.Zero
+                ? DateText.SessionDate(detail.StartedAt)
+                : DateText.SessionStamp(detail.StartedAt);
             DetailStartedFormatted = detail.TimePrecision == "legacyUnknown"
                 ? UiTextCatalog.Format("Workout_History_TimeZoneUnknownFormat", startedText)
                 : startedText;

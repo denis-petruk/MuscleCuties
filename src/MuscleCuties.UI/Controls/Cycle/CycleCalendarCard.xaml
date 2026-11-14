@@ -16,8 +16,9 @@
         <Grid RowDefinitions="Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto, Auto"
               RowSpacing="{StaticResource UiSpaceCompact}">
 
-            <!-- Row 0: Day summary + period countdown -->
-            <Grid ColumnDefinitions="*, Auto">
+            <!-- Row 0: Day summary + period countdown. The countdown is long Russian text, so the row
+                 wraps: the day summary keeps its line instead of being squeezed into three. -->
+            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center" JustifyContent="SpaceBetween">
                 <Label
                     Text="{Binding CycleDaySummary, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource SectionTitle}"
@@ -25,7 +26,6 @@
                     LineBreakMode="WordWrap"
                     SemanticProperties.HeadingLevel="Level2" />
                 <Label
-                    Grid.Column="1"
                     Text="{Binding PeriodCountdownText, Converter={StaticResource LocalizedStringConverter}}"
                     TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                     Style="{StaticResource MutedLabel}"
@@ -33,10 +33,12 @@
                     IsVisible="{Binding HasActiveCycle}"
                     LineBreakMode="WordWrap"
                     SemanticProperties.Description="{Binding PeriodCountdownText, Converter={StaticResource LocalizedStringConverter}}" />
-            </Grid>
+            </FlexLayout>
 
             <!-- Row 1: Phase icon on neutral BG + Phase label & log info + action button -->
-            <Grid Grid.Row="1" ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+            <!-- Wrapping row: the phase name keeps its own line instead of being squeezed between the
+                 icon and the action button until the word breaks. -->
+            <FlexLayout Grid.Row="1" Direction="Row" Wrap="Wrap" AlignItems="Center" JustifyContent="SpaceBetween">
                 <!-- Neutral BG Container for Cycle SVG -->
                 <Border
                     WidthRequest="{StaticResource UiDimension40}"
@@ -57,14 +59,9 @@
                 </Border>
 
                 <!-- Phase Label & Last Logged Text -->
-                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
-                    <Label
-                        Text="{Binding PhaseLabel, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource SectionTitle}"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                        VerticalOptions="Center"
-                        LineBreakMode="WordWrap"
-                        SemanticProperties.Description="{Binding PhaseLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_Calendar_CurrentPhaseFormat}" />
+                <VerticalStackLayout FlexLayout.Grow="1" FlexLayout.Basis="Auto"
+                                     Margin="{StaticResource UiInsets0_0_8_0}"
+                                     Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
                     <Label
                         Text="{Binding LastPhaseLogText, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
@@ -74,12 +71,12 @@
 
                 <!-- Action Button -->
                 <Button Style="{StaticResource ButtonSecondary}"
-                    Grid.Column="2"
+                    Margin="{StaticResource UiInsets0_8_0_0}"
                     Text="{Binding PhaseLogActionText, Converter={StaticResource LocalizedStringConverter}}"
                     Command="{Binding AdvancePhaseCommand}"
                     VerticalOptions="Center"
                     SemanticProperties.Description="{Binding PhaseLogActionText, Converter={StaticResource LocalizedStringConverter}}" />
-            </Grid>
+            </FlexLayout>
 
             <!-- Row 2: Prediction summary badge -->
             <Label
@@ -113,8 +110,10 @@
                 BindableLayout.ItemsSource="{Binding CalendarStripDays}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="cycleModels:CycleDayItem">
+                        <!-- A minimum, not a fixed width: at the largest text sizes "13" is wider than
+                             the cell and broke into two lines. The strip scrolls, so the cell grows. -->
                         <Border
-                            WidthRequest="{StaticResource UiDimension56}"
+                            MinimumWidthRequest="{StaticResource UiDimension56}"
                             MinimumHeightRequest="{StaticResource UiDimension60}"
                             StrokeShape="{StaticResource UiRoundRectangleRadius12}"
                             BackgroundColor="{Binding BackgroundColor}"
@@ -236,26 +235,15 @@
                 LineBreakMode="WordWrap"
                 IsVisible="{Binding HasCalendarNavigationStatus}" />
 
-            <!-- Expand / Collapse Month Grid Button -->
-            <Border
+            <!-- Expand / Collapse Month Grid. A real button carries the automation identity, so the
+                 control can be tapped by id at accessibility sizes, where its label wraps. -->
+            <Button
                 Grid.Row="7"
-                HeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDeepDark}}"
-                StrokeThickness="{StaticResource UiStrokeWidth0}"
-                SemanticProperties.Description="{Binding MonthExpandButtonText, Converter={StaticResource LocalizedStringConverter}}">
-                <Border.GestureRecognizers>
-                    <TapGestureRecognizer Command="{Binding ToggleMonthGridExpandedCommand}" />
-                </Border.GestureRecognizers>
-                <Label
-                    Text="{Binding MonthExpandButtonText, Converter={StaticResource LocalizedStringConverter}}"
-                    TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                    Style="{StaticResource MutedLabel}"
-                    HorizontalOptions="Center"
-                    VerticalOptions="Center"
-                    LineBreakMode="WordWrap" />
-            </Border>
+                AutomationId="CycleMonthToggle"
+                Style="{StaticResource ButtonSecondary}"
+                Text="{Binding MonthExpandButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                Command="{Binding ToggleMonthGridExpandedCommand}"
+                SemanticProperties.Description="{Binding MonthExpandButtonText, Converter={StaticResource LocalizedStringConverter}}" />
 
             <!-- Expandable Month Grid & Legend -->
             <VerticalStackLayout
@@ -263,51 +251,52 @@
                 Spacing="{StaticResource UiSpaceCompact}"
                 IsVisible="{Binding IsMonthGridExpanded}">
 
-                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Default">
-                    <cycleControls:CycleMonthGrid
-                        ItemsSource="{Binding CalendarDays}"
-                        IsExpanded="{Binding IsMonthGridExpanded}"
-                        DaySelectedCommand="{Binding SelectCalendarDayCommand}" />
-                </ScrollView>
+                <cycleControls:CycleMonthGrid
+                    ItemsSource="{Binding CalendarDays}"
+                    IsExpanded="{Binding IsMonthGridExpanded}"
+                    DaySelectedCommand="{Binding SelectCalendarDayCommand}" />
 
-                <!-- Legend for logged vs predicted -->
-                <Grid
-                    ColumnDefinitions="Auto, Auto, 16, Auto, Auto"
-                    ColumnSpacing="{StaticResource UiSpacing6}"
+                <!-- Each legend entry is its own row: in one wrapping row a swatch could separate
+                     from its label once the text grew, which left a lone dot on the card. -->
+                <VerticalStackLayout
+                    Spacing="{StaticResource UiSpaceMicro}"
                     SemanticProperties.Description="{loc:LocalizedText Cycle_Calendar_LegendAccessibility}">
 
-                    <Border
-                        WidthRequest="{StaticResource UiDimension14}"
-                        HeightRequest="{StaticResource UiDimension14}"
-                        StrokeShape="{StaticResource UiRoundRectangleRadius4}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseDefaultLight}, Dark={StaticResource CyclePhaseDefaultDark}}"
-                        StrokeThickness="{StaticResource UiStrokeWidth0}"
-                        VerticalOptions="Center" />
-                    <Label
-                        Grid.Column="1"
-                        Text="{loc:LocalizedText Cycle_Calendar_RecordedObservationLegend}"
-                        Style="{StaticResource CaptionLabel}"
-                        VerticalOptions="Center"
-                        LineBreakMode="WordWrap" />
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                        <Border
+                            WidthRequest="{StaticResource UiDimension14}"
+                            HeightRequest="{StaticResource UiDimension14}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius4}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseDefaultLight}, Dark={StaticResource CyclePhaseDefaultDark}}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            VerticalOptions="Center" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{loc:LocalizedText Cycle_Calendar_RecordedObservationLegend}"
+                            Style="{StaticResource CaptionLabel}"
+                            VerticalOptions="Center"
+                            LineBreakMode="WordWrap" />
+                    </Grid>
 
-                    <Border
-                        Grid.Column="3"
-                        WidthRequest="{StaticResource UiDimension14}"
-                        HeightRequest="{StaticResource UiDimension14}"
-                        StrokeShape="{StaticResource UiRoundRectangleRadius4}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseDefaultLight}, Dark={StaticResource CyclePhaseDefaultDark}}"
-                        Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
-                        StrokeThickness="{StaticResource UiStrokeWidth1}"
-                        Opacity="{StaticResource UiOpacityEstimatedDay}"
-                        VerticalOptions="Center" />
-                    <Label
-                        Grid.Column="4"
-                        Text="{loc:LocalizedText Cycle_Calendar_PredictedEstimatedLegend}"
-                        Style="{StaticResource CaptionLabel}"
-                        FontAttributes="{StaticResource UiFontAttributesItalic}"
-                        VerticalOptions="Center"
-                        LineBreakMode="WordWrap" />
-                </Grid>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                        <Border
+                            WidthRequest="{StaticResource UiDimension14}"
+                            HeightRequest="{StaticResource UiDimension14}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius4}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource CyclePhaseDefaultLight}, Dark={StaticResource CyclePhaseDefaultDark}}"
+                            Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                            StrokeThickness="{StaticResource UiStrokeWidth1}"
+                            Opacity="{StaticResource UiOpacityEstimatedDay}"
+                            VerticalOptions="Center" />
+                        <Label
+                            Grid.Column="1"
+                            Text="{loc:LocalizedText Cycle_Calendar_PredictedEstimatedLegend}"
+                            Style="{StaticResource CaptionLabel}"
+                            FontAttributes="{StaticResource UiFontAttributesItalic}"
+                            VerticalOptions="Center"
+                            LineBreakMode="WordWrap" />
+                    </Grid>
+                </VerticalStackLayout>
             </VerticalStackLayout>
 
         </Grid>

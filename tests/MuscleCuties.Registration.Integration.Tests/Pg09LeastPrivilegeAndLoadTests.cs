@@ -25,7 +25,7 @@ public sealed class Pg09LeastPrivilegeAndLoadTests(ITestOutputHelper output)
     private const int ConnectionTimeoutSeconds = 10;
     private const double NinetyFifthPercentile = 0.95;
 
-    [Fact]
+    [PostgresFact]
     public async Task DisposableFixtureUsesRestrictedMigratorAndBoundedPool()
     {
         var baseConnection = RequireDisposableConnection();

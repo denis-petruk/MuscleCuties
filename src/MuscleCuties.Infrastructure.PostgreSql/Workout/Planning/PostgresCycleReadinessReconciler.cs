@@ -165,11 +165,11 @@ internal static class PostgresCycleReadinessReconciler
         var before = original[item.Id];
         return item.IsOptional && !string.IsNullOrWhiteSpace(before.PlanningSlotId) && before.Sets - item.Sets == SingleSetReduction &&
             item.OptionalSets == Math.Min(before.OptionalSets, item.Sets - MinimumWorkingSets) &&
+            // Only a current daily-readiness reduction is a valid new adjustment (DK1). Phase-only and pattern reasons
+            // remain readable for historical rows but can no longer be produced or accepted.
             ((adjusted.DoseAdjustmentReasonCode, adjusted.DoseAdjustmentConfidence) switch
             {
                 (CycleReadinessPrescriptionRule.DailyReadinessAdjustment, nameof(CycleReadinessConfidence.Current)) => true,
-                (CycleReadinessPrescriptionRule.ProvisionalPhaseAdjustment, nameof(CycleReadinessConfidence.Provisional)) => true,
-                (CycleReadinessPrescriptionRule.RepeatedPhaseAdjustment, nameof(CycleReadinessConfidence.Repeated)) => true,
                 _ => false
             });
     }

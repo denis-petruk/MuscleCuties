@@ -16,7 +16,7 @@ public sealed class InjuryEpisodeIsolationPersistenceTests
     private const int SyntheticRepetitions = 1;
     private const string UtcZone = "UTC";
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task DeletedInjurySourceRetainsEpisodeAndPendingSafetyReconciliation()
     {
         await using var db = CreateContext();
@@ -57,7 +57,7 @@ public sealed class InjuryEpisodeIsolationPersistenceTests
         await transaction.RollbackAsync();
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task EpisodeAndPrescriptionLinksRespectTenantIsolation()
     {
         await using var db = CreateContext();

@@ -7,6 +7,7 @@
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="vm:DashboardViewModel">
 
     <Border
@@ -15,7 +16,9 @@
         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
 
             <!-- Header Row: Icon Tile, Title/Badge, and Status Pill -->
-            <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+                <!-- At accessibility sizes the status pill is as wide as the title, so the header wraps
+                     instead of squeezing the workout name into one letter per line. -->
                 <Border
                     WidthRequest="{StaticResource UiDimension42}"
                     HeightRequest="{StaticResource UiDimension42}"
@@ -62,7 +65,7 @@
                 </Border>
 
                 <!-- Titles: Badge + Main Name -->
-                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
+                <VerticalStackLayout Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center" Margin="{StaticResource UiInsets0_0_8_0}">
                     <Label
                         Text="{Binding WorkoutBadgeText, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
@@ -76,7 +79,7 @@
 
                 <!-- Pill on the right: REST DAY or TRAINING -->
                 <Border
-                    Grid.Column="2"
+                    IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
                     StrokeShape="{StaticResource UiRoundRectangleRadius999}"
                     StrokeThickness="{StaticResource UiStrokeWidth0}"
                     Padding="{StaticResource UiInsets10_4}"
@@ -92,23 +95,18 @@
                         </DataTrigger>
                     </Border.Triggers>
 
-                    <Label
-                        Style="{StaticResource CaptionLabel}"
-                        VerticalOptions="Center">
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="True">
-                                <Setter Property="Text" Value="REST DAY" />
-                                <Setter Property="TextColor"
-                                        Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}" />
-                            </DataTrigger>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="False">
-                                <Setter Property="Text" Value="TRAINING" />
-                                <Setter Property="TextColor" Value="{Binding WorkoutActivityTextColor}" />
-                            </DataTrigger>
-                        </Label.Triggers>
-                    </Label>
+                    <Border>
+                        <Grid>
+                            <Label
+                                Text="{loc:LocalizedText Dashboard_Workout_PillTraining}"
+                                IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
+                                TextColor="{Binding WorkoutActivityTextColor}"
+                                Style="{StaticResource CaptionLabel}"
+                                VerticalOptions="Center" />
+                        </Grid>
+                    </Border>
                 </Border>
-            </Grid>
+            </FlexLayout>
 
             <!-- Activity Sections for Workout days -->
             <FlexLayout
@@ -141,12 +139,19 @@
                 LineBreakMode="WordWrap"
                 Margin="{StaticResource UiInsets0_Minus4_0_0}" />
 
-            <!-- Structured 3-column Visual Metric Tiles -->
-            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
-                  IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}">
+            <!-- Metric tiles. Each tile holds one unbreakable Russian word ("Продолжительность",
+                 "Интенсивность"), so three star columns cannot hold them at accessibility sizes: the
+                 headers measured unconstrained and painted over each other. The shared adaptive row
+                 keeps three across at the standard sizes and gives each tile its own row when the
+                 reader's text size is an accessibility size. -->
+            <sharedControls:AdaptiveRow Columns="3"
+                        IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}">
                 <!-- Tile 1: Duration -->
                 <Grid
-                    Padding="{StaticResource UiInsets0_8}">
+                    Padding="{StaticResource UiInsets0_8}"
+                    FlexLayout.Grow="1"
+                    FlexLayout.Basis="Auto"
+                    Margin="{StaticResource UiInsets0_0_6_4}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -172,8 +177,10 @@
 
                 <!-- Tile 2: Exercises -->
                 <Grid
-                    Grid.Column="1"
-                    Padding="{StaticResource UiInsets0_8}">
+                    Padding="{StaticResource UiInsets0_8}"
+                    FlexLayout.Grow="1"
+                    FlexLayout.Basis="Auto"
+                    Margin="{StaticResource UiInsets0_0_6_4}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -199,8 +206,10 @@
 
                 <!-- Tile 3: Intensity -->
                 <Grid
-                    Grid.Column="2"
-                    Padding="{StaticResource UiInsets0_8}">
+                    Padding="{StaticResource UiInsets0_8}"
+                    FlexLayout.Grow="1"
+                    FlexLayout.Basis="Auto"
+                    Margin="{StaticResource UiInsets0_0_6_4}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -223,7 +232,7 @@
                             HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
                 </Grid>
-            </Grid>
+            </sharedControls:AdaptiveRow>
 
             <!-- Rest Day Recovery Tip / Guidance (Only on Rest Day) -->
             <Border IsVisible="{Binding IsRestDay}" Style="{StaticResource CardSecondary}">
@@ -247,15 +256,9 @@
             <!-- Action Button -->
             <Button
                 Style="{StaticResource ButtonPrimary}"
-                Text="{loc:LocalizedText Dashboard_Workout_StartWorkout}"
+                Text="{Binding WorkoutActionText}"
                 Command="{Binding StartWorkoutCommand}"
-                SemanticProperties.Description="{loc:LocalizedText Dashboard_Workout_OpenTodayPlanA11y}">
-                <Button.Triggers>
-                    <DataTrigger TargetType="Button" Binding="{Binding IsRestDay}" Value="True">
-                        <Setter Property="Text" Value="{loc:LocalizedText Dashboard_Workout_ViewRestDay}" />
-                    </DataTrigger>
-                </Button.Triggers>
-            </Button>
+                SemanticProperties.Description="{loc:LocalizedText Dashboard_Workout_OpenTodayPlanA11y}" />
 
         </VerticalStackLayout>
     </Border>

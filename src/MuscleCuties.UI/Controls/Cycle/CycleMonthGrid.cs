@@ -186,10 +186,15 @@ public sealed class CycleMonthGrid : Grid
 
     private static Border CreateDayCell()
     {
+        // A calendar cell shows a day number and its marker in a seventh of the card width. The shared
+        // button padding leaves too little of that for two digits, so the label wraps one character per
+        // line ("1 / 2 / *"); compact padding and an unwrapped label keep the cell readable at any width.
         var button = new Button
         {
             Style = Application.Current?.Resources["ButtonSecondary"] as Style
-                    ?? throw new InvalidOperationException("The shared secondary button style is unavailable.")
+                    ?? throw new InvalidOperationException("The shared secondary button style is unavailable."),
+            Padding = AppThemeResources.GetThickness("UiInsets2"),
+            LineBreakMode = LineBreakMode.NoWrap
         };
 
         return new Border

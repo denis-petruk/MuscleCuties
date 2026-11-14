@@ -4,6 +4,9 @@ public static class PersonalInfoConstraints
 {
     public const int MinimumEligibleAgeYears =
         MuscleCuties.Core.Domain.Onboarding.BirthDateEligibilityRule.MinimumEligibleAgeYears;
+
+    /// <summary>Cycle length the person has not provided; it is never replaced by a default.</summary>
+    public const int UnsetCycleLength = 0;
 }
 
 public sealed record PersonalInfoProfileDto(

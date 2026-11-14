@@ -29,7 +29,7 @@ public sealed class ReviewedTemplateFloorSourceTests
         };
     }
 
-    [Fact]
+    [PostgresFact]
     public void CompleteMatchingReviewMapsToCoreFloor()
     {
         var row = Row();
@@ -38,7 +38,7 @@ public sealed class ReviewedTemplateFloorSourceTests
         Assert.Equal(SyntheticWorkingSets, floors[row.TemplateId].MinimumWorkingSets);
     }
 
-    [Fact]
+    [PostgresFact]
     public void HistoricalFloorDoesNotRequireExternalEvidenceButMustMatchTemplateVersion()
     {
         var missingEvidence = Row();
@@ -49,7 +49,7 @@ public sealed class ReviewedTemplateFloorSourceTests
         Assert.Empty(ReviewedTemplateFloorSource.Map([wrongVersion]));
     }
 
-    [Fact]
+    [PostgresFact]
     public void IncompleteOrMalformedSlotReviewCannotEnableFloor()
     {
         var row = Row();

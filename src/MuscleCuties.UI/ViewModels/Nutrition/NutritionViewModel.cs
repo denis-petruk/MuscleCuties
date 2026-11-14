@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,7 +7,9 @@ using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UI.Models.UI.Cycle;
+using MuscleCuties.UI.Navigation;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
@@ -16,8 +19,11 @@ using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
+using MuscleCuties.Core.Services.Health;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
@@ -32,6 +38,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     private readonly FoodPortionCatalog _foodPortionCatalog;
     private readonly ISaveMealTemplateUseCase? _saveMealTemplateUseCase;
     private readonly IGetRecipesAndTemplatesUseCase? _getRecipesAndTemplatesUseCase;
+    private readonly IHealthSyncService? _healthSync;
+    private readonly ICurrentProfileUserIdProvider? _userIdProvider;
+    private readonly IProfilePersonalInfoUseCase? _personalInfoUseCase;
     private NutritionMealDistribution? _mealDistribution;
     [ObservableProperty] private string _addFoodMessage = string.Empty;
     [ObservableProperty] private BreakfastPreference _breakfastPreference = BreakfastPreference.Savoury;
@@ -127,7 +136,10 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         MuscleCuties.UseCases.Features.Nutrition.Barcode.ILookupBarcodeUseCase? barcodeUseCase = null,
         IBarcodeScannerHardwareService? barcodeHardwareService = null,
         ISaveMealTemplateUseCase? saveMealTemplateUseCase = null,
-        IGetRecipesAndTemplatesUseCase? getRecipesAndTemplatesUseCase = null)
+        IGetRecipesAndTemplatesUseCase? getRecipesAndTemplatesUseCase = null,
+        IHealthSyncService? healthSync = null,
+        ICurrentProfileUserIdProvider? userIdProvider = null,
+        IProfilePersonalInfoUseCase? personalInfoUseCase = null)
     {
         _overviewUseCase = overviewUseCase;
         _searchUseCase = searchUseCase;
@@ -139,6 +151,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         _barcodeHardwareService = barcodeHardwareService;
         _saveMealTemplateUseCase = saveMealTemplateUseCase;
         _getRecipesAndTemplatesUseCase = getRecipesAndTemplatesUseCase;
+        _healthSync = healthSync;
+        _userIdProvider = userIdProvider;
+        _personalInfoUseCase = personalInfoUseCase;
         if (_changeNotifier is not null) _changeNotifier.NutritionChanged += OnNutritionChanged;
 
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
@@ -286,10 +301,10 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         : IsIngredientSearchVisible ? "Add food"
         : IsEditingMeal ? "Edit meal" : "Log meal";
 
-    public string MealDraftCaloriesText => $"{MealIngredients.Sum(i => i.CaloriesForAmount):N0} kcal";
-    public string MealDraftProteinText => $"{MealIngredients.Sum(i => i.ProteinForAmount):N1} g";
-    public string MealDraftCarbsText => $"{MealIngredients.Sum(i => i.CarbsForAmount):N1} g";
-    public string MealDraftFatsText => $"{MealIngredients.Sum(i => i.FatsForAmount):N1} g";
+    public string MealDraftCaloriesText => NutritionFormat.Calories(MealIngredients.Sum(i => i.CaloriesForAmount));
+    public string MealDraftProteinText => NutritionFormat.Grams(MealIngredients.Sum(i => i.ProteinForAmount));
+    public string MealDraftCarbsText => NutritionFormat.Grams(MealIngredients.Sum(i => i.CarbsForAmount));
+    public string MealDraftFatsText => NutritionFormat.Grams(MealIngredients.Sum(i => i.FatsForAmount));
 
     public string CustomFoodToggleText => IsCustomFoodPanelVisible ? "Hide custom food" : "Create custom food";
     public string BrowseMoreFoodsButtonText => IsBrowsingMoreFoods ? "Browsing..." : "Browse more";
@@ -307,16 +322,16 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             var fats = MealIngredients.Sum(i => i.FatsForAmount);
             var ingredientLabel = MealIngredients.Count == 1 ? "ingredient" : "ingredients";
             return
-                $"{MealIngredients.Count} {ingredientLabel} · {calories:N0} kcal · P {protein:N1}g · C {carbs:N1}g · F {fats:N1}g";
+                $"{MealIngredients.Count} {ingredientLabel} · {NutritionFormat.Calories(calories)} · {NutritionFormat.Macros(protein, carbs, fats)}";
         }
     }
 
-    public string LogMealButtonText => IsEditingMeal ? "Save meal" : "Log meal";
+    public string LogMealButtonText => MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(IsEditingMeal ? "Nutrition_Meal_SaveButton" : "Nutrition_Meal_LogButton");
     public bool IsMealContextEditorVisible => !IsMealChoiceLocked && IsMealContextExpanded;
     public bool IsMealContextSummaryVisible => IsMealChoiceLocked || !IsMealContextExpanded;
     public bool CanChangeMealContext => !IsMealChoiceLocked;
     public string MealChoiceSummary =>
-        $"{UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}")} · {DateTime.Today.Add(SelectedMealTime):t}";
+        $"{UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}")} · {MealTime.Text(SelectedMealTime)}";
 
     public string SelectedMealTypeText =>
         UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}");
@@ -326,8 +341,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             ? _editingMealDate.ToString("MMM d", CultureInfo.CurrentCulture)
             : UiTextCatalog.Get("Common_Today");
 
-    public string SelectedMealTimeText =>
-        DateTime.Today.Add(SelectedMealTime).ToString("t", CultureInfo.CurrentCulture);
+    public string SelectedMealTimeText => MealTime.Text(SelectedMealTime);
 
     public bool IsFoodSourceTabsVisible =>
         IsFoodFinderExpanded && SelectedFoodResult is null && !IsCustomFoodPanelVisible;
@@ -442,6 +456,49 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             TargetCarbs = response.Targets.Carbs;
             TargetFats = response.Targets.Fats;
             _mealDistribution = NutritionPresentationMapper.FromMealDistribution(response.Targets.MealDistribution);
+
+            if (_healthSync is not null && _userIdProvider is not null)
+            {
+                var userId = await _userIdProvider.GetCurrentUserIdAsync();
+                if (userId > 0)
+                {
+                    var healthSummary = await _healthSync.GetCachedWeeklySummaryAsync(userId);
+                    if (healthSummary is not null && healthSummary.HasMovementData)
+                    {
+                        // No invented defaults: without a known weight and age there is no activity adjustment.
+                        var weightKg = 0f;
+                        var age = 0;
+                        if (_personalInfoUseCase is not null)
+                        {
+                            var info = await _personalInfoUseCase.LoadAsync();
+                            if (info.Profile is not null)
+                            {
+                                if (info.Profile.Weight > 0) weightKg = info.Profile.Weight;
+                                if (info.Profile.DateOfBirth != default)
+                                {
+                                    age = DateTime.Today.Year - info.Profile.DateOfBirth.Year;
+                                    if (info.Profile.DateOfBirth.Date > DateTime.Today.AddYears(-age)) age--;
+                                }
+                            }
+                        }
+                        var adjustment = weightKg > 0f && age > 0
+                            ? HealthEnergyAdjustment.CalculateDailyCalories(healthSummary, weightKg, age, 3, CurrentPhase)
+                            : 0f;
+                        ActivityAdjustmentCalories = adjustment;
+                        HasActivityAdjustment = adjustment != 0f;
+                        ActivityAdjustmentText = HasActivityAdjustment
+                            ? (adjustment > 0 ? $"+{NutritionFormat.Calories(adjustment)}" : NutritionFormat.Calories(adjustment))
+                            : string.Empty;
+                        TargetCalories += adjustment;
+                    }
+                    else
+                    {
+                        HasActivityAdjustment = false;
+                        ActivityAdjustmentText = string.Empty;
+                        ActivityAdjustmentCalories = 0f;
+                    }
+                }
+            }
 
             ConsumedCalories = response.Consumed.Calories;
             ConsumedProtein = response.Consumed.Protein;
@@ -607,9 +664,23 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     [RelayCommand]
     public async Task NavigateToFoodLogAsync()
     {
-        if (_navigateAsync is not null)
-            await _navigateAsync("FoodLogPage");
+        if (_navigateAsync is null)
+            return;
+
+        try
+        {
+            await _navigateAsync(NutritionNavigation.FoodLogRoute);
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceError($"[Nutrition] Food log navigation failed: {exception.GetType().Name}");
+            ReportDiaryNavigationFailure();
+        }
     }
+
+    /// <summary>A dead entry point states so instead of leaving the page unchanged and silent.</summary>
+    public void ReportDiaryNavigationFailure() =>
+        ShowPageStatus(UiTextCatalog.Get("Ui_Nutrition_Error_LoadFoods"));
 
     public void Dispose()
     {

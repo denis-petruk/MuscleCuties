@@ -48,6 +48,7 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_EnergySectionTitle"] = "ENERGY";
         English["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Very high";
         English["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Very low";
+        English["Dashboard_CheckIn_HealthKitSleepBadge"] = "Auto-filled from Apple Health ({0}h)";
         English["Dashboard_CheckIn_PlanningTitle"] = "Workout planning";
         English["Dashboard_CheckIn_PlanningSleepQuality"] = "Sleep quality";
         English["Dashboard_CheckIn_PlanningSoreness"] = "Muscle soreness";
@@ -82,8 +83,10 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_StorageNotice"] = "Saved to your private account";
         English["Dashboard_CheckIn_SubmitButton"] = "Save check-in";
         English["Dashboard_CheckIn_SubmitHint"] = "Save your daily check-in";
+        English["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Answer every required question to save your check-in.";
         English["Dashboard_CheckIn_Subtitle"] = "How are you feeling today?";
         English["Dashboard_CheckIn_SuccessMessage"] = "Check-in saved";
+        English["Dashboard_CheckIn_SuggestFromAppleHealth"] = "Suggest ratings from Apple Health";
         English["Dashboard_CheckIn_WeightA11y"] = "Optional body weight in kilograms";
         English["Dashboard_CheckIn_WeightHint"] = "Leave empty to skip weight entry";
         English["Dashboard_CheckIn_WeightPlaceholderKg"] = "kg";
@@ -161,6 +164,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Phase_MissingHeader"] = "This week · Set your cycle phase";
         English["Dashboard_Phase_HeaderFormat"] = "This week · {0}";
         English["Dashboard_Phase_StatusDayFormat"] = "{0} · Day {1} / {2}";
+        English["Dashboard_Phase_StatusDayEstimateFormat"] = "{0} · Day {1} of ~{2} · estimate";
         English["Dashboard_Phase_StatusSelectedFormat"] = "{0} · Phase selected";
         English["Dashboard_Phase_TitleRecovery"] = "Recovery rhythm";
         English["Dashboard_Phase_TitleBuild"] = "Build momentum";
@@ -203,6 +207,8 @@ public static partial class UiTextCatalog
         English["Dashboard_Trend_WeightMedian"] = "Weight · rolling median";
         English["Dashboard_Workout_Duration"] = "Duration";
         English["Dashboard_Workout_CountActivity"] = "Activity";
+        English["Dashboard_Workout_PillRest"] = "REST DAY";
+        English["Dashboard_Workout_PillTraining"] = "TRAINING";
         English["Dashboard_Workout_CountSets"] = "Sets";
         English["Dashboard_Workout_CountExercises"] = "Exercises";
         English["Dashboard_Workout_CountRecovery"] = "Recovery";
@@ -232,5 +238,10 @@ public static partial class UiTextCatalog
         English["Dashboard_Workout_RestGuidance"] =
             "Rest day: keep movement light and let sleep and hydration do the work.";
         English["Dashboard_Workout_ViewRestDay"] = "View rest day";
+        English["Dashboard_CheckIn_HealthRationaleTitle"] = "Use Apple Health for today's check-in?";
+        English["Dashboard_CheckIn_HealthRationaleBody"] = "MuscleCuties reads steps, sleep, heart rate and HRV from Apple Health only to suggest your check-in values and your calorie target. Read-only; you can turn it off in Profile.";
+        English["Dashboard_CheckIn_HealthConnect"] = "Connect Apple Health";
+        English["Dashboard_CheckIn_HealthNotNow"] = "Not now";
+        English["Dashboard_Workout_ViewCompleted"] = "View workout";
     }
 }

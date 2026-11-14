@@ -6,6 +6,7 @@ using MuscleCuties.Contracts.Onboarding;
 using MuscleCuties.Core.Data;
 using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Core.Services;
+using MuscleCuties.Core.Services.Health;
 using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.UI.Composition;
 using MuscleCuties.UI.Navigation;
@@ -171,7 +172,10 @@ public static class MauiProgram
             () => NavigateToAsync("//NutritionPage"),
             () => sp.GetRequiredService<IAppPreloadService>().InvalidateDashboard(),
             sp.GetService<UseCases.Features.Nutrition.DailyLog.INutritionChangeNotifier>(),
-            () => NavigateToAsync(nameof(PhotoJourneyVaultPage))));
+            () => NavigateToAsync(nameof(PhotoJourneyVaultPage)),
+            healthSync: sp.GetService<IHealthSyncService>(),
+            userIdProvider: sp.GetService<ICurrentProfileUserIdProvider>(),
+            personalInfo: sp.GetService<IProfilePersonalInfoUseCase>()));
 
         services.AddSingleton<CycleViewModel>(sp => new CycleViewModel(
             sp.GetRequiredService<ICycleOverviewUseCase>(),
@@ -196,7 +200,10 @@ public static class MauiProgram
             sp.GetRequiredService<ILookupBarcodeUseCase>(),
             sp.GetRequiredService<IBarcodeScannerHardwareService>(),
             sp.GetRequiredService<ISaveMealTemplateUseCase>(),
-            sp.GetRequiredService<IGetRecipesAndTemplatesUseCase>()));
+            sp.GetRequiredService<IGetRecipesAndTemplatesUseCase>(),
+            healthSync: sp.GetService<IHealthSyncService>(),
+            userIdProvider: sp.GetService<ICurrentProfileUserIdProvider>(),
+            personalInfoUseCase: sp.GetService<IProfilePersonalInfoUseCase>()));
 
         services.AddSingleton<WorkoutViewModel>(sp => new WorkoutViewModel(
             sp.GetRequiredService<IWorkoutOverviewUseCase>(),
@@ -353,6 +360,9 @@ public static class MauiProgram
         services.AddTransient<ProfileWorkoutPreferencesPage>();
         services.AddTransient<ProfileUnitsDisplayPage>();
         services.AddTransient<ProfileFeedbackPage>();
+        services.AddTransient<ProfileHealthSyncViewModel>(sp => new ProfileHealthSyncViewModel(
+            sp.GetService<IHealthSyncService>(),
+            sp.GetService<ICurrentProfileUserIdProvider>()));
         services.AddTransient<ProfilePrivacyPage>();
         services.AddTransient<FoodLogPage>();
         services.AddTransient<WorkoutHistoryPage>();

@@ -16,10 +16,6 @@
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid RowDefinitions="Auto,*">
-        <Grid Padding="{DynamicResource PresentationPageHeaderPadding}" VerticalOptions="Center">
-            <sharedControls:PageHeader Title="{loc:LocalizedText Nutrition_Page_Nutrition}" ShowBack="False" />
-        </Grid>
-
         <CollectionView
             Grid.Row="1"
             Margin="{DynamicResource PresentationCollectionHorizontalInset}"
@@ -63,25 +59,20 @@
                         Style="{StaticResource BodyLabel}"
                         LineBreakMode="WordWrap" />
 
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
                           Margin="{StaticResource UiInsets4_6_4_0}">
                         <sharedControls:IconSectionHeader
                             Text="{loc:LocalizedText Nutrition_Page_Meals}"
                             IconGlyph="BowlChopsticks24"
                             Margin="0" />
-                        <Label Grid.Column="1"
-                               Text="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
-                               Style="{StaticResource AccentLabel}"
-                               MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                               VerticalTextAlignment="Center"
-                               HorizontalTextAlignment="End"
-                               LineBreakMode="WordWrap"
-                               SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
-                               SemanticProperties.Hint="{loc:LocalizedText Nutrition_Page_OpensDailyFoodLog}">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding NavigateToFoodLogCommand}" />
-                            </Label.GestureRecognizers>
-                        </Label>
+                        <Button Grid.Column="1"
+                                AutomationId="OpenFoodLog"
+                                Text="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
+                                Style="{StaticResource ButtonSecondary}"
+                                HorizontalOptions="End"
+                                Clicked="OnOpenDailyFoodLogClicked"
+                                SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
+                                SemanticProperties.Hint="{loc:LocalizedText Nutrition_Page_OpensDailyFoodLog}" />
                     </Grid>
 
                     <Border

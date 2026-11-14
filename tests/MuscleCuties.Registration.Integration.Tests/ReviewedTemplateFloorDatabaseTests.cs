@@ -18,7 +18,7 @@ public sealed class ReviewedTemplateFloorDatabaseTests
     private const int Sha256HexLength = 64;
     private static readonly DateOnly SyntheticReviewDate = new(2026, 1, 1);
 
-    [Xunit.Fact]
+    [PostgresFact]
     public void ExplicitSyntheticFloorNeedsCompleteVersionedSlotsButNoAttribution()
     {
         var template = StrengthTemplateCatalog.Templates.First();
@@ -33,7 +33,7 @@ public sealed class ReviewedTemplateFloorDatabaseTests
         Xunit.Assert.Empty(ReviewedTemplateFloorSource.Map([row]));
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task FloorLoadChangesFingerprintAndAppRoleCannotWrite()
     {
         var options = CreateOptions();
@@ -78,7 +78,7 @@ public sealed class ReviewedTemplateFloorDatabaseTests
         await tx.RollbackAsync();
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task AppCatalogLockBlocksFloorWriterUntilTransactionEnds()
     {
         var options = CreateOptions();

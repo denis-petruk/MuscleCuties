@@ -12,7 +12,7 @@
     x:DataType="vm:CyclePhaseDetailViewModel"
     Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
-    SemanticProperties.Description="{loc:LocalizedText Cycle_PhaseDetail_PageAccessibility}">
+    >
 
     <ScrollView>
         <VerticalStackLayout
