@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text;
+using MuscleCuties.UI.Services.Formatting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Dashboard;
@@ -121,7 +122,7 @@ public partial class DashboardViewModel
     }
 
     private static string FormatGrams(double? grams) => grams is { } value
-        ? $"{value.ToString("N0", CultureInfo.CurrentCulture)} g"
+        ? NutritionFormat.Grams(value)
         : "—";
 
     private string FormatWeight(double? kilograms) => kilograms is { } value

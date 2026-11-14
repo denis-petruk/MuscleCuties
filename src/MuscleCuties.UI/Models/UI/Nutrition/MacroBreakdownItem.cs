@@ -1,3 +1,4 @@
+using MuscleCuties.UI.Services.Formatting;
 using Microsoft.Maui.Graphics;
 
 using MuscleCuties.UI.Resources.Styles;
@@ -12,8 +13,8 @@ public class MacroBreakdownItem
     public float Progress { get; set; }
     public Color Color { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
 
-    public string AmountText => $"{Grams:N1}g";
-    public string CaloriesText => $"{Calories:N0} kcal";
+    public string AmountText => NutritionFormat.GramsShort(Grams);
+    public string CaloriesText => NutritionFormat.Calories(Calories);
     public string ProgressText => $"{Progress * 100f:N0}%";
 
     public string IconGlyph => Name switch

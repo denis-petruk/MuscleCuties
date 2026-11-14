@@ -1,4 +1,5 @@
 using System.Globalization;
+using MuscleCuties.UI.Services.Formatting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
@@ -68,7 +69,7 @@ public partial class HistoryIngredientEditor : ObservableObject
     public NutritionMacros MacrosForDraft => NutritionPresentationMapper.FromPer100Grams(
         _caloriesPer100Grams, _proteinPer100Grams, _carbsPer100Grams, _fatsPer100Grams, Grams);
 
-    public string DetailText => $"{Grams:N0} g · {MacrosForDraft.NutritionText}";
+    public string DetailText => $"{NutritionFormat.Grams(Grams)} · {MacrosForDraft.NutritionText}";
 
     /// <summary>
     /// The quantity to persist. An untouched or invalid draft keeps the original value, so a failed

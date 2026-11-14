@@ -1,3 +1,5 @@
+using MuscleCuties.UI.Services.Formatting;
+
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
 public class MealIngredientItem
@@ -33,7 +35,7 @@ public class MealIngredientItem
 
             return string.Equals(label, "g", StringComparison.OrdinalIgnoreCase)
                 ? amountText
-                : $"{amountText} · {Grams:N0}g";
+                : $"{amountText} · {NutritionFormat.Grams(Grams)}";
         }
     }
 }

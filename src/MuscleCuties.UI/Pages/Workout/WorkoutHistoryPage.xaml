@@ -150,7 +150,7 @@
                             <!-- Top: Date and RPE Badge -->
                             <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
                                 <Label LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
-                                    Text="{Binding StartedAt, StringFormat='{0:ddd, MMM d, yyyy}'}"
+                                    Text="{Binding StartedAt, Converter={StaticResource SessionDateConverter}}"
  />
                                 <Border
                                     Grid.Column="1"

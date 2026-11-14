@@ -1,3 +1,5 @@
+using MuscleCuties.UI.Services.Formatting;
+
 using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -139,7 +141,7 @@ public partial class NutritionBreakdownPresenter : ObservableObject
     public static string BuildFiberText(IEnumerable<DailyMicronutrientItem> micronutrients)
     {
         var fiber = micronutrients.FirstOrDefault(item => item.Name == "Fiber");
-        return fiber is null ? "0.0g fiber" : $"{fiber.Amount:N1}g fiber";
+        return fiber is null ? UiTextCatalog.Format("Nutrition_Breakdown_FiberFormat", 0d) : UiTextCatalog.Format("Nutrition_Breakdown_FiberFormat", fiber.Amount);
     }
 
     public static string BuildNutrientSummary(IEnumerable<DailyMicronutrientItem> micronutrients)

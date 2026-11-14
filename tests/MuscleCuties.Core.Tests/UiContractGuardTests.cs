@@ -436,6 +436,60 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// The QA audit read `32g` against `33г` on two screens and `P 32,8g` inside a Russian sheet (D3, D10,
+    /// D26, D28, D38, D43). Every quantity string must come from NutritionFormat; no file may rebuild one
+    /// from a number and an English unit literal.
+    /// </summary>
+    [Fact]
+    public void Quantity_strings_come_from_one_formatter()
+    {
+        var root = RepositoryRoot();
+        var files = new[]
+        {
+            Path.Combine("src", "MuscleCuties.UI", "ViewModels", "Nutrition", "NutritionViewModel.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "ViewModels", "Nutrition", "NutritionViewModel.Suggestions.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "ViewModels", "Nutrition", "FoodLogViewModel.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "ViewModels", "Dashboard", "DashboardViewModel.Trends.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "MealItem.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "NutritionPresentationModels.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "FoodLogUiModels.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "MealSuggestionItem.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "MacroBreakdownItem.cs"),
+            Path.Combine("src", "MuscleCuties.UI", "Models", "UI", "Nutrition", "HistoryIngredientEditor.cs")
+        };
+
+        foreach (var relative in files)
+        {
+            var content = File.ReadAllText(Path.Combine(root, relative));
+            Assert.Contains("NutritionFormat.", content, StringComparison.Ordinal);
+            Assert.DoesNotMatch(@":N[01]\s*}?\s*(kcal|g\b)", content);
+        }
+    }
+
+    /// <summary>
+    /// The archive list row printed `Чт, нояб. 12, 2026` while the detail sheet printed
+    /// `четверг, 12 ноября 2026 г. 09:00` for the same session (D33). Both must read one helper.
+    /// </summary>
+    [Fact]
+    public void Archive_dates_come_from_one_formatter()
+    {
+        var root = RepositoryRoot();
+        var page = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Pages", "Workout", "WorkoutHistoryPage.xaml"));
+        Assert.Contains(
+            "Converter={StaticResource SessionDateConverter}", page, StringComparison.Ordinal);
+
+        var converter = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Resources", "Converters", "SessionDateConverter.cs"));
+        Assert.Contains("DateText.SessionDate", converter, StringComparison.Ordinal);
+
+        var viewModel = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Workout", "WorkoutHistoryViewModel.cs"));
+        Assert.Contains("DateText.SessionStamp", viewModel, StringComparison.Ordinal);
+        Assert.DoesNotContain("ToString(\"D\"", viewModel, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// A Debug build points at `http://127.0.0.1:5080`. When that API is down or has no migrated
     /// catalogue it answers with an empty page, and the picker showed a permanent no-match state with
     /// no rows to tap (D51's root cause). The loopback store must therefore be able to fill the gap.

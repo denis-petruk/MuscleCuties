@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Diagnostics;
+using MuscleCuties.UI.Services.Formatting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UI.Models.UI.Nutrition;
@@ -95,7 +96,7 @@ public partial class NutritionViewModel
             var rp = Math.Max(0, TargetProtein - ConsumedProtein);
             var rc = Math.Max(0, TargetCarbs - ConsumedCarbs);
             var rf = Math.Max(0, TargetFats - ConsumedFats);
-            return $"Remaining: P {rp:N0}g  C {rc:N0}g  F {rf:N0}g";
+            return $"Remaining: {NutritionFormat.Macros(rp, rc, rf)}";
         }
     }
 
@@ -451,7 +452,7 @@ public partial class NutritionViewModel
             _ => 0.25f
         };
         var calories = (int)(TargetCalories * targetFraction);
-        return $"{calories:N0} kcal target";
+        return $"{NutritionFormat.Calories(calories)} target";
     }
 
     private static MealSuggestionItem MapSuggestionDtoToItem(NutritionMealSuggestion dto)
