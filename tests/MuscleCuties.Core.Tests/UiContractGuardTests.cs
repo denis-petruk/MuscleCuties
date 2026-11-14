@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using System.Xml;
 using System.Xml.Linq;
+using MuscleCuties.UI.Services.Formatting;
 using Xunit;
 
 namespace MuscleCuties.Core.Tests;
@@ -287,7 +288,7 @@ public sealed class UiContractGuardTests
         Assert.DoesNotContain("Dashboard_Workout_PillRest", workout, StringComparison.Ordinal);
 
         var foodLog = Read("src", "MuscleCuties.UI", "Pages", "Nutrition", "FoodLogPage.xaml");
-        Assert.Equal(1, Regex.Matches(foodLog, "FormattedSelectedDate").Count);
+        Assert.Single(Regex.Matches(foodLog, "FormattedSelectedDate"));
         Assert.DoesNotContain("Nutrition_FoodLog_NoFoodsLoggedYet", foodLog, StringComparison.Ordinal);
 
         var profile = Read("src", "MuscleCuties.UI", "Controls", "Profile", "ProfileDetailsContent.xaml");
@@ -671,6 +672,13 @@ public sealed class UiContractGuardTests
     /// `Чт, нояб. 12, 2026` across surfaces (D10, D26, D28, D33, D38). One helper owns every
     /// user-visible quantity, weight, duration, date and clock; a screen may not build its own shape.
     /// </summary>
+    [Fact]
+    public void DisplayFormat_clock_formats_datetime_and_timespan_as_24_hour()
+    {
+        Assert.Equal("09:07", DisplayFormat.Time(new DateTime(2026, 1, 2, 9, 7, 0)));
+        Assert.Equal("21:07", DisplayFormat.Time(new TimeSpan(21, 7, 0)));
+    }
+
     [Fact]
     public void One_display_formatter_owns_quantity_date_and_time_shapes()
     {

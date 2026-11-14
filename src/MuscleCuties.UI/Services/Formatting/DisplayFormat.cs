@@ -67,9 +67,10 @@ public static class DisplayFormat
 
     public static string WholeNumber(double value) => Math.Round(value).ToString("0", CultureInfo.CurrentCulture);
 
-    public static string Time(DateTime value) => value.TimeOfDay.ToString(ClockPattern, CultureInfo.InvariantCulture);
+    public static string Time(DateTime value) => value.ToString(ClockPattern, CultureInfo.InvariantCulture);
 
-    public static string Time(TimeSpan value) => value.ToString(ClockPattern, CultureInfo.InvariantCulture);
+    // TimeSpan has no HH token: its 24-hour clock token is hh, so the colon must be escaped.
+    public static string Time(TimeSpan value) => value.ToString(@"hh\:mm", CultureInfo.InvariantCulture);
 
     public static string Timer(int seconds) => $"{seconds / 60:00}:{seconds % 60:00}";
 
