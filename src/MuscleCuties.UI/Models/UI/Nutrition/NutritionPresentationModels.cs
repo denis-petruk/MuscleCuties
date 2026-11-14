@@ -1,3 +1,5 @@
+using MuscleCuties.UI.Services.Formatting;
+
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
 public readonly record struct NutritionMacros(
@@ -9,10 +11,10 @@ public readonly record struct NutritionMacros(
     float CarbsCalories,
     float FatsCalories)
 {
-    public string CaloriesText => $"{Calories:N0} kcal";
-    public string MacrosText => $"P {Protein:N0}g  C {Carbs:N0}g  F {Fats:N0}g";
-    public string MacroText => $"P {Protein:N1}g · C {Carbs:N1}g · F {Fats:N1}g";
-    public string NutritionText => $"{Calories:N0} kcal · P {Protein:N1}g · C {Carbs:N1}g · F {Fats:N1}g";
+    public string CaloriesText => NutritionFormat.Calories(Calories);
+    public string MacrosText => NutritionFormat.Macros(Protein, Carbs, Fats);
+    public string MacroText => NutritionFormat.Macros(Protein, Carbs, Fats);
+    public string NutritionText => $"{NutritionFormat.Calories(Calories)} · {NutritionFormat.Macros(Protein, Carbs, Fats)}";
 }
 
 /// <summary>UI-local coverage statement; the presentation layer never binds a use-case DTO.</summary>

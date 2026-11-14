@@ -301,10 +301,10 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         : IsIngredientSearchVisible ? "Add food"
         : IsEditingMeal ? "Edit meal" : "Log meal";
 
-    public string MealDraftCaloriesText => $"{MealIngredients.Sum(i => i.CaloriesForAmount):N0} kcal";
-    public string MealDraftProteinText => $"{MealIngredients.Sum(i => i.ProteinForAmount):N1} g";
-    public string MealDraftCarbsText => $"{MealIngredients.Sum(i => i.CarbsForAmount):N1} g";
-    public string MealDraftFatsText => $"{MealIngredients.Sum(i => i.FatsForAmount):N1} g";
+    public string MealDraftCaloriesText => NutritionFormat.Calories(MealIngredients.Sum(i => i.CaloriesForAmount));
+    public string MealDraftProteinText => NutritionFormat.Grams(MealIngredients.Sum(i => i.ProteinForAmount));
+    public string MealDraftCarbsText => NutritionFormat.Grams(MealIngredients.Sum(i => i.CarbsForAmount));
+    public string MealDraftFatsText => NutritionFormat.Grams(MealIngredients.Sum(i => i.FatsForAmount));
 
     public string CustomFoodToggleText => IsCustomFoodPanelVisible ? "Hide custom food" : "Create custom food";
     public string BrowseMoreFoodsButtonText => IsBrowsingMoreFoods ? "Browsing..." : "Browse more";
@@ -322,7 +322,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             var fats = MealIngredients.Sum(i => i.FatsForAmount);
             var ingredientLabel = MealIngredients.Count == 1 ? "ingredient" : "ingredients";
             return
-                $"{MealIngredients.Count} {ingredientLabel} · {calories:N0} kcal · P {protein:N1}g · C {carbs:N1}g · F {fats:N1}g";
+                $"{MealIngredients.Count} {ingredientLabel} · {NutritionFormat.Calories(calories)} · {NutritionFormat.Macros(protein, carbs, fats)}";
         }
     }
 
@@ -487,7 +487,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
                         ActivityAdjustmentCalories = adjustment;
                         HasActivityAdjustment = adjustment != 0f;
                         ActivityAdjustmentText = HasActivityAdjustment
-                            ? (adjustment > 0 ? $"+{adjustment:N0} kcal" : $"{adjustment:N0} kcal")
+                            ? (adjustment > 0 ? $"+{NutritionFormat.Calories(adjustment)}" : NutritionFormat.Calories(adjustment))
                             : string.Empty;
                         TargetCalories += adjustment;
                     }

@@ -1,3 +1,5 @@
+using MuscleCuties.UI.Services.Formatting;
+
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
@@ -13,12 +15,12 @@ public static class MacroProgressFormatter
 
     public static string FormatCaloriesConsumed(float consumed)
     {
-        return $"{(int)consumed:N0} kcal";
+        return NutritionFormat.Calories((int)consumed);
     }
 
     public static string FormatCaloriesGoal(float target)
     {
-        return $"/ {(int)target:N0} kcal";
+        return $"/ {NutritionFormat.Calories((int)target)}";
     }
 
     public static string FormatGramsText(float consumed, float target)

@@ -189,10 +189,10 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         : UiTextCatalog.Get("Nutrition_FoodLog_LogEntryTitle");
 
     /// <summary>Draft totals for the meal being edited, so the sheet can open on what it contains.</summary>
-    public string EditDraftCaloriesText => $"{EditingIngredients.Sum(i => (double)i.MacrosForDraft.Calories):N0} kcal";
-    public string EditDraftProteinText => $"P {EditingIngredients.Sum(i => (double)i.MacrosForDraft.Protein):N1} g";
-    public string EditDraftCarbsText => $"C {EditingIngredients.Sum(i => (double)i.MacrosForDraft.Carbs):N1} g";
-    public string EditDraftFatsText => $"F {EditingIngredients.Sum(i => (double)i.MacrosForDraft.Fats):N1} g";
+    public string EditDraftCaloriesText => NutritionFormat.Calories(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Calories));
+    public string EditDraftProteinText => NutritionFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Protein));
+    public string EditDraftCarbsText => NutritionFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Carbs));
+    public string EditDraftFatsText => NutritionFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Fats));
     public ObservableCollection<HistoryIngredientEditor> EditingIngredients { get; } = [];
     public IReadOnlyList<MealType> MealCategories { get; } = Enum.GetValues<MealType>();
 
@@ -221,8 +221,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         {
             var diff = TargetCalories - TotalCalories;
             return diff >= 0
-                ? $"{Math.Round(diff, 0):F0} kcal remaining"
-                : $"{Math.Abs(Math.Round(diff, 0)):F0} kcal over";
+                ? $"{NutritionFormat.Calories(Math.Round(diff, 0))} remaining"
+                : $"{NutritionFormat.Calories(Math.Abs(Math.Round(diff, 0)))} over";
         }
     }
 

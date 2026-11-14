@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MuscleCuties.UI.Services.Formatting;
 using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
@@ -21,7 +22,7 @@ public partial class MealItem : ObservableObject
 
     [ObservableProperty] private string _targetShareText = string.Empty;
 
-    public string MacrosSummaryText => $"P {Macros.Protein:N0}g · C {Macros.Carbs:N0}g · F {Macros.Fats:N0}g";
+    public string MacrosSummaryText => NutritionFormat.Macros(Macros.Protein, Macros.Carbs, Macros.Fats);
     public float ProteinCalories => Macros.ProteinCalories;
     public float CarbsCalories => Macros.CarbsCalories;
     public float FatsCalories => Macros.FatsCalories;

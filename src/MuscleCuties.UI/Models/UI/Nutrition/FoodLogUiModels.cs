@@ -76,11 +76,11 @@ public partial class MealSectionUiGroup : ObservableObject
         var f = Math.Round(Items.Sum(i => i.Fat), 1);
 
         SummaryText = Items.Count == 0
-            ? "0 kcal"
-            : $"{cals:F0} kcal · {p:N0}g P · {c:N0}g C · {f:N0}g F";
-        CaloriesText = $"{cals:F0} kcal";
+            ? NutritionFormat.Calories(0)
+            : $"{NutritionFormat.Calories(cals)} · {NutritionFormat.Macros(p, c, f)}";
+        CaloriesText = NutritionFormat.Calories(cals);
         // Same N0 macro summary as Nutrition's meal card; one block reads the same on both pages.
-        MacrosText = $"P {p:N0}g · C {c:N0}g · F {f:N0}g";
+        MacrosText = NutritionFormat.Macros(p, c, f);
         TimeText = Items.Count == 0
             ? string.Empty
             : MealTime.Text(Items[0].LoggedAtTimestamp);
