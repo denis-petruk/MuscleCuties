@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using MuscleCuties.UI.Resources.Styles;
+using MuscleCuties.UI.Services.Localization;
 using Path = Microsoft.Maui.Controls.Shapes.Path;
 
 namespace MuscleCuties.UI.Controls.Shared;
@@ -41,7 +42,8 @@ public class MacroProgressGrid : ContentView
         "M10 3C7 7 5 10 5 13a5 5 0 0 0 10 0c0-3-2-6-5-10z"
     ];
 
-    private static readonly string[] MacroLabels = ["Protein", "Carbs", "Fats"];
+    private static readonly string[] MacroLabelKeys =
+        ["Nutrition_Macro_Protein", "Nutrition_Macro_Carbs", "Nutrition_Macro_Fat"];
     private static readonly string[] StrokeWidthResourceKeys =
         ["UiStrokeWidth1_7", "UiStrokeWidth1_5", "UiStrokeWidth1_6"];
     private readonly BoxView[] _fillBars = new BoxView[3];
@@ -82,7 +84,7 @@ public class MacroProgressGrid : ContentView
 
             var nameLabel = new Label
             {
-                Text = MacroLabels[i],
+                Text = UiTextCatalog.Get(MacroLabelKeys[i]),
                 Style = (Style)Application.Current!.Resources["MutedLabel"]
             };
 
