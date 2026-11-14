@@ -20,18 +20,10 @@
         <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End"
                 MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}">
             <Grid RowDefinitions="Auto,Auto,*,Auto">
-                <Grid ColumnDefinitions="*,Auto" Padding="{DynamicResource PresentationModalHeaderPadding}">
-                    <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Dashboard_CheckIn_PageTitle}"
-                           Style="{StaticResource ModalTitle}" VerticalOptions="Center" />
-                    <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
-                            SemanticProperties.Description="{loc:LocalizedText Common_Close}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer
-                                Command="{Binding CloseCommand, Source={x:Reference Root}, x:DataType=dashboardControls:DailyCheckInModal}" />
-                        </Border.GestureRecognizers>
-                        <Path Style="{StaticResource ModalCloseIcon}" />
-                    </Border>
-                </Grid>
+                <sharedControls:ModalSheetHeader
+                    Title="{loc:LocalizedText Dashboard_CheckIn_PageTitle}"
+                    CloseCommand="{Binding CloseCommand, Source={x:Reference Root}, x:DataType=dashboardControls:DailyCheckInModal}"
+                    CloseDescription="{loc:LocalizedText Common_Close}" />
                 <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
                 <dashboardControls:DailyCheckInContent Grid.Row="2" />
                 <!-- Actions stay on the sheet edge instead of riding the end of the scroll. -->

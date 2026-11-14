@@ -114,6 +114,36 @@ public sealed class WaveAWiringGuardTests
         }
     }
 
+    /// <summary>
+    /// D36: every sheet drew its own title row, and the check-in/detail sheets still hand-built the
+    /// close button beside a wrapping label. One shared header owns the title, muted subtitle and
+    /// close affordance so those rows cannot drift apart again.
+    /// </summary>
+    [Fact]
+    public void Sheets_use_the_shared_sheet_header()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "Controls");
+        var sheets = new[]
+        {
+            Path.Combine(uiRoot, "Nutrition", "MealEntryModal.xaml"),
+            Path.Combine(uiRoot, "Nutrition", "MealEditorModal.xaml"),
+            Path.Combine(uiRoot, "Nutrition", "NutritionBreakdownModal.xaml"),
+            Path.Combine(uiRoot, "Dashboard", "DailyCheckInModal.xaml")
+        };
+
+        foreach (var path in sheets)
+        {
+            var document = XDocument.Load(path);
+            var headers = document.Descendants()
+                .Where(element => element.Name.LocalName == "ModalSheetHeader")
+                .ToArray();
+            Assert.True(headers.Length == 1,
+                $"{Path.GetFileName(path)} must use exactly one ModalSheetHeader, found {headers.Length}.");
+            Assert.DoesNotContain(document.Descendants(), element =>
+                (string?)element.Attribute("Style") is "{StaticResource ModalTitle}" or "{StaticResource ModalSubtitle}");
+        }
+    }
+
     private static XDocument Load(params string[] parts) =>
         XDocument.Load(Path.Combine(RepositoryRoot(), Path.Combine(parts)));
 

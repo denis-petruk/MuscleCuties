@@ -26,36 +26,12 @@
             VerticalOptions="End">
 
             <Grid RowDefinitions="Auto, Auto, *">
-                <Grid
+                <sharedControls:ModalSheetHeader
                     Grid.Row="0"
-                    ColumnDefinitions="*, Auto"
-                    RowDefinitions="Auto, Auto"
-                    ColumnSpacing="{StaticResource UiSpaceCompact}"
-                    RowSpacing="{StaticResource UiSpacing6}"
-                    Padding="{DynamicResource PresentationModalHeaderPadding}">
-                    <Label
-                        Grid.Row="0" Grid.Column="0"
-                        Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource ModalTitle}"
-                        LineBreakMode="WordWrap" />
-                    <Label
-                        Grid.Row="1" Grid.Column="0"
-                        Text="{Binding NutrientSummaryText, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource ModalSubtitle}"
-                        LineBreakMode="WordWrap" />
-                    <Border
-                        Grid.Row="0"
-                        Grid.Column="1"
-                        Grid.RowSpan="2"
-                        Style="{StaticResource ModalIconButton}"
-                        VerticalOptions="Start"
-                        SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_CloseNutritionBreakdown}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding CloseCommand}" />
-                        </Border.GestureRecognizers>
-                        <Path Style="{StaticResource ModalCloseIcon}" />
-                    </Border>
-                </Grid>
+                    Title="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
+                    Subtitle="{Binding NutrientSummaryText, Converter={StaticResource LocalizedStringConverter}}"
+                    CloseCommand="{Binding CloseCommand}"
+                    CloseDescription="{loc:LocalizedText Nutrition_Breakdown_CloseNutritionBreakdown}" />
 
                 <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
 
