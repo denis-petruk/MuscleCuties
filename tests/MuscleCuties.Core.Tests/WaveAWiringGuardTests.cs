@@ -144,6 +144,62 @@ public sealed class WaveAWiringGuardTests
         }
     }
 
+    /// <summary>
+    /// D44: the three workout metric tiles each hold one long Russian word. Three star columns made
+    /// those headers paint over one another at accessibility sizes; the shared adaptive row stacks
+    /// them one per row there and keeps three across at standard sizes.
+    /// </summary>
+    [Fact]
+    public void Today_workout_metrics_use_the_adaptive_row()
+    {
+        var document = Load("src", "MuscleCuties.UI", "Controls", "Dashboard", "DashboardWorkoutCard.xaml");
+        var row = document.Descendants().SingleOrDefault(element =>
+            element.Name.LocalName == "AdaptiveRow" && (string?)element.Attribute("Columns") == "3");
+        Assert.NotNull(row);
+
+        var metricKeys = new[]
+        {
+            "Dashboard_Workout_Duration",
+            "WorkoutCountLabel",
+            "Dashboard_Workout_Intensity"
+        };
+        foreach (var key in metricKeys)
+        {
+            Assert.Contains(row!.Descendants(), element =>
+                ((string?)element.Attribute("Text"))?.Contains(key, StringComparison.Ordinal) == true);
+        }
+
+        Assert.DoesNotContain(row!.Descendants(), element =>
+            (string?)element.Attribute("ColumnDefinitions") == "*,*,*");
+    }
+
+    /// <summary>
+    /// D52: "Использовать шаблон" sat below the sheet's old clipped viewport, so pressing it was a
+    /// silent no-op. The action and its empty-state status must live inside the one scroll body; the
+    /// picker must reveal the catalog's no-templates message instead of an empty panel.
+    /// </summary>
+    [Fact]
+    public void Meal_entry_template_action_is_reachable_and_explains_an_empty_catalog()
+    {
+        var document = Load("src", "MuscleCuties.UI", "Controls", "Nutrition", "MealEntryModal.xaml");
+
+        var button = document.Descendants().SingleOrDefault(element =>
+            element.Name.LocalName == "Button" &&
+            ((string?)element.Attribute("Command"))?.Contains(
+                "ToggleTemplatePickerCommand", StringComparison.Ordinal) == true);
+        Assert.NotNull(button);
+        Assert.Contains(button!.Ancestors(), element => element.Name.LocalName == "ScrollView");
+
+        var status = document.Descendants().SingleOrDefault(element =>
+            element.Name.LocalName == "Label" &&
+            (string?)element.Attribute("Text") == "{Binding MealTemplateStatus}");
+        Assert.NotNull(status);
+        Assert.Equal("{Binding HasMealTemplateStatus}", status!.Attribute("IsVisible")?.Value);
+
+        Assert.Contains(document.Descendants(), element =>
+            (string?)element.Attribute("BindableLayout.ItemsSource") == "{Binding MealTemplates}");
+    }
+
     private static XDocument Load(params string[] parts) =>
         XDocument.Load(Path.Combine(RepositoryRoot(), Path.Combine(parts)));
 
