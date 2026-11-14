@@ -1,107 +1,63 @@
-# STATUS
+# Status — QA plan implementation, branch `fix/qa-audit-followups`
 
-Report: **`QA_REPORT.md`** (project root, untracked). This file is the handoff for the same pass.
+## 1. Commits
 
-## 1. Changed files
+Six commits on `fix/qa-audit-followups`, D54 kept separate from the Wave A work:
 
-- `QA_REPORT.md` — the audit report; new file, not committed.
-- `STATUS.md` — this handoff.
-- No product source, XAML, HTTP contract, migration or test file was edited. `git status --short`:
-  ` M STATUS.md` and `?? QA_REPORT.md`.
+- `19887dca` — restored `docs/release-audit/2026-11-05/WORKOUT_POLICY.md`. **D16 fixed.**
+- `cd65f85d` — one 24-hour `MealTime` formatter. **D48's 12-hour half fixed.**
+- `3a2daf1e` — the pre-existing 1,921-line primitives base, committed as its own base.
+- `f28aa3b1` — **D54 fixed.** Meal card header declares `JustifyContent="SpaceBetween"`; the heading grows.
+- `3b55255c` — **Wave A frame:** `ModalKeyboardInset`, one scroll body, keyboard padding.
+- `7023dc81` — **Wave A close-out:** the frame reveals the content below the focused field, keeps a 12 pt
+  footer reserve, the toast hosts use the `UiInsets20_0_20_72` clearance token, and the food editor drops
+  its header/tabs/ingredient list while the search field is focused. Evidence images in
+  `docs/qa-evidence/wave-a/`.
 
-## 2. What was run, with output
+## 2. What the screenshots show
 
-Build and unit suites were **not re-run in this pass**; the last recorded result for this commit is in
-§2 of `QA_REPORT.md` and is not restated as current. Everything below is this pass.
+| Claim | Evidence |
+| --- | --- |
+| D54: `Завтрак … 0 ккал` with the gap, light | `docs/qa-evidence/wave-a/P6-foodlog-cards-light.png` |
+| D54: same in dark | `Q9-foodlog-cards-dark.png` |
+| D51: field, `Поиск` and the result row above the keyboard, light | `Q12-searchmode-light.png`, `Q13-results-light.png` |
+| D51: same in dark | `Q14-results-dark.png` |
+| D52 scroll half: entry sheet scrolls, footer clear of the edge | `R4-entry-sheet-dark.png` |
+| D48: 24-hour time in the entry sheet | `R4-entry-sheet-dark.png` shows `22:08` |
 
-Control coverage: **98 rows — 57 PASS, 17 PARTIAL, 7 FAIL, 11 NOT RUN, 5 BLOCKED, 1 not a control.**
+**Not shown on screen:** the built-in food catalogue returned no matches in the simulator, so the result
+row in the picker screenshots is the no-match state. No toast was triggered, so D50's clearance is a
+code-level fix only. The check-in sheet itself was not re-photographed this pass (D5/D37 rest on the frame's
+footer reserve and on the tab bar being hidden while a sheet is open).
 
-Session, driven to its summary and finished (flows 140–151, screenshots `200`–`224`):
+## 3. Commands and output
 
-    Tap on "Начать тренировку"... COMPLETED
-    Tap on "Strength & Sculpt"... COMPLETED
-    tap kg=20 first, then "Далее" → "Первая запись: Machine Chest Press. Отличное начало!" (shots/210–211)
-    Tap on "Пропустить" ×2, then "Далее" → summary "Записано 2 из 5 · пропущено: 3" (shots/215)
-    Tap on "Завершить сеанс"... COMPLETED → back on Train, card still "Начать тренировку"
+```
+dotnet build … -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64
+    0 Warning(s)    0 Error(s)
 
-    psql before repair: 2 workout_session_logs rows, completed_at NULL, confirmed_active_seconds 548 / 0
-    psql after repair:  UPDATE 2 → completed_at = started_at + 9m08s for both
-    cold restart → Today "Тренировка завершена / Завершено сегодня / Открыть тренировку" (shots/221)
-    Train still "Начать тренировку", no completion state (shots/222)
+dotnet test tests/MuscleCuties.Core.Tests
+Passed!  - Failed: 0, Passed: 1384, Skipped: 0, Total: 1384
+```
 
-Plan restore:
+Guard tests added this pass (all green, 30 in the UiContractGuard/UiStyleGate slice):
+`Modal_frame_reveals_the_content_below_the_focused_field`,
+`Toast_hosts_clear_the_floating_tab_bar`,
+`Food_picker_collapses_the_rows_that_do_not_belong_to_the_search`, on top of the earlier frame and meal-card
+guards.
 
-    UPDATE app.workout_days d SET date=b.date, day_of_week=b.day_of_week FROM app.qa_backup_workout_days_20261112 b WHERE d.id=b.id;
-    UPDATE 24
-    rows_still_shifted = 0
-    Train after cold restart: "THU · день отдыха / Rest day" (shots/224)
+## 4. Still open
 
-Remaining pages reached this pass (screenshots `230`–`279`):
+- **D51 result row with real hits** — the layout half is fixed and photographed against the empty state; a
+  real search hit could not be produced in the simulator.
+- **D5 / D37** — structural fix only, no screenshot of the check-in footer.
+- **D50** — code-level fix, no toast photographed.
+- **D52 template action** — `Использовать шаблон` is still a silent no-op.
+- **Not started:** D1/D46 (accessibility tree and the edit action), D47, D29/D30/D20, the cycle wave
+  (D39–D45), the copy wave, and the remaining formatter/selection/header primitives from the plan.
 
-    Цикл → quick-log sheet opened; Спазмы toggled; closed without saving (shots/231–233)
-    Цикл gear → "Личная информация", birth date renders 15.03.1996 (shots/235)
-    Питание → Добавить прием пищи → Использовать шаблон → inline template list, empty state (shots/237)
-    → Добавить еду → "курица" → "Нет совпадений" (shots/242); "chicken" → 2 catalog rows (shots/243)
-    → result row → "Portion" sheet → Добавить ингредиент → 143 kcal in editor (shots/244–245)
-    → Отмена → Nutrition unchanged, nothing persisted (shots/246–247)
-    → Добавить еду → Штрихкод tab (shots/252); barcode 7350053850019 → Найти → "не найден … добавьте вручную" (shots/258)
-    → Своё tab (shots/253); name + 99 kcal → Сохранить → row created in app.user_food_items (shots/259–260)
+## 5. Next step
 
-Cycle phase, created safely through the app (screenshots `261`–`275`):
-
-    Цикл → Быстрая запись → symptom "Тяга к еде" → Сохранить запись
-    validation on empty form: "Выберите отметку цикла, интенсивность или симптом перед сохранением." (shots/265)
-    → "Отметить начало менструации" → app.cycle_logs row (start 2026-11-12, cycle_length 0)
-    → page reads "Менструальная фаза / День 1 из 28" (shots/269)
-    → "Следующая фаза" → "Фолликулярная фаза", still "День 1 из 28"; app.cycle_phase_logs gains
-      note "Manual phase advance"; app.user_profiles.current_cycle_phase = Follicular (shots/270)
-    → tap phase title (shots/271), tap phase tile (shots/272) → nothing happens
-
-    grep -rn 'OpenPhaseDetailsCommand' src --include=*.xaml → (no match)
-    grep -c 'Command=' Pages/Cycle/CyclePage.xaml → 1   (OpenCycleSettingsCommand only)
-    → CyclePhaseDetailPage + phase summary/warning/date sheets have no entry point: BLOCKED in code, not for data
-
-Cleanup, verified:
-
-    DELETE symptom_logs (1) → DELETE cycle_phase_logs (1) → DELETE cycle_logs (1)
-    DELETE app.user_food_items WHERE name='QA Custom Food' → DELETE 1
-    UPDATE app.user_profiles SET current_cycle_phase=NULL → UPDATE 1
-    cycle_logs 0 | cycle_phase_logs 0 | symptom_logs 0 | food_items 1 (pre-existing) | open sessions 0 | quiz 17
-    cold restart → Цикл "Неизвестно фаза / Даты менструации не записаны" (shots/275)
-    You → Выйти → native dialog "Вы уверены, что хотите выйти?" → Отмена, session kept (shots/276–279)
-
-Quiz attempt:
-
-    UPDATE app.user_profiles SET date_of_birth='1990-01-01' → SELECT confirms 1990-01-01
-    You → Личная информация → "Сохранить личную информацию" → returns to You (shots/226)
-    cold restart → Today (shots/227)
-    date_of_birth restored to 1996-03-15; quiz rows 17
-
-## 3. Not verified, and why
-
-- **Quiz — BLOCKED, not untested.** Seeded a synthetic birth date, saved the profile through the app,
-  and restarted: every path lands on Today. The only call site for `//QuizPage` is the callback on
-  `ProfileSetupViewModel` (`MauiProgram.cs:159-161`), which only exists inside registration; the
-  signed-in profile page uses another view model, and registration itself is blocked by D1. Clearing
-  the 17 quiz rows (last pass) also did not route there. 8 question screens, 0 exercised.
-- **Ten controls inside reachable screens** were intentionally not tapped; each has its reason in §10:
-  nutrition goal picker and its save, vault add-photo (Photos access + write), pain modal's
-  replace/stop, swap-panel close, chooser close, note-sheet explicit save (autosave already persisted),
-  check-in × and weight field, "Получить совет" (no accessible label).
-- **Cycle detail surfaces — BLOCKED, and no longer for lack of a phase.** A phase was created live and
-  the app still offers no way in: `OpenPhaseDetailsCommand` is unbound in XAML (`CyclePage.xaml` has one
-  `Command=` binding). More test data cannot unlock it (D34, row 97).
-- **Password recovery — BLOCKED on approval, not on data.** Reachable only from a signed-out Login screen
-  and submitting an address sends a real reset email; not attempted (row 98).
-- **Barcode camera scan** — the simulator has no camera; the numeric path was tested (row 90).
-- Responsiveness at tablet/desktop, VoiceOver focus order and contrast ratios remain unverified — §11.
-
-## 4. Next step or blocker
-
-**D34 is the most structural new finding**: a whole registered page plus four cycle sheets have no
-binding, so a user can never see phase detail. **D26 remains the release blocker**: a finished session must persist `completed_at` once, without the
-duplicate `workout_session_logs`/`workout_logs` rows, and both Today and Train must show the same
-terminal state. The QA account was left terminal by writing `completed_at` in the QA database, which is
-a repair, not a product behaviour — the fix must be in the client/server path. Then D25 (accept 0 kg or
-stop advertising it, and never hide the fields an error names), D32 (Train card ignores completion), and
-D1 (blocks all eight Quiz screens and all in-app registration).
+Give the food search a reachable catalogue (or seed a custom food) so the picker's result row can be
+photographed with a real hit, then drive the check-in and a toast in both themes. After that, the cycle wave
+and D46 — the frame is now stable enough to carry them.
