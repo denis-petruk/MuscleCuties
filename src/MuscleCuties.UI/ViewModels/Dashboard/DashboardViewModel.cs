@@ -371,7 +371,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
 
     public string ReadinessSubtitleText => HasTodayReadinessRecord
         ? "Dashboard_Readiness_SelfReportedSubtitle"
-        : "Dashboard_Readiness_CheckInPrompt";
+        : string.Empty;
 
     public float ReadinessProgress =>
         Math.Clamp(ReadinessScore / MaximumScoreProgressDivisor, 0f, 1f);

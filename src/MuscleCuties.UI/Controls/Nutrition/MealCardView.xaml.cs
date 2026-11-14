@@ -39,6 +39,9 @@ public partial class MealCardView : ContentView
     public static readonly BindableProperty SemanticDescriptionProperty = BindableProperty.Create(
         nameof(SemanticDescription), typeof(string), typeof(MealCardView), string.Empty);
 
+    public static readonly BindableProperty HasContentProperty = BindableProperty.Create(
+        nameof(HasContent), typeof(bool), typeof(MealCardView), true);
+
     public static readonly BindableProperty ShowEditProperty = BindableProperty.Create(
         nameof(ShowEdit), typeof(bool), typeof(MealCardView), true,
         propertyChanged: (bindable, _, _) =>
@@ -116,6 +119,12 @@ public partial class MealCardView : ContentView
     {
         get => (string)GetValue(SemanticDescriptionProperty);
         set => SetValue(SemanticDescriptionProperty, value);
+    }
+
+    public bool HasContent
+    {
+        get => (bool)GetValue(HasContentProperty);
+        set => SetValue(HasContentProperty, value);
     }
 
     public bool ShowEdit

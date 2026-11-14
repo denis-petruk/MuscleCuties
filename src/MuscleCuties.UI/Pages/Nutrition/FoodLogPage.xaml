@@ -189,13 +189,8 @@
                          food log no longer invents a second summary design for the same numbers. -->
                     <Border Style="{StaticResource CardPrimary}">
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
-                            <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                <Label Text="{Binding FormattedSelectedDate, Converter={StaticResource LocalizedStringConverter}}"
-                                       Style="{StaticResource SubHeadline}" />
-                                <Label Grid.Row="1"
-                                       Text="{Binding CalorieRemainingText, Converter={StaticResource LocalizedStringConverter}}"
-                                       Style="{StaticResource MutedLabel}" />
-                            </Grid>
+                            <Label Text="{Binding CalorieRemainingText, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource MutedLabel}" />
 
                             <Grid ColumnDefinitions="76,*" ColumnSpacing="{StaticResource UiSpaceControl}">
                                 <Grid WidthRequest="{StaticResource UiDimension76}" HeightRequest="{StaticResource UiDimension76}">
@@ -300,30 +295,24 @@
                         </VerticalStackLayout>
                     </Border>
 
-                    <!-- Water and the diary shortcut act on the day, so they get their own card
-                         instead of trailing the numbers inside the summary. -->
+                    <!-- Water is the only action inside its card; the diary shortcuts sit in their
+                         own card with one button recipe. -->
                     <Border Style="{StaticResource CardPrimary}">
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing14}">
-                            <nutritionControls:HydrationLogView Grid.Row="0" />
+                        <nutritionControls:HydrationLogView />
+                    </Border>
 
-                            <!-- Quick Diary Actions Row -->
-                            <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                                <Grid ColumnDefinitions="*,Auto">
-                                    <Label
-                                        Text="{loc:LocalizedText Nutrition_FoodLog_YesterdayDiary}"
-                                        Style="{StaticResource MutedLabel}"
-                                        VerticalOptions="Center" />
-                                    <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_FoodLog_CopyYesterday}"
-                                        Command="{Binding CopyYesterdayDiaryCommand}" Grid.Column="1" />
-                                </Grid>
-                                <Button Grid.Row="1"
-                                        Style="{StaticResource ButtonSecondary}"
-                                        HorizontalOptions="Start"
-                                        Text="{loc:LocalizedText Nutrition_FoodLog_OpenBreakdown}"
-                                        Command="{Binding OpenBreakdownCommand}"
-                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_OpenBreakdown}" />
-                            </Grid>
-                        </Grid>
+                    <Border Style="{StaticResource CardPrimary}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Button Style="{StaticResource ButtonSecondary}"
+                                    HorizontalOptions="Fill"
+                                    Text="{loc:LocalizedText Nutrition_FoodLog_CopyYesterday}"
+                                    Command="{Binding CopyYesterdayDiaryCommand}" />
+                            <Button Style="{StaticResource ButtonSecondary}"
+                                    HorizontalOptions="Fill"
+                                    Text="{loc:LocalizedText Nutrition_FoodLog_OpenBreakdown}"
+                                    Command="{Binding OpenBreakdownCommand}"
+                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_OpenBreakdown}" />
+                        </VerticalStackLayout>
                     </Border>
 
                     <Border Style="{StaticResource CardPrimary}">
@@ -361,6 +350,7 @@
                         SemanticDescription="{Binding CardName}"
                         ShowEdit="{Binding CanEditMeal}"
                         ShowTemplate="{Binding HasItems}"
+                        HasContent="{Binding HasItems}"
                         EditCommand="{Binding EditMealCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
                         EditCommandParameter="{Binding .}"
                         TemplateCommand="{Binding SaveMealAsTemplateCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
@@ -414,11 +404,6 @@
                                     </BindableLayout.ItemTemplate>
                                 </VerticalStackLayout>
 
-                                <Label Text="{loc:LocalizedText Nutrition_FoodLog_NoFoodsLoggedYet}"
-                                       Style="{StaticResource MutedLabel}"
-                                       FontAttributes="{StaticResource UiFontAttributesItalic}"
-                                       LineBreakMode="WordWrap"
-                                       IsVisible="{Binding HasItems, Converter={StaticResource InvertedBoolConverter}}" />
                             </VerticalStackLayout>
                         </nutritionControls:MealCardView.BelowContent>
                     </nutritionControls:MealCardView>

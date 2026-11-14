@@ -191,33 +191,34 @@
                                 </BindableLayout.ItemTemplate>
                             </FlexLayout>
 
-                            <!-- Metric row: three equal columns at the standard sizes; at an
-                                 accessibility size each metric keeps its own row, because "Продолжительность"
-                                 cannot sit in a third of the card without breaking mid-word. -->
-                            <sharedControls:AdaptiveRow Grid.Row="4" Columns="3"
-                                                        Margin="{StaticResource UiInsets0_4_0_0}">
-                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                    <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
+                            <!-- Metric rows: each label owns the full card width. In three columns
+                                 "Продолжительность" broke inside the word; a label/value row keeps it
+                                 whole without shrinking the reader's text size. -->
+                            <Grid Grid.Row="4" Margin="{StaticResource UiInsets0_4_0_0}"
+                                  RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
+                                <Grid ColumnDefinitions="*,Auto">
+                                    <Label Style="{StaticResource CaptionLabel}" LineBreakMode="NoWrap"
                                            Text="{loc:LocalizedText Workout_History_DurationHeader}" />
-                                    <Label Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
+                                    <Label Grid.Column="1" Style="{StaticResource BodyStrong}"
+                                           HorizontalTextAlignment="End"
                                            Text="{Binding TotalDurationSeconds, Converter={StaticResource ArchiveDurationConverter}}" />
-                                </VerticalStackLayout>
-
-                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                    <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
+                                </Grid>
+                                <Grid Grid.Row="1" ColumnDefinitions="*,Auto">
+                                    <Label Style="{StaticResource CaptionLabel}" LineBreakMode="NoWrap"
                                            Text="{loc:LocalizedText Workout_History_VolumeHeader}" />
-                                    <Label Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
+                                    <Label Grid.Column="1" Style="{StaticResource BodyStrong}"
+                                           HorizontalTextAlignment="End"
                                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                                            Text="{Binding VolumeLabel, Converter={StaticResource LocalizedStringConverter}}" />
-                                </VerticalStackLayout>
-
-                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                    <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
+                                </Grid>
+                                <Grid Grid.Row="2" ColumnDefinitions="*,Auto">
+                                    <Label Style="{StaticResource CaptionLabel}" LineBreakMode="NoWrap"
                                            Text="{loc:LocalizedText Workout_History_TotalSetsHeader}" />
-                                    <Label Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
+                                    <Label Grid.Column="1" Style="{StaticResource BodyStrong}"
+                                           HorizontalTextAlignment="End"
                                            Text="{Binding TotalSetsCount, Converter={StaticResource ArchiveSetsConverter}}" />
-                                </VerticalStackLayout>
-                            </sharedControls:AdaptiveRow>
+                                </Grid>
+                            </Grid>
                         </Grid>
                     </Border>
                 </DataTemplate>

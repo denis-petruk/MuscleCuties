@@ -541,7 +541,11 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     private static string FormatLastPhaseLog(CyclePhaseEntry? log)
     {
-        return log is null ? "No shift logged yet" : $"{log.Phase} logged {log.LoggedAt:MMM d}";
+        return log is null
+            ? "No shift logged yet"
+            : MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+                "Cycle_Calendar_LastLogFormat",
+                log.LoggedAt.ToString("d MMM", CultureInfo.CurrentCulture));
     }
 
     private ObservableCollection<CycleDayItem> BuildCalendarDays(
