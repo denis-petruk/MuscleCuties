@@ -11,6 +11,7 @@ public partial class NutritionViewModel
     {
         OnPropertyChanged(nameof(IsFoodFinderVisible));
         OnPropertyChanged(nameof(IsFoodFinderCollapsed));
+        OnPropertyChanged(nameof(ShowLogMealHint));
         OnPropertyChanged(nameof(IsFoodSourceTabsVisible));
         OnPropertyChanged(nameof(IsIngredientSearchVisible));
         OnPropertyChanged(nameof(IsBarcodeSourceVisible));
@@ -79,6 +80,9 @@ public partial class NutritionViewModel
         BrowseMoreFoodsCommand.NotifyCanExecuteChanged();
         AddIngredientCommand.NotifyCanExecuteChanged();
         LogMealCommand.NotifyCanExecuteChanged();
+        OnPropertyChanged(nameof(CanSaveMeal));
+        OnPropertyChanged(nameof(ShowLogMealHint));
+        OnPropertyChanged(nameof(LogMealHint));
         CreateCustomFoodCommand.NotifyCanExecuteChanged();
     }
 

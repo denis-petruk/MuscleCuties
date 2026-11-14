@@ -133,6 +133,17 @@ public partial class DailyCheckInViewModel : ObservableObject
     public AsyncRelayCommand SubmitCommand { get; }
     public AsyncRelayCommand SkipCommand { get; }
 
+    /// <summary>True when the commit action can run; false names a prerequisite in <see cref="SubmitHint" />.</summary>
+    public bool CanSubmit => !IsBusy && !IsCompleted && Answers.IsComplete;
+
+    /// <summary>
+    /// D14: a disabled commit must explain what is missing instead of only going grey. The same
+    /// string feeds the visible caption and the accessibility hint, so they cannot disagree.
+    /// </summary>
+    public string SubmitHint => Answers.IsComplete
+        ? UiTextCatalog.Get("Dashboard_CheckIn_SubmitHint")
+        : UiTextCatalog.Get("Dashboard_CheckIn_SubmitPrerequisiteHint");
+
     public async Task CheckIfAlreadyCompletedAsync()
     {
         ErrorMessage = string.Empty;
@@ -359,6 +370,8 @@ public partial class DailyCheckInViewModel : ObservableObject
     private void OnAnswerChanged()
     {
         OnPropertyChanged(nameof(AreAllAnswersProvided));
+        OnPropertyChanged(nameof(CanSubmit));
+        OnPropertyChanged(nameof(SubmitHint));
         SubmitCommand?.NotifyCanExecuteChanged();
     }
 
@@ -369,11 +382,14 @@ public partial class DailyCheckInViewModel : ObservableObject
 
     partial void OnIsBusyChanged(bool value)
     {
+        OnPropertyChanged(nameof(CanSubmit));
+        OnPropertyChanged(nameof(SubmitHint));
         SubmitCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsCompletedChanged(bool value)
     {
+        OnPropertyChanged(nameof(CanSubmit));
         SubmitCommand.NotifyCanExecuteChanged();
     }
 

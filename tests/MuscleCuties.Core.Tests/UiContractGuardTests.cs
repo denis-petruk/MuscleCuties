@@ -328,6 +328,111 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// D11/D36/D49: a selected option is one filled treatment everywhere, with no second outline
+    /// recipe in a page or a sheet. Selection state is projected through the one shared attached
+    /// property so the shared style owns every colour and semantic change.
+    /// </summary>
+    [Fact]
+    public void D11_D36_D49_selection_uses_one_filled_recipe()
+    {
+        var root = RepositoryRoot();
+        var uiRoot = Path.Combine(root, "src", "MuscleCuties.UI");
+        var stylesPath = Path.Combine(uiRoot, "Resources", "Styles", "Styles.xaml");
+        var styles = XDocument.Load(stylesPath);
+        XElement Style(string key) => styles.Descendants()
+            .Single(element => element.Name.LocalName == "Style" &&
+                (string?)element.Attribute(XName.Get("Key", "http://schemas.microsoft.com/winfx/2009/xaml")) == key);
+
+        var choice = Style("ChoiceCell");
+        var selected = choice.Descendants()
+            .First(element => element.Name.LocalName == "DataTrigger" &&
+                ((string?)element.Attribute("Binding"))?.Contains("IsSelected", StringComparison.Ordinal) == true);
+        var setters = selected.Descendants()
+            .Where(element => element.Name.LocalName == "Setter")
+            .ToDictionary(element => (string?)element.Attribute("Property") ?? string.Empty,
+                element => (string?)element.Attribute("Value") ?? string.Empty, StringComparer.Ordinal);
+
+        Assert.Contains("PrimaryDark", setters.GetValueOrDefault("BackgroundColor"), StringComparison.Ordinal);
+        Assert.DoesNotContain("ChoiceSelectedSurface", setters.GetValueOrDefault("BackgroundColor"), StringComparison.Ordinal);
+        Assert.True(
+            !setters.TryGetValue("Stroke", out var selectedStroke) ||
+            selectedStroke.Contains("Transparent", StringComparison.Ordinal),
+            $"A filled selection cell must not draw a second outline: {selectedStroke}");
+        Assert.True(
+            !setters.TryGetValue("StrokeThickness", out var selectedThickness) ||
+            selectedThickness.Contains("UiStrokeWidth0", StringComparison.Ordinal),
+            $"A filled selection cell must have no stroke width: {selectedThickness}");
+
+        var dayStrip = Style("DayStripCell");
+        Assert.Contains("ChoiceCell", (string?)dayStrip.Attribute("BasedOn"), StringComparison.Ordinal);
+
+        // The cell that paints the fill also owns the label ink: an item-flag trigger left
+        // selected chips with dark text on the dark accent.
+        var choiceLabel = Style("ChoiceCellLabel");
+        var choiceLabelTrigger = choiceLabel.Descendants()
+            .Single(element => element.Name.LocalName == "DataTrigger");
+        Assert.Contains(
+            "AncestorType={x:Type sharedControls:SelectionCell}",
+            (string?)choiceLabelTrigger.Attribute("Binding"),
+            StringComparison.Ordinal);
+
+        string[] migratedSurfaces =
+        [
+            Path.Combine("Controls", "Nutrition", "MealEntryModal.xaml"),
+            Path.Combine("Controls", "Nutrition", "MealEditorModal.xaml"),
+            Path.Combine("Controls", "Cycle", "CycleQuickLogBottomSheet.xaml"),
+            Path.Combine("Pages", "Workout", "WorkoutPage.xaml"),
+            Path.Combine("Pages", "Workout", "WorkoutHistoryPage.xaml"),
+            Path.Combine("Pages", "Nutrition", "FoodLogPage.xaml")
+        ];
+        var violations = new List<string>();
+        foreach (var relative in migratedSurfaces)
+        {
+            var text = File.ReadAllText(Path.Combine(uiRoot, relative));
+            if (text.Contains("ChoiceSelectedSurface", StringComparison.Ordinal) ||
+                text.Contains("ChoiceSelectedStroke", StringComparison.Ordinal))
+                violations.Add($"{relative}: restates the selected surface or stroke instead of using ChoiceCell");
+            if (!text.Contains("SelectionCell", StringComparison.Ordinal) ||
+                !text.Contains("IsSelected=", StringComparison.Ordinal))
+                violations.Add($"{relative}: does not project selection through the shared SelectionCell");
+        }
+
+        var mealEntry = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Nutrition", "MealEntryModal.xaml"));
+        var mealEditor = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Nutrition", "MealEditorModal.xaml"));
+        Assert.Contains("sharedControls:ModalSheetHeader", mealEntry, StringComparison.Ordinal);
+        Assert.Contains("shared:ModalSheetHeader", mealEditor, StringComparison.Ordinal);
+        Assert.DoesNotContain("PillBadge", mealEditor, StringComparison.Ordinal);
+        Assert.Contains("SelectedMealDateText", mealEditor, StringComparison.Ordinal);
+        Assert.Contains("SelectedMealTime, StringFormat", mealEditor, StringComparison.Ordinal);
+        Assert.DoesNotContain("UiInsets6_0_0_0", mealEditor, StringComparison.Ordinal);
+
+        var workoutPage = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Workout", "WorkoutPage.xaml"));
+        Assert.Contains("StringFormat='{0:dd}'", workoutPage, StringComparison.Ordinal);
+        Assert.DoesNotContain("StringFormat='{0:dd MMM}'", workoutPage, StringComparison.Ordinal);
+
+        Assert.True(
+            violations.Count == 0,
+            $"{violations.Count} surface(s) still own a selection recipe:\n" + string.Join("\n", violations));
+    }
+
+    /// <summary>
+    /// D14: a disabled commit states what is missing, both to a screen reader and as visible text
+    /// next to the action. Busy-only guards are not prerequisites and are outside this contract.
+    /// </summary>
+    [Fact]
+    public void D14_disabled_commits_publish_a_prerequisite_hint()
+    {
+        var root = RepositoryRoot();
+        var checkIn = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "Controls", "Dashboard", "DailyCheckInModal.xaml"));
+        Assert.Contains("SemanticProperties.Hint=\"{Binding SubmitHint}\"", checkIn, StringComparison.Ordinal);
+        Assert.Contains("Text=\"{Binding SubmitHint}\"", checkIn, StringComparison.Ordinal);
+
+        var editor = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealEditorModal.xaml"));
+        Assert.Contains("SemanticProperties.Hint=\"{Binding LogMealHint}\"", editor, StringComparison.Ordinal);
+        Assert.Contains("Text=\"{Binding LogMealHint}\"", editor, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// D12: an empty meal group is one quiet row, not a card shell nested in the list. The card
     /// surface must be reserved for groups with food; the empty row must not contain a Border,
     /// calorie/macro blocks or the template action.
@@ -1098,6 +1203,10 @@ public sealed class UiContractGuardTests
         var titleStyle = Regex.Match(stylesSource, "<Style x:Key=\"ModalTitle\"[\\s\\S]*?</Style>");
         Assert.True(titleStyle.Success, "ModalTitle style is missing from Styles.xaml.");
         Assert.Contains("SemanticProperties.HeadingLevel", titleStyle.Value);
+        Assert.Contains(
+            "Style=\"{StaticResource ModalTitle}\"",
+            File.ReadAllText(Path.Combine(uiRoot, "Controls", "Shared", "ModalSheetHeader.xaml")),
+            StringComparison.Ordinal);
 
         var missingTitle = new List<string>();
         foreach (var file in SourceFiles(uiRoot, "*.xaml"))
@@ -1106,7 +1215,10 @@ public sealed class UiContractGuardTests
             if (document.Root?.Name.LocalName != "AnimatedModalView")
                 continue;
 
+            // A shared ModalSheetHeader owns the title Label and its heading semantics; the
+            // sheet itself only names the control, so accept that one shared wrapper.
             var hasHeading = document.Descendants().Any(element =>
+                element.Name.LocalName == "ModalSheetHeader" ||
                 element.Name.LocalName == "Label" &&
                 (element.Attribute("Style")?.Value.Contains("ModalTitle", StringComparison.Ordinal) == true ||
                  element.Attribute("SemanticProperties.HeadingLevel") is not null));

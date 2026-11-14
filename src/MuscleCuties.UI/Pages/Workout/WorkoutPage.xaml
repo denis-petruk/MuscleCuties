@@ -190,7 +190,8 @@
                                 <!-- Equal star columns plus one spacing token: every chip measures the
                                      same, and both edges land on the page inset, so the row reads as a
                                      single block whatever the label length or which chip is selected. -->
-                                <Border Style="{StaticResource ChoiceCell}"
+                                <sharedControls:SelectionCell Style="{StaticResource ChoiceCell}"
+                                        IsSelected="{Binding IsSelected}"
                                         SemanticProperties.Description="{Binding Label, Converter={StaticResource LocalizedStringConverter}}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -199,7 +200,7 @@
                                     </Border.GestureRecognizers>
                                     <Label Style="{StaticResource ChoiceCellLabel}"
                                            Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}" />
-                                </Border>
+                                </sharedControls:SelectionCell>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                         </HorizontalStackLayout>
@@ -216,24 +217,30 @@
                                                    BindableLayout.ItemsSource="{Binding ScheduleDays}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="workoutModels:ScheduleDayItem">
-                                    <VerticalStackLayout Spacing="{StaticResource UiSpacing2}"
-                                                         Padding="{StaticResource UiInsets4}"
-                                                         MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                                                         MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                                         SemanticProperties.Description="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}">
-                                        <VerticalStackLayout.GestureRecognizers>
+                                    <sharedControls:SelectionCell Style="{StaticResource DayStripCell}"
+                                        IsSelected="{Binding IsSelected}"
+                                        MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                                        SemanticProperties.Description="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}">
+                                        <Border.GestureRecognizers>
                                             <TapGestureRecognizer
                                                 Command="{Binding SelectScheduleDayCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
                                                 CommandParameter="{Binding .}" />
-                                        </VerticalStackLayout.GestureRecognizers>
+                                        </Border.GestureRecognizers>
+                                        <VerticalStackLayout Spacing="{StaticResource UiSpacing2}"
+                                                             HorizontalOptions="Center"
+                                                             VerticalOptions="Center">
                                         <Label Text="{Binding DayLabel, Converter={StaticResource LocalizedStringConverter}}"
-                                               Style="{StaticResource CaptionSmallStrong}"
-                                               HorizontalTextAlignment="Center"
+                                               Style="{StaticResource DayStripDayName}"
                                                LineBreakMode="WordWrap" />
-                                        <Label Text="{Binding Date, StringFormat='{0:dd MMM}'}"
-                                               Style="{StaticResource CaptionLabel}"
-                                               HorizontalTextAlignment="Center"
+                                        <Label Text="{Binding Date, StringFormat='{0:dd}'}"
+                                               Style="{StaticResource DayStripDayName}"
                                                LineBreakMode="WordWrap" />
+                                        <BoxView WidthRequest="{StaticResource UiDimension4}"
+                                                 HeightRequest="{StaticResource UiDimension4}"
+                                                 CornerRadius="{StaticResource UiCornerRadius2}"
+                                                 HorizontalOptions="Center"
+                                                 Style="{StaticResource DayStripTodayDot}"
+                                                 IsVisible="{Binding IsToday}" />
                                         <!-- Compact chips wrap instead of clipping: a day can carry
                                              several sessions, and the column must stay readable at narrow
                                              widths and large text sizes. -->
@@ -256,7 +263,8 @@
                                                 </DataTemplate>
                                             </BindableLayout.ItemTemplate>
                                         </FlexLayout>
-                                    </VerticalStackLayout>
+                                        </VerticalStackLayout>
+                                </sharedControls:SelectionCell>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                             </HorizontalStackLayout>
@@ -271,7 +279,8 @@
                                 <!-- Equal star columns plus one spacing token: every chip measures the
                                      same, and both edges land on the page inset, so the row reads as a
                                      single block whatever the label length or which chip is selected. -->
-                                <Border Style="{StaticResource ChoiceCell}"
+                                <sharedControls:SelectionCell Style="{StaticResource ChoiceCell}"
+                                        IsSelected="{Binding IsSelected}"
                                         SemanticProperties.Description="{Binding Label, Converter={StaticResource LocalizedStringConverter}}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -280,7 +289,7 @@
                                     </Border.GestureRecognizers>
                                     <Label Style="{StaticResource ChoiceCellLabel}"
                                            Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}" />
-                                </Border>
+                                </sharedControls:SelectionCell>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                         </HorizontalStackLayout>

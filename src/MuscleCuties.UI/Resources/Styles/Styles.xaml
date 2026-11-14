@@ -1315,27 +1315,58 @@
         <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
         <Setter Property="HorizontalOptions" Value="Fill" />
         <Style.Triggers>
-            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                <Setter Property="BackgroundColor"
-                        Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight},
-                                                Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-                <Setter Property="Stroke"
-                        Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight},
-                                                Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+            <!-- One filled selection state: a solid accent fill, no second outline. Every
+                 surface projects its own flag through SelectionCell.IsSelected; none is
+                 allowed to restate the selected surface or stroke in page markup. -->
+            <DataTrigger TargetType="Border"
+                         Binding="{Binding IsSelected, Source={RelativeSource Self}}"
+                         Value="True">
+                <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}" />
+                <Setter Property="Stroke" Value="Transparent" />
+                <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth0}" />
                 <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
             </DataTrigger>
-            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+            <DataTrigger TargetType="Border"
+                         Binding="{Binding IsSelected, Source={RelativeSource Self}}"
+                         Value="False">
                 <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_NotSelected}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
 
-    <!-- The compact source switch is the second choice-cell variant: same selected
-         surface, stroke and touch target, with a squarer shape that reads as one
-         segmented control rather than three floating pills. -->
+    <!-- The compact source switch is the second choice-cell variant: same filled selected
+         treatment and touch target, with a squarer shape that reads as one segmented control
+         rather than three floating pills. -->
     <Style x:Key="ChoiceCellCompact" TargetType="Border" BasedOn="{StaticResource ChoiceCell}">
         <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius8}" />
+    </Style>
+
+    <Style x:Key="ChoiceCellIcon" TargetType="Path">
+        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_8}" />
+        <Setter Property="Aspect" Value="Uniform" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Path"
+                         Binding="{Binding IsSelected, Source={RelativeSource AncestorType={x:Type sharedControls:SelectionCell}}}"
+                         Value="True">
+                <Setter Property="Stroke" Value="{StaticResource ContrastInk}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="ChoiceCellIconFill" TargetType="Path">
+        <Setter Property="Fill" Value="{StaticResource Primary}" />
+        <Setter Property="Stroke" Value="{StaticResource Primary}" />
+        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
+        <Setter Property="Aspect" Value="Uniform" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Path"
+                         Binding="{Binding IsSelected, Source={RelativeSource AncestorType={x:Type sharedControls:SelectionCell}}}"
+                         Value="True">
+                <Setter Property="Fill" Value="{StaticResource ContrastInk}" />
+                <Setter Property="Stroke" Value="{StaticResource ContrastInk}" />
+            </DataTrigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="ChoiceCellLabel" TargetType="Label" BasedOn="{StaticResource CaptionSmallStrong}">
@@ -1346,17 +1377,19 @@
                 Value="{AppThemeBinding Light={StaticResource TextSecondary},
                                         Dark={StaticResource TextSecondaryDark}}" />
         <Style.Triggers>
-            <DataTrigger TargetType="Label" Binding="{Binding IsSelected}" Value="True">
-                <Setter Property="TextColor"
-                        Value="{AppThemeBinding Light={StaticResource TextPrimary},
-                                                Dark={StaticResource TextPrimaryDark}}" />
+            <!-- The cell owns the ink: reading the item flag here missed the very cell that
+                 paints the fill, so a selected chip could pair a solid accent with dark text. -->
+            <DataTrigger TargetType="Label"
+                         Binding="{Binding IsSelected, Source={RelativeSource AncestorType={x:Type sharedControls:SelectionCell}}}"
+                         Value="True">
+                <Setter Property="TextColor" Value="{StaticResource ContrastInk}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
 
-    <!-- The day strip is its own family with one style: a compact dated cell, not a chip and
-         not a card. Seven fit one row, so it owns the 14pt shape and the hairline boundary. -->
-    <Style x:Key="DayStripCell" TargetType="Border">
+    <!-- Day strips are a shape variant of the same choice cell, not a second selection recipe:
+         they inherit the filled selected state, semantics and no-outline rule from ChoiceCell. -->
+    <Style x:Key="DayStripCell" TargetType="Border" BasedOn="{StaticResource ChoiceCell}">
         <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
         <Setter Property="StrokeShape" Value="{StaticResource UiRoundRectangleRadius14}" />
         <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1}" />
@@ -1365,14 +1398,39 @@
         <Setter Property="BackgroundColor"
                 Value="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}" />
         <Setter Property="Padding" Value="{StaticResource UiInsets4_6}" />
+        <Setter Property="HorizontalOptions" Value="Start" />
+    </Style>
+
+    <Style x:Key="DayStripDayName" TargetType="Label" BasedOn="{StaticResource CaptionLabel}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesBold}" />
         <Style.Triggers>
-            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
-                <Setter Property="BackgroundColor"
-                        Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-                <Setter Property="Stroke"
-                        Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            <DataTrigger TargetType="Label"
+                         Binding="{Binding IsSelected, Source={RelativeSource AncestorType={x:Type sharedControls:SelectionCell}}}"
+                         Value="True">
+                <Setter Property="TextColor" Value="{StaticResource ContrastInk}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="DayStripDayNumber" TargetType="Label" BasedOn="{StaticResource SectionTitle}">
+        <Setter Property="HorizontalTextAlignment" Value="Center" />
+        <Style.Triggers>
+            <DataTrigger TargetType="Label"
+                         Binding="{Binding IsSelected, Source={RelativeSource AncestorType={x:Type sharedControls:SelectionCell}}}"
+                         Value="True">
+                <Setter Property="TextColor" Value="{StaticResource ContrastInk}" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style x:Key="DayStripTodayDot" TargetType="BoxView">
+        <Setter Property="Color" Value="{StaticResource Primary}" />
+        <Style.Triggers>
+            <DataTrigger TargetType="BoxView"
+                         Binding="{Binding IsSelected, Source={RelativeSource AncestorType={x:Type sharedControls:SelectionCell}}}"
+                         Value="True">
+                <Setter Property="Color" Value="{StaticResource ContrastInk}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>

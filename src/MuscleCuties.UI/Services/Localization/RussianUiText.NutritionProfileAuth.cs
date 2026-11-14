@@ -386,6 +386,8 @@ internal static partial class RussianUiText
         Values["Nutrition_MealEditor_FoodName"] = "Название продукта";
         Values["Nutrition_MealEditor_GenericFoodNamesMayCheckThe"] = "Общие названия продуктов питания могут проверяться в каталоге. Другие поиски остаются локальными.";
         Values["Nutrition_MealEditor_IngredientAmount"] = "Количество ингредиента";
+        Values["Nutrition_MealEditor_AddFoodPrerequisiteHint"] = "Добавьте хотя бы один продукт, чтобы сохранить приём пищи.";
+        Values["Nutrition_MealEditor_LogHint"] = "Сохранить приём пищи";
         Values["Nutrition_MealEditor_MealTime"] = "Время приема пищи";
         Values["Nutrition_MealEditor_MealType"] = "Тип приема пищи";
         Values["Nutrition_MealEditor_NoMatchYetTryAnotherName"] = "Нет совпадений. Попробуйте другое имя или создайте пользовательское блюдо.";

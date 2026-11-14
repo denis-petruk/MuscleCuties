@@ -597,6 +597,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     {
         if (day is null) return;
         SelectedScheduleDay = day;
+        foreach (var candidate in ScheduleDays)
+            candidate.IsSelected = ReferenceEquals(candidate, day);
         ApplyFeaturedWorkout(day);
     }
 

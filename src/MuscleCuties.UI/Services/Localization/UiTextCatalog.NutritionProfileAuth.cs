@@ -386,6 +386,8 @@ public static partial class UiTextCatalog
         English["Nutrition_MealEditor_FoodName"] = "Food name";
         English["Nutrition_MealEditor_GenericFoodNamesMayCheckThe"] = "Generic food names may check the catalog. Other searches stay local.";
         English["Nutrition_MealEditor_IngredientAmount"] = "Ingredient amount";
+        English["Nutrition_MealEditor_AddFoodPrerequisiteHint"] = "Add at least one food to save this meal.";
+        English["Nutrition_MealEditor_LogHint"] = "Save this meal";
         English["Nutrition_MealEditor_MealTime"] = "Meal time";
         English["Nutrition_MealEditor_MealType"] = "Meal type";
         English["Nutrition_MealEditor_NoMatchYetTryAnotherName"] = "No match yet. Try another name or create a custom food.";

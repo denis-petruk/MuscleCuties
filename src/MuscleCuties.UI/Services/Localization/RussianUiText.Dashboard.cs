@@ -83,6 +83,7 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_StorageNotice"] = "Сохранено в вашей личной учётной записи";
         Values["Dashboard_CheckIn_SubmitButton"] = "Сохранить отметку";
         Values["Dashboard_CheckIn_SubmitHint"] = "Сохранить ежедневную отметку";
+        Values["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Ответьте на все обязательные вопросы, чтобы сохранить отметку.";
         Values["Dashboard_CheckIn_Subtitle"] = "Как вы себя чувствуете сегодня?";
         Values["Dashboard_CheckIn_SuccessMessage"] = "Запись сохранена";
         Values["Dashboard_CheckIn_SuggestFromAppleHealth"] = "Предложить оценки из Apple Health";
