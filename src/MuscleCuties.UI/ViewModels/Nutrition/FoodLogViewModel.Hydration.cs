@@ -40,6 +40,7 @@ public partial class FoodLogViewModel
     public bool CanChangeHydration => (_hydrationDay is not null || IsLegacyHydration)
         && !IsLoading && !IsLoadError && !IsWriting && !IsHydrationBusy && !HasHydrationRetry;
     public bool CanOpenHydrationDetails => _hydrationDay is not null;
+    public bool HasHydrationSecondaryActions => IsLegacyHydration || CanOpenHydrationDetails;
     public bool CanEditHydrationEntry => SelectedHydrationEntry is not null;
     public bool CanEditHydrationPreset => SelectedHydrationPreset is not null;
     public bool CanMoveHydrationPresetUp => SelectedHydrationPreset is { } selected
@@ -98,6 +99,7 @@ public partial class FoodLogViewModel
     {
         OnPropertyChanged(nameof(CanChangeHydration));
         OnPropertyChanged(nameof(CanOpenHydrationDetails));
+        OnPropertyChanged(nameof(HasHydrationSecondaryActions));
     }
 
     private void RefreshHydrationPresetOrderActions()

@@ -9,18 +9,50 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition"
     x:DataType="vm:FoodLogViewModel">
 
-    <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
-        <Label Text="{loc:LocalizedText Nutrition_FoodLog_Water}"
-               Style="{StaticResource CardTitle}" SemanticProperties.HeadingLevel="Level2" />
-        <Label
-            Text="{Binding WaterIntakeMl, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueMl}"
-            Style="{StaticResource BodyLabel}" />
-        <FlexLayout Wrap="Wrap">
-            <Button Style="{StaticResource ButtonSecondary}"
-                    Text="{loc:LocalizedText Nutrition_FoodLog_AddWaterTwoFiftyMl}"
-                    Command="{Binding AddWaterCommand}" CommandParameter="{x:Int32 250}"
-                    Margin="{StaticResource UiInsets0_0_8_8}"
-                    IsEnabled="{Binding CanChangeHydration}" />
+    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+        <!-- The card header follows MealCardView: one wrapping flex row, a value at the card's
+             number scale, and an action that matches the icon's height. The old Auto,*,Auto grid
+             kept the action pinned to the far edge while crushing the text column at large type. -->
+        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
+            <Border WidthRequest="{StaticResource UiControlHeight}"
+                    HeightRequest="{StaticResource UiControlHeight}"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource WaterSurfaceLight}, Dark={StaticResource WaterSurfaceDark}}"
+                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                    VerticalOptions="Center">
+                <Path Data="M12 2.5s7 7.5 7 12a7 7 0 1 1-14 0c0-4.5 7-12 7-12z"
+                      Fill="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
+                      Stroke="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
+                      StrokeThickness="{StaticResource UiStrokeWidth0_5}"
+                      Aspect="Uniform"
+                      WidthRequest="{StaticResource UiDimension18}"
+                      HeightRequest="{StaticResource UiDimension18}"
+                      HorizontalOptions="Center"
+                      VerticalOptions="Center" />
+            </Border>
+            <FlexLayout Grid.Column="1" Direction="Row" Wrap="Wrap"
+                        AlignItems="Center" JustifyContent="SpaceBetween">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}"
+                                     VerticalOptions="Center"
+                                     FlexLayout.Grow="1">
+                    <Label Text="{loc:LocalizedText Nutrition_FoodLog_Water}"
+                           Style="{StaticResource BodyStrong}"
+                           SemanticProperties.HeadingLevel="Level2" />
+                    <Label Text="{Binding WaterIntakeMl, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueMl}"
+                           Style="{StaticResource SectionTitle}"
+                           LineBreakMode="WordWrap" />
+                </VerticalStackLayout>
+                <Button Style="{StaticResource ButtonSecondary}"
+                        Text="{loc:LocalizedText Nutrition_FoodLog_AddWaterTwoFiftyMl}"
+                        Command="{Binding AddWaterCommand}" CommandParameter="{x:Int32 250}"
+                        FlexLayout.AlignSelf="End"
+                        IsEnabled="{Binding CanChangeHydration}" />
+            </FlexLayout>
+        </Grid>
+        <!-- The legacy subtract and details actions disappear entirely when neither applies, so
+             their row cannot leave an empty 16 pt band at the bottom of the card. -->
+        <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center"
+                    IsVisible="{Binding HasHydrationSecondaryActions}">
             <Button Style="{StaticResource ButtonSecondary}"
                     Text="{loc:LocalizedText Nutrition_FoodLog_SubtractWaterTwoFiftyMl}"
                     Command="{Binding RemoveWaterCommand}" CommandParameter="{x:Int32 250}"
@@ -30,6 +62,7 @@
             <Button Style="{StaticResource ButtonSecondary}"
                     Command="{Binding ToggleHydrationDetailsCommand}"
                     IsVisible="{Binding CanOpenHydrationDetails}"
+                    Margin="{StaticResource UiInsets0_0_8_8}"
                     Text="{loc:LocalizedText Nutrition_Hydration_ShowDetails}">
                 <Button.Triggers>
                     <DataTrigger TargetType="Button" Binding="{Binding IsHydrationExpanded}" Value="True">

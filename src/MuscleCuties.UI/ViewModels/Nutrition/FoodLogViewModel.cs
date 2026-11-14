@@ -268,6 +268,10 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         if (!_isActive && _changeNotifier is not null)
             _changeNotifier.NutritionChanged += OnNutritionChanged;
         _isActive = true;
+        // The hydration scope is created on activation, not in the constructor: a page can be
+        // reactivated after Deactivate, and LoadHydrationAsync silently no-ops without a scope.
+        if (_hydrationScope is null)
+            ResetHydration();
         await LoadLogForDateAsync(SelectedDate);
     }
 
