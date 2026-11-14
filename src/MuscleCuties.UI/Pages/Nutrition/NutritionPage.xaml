@@ -65,19 +65,14 @@
                             Text="{loc:LocalizedText Nutrition_Page_Meals}"
                             IconGlyph="BowlChopsticks24"
                             Margin="0" />
-                        <Label Grid.Column="1"
-                               Text="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
-                               Style="{StaticResource AccentLabel}"
-                               MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                               VerticalTextAlignment="Center"
-                               HorizontalTextAlignment="End"
-                               LineBreakMode="WordWrap"
-                               SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
-                               SemanticProperties.Hint="{loc:LocalizedText Nutrition_Page_OpensDailyFoodLog}">
-                            <Label.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding NavigateToFoodLogCommand}" />
-                            </Label.GestureRecognizers>
-                        </Label>
+                        <Button Grid.Column="1"
+                                AutomationId="OpenFoodLog"
+                                Text="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
+                                Style="{StaticResource ButtonSecondary}"
+                                HorizontalOptions="End"
+                                Clicked="OnOpenDailyFoodLogClicked"
+                                SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_DailyFoodLog}"
+                                SemanticProperties.Hint="{loc:LocalizedText Nutrition_Page_OpensDailyFoodLog}" />
                     </Grid>
 
                     <Border

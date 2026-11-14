@@ -342,6 +342,46 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// `Дневник питания` is a real button in the section header beside `Еда`, not a tap gesture, and it
+    /// routes through the page's click handler, which reports a visible message instead of failing
+    /// silently. The entry is checked by a cold-launch simulator run; this guard fails if it regresses.
+    /// </summary>
+    [Fact]
+    public void The_daily_log_entry_is_a_real_button_that_routes()
+    {
+        var root = RepositoryRoot();
+        var pagePath = Path.Combine(root, "src", "MuscleCuties.UI", "Pages", "Nutrition", "NutritionPage.xaml");
+        var document = XDocument.Load(pagePath);
+        XNamespace maui = "http://schemas.microsoft.com/dotnet/2021/maui";
+
+        var entry = document.Descendants()
+            .Single(element =>
+                string.Equals((string?)element.Attribute("AutomationId"), "OpenFoodLog", StringComparison.Ordinal));
+
+        Assert.Equal("Button", entry.Name.LocalName);
+        Assert.Equal("OnOpenDailyFoodLogClicked", (string?)entry.Attribute("Clicked"));
+        Assert.Equal("1", (string?)entry.Attributes().Single(attribute => attribute.Name.LocalName == "Grid.Column"));
+
+        // The design position: the section header beside `Еда`.
+        var header = entry.Parent;
+        Assert.NotNull(header);
+        Assert.Contains(
+            header!.Elements(),
+            sibling => sibling.Name.LocalName == "IconSectionHeader");
+
+        Assert.DoesNotContain(
+            document.Descendants(maui + "TapGestureRecognizer")
+                .Select(gesture => (string?)gesture.Attribute("Command")),
+            command => command?.Contains("NavigateToFoodLog", StringComparison.Ordinal) == true);
+
+        var codeBehind = File.ReadAllText(
+            Path.Combine(root, "src", "MuscleCuties.UI", "Pages", "Nutrition", "NutritionPage.xaml.cs"));
+        Assert.Contains("OnOpenDailyFoodLogClicked", codeBehind, StringComparison.Ordinal);
+        Assert.Contains("GoToAsync(NutritionNavigation.FoodLogRoute)", codeBehind, StringComparison.Ordinal);
+        Assert.Contains("ReportDiaryNavigationFailure", codeBehind, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// A Debug build points at `http://127.0.0.1:5080`. When that API is down or has no migrated
     /// catalogue it answers with an empty page, and the picker showed a permanent no-match state with
     /// no rows to tap (D51's root cause). The loopback store must therefore be able to fill the gap.
