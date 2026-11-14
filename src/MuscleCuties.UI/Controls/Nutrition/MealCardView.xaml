@@ -22,7 +22,7 @@
         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
             <!-- Icon, meal type and calorie block. At accessibility sizes the calorie block is as wide as
                  the heading, so the row wraps instead of crushing the heading into single letters. -->
-            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center" JustifyContent="SpaceBetween">
                 <Path
                     Data="{Binding MealTypeIconData, Source={x:Reference Root}, Converter={StaticResource StringToGeometryConverter}}"
                     Style="{StaticResource NutritionLineIcon}"
@@ -37,11 +37,13 @@
                     Margin="{StaticResource UiInsets12_0_0_0}"
                     Style="{StaticResource BodyStrong}"
                     LineBreakMode="WordWrap"
+                    HorizontalTextAlignment="Start"
+                    FlexLayout.Grow="1"
                     VerticalOptions="Center" />
 
                 <VerticalStackLayout
                     Spacing="{StaticResource UiSpaceMicro}"
-                    HorizontalOptions="End"
+                    Margin="{StaticResource UiInsets12_0_0_0}"
                     VerticalOptions="Center">
                     <Label
                         Text="{Binding CaloriesText, Source={x:Reference Root}}"
