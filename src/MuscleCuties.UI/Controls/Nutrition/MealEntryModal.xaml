@@ -105,10 +105,9 @@
 
                         <Label Text="{loc:LocalizedText Nutrition_MealEditor_Time}"
                                Style="{StaticResource FormFieldLabel}" />
-                        <Border Style="{StaticResource InputContainer}">
-                            <TimePicker Time="{Binding EntryMealTime}" Format="HH:mm"
-                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_MealTime}" />
-                        </Border>
+                        <sharedControls:TimeField
+                            Time="{Binding EntryMealTime}"
+                            Description="{loc:LocalizedText Nutrition_MealEditor_MealTime}" />
 
                         <Button
                             Style="{StaticResource ButtonPrimary}"

@@ -191,11 +191,10 @@
                                 </ScrollView>
 
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                                    <Border Style="{StaticResource InputContainer}">
-                                        <TimePicker Time="{Binding SelectedMealTime}" Format="HH:mm"
-                                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_MealTime}"
-                                                    SemanticProperties.Hint="{Binding SelectedMealTimeText}" />
-                                    </Border>
+                                    <shared:TimeField
+                                        Time="{Binding SelectedMealTime}"
+                                        Description="{loc:LocalizedText Nutrition_MealEditor_MealTime}"
+                                        Hint="{Binding SelectedMealTimeText}" />
                                     <Button Grid.Column="1" Text="{loc:LocalizedText Common_Done}"
                                             Command="{Binding ToggleMealContextCommand}"
                                             Style="{StaticResource ButtonSecondary}" />

@@ -60,6 +60,60 @@ public sealed class WaveAWiringGuardTests
             grid => (string?)grid.Attribute("ColumnDefinitions") == "*,Auto");
     }
 
+    /// <summary>
+    /// D24/D48: both date and time pickers keep the native UITextField's rounded border inside the
+    /// shared InputContainer, so the field drew two frames. They also each rendered their own
+    /// TimePicker, and hydration's two copies fell back to the device's 12-hour pattern. One shared
+    /// field must own the 24-hour format and the container, with no timer updating the value.
+    /// </summary>
+    [Fact]
+    public void Date_and_time_values_use_one_24_hour_field_without_native_chrome()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var timeFieldPath = Path.Combine(uiRoot, "Controls", "Shared", "TimeField.xaml");
+        Assert.True(File.Exists(timeFieldPath),
+            "Date and time values must use the shared TimeField instead of per-screen TimePicker markup.");
+
+        var timeField = File.ReadAllText(timeFieldPath);
+        Assert.Contains("Format=\"HH:mm\"", timeField);
+        Assert.Contains("{StaticResource InputContainer}", timeField);
+
+        var strayPickers = SourceFiles(uiRoot, "*.xaml")
+            .Where(path => File.ReadAllText(path).Contains("<TimePicker", StringComparison.Ordinal))
+            .Select(path => Path.GetRelativePath(uiRoot, path).Replace('\\', '/'))
+            .ToArray();
+        Assert.Equal(new[] { "Controls/Shared/TimeField.xaml" }, strayPickers);
+
+        foreach (var relative in new[]
+                 {
+                     "Controls/Nutrition/MealEntryModal.xaml",
+                     "Controls/Nutrition/MealEditorModal.xaml",
+                     "Controls/Nutrition/HydrationLogView.xaml"
+                 })
+        {
+            var screen = XDocument.Load(Path.Combine(uiRoot, relative));
+            Assert.Contains(screen.Descendants(), element => element.Name.LocalName == "TimeField");
+        }
+
+        var composition = File.ReadAllText(Path.Combine(uiRoot, "Composition", "PlatformCompositionExtensions.cs"));
+        var iosStart = composition.IndexOf("#elif IOS", StringComparison.Ordinal);
+        Assert.True(iosStart >= 0, "The iOS picker chrome mappings must exist.");
+        var dateStart = composition.IndexOf("DatePickerHandler.Mapper", iosStart, StringComparison.Ordinal);
+        var timeStart = composition.IndexOf("TimePickerHandler.Mapper", dateStart, StringComparison.Ordinal);
+        Assert.True(dateStart >= 0 && timeStart > dateStart, "The iOS picker chrome mappings must exist.");
+        Assert.Contains("BorderStyle = UITextBorderStyle.None", composition[dateStart..timeStart]);
+        Assert.Contains("BorderStyle = UITextBorderStyle.None", composition[timeStart..]);
+
+        var nutritionViewModels = Path.Combine(uiRoot, "ViewModels", "Nutrition");
+        foreach (var source in SourceFiles(nutritionViewModels, "*.cs"))
+        {
+            var text = File.ReadAllText(source);
+            Assert.DoesNotContain("DispatcherTimer", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("Device.StartTimer", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("PeriodicTimer", text, StringComparison.Ordinal);
+        }
+    }
+
     private static XDocument Load(params string[] parts) =>
         XDocument.Load(Path.Combine(RepositoryRoot(), Path.Combine(parts)));
 
@@ -79,4 +133,9 @@ public sealed class WaveAWiringGuardTests
 
         throw new InvalidOperationException($"Could not locate repository root from '{AppContext.BaseDirectory}'.");
     }
+
+    private static IEnumerable<string> SourceFiles(string root, string pattern) =>
+        Directory.EnumerateFiles(root, pattern, SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}", StringComparison.Ordinal)
+                        && !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}", StringComparison.Ordinal));
 }

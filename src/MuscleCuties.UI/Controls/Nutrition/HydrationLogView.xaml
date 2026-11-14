@@ -6,6 +6,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:models="clr-namespace:MuscleCuties.UI.Models.UI.Nutrition"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Nutrition"
     x:DataType="vm:FoodLogViewModel">
 
@@ -167,10 +168,8 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="models:HydrationReminderTime">
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                                    <Border Style="{StaticResource PickerContainer}">
-                                        <TimePicker Time="{Binding Time}"
-                                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_Hydration_ReminderTime}" />
-                                    </Border>
+                                    <sharedControls:TimeField Time="{Binding Time}"
+                                                              Description="{loc:LocalizedText Nutrition_Hydration_ReminderTime}" />
                                     <Button Style="{StaticResource ButtonSecondary}"
                                             Text="{loc:LocalizedText Nutrition_Hydration_RemoveReminderTime}"
                                             Command="{Binding RemoveHydrationReminderTimeCommand, Source={RelativeSource AncestorType={x:Type vm:FoodLogViewModel}}, x:DataType=vm:FoodLogViewModel}"
@@ -182,15 +181,11 @@
                     <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_Hydration_AddReminderTime}"
                             IsEnabled="{Binding CanAddHydrationReminderTime}" Command="{Binding AddHydrationReminderTimeCommand}" />
                     <Label Text="{loc:LocalizedText Nutrition_Hydration_QuietStart}" Style="{StaticResource FormFieldLabel}" />
-                    <Border Style="{StaticResource PickerContainer}">
-                        <TimePicker Time="{Binding HydrationQuietStart}"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_Hydration_QuietStart}" />
-                    </Border>
+                    <sharedControls:TimeField Time="{Binding HydrationQuietStart}"
+                                              Description="{loc:LocalizedText Nutrition_Hydration_QuietStart}" />
                     <Label Text="{loc:LocalizedText Nutrition_Hydration_QuietEnd}" Style="{StaticResource FormFieldLabel}" />
-                    <Border Style="{StaticResource PickerContainer}">
-                        <TimePicker Time="{Binding HydrationQuietEnd}"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_Hydration_QuietEnd}" />
-                    </Border>
+                    <sharedControls:TimeField Time="{Binding HydrationQuietEnd}"
+                                              Description="{loc:LocalizedText Nutrition_Hydration_QuietEnd}" />
                 </VerticalStackLayout>
                 <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Nutrition_Hydration_SaveReminderPreferences}"
                         Command="{Binding SaveHydrationReminderCommand}" />

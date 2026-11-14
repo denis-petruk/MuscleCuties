@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Shared.TimeField"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shared="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    x:DataType="shared:TimeField">
+
+    <Border Style="{StaticResource InputContainer}">
+        <!-- One frame: the native picker's own border is cleared in PlatformCompositionExtensions.
+             Format is fixed here so every clock reading stays 24-hour regardless of device locale. -->
+        <TimePicker
+            Time="{Binding Time, Source={x:Reference Root}, Mode=TwoWay}"
+            Format="HH:mm"
+            SemanticProperties.Description="{Binding Description, Source={x:Reference Root}}"
+            SemanticProperties.Hint="{Binding Hint, Source={x:Reference Root}}" />
+    </Border>
+</ContentView>

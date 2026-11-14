@@ -80,9 +80,15 @@ public static class PlatformCompositionExtensions
                 handler.PlatformView.BackgroundColor = UIColor.Clear;
             });
             DatePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-                handler.PlatformView.BackgroundColor = UIColor.Clear);
+            {
+                handler.PlatformView.BorderStyle = UITextBorderStyle.None;
+                handler.PlatformView.BackgroundColor = UIColor.Clear;
+            });
             TimePickerHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
-                handler.PlatformView.BackgroundColor = UIColor.Clear);
+            {
+                handler.PlatformView.BorderStyle = UITextBorderStyle.None;
+                handler.PlatformView.BackgroundColor = UIColor.Clear;
+            });
 #endif
         });
     }
