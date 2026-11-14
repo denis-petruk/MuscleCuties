@@ -19,7 +19,15 @@ public partial class MealEditorModal : AnimatedModalView
 
     private void OnSearchSubmitted(object? sender, EventArgs e)
     {
-        SearchEntry.Unfocus();
+        // The keyboard stays up on purpose: unfocusing here was how the picker hid its own results
+        // the moment a search ran, so a hit was only reachable after dismissing the keys (D51).
+        // The button steals focus on iOS, so the field takes it back once the results render.
+        SetSearchMode(true);
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(250), () =>
+        {
+            if (IsOpen)
+                SearchEntry.Focus();
+        });
     }
 
     /// <summary>

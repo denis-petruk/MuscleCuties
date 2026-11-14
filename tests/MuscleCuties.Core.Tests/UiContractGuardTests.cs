@@ -289,9 +289,12 @@ public sealed class UiContractGuardTests
         Assert.Contains("EnsureScrollBody", frame, StringComparison.Ordinal);
         Assert.Contains("new ScrollView", frame, StringComparison.Ordinal);
 
-        // One body only: a sheet that already owns a ScrollView must reuse it rather than nesting a second.
+        // One body only: a sheet that already owns a ScrollView — even nested under its header grid,
+        // as the check-in sheet does — must reuse it rather than nesting a second.
+        Assert.Contains("FindScrollBody(surface.Content)", frame, StringComparison.Ordinal);
+        Assert.DoesNotContain("if (surface.Content is ScrollView existing)", frame, StringComparison.Ordinal);
         Assert.Contains(
-            "if (surface.Content is ScrollView existing)",
+            "if (FindScrollBody(child) is { } nested)",
             frame,
             StringComparison.Ordinal);
     }
@@ -310,6 +313,75 @@ public sealed class UiContractGuardTests
         Assert.Contains("RevealContentBelowFocusedField", frame, StringComparison.Ordinal);
         Assert.Contains("ScrollToAsync(focused, ScrollToPosition.Start", frame, StringComparison.Ordinal);
         Assert.Contains("SheetFooterReserve", frame, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The floating tab bar is 49 pt plus the 34 pt home inset, and it is drawn over page content.
+    /// With a 32 pt bottom padding the last card scrolls under the bar, which hid the check-in action
+    /// on Today (D37). The shared page padding must therefore clear the bar.
+    /// </summary>
+    [Fact]
+    public void Page_content_padding_clears_the_floating_tab_bar()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Resources", "Styles", "Styles.xaml");
+        var document = XDocument.Load(path);
+        XNamespace maui = "http://schemas.microsoft.com/dotnet/2021/maui";
+
+        var padding = document.Descendants(maui + "Thickness")
+            .FirstOrDefault(element => (string?)element.Attribute(XName.Get("Key", "http://schemas.microsoft.com/winfx/2009/xaml")) ==
+                                      "PresentationPageContentPadding");
+
+        Assert.True(padding is not null, "Styles.xaml no longer declares PresentationPageContentPadding.");
+
+        var bottom = double.Parse(((string)padding!).Split(',')[3], System.Globalization.CultureInfo.InvariantCulture);
+        Assert.True(
+            bottom >= 92,
+            $"PresentationPageContentPadding bottom is {bottom:0} pt; the tab bar covers the last 83 pt of the page, " +
+            "so the final card's action is unreachable (D37).");
+    }
+
+    /// <summary>
+    /// A Debug build points at `http://127.0.0.1:5080`. When that API is down or has no migrated
+    /// catalogue it answers with an empty page, and the picker showed a permanent no-match state with
+    /// no rows to tap (D51's root cause). The loopback store must therefore be able to fill the gap.
+    /// </summary>
+    [Fact]
+    public void The_debug_picker_has_a_catalogue_when_the_loopback_api_is_empty()
+    {
+        var composition = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Composition", "ApplicationCompositionExtensions.cs"));
+        var store = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Services", "Nutrition", "LoopbackFoodCatalogSearchStore.cs"));
+
+        Assert.Contains("LoopbackFoodCatalogSearchStore", composition, StringComparison.Ordinal);
+        Assert.Contains("AppTargetEnvironment.Local", composition, StringComparison.Ordinal);
+        Assert.Contains("DevelopmentFoodCatalog.Search(query)", store, StringComparison.Ordinal);
+        Assert.Contains("cloud.Count > 0", store, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Results used to appear only after the keyboard was dismissed, because the search ran on submit
+    /// and unfocused the field. Typing now schedules a debounced search, so a hit is visible while the
+    /// keys are still up (D51).
+    /// </summary>
+    [Fact]
+    public void Food_search_runs_while_the_field_stays_focused()
+    {
+        var root = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "ViewModels", "Nutrition");
+        var notifications = File.ReadAllText(Path.Combine(root, "NutritionViewModel.Notifications.cs"));
+        var search = File.ReadAllText(Path.Combine(root, "NutritionViewModel.Search.cs"));
+        var modal = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealEditorModal.xaml.cs"));
+
+        Assert.Contains("ScheduleFoodSearch(value)", notifications, StringComparison.Ordinal);
+        Assert.Contains("SearchDebounceMilliseconds", search, StringComparison.Ordinal);
+        Assert.Contains("Task.Delay(SearchDebounceMilliseconds, cancellationToken)", search, StringComparison.Ordinal);
+        Assert.Contains("SearchEntry.Focused", modal, StringComparison.Ordinal);
+        Assert.Contains("SearchEntry.Unfocused", modal, StringComparison.Ordinal);
+
+        // The old behaviour unfocused the field on submit and hid the results with the keyboard.
+        Assert.DoesNotContain("SearchEntry.Unfocus();", modal, StringComparison.Ordinal);
     }
 
     /// <summary>

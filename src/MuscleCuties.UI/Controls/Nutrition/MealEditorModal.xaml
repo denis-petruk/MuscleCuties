@@ -271,7 +271,10 @@
                     </CollectionView.ItemTemplate>
                 </CollectionView>
 
+                <!-- Opaque: the search shares its grid row with the ingredient list, and a transparent
+                     background let that list show through the result rows once real hits arrived. -->
                 <Grid Grid.Row="3" RowDefinitions="Auto,Auto,*" Margin="{StaticResource UiInsets20_16_20_0}" RowSpacing="{StaticResource UiSpaceTight}"
+                      BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                       IsVisible="{Binding IsIngredientSearchVisible}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Border Style="{StaticResource PickerContainer}">
