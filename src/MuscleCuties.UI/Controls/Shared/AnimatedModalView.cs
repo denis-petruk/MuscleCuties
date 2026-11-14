@@ -274,11 +274,15 @@ public class AnimatedModalView : ContentView
     /// </remarks>
     private static ScrollView? EnsureScrollBody(Border surface)
     {
-        if (surface.Content is ScrollView existing)
-            return existing;
-
         if (surface.Content is null)
             return null;
+
+        // A sheet that already owns a body keeps it — wrapping it again gives the sheet two
+        // scroll views and the inner one stops scrolling. The check-in sheet is the case that
+        // matters: it draws a header, its own ScrollView and a pinned footer into the surface.
+        var ownBody = FindScrollBody(surface.Content);
+        if (ownBody is not null)
+            return ownBody;
 
         var body = new ScrollView
         {
@@ -288,6 +292,20 @@ public class AnimatedModalView : ContentView
 
         surface.Content = body;
         return body;
+    }
+
+    private static ScrollView? FindScrollBody(IVisualTreeElement root)
+    {
+        foreach (var child in root.GetVisualChildren())
+        {
+            if (child is ScrollView scroll)
+                return scroll;
+
+            if (FindScrollBody(child) is { } nested)
+                return nested;
+        }
+
+        return null;
     }
 
     private Border? SheetSurface()

@@ -63,6 +63,7 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(IsFoodSearchIdle));
         SearchFoodCommand.NotifyCanExecuteChanged();
         BrowseMoreFoodsCommand.NotifyCanExecuteChanged();
+        ScheduleFoodSearch(value);
     }
 
     partial void OnFoodSearchResultsChanged(ObservableCollection<FoodSearchResultItem> value)

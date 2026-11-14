@@ -10,6 +10,7 @@ using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Workout;
 using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Infrastructure.Cloud;
+using MuscleCuties.UI.Services.Configuration;
 using MuscleCuties.Infrastructure.Cycle.Overview;
 using MuscleCuties.Infrastructure.Dashboard.Overview;
 using MuscleCuties.Infrastructure.Nutrition.DailyLog;
@@ -134,7 +135,10 @@ public static class ApplicationCompositionExtensions
         services.AddSingleton<INutritionOverviewUseCase, NutritionOverviewUseCase>();
 
         services.AddSingleton<CloudFoodCatalogSearchStore>();
-        services.AddSingleton<IFoodCatalogSearchStore>(sp => sp.GetRequiredService<CloudFoodCatalogSearchStore>());
+        services.AddSingleton<IFoodCatalogSearchStore>(sp =>
+            AppEndpointConfiguration.ActiveEnvironment == AppTargetEnvironment.Local
+                ? new LoopbackFoodCatalogSearchStore(sp.GetRequiredService<CloudFoodCatalogSearchStore>())
+                : sp.GetRequiredService<CloudFoodCatalogSearchStore>());
         services.AddSingleton<IBarcodeFoodLookupStore>(sp => sp.GetRequiredService<CloudFoodCatalogSearchStore>());
         services.AddSingleton<IFoodCatalogSearchUseCase, FoodCatalogSearchUseCase>();
         services.AddSingleton<ILookupBarcodeUseCase, LookupBarcodeUseCase>();
