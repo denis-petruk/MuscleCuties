@@ -36,6 +36,27 @@ public partial class CycleViewModel
     public RelayCommand<SymptomOptionItem> ToggleSymptomCommand { get; private set; } = null!;
     public AsyncRelayCommand SaveQuickLogCommand { get; private set; } = null!;
 
+    /// <summary>
+    ///     A save needs something to save: a period mark, a flow, or a symptom. Without any of them the
+    ///     button is disabled and states the prerequisite through its semantics hint (D32).
+    /// </summary>
+    public bool HasQuickLogInput =>
+        IsPeriodStarted ||
+        IsPeriodEnded ||
+        (SelectedFlowIntensity is FlowIntensity intensity && intensity != FlowIntensity.None) ||
+        SymptomOptions.Any(symptom => symptom.IsSelected);
+
+    public string SaveQuickLogHint => HasQuickLogInput
+        ? string.Empty
+        : MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_SaveRequiresInputHint");
+
+    private void NotifyQuickLogInputChanged()
+    {
+        OnPropertyChanged(nameof(HasQuickLogInput));
+        OnPropertyChanged(nameof(SaveQuickLogHint));
+        SaveQuickLogCommand?.NotifyCanExecuteChanged();
+    }
+
     private void InitializeQuickLogCommands()
     {
         OpenQuickLogCommand = new RelayCommand(() => OpenQuickLog());
@@ -45,7 +66,9 @@ public partial class CycleViewModel
         StartPeriodFromQuickLogCommand = new RelayCommand(StartPeriodFromQuickLog);
         SelectFlowCommand = new RelayCommand<FlowOptionItem>(SelectFlow);
         ToggleSymptomCommand = new RelayCommand<SymptomOptionItem>(ToggleSymptom);
-        SaveQuickLogCommand = new AsyncRelayCommand(SaveQuickLogCoreAsync, () => !IsQuickLogLoading && !IsBusy);
+        SaveQuickLogCommand = new AsyncRelayCommand(
+            SaveQuickLogCoreAsync,
+            () => !IsQuickLogLoading && !IsBusy && HasQuickLogInput);
 
         FlowOptions = BuildFlowOptions(null);
         SymptomOptions = BuildSymptomOptions(null);
@@ -93,6 +116,7 @@ public partial class CycleViewModel
 
             FlowOptions = BuildFlowOptions(SelectedFlowIntensity);
             SymptomOptions = BuildSymptomOptions(saved?.Symptoms);
+            NotifyQuickLogInputChanged();
         }
         catch (Exception ex)
         {
@@ -143,6 +167,8 @@ public partial class CycleViewModel
             if (SelectedFlowIntensity is null or FlowIntensity.None)
                 SelectFlow(FlowOptions.FirstOrDefault(f => f.Intensity == FlowIntensity.Medium));
         }
+
+        NotifyQuickLogInputChanged();
     }
 
     private void TogglePeriodEnded()
@@ -155,6 +181,8 @@ public partial class CycleViewModel
             SelectedFlowIntensity = FlowIntensity.None;
             FlowOptions = BuildFlowOptions(null);
         }
+
+        NotifyQuickLogInputChanged();
     }
 
     private void SelectFlow(FlowOptionItem? option)
@@ -174,6 +202,7 @@ public partial class CycleViewModel
         }
 
         FlowOptions = BuildFlowOptions(SelectedFlowIntensity);
+        NotifyQuickLogInputChanged();
     }
 
     private void ToggleSymptom(SymptomOptionItem? symptom)
@@ -188,6 +217,7 @@ public partial class CycleViewModel
             selected.Remove(symptom.Type);
 
         SymptomOptions = BuildSymptomOptions(selected.ToList());
+        NotifyQuickLogInputChanged();
     }
 
     private async Task SaveQuickLogCoreAsync()

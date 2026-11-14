@@ -349,7 +349,8 @@
                         Grid.Row="1"
                         Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Cycle_QuickLog_SaveButton}"
-                        Command="{Binding SaveQuickLogCommand}" />
+                        Command="{Binding SaveQuickLogCommand}"
+                        SemanticProperties.Hint="{Binding SaveQuickLogHint}" />
                 </Grid>
 
             </Grid>
