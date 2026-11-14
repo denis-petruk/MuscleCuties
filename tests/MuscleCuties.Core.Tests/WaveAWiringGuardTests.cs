@@ -35,6 +35,31 @@ public sealed class WaveAWiringGuardTests
         Assert.Equal("1", collection.Attribute("Grid.Row")?.Value);
     }
 
+    /// <summary>
+    /// D22: the macro-targets card kept its title in a `*,Auto` grid beside "Дополнительные
+    /// настройки". At accessibility text sizes the button took the width it wanted and the title
+    /// collapsed into a four-line sliver. The card header must use the shared adaptive row so the
+    /// title and the action stack when the text no longer fits side by side.
+    /// </summary>
+    [Fact]
+    public void Macro_targets_header_stacks_beside_its_action_at_large_text()
+    {
+        var document = Load("src", "MuscleCuties.UI", "Pages", "Profile", "ProfileNutritionSettingsPage.xaml");
+
+        var title = document.Descendants().Single(element =>
+            element.Name.LocalName == "IconSectionHeader" &&
+            ((string?)element.Attribute("Text"))?.Contains(
+                "Profile_NutritionSettings_MacroTargets", StringComparison.Ordinal) == true);
+
+        var row = title.Ancestors().FirstOrDefault(element => element.Name.LocalName == "AdaptiveRow");
+        Assert.NotNull(row);
+        Assert.Equal("2", row!.Attribute("Columns")?.Value);
+
+        Assert.DoesNotContain(
+            title.Ancestors().Where(element => element.Name.LocalName == "Grid"),
+            grid => (string?)grid.Attribute("ColumnDefinitions") == "*,Auto");
+    }
+
     private static XDocument Load(params string[] parts) =>
         XDocument.Load(Path.Combine(RepositoryRoot(), Path.Combine(parts)));
 

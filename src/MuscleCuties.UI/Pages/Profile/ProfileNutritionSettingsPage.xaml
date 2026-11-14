@@ -284,17 +284,17 @@
 
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
-                    <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource UiInsets0_4}" MinimumHeightRequest="{StaticResource UiDimension44}">
+                    <sharedControls:AdaptiveRow Columns="2" Padding="{StaticResource UiInsets0_4}"
+                                               MinimumHeightRequest="{StaticResource UiDimension44}">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_NutritionSettings_MacroTargets}"
                                                           IconGlyph="Beaker24" />
                         <Button
-                            Grid.Column="1"
                             Text="{Binding AdvancedSettingsButtonText, Converter={StaticResource LocalizedStringConverter}}"
                             Command="{Binding ToggleAdvancedSettingsCommand}"
                             Style="{StaticResource ButtonSecondary}"
                             VerticalOptions="Center"
                             SemanticProperties.Description="{loc:LocalizedText Profile_NutritionSettings_ToggleMacroTargetFields}" />
-                    </Grid>
+                    </sharedControls:AdaptiveRow>
             
                     <Label
                         Text="{loc:LocalizedText Profile_NutritionSettings_OverrideCalculatedTargetsWithYourOwn}"
