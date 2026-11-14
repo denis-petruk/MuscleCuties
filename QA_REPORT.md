@@ -420,7 +420,7 @@ destroys the meaning the palette is supposed to carry. Evidence: `dk-cycle.png`,
 
 ### D10 — P2 — 12-hour clock inside the Russian interface
 > **Status: closed.** `MealTime` renders 24-hour time (fixed with D48); this build's meal entry sheet
-> shows `00:57`, not `3:02 PM`. Evidence: `meal-entry-light.png`.
+> shows `01:01`, not `3:02 PM`. Evidence: `meal-entry-light.png`.
 **Reproduced in the running app.** The meal entry sheet shows `3:02 PM` while every other surface and
 the Russian locale use 24-hour time (`15:02` in the status bar at the same moment). Evidence:
 `n-entry.png`.
