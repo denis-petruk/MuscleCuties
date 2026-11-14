@@ -1,56 +1,57 @@
-# Status
+# Status — Wave A close-out
 
-## Changed files
+Branch: `fix/qa-audit-followups`. Nothing pushed; no PR opened.
 
-- `src/MuscleCuties.UI/Controls/Dashboard/DashboardWorkoutCard.xaml` — the header is now an
-  `Auto,*` grid: the icon keeps its own column, while the badge, title, and support line share the
-  text column. The rest-day guidance is an inline callout with `UiInsets14_12` and `MutedLabel`
-  instead of a `CardSecondary` nested inside the primary card, removing the double inset and the
-  12 pt caption type.
-- `tests/MuscleCuties.Core.Tests/UiContractGuardTests.cs` — added
-  `Today_rest_card_keeps_support_copy_aligned_and_guidance_compact`, which failed before the
-  layout change and now guards the alignment, compact inset, and support-size guidance.
-- `docs/qa-evidence/wave-a/rest-card-before.png`,
-  `docs/qa-evidence/wave-a/rest-card-after.png`,
-  `docs/qa-evidence/wave-a/rest-card-after-dark.png`, and
-  `docs/qa-evidence/wave-a/rest-card-after-accessibility-large.png` — simulator evidence for the
-  normal, dark, and accessibility-large rendering.
+## Commits in this pass
 
-## Test commands and output
+- `6f520353` — Use the shared page header on Nutrition (D2).
+- `6eb6d92e` — Let the macro-targets header stack beside its action (D22).
+- `272958c1` — Use one 24-hour time field without native picker chrome (D48; birthday half of D24).
+- `c8c94888` — Use the shared sheet header on check-in and breakdown (D36 adoption).
+- `2c8a3dcc` — Guard the template empty state and workout metrics (D52, D44).
 
-    dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj --no-restore \
-      --filter "FullyQualifiedName~UiContractGuard|FullyQualifiedName~UiStyleGate|FullyQualifiedName~Xaml_buttons_use_shared_styles"
+The earlier rest-card fix `cd9b544f` was not redone.
 
-    Passed!  - Failed: 0, Passed: 52, Skipped: 0, Total: 52
+## What changed
 
-    dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj --no-build --no-restore
+- `NutritionPage.xaml` composes `sharedControls:PageHeader` in the root `Auto,*` row. The empty
+  header row and the bespoke hero are gone.
+- `ProfileNutritionSettingsPage.xaml` puts the macro-targets title and action in
+  `AdaptiveRow Columns="2"`; at an accessibility text size they stack instead of squeezing the title.
+- New `Controls/Shared/TimeField.xaml` / `.xaml.cs` owns one `InputContainer` frame, a fixed 24-hour
+  `HH:mm` format and a two-way time value. Adopted by `MealEntryModal`, `MealEditorModal` and all
+  three `HydrationLogView` time controls. No timer refreshes the value.
+- `PlatformCompositionExtensions` clears the native `UITextField.BorderStyle` on iOS `DatePicker` and
+  `TimePicker`, removing the concentric inner frame from both the birthday and meal-time fields.
+- `DailyCheckInModal` and `NutritionBreakdownModal` now use `sharedControls:ModalSheetHeader` instead
+  of hand-built title rows. Entry/editor/picker already used it.
+- `WaveAWiringGuardTests.cs` pins the page header, adaptive macro row, shared time field/native chrome,
+  shared sheet headers, template empty state and dashboard adaptive metric row.
 
-    Passed!  - Failed: 0, Passed: 1409, Skipped: 0, Total: 1409
+## Verification
 
-    dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios \
-      -p:RuntimeIdentifier=iossimulator-arm64 --no-restore
+- Guard subset: 58 passed, 0 failed.
+- Full `MuscleCuties.Core.Tests`: 1415 passed, 0 failed.
+- iOS simulator build: 0 warnings, 0 errors.
+- Simulator evidence under `docs/qa-evidence/wave-a/`, each captured light/dark at normal and
+  `accessibility-large`:
+  - `d2-nutrition-header-*`
+  - `d22-macro-header-*`
+  - `d24-birthday-field-*`
+  - `d48-entry-time-*` and `d48-entry-time-template-*`
+  - `d36-checkin-header-*` and `d36-breakdown-header-*`
+  - `d52-entry-template-empty-*` (the template action was tapped and the no-templates state was
+    visible at all four combinations).
 
-    Build succeeded.
-        0 Warning(s)
-        0 Error(s)
+## Limitations
 
-The new guard first failed with: `WorkoutSubtitle must sit in the same Auto,* grid as the icon so
-it aligns with the title, not the icon.` It passes after the XAML change. The card was inspected in
-the simulator in light, dark, and `accessibility-large` before restoring the simulator to light and
-`large`.
-
-## Not verified
-
-- The five-project solution suite was not rerun for this UI-only change; the last full-solution
-  gate belongs to the previous task, not this one.
-- The training-day variant of the reflowed header was not opened in the simulator. The rest-day
-  card and its guidance were checked; the workout-day pill and activity chips use the same new
-  text-column grid but were not visually exercised.
-- The primary action was not tapped after the layout change; its command and binding are unchanged.
-- The existing untranslated `Rest Focus` subtitle was left alone; it comes from data/copy rather
-  than the card typography.
-
-## Next step
-
-Review the four evidence frames and merge the card refinement. The untranslated rest subtitle and
-the remaining QA waves are separate follow-ups.
+- D44's adaptive metric row was already in the branch when this pass began, so its new guard was green
+  on arrival rather than red-before/green-after. Today is a rest day on the QA account, and changing
+  the account's plan was out of scope, so no training-day after frame was captured. The earlier
+  `C24-today-loaded-light.png` remains the only dashboard evidence.
+- D24 is only partly closed: the birthday frame is fixed, but `Рост 165` / `Вес 62` still have no
+  unit and `Личные данные` still reads as a muted caption.
+- D52 was driven with an empty template catalog. Selecting or editing a saved template was not
+  exercised.
+- The simulator was left in the last evidence state (light, `accessibility-large`) until the final
+  reset to light/`large`.

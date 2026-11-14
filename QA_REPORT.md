@@ -335,6 +335,13 @@ automation and VoiceOver but not from sight. The edit button, however, does not 
 own centre either, so the missing tree is not the only reason that path fails: see D46.
 
 ### D2 — P1 — Nutrition has no shared page header and uses a second page skin
+> **Status: closed on `fix/qa-audit-followups`.** `NutritionPage` now composes
+> `<sharedControls:PageHeader Title="…Nutrition_Page_Nutrition" ShowBack="False" />` in the root
+> `Auto,*` grid; the empty row and the bespoke pink hero are gone. Guard
+> `Nutrition_page_uses_the_shared_page_header` was red on the headerless root before the change and
+> is green after. Driven in the simulator at normal and `accessibility-large`, light and dark.
+> Evidence: `d2-nutrition-header-light.png`, `d2-nutrition-header-dark.png`,
+> `d2-nutrition-header-accessibility-large.png`, `d2-nutrition-header-accessibility-large-dark.png`.
 **Reproduced in the running app.** Code: `Pages/Nutrition/NutritionPage.xaml` has no `PageHeader`; its
 root grid still declares an empty `Auto` row (`RowDefinitions="Auto,*"`, CollectionView in row 1), and
 the visible header is a pink `CardPrimary`-like block with an eyebrow dot, the title repeated, a
@@ -576,6 +583,13 @@ content ends above the pinned bar. Evidence: `light-ProfilePersonalInfoPage.png`
 `dark-ProfileUnitsDisplayPage.png`, `rt-ProfileFeedbackPage.png`.
 
 ### D22 — P1 — Section headers collapse into a vertical sliver beside a trailing action
+> **Status: closed on `fix/qa-audit-followups`.** The `Целевые макросы` header is now a
+> `sharedControls:AdaptiveRow Columns="2"`: equal columns at standard text size, with the title and
+> `Дополнительные настройки` stacking full-width at an accessibility size instead of squeezing the
+> title into a sliver. Guard `Macro_targets_header_stacks_beside_its_action_at_large_text` was red on
+> the old `*,Auto` grid and is green after. Driven at normal and `accessibility-large`, light and dark.
+> Evidence: `d22-macro-header-light.png`, `d22-macro-header-dark.png`,
+> `d22-macro-header-accessibility-large.png`, `d22-macro-header-accessibility-large-dark.png`.
 **Reproduced in the running app.** On `Настройки питания` the card header `Целевые макросы` is squeezed
 into a four-line column — `Целев` / `ые` / `макро` / `сы` — because `Дополнительные настройки` claims
 the row width, and the same row is unreadable at both appearances. This is the header/action row
@@ -592,6 +606,16 @@ selected recipe on Train's filters and the day strip. Evidence: `dark-ProfileUni
 `rt-ProfileUnitsDisplayPage.png`.
 
 ### D24 — P2 — Personal info: double-framed date field and unitless measurements
+> **Status: birthday frame closed on `fix/qa-audit-followups`; measurement units and the trailing
+> caption remain open.** The iOS mapper now clears the native `UITextField.BorderStyle` on
+> `DatePicker` as well as `TimePicker`, so the shared `InputContainer` is the only frame around
+> `15.03.1996` (and around the meal-time field, D48). Guard
+> `Date_and_time_values_use_one_24_hour_field_without_native_chrome` was red before the shared field
+> and native-chrome change, then green. Driven at normal and `accessibility-large`, light and dark.
+> Evidence: `d24-birthday-field-light.png`, `d24-birthday-field-dark.png`,
+> `d24-birthday-field-accessibility-large.png`, `d24-birthday-field-accessibility-large-dark.png`.
+> `Рост 165` / `Вес 62` still carry no unit, and `Личные данные` still reads as a muted caption; those
+> two parts of D24 are not claimed fixed here.
 **Reproduced in the running app, both appearances.** The birthday control is drawn as a rounded field
 inside another rounded field (`15.03.1996` sits inside two concentric borders), which no other input on
 the screen has; `Рост 165` and `Вес 62` carry no unit and no unit suffix; and the card's trailing
@@ -759,6 +783,10 @@ Evidence: `S9-swap.png`, `S10-swap-confirm-empty.png`.
 > `wave-a-entry-light.png`, `wave-a-editor-summary-{light,dark}.png`,
 > `wave-a-picker-{light,dark}.png` and `wave-a-editor-context-dark.png` (selected `Завтрак` white on
 > the filled cell; back chevron only in the picker).
+> The check-in and nutrient-breakdown sheets joined the same header in the Wave A close-out; guard
+> `Sheets_use_the_shared_sheet_header` was red on those two hand-built rows, then green. Frames:
+> `d36-checkin-header-{light,dark,accessibility-large,accessibility-large-dark}.png` and
+> `d36-breakdown-header-{light,dark,accessibility-large,accessibility-large-dark}.png`.
 **Reproduced in the running app, dark.**
 Repro: Nutrition → `Добавить прием пищи` → meal editor → `Добавить еду`.
 Expected: the same chip recipe for a selected option and the same sheet header anatomy across the
@@ -870,6 +898,14 @@ inside the calendar card, and weekdays are lowercase (`суббота, 14 ноя
 Evidence: `C7-month-expanded-light.png`, `C18-december-modal-light.png`, `C14-datephase-modal-dark.png`.
 
 ### D44 — P2 — Today's workout metrics row collides at large text
+> **Status: layout fixed and guarded; simulator capture blocked in this environment.** The three metric
+> tiles are inside `sharedControls:AdaptiveRow Columns="3"`; at an accessibility size the row is one
+> tile per row, and at standard sizes it stays three across. Guard
+> `Today_workout_metrics_use_the_adaptive_row` now pins that shape. The fix was already present in the
+> branch when this pass started, so the guard was green on arrival rather than red-before/green-after;
+> it is a regression guard, not a fresh red test. Today is a rest day on this QA account, and changing
+> the account's plan to manufacture a training day was out of scope, so no new after frame could be
+> driven. The earlier before frame remains `C24-today-loaded-light.png`; no after frame is claimed.
 **Reproduced in the running app.**
 Repro: Today with a planned strength day at default text size.
 Expected: three metrics on one row with labels that do not overlap.
@@ -943,7 +979,17 @@ same clock; `SelectedMealTimeText` did the same. Both pickers and both text buil
 `Services/Formatting/MealTime` (`HH:mm`, invariant), so the field, the chip, the meal card and the editor
 header cannot disagree. `UiContractGuardTests.Meal_times_render_one_24_hour_clock_instead_of_the_culture_short_pattern`
 fails if the culture-short pattern returns; it was red on all six sites before the change and is green now.
-Commit `cd65f85d`. The double frame around the field is untouched and still open.
+Commit `cd65f85d`.
+
+**Double frame closed (Wave A close-out).** One `sharedControls:TimeField` now owns the 24-hour
+`HH:mm` format and the single `InputContainer` frame, and the iOS `TimePicker`/`DatePicker` mappings
+clear the native `UITextField.BorderStyle` that drew the inner rounded rect. The field is adopted by
+the entry sheet, the editor and all three hydration reminder times; the value is still frozen at
+sheet open and no timer refreshes it. Guard
+`Date_and_time_values_use_one_24_hour_field_without_native_chrome` was red on the missing control and
+native chrome, then green. Driven at normal and `accessibility-large`, light and dark.
+Evidence: `d48-entry-time-template-light.png`, `d48-entry-time-template-dark.png`,
+`d48-entry-time-accessibility-large.png`, `d48-entry-time-accessibility-large-dark.png`.
 
 ### D49 — P2 — Read-only value chips in the editor look exactly like the tappable chips before it
 > **Status: closed.** The editor's summary is a labelled text row (`Тип приема пищи`) followed by
@@ -1025,10 +1071,16 @@ Evidence: `N13-picker-keyboard-light.png`, `N14-picker-keyboard-dismissed-light.
 `N15-picker-keyboard-dark.png`, `N16-picker-keyboard-dismissed-dark.png`.
 
 ### D52 — P2 — The entry sheet cannot scroll, and `Использовать шаблон` is a silent no-op
-**Reproduced in the running app**, dark, three separate launches. **Scroll half fixed** (`3b55255c`, seen in
+**Closed on `fix/qa-audit-followups`.** **Scroll half fixed** (`3b55255c`, seen in
 `R4-entry-sheet-dark.png`): every sheet whose surface draws straight into `ModalSurface` now gets a scroll
 body from the frame, and the frame keeps a 12 pt footer reserve underneath it, so the entry sheet's last
-action clears the edge. **Still open:** the template action itself is unchanged and untested since the change.
+action clears the edge. **Template half verified this pass:** the action and its status now sit inside
+that body, a tap reveals the view model's `Nutrition_MealEntry_NoTemplates` message, and the sheet can be
+scrolled to it at standard and accessibility sizes in both themes. Guard
+`Meal_entry_template_action_is_reachable_and_explains_an_empty_catalog` pins the action inside the
+scroll body and the visible empty-state binding. Evidence: `d52-entry-template-empty-light.png`,
+`d52-entry-template-empty-dark.png`, `d52-entry-template-empty-accessibility-large.png`,
+`d52-entry-template-empty-accessibility-large-dark.png`.
 
 Repro: Nutrition → `Добавить прием пищи` → swipe up inside the sheet; then tap `Использовать шаблон`.
 Expected: the sheet scrolls when its content exceeds the visible height, and with no saved templates the
