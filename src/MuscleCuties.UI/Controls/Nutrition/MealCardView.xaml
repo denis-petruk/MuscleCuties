@@ -10,9 +10,12 @@
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="controls:MealCardView">
 
-    <Border
-        Style="{StaticResource CardPrimary}"
-        SemanticProperties.Description="{Binding SemanticDescription, Source={x:Reference Root}}">
+    <Grid>
+        <Border
+            x:Name="MealCardSurface"
+            IsVisible="{Binding HasContent, Source={x:Reference Root}}"
+            Style="{StaticResource CardPrimary}"
+            SemanticProperties.Description="{Binding SemanticDescription, Source={x:Reference Root}}">
         <Border.GestureRecognizers>
             <TapGestureRecognizer
                 Command="{Binding OpenCommand, Source={x:Reference Root}}"
@@ -116,5 +119,37 @@
 
             <ContentView Content="{Binding BelowContent, Source={x:Reference Root}}" />
         </VerticalStackLayout>
-    </Border>
+        </Border>
+
+        <!-- An empty meal group is a row, not a card. Keeping the icon and meal type gives it a
+             place in the list; the only content is the one empty statement. -->
+        <Grid
+            x:Name="EmptyMealRow"
+            IsVisible="{Binding IsEmpty, Source={x:Reference Root}}"
+            ColumnDefinitions="Auto,*,Auto"
+            ColumnSpacing="{StaticResource UiSpaceTight}"
+            Padding="{StaticResource UiInsets0_8}">
+            <Path
+                Data="{Binding MealTypeIconData, Source={x:Reference Root}, Converter={StaticResource StringToGeometryConverter}}"
+                Style="{StaticResource NutritionLineIcon}"
+                Stroke="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource PrimaryDark}}"
+                StrokeThickness="{StaticResource UiStrokeWidth1_8}"
+                WidthRequest="{StaticResource UiDimension20}"
+                HeightRequest="{StaticResource UiDimension20}"
+                VerticalOptions="Center" />
+            <Label
+                Grid.Column="1"
+                Text="{Binding Heading, Source={x:Reference Root}}"
+                Style="{StaticResource BodyStrong}"
+                LineBreakMode="WordWrap"
+                VerticalOptions="Center" />
+            <Label
+                Grid.Column="2"
+                Text="{Binding MealName, Source={x:Reference Root}}"
+                Style="{StaticResource MutedLabel}"
+                HorizontalTextAlignment="End"
+                LineBreakMode="WordWrap"
+                VerticalOptions="Center" />
+        </Grid>
+    </Grid>
 </ContentView>

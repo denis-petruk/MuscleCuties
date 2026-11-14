@@ -2,38 +2,26 @@
 
 ## 1. Changed files
 
-This pass closed D7, D13 and the archive's mid-word wrap on top of `64a42f65`; D43 is untouched.
+D12's empty meal-group shell is closed on top of `b3d2d652`; D43 is untouched.
 
-- `src/MuscleCuties.UI/Controls/Dashboard/ReadinessRecoveryCard.xaml`,
-  `ViewModels/Dashboard/DashboardViewModel.cs` — the no-record state keeps the `Нужна отметка` pill and
-  one explanation; the duplicate subtitle and tinted prompt box are removed.
-- `src/MuscleCuties.UI/Controls/Dashboard/DashboardWorkoutCard.xaml` — the `ДЕНЬ ОТДЫХА` pill is gone;
-  the title and guidance carry the state.
-- `src/MuscleCuties.UI/Controls/Cycle/CycleCalendarCard.xaml`,
-  `ViewModels/Cycle/CycleViewModel.cs`, `Services/Localization/{RussianUiText,UiTextCatalog}.CycleWorkout.cs`
-  — the hero states the phase once; the calendar card keeps `Запись от 13 нояб.` through the new
-  `Cycle_Calendar_LastLogFormat`, with no repeated `logged` sentence or phase title.
-- `src/MuscleCuties.UI/Pages/Nutrition/FoodLogPage.xaml` — one date on the page; the water card hosts
-  only `HydrationLogView`; `Скопировать вчерашнее` and `Разбор питательных веществ` are two full-width
-  `ButtonSecondary` controls in their own card; `Дневник за вчера` and the second empty sentence are
-  removed.
-- `src/MuscleCuties.UI/Controls/Nutrition/MealCardView.xaml(.cs)` — new `HasContent` flag hides the
-  zero-calorie stack and macro line on an empty group.
-- `src/MuscleCuties.UI/Controls/Profile/ProfileDetailsContent.xaml` — the vault shows one privacy
-  status plus `Показать`.
-- `src/MuscleCuties.UI/Pages/Workout/WorkoutHistoryPage.xaml` — the three-column `AdaptiveRow` is now
-  three stacked label/value rows; `Продолжительность`, `Объем` and `Всего подходов` stay whole.
-- `tests/MuscleCuties.Core.Tests/UiContractGuardTests.cs` — `D7_surfaces_state_each_fact_once`,
+- `src/MuscleCuties.UI/Controls/Nutrition/MealCardView.xaml` — the `CardPrimary` surface is now shown
+  only when `HasContent` is true. An empty group renders as `EmptyMealRow`: a plain `Grid` with the meal
+  icon, meal type and one `Пока ничего не добавлено` statement. It has no inner `Border`, calorie or
+  macro block, template action or `BelowContent`; the divider/action anatomy belongs only to a
+  populated card.
+- `src/MuscleCuties.UI/Controls/Nutrition/MealCardView.xaml.cs` — added `IsEmpty` and refresh it when
+  `HasContent` changes.
+- `tests/MuscleCuties.Core.Tests/UiContractGuardTests.cs` —
+  `D12_empty_meal_group_is_one_row_without_a_card_surface`, seen red on the old unconditional card
+  surface and then green. Existing `D7_surfaces_state_each_fact_once`,
   `D13_water_card_does_not_host_unrelated_actions` and
-  `Archive_duration_header_does_not_wrap_mid_word`; each was run red against the old shape, then green.
-  The D7 guard also asserts that the cycle card no longer repeats the phase title.
-- `docs/qa-evidence/wave-a/` — final-head frames, light and dark:
-  `d7-today-{light,dark}.png`, `d7-cycle-{light,dark}.png`, `d7-foodlog-{light,dark}.png`,
-  `d7-foodlog-empty-light.png`, `d7-profile-{light,dark}.png`, `d7-archive-{light,dark}.png`,
-  `d13-foodlog-actions-{light,dark}.png`. The stale diagnostic `d7-foodlog-empty-light.png` was
-  replaced with the current empty-group frame.
-- `QA_REPORT.md` — D7, D13 and D26 are closed with the guards and new frames; affected plan rows and
-  the Food Log/Archive audit-matrix rows no longer claim the fixed defects.
+  `Archive_duration_header_does_not_wrap_mid_word` remain green.
+- `docs/qa-evidence/wave-a/` — final-head frames: `d12-foodlog-empty-{light,dark}.png` (all four empty
+  sections, no card shells), `d12-nutrition-meal-{light,dark}.png` (populated shared card still
+  renders), and refreshed `d7-foodlog-empty-light.png` / `d13-foodlog-actions-{light,dark}.png` so
+  those earlier rows do not cite the old empty-card shape.
+- `QA_REPORT.md` — row 19 and D12 now record the closed empty-group shape, the guard and the new
+  frames. The meal-editor/breakdown rows no longer claim D12 for their separate nested-card debt.
 
 ## 2. Test commands and pasted output
 
@@ -43,51 +31,42 @@ dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios 
     0 Error(s)
 
 dotnet test tests/MuscleCuties.Core.Tests
-Passed!  - Failed: 0, Passed: 1403, Skipped: 0, Total: 1403
+Passed!  - Failed: 0, Passed: 1404, Skipped: 0, Total: 1404
 
 dotnet test tests/MuscleCuties.Core.Tests --filter "UiContractGuard|UiStyleGate"
-Passed!  - Failed: 0, Passed: 45, Skipped: 0, Total: 45
+Passed!  - Failed: 0, Passed: 46, Skipped: 0, Total: 46
 ```
 
 Red then green, this pass:
 
 ```
-D7_surfaces_state_each_fact_once
-  RED   Failed  (duplicate prompt/pill/date/empty copy; repeated phase in the cycle card)
-  GREEN Passed
-
-D13_water_card_does_not_host_unrelated_actions
-  RED   Failed  (water card also contained Copy-yesterday, Breakdown and the diary label)
-  GREEN Passed
-
-Archive_duration_header_does_not_wrap_mid_word
-  RED   Failed  (three-column AdaptiveRow with no NoWrap on the duration header)
+D12_empty_meal_group_is_one_row_without_a_card_surface
+  RED   Assert.Contains() Failure: card surface had no HasContent visibility binding
   GREEN Passed
 ```
 
 Driven on simulator `678048F6-C4C7-406C-A970-7104AED3E00A`, installed from
 `src/MuscleCuties.UI/bin/Debug/net10.0-ios/iossimulator-arm64/MuscleCuties.UI.app` after the final
-change. Screenshots were taken with `xcrun simctl io booted screenshot` after each flow settled; Today,
-Cycle, Food Log (summary, empty groups, actions), Profile and the archive list were inspected in light
-and dark.
+change. Food Log empty rows were inspected in light and dark; the populated `MealCardView` was
+inspected on Nutrition in light and dark after logging a synthetic `Chicken feet` entry.
 
 ## 3. What was not verified, and why
 
-- **D43 is the only formatter-family item still open and is parked unchanged.** It needs a wording/design decision: the
-  heading `Исследователь 4-фазы` and chip `NOW`, and which phase-list recipe is canonical (the
-  explorer's four saturated bars or the date sheet's four pink cards). Its date line
-  `среда, 4 ноября 2026 г.` can move to `DateText` once that is settled. No D43 file was edited.
-- D12's full-card empty meal groups remain; this pass removed their duplicated content only. The
-  nested-card cleanup (breakdown, check-in, cycle hero) is unchanged, so D12 is still open as
-  structural debt.
-- Other D-row surfaces were not re-driven in this pass; their cited frames predate this head and were
-  not claimed as current. The frames retaken here cover the surfaces changed by D7, D13 and the archive
-  layout.
+- **D43 is still open and unchanged.** It needs the owner's wording/phase-recipe decision recorded in
+  `QA_REPORT.md`; no D43 file was edited.
+- Food Log displayed `Повторить загрузку этого дня` throughout the visual pass, so its meal data did
+  not load. The all-empty row shape is verified there in both themes; a mixed populated/empty Food Log
+  could not be driven. The populated shared-card branch was verified on Nutrition instead.
+- The screenshots expose the still-open D4 `Snacks` heading in the Russian Food Log; it is not a D12
+  regression and was not changed in this pass.
+- `QA_REPORT.md` still records 34 open findings from earlier audit passes, including D43. D12 is no
+  longer one of them. The report also records 17 closed and 3 withdrawn/retracted findings (D17, D31,
+  D53); rows such as D1, D2, D4, D9, D11, D14, D15, D18–D25, D27, D29, D30, D34–D36, D39–D47, D49 and
+  D52 are not claimed fixed by this pass.
 
 ## 4. Next step
 
-The only product decision blocking the formatter family is D43's wording/recipe choice; D12's
-structural cleanup can proceed without it. Once answered, switch
-the phase list to the chosen recipe, route its date line through `DateText`, close D43 with light/dark
-frames, and then continue with the remaining visual-consistency group (D8, D11, D14, D19, D21, D22,
-D36, D44).
+D12's empty-group shell is complete. The only owner decision blocking the formatter family remains
+D43's wording/recipe choice; after that, continue the remaining open QA rows above. D12's separate
+sheet/hero nested-card examples are now recorded as their own consistency debt rather than folded into
+this closure.

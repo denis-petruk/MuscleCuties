@@ -40,7 +40,9 @@ public partial class MealCardView : ContentView
         nameof(SemanticDescription), typeof(string), typeof(MealCardView), string.Empty);
 
     public static readonly BindableProperty HasContentProperty = BindableProperty.Create(
-        nameof(HasContent), typeof(bool), typeof(MealCardView), true);
+        nameof(HasContent), typeof(bool), typeof(MealCardView), true,
+        propertyChanged: (bindable, _, _) =>
+            ((MealCardView)bindable).OnPropertyChanged(nameof(IsEmpty)));
 
     public static readonly BindableProperty ShowEditProperty = BindableProperty.Create(
         nameof(ShowEdit), typeof(bool), typeof(MealCardView), true,
@@ -126,6 +128,8 @@ public partial class MealCardView : ContentView
         get => (bool)GetValue(HasContentProperty);
         set => SetValue(HasContentProperty, value);
     }
+
+    public bool IsEmpty => !HasContent;
 
     public bool ShowEdit
     {

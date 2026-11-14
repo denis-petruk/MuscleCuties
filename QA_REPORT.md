@@ -200,12 +200,12 @@ Nothing is marked PASS on code reading alone.
 | 11 | Nutrition render | Signed in | Open Питание | Shared page header + summary | Rendered without any page header; bespoke pink hero (D2) | FAIL | `t-nutrition.png`, `d2-nutrition.png` |
 | 12 | Meal entry sheet | Nutrition | Tap `Добавить прием пищи` | Compact context, then commit actions | Opens in 24-hour Russian time `01:20` (D10) | PASS | `meal-entry-light.png`, `meal-entry-dark.png` |
 | 13 | Suggest meal sheet | Entry sheet | Tap `Предложить приём пищи` | Suggestion cards | Opens; English food names, descriptions and `Goal: Snack` (D4) | FAIL | hierarchy capture |
-| 14 | Meal editor | Entry sheet | Tap `Добавить прием пищи` | Editor with summary and actions | Opens; exposes no accessible elements (D1); large empty body (D12) | FAIL | `s2-editor.png` |
+| 14 | Meal editor | Entry sheet | Tap `Добавить прием пищи` | Editor with summary and actions | Opens; exposes no accessible elements (D1); large empty body | FAIL | `s2-editor.png` |
 | 15 | Food picker (search tab) | Editor | Tap `Добавить еду` | Search field and results | Opens; still no accessible elements (D1) | FAIL | `s4-foodpick.png` |
 | 16 | Food search submit | Picker | Type a query, search, add | Results and save | BLOCKED by #15: sheet is coordinate-only; not completed | BLOCKED | hierarchy shows only status bar |
-| 17 | Nutrition breakdown | Nutrition | Tap `Микроэлементы` | Sheet with donut, macros, micros | Quantities now from `NutritionFormat`; nested-card layout remains (D12) | PARTIAL | `breakdown-light.png` |
+| 17 | Nutrition breakdown | Nutrition | Tap `Микроэлементы` | Sheet with donut, macros, micros | Quantities now from `NutritionFormat`; nested-card layout remains | PARTIAL | `breakdown-light.png` |
 | 18 | Food log page | Nutrition | Tap `Дневник питания` | Shared header, date strip, rings, meals | Rendered; date appears once, the water card holds only water and the two diary actions have their own equal-width card (D13 closed) | PASS | `d7-foodlog-light.png`, `d7-foodlog-dark.png`, `d13-foodlog-actions-light.png`, `d13-foodlog-actions-dark.png` |
-| 19 | Empty meal groups | Food log | Scroll past summary | One compact empty row per group | Each group is one line: meal name and `Пока ничего не добавлено`; zero macros and the second empty sentence are gone (D7 closed). The groups are still full cards, so D12 remains | PARTIAL | `d13-foodlog-actions-light.png`, `d13-foodlog-actions-dark.png` |
+| 19 | Empty meal groups | Food log | Scroll past summary | One compact empty row per group | Breakfast, lunch, dinner and snacks are one row each: icon, meal type and `Пока ничего не добавлено`, with no card surface, calories, macros, actions or second sentence (D7, D12 closed) | PASS | `d12-foodlog-empty-light.png`, `d12-foodlog-empty-dark.png`; populated card path in `d12-nutrition-meal-light.png`, `d12-nutrition-meal-dark.png` |
 | 20 | Meal card **Edit meal** | Food log / Nutrition | Locate the card's edit action | Reachable action that opens the editor | Card root description hides the action; not reachable by automation/VoiceOver (D1) | BLOCKED | hierarchy: only `Scrambled Eggs with Toast` |
 | 21 | Dark appearance, five tabs | Dark | Visit each tab | Same hierarchy, readable | Captured; contrast holds, D7's duplicated statements are gone, remaining frame defects persist | PARTIAL | `d7-today-dark.png`, `d7-cycle-dark.png`, `d7-foodlog-dark.png`, `d7-profile-dark.png`, `d7-archive-dark.png`, `dk-train.png` |
 | 22 | Dark appearance, sheets | Dark | Re-open sheets | Same sheet styling | Activity chooser and session notes captured in dark and show the same defects as light; check-in, editor, picker and breakdown still light-only | PARTIAL | `sess-dark-3.png`, `notes-sheet.png` |
@@ -448,6 +448,16 @@ Food Log's water card are cut by the tab bar because the scroll content has no b
 Evidence: `dk-train.png`, `fl4-card.png`.
 
 ### D12 — P2 — Nested card shells and oversized empty states
+> **Status: closed.** The empty meal-group shell was the live D12 surface in this pass.
+> `MealCardView` now renders its `CardPrimary`
+> surface only when `HasContent`; an empty group is a plain `EmptyMealRow` with the meal icon, meal
+> type and one `Пока ничего не добавлено` statement. It has no inner `Border`, calorie/macro block,
+> template action or `BelowContent`. The same shared control backs all four Food Log sections and the
+> Nutrition meal cards, so the shape is not patched per page. Guard
+> `D12_empty_meal_group_is_one_row_without_a_card_surface` was seen red on the old card surface, then
+> green. Driven in both themes on the final build: `d12-foodlog-empty-{light,dark}.png`, and the
+> populated card in `d12-nutrition-meal-{light,dark}.png`. The sheet/hero nesting examples in the historical
+> reproduction below are separate consistency debt and are not claimed by this closure.
 **Reproduced in the running app.** The check-in sheet contains two full cards inside the sheet surface;
 the Cycle hero contains two tinted sub-cards; each of twelve micronutrients in the breakdown sheet is a
 full card; the meal editor's body is a large blank area under a disabled pink commit; empty meal groups
