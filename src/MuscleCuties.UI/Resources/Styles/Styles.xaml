@@ -162,6 +162,9 @@
     <Thickness x:Key="UiInsets20_0_20_14">20,0,20,14</Thickness>
     <Thickness x:Key="UiInsets20_0_20_16">20,0,20,16</Thickness>
     <Thickness x:Key="UiInsets20_0_20_20">20,0,20,20</Thickness>
+    <!-- Toast host clearance: the floating tab bar is 49 pt plus the 34 pt home inset; a toast that
+         ignores it is covered by the bar in the bottom corners. -->
+    <Thickness x:Key="UiInsets20_0_20_72">20,0,20,72</Thickness>
     <Thickness x:Key="UiInsets20_0_20_24">20,0,20,24</Thickness>
     <Thickness x:Key="UiInsets20_0_20_32">20,0,20,32</Thickness>
     <Thickness x:Key="UiInsets20_12_20_20">20,12,20,20</Thickness>
