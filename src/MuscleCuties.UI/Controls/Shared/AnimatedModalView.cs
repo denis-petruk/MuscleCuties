@@ -101,6 +101,7 @@ public class AnimatedModalView : ContentView
         if (page is not null)
         {
             ModalAccessibilityScope.Release(page, this);
+            ModalTabBar.Release(page);
             _isolationPage = null;
         }
     }
@@ -109,6 +110,7 @@ public class AnimatedModalView : ContentView
     {
         var page = HostPage();
         HookPage(page);
+        ApplyBottomSafeAreaBleed();
 
         if (!IsOpen)
         {
@@ -124,10 +126,48 @@ public class AnimatedModalView : ContentView
         {
             _isolationPage = page;
             ModalAccessibilityScope.Acquire(_isolationPage, this);
+            ModalTabBar.Acquire(_isolationPage);
         }
 
         _capturedFocusTarget ??= RestoreFocusTarget ?? FocusedOutsideSheet();
         CompleteOpen(_transitionVersion);
+    }
+
+    /// <summary>
+    /// Lets the sheet reach the physical bottom edge.
+    /// </summary>
+    /// <remarks>
+    /// Pages that set <c>SafeAreaEdges="All"</c> inset their content above the home indicator, and a
+    /// sheet anchored to the bottom of that content stops one indicator-height short of the screen.
+    /// Negative bottom margin extends the host over that strip; the shared footer inset keeps the
+    /// footer content clear of the indicator. Pages without the inset get the same treatment, so the
+    /// frame reaches the edge identically everywhere.
+    /// </remarks>
+    private void ApplyBottomSafeAreaBleed()
+    {
+#if IOS
+        var bottom = 0.0;
+        foreach (var scene in UIKit.UIApplication.SharedApplication.ConnectedScenes)
+        {
+            if (scene is not UIKit.UIWindowScene windowScene)
+                continue;
+
+            foreach (var window in windowScene.Windows)
+            {
+                if (window.IsKeyWindow)
+                {
+                    bottom = window.SafeAreaInsets.Bottom;
+                    break;
+                }
+            }
+
+            if (bottom > 0)
+                break;
+        }
+
+        if (bottom > 0)
+            Margin = new Thickness(Margin.Left, Margin.Top, Margin.Right, -bottom);
+#endif
     }
 
     private static void OnIsOpenChanged(BindableObject bindable, object oldValue, object newValue)
@@ -160,6 +200,7 @@ public class AnimatedModalView : ContentView
         _isolationPage = HostPage();
         HookPage(_isolationPage);
         ModalAccessibilityScope.Acquire(_isolationPage, this);
+        ModalTabBar.Acquire(_isolationPage);
         ModalTransition.PlayShow(this);
 
         // Layout of a content-sized sheet completes after this property change. Focus and the

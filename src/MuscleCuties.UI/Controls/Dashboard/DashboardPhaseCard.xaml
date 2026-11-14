@@ -63,29 +63,36 @@
                 ColumnDefinitions="*, *, *, *"
                 ColumnSpacing="{StaticResource UiSpaceMicro}"
                 RowSpacing="{StaticResource UiSpacing6}">
-                <Label
-                    Text="{loc:LocalizedText Dashboard_Phase_Menstrual}"
-                    Style="{StaticResource CaptionLabel}"
-                    TextColor="{AppThemeBinding Light={StaticResource CyclePhaseMenstrualTextLight}, Dark={StaticResource CyclePhaseMenstrualTextDark}}"
-                    />
-                <Label
-                    Grid.Column="1"
-                    Text="{loc:LocalizedText Dashboard_Phase_Follicular}"
-                    Style="{StaticResource CaptionLabel}"
-                    TextColor="{AppThemeBinding Light={StaticResource CyclePhaseFollicularTextLight}, Dark={StaticResource CyclePhaseFollicularTextDark}}"
-                    />
-                <Label
-                    Grid.Column="2"
-                    Text="{loc:LocalizedText Dashboard_Phase_Ovulatory}"
-                    Style="{StaticResource CaptionLabel}"
-                    TextColor="{AppThemeBinding Light={StaticResource CyclePhaseOvulatoryTextLight}, Dark={StaticResource CyclePhaseOvulatoryTextDark}}"
-                    />
-                <Label
-                    Grid.Column="3"
-                    Text="{loc:LocalizedText Dashboard_Phase_Luteal}"
-                    Style="{StaticResource CaptionLabel}"
-                    TextColor="{AppThemeBinding Light={StaticResource CyclePhaseLutealTextLight}, Dark={StaticResource CyclePhaseLutealTextDark}}"
-                    HorizontalTextAlignment="End" />
+                <!-- Phase names wrap as a legend row: at the shared caption size a Russian phase name
+                     is wider than a quarter of the card, and a single word cannot wrap without breaking
+                     mid-word. The colour bar below keeps its four equal segments. -->
+                <FlexLayout
+                    Grid.Row="0"
+                    Grid.ColumnSpan="4"
+                    Direction="Row"
+                    Wrap="Wrap"
+                    AlignItems="Center">
+                    <Label
+                        Text="{loc:LocalizedText Dashboard_Phase_Menstrual}"
+                        Style="{StaticResource CaptionTinyCentered}"
+                        Margin="{StaticResource UiInsets0_0_8_0}"
+                        TextColor="{AppThemeBinding Light={StaticResource CyclePhaseMenstrualTextLight}, Dark={StaticResource CyclePhaseMenstrualTextDark}}" />
+                    <Label
+                        Text="{loc:LocalizedText Dashboard_Phase_Follicular}"
+                        Style="{StaticResource CaptionTinyCentered}"
+                        Margin="{StaticResource UiInsets0_0_8_0}"
+                        TextColor="{AppThemeBinding Light={StaticResource CyclePhaseFollicularTextLight}, Dark={StaticResource CyclePhaseFollicularTextDark}}" />
+                    <Label
+                        Text="{loc:LocalizedText Dashboard_Phase_Ovulatory}"
+                        Style="{StaticResource CaptionTinyCentered}"
+                        Margin="{StaticResource UiInsets0_0_8_0}"
+                        TextColor="{AppThemeBinding Light={StaticResource CyclePhaseOvulatoryTextLight}, Dark={StaticResource CyclePhaseOvulatoryTextDark}}" />
+                    <Label
+                        Text="{loc:LocalizedText Dashboard_Phase_Luteal}"
+                        Style="{StaticResource CaptionTinyCentered}"
+                        Margin="{StaticResource UiInsets0_0_8_0}"
+                        TextColor="{AppThemeBinding Light={StaticResource CyclePhaseLutealTextLight}, Dark={StaticResource CyclePhaseLutealTextDark}}" />
+                </FlexLayout>
 
                 <BoxView
                     Grid.Row="1"

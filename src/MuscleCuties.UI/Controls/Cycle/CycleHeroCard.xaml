@@ -37,8 +37,11 @@
             </Grid>
 
             <!-- Middle Row: Phase title and artwork -->
-            <Grid Grid.Row="1" ColumnDefinitions="*, 80" ColumnSpacing="{StaticResource UiSpacing14}" RowSpacing="{StaticResource UiSpacing6}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
+            <!-- Wrapping row: at accessibility text sizes the phase name needs the full width, so the
+                 artwork drops below it instead of squeezing the label until it breaks mid-word. -->
+            <FlexLayout Grid.Row="1" Direction="Row" Wrap="Wrap" AlignItems="Center" JustifyContent="SpaceBetween">
+                <VerticalStackLayout FlexLayout.Grow="1" FlexLayout.Basis="Auto"
+                                     Spacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
                     <Label
                         Text="{Binding PhaseLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_Hero_PhaseFormat}"
                         Style="{StaticResource SectionTitle}"
@@ -53,9 +56,9 @@
 
                 <!-- Vector artwork container -->
                 <Border
-                    Grid.Column="1"
                     WidthRequest="{StaticResource UiDimension80}"
                     HeightRequest="{StaticResource UiDimension80}"
+                    Margin="{StaticResource UiInsets12_0_0_0}"
                     StrokeShape="{StaticResource UiRoundRectangleRadius24}"
                     BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
                     StrokeThickness="{StaticResource UiStrokeWidth0}"
@@ -77,7 +80,7 @@
                             VerticalOptions="Center" />
                     </Grid>
                 </Border>
-            </Grid>
+            </FlexLayout>
 
             <!-- Bottom Row: Quick-log action button -->
             <Button

@@ -86,11 +86,16 @@ public class MacroProgressGrid : ContentView
                 Style = (Style)Application.Current!.Resources["MutedLabel"]
             };
 
-            var header = new HorizontalStackLayout
+            // A stack layout measures its children unconstrained, so at accessibility text sizes the three
+            // icon+name headers overran their columns and read as one run-on line. A grid keeps each name
+            // inside its own column, where the label wraps instead of pushing into its neighbour.
+            var header = new VerticalStackLayout
             {
-                Spacing = AppThemeResources.GetDouble("UiSpacing5"),
+                Spacing = AppThemeResources.GetDouble("UiSpacing2"),
                 Children = { icon, nameLabel }
             };
+            icon.HorizontalOptions = LayoutOptions.Start;
+            nameLabel.LineBreakMode = LineBreakMode.WordWrap;
             Grid.SetRow(header, 0);
             Grid.SetColumn(header, i);
             grid.Add(header);

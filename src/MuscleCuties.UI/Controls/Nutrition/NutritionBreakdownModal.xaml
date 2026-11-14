@@ -57,18 +57,17 @@
                     </Border>
                 </Grid>
 
-                <BoxView
-                    Grid.Row="1"
-                    Style="{StaticResource ModalDivider}"
-                    Margin="{StaticResource UiInsets20_0_20_14}" />
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
 
+                <!-- The inset sits on a wrapper, not on the CollectionView: with a Margin on the
+                     CollectionView itself iOS measures this header at the un-inset width, so the
+                     day-summary row painted past the right edge and its last label was cut. -->
+                <Grid Grid.Row="2" Margin="{DynamicResource PresentationModalPagePadding}">
                 <CollectionView
-                    Grid.Row="2"
                     ItemsSource="{Binding Micronutrients}"
                     ItemSizingStrategy="MeasureAllItems"
                     SelectionMode="None"
                     VerticalScrollBarVisibility="Always"
-                    Margin="{StaticResource UiInsets20_0_20_32}"
                     VerticalOptions="Fill">
                     <CollectionView.Header>
                         <VerticalStackLayout>
@@ -112,7 +111,7 @@
 
                                 <Grid
                                     Grid.Column="1"
-                                    RowDefinitions="Auto, Auto, Auto, Auto, Auto"
+                                    RowDefinitions="Auto, Auto, Auto, Auto"
                                     ColumnDefinitions="Auto, *"
                                     RowSpacing="{StaticResource UiSpacing10}"
                                     VerticalOptions="Center">
@@ -141,38 +140,9 @@
                                         Style="{StaticResource CaptionLabel}"
                                         LineBreakMode="WordWrap" />
 
-                                    <Border
-                                        Grid.Row="3"
-                                        Grid.ColumnSpan="2"
-                                        StrokeShape="{StaticResource UiRoundRectangleRadius16}"
-                                        StrokeThickness="{StaticResource UiStrokeWidth0}"
-                                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDeepDark}}"
-                                        Padding="{StaticResource UiInsets10_8}"
-                                        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                        MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                                        HorizontalOptions="Start"
-                                        IsVisible="{Binding CanEditMeal}"
-                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_EditMeal}">
-                                        <Border.GestureRecognizers>
-                                             <TapGestureRecognizer Command="{Binding EditMealCommand}" />
-                                        </Border.GestureRecognizers>
-                                        <Grid ColumnDefinitions="Auto, Auto" ColumnSpacing="{StaticResource UiSpacing6}">
-                                            <mi:MauiIcon
-                                                Icon="{mi:Fluent EditSettings24}" IconSize="{StaticResource UiDimension14}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                                WidthRequest="{StaticResource UiDimension14}"
-                                                HeightRequest="{StaticResource UiDimension14}"
-                                                VerticalOptions="Center" />
-                                            <Label
-                                                Grid.Column="1"
-                                                Text="{loc:LocalizedText Nutrition_Breakdown_EditMeal}"
-                                                Style="{StaticResource CaptionStrong}"
-                                                LineBreakMode="WordWrap"
-                                                VerticalOptions="Center" />
-                                        </Grid>
-                                    </Border>
 
                                     <VerticalStackLayout
-                                        Grid.Row="4"
+                                        Grid.Row="3"
                                         Grid.ColumnSpan="2"
                                         Spacing="{StaticResource UiSpacing7}"
                                         BindableLayout.ItemsSource="{Binding MacroItems}">
@@ -210,6 +180,17 @@
                                     </VerticalStackLayout>
                                 </Grid>
                             </Grid>
+                            <!-- The same shared edit action the meal cards use: one control, one
+                                 identity, on the day page and here. It sits under the summary rather
+                                 than in the narrow column beside the ring. -->
+                            <sharedControls:MealEditAction
+                                Text="{loc:LocalizedText Nutrition_Breakdown_EditMeal}"
+                                Command="{Binding EditMealCommand}"
+                                IsVisible="{Binding CanEditMeal}"
+                                HorizontalOptions="Start"
+                                Margin="{StaticResource UiInsets0_0_0_16}"
+                                SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakdown_EditMeal}" />
+
                             <Grid ColumnDefinitions="*,Auto" Padding="{StaticResource UiInsets0_2_0_10}" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                 <Label
                                     Text="{loc:LocalizedText Nutrition_Breakdown_Micronutrients}"
@@ -316,6 +297,7 @@
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
+                </Grid>
             </Grid>
         </Border>
     </Grid>

@@ -541,8 +541,8 @@
         <Grid>
         <Border x:Name="PreviewSheet"
                 Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
-            <Grid RowDefinitions="Auto,*,Auto" Style="{StaticResource ModalBody}">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
+                <Grid Padding="{DynamicResource PresentationModalHeaderPadding}" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Workout_Generation_PreviewTitle}" IconGlyph="Target24" />
                     </VerticalStackLayout>
@@ -554,8 +554,9 @@
                         <Path Style="{StaticResource ModalCloseIcon}" />
                     </Border>
                 </Grid>
-                <ScrollView Grid.Row="1">
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+                <ScrollView Grid.Row="2">
+                    <VerticalStackLayout Padding="{DynamicResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpaceControl}">
                         <!-- Reduced Volume Notice Sub-Section -->
                         <Border IsVisible="{Binding RequiresReducedVolumeAcknowledgment}"
                                 Style="{StaticResource CardSecondary}">
@@ -783,7 +784,7 @@
 
                         </VerticalStackLayout>
                 </ScrollView>
-                <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}">
+                <VerticalStackLayout Grid.Row="3" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}">
                     <BoxView Style="{StaticResource PlanStickyActionDivider}" />
                     <ActivityIndicator
                         Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsBusy}"
