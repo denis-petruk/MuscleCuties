@@ -382,6 +382,34 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// The archive detail summary must speak the app's language: the QA audit read
+    /// `1 working sets · 200 kg vol` in an otherwise Russian sheet (D33).
+    /// </summary>
+    [Fact]
+    public void The_archive_volume_summary_uses_localized_copy()
+    {
+        var root = RepositoryRoot();
+        var modelPath = Path.Combine(
+            root, "src", "MuscleCuties.UI", "Models", "UI", "Workout", "WorkoutArchiveUiModels.cs");
+        var model = File.ReadAllText(modelPath);
+
+        Assert.DoesNotContain("working sets", model, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("kg vol", model, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Workout_History_VolumeSummaryFormat", model, StringComparison.Ordinal);
+
+        Assert.Contains(
+            "Workout_History_VolumeSummaryFormat",
+            File.ReadAllText(Path.Combine(
+                root, "src", "MuscleCuties.UI", "Services", "Localization", "RussianUiText.CycleWorkout.cs")),
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "Workout_History_VolumeSummaryFormat",
+            File.ReadAllText(Path.Combine(
+                root, "src", "MuscleCuties.UI", "Services", "Localization", "UiTextCatalog.CycleWorkout.cs")),
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// A Debug build points at `http://127.0.0.1:5080`. When that API is down or has no migrated
     /// catalogue it answers with an empty page, and the picker showed a permanent no-match state with
     /// no rows to tap (D51's root cause). The loopback store must therefore be able to fill the gap.
