@@ -36,7 +36,7 @@
                 <dashboardControls:DailyCheckInContent Grid.Row="2" />
                 <!-- Actions stay on the sheet edge instead of riding the end of the scroll. -->
                 <Grid Grid.Row="3"
-                      RowDefinitions="Auto,Auto,Auto"
+                      RowDefinitions="Auto,Auto,Auto,Auto"
                       ColumnSpacing="{StaticResource UiSpaceTight}"
                       Padding="{DynamicResource PresentationActionFooterPadding}"
                       IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}"
@@ -57,8 +57,15 @@
                     <Button Style="{StaticResource ButtonPrimary}"
                             Text="{loc:LocalizedText Dashboard_CheckIn_SubmitButton}"
                             Command="{Binding SubmitCommand}"
-                            SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_SubmitHint}" />
+                            IsEnabled="{Binding CanSubmit}"
+                            SemanticProperties.Hint="{Binding SubmitHint}" />
                     </sharedControls:AdaptiveRow>
+                    <Label Grid.Row="3"
+                           Text="{Binding SubmitHint}"
+                           IsVisible="{Binding CanSubmit, Converter={StaticResource InvertedBoolConverter}}"
+                           Style="{StaticResource CaptionLabel}"
+                           HorizontalTextAlignment="Center"
+                           LineBreakMode="WordWrap" />
                 </Grid>
             </Grid>
         </Border>

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Diagnostics;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UI.Navigation;
 using MuscleCuties.UI.Models.UI.Nutrition;
@@ -417,9 +418,21 @@ public partial class NutritionViewModel
             grams, grams, "g");
     }
 
+    /// <summary>D14: the commit's own enabled state, exposed so the button and its hint agree.</summary>
+    public bool CanSaveMeal => CanLogMeal();
+
+    public bool ShowLogMealHint => IsFoodFinderCollapsed && !CanSaveMeal;
+
+    public string LogMealHint => CanSaveMeal
+        ? UiTextCatalog.Get("Nutrition_MealEditor_LogHint")
+        : UiTextCatalog.Get("Nutrition_MealEditor_AddFoodPrerequisiteHint");
+
     private void NotifyMealIngredientProperties()
     {
         OnPropertyChanged(nameof(HasMealIngredients));
+        OnPropertyChanged(nameof(CanSaveMeal));
+        OnPropertyChanged(nameof(ShowLogMealHint));
+        OnPropertyChanged(nameof(LogMealHint));
         NotifyFoodFinderProperties();
         OnPropertyChanged(nameof(MealIngredientsTotalText));
         OnPropertyChanged(nameof(MealDraftCaloriesText));

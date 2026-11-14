@@ -85,105 +85,66 @@
                                  pill needs the full width, otherwise its label breaks mid-word. -->
                             <FlexLayout Grid.Row="1" Direction="Row" Wrap="Wrap" AlignItems="Start">
                                 <!-- Period Started Toggle -->
-                                <Border
+                                <sharedControls:SelectionCell
+                                    x:Name="PeriodStartedCell"
                                     FlexLayout.Grow="1"
                                     FlexLayout.Basis="Auto"
                                     Margin="{StaticResource UiInsets0_0_8_8}"
                                     Style="{StaticResource ChoiceCell}"
+                                    IsSelected="{Binding IsPeriodStarted}"
                                     SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_TogglePeriodStartedAccessibility}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding TogglePeriodStartedCommand}" />
                                     </Border.GestureRecognizers>
-                                    <Border.Triggers>
-                                        <DataTrigger
-                                            TargetType="Border"
-                                            Binding="{Binding IsPeriodStarted}"
-                                            Value="True">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
                                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
                                           HorizontalOptions="Center" VerticalOptions="Center">
                                         <Path
                                             Data="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
-                                            Stroke="{StaticResource Primary}"
-                                            Fill="{StaticResource Primary}"
-                                            StrokeThickness="{StaticResource UiStrokeWidth1}"
-                                            Aspect="Uniform"
+                                            BindingContext="{Binding Source={x:Reference PeriodStartedCell}}"
+                                            Style="{StaticResource ChoiceCellIconFill}"
                                             WidthRequest="{StaticResource UiDimension14}"
                                             HeightRequest="{StaticResource UiDimension14}"
                                             VerticalOptions="Center" />
                                         <Label
                                             Grid.Column="1"
                                             Text="{loc:LocalizedText Cycle_QuickLog_PeriodStarted}"
-                                            Style="{StaticResource MutedLabel}"
-                                            LineBreakMode="WordWrap"
-                                            VerticalOptions="Center">
-                                            <Label.Triggers>
-                                                <DataTrigger
-                                                    TargetType="Label"
-                                                    Binding="{Binding IsPeriodStarted}"
-                                                    Value="True">
-                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                                </DataTrigger>
-                                            </Label.Triggers>
-                                        </Label>
+                                            BindingContext="{Binding Source={x:Reference PeriodStartedCell}}"
+                                            Style="{StaticResource ChoiceCellLabel}"
+                                            VerticalOptions="Center" />
                                     </Grid>
-                                </Border>
+                                </sharedControls:SelectionCell>
 
                                 <!-- Period Ended Toggle -->
-                                <Border
+                                <sharedControls:SelectionCell
+                                    x:Name="PeriodEndedCell"
                                     FlexLayout.Grow="1"
                                     FlexLayout.Basis="Auto"
                                     Margin="{StaticResource UiInsets0_0_8_8}"
                                     Style="{StaticResource ChoiceCell}"
+                                    IsSelected="{Binding IsPeriodEnded}"
                                     SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_TogglePeriodEndedAccessibility}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding TogglePeriodEndedCommand}" />
                                     </Border.GestureRecognizers>
-                                    <Border.Triggers>
-                                        <DataTrigger
-                                            TargetType="Border"
-                                            Binding="{Binding IsPeriodEnded}"
-                                            Value="True">
-                                            <Setter Property="BackgroundColor"
-                                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-                                        </DataTrigger>
-                                    </Border.Triggers>
                                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
                                           HorizontalOptions="Center" VerticalOptions="Center">
                                         <Path
                                             Data="M5 13l4 4L19 7"
-                                            Stroke="{StaticResource Primary}"
-                                            StrokeThickness="{StaticResource UiStrokeWidth2}"
+                                            BindingContext="{Binding Source={x:Reference PeriodEndedCell}}"
+                                            Style="{StaticResource ChoiceCellIcon}"
                                             StrokeLineCap="Round"
                                             StrokeLineJoin="Round"
-                                            Aspect="Uniform"
                                             WidthRequest="{StaticResource UiDimension14}"
                                             HeightRequest="{StaticResource UiDimension14}"
                                             VerticalOptions="Center" />
                                         <Label
                                             Grid.Column="1"
                                             Text="{loc:LocalizedText Cycle_QuickLog_PeriodEnded}"
-                                            Style="{StaticResource MutedLabel}"
-                                            LineBreakMode="WordWrap"
-                                            VerticalOptions="Center">
-                                            <Label.Triggers>
-                                                <DataTrigger
-                                                    TargetType="Label"
-                                                    Binding="{Binding IsPeriodEnded}"
-                                                    Value="True">
-                                                    <Setter Property="TextColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                                </DataTrigger>
-                                            </Label.Triggers>
-                                        </Label>
+                                            BindingContext="{Binding Source={x:Reference PeriodEndedCell}}"
+                                            Style="{StaticResource ChoiceCellLabel}"
+                                            VerticalOptions="Center" />
                                     </Grid>
-                                </Border>
+                                </sharedControls:SelectionCell>
                             </FlexLayout>
                         </Grid>
 
@@ -200,7 +161,8 @@
                                         BindableLayout.ItemsSource="{Binding FlowOptions}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="cycleModels:FlowOptionItem">
-                                        <Border Style="{StaticResource CardSecondary}"
+                                        <sharedControls:SelectionCell Style="{StaticResource ChoiceCell}"
+                                            IsSelected="{Binding IsSelected}"
                                             Margin="{StaticResource UiInsets0_0_8_8}"
                                             MinimumHeightRequest="{StaticResource UiDimension52}"
                                             SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_QuickLog_FlowIntensityFormat}">
@@ -209,39 +171,23 @@
                                                     Command="{Binding SelectFlowCommand, Source={RelativeSource AncestorType={x:Type vm:CycleViewModel}}, x:DataType=vm:CycleViewModel}"
                                                     CommandParameter="{Binding .}" />
                                             </Border.GestureRecognizers>
-                                            <Border.Triggers>
-
-                                            </Border.Triggers>
                                             <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}" HorizontalOptions="Center"
                                                   VerticalOptions="Center">
                                                 <Label
                                                     Grid.Row="0"
                                                     Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
-                                                    Style="{StaticResource MutedLabel}"
-                                                    LineBreakMode="WordWrap"
-                                                    HorizontalOptions="Center"
-                                                    HorizontalTextAlignment="Center">
-                                                    <Label.Triggers>
-                                                        <DataTrigger
-                                                            TargetType="Label"
-                                                            Binding="{Binding IsSelected}"
-                                                            Value="True">
-                                                            <Setter Property="TextColor"
-                                                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                                        </DataTrigger>
-                                                    </Label.Triggers>
-                                                </Label>
+                                                    Style="{StaticResource ChoiceCellLabel}"
+                                                    HorizontalTextAlignment="Center" />
                                                 <Path
                                                     Grid.Row="1"
                                                     Data="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
-                                                    Fill="{StaticResource Primary}"
-                                                    Aspect="Uniform"
+                                                    Style="{StaticResource ChoiceCellIconFill}"
                                                     WidthRequest="{StaticResource UiDimension8}"
                                                     HeightRequest="{StaticResource UiDimension8}"
                                                     HorizontalOptions="Center"
                                                     IsVisible="{Binding IsSelected}" />
                                             </Grid>
-                                        </Border>
+                                        </sharedControls:SelectionCell>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </FlexLayout>
@@ -264,7 +210,8 @@
                                 BindableLayout.ItemsSource="{Binding SymptomOptions}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="cycleModels:SymptomOptionItem">
-                                        <Border Style="{StaticResource CardSecondary}"
+                                        <sharedControls:SelectionCell Style="{StaticResource ChoiceCell}"
+                                            IsSelected="{Binding IsSelected}"
                                             FlexLayout.Basis="48%"
                                             Margin="{StaticResource UiInsets0_0_0_10}"
                                             MinimumHeightRequest="{StaticResource UiDimension50}"
@@ -274,49 +221,30 @@
                                                     Command="{Binding ToggleSymptomCommand, Source={RelativeSource AncestorType={x:Type vm:CycleViewModel}}, x:DataType=vm:CycleViewModel}"
                                                     CommandParameter="{Binding .}" />
                                             </Border.GestureRecognizers>
-                                            <Border.Triggers>
-
-                                            </Border.Triggers>
                                             <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpacing10}"
                                                   VerticalOptions="Center">
                                                 <Path
                                                     Data="{Binding IconData, Converter={StaticResource StringToGeometryConverter}}"
-                                                    Stroke="{StaticResource Primary}"
-                                                    StrokeThickness="{StaticResource UiStrokeWidth1_8}"
-                                                    Aspect="Uniform"
+                                                    Style="{StaticResource ChoiceCellIcon}"
                                                     WidthRequest="{StaticResource UiDimension16}"
                                                     HeightRequest="{StaticResource UiDimension16}"
                                                     VerticalOptions="Center" />
                                                 <Label
                                                     Grid.Column="1"
                                                     Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
-                                                    Style="{StaticResource MutedLabel}"
+                                                    Style="{StaticResource ChoiceCellLabel}"
                                                     LineBreakMode="WordWrap"
-                                                    VerticalOptions="Center">
-                                                    <Label.Triggers>
-                                                        <DataTrigger
-                                                            TargetType="Label"
-                                                            Binding="{Binding IsSelected}"
-                                                            Value="True">
-                                                            <Setter Property="TextColor"
-                                                                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                                        </DataTrigger>
-                                                    </Label.Triggers>
-                                                </Label>
+                                                    VerticalOptions="Center" />
                                                 <Path
                                                     Grid.Column="2"
                                                     Data="M5 13l4 4L19 7"
-                                                    Stroke="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}"
-                                                    StrokeThickness="{StaticResource UiStrokeWidth2}"
-                                                    StrokeLineCap="Round"
-                                                    StrokeLineJoin="Round"
-                                                    Aspect="Uniform"
+                                                    Style="{StaticResource ChoiceCellIcon}"
                                                     WidthRequest="{StaticResource UiDimension14}"
                                                     HeightRequest="{StaticResource UiDimension14}"
                                                     IsVisible="{Binding IsSelected}"
                                                     VerticalOptions="Center" />
                                             </Grid>
-                                        </Border>
+                                        </sharedControls:SelectionCell>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </FlexLayout>

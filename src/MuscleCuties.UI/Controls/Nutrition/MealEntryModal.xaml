@@ -24,29 +24,11 @@
             Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
 
             <Grid RowDefinitions="Auto, Auto, *">
-                <Grid
-                    Padding="{DynamicResource PresentationModalHeaderPadding}"
-                    ColumnDefinitions="*,Auto"
-                    ColumnSpacing="{StaticResource UiSpaceCompact}">
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                        <Label
-                            Text="{loc:LocalizedText Nutrition_MealEntry_Title}"
-                            Style="{StaticResource ModalTitle}" />
-                        <Label
-                            Text="{loc:LocalizedText Nutrition_MealEntry_Subtitle}"
-                            Style="{StaticResource ModalSubtitle}" />
-                    </VerticalStackLayout>
-                    <Border
-                        Grid.Column="1"
-                        Style="{StaticResource ModalIconButton}"
-                        VerticalOptions="Start"
-                        SemanticProperties.Description="{loc:LocalizedText Common_Close}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding CloseMealEntryCommand}" />
-                        </Border.GestureRecognizers>
-                        <Path Style="{StaticResource ModalCloseIcon}" />
-                    </Border>
-                </Grid>
+                <sharedControls:ModalSheetHeader
+                    Title="{loc:LocalizedText Nutrition_MealEntry_Title}"
+                    Subtitle="{loc:LocalizedText Nutrition_MealEntry_Subtitle}"
+                    CloseCommand="{Binding CloseMealEntryCommand}"
+                    CloseDescription="{loc:LocalizedText Common_Close}" />
 
                 <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
 
@@ -64,96 +46,61 @@
                             ColumnSpacing="{StaticResource UiSpacing10}"
                             RowSpacing="{StaticResource UiSpacing10}">
 
-                            <Border Style="{StaticResource CardSecondary}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_BreakfastMealType}"
-                                    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsEntryBreakfastSelected}"
-                                                 Value="True">
-                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                                        <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
+                            <sharedControls:SelectionCell x:Name="EntryBreakfastCell"
+                                    Style="{StaticResource ChoiceCell}"
+                                    IsSelected="{Binding IsEntryBreakfastSelected}"
+                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_BreakfastMealType}">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding SelectEntryMealTypeCommand}"
                                         CommandParameter="{x:Static nutritionEnums:MealType.Breakfast}" />
                                 </Border.GestureRecognizers>
                                 <Label Text="{loc:LocalizedText Nutrition_MealType_Breakfast}"
-                                       Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
-                                       HorizontalOptions="Center" VerticalOptions="Center" />
-                            </Border>
+                                       BindingContext="{Binding Source={x:Reference EntryBreakfastCell}}"
+                                       Style="{StaticResource ChoiceCellLabel}" />
+                            </sharedControls:SelectionCell>
 
-                            <Border Grid.Column="1" Style="{StaticResource CardSecondary}"
-                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_LunchMealType}"
-                                    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsEntryLunchSelected}"
-                                                 Value="True">
-                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                                        <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
+                            <sharedControls:SelectionCell x:Name="EntryLunchCell"
+                                    Grid.Column="1" Style="{StaticResource ChoiceCell}"
+                                    IsSelected="{Binding IsEntryLunchSelected}"
+                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_LunchMealType}">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding SelectEntryMealTypeCommand}"
                                         CommandParameter="{x:Static nutritionEnums:MealType.Lunch}" />
                                 </Border.GestureRecognizers>
                                 <Label Text="{loc:LocalizedText Nutrition_MealType_Lunch}"
-                                       Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
-                                       HorizontalOptions="Center" VerticalOptions="Center" />
-                            </Border>
+                                       BindingContext="{Binding Source={x:Reference EntryLunchCell}}"
+                                       Style="{StaticResource ChoiceCellLabel}" />
+                            </sharedControls:SelectionCell>
 
-                            <Border Grid.Row="1" Style="{StaticResource CardSecondary}"
-                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_DinnerMealType}"
-                                    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsEntryDinnerSelected}"
-                                                 Value="True">
-                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                                        <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
+                            <sharedControls:SelectionCell x:Name="EntryDinnerCell"
+                                    Grid.Row="1" Style="{StaticResource ChoiceCell}"
+                                    IsSelected="{Binding IsEntryDinnerSelected}"
+                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_DinnerMealType}">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding SelectEntryMealTypeCommand}"
                                         CommandParameter="{x:Static nutritionEnums:MealType.Dinner}" />
                                 </Border.GestureRecognizers>
                                 <Label Text="{loc:LocalizedText Nutrition_MealType_Dinner}"
-                                       Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
-                                       HorizontalOptions="Center" VerticalOptions="Center" />
-                            </Border>
+                                       BindingContext="{Binding Source={x:Reference EntryDinnerCell}}"
+                                       Style="{StaticResource ChoiceCellLabel}" />
+                            </sharedControls:SelectionCell>
 
-                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardSecondary}"
-                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_SnackMealType}"
-                                    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-                                <Border.Triggers>
-                                    <DataTrigger TargetType="Border" Binding="{Binding IsEntrySnackSelected}"
-                                                 Value="True">
-                                        <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-                                        <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-                                        <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth2}" />
-                                        <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
-                                    </DataTrigger>
-                                </Border.Triggers>
+                            <sharedControls:SelectionCell x:Name="EntrySnackCell"
+                                    Grid.Row="1" Grid.Column="1" Style="{StaticResource ChoiceCell}"
+                                    IsSelected="{Binding IsEntrySnackSelected}"
+                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEntry_SnackMealType}">
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding SelectEntryMealTypeCommand}"
                                         CommandParameter="{x:Static nutritionEnums:MealType.Snack}" />
                                 </Border.GestureRecognizers>
                                 <Label Text="{loc:LocalizedText Nutrition_MealType_Snack}"
-                                       Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
-                                       HorizontalOptions="Center" VerticalOptions="Center" />
-                            </Border>
+                                       BindingContext="{Binding Source={x:Reference EntrySnackCell}}"
+                                       Style="{StaticResource ChoiceCellLabel}" />
+                            </sharedControls:SelectionCell>
                         </Grid>
 
                         <Label Text="{loc:LocalizedText Nutrition_MealEditor_Time}"

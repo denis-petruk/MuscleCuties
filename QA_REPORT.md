@@ -441,6 +441,17 @@ the Russian locale use 24-hour time (`15:02` in the status bar at the same momen
 `n-entry.png`.
 
 ### D11 — P2 — Day/filter strips differ per screen and clip at the right edge
+> **Status: closed.** Every strip now consumes the same `SelectionCell` + `ChoiceCell`/
+> `DayStripCell` recipe: Train's week and filter rows, Train/Food Log day strips, workout-history
+> months, Cycle toggles/flow/symptoms and the injury choices. The Train day cell no longer prints
+> `09 нояб.` inside a 44 pt minimum cell, so all seven days measure on one page width instead of
+> clipping the selected Saturday; both strips use the same day-name, day-number and today-dot styles.
+> Label ink now reads the ancestor `SelectionCell.IsSelected`, so a solid accent fill cannot pair with
+> dark chip text. Guard `D11_D36_D49_selection_uses_one_filled_recipe` was seen red on the old
+> outline/tint and month-label shape, then green. Final frames: `wave-a-train-light.png` /
+> `wave-a-train-dark.png` (selected week/filter chips solid with white labels) and
+> `wave-a-foodlog-strip-{light,dark}.png` (all seven day cells fit; selected Saturday is filled with
+> white `СБ`/`14` and the today dot).
 **Reproduced in the running app.** Train's week strip is a text row (`MON`, `TUE`…) with Russian dates
 and tick marks, clipped after `SA`/`14 н` with no fade or scroll affordance; Food Log's strip is
 56 pt pill cells with a selected outline and a dot. Both are day selectors. Train's filter chips and
@@ -478,6 +489,13 @@ button. The three buttons have three different widths and two different corner t
 card. Evidence: `fl4-card.png`.
 
 ### D14 — P2 — Disabled primary actions have no explanation and almost no contrast
+> **Status: closed.** Check-in now exposes `CanSubmit`, a visible prerequisite caption and
+> `SemanticProperties.Hint="{Binding SubmitHint}"`; the meal editor does the same with `LogMealHint`.
+> The check-in frame shows the disabled commit with `Ответьте на все обязательные вопросы, чтобы
+> сохранить отметку.` directly above it in both themes. Guard
+> `D14_disabled_commits_publish_a_prerequisite_hint` was seen red before the hints and is green now.
+> Evidence: `wave-a-checkin-{light,dark}.png`, `wave-a-editor-summary-{light,dark}.png`.
+> Busy-only guards are outside this prerequisite contract.
 **Reproduced in the running app.** Check-in `Сохранить отметку` and meal editor `Приём пищи` are pale
 pink fill with muted mauve text (visually near 2:1), and nothing marks what is missing. The contract
 requires a nearby explanation of the unmet prerequisite and a readable explanation even when the
@@ -734,6 +752,13 @@ sheet.
 Evidence: `S9-swap.png`, `S10-swap-confirm-empty.png`.
 
 ### D36 — P2 — One flow uses two selection recipes and two sheet headers
+> **Status: closed.** The entry sheet, editor and picker now share `ModalSheetHeader` (title, subtitle,
+> one close); the editor adds the back slot only while the food finder is visible. All three mark the
+> selected option with the same solid `PrimaryDark` fill and white label, with the outline deleted from
+> page markup. Guard `D11_D36_D49_selection_uses_one_filled_recipe` is green. Frames:
+> `wave-a-entry-light.png`, `wave-a-editor-summary-{light,dark}.png`,
+> `wave-a-picker-{light,dark}.png` and `wave-a-editor-context-dark.png` (selected `Завтрак` white on
+> the filled cell; back chevron only in the picker).
 **Reproduced in the running app, dark.**
 Repro: Nutrition → `Добавить прием пищи` → meal editor → `Добавить еду`.
 Expected: the same chip recipe for a selected option and the same sheet header anatomy across the
@@ -921,6 +946,12 @@ fails if the culture-short pattern returns; it was red on all six sites before t
 Commit `cd65f85d`. The double frame around the field is untouched and still open.
 
 ### D49 — P2 — Read-only value chips in the editor look exactly like the tappable chips before it
+> **Status: closed.** The editor's summary is a labelled text row (`Тип приема пищи`) followed by
+> `Завтрак · Сегодня · 10:06` and one explicit `Изменить` button; the three dead value pills are gone.
+> The time reads the bound clock directly so the formatter cannot leave an empty third value. Guard
+> `D11_D36_D49_selection_uses_one_filled_recipe` asserts the summary and rejects the missing
+> `UiInsets6_0_0_0` resource that made the first attempt throw. Evidence:
+> `wave-a-editor-summary-light.png`, `wave-a-editor-summary-dark.png`.
 **Reproduced in the running app.**
 
 Repro: `Добавить прием пищи` → `Добавить прием пищи`.

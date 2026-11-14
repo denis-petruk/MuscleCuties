@@ -7,6 +7,7 @@
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
     xmlns:ui="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
+    xmlns:shared="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="vm:InjuryLogViewModel">
     <ContentView.Resources>
         <DataTemplate x:Key="InjuryRow" x:DataType="ui:InjuryLogItem">
@@ -172,9 +173,10 @@
                                     BindableLayout.ItemsSource="{Binding ClinicianAdviceOptions}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="ui:InjuryAdviceOption">
-                                    <Border Style="{StaticResource ChoiceCellCompact}"
+                                    <shared:SelectionCell Style="{StaticResource ChoiceCellCompact}"
                                             Margin="{StaticResource UiInsets2}"
                                             FlexLayout.Grow="1"
+                                            IsSelected="{Binding IsSelected}"
                                             SemanticProperties.Description="{Binding LabelKey, Converter={StaticResource LocalizedStringConverter}}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer
@@ -183,7 +185,7 @@
                                         </Border.GestureRecognizers>
                                         <Label Text="{Binding LabelKey, Converter={StaticResource LocalizedStringConverter}}"
                                                Style="{StaticResource ChoiceCellLabel}" />
-                                    </Border>
+                                    </shared:SelectionCell>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </FlexLayout>

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Shared.ModalSheetHeader"
+    x:Name="Root"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    x:DataType="shared:ModalSheetHeader"
+    xmlns:shared="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    Padding="{DynamicResource PresentationModalHeaderPadding}">
+
+    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+        <Border
+            Style="{StaticResource ModalIconButton}"
+            IsVisible="{Binding ShowBack, Source={x:Reference Root}}"
+            SemanticProperties.Description="{Binding BackDescription, Source={x:Reference Root}}">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding BackCommand, Source={x:Reference Root}}" />
+            </Border.GestureRecognizers>
+            <Path
+                Data="M15 4 7 12l8 8"
+                Style="{StaticResource NutritionLineIcon}"
+                WidthRequest="{StaticResource UiDimension20}"
+                HeightRequest="{StaticResource UiDimension20}" />
+        </Border>
+
+        <VerticalStackLayout
+            Grid.Column="1"
+            Spacing="{StaticResource UiSpaceMicro}"
+            VerticalOptions="Center">
+            <Label
+                Text="{Binding Title, Source={x:Reference Root}}"
+                Style="{StaticResource ModalTitle}"
+                LineBreakMode="WordWrap" />
+            <Label
+                Text="{Binding Subtitle, Source={x:Reference Root}}"
+                IsVisible="{Binding HasSubtitle, Source={x:Reference Root}}"
+                Style="{StaticResource ModalSubtitle}"
+                LineBreakMode="WordWrap" />
+        </VerticalStackLayout>
+
+        <Border
+            Grid.Column="2"
+            Style="{StaticResource ModalIconButton}"
+            VerticalOptions="Start"
+            SemanticProperties.Description="{Binding CloseDescription, Source={x:Reference Root}}">
+            <Border.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseCommand, Source={x:Reference Root}}" />
+            </Border.GestureRecognizers>
+            <Path Style="{StaticResource ModalCloseIcon}" />
+        </Border>
+    </Grid>
+</ContentView>

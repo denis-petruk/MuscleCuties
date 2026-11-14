@@ -93,8 +93,9 @@
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}" BindableLayout.ItemsSource="{Binding AvailableMonths}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="uiModels:MonthFilterItem">
-                                    <Border
+                                    <sharedControls:SelectionCell
                                         Style="{StaticResource ChoiceCell}"
+                                        IsSelected="{Binding IsSelected}"
                                         SemanticProperties.Description="{Binding DisplayName}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer
@@ -105,7 +106,7 @@
                                              come from the one shared choice style. -->
                                         <Label Style="{StaticResource ChoiceCellLabel}"
                                                Text="{Binding DisplayName}" />
-                                    </Border>
+                                    </sharedControls:SelectionCell>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </HorizontalStackLayout>

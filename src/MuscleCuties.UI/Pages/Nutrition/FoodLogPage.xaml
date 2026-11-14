@@ -126,7 +126,8 @@
                                                    BindableLayout.ItemsSource="{Binding DateStripDays}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="uiModels:DateStripDayItem">
-                                    <Border Style="{StaticResource DayStripCell}"
+                                    <sharedControls:SelectionCell Style="{StaticResource DayStripCell}"
+                                            IsSelected="{Binding IsSelected}"
                                             MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}">
 
                                         <Border.GestureRecognizers>
@@ -139,23 +140,21 @@
                                             <Label
                                                 Grid.Row="0"
                                                 Text="{Binding DayName, Converter={StaticResource LocalizedStringConverter}}"
-                                                Style="{StaticResource CaptionLabel}"
-                                                HorizontalTextAlignment="Center" />
+                                                Style="{StaticResource DayStripDayName}" />
                                             <Label
                                                 Grid.Row="1"
                                                 Text="{Binding DayNumber, Converter={StaticResource LocalizedStringConverter}}"
-                                                Style="{StaticResource SectionTitle}"
-                                                HorizontalTextAlignment="Center" />
+                                                Style="{StaticResource DayStripDayNumber}" />
                                             <BoxView
                                                 Grid.Row="2"
                                                 WidthRequest="{StaticResource UiDimension4}"
                                                 HeightRequest="{StaticResource UiDimension4}"
                                                 CornerRadius="{StaticResource UiCornerRadius2}"
                                                 HorizontalOptions="Center"
-                                                Color="{StaticResource Primary}"
+                                                Style="{StaticResource DayStripTodayDot}"
                                                 IsVisible="{Binding IsToday}" />
                                         </Grid>
-                                    </Border>
+                                    </sharedControls:SelectionCell>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                             </HorizontalStackLayout>
