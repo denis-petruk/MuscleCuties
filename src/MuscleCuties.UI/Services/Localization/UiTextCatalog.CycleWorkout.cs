@@ -286,6 +286,10 @@ public static partial class UiTextCatalog
         English["Workout_History_DistanceFormat"] = "{0:0.##} km";
         English["Workout_History_DistanceHeader"] = "Distance";
         English["Workout_History_DurationMinutesFormat"] = "{0} min";
+        English["Workout_History_DurationValueFormat"] = "{0} min";
+        English["Workout_History_SetsOneFormat"] = "{0} set";
+        English["Workout_History_SetsFewFormat"] = "{0} sets";
+        English["Workout_History_SetsManyFormat"] = "{0} sets";
         English["Workout_History_NotRecorded"] = "Not recorded";
         English["Workout_History_NoSetDetailsNote"] = "Set details were not recorded.";
         English["Workout_History_NotesUpdatedMessage"] = "Notes and RPE updated.";

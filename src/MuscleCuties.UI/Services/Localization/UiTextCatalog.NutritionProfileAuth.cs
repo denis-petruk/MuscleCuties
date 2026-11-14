@@ -335,6 +335,7 @@ public static partial class UiTextCatalog
         English["Nutrition_Format_CaloriesValueKcal"] = "{0:F0} kcal";
         English["Nutrition_Format_Grams"] = "{0:N1} g";
         English["Nutrition_Format_GramsShort"] = "{0:N1}g";
+        English["Nutrition_Format_GramsWholeShort"] = "{0:N0} g";
         English["Nutrition_Format_Milligrams"] = "{0:N0} mg";
         English["Nutrition_Format_Micrograms"] = "{0:N0} mcg";
         English["Nutrition_Format_Calories"] = "{0:N0} kcal";

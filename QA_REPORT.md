@@ -195,16 +195,16 @@ Nothing is marked PASS on code reading alone.
 | 6 | Cycle render | Signed in | Open Цикл | Phase hero, day, actions | Rendered; phase colour and `День 14 из 28` mismatch (D8, D9) | FAIL | `dk-cycle.png` |
 | 7 | Cycle calendar / quick log / next phase | Cycle | Expand month, open quick log | Calendar grid, log sheet | Not driven | NOT RUN | — |
 | 8 | Train render | Signed in | Open Тренировки | Week strip, day card, filters | Rendered; English day labels, broken summary sentence, clipped strip and chips (D4, D6, D11) | FAIL | `dk-train.png` |
-| 9 | Workout archive | Signed in with one completed session | Open `Архив тренировок` (entered through the start-up route after the tab path failed) | Totals, month filters, session cards | Rendered with one session; `1800s`, `1 sets`, label split `Продолжительно/сть`, mixed date format, debug-style footer (D26) | FAIL | `rt-WorkoutHistoryPage.png` |
+| 9 | Workout archive | Signed in with one completed session | `Тренировки` → `Архив тренировок` | Totals, month filters, session cards | Renders `30 мин`, `1 подход`, and the shared date shape (D26, D33); label still wraps at default width | PASS | `archive-list-light.png`, `archive-list-dark.png` |
 | 10 | Start session | A training day (QA data shifted by −3 days, backed up) | Today/Train card → `Начать тренировку` → `Активности тренировки` → `Strength & Sculpt` → `Начать` | Day overview, then the session screen | Both reached; chooser sheet overlaps its own rows and lingers after selection (D19); in-progress card then offers `Открыть день отдыха` (D18) | FAIL | `tr1-today.png`, `sess-normal-1.png`, `sess-dark-3.png`, `relaunch3.png` |
 | 11 | Nutrition render | Signed in | Open Питание | Shared page header + summary | Rendered without any page header; bespoke pink hero (D2) | FAIL | `t-nutrition.png`, `d2-nutrition.png` |
-| 12 | Meal entry sheet | Nutrition | Tap `Добавить прием пищи` | Compact context, then commit actions | Opens; 12-hour `3:02 PM` in Russian UI (D10) | FAIL | `n-entry.png` |
+| 12 | Meal entry sheet | Nutrition | Tap `Добавить прием пищи` | Compact context, then commit actions | Opens in 24-hour Russian time (D10) | PASS | `meal-entry-light.png` |
 | 13 | Suggest meal sheet | Entry sheet | Tap `Предложить приём пищи` | Suggestion cards | Opens; English food names, descriptions and `Goal: Snack` (D4) | FAIL | hierarchy capture |
 | 14 | Meal editor | Entry sheet | Tap `Добавить прием пищи` | Editor with summary and actions | Opens; exposes no accessible elements (D1); large empty body (D12) | FAIL | `s2-editor.png` |
 | 15 | Food picker (search tab) | Editor | Tap `Добавить еду` | Search field and results | Opens; still no accessible elements (D1) | FAIL | `s4-foodpick.png` |
 | 16 | Food search submit | Picker | Type a query, search, add | Results and save | BLOCKED by #15: sheet is coordinate-only; not completed | BLOCKED | hierarchy shows only status bar |
-| 17 | Nutrition breakdown | Nutrition | Tap `Микроэлементы` | Sheet with donut, macros, micros | Opens; mixed language, units, nested cards (D3, D7) | FAIL | `breakdown-light.png` |
-| 18 | Food log page | Nutrition | Tap `Дневник питания` | Shared header, date strip, rings, meals | Rendered; rings differ from Nutrition bars, water card holds three unrelated actions (D3, D13) | FAIL | `fl4-card.png`, `foodlog-dark.png` |
+| 17 | Nutrition breakdown | Nutrition | Tap `Микроэлементы` | Sheet with donut, macros, micros | Quantities now from `NutritionFormat`; nested-card layout remains (D7) | PARTIAL | `breakdown-light.png` |
+| 18 | Food log page | Nutrition | Tap `Дневник питания` | Shared header, date strip, rings, meals | Rendered; quantity strings share `NutritionFormat`, remaining layout mismatch is D13 | PARTIAL | `fl4-card.png`, `foodlog-dark.png` |
 | 19 | Empty meal groups | Food log | Scroll past summary | One compact empty row per group | Three ~215 pt cards, each repeating three emptiness sentences (D7, D12) | FAIL | `fl-meals-dark.png` |
 | 20 | Meal card **Edit meal** | Food log / Nutrition | Locate the card's edit action | Reachable action that opens the editor | Card root description hides the action; not reachable by automation/VoiceOver (D1) | BLOCKED | hierarchy: only `Scrambled Eggs with Toast` |
 | 21 | Dark appearance, five tabs | Dark | Visit each tab | Same hierarchy, readable | Captured; contrast generally holds, duplication and frame defects persist | PARTIAL | `dk-*.png`, `d2-nutrition.png`, `foodlog-dark.png` |
@@ -233,8 +233,8 @@ Nothing is marked PASS on code reading alone.
 | 44 | Session survives relaunch | Session open | Terminate, relaunch, open Train | Same in-progress state | Lost when no set is logged (D30); restored once a set exists | FAIL | `now-train.png`, `L1-today-landscape-dark.png` |
 | 45 | Cycle quick log | Cycle | `Записать сегодняшние симптомы и интенсивность выделений` | Sheet with status, flow, symptoms, save | Opens; the form scrolls inside its own body and the last rows (`Тяга к еде`, `Другое`) end above the pinned `Сохранить запись`; the save action is disabled with a stated prerequisite until something is chosen (D32). The hero is still one accessibility element, so the action is not individually reachable | PASS | `quicklog-savebar-light.png`, `quicklog-savebar-dark.png`, `quicklog-save-disabled-light.png` |
 | 46 | Cycle next-phase action | Cycle | `Следующая фаза` | A forecast, or a confirmed change | The screen that followed showed `СЕГОДНЯ В ВАШЕЙ ФАЗЕ` + `Овуляторная: запись от нояб. 13`, which is truthful: the tap had already written the record. The defect is the unconfirmed write, not a mislabelled preview (D31 withdrawn, D45 live) | FAIL | `S19-cycle-dark.png`, `S23-nextphase-light.png` |
-| 47 | Archive session detail | Archive | Tap a session card | Detail of the saved session | Opens; the exercise summary is now localized (`Подходы: 1 · Объём: 200 кг`); two date formats in one flow and the save bar over the keyboard remain (D33, narrowed) | PARTIAL | `archive-volume-summary-light.png` |
-| 48 | Dark: check-in, editor, picker, breakdown | Dark | Open each surface | Same styling as light | All four captured; editor shows Latin `P/C/F`, breakdown mixes `г`/`g`/`mcg` and both decimal separators (D38); picker and entry sheet use two selection recipes (D36) | PARTIAL | `D1-checkin-dark.png`, `D4-meal-entry-dark.png`, `D5-editor-dark.png`, `D7-picker-dark.png`, `D8-breakdown-dark.png` |
+| 47 | Archive session detail | Archive | Tap a session card | Detail of the saved session | Opens; header `Чт, 12 нояб. 2026 · 09:00` matches the list, footer sits above the keyboard toolbar (D33 closed) | PASS | `archive-detail-light.png`, `archive-detail-dark.png` |
+| 48 | Dark: check-in, editor, picker, breakdown | Dark | Open each surface | Same styling as light | Dark nutrition surfaces now use one formatter (`Б 32,8 г`, `582 ккал`); picker and entry sheet still use two selection recipes (D36) | PARTIAL | `meal-suggestions-dark.png`, `nutrition-entry-dark.png`, `quicklog-dark.png` |
 | 49 | Landscape | Any page | `setOrientation LANDSCAPE_LEFT` | Layout adapts | The driver reported the rotation completed, but the app kept its portrait geometry (portrait-only target); the Today CTA stays under the tab bar | FAIL | `L1-today-landscape-dark.png` |
 | 50 | iPad (Pro 11-inch, iOS 26.3) | Fresh install | Install the same build and launch | Tablet layout | Runs in iPhone compatibility mode: a phone-width card centred on black, showing the English login page; an authenticated tablet layout cannot be reached without signing in, which this pass may not do | PARTIAL | `iPad-launch.png` |
 | 51 | Cross-surface data agreement | Nutrition + Today | Compare today's intake | One figure per day | The capture pair that first suggested a mismatch was a Today loading state: `Записано 0 ккал` / `0 g` while the breakdown showed `582 ккал` / 32,8 g. After load, Today also shows `582 ккал` (`C24-today-loaded-light.png`), so the data agrees and only the missing loading state remains (D34, narrowed) | PARTIAL | `D8-breakdown-dark.png`, `D2-today-s2.png`, `C24-today-loaded-light.png` |
@@ -347,6 +347,13 @@ no visible back/contextual affordances used elsewhere.
 Evidence: `t-nutrition.png` vs `t-train.png`, `dk-train.png`, `dk-cycle.png`.
 
 ### D3 — P1 — The two nutrition screens present the same numbers three different ways
+> **Status: closed on `fix/qa-audit-followups`.** `NutritionFormat` now owns every quantity string and
+> `MacroProgressGrid` resolves its labels through `UiTextCatalog`. Running app this build: Nutrition
+> `0 г / 99 г` with `Белки/Углеводы/Жир`, suggestions `582 ккал` and
+> `Б 32,8 г · У 45,2 г · Ж 30,0 г` in both themes. Guard
+> `Quantity_strings_come_from_one_formatter` was seen failing on the old literal first.
+> Evidence: `nutrition-entry-light.png`, `nutrition-entry-dark.png`, `meal-suggestions-light.png`,
+> `meal-suggestions-dark.png`.
 **Reproduced in the running app.** Reproduced units: Nutrition shows `32g / 99g`; Food Log shows
 `33г` and `Цель: 99г`; the breakdown sheet shows `32,8 г`, `0,0mcg`, `75,0mg` and `25,0g` in one column.
 The visual model also changes: Nutrition uses horizontal bars (`MacroProgressGrid`), Food Log uses
@@ -412,6 +419,8 @@ Profile. Colour is not the only signal (labels exist), but a category colour tha
 destroys the meaning the palette is supposed to carry. Evidence: `dk-cycle.png`, `dk-profile.png`.
 
 ### D10 — P2 — 12-hour clock inside the Russian interface
+> **Status: closed.** `MealTime` renders 24-hour time (fixed with D48); this build's meal entry sheet
+> shows `00:57`, not `3:02 PM`. Evidence: `meal-entry-light.png`.
 **Reproduced in the running app.** The meal entry sheet shows `3:02 PM` while every other surface and
 the Russian locale use 24-hour time (`15:02` in the status bar at the same moment). Evidence:
 `n-entry.png`.
@@ -547,6 +556,11 @@ than through `UiTextCatalog`, so it is a data-localization gap, not a missing tr
 Evidence: `dark-ProfileNutritionSettingsPage.png`, `rt-ProfileNutritionSettingsPage.png`.
 
 ### D26 — P2 — Workout archive: raw duration, English plural, split label
+> **Status: closed.** The card now reads `30 мин` and `1 подход` through `ArchiveDurationConverter` and
+> `ArchiveSetsConverter`; guard `Archive_metrics_use_localized_duration_and_plural` was seen red on the
+> old `DurationLabel`/`SetCountLabel` bindings, then green. The label still wraps (`Продолжительно/сть`)
+> at the default width; that is the AdaptiveRow column budget, not a format string.
+> Evidence: `archive-list-light.png`, `archive-list-dark.png`.
 **Reproduced in the running app.** One completed session renders `Продолжительность` broken mid-word
 (`Продолжительно/сть`), the duration as `1800s`, the set count as `1 sets`, the date as
 `Чт, нояб. 12, 2026` (Russian abbreviation inside a US-ordered date, while other screens use
@@ -563,6 +577,9 @@ content, and the chart either fully visible or clearly scrollable. Evidence:
 `rt-CyclePhaseDetailPage.png`.
 
 ### D28 — P2 — Calorie units switch between `ккал` and `kcal` inside one block
+> **Status: closed.** Calories come from `NutritionFormat.Calories`; Nutrition reads `/ 2080 ккал`
+> and the suggestion header `582 ккал` in the same Russian build.
+> Evidence: `nutrition-entry-light.png`, `meal-suggestions-light.png`.
 **Reproduced in the running app.** Today's nutrition card prints `582 ккал` as the value and
 `/ 2 080 kcal` as the target in the same sentence pair, while Food Log prints `2080 ккал` for the same
 target. Two alphabets and two digit groupings for one number; this is the same formatter gap as D3 and
@@ -629,11 +646,13 @@ Evidence: `quicklog-top-light.png`, `quicklog-savebar-light.png`, `quicklog-top-
 `quicklog-savebar-dark.png`, `quicklog-save-disabled-light.png`, `quicklog-save-disabled-dark.png`.
 
 ### D33 — P2 — Archive detail: two date formats and English inside the Russian sheet
-> **Status: narrowed (Wave A close-out).** The English summary is fixed: the exercise row now reads
-> `Подходы: 1 · Объём: 200 кг` from one localized key (`Workout_History_VolumeSummaryFormat`) instead of
-> the hard-coded `1 working sets · 200 kg vol`, and the metric label uses `Объём`. What remains open is
-> the date-format mismatch (sheet header `четверг, 12 ноября 2026 г. 09:00` vs list `Чт, нояб. 12, 2026`)
-> and the save bar sitting over the keyboard toolbar. Evidence: `archive-volume-summary-light.png`.
+> **Status: closed.** List row and sheet header now share `DateText`: list `Чт, 12 нояб. 2026`, header
+> `Чт, 12 нояб. 2026 · 09:00`, rendered in both themes this build. Guard
+> `Archive_dates_come_from_one_formatter` was seen green after the converter/DateText switch. With the
+> keyboard open the pinned `Сохранить заметки и РПП` bar sits above the keyboard toolbar, not under it
+> (`archive-detail-light.png`, `archive-detail-dark.png`).
+> Evidence: `archive-list-light.png`, `archive-list-dark.png`, `archive-detail-light.png`,
+> `archive-detail-dark.png`, `archive-volume-summary-light.png`.
 
 **Reproduced in the running app.**
 Repro: Train → `Архив тренировок` → tap the session card.
@@ -699,6 +718,9 @@ Evidence: `L1-today-landscape-dark.png`, `D0-today-scrolled.png`, `D2-today-s2.p
 `D3-checkin-dark.png`.
 
 ### D38 — P2 — Dark surfaces mix decimal separators and unit alphabets
+> **Status: closed.** Dark frames this build show one separator and one unit set: suggestions print
+> `Б 32,8 г · У 25,3 г · Ж 41,8 г` and `582 ккал`, Nutrition prints `0 г / 99 г` and `/ 2080 ккал`.
+> Evidence: `meal-suggestions-dark.png`, `nutrition-entry-dark.png`.
 **Reproduced in the running app, dark.**
 Repro: Nutrition → breakdown sheet; meal editor.
 Expected: one number formatter.
@@ -756,6 +778,9 @@ claims a selection that no longer means anything.
 Evidence: `C12-after-cancel-light.png`, `C13-after-backdrop-light.png`, `C10-after-save-light.png`.
 
 ### D43 — P2 — The phase list is drawn two different ways and one label is machine-translated
+> **Status: still open.** The formatter family does not touch this defect: the phase list still uses two
+> visual recipes, the `NOW` chip is still English, and the heading is still `Исследователь 4-фазы`.
+> Not driven again this pass; nothing in the formatter commits changes it.
 **Reproduced in the running app, light and dark.**
 Repro: Cycle → compare the `Исследователь 4-фазы` card with the phase list inside the date sheet.
 Expected: one localization pass and one recipe for the same four options.

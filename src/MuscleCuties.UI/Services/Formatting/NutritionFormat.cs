@@ -13,6 +13,8 @@ public static class NutritionFormat
 
     public static string GramsShort(double grams) => UiTextCatalog.Format("Nutrition_Format_GramsShort", grams);
 
+    public static string GramsWholeShort(double grams) => UiTextCatalog.Format("Nutrition_Format_GramsWholeShort", grams);
+
     public static string Milligrams(double milligrams) => UiTextCatalog.Format("Nutrition_Format_Milligrams", milligrams);
 
     public static string Micrograms(double micrograms) => UiTextCatalog.Format("Nutrition_Format_Micrograms", micrograms);

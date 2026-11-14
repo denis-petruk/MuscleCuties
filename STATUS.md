@@ -1,21 +1,29 @@
 # Status — QA audit fixes, branch `fix/qa-audit-followups`
 
-## 1. Changed files
+## 1. What this pass changed
 
-Thirteen commits stand on the branch; this pass adds the quick-log save prerequisite on top of `1caa0278`.
+The shared formatter family is closed in code and in the running app:
 
-- `src/MuscleCuties.UI/ViewModels/Cycle/CycleViewModel.QuickLog.cs` — `HasQuickLogInput`
-  (period mark, flow or symptom), `SaveQuickLogHint`, and `SaveQuickLogCommand` now requires it.
-- `src/MuscleCuties.UI/Controls/Cycle/CycleQuickLogBottomSheet.xaml` —
-  `SemanticProperties.Hint="{Binding SaveQuickLogHint}"` on `Сохранить запись`.
-- `src/MuscleCuties.UI/Services/Localization/RussianUiText.CycleWorkout.cs` /
-  `UiTextCatalog.CycleWorkout.cs` — `Cycle_QuickLog_SaveRequiresInputHint`.
-- `tests/MuscleCuties.Core.Tests/UiContractGuardTests.cs` —
-  `The_quick_log_save_states_its_prerequisite_when_disabled`.
-- `QA_REPORT.md` — D32 now covers the disabled state; case 45 moved to PASS.
-- `docs/qa-evidence/wave-a/quicklog-save-disabled-light.png`, `quicklog-save-disabled-dark.png`.
+- `src/MuscleCuties.UI/Services/Formatting/NutritionFormat.cs` — `Grams`, `GramsShort`,
+  `GramsWholeShort`, `Milligrams`, `Micrograms`, `Micronutrient`, `Calories`, `Macros`; every shape is a
+  catalogue key (`Nutrition_Format_*`, `Nutrition_Unit_*`) so the decimal separator comes from the
+  current culture and the suffix from the active language.
+- `src/MuscleCuties.UI/Services/Formatting/DateText.cs` — `SessionDateFormat`, `SessionDate`,
+  `SessionStamp`.
+- `src/MuscleCuties.UI/Resources/Converters/SessionDateConverter.cs`,
+  `ArchiveDurationConverter.cs`, `ArchiveSetsConverter.cs` — XAML bindings for the same shapes.
+- Switched call sites: `NutritionViewModel` (draft summary, adjustment, remaining), `FoodLogViewModel`
+  (edit drafts, remaining/over), `NutritionViewModel.Suggestions`, `DashboardViewModel.Trends`,
+  `FoodLogViewModel.FastLogging`, `MealItem`, `NutritionPresentationModels`, `FoodLogUiModels`,
+  `MealSuggestionItem`, `MacroBreakdownItem`, `MealIngredientItem`, `HistoryIngredientEditor`,
+  `DailyMicronutrientItem`, `MacroProgressGrid` labels, `MacroProgressFormatter`,
+  `NutritionBreakdownPresenter`, `WorkoutHistoryViewModel`, `WorkoutHistoryPage.xaml`.
+- Guards in `tests/MuscleCuties.Core.Tests/UiContractGuardTests.cs`:
+  `Quantity_strings_come_from_one_formatter`, `Archive_dates_come_from_one_formatter`,
+  `Archive_metrics_use_localized_duration_and_plural`. Each was seen failing on the old literal or old
+  binding before passing; no existing guard was weakened.
 
-## 2. Test commands and output
+## 2. Test commands and final output
 
 ```
 dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64
@@ -23,35 +31,61 @@ dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios 
     0 Error(s)
 
 dotnet test tests/MuscleCuties.Core.Tests
-Passed!  - Failed: 0, Passed: 1394, Skipped: 0, Total: 1394
+Passed!  - Failed: 0, Passed: 1397, Skipped: 0, Total: 1397
 
 dotnet test tests/MuscleCuties.Core.Tests --filter "UiContractGuard|UiStyleGate"
-Passed!  - Failed: 0, Passed: 36, Skipped: 0, Total: 36
+Passed!  - Failed: 0, Passed: 39, Skipped: 0, Total: 39
 ```
 
-Guard `The_quick_log_save_states_its_prerequisite_when_disabled`, red then green:
+Red/green evidence, formatter guard:
 
 ```
-=== GREEN ===  Passed!  - Failed: 0, Passed: 1
-=== RED   ===  Assert.Contains() Failure: Sub-string not found
-               Failed!  - Failed: 1, Passed: 0
-=== GREEN AGAIN === Passed!  - Failed: 0, Passed: 1
+=== RED   === Failed  Quantity_strings_come_from_one_formatter (P {Macros.Protein:N0}g literal)
+=== GREEN === Passed  Quantity_strings_come_from_one_formatter
 ```
 
-Simulator, this build: `T55` light and dark, one failure count 0 each, showing `Сохранить запись`
-disabled with no selection.
+Red/green evidence, archive metrics guard:
 
-## 3. Not verified, and why
+```
+=== RED   === Failed  Archive_metrics_use_localized_duration_and_plural (DurationLabel binding)
+=== GREEN === Passed  Archive_metrics_use_localized_duration_and_plural (TotalDurationSeconds binding)
+```
 
-- **The formatter family is not done.** D3, D10, D26, D28, D38 and D43 still render the old unit and
-  date shapes, and D33's date half is open. This pass did not implement the shared formatter; no row for
-  those defects claims otherwise.
-- D32's hero entry is still one accessibility element, so the quick-log action is not individually
-  reachable by assistive technology; the sheet itself is driven by a point tap.
+## 3. Frames from this build (`docs/qa-evidence/wave-a/`)
+
+Light and dark for the surfaces the closed defects cite:
+
+- Nutrition entry: `nutrition-entry-light.png`, `nutrition-entry-dark.png` — `0 г / 99 г`,
+  `Белки / Углеводы / Жир`, `/ 2080 ккал`.
+- Meal detail (suggestions): `meal-suggestions-light.png`, `meal-suggestions-dark.png` —
+  `582 ккал`, `Б 32,8 г · У 45,2 г · Ж 30,0 г`.
+- Meal entry sheet / 24-hour time: `meal-entry-light.png` — `00:57`.
+- Archive list: `archive-list-light.png`, `archive-list-dark.png` — `30 мин`, `1 подход`,
+  `Чт, 12 нояб. 2026`.
+- Archive detail: `archive-detail-light.png`, `archive-detail-dark.png` — header
+  `Чт, 12 нояб. 2026 · 09:00`, footer above the keyboard toolbar.
+- Cycle quick log: `quicklog-light.png`, `quicklog-dark.png` — `суббота, 14 ноября`.
+
+Driven with Maestro on simulator `678048F6-C4C7-406C-A970-7104AED3E00A`, installed from
+`src/MuscleCuties.UI/bin/Debug/net10.0-ios/iossimulator-arm64/MuscleCuties.UI.app`; frames taken with
+`xcrun simctl io booted screenshot` after the flow settled.
+
+## 4. Closed in `QA_REPORT.md`
+
+D3, D10, D26, D28, D33 (both date halves and the keyboard footer) and D38 are marked closed against the
+frames above and their guards. D43 remains open: it is the cycle phase-list visual recipe and the
+machine-translated heading, which the formatter family does not touch; its section says so explicitly.
+
+## 5. Not verified, and why
+
+- D43 was not re-driven this pass; nothing in these commits changes it.
+- Food-log rings and the breakdown donut still differ from Nutrition bars (D13/D7); only their quantity
+  strings were switched.
+- D32's hero entry remains one accessibility element; the quick-log action is driven by a point tap.
 - Frames cited for D50, D37, D54, D51 and D52 come from earlier commits in this branch and were not
-  re-shot this pass; the pages they show were not touched by either of the last two commits.
+  re-shot this pass; the pages they show were not touched by the formatter commits.
 
-## 4. Next step
+## 6. Next step
 
-Build `NutritionFormat`/`DateText` and switch every nutrition and archive surface to it, closing D3,
-D10, D26, D28, D38, D43 and the D33 date half. That is the only remaining group in Wave A.
+The remaining Wave A group is D43's phase-list recipe plus the English `NOW` chip and heading; after that
+the audit's visual-consistency group (D8, D11, D14, D19, D21, D22, D36, D44) is the next coherent unit.

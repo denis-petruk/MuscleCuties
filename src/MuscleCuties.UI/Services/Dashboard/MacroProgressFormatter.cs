@@ -25,7 +25,7 @@ public static class MacroProgressFormatter
 
     public static string FormatGramsText(float consumed, float target)
     {
-        return $"{(int)consumed}g / {(int)target}g";
+        return $"{NutritionFormat.GramsWholeShort(consumed)} / {NutritionFormat.GramsWholeShort(target)}";
     }
 
     public static string GetPhaseIconGlyph(CyclePhase phase)

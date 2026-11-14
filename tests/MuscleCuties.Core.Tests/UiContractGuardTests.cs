@@ -467,6 +467,22 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// The archive card printed `1800s` and `1 sets` (D26). Duration and set count must render through
+    /// the localized converters that own their plural and unit shapes.
+    /// </summary>
+    [Fact]
+    public void Archive_metrics_use_localized_duration_and_plural()
+    {
+        var root = RepositoryRoot();
+        var page = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Pages", "Workout", "WorkoutHistoryPage.xaml"));
+        Assert.Contains("Converter={StaticResource ArchiveDurationConverter}", page, StringComparison.Ordinal);
+        Assert.Contains("Converter={StaticResource ArchiveSetsConverter}", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("{Binding DurationLabel", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("{Binding SetCountLabel", page, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// The archive list row printed `Чт, нояб. 12, 2026` while the detail sheet printed
     /// `четверг, 12 ноября 2026 г. 09:00` for the same session (D33). Both must read one helper.
     /// </summary>

@@ -200,7 +200,7 @@
                                     <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
                                            Text="{loc:LocalizedText Workout_History_DurationHeader}" />
                                     <Label Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
-                                           Text="{Binding DurationLabel, Converter={StaticResource LocalizedStringConverter}}" />
+                                           Text="{Binding TotalDurationSeconds, Converter={StaticResource ArchiveDurationConverter}}" />
                                 </VerticalStackLayout>
 
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
@@ -215,7 +215,7 @@
                                     <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
                                            Text="{loc:LocalizedText Workout_History_TotalSetsHeader}" />
                                     <Label Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
-                                           Text="{Binding SetCountLabel, Converter={StaticResource LocalizedStringConverter}}" />
+                                           Text="{Binding TotalSetsCount, Converter={StaticResource ArchiveSetsConverter}}" />
                                 </VerticalStackLayout>
                             </sharedControls:AdaptiveRow>
                         </Grid>

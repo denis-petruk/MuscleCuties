@@ -286,6 +286,10 @@ internal static partial class RussianUiText
         Values["Workout_History_DistanceFormat"] = "{0:0.##} км";
         Values["Workout_History_DistanceHeader"] = "Дистанция";
         Values["Workout_History_DurationMinutesFormat"] = "{0} мин";
+        Values["Workout_History_DurationValueFormat"] = "{0} мин";
+        Values["Workout_History_SetsOneFormat"] = "{0} подход";
+        Values["Workout_History_SetsFewFormat"] = "{0} подхода";
+        Values["Workout_History_SetsManyFormat"] = "{0} подходов";
         Values["Workout_History_NotRecorded"] = "Не записано";
         Values["Workout_History_NoSetDetailsNote"] = "Детали подходов не записаны.";
         Values["Workout_History_NotesUpdatedMessage"] = "Заметки и РПЭ обновлены.";
