@@ -189,13 +189,13 @@ Nothing is marked PASS on code reading alone.
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | Cold launch | Signed-in cache present | Install current build, launch | Today tab, Russian UI | Today rendered in Russian with restored session | PASS | `02-fresh-launch.png` |
 | 2 | Tab navigation | Signed in | Tap all five tab items, both directions | Each destination renders | All five rendered; Nutrition needs a second tap after cold start to switch | PARTIAL | `t-cycle.png`, `t-train.png`, `t-nutrition.png`, `t-profile.png` |
-| 3 | Today render | Signed in | Open Сегодня | Hierarchy: next action, then status | Rest card + readiness card render; copy duplicated (D7) | FAIL | `dk-today.png` |
+| 3 | Today render | Signed in | Open Сегодня | Hierarchy: next action, then status | Rest card and readiness card each state their status once (D7 closed) | PASS | `d7-today-light.png`, `d7-today-dark.png` |
 | 4 | Check-in sheet open | Today | Tap `Заполнить отметку` | Sheet with sleep, quality, energy | Opens; pinned footer clipped at screen bottom (D5) | FAIL | `checkin-light.png` |
 | 5 | Check-in save | Sheet open | Drag sleep, answer, save | Saves and closes | Not driven this pass | NOT RUN | — |
 | 6 | Cycle render | Signed in | Open Цикл | Phase hero, day, actions | Rendered; phase colour and `День 14 из 28` mismatch (D8, D9) | FAIL | `dk-cycle.png` |
 | 7 | Cycle calendar / quick log / next phase | Cycle | Expand month, open quick log | Calendar grid, log sheet | Not driven | NOT RUN | — |
 | 8 | Train render | Signed in | Open Тренировки | Week strip, day card, filters | Rendered; English day labels, broken summary sentence, clipped strip and chips (D4, D6, D11) | FAIL | `dk-train.png` |
-| 9 | Workout archive | Signed in with one completed session | `Тренировки` → `Архив тренировок` | Totals, month filters, session cards | Renders `30 мин`, `1 подход`, and the shared date shape (D26, D33); label still wraps at default width | PASS | `workout-archive-light.png`, `workout-archive-dark.png`, `archive-list-light.png`, `archive-list-dark.png` |
+| 9 | Workout archive | Signed in with one completed session | `Тренировки` → `Архив тренировок` | Totals, month filters, session cards | Renders `30 мин`, `1 подход`, the shared date shape and a whole `Продолжительность` label on its own row (D26, D33) | PASS | `d7-archive-light.png`, `d7-archive-dark.png`, `workout-archive-light.png`, `workout-archive-dark.png` |
 | 10 | Start session | A training day (QA data shifted by −3 days, backed up) | Today/Train card → `Начать тренировку` → `Активности тренировки` → `Strength & Sculpt` → `Начать` | Day overview, then the session screen | Both reached; chooser sheet overlaps its own rows and lingers after selection (D19); in-progress card then offers `Открыть день отдыха` (D18) | FAIL | `tr1-today.png`, `sess-normal-1.png`, `sess-dark-3.png`, `relaunch3.png` |
 | 11 | Nutrition render | Signed in | Open Питание | Shared page header + summary | Rendered without any page header; bespoke pink hero (D2) | FAIL | `t-nutrition.png`, `d2-nutrition.png` |
 | 12 | Meal entry sheet | Nutrition | Tap `Добавить прием пищи` | Compact context, then commit actions | Opens in 24-hour Russian time `01:20` (D10) | PASS | `meal-entry-light.png`, `meal-entry-dark.png` |
@@ -203,11 +203,11 @@ Nothing is marked PASS on code reading alone.
 | 14 | Meal editor | Entry sheet | Tap `Добавить прием пищи` | Editor with summary and actions | Opens; exposes no accessible elements (D1); large empty body (D12) | FAIL | `s2-editor.png` |
 | 15 | Food picker (search tab) | Editor | Tap `Добавить еду` | Search field and results | Opens; still no accessible elements (D1) | FAIL | `s4-foodpick.png` |
 | 16 | Food search submit | Picker | Type a query, search, add | Results and save | BLOCKED by #15: sheet is coordinate-only; not completed | BLOCKED | hierarchy shows only status bar |
-| 17 | Nutrition breakdown | Nutrition | Tap `Микроэлементы` | Sheet with donut, macros, micros | Quantities now from `NutritionFormat`; nested-card layout remains (D7) | PARTIAL | `breakdown-light.png` |
-| 18 | Food log page | Nutrition | Tap `Дневник питания` | Shared header, date strip, rings, meals | Rendered; quantity strings share `NutritionFormat`, remaining layout mismatch is D13 | PARTIAL | `fl4-card.png`, `foodlog-dark.png` |
-| 19 | Empty meal groups | Food log | Scroll past summary | One compact empty row per group | Three ~215 pt cards, each repeating three emptiness sentences (D7, D12) | FAIL | `fl-meals-dark.png` |
+| 17 | Nutrition breakdown | Nutrition | Tap `Микроэлементы` | Sheet with donut, macros, micros | Quantities now from `NutritionFormat`; nested-card layout remains (D12) | PARTIAL | `breakdown-light.png` |
+| 18 | Food log page | Nutrition | Tap `Дневник питания` | Shared header, date strip, rings, meals | Rendered; date appears once, the water card holds only water and the two diary actions have their own equal-width card (D13 closed) | PASS | `d7-foodlog-light.png`, `d7-foodlog-dark.png`, `d13-foodlog-actions-light.png`, `d13-foodlog-actions-dark.png` |
+| 19 | Empty meal groups | Food log | Scroll past summary | One compact empty row per group | Each group is one line: meal name and `Пока ничего не добавлено`; zero macros and the second empty sentence are gone (D7 closed). The groups are still full cards, so D12 remains | PARTIAL | `d13-foodlog-actions-light.png`, `d13-foodlog-actions-dark.png` |
 | 20 | Meal card **Edit meal** | Food log / Nutrition | Locate the card's edit action | Reachable action that opens the editor | Card root description hides the action; not reachable by automation/VoiceOver (D1) | BLOCKED | hierarchy: only `Scrambled Eggs with Toast` |
-| 21 | Dark appearance, five tabs | Dark | Visit each tab | Same hierarchy, readable | Captured; contrast generally holds, duplication and frame defects persist | PARTIAL | `dk-*.png`, `d2-nutrition.png`, `foodlog-dark.png` |
+| 21 | Dark appearance, five tabs | Dark | Visit each tab | Same hierarchy, readable | Captured; contrast holds, D7's duplicated statements are gone, remaining frame defects persist | PARTIAL | `d7-today-dark.png`, `d7-cycle-dark.png`, `d7-foodlog-dark.png`, `d7-profile-dark.png`, `d7-archive-dark.png`, `dk-train.png` |
 | 22 | Dark appearance, sheets | Dark | Re-open sheets | Same sheet styling | Activity chooser and session notes captured in dark and show the same defects as light; check-in, editor, picker and breakdown still light-only | PARTIAL | `sess-dark-3.png`, `notes-sheet.png` |
 | 23 | Profile subpages | Signed in | Open personal info, nutrition settings, units, feedback, privacy, photo vault (start-up route) | Pushed routes render inside the shared frame | All six render; sticky save bars cover the last field everywhere (D21), header sliver (D22), raw `Maintain Health` (D25), double-framed birthday and unitless measurements (D24), `imperial` in Russian copy (D23) | FAIL | `light-ProfilePersonalInfoPage.png`, `rt-ProfileNutritionSettingsPage.png`, `rt-ProfileUnitsDisplayPage.png`, `rt-ProfileFeedbackPage.png`, `rt-ProfilePrivacyPage.png`, `rt-PhotoJourneyVaultPage.png` and their `dark-` counterparts |
 | 24 | Auth, registration, onboarding, OTP | Signed out | Sign out, register, verify | Complete onboarding | Not driven; session restored, no sign-out | NOT RUN | — |
@@ -392,6 +392,16 @@ and reads as a failed template substitution. Expected: one localized sentence su
 This is a runtime-format string, so it is also a localization-catalog gap rather than a one-off typo.
 
 ### D7 — P2 — Every surface states the same fact two to three times
+> **Status: closed.** Rest day is now `День отдыха` plus guidance and one action; the rest pill is
+> gone. Readiness with no record is the `Нужна отметка` pill plus one explanation and one action; the
+> duplicate subtitle and tinted prompt box are gone. Cycle states the phase once in the hero and the
+> calendar card keeps only `Запись от 13 нояб.`; the English `… logged …` sentence is replaced by the
+> localized `Cycle_Calendar_LastLogFormat`. Food Log's date appears once; empty meal groups show the
+> meal name and `Пока ничего не добавлено` only; the profile vault is one status sentence plus
+> `Показать`. Guard `D7_surfaces_state_each_fact_once` (including its Cycle-card assertion) was seen
+> red on the old shapes, then green. Both themes were driven on the final build: `d7-today-{light,dark}.png`, `d7-cycle-{light,dark}.png`,
+> `d7-foodlog-{light,dark}.png`, `d7-foodlog-empty-light.png`,
+> `d7-profile-{light,dark}.png`.
 **Reproduced in the running app.**
 - Today rest card: title `День отдыха`, a `ДЕНЬ ОТДЫХА` pill directly under it, then an inner notice
   repeating that it is a rest day.
@@ -446,6 +456,12 @@ card shells. Evidence: `checkin-light.png`, `dk-cycle.png`, `breakdown-light.png
 `fl-meals-dark.png`.
 
 ### D13 — P2 — The water card is used as a shelf for unrelated actions
+> **Status: closed.** `HydrationLogView` now owns its card alone. `Скопировать вчерашнее` and
+> `Разбор питательных веществ` sit in their own next card as two full-width `ButtonSecondary`
+> controls with the same height and corner treatment; the `Дневник за вчера` label is removed. Guard
+> `D13_water_card_does_not_host_unrelated_actions` was seen red on the old card, then green.
+> Driven in both themes: `d13-foodlog-actions-light.png`, `d13-foodlog-actions-dark.png`; the
+> water-only card is in `d7-foodlog-{light,dark}.png`.
 **Reproduced in the running app.** The Food Log's `Вода` card contains `+250 мл`, the label
 `Дневник за вчера`, a floating `Скопировать вчерашнее` button and a `Разбор питательных веществ`
 button. The three buttons have three different widths and two different corner treatments inside one
@@ -564,11 +580,12 @@ Evidence: `dark-ProfileNutritionSettingsPage.png`, `rt-ProfileNutritionSettingsP
 > **Status: closed.** The card now reads `30 мин`, `1 подход` and `200 кг` through
 > `ArchiveDurationConverter` and `ArchiveSetsConverter`; guard
 > `Archive_metrics_use_localized_duration_and_plural` was seen red on the old
-> `DurationLabel`/`SetCountLabel` bindings, then green. The label still wraps
-> (`Продолжительно/сть`) at the default width; that is the AdaptiveRow column budget, not a format
-> string.
-> Evidence: `workout-archive-light.png`, `workout-archive-dark.png`, `archive-list-light.png`,
-> `archive-list-dark.png`.
+> `DurationLabel`/`SetCountLabel` bindings, then green. The three-column `AdaptiveRow` was replaced by
+> stacked label/value rows, so `Продолжительность`, `Объем` and `Всего подходов` each own the card
+> width and stay whole; guard `Archive_duration_header_does_not_wrap_mid_word` was seen red on the old
+> three-column layout, then green.
+> Evidence: `d7-archive-light.png`, `d7-archive-dark.png`, `workout-archive-light.png`,
+> `workout-archive-dark.png`, `archive-list-light.png`, `archive-list-dark.png`.
 **Reproduced in the running app.** One completed session renders `Продолжительность` broken mid-word
 (`Продолжительно/сть`), the duration as `1800s`, the set count as `1 sets`, the date as
 `Чт, нояб. 12, 2026` (Russian abbreviation inside a US-ordered date, while other screens use
@@ -1258,15 +1275,15 @@ captured in light and dark.
 | Cycle | both | ✔ | ✖ 500 pt hero block before the first action | ✖ follicular is pink in the hero and green one card below (D9) | ✖ nested tinted sub-card | ✖ next-phase CTA is a wide outline block | — | ✖ day repeated twice | ✖ |
 | Train | dark | ✔ | ✖ text week strip clipped at `SA` | ✔ | ✔ | ✖ archive button above the plan | — | ✖ `training day - 6` (D6) | ✖ |
 | Nutrition | both | ✔ | ✖ dead `Auto` row | ✖ second pink hero skin (D2) | ✔ shared meal card | ✔ | — | ✖ hero + summary + phase card repeat the day | ✖ |
-| Food Log | both | ✔ | ✖ content under tab bar | ✔ | ✔ shared meal card | ✖ water card holds three actions (D13) | — | ✖ three empty cards say three things | ✖ |
+| Food Log | both | ✔ | ✖ content under tab bar | ✔ | ✔ shared meal card | ✔ water only; actions in their own equal-button card (D13) | — | ✔ one empty line per group (D7) | ✖ |
 | Profile | dark | ✔ | ✔ | ✖ phase pill colour differs from Cycle (D9) | ✔ stat rows | — | — | ✖ uppercase headings, `&` in Russian | ✖ |
 | Personal info | both | ✔ | ✖ save bar covers the last field (D21) | ✔ | ✔ | ✔ | ✖ double-framed date, unitless height/weight (D24) | — | ✖ |
 | Nutrition settings | both | ✖ section header collapses to a 4-line column (D22) | ✖ | ✔ | ✔ | ✔ | ✖ raw `Maintain Health` (D25) | — | ✖ |
 | Units | both | ✔ | ✖ bar over `Энергия` | ✔ | ✔ | ✔ | ✖ placeholder-as-value units, `imperial` in Russian (D23) | — | ✖ |
 | Feedback | light | ✔ | ✖ bar over `Приоритет` | ✔ | ✔ | ✖ primary action rendered in the disabled treatment | ✔ | ✖ textareas empty with one placeholder each | ✖ |
 | Privacy | light | ✔ | ✖ last card cut by the bottom edge | ✔ | ✔ | ✔ | — | — | ✖ |
-| Photo vault | light | ✔ | ✔ | ✔ | ✔ | ✖ add-photo primary styled secondary | — | ✖ three ways to say the preview is hidden | ✖ |
-| Archive | dark | ✔ | ✖ `Продолжительно/сть` split; footer line under the tab bar | ✔ | ✔ | ✖ month chips look like filters but are the only control | — | ✖ `Все упражнения загружены` | ✖ |
+| Photo vault | light | ✔ | ✔ | ✔ | ✔ | ✖ add-photo primary styled secondary | — | ✔ one privacy status plus `Показать` (D7) | ✖ |
+| Archive | dark | ✔ | ✔ `Продолжительность` whole; footer line under the tab bar | ✔ | ✔ | ✖ month chips look like filters but are the only control | — | ✖ `Все упражнения загружены` | ✖ |
 | Archive detail | dark | ✔ | ✖ keyboard covers `ПОВТОРЫ`; save bar stacked on the keyboard toolbar | ✔ | ✔ | ✔ | ✖ weight `20,0` vs list `200 кг` | — | ✖ |
 | Phase detail | light | ✔ | ✖ ~300 pt empty body | ✔ | ✔ | ✔ | — | ✖ bilingual subtitle, clipped chart (D27) | ✖ |
 | Session | both | ✖ exercise title wraps into the progress tabs at large text; two `Назад` buttons | ✖ set fields under the pinned block (D29) | ✖ default iOS blue timer bar | ✔ tabs + set rows | ✖ four stacked full-width actions with equal weight | ✖ fields unreachable | ✖ error banner unreadable sentence | ✖ |

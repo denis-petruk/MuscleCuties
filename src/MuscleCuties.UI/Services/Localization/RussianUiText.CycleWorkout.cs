@@ -190,6 +190,7 @@ internal static partial class RussianUiText
         Values["Cycle_PhaseSummary_LutealRecovery"] = "Уделяйте время сну и восстановлению, когда это нужно.";
         Values["Cycle_PhaseSummary_LutealQuickRule"] = "Записывайте симптомы, а не предполагайте самочувствие по фазе.";
         Values["Cycle_Calendar_CardAccessibility"] = "Календарь цикла с текущей фазой и ежемесячным обзором";
+        Values["Cycle_Calendar_LastLogFormat"] = "Запись от {0}";
         Values["Cycle_Calendar_CurrentPhaseFormat"] = "Текущая фаза: {0}";
         Values["Cycle_Calendar_LegendAccessibility"] = "Обозначения календаря: сплошная заливка — записанное наблюдение; контур и звёздочка — прогноз или оценка фазы.";
         Values["Cycle_Calendar_NextMonthAccessibility"] = "На следующий месяц";

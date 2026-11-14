@@ -44,7 +44,8 @@
                 <VerticalStackLayout
                     Spacing="{StaticResource UiSpaceMicro}"
                     Margin="{StaticResource UiInsets12_0_0_0}"
-                    VerticalOptions="Center">
+                    VerticalOptions="Center"
+                    IsVisible="{Binding HasContent, Source={x:Reference Root}}">
                     <Label
                         Text="{Binding CaloriesText, Source={x:Reference Root}}"
                         Style="{StaticResource BodyStrong}"
@@ -73,7 +74,8 @@
             <Label
                 Text="{Binding MacrosText, Source={x:Reference Root}}"
                 Style="{StaticResource MutedLabel}"
-                LineBreakMode="WordWrap" />
+                LineBreakMode="WordWrap"
+                IsVisible="{Binding HasContent, Source={x:Reference Root}}" />
 
             <!-- One action row on every meal card: Edit meal when the meal is editable as one
                  block, then the save-template star. Actions never share the macro line, so the

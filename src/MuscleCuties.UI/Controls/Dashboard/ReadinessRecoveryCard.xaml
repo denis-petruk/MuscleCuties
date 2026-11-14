@@ -36,16 +36,6 @@
                 </Border>
             </FlexLayout>
 
-            <Border Style="{StaticResource CardSecondary}"
-                    IsVisible="{Binding HasTodayReadinessRecord, Converter={StaticResource InvertedBoolConverter}}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
-                    <Label Text="{loc:LocalizedText Dashboard_Readiness_CheckInPrompt}"
-                           Style="{StaticResource BodyStrong}"
-                           HorizontalOptions="Center"
-                           HorizontalTextAlignment="Center" />
-                </VerticalStackLayout>
-            </Border>
-
             <!-- Readiness and recovery rings. "Восстановление" cannot fit a half width at accessibility
                  sizes, so the shared row gives each ring its own row there. -->
             <sharedControls:AdaptiveRow Columns="2"

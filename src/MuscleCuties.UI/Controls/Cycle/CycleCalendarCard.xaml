@@ -63,13 +63,6 @@
                                      Margin="{StaticResource UiInsets0_0_8_0}"
                                      Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
                     <Label
-                        Text="{Binding PhaseLabel, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource SectionTitle}"
-                        TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                        VerticalOptions="Center"
-                        LineBreakMode="WordWrap"
-                        SemanticProperties.Description="{Binding PhaseLabel, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_Calendar_CurrentPhaseFormat}" />
-                    <Label
                         Text="{Binding LastPhaseLogText, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                         Style="{StaticResource MutedLabel}"

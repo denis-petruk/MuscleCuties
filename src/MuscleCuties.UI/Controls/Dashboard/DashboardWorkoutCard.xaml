@@ -79,6 +79,7 @@
 
                 <!-- Pill on the right: REST DAY or TRAINING -->
                 <Border
+                    IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
                     StrokeShape="{StaticResource UiRoundRectangleRadius999}"
                     StrokeThickness="{StaticResource UiStrokeWidth0}"
                     Padding="{StaticResource UiInsets10_4}"
@@ -96,13 +97,6 @@
 
                     <Border>
                         <Grid>
-                            <Label
-                                Text="{loc:LocalizedText Dashboard_Workout_PillRest}"
-                                IsVisible="{Binding IsRestDay}"
-                                TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
-                                Style="{StaticResource CaptionLabel}"
-                                VerticalOptions="Center" />
-
                             <Label
                                 Text="{loc:LocalizedText Dashboard_Workout_PillTraining}"
                                 IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"

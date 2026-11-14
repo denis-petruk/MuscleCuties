@@ -190,6 +190,7 @@ public static partial class UiTextCatalog
         English["Cycle_PhaseSummary_LutealRecovery"] = "Make room for sleep and recovery when you need it.";
         English["Cycle_PhaseSummary_LutealQuickRule"] = "Record symptoms instead of assuming the phase predicts how you feel.";
         English["Cycle_Calendar_CardAccessibility"] = "Cycle calendar card showing current phase and monthly overview";
+        English["Cycle_Calendar_LastLogFormat"] = "Logged {0}";
         English["Cycle_Calendar_CurrentPhaseFormat"] = "Current phase: {0}";
         English["Cycle_Calendar_LegendAccessibility"] = "Calendar legend: solid fill means recorded observation; border and asterisk mean predicted or estimated phase";
         English["Cycle_Calendar_NextMonthAccessibility"] = "Next month";

@@ -271,6 +271,80 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// D7: the same fact was stated two or three times on Today, Food Log, Cycle and Profile. Each
+    /// surface keeps one status and, at most, one explanation.
+    /// </summary>
+    [Fact]
+    public void D7_surfaces_state_each_fact_once()
+    {
+        var root = RepositoryRoot();
+        string Read(params string[] parts) => File.ReadAllText(Path.Combine(root, Path.Combine(parts)));
+
+        var readiness = Read("src", "MuscleCuties.UI", "Controls", "Dashboard", "ReadinessRecoveryCard.xaml");
+        Assert.DoesNotContain("Dashboard_Readiness_CheckInPrompt", readiness, StringComparison.Ordinal);
+
+        var workout = Read("src", "MuscleCuties.UI", "Controls", "Dashboard", "DashboardWorkoutCard.xaml");
+        Assert.DoesNotContain("Dashboard_Workout_PillRest", workout, StringComparison.Ordinal);
+
+        var foodLog = Read("src", "MuscleCuties.UI", "Pages", "Nutrition", "FoodLogPage.xaml");
+        Assert.Equal(1, Regex.Matches(foodLog, "FormattedSelectedDate").Count);
+        Assert.DoesNotContain("Nutrition_FoodLog_NoFoodsLoggedYet", foodLog, StringComparison.Ordinal);
+
+        var profile = Read("src", "MuscleCuties.UI", "Controls", "Profile", "ProfileDetailsContent.xaml");
+        Assert.DoesNotContain("Profile_Details_TapToRevealPreview", profile, StringComparison.Ordinal);
+
+        var cycle = Read("src", "MuscleCuties.UI", "ViewModels", "Cycle", "CycleViewModel.cs");
+        Assert.DoesNotContain("log.Phase} logged", cycle, StringComparison.Ordinal);
+
+        var calendar = Read("src", "MuscleCuties.UI", "Controls", "Cycle", "CycleCalendarCard.xaml");
+        Assert.DoesNotContain("Text=\"{Binding PhaseLabel, Converter={StaticResource LocalizedStringConverter}}\"",
+            calendar, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// D13: the water card was a shelf for the yesterday diary and the nutrient breakdown. Those
+    /// actions must live in their own card, not inside the Border that hosts HydrationLogView.
+    /// </summary>
+    [Fact]
+    public void D13_water_card_does_not_host_unrelated_actions()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Pages", "Nutrition", "FoodLogPage.xaml");
+        var document = XDocument.Load(path);
+        var hydration = document.Descendants()
+            .FirstOrDefault(element => element.Name.LocalName == "HydrationLogView");
+        Assert.NotNull(hydration);
+        var card = hydration!.Ancestors()
+            .FirstOrDefault(ancestor => ancestor.Name.LocalName == "Border");
+        Assert.NotNull(card);
+        var labels = card!.Descendants()
+            .Where(element => element.Name.LocalName is "Button" or "Label")
+            .Select(element => (string?)element.Attribute("Text"))
+            .Where(text => text is not null)
+            .ToArray();
+        Assert.DoesNotContain(labels, text => text!.Contains("OpenBreakdown", StringComparison.Ordinal));
+        Assert.DoesNotContain(labels, text => text!.Contains("CopyYesterday", StringComparison.Ordinal));
+        Assert.DoesNotContain(labels, text => text!.Contains("YesterdayDiary", StringComparison.Ordinal));
+    }
+
+    /// <summary>
+    /// The archive card split `Продолжительность` mid-word. The metric header must not wrap at the
+    /// card width the app produces.
+    /// </summary>
+    [Fact]
+    public void Archive_duration_header_does_not_wrap_mid_word()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Pages", "Workout", "WorkoutHistoryPage.xaml");
+        var document = XDocument.Load(path);
+        var label = document.Descendants()
+            .FirstOrDefault(element => element.Name.LocalName == "Label" &&
+                (string?)element.Attribute("Text") == "{loc:LocalizedText Workout_History_DurationHeader}");
+        Assert.NotNull(label);
+        Assert.Equal("NoWrap", (string?)label!.Attribute("LineBreakMode"));
+    }
+
+    /// <summary>
     /// Archive detail kept its pinned save bar behind the keyboard toolbar (D33): padding only the
     /// scroll body left the surface's footer row at the screen edge. The frame must inset the whole
     /// surface, so any pinned footer sits above the keys.
