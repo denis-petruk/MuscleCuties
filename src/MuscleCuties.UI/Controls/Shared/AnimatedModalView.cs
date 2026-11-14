@@ -17,7 +17,8 @@ public class AnimatedModalView : ContentView
     public static readonly BindableProperty RestoreFocusTargetProperty =
         BindableProperty.Create(nameof(RestoreFocusTarget), typeof(VisualElement), typeof(AnimatedModalView));
 
-
+    /// <summary>Bottom strip a sheet always keeps for its pinned footer.</summary>
+    private const double SheetFooterReserve = 12;
 
     private VisualElement? _capturedFocusTarget;
     private ContentPage? _isolationPage;
@@ -209,9 +210,57 @@ public class AnimatedModalView : ContentView
         if (body is null)
             return;
 
-        // Padding grows the scrollable extent by exactly the covered strip; MAUI's own keyboard
-        // handling then brings the focused field above the keys.
-        body.Padding = new Thickness(body.Padding.Left, body.Padding.Top, body.Padding.Right, Math.Max(0, keyboardInset));
+        // Padding grows the scrollable extent by the covered strip plus the footer reserve, so the
+        // last row and any pinned footer can always be scrolled clear of the keys.
+        body.Padding = new Thickness(
+            body.Padding.Left,
+            body.Padding.Top,
+            body.Padding.Right,
+            Math.Max(0, keyboardInset) + SheetFooterReserve);
+
+        if (keyboardInset > 0)
+            RevealContentBelowFocusedField(body);
+    }
+
+    /// <summary>
+    /// Scrolls the body so the row under the focused field is visible, not just the field itself.
+    /// </summary>
+    /// <remarks>
+    /// MAUI scrolls a focused entry into view, which for the food picker put the field at the bottom
+    /// of the visible strip and left the result list behind the keyboard. Anchoring the focused row at
+    /// the top of the body gives the picker its first result back and keeps a pinned footer reachable.
+    /// </remarks>
+    private static void RevealContentBelowFocusedField(ScrollView body)
+    {
+        var focused = FindFocusedDescendant(body);
+        if (focused is null)
+            return;
+
+        body.Dispatcher.Dispatch(async () =>
+        {
+            try
+            {
+                await body.ScrollToAsync(focused, ScrollToPosition.Start, true);
+            }
+            catch (Exception)
+            {
+                // A body that is being replaced while the keyboard animates must not crash the sheet.
+            }
+        });
+    }
+
+    private static VisualElement? FindFocusedDescendant(IVisualTreeElement root)
+    {
+        foreach (var child in root.GetVisualChildren())
+        {
+            if (child is VisualElement { IsFocused: true } focused)
+                return focused;
+
+            if (FindFocusedDescendant(child) is { } nested)
+                return nested;
+        }
+
+        return null;
     }
 
     /// <summary>

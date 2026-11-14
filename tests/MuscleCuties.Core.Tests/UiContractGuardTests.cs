@@ -288,6 +288,88 @@ public sealed class UiContractGuardTests
         // shortened sheet scroll instead of clipping its last rows behind the keys.
         Assert.Contains("EnsureScrollBody", frame, StringComparison.Ordinal);
         Assert.Contains("new ScrollView", frame, StringComparison.Ordinal);
+
+        // One body only: a sheet that already owns a ScrollView must reuse it rather than nesting a second.
+        Assert.Contains(
+            "if (surface.Content is ScrollView existing)",
+            frame,
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Shortening the sheet and padding its body keeps the focused field above the keys, but the rows
+    /// under it — the picker's first result — stayed behind the keyboard (D51). The frame must therefore
+    /// move the body so the content below the focused field is on screen, not just the field itself.
+    /// </summary>
+    [Fact]
+    public void Modal_frame_reveals_the_content_below_the_focused_field()
+    {
+        var frame = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Shared", "AnimatedModalView.cs"));
+
+        Assert.Contains("RevealContentBelowFocusedField", frame, StringComparison.Ordinal);
+        Assert.Contains("ScrollToAsync(focused, ScrollToPosition.Start", frame, StringComparison.Ordinal);
+        Assert.Contains("SheetFooterReserve", frame, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The sheet has roughly 250 pt above the keyboard. Header + source tabs + ingredient list spend more
+    /// than that, which pushed the picker's result row behind the keys even after the frame learned to
+    /// shorten itself (D51). While the search field is focused the editor therefore drops the rows that
+    /// are not part of the search, and restores them when focus leaves.
+    /// </summary>
+    [Fact]
+    public void Food_picker_collapses_the_rows_that_do_not_belong_to_the_search()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition");
+        var xaml = File.ReadAllText(Path.Combine(uiRoot, "MealEditorModal.xaml"));
+        var code = File.ReadAllText(Path.Combine(uiRoot, "MealEditorModal.xaml.cs"));
+
+        Assert.Contains("x:Name=\"EditorHeaderRow\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"SourceTabsRow\"", xaml, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"IngredientListRow\"", xaml, StringComparison.Ordinal);
+
+        Assert.Contains("SearchEntry.Focused", code, StringComparison.Ordinal);
+        Assert.Contains("SearchEntry.Unfocused", code, StringComparison.Ordinal);
+
+        // Search mode has to hide all three rows, and restore all three.
+        Assert.Contains("EditorHeaderRow.IsVisible = !active;", code, StringComparison.Ordinal);
+        Assert.Contains("SourceTabsRow.IsVisible = !active;", code, StringComparison.Ordinal);
+        Assert.Contains("IngredientListRow.IsVisible = !active;", code, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The toast host floats over the page, and the floating tab bar is 49 pt plus the home inset. A
+    /// toast that keeps the old 20 pt bottom margin sits under the bar (D5/D50), so every toast host has
+    /// to clear the bar through the shared token rather than its own number.
+    /// </summary>
+    [Fact]
+    public void Toast_hosts_clear_the_floating_tab_bar()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var styles = File.ReadAllText(Path.Combine(uiRoot, "Resources", "Styles", "Styles.xaml"));
+
+        Assert.Contains("x:Key=\"UiInsets20_0_20_72\"", styles, StringComparison.Ordinal);
+
+        var hosts = Directory
+            .EnumerateFiles(Path.Combine(uiRoot, "Pages"), "*.xaml", SearchOption.AllDirectories)
+            .Where(path => File.ReadAllText(path).Contains("StatusToastSurface", StringComparison.Ordinal))
+            .ToArray();
+
+        Assert.NotEmpty(hosts);
+
+        foreach (var host in hosts)
+        {
+            var text = File.ReadAllText(host);
+            Assert.True(
+                text.Contains("UiInsets20_0_20_72", StringComparison.Ordinal),
+                $"{Path.GetFileName(host)} hosts a status toast without the UiInsets20_0_20_72 clearance; " +
+                "the floating tab bar covers its bottom 49 pt.");
+            Assert.DoesNotContain(
+                "Margin=\"{StaticResource UiInsets20_0_20_20}\"",
+                text,
+                StringComparison.Ordinal);
+        }
     }
 
     /// <summary>

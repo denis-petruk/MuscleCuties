@@ -974,7 +974,7 @@
             Grid.RowSpan="2"
             HorizontalOptions="Center"
             VerticalOptions="End"
-            Margin="{StaticResource UiInsets20_0_20_20}"
+            Margin="{StaticResource UiInsets20_0_20_72}"
             MaximumWidthRequest="{StaticResource UiDimension640}"
             Style="{StaticResource StatusToastSurface}"
             IsVisible="{Binding IsStatusVisible}"

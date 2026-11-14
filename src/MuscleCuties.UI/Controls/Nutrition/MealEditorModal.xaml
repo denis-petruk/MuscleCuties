@@ -20,7 +20,7 @@
         </BoxView>
         <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
             <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
-                <Grid Padding="{DynamicResource PresentationModalHeaderPadding}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                <Grid x:Name="EditorHeaderRow" Padding="{DynamicResource PresentationModalHeaderPadding}" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <Border Style="{StaticResource ModalIconButton}"
                             IsVisible="{Binding IsFoodFinderVisible}"
                             SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_BackToMeal}">
@@ -43,7 +43,7 @@
                 </Grid>
                 <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
 
-                <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+                <Grid x:Name="SourceTabsRow" Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
                       Margin="{StaticResource UiInsets20_12_20_20}"
                       IsVisible="{Binding IsFoodSourceTabsVisible}">
                     <Border Grid.Column="0" Style="{StaticResource ChoiceCellCompact}"
@@ -75,7 +75,7 @@
                     </Border>
                 </Grid>
 
-                <CollectionView Grid.Row="3" IsVisible="{Binding IsFoodFinderCollapsed}" Margin="{StaticResource UiInsets20_0}"
+                <CollectionView x:Name="IngredientListRow" Grid.Row="3" IsVisible="{Binding IsFoodFinderCollapsed}" Margin="{StaticResource UiInsets20_0}"
                                 ItemsSource="{Binding MealIngredients}"
                                 ItemSizingStrategy="MeasureAllItems" SelectionMode="None">
                     <CollectionView.Header>
