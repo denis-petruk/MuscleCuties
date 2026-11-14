@@ -271,6 +271,32 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// The meal card header is a three-part row: type icon, meal type, calorie block at the trailing
+    /// edge. A wrapped FlexLayout defaults to Start, which put the calories straight after the word
+    /// (`Завтрак0 ккал`) instead of at the far edge, so the header must state its distribution.
+    /// </summary>
+    [Fact]
+    public void Meal_card_header_pushes_the_calorie_block_to_the_trailing_edge()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealCardView.xaml");
+
+        var document = XDocument.Load(path);
+        XNamespace maui = "http://schemas.microsoft.com/dotnet/2021/maui";
+
+        var header = document.Descendants(maui + "FlexLayout")
+            .FirstOrDefault(element => element.Elements(maui + "Path").Any());
+
+        Assert.True(header is not null, "MealCardView.xaml no longer has the icon + heading header row.");
+
+        var justify = (string?)header!.Attribute("JustifyContent");
+        Assert.True(
+            string.Equals(justify, "SpaceBetween", StringComparison.Ordinal),
+            $"The meal card header must use JustifyContent=\"SpaceBetween\" so the calorie block sits at the\\n" +
+            $"trailing edge; it declares \"{justify ?? "<none>"}\", which renders as `Затронуто0 ккал`.\\n".Replace("Затронуто", "Завтрак"));
+    }
+
+    /// <summary>
     /// A meal time is a clock reading, not a locale greeting: the Russian interface renders one
     /// 24-hour value in the field and in the summary chip beside it. The culture-short pattern
     /// ("t" / ":t}") prints "8:58 PM" under an English device locale, so the field and the chip
