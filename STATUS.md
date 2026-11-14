@@ -73,19 +73,21 @@ and dark.
 
 ## 3. What was not verified, and why
 
-- **D43 is the only open item and is parked unchanged.** It needs a wording/design decision: the
+- **D43 is the only formatter-family item still open and is parked unchanged.** It needs a wording/design decision: the
   heading `Исследователь 4-фазы` and chip `NOW`, and which phase-list recipe is canonical (the
   explorer's four saturated bars or the date sheet's four pink cards). Its date line
   `среда, 4 ноября 2026 г.` can move to `DateText` once that is settled. No D43 file was edited.
 - D12's full-card empty meal groups remain; this pass removed their duplicated content only. The
-  nested-card cleanup (breakdown, check-in, cycle hero) is unchanged.
+  nested-card cleanup (breakdown, check-in, cycle hero) is unchanged, so D12 is still open as
+  structural debt.
 - Other D-row surfaces were not re-driven in this pass; their cited frames predate this head and were
   not claimed as current. The frames retaken here cover the surfaces changed by D7, D13 and the archive
   layout.
 
 ## 4. Next step
 
-The only product decision blocking further work is D43's wording/recipe choice. Once answered, switch
+The only product decision blocking the formatter family is D43's wording/recipe choice; D12's
+structural cleanup can proceed without it. Once answered, switch
 the phase list to the chosen recipe, route its date line through `DateText`, close D43 with light/dark
 frames, and then continue with the remaining visual-consistency group (D8, D11, D14, D19, D21, D22,
 D36, D44).
