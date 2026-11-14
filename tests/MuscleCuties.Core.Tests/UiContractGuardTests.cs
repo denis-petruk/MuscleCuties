@@ -303,6 +303,34 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// The Today rest card is the primary action on a rest day. Its support line belongs in the
+    /// text column beside the icon, and its guidance is a compact inline callout rather than a
+    /// second card nested inside the first. A full secondary card here doubles the inset and
+    /// drops essential guidance to the smallest caption size.
+    /// </summary>
+    [Fact]
+    public void Today_rest_card_keeps_support_copy_aligned_and_guidance_compact()
+    {
+        XNamespace maui = "http://schemas.microsoft.com/dotnet/2021/maui";
+        var document = XDocument.Load(Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI",
+            "Controls", "Dashboard", "DashboardWorkoutCard.xaml"));
+
+        var subtitle = document.Descendants(maui + "Label").Single(element =>
+            ((string?)element.Attribute("Text"))?.Contains("WorkoutSubtitle", StringComparison.Ordinal) == true);
+        Assert.True(
+            subtitle.Ancestors(maui + "Grid").Any(grid =>
+                (string?)grid.Attribute("ColumnDefinitions") == "Auto,*"),
+            "WorkoutSubtitle must sit in the same Auto,* grid as the icon so it aligns with the title, not the icon.");
+
+        var guidance = document.Descendants(maui + "Label").Single(element =>
+            ((string?)element.Attribute("Text"))?.Contains("Dashboard_Workout_RestGuidance", StringComparison.Ordinal) == true);
+        var callout = guidance.Ancestors(maui + "Border").First();
+        Assert.NotEqual("{StaticResource CardSecondary}", (string?)callout.Attribute("Style"));
+        Assert.Equal("{StaticResource UiInsets14_12}", (string?)callout.Attribute("Padding"));
+        Assert.Equal("{StaticResource MutedLabel}", (string?)guidance.Attribute("Style"));
+    }
+
+    /// <summary>
     /// D13: the water card was a shelf for the yesterday diary and the nutrient breakdown. Those
     /// actions must live in their own card, not inside the Border that hosts HydrationLogView.
     /// </summary>
