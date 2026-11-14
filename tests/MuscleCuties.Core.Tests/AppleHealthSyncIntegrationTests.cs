@@ -313,7 +313,7 @@ public sealed class AppleHealthSyncIntegrationTests
         Assert.Equal(7.5, vm.SleepHours);
         Assert.True(vm.IsSleepAutoFilled);
         Assert.Equal("Auto-filled from Apple Health (7.5h)", vm.SleepAutoFilledBadgeText);
-        Assert.Equal("7.5h", vm.SleepDisplay);
+        Assert.Equal("7.5 h", vm.SleepDisplay);
     }
 
     [Theory]
@@ -415,7 +415,7 @@ public sealed class AppleHealthSyncIntegrationTests
         // Act: user manually drags sleep slider to 6.0
         vm.SleepHours = 6.0;
         Assert.Equal(6.0, vm.SleepHours);
-        Assert.Equal("6.0h", vm.SleepDisplay);
+        Assert.Equal("6.0 h", vm.SleepDisplay);
 
         // Act: user overrides energy and sleep quality chips
         vm.EnergyLevel = 5;

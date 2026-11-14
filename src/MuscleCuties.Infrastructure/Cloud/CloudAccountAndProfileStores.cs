@@ -823,8 +823,10 @@ public sealed class CloudProfilePersonalInfoStore(
             : DateOnly.FromDateTime(request.BirthDate);
         // Only write the birth date when the person set or changed it; an unset date is never sent.
         var setDateOfBirth = requestedBirthDate is not null && requestedBirthDate != currentResponse.Data.DateOfBirth;
+        // An unset cycle length keeps a stored value; when nothing is stored, it stays null
+        // rather than becoming a fabricated zero.
         int? cycleLength = request.CycleLength == PersonalInfoConstraints.UnsetCycleLength
-            ? null
+            ? currentResponse.Data.CycleLength > 0 ? currentResponse.Data.CycleLength : null
             : request.CycleLength;
         var pregnancy = Enum.IsDefined(typeof(PregnancyStatus), request.PregnancyStatus)
             ? (PregnancyStatus)request.PregnancyStatus
