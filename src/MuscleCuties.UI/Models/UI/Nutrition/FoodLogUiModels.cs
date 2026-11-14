@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Nutrition;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
@@ -82,7 +83,7 @@ public partial class MealSectionUiGroup : ObservableObject
         MacrosText = $"P {p:N0}g · C {c:N0}g · F {f:N0}g";
         TimeText = Items.Count == 0
             ? string.Empty
-            : Items[0].LoggedAtTimestamp.ToString("t", CultureInfo.CurrentCulture);
+            : MealTime.Text(Items[0].LoggedAtTimestamp);
         CardName = Items.Count switch
         {
             0 => UiTextCatalog.Get("Nutrition_FoodLog_NothingLoggedYet"),
