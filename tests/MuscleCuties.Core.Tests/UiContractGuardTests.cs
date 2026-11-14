@@ -410,6 +410,32 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// `Сохранить запись` saved nothing and said nothing when no period mark, flow or symptom was chosen
+    /// (D32). It must be disabled without input and state the prerequisite through its semantics hint.
+    /// </summary>
+    [Fact]
+    public void The_quick_log_save_states_its_prerequisite_when_disabled()
+    {
+        var root = RepositoryRoot();
+        var sheet = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Controls", "Cycle", "CycleQuickLogBottomSheet.xaml"));
+        Assert.Contains(
+            "SemanticProperties.Hint=\"{Binding SaveQuickLogHint}\"", sheet, StringComparison.Ordinal);
+
+        var viewModel = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Cycle", "CycleViewModel.QuickLog.cs"));
+        Assert.Contains("HasQuickLogInput", viewModel, StringComparison.Ordinal);
+        Assert.Contains("&& HasQuickLogInput", viewModel, StringComparison.Ordinal);
+        Assert.Contains("Cycle_QuickLog_SaveRequiresInputHint", viewModel, StringComparison.Ordinal);
+
+        Assert.Contains(
+            "Cycle_QuickLog_SaveRequiresInputHint",
+            File.ReadAllText(Path.Combine(
+                root, "src", "MuscleCuties.UI", "Services", "Localization", "RussianUiText.CycleWorkout.cs")),
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// A Debug build points at `http://127.0.0.1:5080`. When that API is down or has no migrated
     /// catalogue it answers with an empty page, and the picker showed a permanent no-match state with
     /// no rows to tap (D51's root cause). The loopback store must therefore be able to fill the gap.
