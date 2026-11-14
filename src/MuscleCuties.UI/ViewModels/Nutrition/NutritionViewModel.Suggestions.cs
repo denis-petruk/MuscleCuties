@@ -1,3 +1,4 @@
+using MuscleCuties.UI.Services.Localization;
 using System.Collections.ObjectModel;
 using System.Diagnostics;
 using MuscleCuties.UI.Services.Formatting;
@@ -96,7 +97,7 @@ public partial class NutritionViewModel
             var rp = Math.Max(0, TargetProtein - ConsumedProtein);
             var rc = Math.Max(0, TargetCarbs - ConsumedCarbs);
             var rf = Math.Max(0, TargetFats - ConsumedFats);
-            return $"Remaining: {NutritionFormat.Macros(rp, rc, rf)}";
+            return UiTextCatalog.Format("Nutrition_Breakdown_RemainingFormat", NutritionFormat.Macros(rp, rc, rf));
         }
     }
 

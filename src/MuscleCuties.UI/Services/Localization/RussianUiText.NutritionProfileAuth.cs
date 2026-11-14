@@ -334,7 +334,7 @@ internal static partial class RussianUiText
         Values["Nutrition_FoodLog_Water"] = "Вода";
         Values["Nutrition_Format_CaloriesValueKcal"] = "{0:F0} ккал";
         Values["Nutrition_Format_Grams"] = "{0:N1} г";
-        Values["Nutrition_Format_GramsShort"] = "{0:N1}г";
+        Values["Nutrition_Format_GramsShort"] = "{0:N1} г";
         Values["Nutrition_Format_GramsWholeShort"] = "{0:N0} г";
         Values["Nutrition_Format_Milligrams"] = "{0:N0} мг";
         Values["Nutrition_Format_Micrograms"] = "{0:N0} мкг";
@@ -345,6 +345,7 @@ internal static partial class RussianUiText
         Values["Nutrition_Unit_Milligrams"] = "мг";
         Values["Nutrition_Unit_Micrograms"] = "мкг";
         Values["Nutrition_Breakdown_FiberFormat"] = "{0:N1} г клетчатки";
+        Values["Nutrition_Breakdown_RemainingFormat"] = "Осталось: {0}";
         Values["Nutrition_Format_TargetCaloriesValueKcal"] = "/ {0:F0} ккал";
         Values["Nutrition_Label_CaloriesKcal"] = "Калории (ккал)";
         Values["Nutrition_Label_CarbsGrams"] = "Углеводы (г)";

@@ -1,29 +1,31 @@
 # Status — QA audit fixes, branch `fix/qa-audit-followups`
 
-## 1. What this pass changed
+## 1. Changed files
 
-The shared formatter family is closed in code and in the running app:
+This pass proved the formatter family on the branch build and fixed the two things the frames exposed:
 
-- `src/MuscleCuties.UI/Services/Formatting/NutritionFormat.cs` — `Grams`, `GramsShort`,
-  `GramsWholeShort`, `Milligrams`, `Micrograms`, `Micronutrient`, `Calories`, `Macros`; every shape is a
-  catalogue key (`Nutrition_Format_*`, `Nutrition_Unit_*`) so the decimal separator comes from the
-  current culture and the suffix from the active language.
-- `src/MuscleCuties.UI/Services/Formatting/DateText.cs` — `SessionDateFormat`, `SessionDate`,
-  `SessionStamp`.
-- `src/MuscleCuties.UI/Resources/Converters/SessionDateConverter.cs`,
-  `ArchiveDurationConverter.cs`, `ArchiveSetsConverter.cs` — XAML bindings for the same shapes.
-- Switched call sites: `NutritionViewModel` (draft summary, adjustment, remaining), `FoodLogViewModel`
-  (edit drafts, remaining/over), `NutritionViewModel.Suggestions`, `DashboardViewModel.Trends`,
-  `FoodLogViewModel.FastLogging`, `MealItem`, `NutritionPresentationModels`, `FoodLogUiModels`,
-  `MealSuggestionItem`, `MacroBreakdownItem`, `MealIngredientItem`, `HistoryIngredientEditor`,
-  `DailyMicronutrientItem`, `MacroProgressGrid` labels, `MacroProgressFormatter`,
-  `NutritionBreakdownPresenter`, `WorkoutHistoryViewModel`, `WorkoutHistoryPage.xaml`.
-- Guards in `tests/MuscleCuties.Core.Tests/UiContractGuardTests.cs`:
-  `Quantity_strings_come_from_one_formatter`, `Archive_dates_come_from_one_formatter`,
-  `Archive_metrics_use_localized_duration_and_plural`. Each was seen failing on the old literal or old
-  binding before passing; no existing guard was weakened.
+- `src/MuscleCuties.UI/Services/Localization/RussianUiText.NutritionProfileAuth.cs`,
+  `UiTextCatalog.NutritionProfileAuth.cs` — `Nutrition_Format_GramsShort` now keeps the space before the
+  unit (`{0:N1} г`), and `Nutrition_Breakdown_RemainingFormat` (`Осталось: {0}` / `Remaining: {0}`)
+  replaces the English label wrapped around Russian numbers.
+- `src/MuscleCuties.UI/ViewModels/Nutrition/NutritionViewModel.Suggestions.cs` — remaining summary goes
+  through the new key.
+- `src/MuscleCuties.UI/Controls/Shared/AnimatedModalView.cs` — the keyboard inset now pads the whole
+  sheet surface, not only its scroll body, so a pinned footer (archive detail's
+  `Сохранить заметки и РПП`) is fully above the keyboard toolbar. Shrinking only the body had left the
+  save bar's label peeking above the toolbar while the button itself stayed behind it.
+- `tests/MuscleCuties.Core.Tests/UiContractGuardTests.cs` — three guards added this pass:
+  `Grams_short_form_keeps_space_before_unit`, `Suggestion_remaining_label_is_localized`,
+  `Modal_frame_insets_the_surface_so_a_pinned_footer_clears_the_keyboard`. Each was run red against the
+  old shape before the fix, then green.
+- `docs/qa-evidence/wave-a/` — every cited frame retaken from the installed build at this branch head,
+  light and dark: `nutrition-entry-*`, `meal-suggestions-*`, `meal-detail-*`, `meal-entry-*`,
+  `archive-list-*`, `archive-detail-*`, `archive-detail-save-light`, `workout-archive-*`,
+  `quicklog-*`, and D43's `cycle-explorer-light`, `cycle-phase-sheet-{light,dark}`.
+- `QA_REPORT.md` — D3, D10, D26, D28, D33 and D38 now cite those frames; D43 is the single open item
+  with the exact strings and the decision it needs.
 
-## 2. Test commands and final output
+## 2. Test commands and pasted output
 
 ```
 dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64
@@ -31,61 +33,47 @@ dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios 
     0 Error(s)
 
 dotnet test tests/MuscleCuties.Core.Tests
-Passed!  - Failed: 0, Passed: 1397, Skipped: 0, Total: 1397
+Passed!  - Failed: 0, Passed: 1400, Skipped: 0, Total: 1400
 
 dotnet test tests/MuscleCuties.Core.Tests --filter "UiContractGuard|UiStyleGate"
-Passed!  - Failed: 0, Passed: 39, Skipped: 0, Total: 39
+Passed!  - Failed: 0, Passed: 42, Skipped: 0, Total: 42
 ```
 
-Red/green evidence, formatter guard:
+Red then green, this pass:
 
 ```
-=== RED   === Failed  Quantity_strings_come_from_one_formatter (P {Macros.Protein:N0}g literal)
-=== GREEN === Passed  Quantity_strings_come_from_one_formatter
+Grams_short_form_keeps_space_before_unit
+  RED   Failed  (Nutrition_Format_GramsShort = "{0:N1}г")
+  GREEN Passed
+
+Suggestion_remaining_label_is_localized
+  RED   Failed  ("Remaining: {NutritionFormat.Macros(...)}")
+  GREEN Passed
+
+Modal_frame_insets_the_surface_so_a_pinned_footer_clears_the_keyboard
+  RED   Failed  (surface.Padding not set; only body.Padding)
+  GREEN Passed
 ```
 
-Red/green evidence, archive metrics guard:
+Driven on simulator `678048F6-C4C7-406C-A970-7104AED3E00A`, installed from
+`src/MuscleCuties.UI/bin/Debug/net10.0-ios/iossimulator-arm64/MuscleCuties.UI.app`, screenshots taken
+with `xcrun simctl io booted screenshot` after each flow settled.
 
-```
-=== RED   === Failed  Archive_metrics_use_localized_duration_and_plural (DurationLabel binding)
-=== GREEN === Passed  Archive_metrics_use_localized_duration_and_plural (TotalDurationSeconds binding)
-```
+## 3. What was not verified, and why
 
-## 3. Frames from this build (`docs/qa-evidence/wave-a/`)
+- **D43 is still open.** It is the only formatter-family item not driven to a closed state, because
+  closing it needs a wording and design decision: the heading `Исследователь 4-фазы` and chip `NOW`;
+  and which phase-list recipe is canonical — the explorer's four saturated bars or the date sheet's four
+  pink cards. Their date line `среда, 4 ноября 2026 г.` can switch to `DateText` once that is settled.
+  Frames: `cycle-explorer-light.png`, `cycle-phase-sheet-light.png`, `cycle-phase-sheet-dark.png`.
+- Food Log rings and the breakdown donut still differ from Nutrition's bars (D13/D7); only their
+  quantity strings were re-verified.
+- The archive's `Продолжительно/сть` label still breaks mid-word at default width; that is the
+  AdaptiveRow column budget, not a format string.
+- Dark mode was checked for the surfaces named in the request; other dark pages were not re-driven.
 
-Light and dark for the surfaces the closed defects cite:
+## 4. Next step
 
-- Nutrition entry: `nutrition-entry-light.png`, `nutrition-entry-dark.png` — `0 г / 99 г`,
-  `Белки / Углеводы / Жир`, `/ 2080 ккал`.
-- Meal detail (suggestions): `meal-suggestions-light.png`, `meal-suggestions-dark.png` —
-  `582 ккал`, `Б 32,8 г · У 45,2 г · Ж 30,0 г`.
-- Meal entry sheet / 24-hour time: `meal-entry-light.png` — `01:01`.
-- Archive list: `archive-list-light.png`, `archive-list-dark.png` — `30 мин`, `1 подход`,
-  `Чт, 12 нояб. 2026`.
-- Archive detail: `archive-detail-light.png`, `archive-detail-dark.png` — header
-  `Чт, 12 нояб. 2026 · 09:00`, footer above the keyboard toolbar.
-- Cycle quick log: `quicklog-light.png`, `quicklog-dark.png` — `суббота, 14 ноября`.
-
-Driven with Maestro on simulator `678048F6-C4C7-406C-A970-7104AED3E00A`, installed from
-`src/MuscleCuties.UI/bin/Debug/net10.0-ios/iossimulator-arm64/MuscleCuties.UI.app`; frames taken with
-`xcrun simctl io booted screenshot` after the flow settled.
-
-## 4. Closed in `QA_REPORT.md`
-
-D3, D10, D26, D28, D33 (both date halves and the keyboard footer) and D38 are marked closed against the
-frames above and their guards. D43 remains open: it is the cycle phase-list visual recipe and the
-machine-translated heading, which the formatter family does not touch; its section says so explicitly.
-
-## 5. Not verified, and why
-
-- D43 was not re-driven this pass; nothing in these commits changes it.
-- Food-log rings and the breakdown donut still differ from Nutrition bars (D13/D7); only their quantity
-  strings were switched.
-- D32's hero entry remains one accessibility element; the quick-log action is driven by a point tap.
-- Frames cited for D50, D37, D54, D51 and D52 come from earlier commits in this branch and were not
-  re-shot this pass; the pages they show were not touched by the formatter commits.
-
-## 6. Next step
-
-The remaining Wave A group is D43's phase-list recipe plus the English `NOW` chip and heading; after that
-the audit's visual-consistency group (D8, D11, D14, D19, D21, D22, D36, D44) is the next coherent unit.
+The only blocker is D43's wording/recipe decision above. Once answered, switch the phase list to the
+chosen recipe, route its date line through `DateText`, close D43 with a light/dark frame, and then move
+to the visual-consistency group (D8, D11, D14, D19, D21, D22, D36, D44).

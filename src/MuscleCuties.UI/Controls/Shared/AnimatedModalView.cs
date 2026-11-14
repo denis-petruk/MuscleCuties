@@ -218,6 +218,16 @@ public class AnimatedModalView : ContentView
             body.Padding.Right,
             Math.Max(0, keyboardInset) + SheetFooterReserve);
 
+        // The body padding keeps scrolled rows reachable; the surface padding is what lifts a pinned
+        // footer row above the keyboard toolbar. Pages such as archive detail draw their footer in the
+        // sheet grid, outside the scroll body, so padding only the body left the save bar under the keys.
+        var surfaceInset = keyboardInset > 0 ? keyboardInset + SheetFooterReserve : 0;
+        surface.Padding = new Thickness(
+            surface.Padding.Left,
+            surface.Padding.Top,
+            surface.Padding.Right,
+            surfaceInset);
+
         if (keyboardInset > 0)
             RevealContentBelowFocusedField(body);
     }
