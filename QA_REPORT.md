@@ -231,9 +231,9 @@ Nothing is marked PASS on code reading alone.
 | 42 | Exercise swap | Session open | `Обменять` | Replacement list, confirm disabled until a choice | List renders; confirm is enabled with nothing selected and does nothing (D35); equipment and muscles are English | FAIL | `S9-swap.png`, `S10-swap-confirm-empty.png` |
 | 43 | Finish session and summary | Session open, exercises answered | `Далее` on the last exercise | Summary and a closed session | Unreachable: the weight banner removes the set grid and `Далее` stops responding (D29); no summary was seen and no session was completed | BLOCKED | `S13-after-last.png`, `S15-weight-typed.png` |
 | 44 | Session survives relaunch | Session open | Terminate, relaunch, open Train | Same in-progress state | Lost when no set is logged (D30); restored once a set exists | FAIL | `now-train.png`, `L1-today-landscape-dark.png` |
-| 45 | Cycle quick log | Cycle | Open the quick-log action | Sheet with status, flow, symptoms, save | Opens; the save bar covers the last symptom rows (D32); the hero hosting the action is one giant accessibility element, so the action is not individually reachable | FAIL | `S21-quicklog-dark.png`, `S22-quicklog-light.png` |
+| 45 | Cycle quick log | Cycle | `Записать сегодняшние симптомы и интенсивность выделений` | Sheet with status, flow, symptoms, save | Opens; the form scrolls inside its own body and the last rows (`Тяга к еде`, `Другое`) end above the pinned `Сохранить запись`, light and dark (D32). The hero is still one accessibility element, so the action is not individually reachable | PARTIAL | `quicklog-savebar-light.png`, `quicklog-savebar-dark.png` |
 | 46 | Cycle next-phase action | Cycle | `Следующая фаза` | A forecast, or a confirmed change | The screen that followed showed `СЕГОДНЯ В ВАШЕЙ ФАЗЕ` + `Овуляторная: запись от нояб. 13`, which is truthful: the tap had already written the record. The defect is the unconfirmed write, not a mislabelled preview (D31 withdrawn, D45 live) | FAIL | `S19-cycle-dark.png`, `S23-nextphase-light.png` |
-| 47 | Archive session detail | Archive | Tap a session card | Detail of the saved session | Opens; two date formats in one flow, `1 working sets · 200 kg vol`, save bar over the keyboard (D33) | FAIL | `S16-archive.png`, `S18-archive-tap.png` |
+| 47 | Archive session detail | Archive | Tap a session card | Detail of the saved session | Opens; the exercise summary is now localized (`Подходы: 1 · Объём: 200 кг`); two date formats in one flow and the save bar over the keyboard remain (D33, narrowed) | PARTIAL | `archive-volume-summary-light.png` |
 | 48 | Dark: check-in, editor, picker, breakdown | Dark | Open each surface | Same styling as light | All four captured; editor shows Latin `P/C/F`, breakdown mixes `г`/`g`/`mcg` and both decimal separators (D38); picker and entry sheet use two selection recipes (D36) | PARTIAL | `D1-checkin-dark.png`, `D4-meal-entry-dark.png`, `D5-editor-dark.png`, `D7-picker-dark.png`, `D8-breakdown-dark.png` |
 | 49 | Landscape | Any page | `setOrientation LANDSCAPE_LEFT` | Layout adapts | The driver reported the rotation completed, but the app kept its portrait geometry (portrait-only target); the Today CTA stays under the tab bar | FAIL | `L1-today-landscape-dark.png` |
 | 50 | iPad (Pro 11-inch, iOS 26.3) | Fresh install | Install the same build and launch | Tablet layout | Runs in iPhone compatibility mode: a phone-width card centred on black, showing the English login page; an authenticated tablet layout cannot be reached without signing in, which this pass may not do | PARTIAL | `iPad-launch.png` |
@@ -618,16 +618,22 @@ the same day. Two contradictory claims about the current phase, one tap apart.
 Evidence: `S19-cycle-dark.png` versus `S23-nextphase-light.png`.
 
 ### D32 — P2 — Quick-log save bar covers the symptom rows
-**Reproduced in the running app, light and dark.**
-Repro: Cycle → quick-log action → read the sheet.
-Expected: the sheet scroll area ends above `Сохранить запись`.
-Actual: the button is pinned at y≈790–838 while the symptom grid continues to y≈907; the last two
-symptoms (`Настроение`, `Мажущие выделения`) and everything after them render under the bar and below
-the screen edge, and the sheet has no visible scrollbar. `Сохранить запись` also has no disabled state
-and no statement of what is required.
-Evidence: `S21-quicklog-dark.png`, `S22-quicklog-light.png`, quick-log hierarchy.
+**Closed and proved on screen** (Wave A close-out). The sheet keeps its own `ScrollView` inside an
+`Auto, *, Auto` grid, so the form body ends above the pinned footer instead of running underneath it.
+Driven from the real entry (`Cycle → Записать сегодняшние симптомы…`) in both themes: scrolled to the
+last row, `Тяга к еде` and `Другое` sit fully above `Сохранить запись`, and the scrollbar is visible.
+`Сохранить запись` still has no disabled state and states no prerequisite — that part of the finding is
+left to the validation pass and is not claimed here.
+Evidence: `quicklog-top-light.png`, `quicklog-savebar-light.png`, `quicklog-top-dark.png`,
+`quicklog-savebar-dark.png`.
 
 ### D33 — P2 — Archive detail: two date formats and English inside the Russian sheet
+> **Status: narrowed (Wave A close-out).** The English summary is fixed: the exercise row now reads
+> `Подходы: 1 · Объём: 200 кг` from one localized key (`Workout_History_VolumeSummaryFormat`) instead of
+> the hard-coded `1 working sets · 200 kg vol`, and the metric label uses `Объём`. What remains open is
+> the date-format mismatch (sheet header `четверг, 12 ноября 2026 г. 09:00` vs list `Чт, нояб. 12, 2026`)
+> and the save bar sitting over the keyboard toolbar. Evidence: `archive-volume-summary-light.png`.
+
 **Reproduced in the running app.**
 Repro: Train → `Архив тренировок` → tap the session card.
 Expected: the same date format as the list and Russian units.

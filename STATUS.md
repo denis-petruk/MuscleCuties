@@ -2,33 +2,21 @@
 
 ## 1. Changed files
 
-Nine commits stand unchanged on the branch, plus this pass on top of `41bb3f6f`:
+Ten commits stand on the branch; this pass sits on top of `574bf60b`.
 
-- `src/MuscleCuties.UI/Pages/Nutrition/NutritionPage.xaml` — the `Дневник питания` entry is a real
-  `Button` (`AutomationId="OpenFoodLog"`, `ButtonSecondary`, `HorizontalOptions="End"`) in the `Еда`
-  section header beside `IconSectionHeader`, wired to `Clicked="OnOpenDailyFoodLogClicked"`. The
-  previous `Label` + `TapGestureRecognizer` is gone.
-- `src/MuscleCuties.UI/Pages/Nutrition/NutritionPage.xaml.cs` — `OnOpenDailyFoodLogClicked` routes
-  through `Shell.Current.GoToAsync(NutritionNavigation.FoodLogRoute)` and calls
-  `ReportDiaryNavigationFailure()` on any exception, so a dead route states itself.
-- `src/MuscleCuties.UI/ViewModels/Nutrition/NutritionViewModel.cs` — `NavigateToFoodLogAsync` routes
-  through `NutritionNavigation.FoodLogRoute`, logs and reports failures; new
-  `ReportDiaryNavigationFailure()`.
-- `tests/MuscleCuties.Core.Tests/UiContractGuardTests.cs` — `The_daily_log_entry_is_a_real_button_that_routes`:
-  the entry is a `Button` in the `Еда` header (sibling `IconSectionHeader`), carries the click handler,
-  no `NavigateToFoodLog` gesture remains, and the handler routes and reports.
-- `QA_REPORT.md` — D50 closed with the new screenshots; case 70 (toast placement) moved to PASS.
+- `src/MuscleCuties.UI/Models/UI/Workout/WorkoutArchiveUiModels.cs` — the archive exercise summary is
+  formatted from one localized key instead of the hard-coded `1 working sets · 200 kg vol` (D33).
+- `src/MuscleCuties.UI/Services/Localization/RussianUiText.CycleWorkout.cs` /
+  `UiTextCatalog.CycleWorkout.cs` — `Workout_History_VolumeSummaryFormat`
+  (`Подходы: {0} · Объём: {1} кг` / `Sets: {0} · Volume: {1} kg`).
+- `tests/MuscleCuties.Core.Tests/UiContractGuardTests.cs` — `The_archive_volume_summary_uses_localized_copy`.
+- `QA_REPORT.md` — D32 closed with the quick-log frames; D33 narrowed to the date/keyboard halves;
+  case 45 moved to PARTIAL and case 47 to PARTIAL with the new evidence.
 - `STATUS.md` — this file.
-
-Evidence copied into `docs/qa-evidence/wave-a/`:
-
-| File | What it proves |
-| --- | --- |
-| `nutrition-diary-entry-light.png` | `Дневник питания` as a button in the `Еда` row, beside `Добавить приём пищи` / `План на день` |
-| `diary-cold-single-tap-light.png` | diary open after a cold launch and a single tap on that entry |
-| `toast-foodlog-notes-light.png`, `toast-foodlog-notes-dark.png` | `Заметки сохранены.` raised by `Сохранить заметки` on the food log, above the tab bar, both themes |
-| `toast-workouthistory-notes-light.png`, `toast-workouthistory-notes-dark.png` | `Заметки и РПП обновлены.` raised by `Сохранить заметки и РПП` on a history session, above the pinned sheet footer, both themes |
-| `checkin-sheet-footer-dark.png` | check-in sheet footer at rest in dark (`Пока пропустить` / `Сохранить отметку`) next to the existing light frame |
+- `docs/qa-evidence/wave-a/` — refreshed `diary-dark.png`, `toast-workouthistory-notes-light.png`,
+  `toast-workouthistory-notes-dark.png`, `checkin-sheet-footer-dark.png`, and new
+  `quicklog-top-light.png`, `quicklog-savebar-light.png`, `quicklog-top-dark.png`,
+  `quicklog-savebar-dark.png`, `archive-volume-summary-light.png`.
 
 ## 2. Test commands and output
 
@@ -38,50 +26,48 @@ dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios 
     0 Error(s)
 
 dotnet test tests/MuscleCuties.Core.Tests
-Passed!  - Failed: 0, Passed: 1392, Skipped: 0, Total: 1392
+Passed!  - Failed: 0, Passed: 1393, Skipped: 0, Total: 1393
 
 dotnet test tests/MuscleCuties.Core.Tests --filter "UiContractGuard|UiStyleGate"
-Passed!  - Failed: 0, Passed: 34, Skipped: 0, Total: 34
+Passed!  - Failed: 0, Passed: 35, Skipped: 0, Total: 35
 ```
 
-Guard red, then green (the entry reverted to `41bb3f6f`'s `Label`, then restored):
+New guard red, then green:
 
 ```
-=== RED (entry reverted to HEAD) ===
-   at System.Linq.Enumerable.Single[TSource](IEnumerable`1 source, Func`2 predicate)
+=== RED ===
+Assert.DoesNotContain() Failure: Sub-string found
 Failed!  - Failed: 1, Passed: 0, Skipped: 0, Total: 1
-=== GREEN (entry restored) ===
-Passed!  - Failed: 0, Passed: 1, Skipped: 0, Total: 1
+
+=== GREEN ===
+Passed!  - Failed: 1 -> 0, Passed: 1, Skipped: 0, Total: 1
 ```
 
-Simulator, cold launch, one tab tap, one tap on `id: OpenFoodLog`, assertion on `Вода`:
+Simulator, current binary:
 
 ```
-maestro test flows/T39.yaml   run 1 exit=0 0 failures
-maestro test flows/T39.yaml   run 2 exit=0 0 failures
-maestro test flows/T39.yaml   run 3 exit=0 0 failures
+maestro flows/T51.yaml   light 0 failures   quick-log scrolled to the last symptom row
+maestro flows/T51.yaml   dark  0 failures
+maestro flows/T52.yaml   dark  0 failures   diary after one cold-launch tap
+maestro flows/T45.yaml   dark  0 failures   workout-history notes toast
+maestro flows/T45.yaml   light 0 failures   workout-history notes toast
+maestro flows/T42.yaml   dark  0 failures   check-in sheet footer at rest
+maestro flows/T54.yaml   light 0 failures   archive detail with `Подходы: 1 · Объём: 200 кг`
 ```
-
-Instrumented run (temporary data-directory probe, removed before the commit) recorded the layer on a
-cold launch: `enter source=Push target=FoodLogPage`, `pass-through verified=True`,
-`FoodLogPage ctor`, `navigated Push location=//MainTab/NutritionPage/FoodLogPage page=FoodLogPage`,
-`after await current=//MainTab/NutritionPage/FoodLogPage`. The shell pushed, the page was constructed
-and shown; earlier screenshots had caught the push mid-animation.
 
 ## 3. Not verified, and why
 
-- The diary was only photographed in light; the dark frame is the pre-existing `foodlog-dark.png`, not a
-  fresh cold-launch capture.
-- Toast screenshots were taken against the branch build immediately before the entry was restyled from
-  its temporary link treatment to `ButtonSecondary`; that restyle touches only the Nutrition header, and
-  the food-log toast was re-captured after it (`toast-foodlog-notes-light.png`). The dark food-log and
-  both workout-history frames pre-date that two-file change.
-- The D32 quick-log save-bar case was not re-driven in this pass; the toast capture covers the
-  `WorkoutHistoryPage` host, not the cycle quick-log sheet.
-- Maestro's `takeScreenshot` returns while the Shell push is still animating, so navigation frames are
-  captured with `simctl io screenshot` after the flow instead.
+- D33 is only half closed: the sheet header still prints `четверг, 12 ноября 2026 г. 09:00` against the
+  list's `Чт, нояб. 12, 2026`, and `Сохранить заметки и РПП` still sits over the keyboard toolbar. Neither
+  is claimed.
+- The quick-log save button still has no disabled state; D32's layout half is fixed, its validation half
+  is not.
+- The remaining live findings in `QA_REPORT.md` (D1–D49 apart from those Wave A closed) are untouched;
+  the next group is the shared formatter/selection pass, not started here.
+- All screenshots come from the current build except the two FoodLog toast frames already captured on
+  this branch (`toast-foodlog-notes-*`), whose page was not changed by this pass.
 
 ## 4. Next step
 
-Close the cycle wave (D27–D40): quick-log save bar, legend truthfulness, phase-explorer copy. Then
-re-shoot the diary in dark on the current build.
+Add the shared quantity/date formatter and close D3, D10, D26, D28, D38, D43, then the narrowed D33 date
+half. After that, the Quick Log validation state (D32 remainder).

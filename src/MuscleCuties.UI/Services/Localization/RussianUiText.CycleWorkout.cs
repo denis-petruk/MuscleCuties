@@ -289,6 +289,7 @@ internal static partial class RussianUiText
         Values["Workout_History_NotRecorded"] = "Не записано";
         Values["Workout_History_NoSetDetailsNote"] = "Детали подходов не записаны.";
         Values["Workout_History_NotesUpdatedMessage"] = "Заметки и РПЭ обновлены.";
+        Values["Workout_History_VolumeSummaryFormat"] = "Подходы: {0} · Объём: {1} кг";
         Values["Workout_History_OpenSessionHint"] = "Открывает подробности тренировки";
         Values["Workout_History_RpeValueFormat"] = "{0}/10";
         Values["Workout_History_SetUpdatedFormat"] = "Подход №{0} обновлён ({1:F1} кг × {2} повторений)";

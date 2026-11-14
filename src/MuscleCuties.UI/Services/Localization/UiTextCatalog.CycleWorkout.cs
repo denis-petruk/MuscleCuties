@@ -289,6 +289,7 @@ public static partial class UiTextCatalog
         English["Workout_History_NotRecorded"] = "Not recorded";
         English["Workout_History_NoSetDetailsNote"] = "Set details were not recorded.";
         English["Workout_History_NotesUpdatedMessage"] = "Notes and RPE updated.";
+        English["Workout_History_VolumeSummaryFormat"] = "Sets: {0} · Volume: {1} kg";
         English["Workout_History_OpenSessionHint"] = "Opens session details";
         English["Workout_History_RpeValueFormat"] = "{0}/10";
         English["Workout_History_SetUpdatedFormat"] = "Set #{0} updated ({1:F1} kg × {2} reps)";
