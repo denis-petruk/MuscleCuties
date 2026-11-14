@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
@@ -6,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UI.Models.UI.Cycle;
+using MuscleCuties.UI.Navigation;
 using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Dashboard;
@@ -662,9 +664,23 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     [RelayCommand]
     public async Task NavigateToFoodLogAsync()
     {
-        if (_navigateAsync is not null)
-            await _navigateAsync("FoodLogPage");
+        if (_navigateAsync is null)
+            return;
+
+        try
+        {
+            await _navigateAsync(NutritionNavigation.FoodLogRoute);
+        }
+        catch (Exception exception)
+        {
+            Trace.TraceError($"[Nutrition] Food log navigation failed: {exception.GetType().Name}");
+            ReportDiaryNavigationFailure();
+        }
     }
+
+    /// <summary>A dead entry point states so instead of leaving the page unchanged and silent.</summary>
+    public void ReportDiaryNavigationFailure() =>
+        ShowPageStatus(UiTextCatalog.Get("Ui_Nutrition_Error_LoadFoods"));
 
     public void Dispose()
     {

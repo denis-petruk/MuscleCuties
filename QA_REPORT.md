@@ -256,7 +256,7 @@ Nothing is marked PASS on code reading alone.
 | 67 | Nutrition history, save meal as template | Food Log, scrolled | Tap the star | Template saved, visible confirmation, list unchanged | Writes one `saved_meal_templates` row with the auto-name `Шаблон Завтрак (нояб. 13)` and shows the toast `Шаблон «…» сохранён.`; the list and the day totals are untouched. Row removed during cleanup | PASS | `M10-star-tap-light.png` |
 | 68 | Nutrition history, save notes with the field empty | Food Log, scrolled | Tap `Сохранить заметки` with the placeholder untouched | Validation or a disabled action | Reports `Заметки сохранены.` and writes nothing; the placeholder text is never an error and there is no dirty state, so success is claimed for a no-op (D47) | FAIL | `M6-foodlog-meal-tap-light.png` |
 | 69 | Nutrition cross-surface agreement | Breakfast saved (582 kcal) | Compare Nutrition, Food Log and Today | Same day agrees everywhere | Nutrition `582 / 2080`, Food Log `582 / 2080`, Today `582`; the same meal reads `32g / 45g / 29g` on Nutrition and `33г / 45г / 30г` on Food Log — agreement on energy, rounding drift on macros (D3) | PARTIAL | `M3-foodlog-light.png`, `M8-edit-from-log-light.png`, `C24-today-loaded-light.png` |
-| 70 | Toast placement | Any action that toasts | `Сохранить заметки`, star | Banner above the tab bar, fully readable | Banner is drawn over the content at the very bottom and overlaps the tab bar area; its second line is clipped by the screen edge (D50) | FAIL | `M6-foodlog-meal-tap-light.png`, `M10-star-tap-light.png` |
+| 70 | Toast placement | Any action that toasts | `Сохранить заметки`, `Сохранить заметки и РПП` | Banner above the tab bar, fully readable | Both hosts place the banner above the tab bar and the pinned sheet footer with the full text on one line, in light and dark (D50) | PASS | `toast-foodlog-notes-light.png`, `toast-foodlog-notes-dark.png`, `toast-workouthistory-notes-light.png`, `toast-workouthistory-notes-dark.png` |
 | 71 | Notes field with the keyboard up, light | Food Log, notes card | Tap the field, type `QA note keyboard test 14.11` | Label, field and `Сохранить заметки` stay visible above the keyboard | The page scrolls the card up; `Заметки`, all four typed lines and the save button sit fully above the keyboard. The keyboard's own `Готово` is stock iOS blue, off the app palette, but that is system chrome | PASS | `N5-notes-keyboard-focus-light.png` |
 | 72 | Keyboard dismissed mid-edit, light | Notes field focused, text typed | Tap `Готово` | Keyboard closes, text kept, page height and scroll restored | Text unchanged after dismissal; the full card and the meal list below return, tab labels visible again; nothing is saved or reset | PASS | `N6-notes-keyboard-dismissed-light.png` |
 | 73 | Notes field with the keyboard up, dark | Same, dark theme | Same | Same as light | Field, label and save button remain above the keyboard and the text stays legible on the dark card; the `Готово` accessory bar sits over the tab bar's labels (D50 family), not over the field | PASS | `N17-notes-keyboard-dark.png`, `N18-notes-keyboard-dismissed-dark.png` |
@@ -849,11 +849,14 @@ editor (`ё` present, then absent), plus `Тип приема пищи` in the e
 Evidence: `M1-entry-sheet-light.png`, `M2-editor-light.png`.
 
 ### D50 — P2 — Toast banners collide with the tab bar and clip their second line
-**Reproduced in the running app** (twice: notes save, template save). **Still open — code-level only.** Both
-toast hosts moved to the `UiInsets20_0_20_72` clearance token and the guard
-`Toast_hosts_clear_the_floating_tab_bar` fails if a host drops back to 20 pt, but no toast could be
-triggered for a screenshot: both hosts report only on failed requests, the local API is healthy, and the
-`Дневник питания` link that opens the notes host does not navigate in this build.
+**Closed and proved on screen** (Wave A close-out). Both hosts keep the `UiInsets20_0_20_72` clearance
+token (the guard `Toast_hosts_clear_the_floating_tab_bar` fails if a host drops back to 20 pt), and both
+were raised from real user actions in one cold launch each: `Сохранить заметки` on the food log
+(`Заметки сохранены.`) and `Сохранить заметки и РПП` on a workout-history session
+(`Заметки и РПП обновлены.`). Both banners sit above the tab bar and the sheet footer with their full
+text visible, in light and dark. The entry that reaches the notes host — `Дневник питания` — was also
+fixed: it is a real button in the `Еда` row and opens the diary on the first tap after a cold launch
+(`diary-cold-single-tap-light.png`).
 
 Repro: Food Log → tap `Сохранить заметки`, then tap the star on the meal card.
 Expected: a banner above the tab bar with its full text and safe-area padding.
