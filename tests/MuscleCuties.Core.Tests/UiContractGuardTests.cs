@@ -328,6 +328,43 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// D12: an empty meal group is one quiet row, not a card shell nested in the list. The card
+    /// surface must be reserved for groups with food; the empty row must not contain a Border,
+    /// calorie/macro blocks or the template action.
+    /// </summary>
+    [Fact]
+    public void D12_empty_meal_group_is_one_row_without_a_card_surface()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealCardView.xaml");
+        var document = XDocument.Load(path);
+
+        var cardSurface = document.Descendants()
+            .SingleOrDefault(element => element.Name.LocalName == "Border" &&
+                ((string?)element.Attribute("Style"))?.Contains("CardPrimary", StringComparison.Ordinal) == true);
+        Assert.NotNull(cardSurface);
+        Assert.Contains("HasContent", (string?)cardSurface!.Attribute("IsVisible"), StringComparison.Ordinal);
+
+        var emptyRow = document.Descendants()
+            .SingleOrDefault(element => (string?)element.Attribute(XName.Get(
+                "Name", "http://schemas.microsoft.com/winfx/2009/xaml")) == "EmptyMealRow");
+        Assert.NotNull(emptyRow);
+        Assert.Contains("IsEmpty", (string?)emptyRow!.Attribute("IsVisible"), StringComparison.Ordinal);
+        Assert.DoesNotContain(emptyRow.Descendants(), element => element.Name.LocalName == "Border");
+
+        var values = emptyRow.Descendants()
+            .SelectMany(element => element.Attributes())
+            .Select(attribute => attribute.Value)
+            .ToArray();
+        Assert.DoesNotContain(values, value => value.Contains("CaloriesText", StringComparison.Ordinal));
+        Assert.DoesNotContain(values, value => value.Contains("MacrosText", StringComparison.Ordinal));
+        Assert.DoesNotContain(values, value => value.Contains("IngredientsText", StringComparison.Ordinal));
+        Assert.DoesNotContain(values, value => value.Contains("BelowContent", StringComparison.Ordinal));
+        Assert.DoesNotContain(values, value => value.Contains("ShowTemplate", StringComparison.Ordinal));
+        Assert.Single(values, value => value.Contains("{Binding MealName", StringComparison.Ordinal));
+    }
+
+    /// <summary>
     /// The archive card split `Продолжительность` mid-word. The metric header must not wrap at the
     /// card width the app produces.
     /// </summary>
