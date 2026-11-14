@@ -271,6 +271,19 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// Archive detail kept its pinned save bar behind the keyboard toolbar (D33): padding only the
+    /// scroll body left the surface's footer row at the screen edge. The frame must inset the whole
+    /// surface, so any pinned footer sits above the keys.
+    /// </summary>
+    [Fact]
+    public void Modal_frame_insets_the_surface_so_a_pinned_footer_clears_the_keyboard()
+    {
+        var frame = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Shared", "AnimatedModalView.cs"));
+        Assert.Contains("surface.Padding = new Thickness", frame, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// The modal frame owns the keyboard inset and every sheet body scrolls inside it. A sheet that
     /// skipped either would put its fields back under the keys, which is the defect the frame fixes
     /// for all of them at once.
@@ -464,6 +477,38 @@ public sealed class UiContractGuardTests
             Assert.Contains("NutritionFormat.", content, StringComparison.Ordinal);
             Assert.DoesNotMatch(@":N[01]\s*}?\s*(kcal|g\b)", content);
         }
+    }
+
+    /// <summary>
+    /// Meal detail printed `314,2г` beside `32,8 г` on the same sheet. The short form must keep the
+    /// same space-before-unit shape as the long form (D3).
+    /// </summary>
+    [Fact]
+    public void Grams_short_form_keeps_space_before_unit()
+    {
+        var root = RepositoryRoot();
+        var ru = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Services", "Localization",
+            "RussianUiText.NutritionProfileAuth.cs"));
+        Assert.Contains(
+            "Values[\"Nutrition_Format_GramsShort\"] = \"{0:N1} г\";",
+            ru,
+            StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// The suggestion sheet printed `Remaining: Б 99,0 г ...` inside the Russian sheet (D3/D38). The
+    /// label belongs to the catalogue, with the formatter owning only the numbers.
+    /// </summary>
+    [Fact]
+    public void Suggestion_remaining_label_is_localized()
+    {
+        var root = RepositoryRoot();
+        var source = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Nutrition",
+            "NutritionViewModel.Suggestions.cs"));
+        Assert.Contains("Nutrition_Breakdown_RemainingFormat", source, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"Remaining: {", source, StringComparison.Ordinal);
     }
 
     /// <summary>

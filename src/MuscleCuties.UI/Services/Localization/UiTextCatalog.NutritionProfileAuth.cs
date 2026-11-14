@@ -334,7 +334,7 @@ public static partial class UiTextCatalog
         English["Nutrition_FoodLog_Water"] = "Water";
         English["Nutrition_Format_CaloriesValueKcal"] = "{0:F0} kcal";
         English["Nutrition_Format_Grams"] = "{0:N1} g";
-        English["Nutrition_Format_GramsShort"] = "{0:N1}g";
+        English["Nutrition_Format_GramsShort"] = "{0:N1} g";
         English["Nutrition_Format_GramsWholeShort"] = "{0:N0} g";
         English["Nutrition_Format_Milligrams"] = "{0:N0} mg";
         English["Nutrition_Format_Micrograms"] = "{0:N0} mcg";
@@ -345,6 +345,7 @@ public static partial class UiTextCatalog
         English["Nutrition_Unit_Milligrams"] = "mg";
         English["Nutrition_Unit_Micrograms"] = "mcg";
         English["Nutrition_Breakdown_FiberFormat"] = "{0:N1}g fiber";
+        English["Nutrition_Breakdown_RemainingFormat"] = "Remaining: {0}";
         English["Nutrition_Format_TargetCaloriesValueKcal"] = "/ {0:F0} kcal";
         English["Nutrition_Label_CaloriesKcal"] = "Calories (kcal)";
         English["Nutrition_Label_CarbsGrams"] = "Carbs (g)";
