@@ -271,6 +271,48 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// A meal time is a clock reading, not a locale greeting: the Russian interface renders one
+    /// 24-hour value in the field and in the summary chip beside it. The culture-short pattern
+    /// ("t" / ":t}") prints "8:58 PM" under an English device locale, so the field and the chip
+    /// disagreed inside one sheet.
+    /// </summary>
+    [Fact]
+    public void Meal_times_render_one_24_hour_clock_instead_of_the_culture_short_pattern()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var violations = new List<string>();
+
+        var cultureShortPatterns = new[]
+        {
+            "Format=\"t\"",
+            ":t}",
+            "ToString(\"t\""
+        };
+
+        var files = SourceFiles(uiRoot, "*.xaml")
+            .Concat(SourceFiles(uiRoot, "*.cs"));
+
+        foreach (var file in files)
+        {
+            var relative = Relative(file, uiRoot).Replace('\\', '/');
+            if (!relative.Contains("Nutrition", StringComparison.Ordinal))
+                continue;
+
+            var source = File.ReadAllText(file);
+            foreach (var pattern in cultureShortPatterns)
+            {
+                if (source.Contains(pattern, StringComparison.Ordinal))
+                    violations.Add($"{relative}: renders a meal time with the culture-short pattern {pattern}");
+            }
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Found {violations.Count} culture-short meal time(s). Render them through MealTime.Text (HH:mm):\n"
+            + string.Join("\n", violations));
+    }
+
+    /// <summary>
     /// Mirrors the sanctioned colour-exception table in DESIGN.md. A site may only be added by
     /// updating that table, so the documentation and the markup cannot drift apart.
     /// </summary>

@@ -23,7 +23,7 @@
             x:Name="SheetSurface"
             Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
 
-            <Grid RowDefinitions="Auto, *">
+            <Grid RowDefinitions="Auto, Auto, *">
                 <Grid
                     Padding="{DynamicResource PresentationModalHeaderPadding}"
                     ColumnDefinitions="*,Auto"
@@ -48,7 +48,9 @@
                     </Border>
                 </Grid>
 
-                <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+
+                <ScrollView Grid.Row="2" VerticalScrollBarVisibility="Default">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing14}" Padding="{DynamicResource PresentationModalPagePadding}">
 
                         <Label
@@ -157,7 +159,7 @@
                         <Label Text="{loc:LocalizedText Nutrition_MealEditor_Time}"
                                Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
-                            <TimePicker Time="{Binding EntryMealTime}" Format="t"
+                            <TimePicker Time="{Binding EntryMealTime}" Format="HH:mm"
                                         SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_MealTime}" />
                         </Border>
 

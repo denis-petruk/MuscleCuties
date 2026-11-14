@@ -41,7 +41,7 @@
                         <Path Style="{StaticResource ModalCloseIcon}" />
                     </Border>
                 </Grid>
-                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" Margin="{StaticResource UiInsets20_0}" />
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
 
                 <Grid Grid.Row="2" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
                       Margin="{StaticResource UiInsets20_12_20_20}"
@@ -139,8 +139,15 @@
                             <!-- Expanded Compact Context Editor -->
                             <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}"
                                                  IsVisible="{Binding IsMealContextEditorVisible}">
-                                <Grid ColumnDefinitions="*,*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
-                                    <Border Grid.Column="0" Style="{StaticResource ChoiceCellCompact}">
+                                <!-- The four meal types are one long Russian word each ("Завтрак",
+                                     "Перекус"): four columns break them at accessibility sizes, so
+                                     the row shares two columns there instead. -->
+                                <!-- The four meal types are one long Russian word each ("Завтрак",
+                                     "Перекус"): equal quarters broke them at accessibility sizes, so
+                                     each keeps its natural width and the row scrolls. -->
+                                <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                                    <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                    <Border Style="{StaticResource ChoiceCellCompact}">
                                         <Border.Triggers>
                                             <DataTrigger TargetType="Border" Binding="{Binding IsBreakfastSelected}" Value="True">
                                                 <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
@@ -154,7 +161,7 @@
                                         </Border.GestureRecognizers>
                                         <Label Text="{loc:LocalizedText Nutrition_MealType_Breakfast}" Style="{StaticResource ChoiceCellLabel}" />
                                     </Border>
-                                    <Border Grid.Column="1" Style="{StaticResource ChoiceCellCompact}">
+                                    <Border Style="{StaticResource ChoiceCellCompact}">
                                         <Border.Triggers>
                                             <DataTrigger TargetType="Border" Binding="{Binding IsLunchSelected}" Value="True">
                                                 <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
@@ -168,7 +175,7 @@
                                         </Border.GestureRecognizers>
                                         <Label Text="{loc:LocalizedText Nutrition_MealType_Lunch}" Style="{StaticResource ChoiceCellLabel}" />
                                     </Border>
-                                    <Border Grid.Column="2" Style="{StaticResource ChoiceCellCompact}">
+                                    <Border Style="{StaticResource ChoiceCellCompact}">
                                         <Border.Triggers>
                                             <DataTrigger TargetType="Border" Binding="{Binding IsDinnerSelected}" Value="True">
                                                 <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
@@ -182,7 +189,7 @@
                                         </Border.GestureRecognizers>
                                         <Label Text="{loc:LocalizedText Nutrition_MealType_Dinner}" Style="{StaticResource ChoiceCellLabel}" />
                                     </Border>
-                                    <Border Grid.Column="3" Style="{StaticResource ChoiceCellCompact}">
+                                    <Border Style="{StaticResource ChoiceCellCompact}">
                                         <Border.Triggers>
                                             <DataTrigger TargetType="Border" Binding="{Binding IsSnackSelected}" Value="True">
                                                 <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
@@ -196,11 +203,12 @@
                                         </Border.GestureRecognizers>
                                         <Label Text="{loc:LocalizedText Nutrition_MealType_Snack}" Style="{StaticResource ChoiceCellLabel}" />
                                     </Border>
-                                </Grid>
+                                    </HorizontalStackLayout>
+                                </ScrollView>
 
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                     <Border Style="{StaticResource InputContainer}">
-                                        <TimePicker Time="{Binding SelectedMealTime}" Format="t"
+                                        <TimePicker Time="{Binding SelectedMealTime}" Format="HH:mm"
                                                     SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_MealTime}" />
                                     </Border>
                                     <Button Grid.Column="1" Text="{loc:LocalizedText Common_Done}"
@@ -477,7 +485,11 @@
                         <Button Style="{StaticResource ButtonSecondary}"
                                 Text="{loc:LocalizedText Common_Cancel}"
                                 Command="{Binding ToggleMealEditorCommand}" />
+                        <!-- The sheet's only commit action, so it carries a stable identity: the day
+                             plan opens this sheet pre-filled and the flow must be able to save it
+                             without guessing at a wrapped label or a pixel position. -->
                         <Button Grid.Column="1"
+                                AutomationId="MealEditorLogButton"
                                 Style="{StaticResource ButtonPrimary}"
                                 Text="{Binding LogMealButtonText, Converter={StaticResource LocalizedStringConverter}}"
                                 Command="{Binding LogMealCommand}" />

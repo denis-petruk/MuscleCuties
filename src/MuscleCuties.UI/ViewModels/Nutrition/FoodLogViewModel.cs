@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
@@ -180,7 +181,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     public bool IsPlainFoodEditor => !IsGroupedEditor;
     public bool CanDeleteEditingFood => IsEditingExisting && !IsMealContextLocked;
     public string MealContextSummary =>
-        $"{UiTextCatalog.Get($"Nutrition_MealType_{EditingMealType}")} · {_draftTimestamp:t}";
+        $"{UiTextCatalog.Get($"Nutrition_MealType_{EditingMealType}")} · {MealTime.Text(_draftTimestamp)}";
     public string EditModalTitle => IsEditingExisting
         ? (IsMealContextLocked
             ? UiTextCatalog.Get("Nutrition_Breakdown_EditMeal")

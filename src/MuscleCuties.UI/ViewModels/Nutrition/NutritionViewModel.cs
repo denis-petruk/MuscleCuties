@@ -7,6 +7,7 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
@@ -328,7 +329,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public bool IsMealContextSummaryVisible => IsMealChoiceLocked || !IsMealContextExpanded;
     public bool CanChangeMealContext => !IsMealChoiceLocked;
     public string MealChoiceSummary =>
-        $"{UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}")} · {DateTime.Today.Add(SelectedMealTime):t}";
+        $"{UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}")} · {MealTime.Text(SelectedMealTime)}";
 
     public string SelectedMealTypeText =>
         UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}");
@@ -338,8 +339,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             ? _editingMealDate.ToString("MMM d", CultureInfo.CurrentCulture)
             : UiTextCatalog.Get("Common_Today");
 
-    public string SelectedMealTimeText =>
-        DateTime.Today.Add(SelectedMealTime).ToString("t", CultureInfo.CurrentCulture);
+    public string SelectedMealTimeText => MealTime.Text(SelectedMealTime);
 
     public bool IsFoodSourceTabsVisible =>
         IsFoodFinderExpanded && SelectedFoodResult is null && !IsCustomFoodPanelVisible;
