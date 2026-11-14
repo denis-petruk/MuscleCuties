@@ -15,8 +15,9 @@
         Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
 
-            <!-- Header Row: Icon Tile, Title/Badge, and Status Pill -->
-            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+            <!-- Header Row: Icon Tile, Title/Badge, and Status Pill. At accessibility sizes the pill is
+                 as wide as the title, so the row wraps rather than squeezing the name into one letter per line. -->
+            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
                 <!-- Icon Tile -->
                 <Border
                     WidthRequest="{StaticResource UiDimension42}"
@@ -64,7 +65,7 @@
                 </Border>
 
                 <!-- Titles: Badge + Main Name -->
-                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}" VerticalOptions="Center">
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" VerticalOptions="Center" Margin="{StaticResource UiInsets0_0_8_0}">
                     <Label LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
                         Text="{Binding BadgeText, Source={x:Reference Root}}"
                         TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
@@ -77,7 +78,6 @@
 
                 <!-- Status Pill on the Right -->
                 <Border
-                    Grid.Column="2"
                     StrokeShape="{StaticResource UiRoundRectangleRadius999}"
                     StrokeThickness="{StaticResource UiStrokeWidth0}"
                     Padding="{StaticResource UiInsets10_4}"
@@ -109,7 +109,7 @@
                         </Label.Triggers>
                     </Label>
                 </Border>
-            </Grid>
+            </FlexLayout>
 
             <!-- Multiple Activity Chips (if more than 1 activity on workout days) -->
             <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Start"

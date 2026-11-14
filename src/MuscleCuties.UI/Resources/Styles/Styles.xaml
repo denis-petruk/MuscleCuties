@@ -682,11 +682,6 @@
         <Setter Property="VerticalScrollBarVisibility" Value="Default" />
     </Style>
 
-    <Style x:Key="ModalBody" TargetType="Grid">
-        <Setter Property="Padding" Value="{StaticResource UiInsets18}" />
-        <Setter Property="RowSpacing" Value="{StaticResource UiSpaceControl}" />
-    </Style>
-
     <Style x:Key="DisclosureHeader" TargetType="Grid">
         <Setter Property="Padding" Value="0,8" />
         <Setter Property="ColumnSpacing" Value="{StaticResource UiSpaceTight}" />
@@ -845,12 +840,18 @@
         <Setter Property="VerticalOptions" Value="Center" />
     </Style>
 
+    <!-- The one hairline under a sheet header. It has to read on the modal surface itself, so it uses
+         the muted border token: SurfaceSubtleLight on a white surface disappears altogether. -->
     <Style x:Key="ModalDivider" TargetType="BoxView">
         <Setter Property="HeightRequest" Value="1" />
         <Setter Property="Margin" Value="20,0" />
+        <!-- BoxView paints from Color; BackgroundColor alone leaves the rule unpainted on iOS. -->
+        <Setter Property="Color"
+                Value="{AppThemeBinding Light={StaticResource BorderMutedLight},
+                                        Dark={StaticResource BorderMutedDark}}" />
         <Setter Property="BackgroundColor"
-                Value="{AppThemeBinding Light={StaticResource SurfaceSubtleLight},
-                                        Dark={StaticResource SurfaceSubtleDark}}" />
+                Value="{AppThemeBinding Light={StaticResource BorderMutedLight},
+                                        Dark={StaticResource BorderMutedDark}}" />
     </Style>
 
     <Style x:Key="WorkoutMetricValue" TargetType="Label">
@@ -921,6 +922,9 @@
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusButton}" />
         <Setter Property="MinimumHeightRequest" Value="{StaticResource UiControlHeight}" />
         <Setter Property="HorizontalOptions" Value="Fill" />
+        <!-- Wrap instead of truncating: at accessibility text sizes a full-sentence action label
+             used to be clipped at the button edge. -->
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">
@@ -967,6 +971,7 @@
         <Setter Property="HeightRequest" Value="{StaticResource UiDimensionMinus1}" />
         <Setter Property="Padding" Value="{StaticResource UiInsets12_0}" />
         <Setter Property="HorizontalOptions" Value="Fill" />
+        <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
                 <VisualStateGroup x:Name="CommonStates">

@@ -22,23 +22,13 @@
             Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
             <Grid RowDefinitions="Auto, Auto, Auto">
 
-                <!-- Header (Flattened Grid) -->
-                <Grid RowDefinitions="Auto, Auto, Auto">
-                    <!-- Drag handle -->
-                    <BoxView
-                        Grid.Row="0"
-                        WidthRequest="{StaticResource UiDimension40}"
-                        HeightRequest="{StaticResource UiDimension4}"
-                        CornerRadius="{StaticResource UiCornerRadius2}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceMutedStrongLight}, Dark={StaticResource SurfaceMutedStrongDark}}"
-                        HorizontalOptions="Center"
-                        Margin="{StaticResource UiInsets0_10_0_10}" />
-
+                <!-- Header: shared sheet anatomy — header padding, one divider, then body. -->
+                <Grid RowDefinitions="Auto, Auto">
                     <Grid
-                        Grid.Row="1"
+                        Grid.Row="0"
                         ColumnDefinitions="Auto, *, Auto"
                         ColumnSpacing="{StaticResource UiSpaceCompact}"
-                        Padding="{StaticResource UiInsets20_0_20_12}"
+                        Padding="{DynamicResource PresentationModalHeaderPadding}"
                         VerticalOptions="Center">
 
                         <Image
@@ -79,11 +69,7 @@
                         </Border>
                     </Grid>
 
-                    <BoxView
-                        Grid.Row="2"
-                        HeightRequest="{StaticResource UiDimension1}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
-                        Opacity="{StaticResource UiOpacityBackdrop}" />
+                    <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
                 </Grid>
 
                 <!-- Scrollable Body (Flattened Grid) -->

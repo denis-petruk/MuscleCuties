@@ -118,17 +118,16 @@
                                 VerticalOptions="Center" />
                         </Border>
 
-                        <Grid
-                            Grid.Row="1"
-                            Grid.ColumnSpan="3"
-                            ColumnDefinitions="*,*,*,*,*,*,*"
-                            ColumnSpacing="{StaticResource UiSpacing2}"
-                            BindableLayout.ItemsSource="{Binding DateStripDays}">
+                        <!-- Seven cells cannot share one line at accessibility sizes without breaking a
+                             date, so the strip keeps each day at its own width and scrolls sideways. -->
+                        <ScrollView Grid.Row="1" Grid.ColumnSpan="3"
+                                    Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                            <HorizontalStackLayout Spacing="{StaticResource UiSpacing2}"
+                                                   BindableLayout.ItemsSource="{Binding DateStripDays}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="uiModels:DateStripDayItem">
-                                    <Border
-                                        Grid.Column="{Binding Position}"
-                                        Style="{StaticResource DayStripCell}">
+                                    <Border Style="{StaticResource DayStripCell}"
+                                            MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}">
 
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer
@@ -159,7 +158,8 @@
                                     </Border>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
-                        </Grid>
+                            </HorizontalStackLayout>
+                        </ScrollView>
                     </Grid>
 
                     <!-- Native Date Picker Trigger (Hidden unless toggled) -->
@@ -449,7 +449,7 @@
                     <TapGestureRecognizer /> <!-- Absorb tap inside dialog -->
                 </Border.GestureRecognizers>
 
-                <Grid RowDefinitions="Auto,*,Auto">
+                <Grid RowDefinitions="Auto,Auto,*,Auto">
                     <Grid Padding="{DynamicResource PresentationModalHeaderPadding}" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                             <Label
                                 Text="{Binding EditModalTitle, Converter={StaticResource LocalizedStringConverter}}"
@@ -466,7 +466,9 @@
                             </Border>
                     </Grid>
 
-                    <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
+                    <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+
+                    <ScrollView Grid.Row="2" VerticalScrollBarVisibility="Default">
                         <VerticalStackLayout Padding="{DynamicResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpaceCompact}">
 
                         <!-- Fast logging: local history first, then an explicit catalog lookup. -->
@@ -935,7 +937,7 @@
                     </ScrollView>
                     <!-- NM02: the trailing action column collapses when no second action applies, so a
                          sole Save fills the footer instead of leaving an empty half. -->
-                    <Grid Grid.Row="2" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
+                    <Grid Grid.Row="3" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
                           Padding="{DynamicResource PresentationActionFooterPadding}">
                         <Button Style="{StaticResource ButtonPrimary}"
                             Text="{loc:LocalizedText Common_Save}"

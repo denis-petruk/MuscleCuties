@@ -23,21 +23,12 @@
             Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
             <Grid RowDefinitions="Auto, *, Auto">
 
-                <!-- Header (Flattened Grid) -->
-                <Grid RowDefinitions="Auto, Auto, Auto">
-                    <BoxView
-                        Grid.Row="0"
-                        WidthRequest="{StaticResource UiDimension40}"
-                        HeightRequest="{StaticResource UiDimension4}"
-                        CornerRadius="{StaticResource UiCornerRadius2}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceMutedStrongLight}, Dark={StaticResource SurfaceMutedStrongDark}}"
-                        HorizontalOptions="Center"
-                        Margin="{StaticResource UiInsets0_10_0_10}" />
-
+                <!-- Header: shared sheet anatomy — header padding, one divider, then body. -->
+                <Grid RowDefinitions="Auto, Auto">
                     <Grid
-                        Grid.Row="1"
+                        Grid.Row="0"
                         ColumnDefinitions="*, Auto"
-                        Padding="{StaticResource UiInsets20_0_20_12}"
+                        Padding="{DynamicResource PresentationModalHeaderPadding}"
                         VerticalOptions="Center">
                         <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
                             <Label
@@ -69,11 +60,7 @@
                         </Border>
                     </Grid>
 
-                    <BoxView
-                        Grid.Row="2"
-                        HeightRequest="{StaticResource UiDimension1}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
-                        Opacity="{StaticResource UiOpacityBackdrop}" />
+                    <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
                 </Grid>
 
                 <!-- Scrollable Form Body -->
@@ -94,9 +81,14 @@
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
-                            <Grid Grid.Row="1" ColumnDefinitions="*, *" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                            <!-- Wrapping pills, not a fixed two-up grid: at accessibility text sizes each
+                                 pill needs the full width, otherwise its label breaks mid-word. -->
+                            <FlexLayout Grid.Row="1" Direction="Row" Wrap="Wrap" AlignItems="Start">
                                 <!-- Period Started Toggle -->
                                 <Border
+                                    FlexLayout.Grow="1"
+                                    FlexLayout.Basis="Auto"
+                                    Margin="{StaticResource UiInsets0_0_8_8}"
                                     Style="{StaticResource ChoiceCell}"
                                     SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_TogglePeriodStartedAccessibility}">
                                     <Border.GestureRecognizers>
@@ -113,8 +105,8 @@
                                             <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                         </DataTrigger>
                                     </Border.Triggers>
-                                    <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center"
-                                                           VerticalOptions="Center">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+                                          HorizontalOptions="Center" VerticalOptions="Center">
                                         <Path
                                             Data="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"
                                             Stroke="{StaticResource Primary}"
@@ -125,6 +117,7 @@
                                             HeightRequest="{StaticResource UiDimension14}"
                                             VerticalOptions="Center" />
                                         <Label
+                                            Grid.Column="1"
                                             Text="{loc:LocalizedText Cycle_QuickLog_PeriodStarted}"
                                             Style="{StaticResource MutedLabel}"
                                             LineBreakMode="WordWrap"
@@ -138,12 +131,14 @@
                                                 </DataTrigger>
                                             </Label.Triggers>
                                         </Label>
-                                    </HorizontalStackLayout>
+                                    </Grid>
                                 </Border>
 
                                 <!-- Period Ended Toggle -->
                                 <Border
-                                    Grid.Column="1"
+                                    FlexLayout.Grow="1"
+                                    FlexLayout.Basis="Auto"
+                                    Margin="{StaticResource UiInsets0_0_8_8}"
                                     Style="{StaticResource ChoiceCell}"
                                     SemanticProperties.Description="{loc:LocalizedText Cycle_QuickLog_TogglePeriodEndedAccessibility}">
                                     <Border.GestureRecognizers>
@@ -160,8 +155,8 @@
                                             <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                                         </DataTrigger>
                                     </Border.Triggers>
-                                    <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center"
-                                                           VerticalOptions="Center">
+                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+                                          HorizontalOptions="Center" VerticalOptions="Center">
                                         <Path
                                             Data="M5 13l4 4L19 7"
                                             Stroke="{StaticResource Primary}"
@@ -173,6 +168,7 @@
                                             HeightRequest="{StaticResource UiDimension14}"
                                             VerticalOptions="Center" />
                                         <Label
+                                            Grid.Column="1"
                                             Text="{loc:LocalizedText Cycle_QuickLog_PeriodEnded}"
                                             Style="{StaticResource MutedLabel}"
                                             LineBreakMode="WordWrap"
@@ -186,9 +182,9 @@
                                                 </DataTrigger>
                                             </Label.Triggers>
                                         </Label>
-                                    </HorizontalStackLayout>
+                                    </Grid>
                                 </Border>
-                            </Grid>
+                            </FlexLayout>
                         </Grid>
 
                         <!-- SECTION 2: Flow Intensity (Flattened Grid) -->
@@ -200,11 +196,12 @@
                                 LineBreakMode="WordWrap"
                                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}" />
 
-                            <Grid Grid.Row="1" ColumnDefinitions="*, *, *, *" ColumnSpacing="{StaticResource UiSpaceTight}"
-                                   BindableLayout.ItemsSource="{Binding FlowOptions}">
+                            <FlexLayout Grid.Row="1" Direction="Row" Wrap="Wrap" AlignItems="Start"
+                                        BindableLayout.ItemsSource="{Binding FlowOptions}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="cycleModels:FlowOptionItem">
                                         <Border Style="{StaticResource CardSecondary}"
+                                            Margin="{StaticResource UiInsets0_0_8_8}"
                                             MinimumHeightRequest="{StaticResource UiDimension52}"
                                             SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_QuickLog_FlowIntensityFormat}">
                                             <Border.GestureRecognizers>
@@ -247,7 +244,7 @@
                                         </Border>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
-                            </Grid>
+                            </FlexLayout>
                         </Grid>
 
                         <!-- SECTION 3: Symptoms (Flattened Grid) -->

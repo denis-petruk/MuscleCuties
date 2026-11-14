@@ -138,8 +138,13 @@ public class PageHeader : ContentView
             ColumnSpacing = AppThemeResources.GetDouble("UiSpaceTight"),
             RowSpacing = AppThemeResources.GetDouble("UiSpacing2")
         };
+        // At an accessibility text size the contextual action takes a row of its own: sharing the
+        // title's line leaves a column too narrow for one long Russian word ("тренировок").
+        var actionOnOwnRow = IsAccessibilityTextSize();
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
+        if (actionOnOwnRow)
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
 
         var titleColumn = 0;
         if (ShowBack)
@@ -156,7 +161,8 @@ public class PageHeader : ContentView
         }
 
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
-        grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+        if (!actionOnOwnRow)
+            grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
 
         var title = new Label
         {
@@ -182,8 +188,19 @@ public class PageHeader : ContentView
 
         _actionHost = new ContentView { VerticalOptions = LayoutOptions.Start };
         grid.Children.Add(_actionHost);
-        Grid.SetColumn(_actionHost, titleColumn + 1);
-        Grid.SetRowSpan(_actionHost, 2);
+        if (actionOnOwnRow)
+        {
+            Grid.SetRow(_actionHost, 2);
+            Grid.SetColumn(_actionHost, 0);
+            Grid.SetColumnSpan(_actionHost, titleColumn + 1);
+            // The action keeps the page's right edge on its own row.
+            _actionHost.HorizontalOptions = LayoutOptions.End;
+        }
+        else
+        {
+            Grid.SetColumn(_actionHost, titleColumn + 1);
+            Grid.SetRowSpan(_actionHost, 2);
+        }
 
         Content = grid;
         ApplyText();
@@ -211,6 +228,16 @@ public class PageHeader : ContentView
         // AutomationProperties.Name resolves to the same label, so it is not set a second time.
         SemanticProperties.SetDescription(back, UiTextCatalog.TranslateRuntimeText("Back"));
         return back;
+    }
+
+    private static bool IsAccessibilityTextSize()
+    {
+#if IOS
+        var category = UIKit.UIApplication.SharedApplication.PreferredContentSizeCategory?.ToString();
+        return category is not null && category.Contains("Accessibility", StringComparison.Ordinal);
+#else
+        return false;
+#endif
     }
 
     private void ApplyText()

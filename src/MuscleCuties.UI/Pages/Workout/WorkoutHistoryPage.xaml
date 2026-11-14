@@ -66,21 +66,25 @@
                         Grid.Row="0"
                         Style="{StaticResource CardPrimary}">
                         <!-- Shared rows: a two-line label cannot push one value below the other. -->
-                        <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto"
-                              ColumnSpacing="{StaticResource UiSpaceControl}"
-                              RowSpacing="{StaticResource UiSpaceMicro}">
-                            <Label Grid.Row="0" Grid.Column="0" LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
-                                   Text="{loc:LocalizedText Workout_History_CompletedSessionsTitle}" />
-                            <Label Grid.Row="0" Grid.Column="1" LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
-                                   Text="{loc:LocalizedText Workout_History_RecordedSetVolumeHeader}" />
-                            <Label Grid.Row="1" Grid.Column="0" LineBreakMode="WordWrap" Style="{StaticResource WorkoutNumber}"
-                                   HorizontalTextAlignment="Start"
-                                   Text="{Binding TotalSessionsCount, Converter={StaticResource LocalizedStringConverter}}" />
-                            <Label Grid.Row="1" Grid.Column="1" LineBreakMode="WordWrap" Style="{StaticResource WorkoutNumber}"
-                                   HorizontalTextAlignment="Start"
-                                   Text="{Binding LifetimeVolumeFormatted, Converter={StaticResource LocalizedStringConverter}}"
-                                   TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
-                        </Grid>
+                        <!-- Two complete stats: label and value stay together, and at accessibility
+                             sizes each one takes the full card instead of breaking "Завершенные". -->
+                        <sharedControls:AdaptiveRow Columns="2">
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                <Label LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
+                                       Text="{loc:LocalizedText Workout_History_CompletedSessionsTitle}" />
+                                <Label LineBreakMode="WordWrap" Style="{StaticResource WorkoutNumber}"
+                                       HorizontalTextAlignment="Start"
+                                       Text="{Binding TotalSessionsCount, Converter={StaticResource LocalizedStringConverter}}" />
+                            </VerticalStackLayout>
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                <Label LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
+                                       Text="{loc:LocalizedText Workout_History_RecordedSetVolumeHeader}" />
+                                <Label LineBreakMode="WordWrap" Style="{StaticResource WorkoutNumber}"
+                                       HorizontalTextAlignment="Start"
+                                       Text="{Binding LifetimeVolumeFormatted, Converter={StaticResource LocalizedStringConverter}}"
+                                       TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
+                            </VerticalStackLayout>
+                        </sharedControls:AdaptiveRow>
                     </Border>
 
                     <!-- Monthly Filter Chips -->
@@ -132,6 +136,7 @@
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="archive:WorkoutArchiveSummaryDto">
                     <Border
+                        AutomationId="WorkoutHistorySessionCard"
                         Margin="{DynamicResource PresentationCollectionItemMargin}"
                         Style="{StaticResource CardPrimary}"
                         SemanticProperties.Hint="{loc:LocalizedText Workout_History_OpenSessionHint}">
@@ -186,9 +191,11 @@
                                 </BindableLayout.ItemTemplate>
                             </FlexLayout>
 
-                            <!-- Metric row: three equal columns, left aligned so long values wrap instead of clipping. -->
-                            <Grid Grid.Row="4" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceCompact}"
-                                  Margin="{StaticResource UiInsets0_4_0_0}">
+                            <!-- Metric row: three equal columns at the standard sizes; at an
+                                 accessibility size each metric keeps its own row, because "Продолжительность"
+                                 cannot sit in a third of the card without breaking mid-word. -->
+                            <sharedControls:AdaptiveRow Grid.Row="4" Columns="3"
+                                                        Margin="{StaticResource UiInsets0_4_0_0}">
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
                                     <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
                                            Text="{loc:LocalizedText Workout_History_DurationHeader}" />
@@ -196,7 +203,7 @@
                                            Text="{Binding DurationLabel, Converter={StaticResource LocalizedStringConverter}}" />
                                 </VerticalStackLayout>
 
-                                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
                                     <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
                                            Text="{loc:LocalizedText Workout_History_VolumeHeader}" />
                                     <Label Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
@@ -204,13 +211,13 @@
                                            Text="{Binding VolumeLabel, Converter={StaticResource LocalizedStringConverter}}" />
                                 </VerticalStackLayout>
 
-                                <VerticalStackLayout Grid.Column="2" Spacing="{StaticResource UiSpaceMicro}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
                                     <Label Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap"
                                            Text="{loc:LocalizedText Workout_History_TotalSetsHeader}" />
                                     <Label Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap"
                                            Text="{Binding SetCountLabel, Converter={StaticResource LocalizedStringConverter}}" />
                                 </VerticalStackLayout>
-                            </Grid>
+                            </sharedControls:AdaptiveRow>
                         </Grid>
                     </Border>
                 </DataTemplate>
@@ -252,7 +259,7 @@
                     <TapGestureRecognizer /> <!-- Absorb taps inside modal -->
                 </Border.GestureRecognizers>
 
-                <Grid RowDefinitions="Auto,*,Auto">
+                <Grid RowDefinitions="Auto,Auto,*,Auto">
                     <!-- Modal Header -->
                     <Grid Grid.Row="0" ColumnDefinitions="*,Auto" Padding="{DynamicResource PresentationModalHeaderPadding}">
                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
@@ -278,12 +285,16 @@
                         </Border>
                     </Grid>
 
+                    <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+
                     <!-- Session content scrolls while the header and save action stay visible. -->
-                    <ScrollView Grid.Row="1" VerticalScrollBarVisibility="Default">
+                    <ScrollView Grid.Row="2" VerticalScrollBarVisibility="Default">
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceControl}" Padding="{DynamicResource PresentationModalPagePadding}">
 
                         <!-- Key Metrics Row -->
-                        <Grid Grid.Row="0" ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
+                        <!-- Two columns, not three: "Продолжительность" is one unbreakable word and a
+                             third of the sheet's width broke it mid-word at default text size. -->
+                        <Grid Grid.Row="0" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto"
                               ColumnSpacing="{StaticResource UiSpaceCompact}" RowSpacing="{StaticResource UiSpaceCompact}">
                             <Border Style="{StaticResource CardSecondary}">
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
@@ -304,7 +315,7 @@
                                 </Grid>
                             </Border>
 
-                            <Border Grid.Column="2" Style="{StaticResource CardSecondary}">
+                            <Border Grid.Row="1" Style="{StaticResource CardSecondary}">
                                 <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                                     <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Grid.Row="0" Text="{loc:LocalizedText Workout_History_RpeHeader}"
  />
@@ -314,7 +325,7 @@
                             </Border>
 
                             <!-- Distance is recorded only for timed distance activities. -->
-                            <Border Grid.Row="1" Grid.ColumnSpan="3" Style="{StaticResource CardSecondary}"
+                            <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource CardSecondary}"
                                     IsVisible="{Binding HasDetailDistance}">
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                     <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}"
@@ -417,7 +428,7 @@
                         </Grid>
                     </ScrollView>
 
-                    <Grid Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}">
+                    <Grid Grid.Row="3" Padding="{DynamicResource PresentationActionFooterPadding}">
                         <Button Style="{StaticResource ButtonSecondary}"
                                 Text="{loc:LocalizedText Workout_History_SaveNotesAndRpeButton}"
                                 Command="{Binding SaveSessionNotesCommand}" />

@@ -63,10 +63,7 @@
                     <BoxView
                         Grid.Row="2"
                         Grid.ColumnSpan="2"
-                        HeightRequest="{StaticResource UiDimension1}"
-                        Margin="{StaticResource UiInsets0_6_0_0}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
-                        Opacity="{StaticResource UiOpacityBackdrop}" />
+                        Style="{StaticResource ModalDivider}" />
                 </Grid>
 
                 <ScrollView Grid.Row="1">

@@ -21,7 +21,7 @@
             x:Name="SheetSurface"
             Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
             VerticalOptions="End">
-            <Grid RowDefinitions="Auto, *, Auto" RowSpacing="{StaticResource UiSpacing0}">
+            <Grid RowDefinitions="Auto, Auto, *, Auto" RowSpacing="{StaticResource UiSpacing0}">
                 <Grid ColumnDefinitions="Auto, *, Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{DynamicResource PresentationModalHeaderPadding}">
                     <Border
                         WidthRequest="{StaticResource UiDimension34}"
@@ -63,7 +63,9 @@
                     </Border>
                 </Grid>
 
-                <ScrollView Grid.Row="1">
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+
+                <ScrollView Grid.Row="2">
                     <Label
                         Text="{Binding CycleWarningText, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource MutedLabel}"

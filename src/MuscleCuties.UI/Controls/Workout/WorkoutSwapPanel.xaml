@@ -17,31 +17,41 @@
             </Grid.GestureRecognizers>
         </Grid>
         <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
-                Padding="{DynamicResource PresentationModalPagePadding}"
                 VerticalOptions="End">
-            <Grid RowDefinitions="Auto,Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpaceCompact}" IsEnabled="{Binding CanInteract}">
-                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing0}" IsEnabled="{Binding CanInteract}">
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                      Padding="{DynamicResource PresentationModalHeaderPadding}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Swap_Title}" Style="{StaticResource SectionTitle}"
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Swap_Title}" Style="{StaticResource ModalTitle}"
                                SemanticProperties.HeadingLevel="Level2" />
                         <Label LineBreakMode="WordWrap"
                             Text="{Binding SwapTargetName, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Swap_ReplaceFormat}"
                             Style="{StaticResource CaptionLabel}" />
                     </VerticalStackLayout>
-                    <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Swap_CloseButton}"
-                            Command="{Binding CloseSwapPanelCommand}" IsVisible="{Binding CanDismissSwap}"
-                            Style="{StaticResource ButtonSecondary}" />
+                    <Border Grid.Column="1" Style="{StaticResource ModalIconButton}" IsVisible="{Binding CanDismissSwap}"
+                            SemanticProperties.Description="{loc:LocalizedText Workout_Swap_CloseButton}">
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding CloseSwapPanelCommand}" />
+                        </Border.GestureRecognizers>
+                        <Path Style="{StaticResource ModalCloseIcon}" />
+                    </Border>
                 </Grid>
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+                <!-- Auto rows, not a star row: a star row inside a bottom-anchored sheet stretches the
+                     panel to the full sheet ceiling even when the candidate list is empty. -->
+                <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}"
+                      Padding="{DynamicResource PresentationModalPagePadding}">
                 <ActivityIndicator
-                        Style="{StaticResource StateBusyInline}" Grid.Row="1" IsVisible="{Binding IsSwapLoading}" IsRunning="{Binding IsSwapLoading}"
+                        Style="{StaticResource StateBusyInline}" IsVisible="{Binding IsSwapLoading}" IsRunning="{Binding IsSwapLoading}"
                                    />
-                <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}">
+                <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}">
                     <Label LineBreakMode="WordWrap" Text="{Binding SwapErrorText, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource ErrorLabel}" IsVisible="{Binding HasSwapError}" />
                     <Label LineBreakMode="WordWrap" Text="{Binding SwapEmptyTextKey, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource BodyLabel}" IsVisible="{Binding ShowNoSwapCandidates}" />
                 </VerticalStackLayout>
-                <CollectionView Grid.Row="3" ItemsSource="{Binding SwapCandidates}"
+                <CollectionView Grid.Row="2" ItemsSource="{Binding SwapCandidates}"
+                                MaximumHeightRequest="{StaticResource ModalSheetBodyMaximumHeight}"
                                 IsVisible="{Binding HasSwapCandidates}"
                                 SelectionMode="None">
                     <CollectionView.ItemTemplate>
@@ -79,7 +89,9 @@
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
-                <VerticalStackLayout Grid.Row="4" Spacing="{StaticResource UiSpaceMicro}">
+                </Grid>
+                <VerticalStackLayout Grid.Row="3" Spacing="{StaticResource UiSpaceMicro}"
+                                     Padding="{DynamicResource PresentationActionFooterPadding}">
                     <Button Style="{StaticResource ButtonPrimary}" Text="{Binding SwapConfirmText, Converter={StaticResource LocalizedStringConverter}}"
                             Command="{Binding ConfirmSwapCommand}" IsVisible="{Binding HasSwapCandidates}" />
                     <Button Text="{loc:LocalizedText Workout_Swap_LeaveSessionButton}" Command="{Binding FinishSessionCommand}"

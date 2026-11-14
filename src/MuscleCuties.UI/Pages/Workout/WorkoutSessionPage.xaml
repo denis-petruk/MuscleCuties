@@ -760,7 +760,7 @@
 
         <!-- S-04 pain report: a sheet, so the exercise and its set rows keep their room. Stopping the
              movement is primary; logged sets are never erased and nothing is added to make up for it. -->
-        <sharedControls:AnimatedModalView Grid.RowSpan="2"
+        <sharedControls:AnimatedModalView Grid.RowSpan="4"
                                           ZIndex="34"
                                           IsOpen="{Binding IsPainReportVisible}">
             <Grid>
@@ -770,14 +770,25 @@
                     </BoxView.GestureRecognizers>
                 </BoxView>
                 <Border Style="{StaticResource ModalSurface}"
-                        Padding="{DynamicResource PresentationModalPagePadding}"
                         MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
                         VerticalOptions="End">
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                  <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing0}">
+                    <Grid Padding="{DynamicResource PresentationModalHeaderPadding}" ColumnDefinitions="*,Auto"
+                          ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Label LineBreakMode="WordWrap"
                                Text="{loc:LocalizedText Workout_Session_PainTitle}"
                                Style="{StaticResource ModalTitle}"
                                SemanticProperties.HeadingLevel="Level1" />
+                        <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
+                                SemanticProperties.Description="{loc:LocalizedText Common_Close}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding CancelPainReportCommand}" />
+                            </Border.GestureRecognizers>
+                            <Path Style="{StaticResource ModalCloseIcon}" />
+                        </Border>
+                    </Grid>
+                    <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+                    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpaceCompact}">
                         <Label LineBreakMode="WordWrap"
                                Text="{loc:LocalizedText Workout_Session_PainBody}"
                                Style="{StaticResource BodyLabel}" />
@@ -792,12 +803,13 @@
                                 Command="{Binding CancelPainReportCommand}"
                                 Style="{StaticResource ButtonSecondary}" />
                     </VerticalStackLayout>
+                  </Grid>
                 </Border>
             </Grid>
         </sharedControls:AnimatedModalView>
 
         <!-- Abandon confirmation: keeps the active state unless the user confirms -->
-        <sharedControls:AnimatedModalView Grid.RowSpan="2"
+        <sharedControls:AnimatedModalView Grid.RowSpan="4"
                                           ZIndex="35"
                                           AutomationId="WorkoutSessionAbandonConfirmationModal"
                                           IsOpen="{Binding IsAbandonConfirmationVisible}">
@@ -808,14 +820,25 @@
                     </BoxView.GestureRecognizers>
                 </BoxView>
                 <Border Style="{StaticResource ModalSurface}"
-                        Padding="{DynamicResource PresentationModalPagePadding}"
                         MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
                         VerticalOptions="End">
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                  <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing0}">
+                    <Grid Padding="{DynamicResource PresentationModalHeaderPadding}" ColumnDefinitions="*,Auto"
+                          ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Label LineBreakMode="WordWrap"
                                Text="{loc:LocalizedText Workout_Session_AbandonConfirmTitle}"
-                               Style="{StaticResource SectionTitle}"
+                               Style="{StaticResource ModalTitle}"
                                SemanticProperties.HeadingLevel="Level2" />
+                        <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
+                                SemanticProperties.Description="{loc:LocalizedText Common_Close}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Command="{Binding CancelAbandonPlannedSessionCommand}" />
+                            </Border.GestureRecognizers>
+                            <Path Style="{StaticResource ModalCloseIcon}" />
+                        </Border>
+                    </Grid>
+                    <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+                    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpaceCompact}">
                         <Label LineBreakMode="WordWrap"
                                Text="{loc:LocalizedText Workout_Session_AbandonConfirmBody}"
                                Style="{StaticResource BodyLabel}" />
@@ -828,12 +851,13 @@
                                 Text="{loc:LocalizedText Workout_Session_AbandonCancel}"
                                 Command="{Binding CancelAbandonPlannedSessionCommand}" />
                     </VerticalStackLayout>
+                  </Grid>
                 </Border>
             </Grid>
         </sharedControls:AnimatedModalView>
 
         <!-- Movement Note Editor Modal -->
-        <sharedControls:AnimatedModalView Grid.RowSpan="2"
+        <sharedControls:AnimatedModalView Grid.RowSpan="4"
                                           ZIndex="30"
                                           IsOpen="{Binding IsMovementNoteOpen}">
             <Grid>
@@ -843,23 +867,32 @@
                     </BoxView.GestureRecognizers>
                 </BoxView>
                 <Border Style="{StaticResource ModalSurface}"
-                        Padding="{DynamicResource PresentationModalPagePadding}"
                         MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
                         VerticalOptions="End">
-                    <Grid RowDefinitions="Auto,Auto,*,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                    <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                              Padding="{DynamicResource PresentationModalHeaderPadding}">
                             <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_NoteEditorTitle}"
                                    Style="{StaticResource ModalTitle}"
                                    SemanticProperties.HeadingLevel="Level1" />
-                            <Button Grid.Column="1" Text="{loc:LocalizedText Common_Close}"
-                                    Command="{Binding CloseMovementNoteCommand}"
-                                    Style="{StaticResource ButtonSecondary}" />
+                            <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
+                                    SemanticProperties.Description="{loc:LocalizedText Common_Close}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding CloseMovementNoteCommand}" />
+                                </Border.GestureRecognizers>
+                                <Path Style="{StaticResource ModalCloseIcon}" />
+                            </Border>
                         </Grid>
 
-                        <Label Grid.Row="1" LineBreakMode="WordWrap" Text="{Binding CurrentExercise.Name}"
+                        <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+
+                        <Grid Grid.Row="2" RowDefinitions="Auto,*,Auto" RowSpacing="{StaticResource UiSpaceCompact}"
+                              Padding="{DynamicResource PresentationModalPagePadding}">
+
+                        <Label LineBreakMode="WordWrap" Text="{Binding CurrentExercise.Name}"
                                Style="{StaticResource BodyStrong}" />
 
-                        <Border Grid.Row="2" Style="{StaticResource InputContainer}" HeightRequest="{StaticResource UiDimension120}">
+                        <Border Grid.Row="1" Style="{StaticResource InputContainer}" HeightRequest="{StaticResource UiDimension120}">
                             <Editor Text="{Binding MovementNoteText, Mode=TwoWay}"
                                     Placeholder="{loc:LocalizedText Workout_Session_NotePlaceholder}"
                                     MaxLength="2000"
@@ -867,7 +900,7 @@
                                     VerticalOptions="Fill" />
                         </Border>
 
-                        <VerticalStackLayout Grid.Row="3" Spacing="{StaticResource UiSpaceMicro}">
+                        <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceMicro}">
                             <Label LineBreakMode="WordWrap"
                                    Text="{Binding MovementNoteErrorText, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource ErrorLabel}"
@@ -877,8 +910,10 @@
                                    Style="{StaticResource AccentLabel}"
                                    IsVisible="{Binding HasMovementNoteStatus}" />
                         </VerticalStackLayout>
+                        </Grid>
 
-                        <Grid Grid.Row="4" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                        <Grid Grid.Row="3" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+                              Padding="{DynamicResource PresentationActionFooterPadding}">
                             <Button Text="{loc:LocalizedText Workout_Session_ClearNoteButton}"
                                     Command="{Binding ClearMovementNoteCommand}"
                                     IsEnabled="{Binding IsMovementNoteBusy, Converter={StaticResource InvertedBoolConverter}}"

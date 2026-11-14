@@ -14,8 +14,7 @@
     xmlns:injuryControls="clr-namespace:MuscleCuties.UI.Controls.Injury"
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     x:DataType="vm:WorkoutViewModel"
-    Shell.NavBarIsVisible="False"
-    Shell.TabBarIsVisible="{Binding IsTabBarVisible}">
+    Shell.NavBarIsVisible="False">
 
 
     <Grid RowDefinitions="Auto,*">
@@ -181,16 +180,17 @@
                             Style="{StaticResource MutedLabel}" />
                     </VerticalStackLayout>
 
-                    <Grid ColumnDefinitions="*,*,*,*"
-                          ColumnSpacing="{StaticResource UiSpaceTight}"
-                          BindableLayout.ItemsSource="{Binding Weeks}">
+                    <!-- A chip keeps its natural width and the row scrolls: four equal columns broke
+                         "Неделя 1" inside the word once the reader asked for larger text. -->
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                        <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                               BindableLayout.ItemsSource="{Binding Weeks}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:FilterChipItem">
                                 <!-- Equal star columns plus one spacing token: every chip measures the
                                      same, and both edges land on the page inset, so the row reads as a
                                      single block whatever the label length or which chip is selected. -->
-                                <Border Grid.Column="{Binding Column}"
-                                        Style="{StaticResource ChoiceCell}"
+                                <Border Style="{StaticResource ChoiceCell}"
                                         SemanticProperties.Description="{Binding Label, Converter={StaticResource LocalizedStringConverter}}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -202,20 +202,23 @@
                                 </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
-                    </Grid>
+                        </HorizontalStackLayout>
+                    </ScrollView>
 
                     <!-- Seven days fit one row only without per-card chrome: a card inset leaves
                          too little width for the workout tag, so the type is carried by the dot and
                          by the session list below, and the day navigates on tap. -->
                     <Border Style="{StaticResource CardPrimary}">
-                        <Grid ColumnDefinitions="*,*,*,*,*,*,*"
-                              ColumnSpacing="{StaticResource UiSpacing2}"
-                              BindableLayout.ItemsSource="{Binding ScheduleDays}">
+                        <!-- Seven cells cannot share one line at accessibility sizes without breaking a
+                             date, so the strip keeps each day at its own width and scrolls sideways. -->
+                        <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                            <HorizontalStackLayout Spacing="{StaticResource UiSpacing2}"
+                                                   BindableLayout.ItemsSource="{Binding ScheduleDays}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="workoutModels:ScheduleDayItem">
-                                    <VerticalStackLayout Grid.Column="{Binding Column}"
-                                                         Spacing="{StaticResource UiSpacing2}"
+                                    <VerticalStackLayout Spacing="{StaticResource UiSpacing2}"
                                                          Padding="{StaticResource UiInsets4}"
+                                                         MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
                                                          MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                                          SemanticProperties.Description="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}">
                                         <VerticalStackLayout.GestureRecognizers>
@@ -256,19 +259,19 @@
                                     </VerticalStackLayout>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
-                        </Grid>
+                            </HorizontalStackLayout>
+                        </ScrollView>
                     </Border>
 
-                    <Grid ColumnDefinitions="*,*,*,*"
-                          ColumnSpacing="{StaticResource UiSpaceTight}"
-                          BindableLayout.ItemsSource="{Binding Filters}">
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                        <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                               BindableLayout.ItemsSource="{Binding Filters}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:FilterChipItem">
                                 <!-- Equal star columns plus one spacing token: every chip measures the
                                      same, and both edges land on the page inset, so the row reads as a
                                      single block whatever the label length or which chip is selected. -->
-                                <Border Grid.Column="{Binding Column}"
-                                        Style="{StaticResource ChoiceCell}"
+                                <Border Style="{StaticResource ChoiceCell}"
                                         SemanticProperties.Description="{Binding Label, Converter={StaticResource LocalizedStringConverter}}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
@@ -280,7 +283,8 @@
                                 </Border>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
-                    </Grid>
+                        </HorizontalStackLayout>
+                    </ScrollView>
 
                     <ActivityIndicator
                         Style="{StaticResource StateBusyPage}"
@@ -383,17 +387,22 @@
                 </BoxView.GestureRecognizers>
             </BoxView>
             <Border Style="{StaticResource ModalSurface}"
-                    Padding="{DynamicResource PresentationModalPagePadding}"
                     MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
-                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
+                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                          Padding="{DynamicResource PresentationModalHeaderPadding}">
                         <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_ActivitiesTitle}" Style="{StaticResource ModalTitle}"
                                SemanticProperties.HeadingLevel="Level1" />
-                        <Button Grid.Column="1" Text="{loc:LocalizedText Common_Close}"
-                                Clicked="OnCloseSessionActivitiesClicked"
-                                Style="{StaticResource ButtonSecondary}" />
+                        <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
+                                SemanticProperties.Description="{loc:LocalizedText Common_Close}">
+                            <Border.GestureRecognizers>
+                                <TapGestureRecognizer Tapped="OnCloseSessionActivitiesClicked" />
+                            </Border.GestureRecognizers>
+                            <Path Style="{StaticResource ModalCloseIcon}" />
+                        </Border>
                     </Grid>
-                    <Grid Grid.Row="1">
+                    <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+                    <Grid Grid.Row="2" Padding="{DynamicResource PresentationModalPagePadding}">
                         <ActivityIndicator
                         Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                            HorizontalOptions="Center" VerticalOptions="Center" />
@@ -443,8 +452,9 @@
                             </ScrollView>
                         </VerticalStackLayout>
                     </Grid>
-                    <Label LineBreakMode="WordWrap" Grid.Row="2" Text="{loc:LocalizedText Workout_Session_ChooseActivityToStart}"
+                    <Label LineBreakMode="WordWrap" Grid.Row="3" Text="{loc:LocalizedText Workout_Session_ChooseActivityToStart}"
                            Style="{StaticResource MutedLabel}"
+                           Padding="{DynamicResource PresentationActionFooterPadding}"
                            IsVisible="{Binding HasActivityChoices}" />
                 </Grid>
             </Border>
@@ -462,23 +472,29 @@
                     </BoxView.GestureRecognizers>
                 </BoxView>
                 <Border Style="{StaticResource ModalSurface}"
-                        Padding="{DynamicResource PresentationModalPagePadding}"
                         MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
                         VerticalOptions="End">
-                    <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                    <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                              Padding="{DynamicResource PresentationModalHeaderPadding}">
                             <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Reschedule_Title}"
                                    Style="{StaticResource ModalTitle}"
                                    SemanticProperties.HeadingLevel="Level1" />
-                            <Button Grid.Column="1" Text="{loc:LocalizedText Common_Close}"
-                                    Command="{Binding CloseRescheduleModalCommand}"
-                                    Style="{StaticResource ButtonSecondary}" />
+                            <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
+                                    SemanticProperties.Description="{loc:LocalizedText Common_Close}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding CloseRescheduleModalCommand}" />
+                                </Border.GestureRecognizers>
+                                <Path Style="{StaticResource ModalCloseIcon}" />
+                            </Border>
                         </Grid>
 
-                        <Label Grid.Row="1" LineBreakMode="WordWrap" Text="{Binding ReschedulingWorkoutTitle}"
-                               Style="{StaticResource BodyStrong}" />
+                        <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
 
-                        <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}">
+                        <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}"
+                                             Padding="{DynamicResource PresentationModalPagePadding}">
+                            <Label LineBreakMode="WordWrap" Text="{Binding ReschedulingWorkoutTitle}"
+                                   Style="{StaticResource BodyStrong}" />
                             <Label LineBreakMode="WordWrap"
                                    Text="{Binding RescheduleStatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource ErrorLabel}"
@@ -521,6 +537,7 @@
 
                         <Button Grid.Row="3"
                                 Style="{StaticResource ButtonPrimary}"
+                                Margin="{DynamicResource PresentationActionFooterPadding}"
                                 Text="{loc:LocalizedText Workout_Reschedule_ConfirmButton}"
                                 Command="{Binding ConfirmRescheduleCommand}"
                                 IsEnabled="{Binding CanConfirmReschedule}"

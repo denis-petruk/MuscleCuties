@@ -59,7 +59,7 @@
                         Style="{StaticResource BodyLabel}"
                         LineBreakMode="WordWrap" />
 
-                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
                           Margin="{StaticResource UiInsets4_6_4_0}">
                         <sharedControls:IconSectionHeader
                             Text="{loc:LocalizedText Nutrition_Page_Meals}"

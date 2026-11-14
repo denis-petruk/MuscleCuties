@@ -13,7 +13,6 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="vm:DashboardViewModel"
     Shell.NavBarIsVisible="False"
-    Shell.TabBarIsVisible="{Binding IsAnyModalVisible, Converter={StaticResource InvertedBoolConverter}}"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 

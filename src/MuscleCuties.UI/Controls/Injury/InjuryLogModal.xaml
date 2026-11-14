@@ -40,19 +40,18 @@
                 <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
                 <injuryControls:InjuryLogContent Grid.Row="2" />
                 <!-- Form actions stay on the sheet edge instead of riding the end of a long scroll. -->
-                <Grid Grid.Row="3"
-                      ColumnDefinitions="*,*"
+                <sharedControls:AdaptiveRow Grid.Row="3" Columns="2"
                       ColumnSpacing="{StaticResource UiSpaceTight}"
-                      Padding="{DynamicResource PresentationModalPagePadding}"
+                      RowSpacing="{StaticResource UiSpaceTight}"
+                      Padding="{DynamicResource PresentationActionFooterPadding}"
                       IsVisible="{Binding ShowAddForm}">
                     <Button Text="{loc:LocalizedText Common_Cancel}"
                             Command="{Binding CancelEditCommand}"
                             Style="{StaticResource ButtonSecondary}" />
-                    <Button Grid.Column="1"
-                            Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
+                    <Button Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
                             AutomationId="InjurySaveButton" Command="{Binding SaveInjuryCommand}"
                             Style="{StaticResource ButtonPrimary}" />
-                </Grid>
+                </sharedControls:AdaptiveRow>
             </Grid>
         </Border>
     </Grid>
