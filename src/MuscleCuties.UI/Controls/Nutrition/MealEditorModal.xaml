@@ -118,7 +118,7 @@
                                                 <Span Text=" · " />
                                                 <Span Text="{Binding SelectedMealDateText}" />
                                                 <Span Text=" · " />
-                                                <Span Text="{Binding SelectedMealTime, StringFormat='{0:hh\\:mm}'}" />
+                                                <Span Text="{Binding SelectedMealTimeText}" />
                                             </FormattedString>
                                         </Label.FormattedText>
                                     </Label>

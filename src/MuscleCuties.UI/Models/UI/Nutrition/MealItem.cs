@@ -22,7 +22,7 @@ public partial class MealItem : ObservableObject
 
     [ObservableProperty] private string _targetShareText = string.Empty;
 
-    public string MacrosSummaryText => NutritionFormat.Macros(Macros.Protein, Macros.Carbs, Macros.Fats);
+    public string MacrosSummaryText => DisplayFormat.Macros(Macros.Protein, Macros.Carbs, Macros.Fats);
     public float ProteinCalories => Macros.ProteinCalories;
     public float CarbsCalories => Macros.CarbsCalories;
     public float FatsCalories => Macros.FatsCalories;

@@ -209,6 +209,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         MacroProgressFormatter.CalculateProgress(ConsumedCalories, TargetCalories);
 
     public string CaloriesConsumed => MacroProgressFormatter.FormatCaloriesConsumed(ConsumedCalories);
+    public string ConsumedCaloriesText => DisplayFormat.WholeNumber(ConsumedCalories);
     public string CaloriesGoal => MacroProgressFormatter.FormatCaloriesGoal(TargetCalories);
 
     public string ProteinText => MacroProgressFormatter.FormatGramsText(ConsumedProtein, TargetProtein);
@@ -301,10 +302,10 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         : IsIngredientSearchVisible ? "Add food"
         : IsEditingMeal ? "Edit meal" : "Log meal";
 
-    public string MealDraftCaloriesText => NutritionFormat.Calories(MealIngredients.Sum(i => i.CaloriesForAmount));
-    public string MealDraftProteinText => NutritionFormat.Grams(MealIngredients.Sum(i => i.ProteinForAmount));
-    public string MealDraftCarbsText => NutritionFormat.Grams(MealIngredients.Sum(i => i.CarbsForAmount));
-    public string MealDraftFatsText => NutritionFormat.Grams(MealIngredients.Sum(i => i.FatsForAmount));
+    public string MealDraftCaloriesText => DisplayFormat.Calories(MealIngredients.Sum(i => i.CaloriesForAmount));
+    public string MealDraftProteinText => DisplayFormat.Grams(MealIngredients.Sum(i => i.ProteinForAmount));
+    public string MealDraftCarbsText => DisplayFormat.Grams(MealIngredients.Sum(i => i.CarbsForAmount));
+    public string MealDraftFatsText => DisplayFormat.Grams(MealIngredients.Sum(i => i.FatsForAmount));
 
     public string CustomFoodToggleText => IsCustomFoodPanelVisible ? "Hide custom food" : "Create custom food";
     public string BrowseMoreFoodsButtonText => IsBrowsingMoreFoods ? "Browsing..." : "Browse more";
@@ -322,7 +323,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             var fats = MealIngredients.Sum(i => i.FatsForAmount);
             var ingredientLabel = MealIngredients.Count == 1 ? "ingredient" : "ingredients";
             return
-                $"{MealIngredients.Count} {ingredientLabel} · {NutritionFormat.Calories(calories)} · {NutritionFormat.Macros(protein, carbs, fats)}";
+                $"{MealIngredients.Count} {ingredientLabel} · {DisplayFormat.Calories(calories)} · {DisplayFormat.Macros(protein, carbs, fats)}";
         }
     }
 
@@ -331,17 +332,17 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public bool IsMealContextSummaryVisible => IsMealChoiceLocked || !IsMealContextExpanded;
     public bool CanChangeMealContext => !IsMealChoiceLocked;
     public string MealChoiceSummary =>
-        $"{UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}")} · {MealTime.Text(SelectedMealTime)}";
+        $"{UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}")} · {DisplayFormat.Time(SelectedMealTime)}";
 
     public string SelectedMealTypeText =>
         UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}");
 
     public string SelectedMealDateText =>
         IsEditingMeal && _editingMealDate.Date != DateTime.Today
-            ? _editingMealDate.ToString("MMM d", CultureInfo.CurrentCulture)
+            ? DisplayFormat.DayMonth(_editingMealDate)
             : UiTextCatalog.Get("Common_Today");
 
-    public string SelectedMealTimeText => MealTime.Text(SelectedMealTime);
+    public string SelectedMealTimeText => DisplayFormat.Time(SelectedMealTime);
 
     public bool IsFoodSourceTabsVisible =>
         IsFoodFinderExpanded && SelectedFoodResult is null && !IsCustomFoodPanelVisible;
@@ -487,7 +488,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
                         ActivityAdjustmentCalories = adjustment;
                         HasActivityAdjustment = adjustment != 0f;
                         ActivityAdjustmentText = HasActivityAdjustment
-                            ? (adjustment > 0 ? $"+{NutritionFormat.Calories(adjustment)}" : NutritionFormat.Calories(adjustment))
+                            ? (adjustment > 0 ? $"+{DisplayFormat.Calories(adjustment)}" : DisplayFormat.Calories(adjustment))
                             : string.Empty;
                         TargetCalories += adjustment;
                     }

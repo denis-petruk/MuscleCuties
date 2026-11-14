@@ -16,8 +16,8 @@ public partial class DateStripDayItem : ObservableObject
     public DateStripDayItem(DateOnly date, bool isToday)
     {
         Date = date;
-        DayName = date.ToString("ddd", CultureInfo.CurrentCulture).ToUpperInvariant();
-        DayNumber = date.Day.ToString(CultureInfo.InvariantCulture);
+        DayName = DisplayFormat.DayOfWeekShortUpper(date.ToDateTime(TimeOnly.MinValue));
+        DayNumber = DisplayFormat.DayNumber(date);
         IsToday = isToday;
     }
 
@@ -76,14 +76,14 @@ public partial class MealSectionUiGroup : ObservableObject
         var f = Math.Round(Items.Sum(i => i.Fat), 1);
 
         SummaryText = Items.Count == 0
-            ? NutritionFormat.Calories(0)
-            : $"{NutritionFormat.Calories(cals)} · {NutritionFormat.Macros(p, c, f)}";
-        CaloriesText = NutritionFormat.Calories(cals);
+            ? DisplayFormat.Calories(0)
+            : $"{DisplayFormat.Calories(cals)} · {DisplayFormat.Macros(p, c, f)}";
+        CaloriesText = DisplayFormat.Calories(cals);
         // Same N0 macro summary as Nutrition's meal card; one block reads the same on both pages.
-        MacrosText = NutritionFormat.Macros(p, c, f);
+        MacrosText = DisplayFormat.Macros(p, c, f);
         TimeText = Items.Count == 0
             ? string.Empty
-            : MealTime.Text(Items[0].LoggedAtTimestamp);
+            : DisplayFormat.Time(Items[0].LoggedAtTimestamp);
         CardName = Items.Count switch
         {
             0 => UiTextCatalog.Get("Nutrition_FoodLog_NothingLoggedYet"),

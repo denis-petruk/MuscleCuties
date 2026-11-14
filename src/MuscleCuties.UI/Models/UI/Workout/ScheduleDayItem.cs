@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Graphics;
 
 using MuscleCuties.UI.Resources.Styles;
+using MuscleCuties.UI.Services.Formatting;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 
@@ -31,6 +32,9 @@ public sealed partial class ScheduleDayItem : ObservableObject
 
     /// <summary>Calendar date for this schedule slot.</summary>
     public DateTime Date { get; init; }
+
+    /// <summary>Day number rendered through the shared value formatter.</summary>
+    public string DayNumberText => DisplayFormat.DayNumberPadded(Date);
 
     /// <summary>0-indexed week within the multi-week schedule (0..3).</summary>
     public int WeekIndex { get; init; }

@@ -181,7 +181,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     public bool IsPlainFoodEditor => !IsGroupedEditor;
     public bool CanDeleteEditingFood => IsEditingExisting && !IsMealContextLocked;
     public string MealContextSummary =>
-        $"{UiTextCatalog.Get($"Nutrition_MealType_{EditingMealType}")} · {MealTime.Text(_draftTimestamp)}";
+        $"{UiTextCatalog.Get($"Nutrition_MealType_{EditingMealType}")} · {DisplayFormat.Time(_draftTimestamp)}";
     public string EditModalTitle => IsEditingExisting
         ? (IsMealContextLocked
             ? UiTextCatalog.Get("Nutrition_Breakdown_EditMeal")
@@ -189,10 +189,10 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         : UiTextCatalog.Get("Nutrition_FoodLog_LogEntryTitle");
 
     /// <summary>Draft totals for the meal being edited, so the sheet can open on what it contains.</summary>
-    public string EditDraftCaloriesText => NutritionFormat.Calories(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Calories));
-    public string EditDraftProteinText => NutritionFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Protein));
-    public string EditDraftCarbsText => NutritionFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Carbs));
-    public string EditDraftFatsText => NutritionFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Fats));
+    public string EditDraftCaloriesText => DisplayFormat.Calories(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Calories));
+    public string EditDraftProteinText => DisplayFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Protein));
+    public string EditDraftCarbsText => DisplayFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Carbs));
+    public string EditDraftFatsText => DisplayFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Fats));
     public ObservableCollection<HistoryIngredientEditor> EditingIngredients { get; } = [];
     public IReadOnlyList<MealType> MealCategories { get; } = Enum.GetValues<MealType>();
 
@@ -210,6 +210,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     public double CalorieProgressRatio =>
         TargetCalories > 0 ? Math.Clamp(TotalCalories / TargetCalories, 0.0, 1.0) : 0.0;
+    public string TotalCaloriesText => DisplayFormat.WholeNumber(TotalCalories);
 
     public double ProteinProgressRatio => TargetProtein > 0 ? Math.Clamp(TotalProtein / TargetProtein, 0.0, 1.0) : 0.0;
     public double CarbsProgressRatio => TargetCarbs > 0 ? Math.Clamp(TotalCarbs / TargetCarbs, 0.0, 1.0) : 0.0;
@@ -221,8 +222,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         {
             var diff = TargetCalories - TotalCalories;
             return diff >= 0
-                ? $"{NutritionFormat.Calories(Math.Round(diff, 0))} remaining"
-                : $"{NutritionFormat.Calories(Math.Abs(Math.Round(diff, 0)))} over";
+                ? $"{DisplayFormat.Calories(Math.Round(diff, 0))} remaining"
+                : $"{DisplayFormat.Calories(Math.Abs(Math.Round(diff, 0)))} over";
         }
     }
 
@@ -233,15 +234,17 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         get
         {
             var today = DateOnly.FromDateTime(DateTime.Today);
-            if (SelectedDate == today)
-                return "Today, " + SelectedDate.ToString("m", CultureInfo.CurrentCulture);
-            if (SelectedDate == today.AddDays(-1))
-                return "Yesterday, " + SelectedDate.ToString("m", CultureInfo.CurrentCulture);
-            if (SelectedDate == today.AddDays(1))
-                return "Tomorrow, " + SelectedDate.ToString("m", CultureInfo.CurrentCulture);
+            var prefix = SelectedDate == today
+                ? UiTextCatalog.Get("Common_Today")
+                : SelectedDate == today.AddDays(-1)
+                    ? UiTextCatalog.Get("Common_Yesterday")
+                    : SelectedDate == today.AddDays(1)
+                        ? UiTextCatalog.Get("Common_Tomorrow")
+                        : DisplayFormat.DayMonthWithWeekday(SelectedDate);
 
-            return SelectedDate.ToString("ddd", CultureInfo.CurrentCulture) + ", " +
-                   SelectedDate.ToString("m", CultureInfo.CurrentCulture);
+            return SelectedDate == today || SelectedDate == today.AddDays(-1) || SelectedDate == today.AddDays(1)
+                ? UiTextCatalog.Format("Common_Format_RelativeDate", prefix, DisplayFormat.DayMonth(SelectedDate))
+                : prefix;
         }
     }
 

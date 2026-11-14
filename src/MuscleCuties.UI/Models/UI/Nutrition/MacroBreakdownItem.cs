@@ -13,8 +13,8 @@ public class MacroBreakdownItem
     public float Progress { get; set; }
     public Color Color { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
 
-    public string AmountText => NutritionFormat.GramsShort(Grams);
-    public string CaloriesText => NutritionFormat.Calories(Calories);
+    public string AmountText => DisplayFormat.GramsShort(Grams);
+    public string CaloriesText => DisplayFormat.Calories(Calories);
     public string ProgressText => $"{Progress * 100f:N0}%";
 
     public string IconGlyph => Name switch

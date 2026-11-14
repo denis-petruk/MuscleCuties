@@ -122,7 +122,7 @@ public partial class DashboardViewModel
     }
 
     private static string FormatGrams(double? grams) => grams is { } value
-        ? NutritionFormat.Grams(value)
+        ? DisplayFormat.Grams(value)
         : "—";
 
     private string FormatWeight(double? kilograms) => kilograms is { } value

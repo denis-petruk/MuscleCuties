@@ -97,7 +97,7 @@ public partial class NutritionViewModel
             var rp = Math.Max(0, TargetProtein - ConsumedProtein);
             var rc = Math.Max(0, TargetCarbs - ConsumedCarbs);
             var rf = Math.Max(0, TargetFats - ConsumedFats);
-            return UiTextCatalog.Format("Nutrition_Breakdown_RemainingFormat", NutritionFormat.Macros(rp, rc, rf));
+            return UiTextCatalog.Format("Nutrition_Breakdown_RemainingFormat", DisplayFormat.Macros(rp, rc, rf));
         }
     }
 
@@ -453,7 +453,7 @@ public partial class NutritionViewModel
             _ => 0.25f
         };
         var calories = (int)(TargetCalories * targetFraction);
-        return $"{NutritionFormat.Calories(calories)} target";
+        return $"{DisplayFormat.Calories(calories)} target";
     }
 
     private static MealSuggestionItem MapSuggestionDtoToItem(NutritionMealSuggestion dto)

@@ -21,6 +21,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\src\MuscleCuties.UI\Services\Formatting\DisplayFormat.cs" Link="DisplayFormat.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Workout\WorkoutAccountCalendarClient.cs" Link="WorkoutAccountCalendarClient.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Dashboard\DailyCheckInViewModel.cs" Link="DailyCheckInViewModel.cs" />
     <ProjectReference Include="..\..\src\MuscleCuties.Core\MuscleCuties.Core.csproj" />

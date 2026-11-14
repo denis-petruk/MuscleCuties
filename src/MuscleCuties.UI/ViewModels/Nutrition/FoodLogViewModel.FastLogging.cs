@@ -107,7 +107,7 @@ public partial class FoodLogViewModel
     public bool HasSelectedQuickFoods => SelectedQuickFoodsCount > 0;
 
     public string SelectedQuickFoodsSummaryText =>
-        $"Add {SelectedQuickFoodsCount} {(SelectedQuickFoodsCount == 1 ? "item" : "items")} • {NutritionFormat.Calories(SelectedQuickFoodsCalories)}";
+        $"Add {SelectedQuickFoodsCount} {(SelectedQuickFoodsCount == 1 ? "item" : "items")} • {DisplayFormat.Calories(SelectedQuickFoodsCalories)}";
 
     private void OnQuickFoodSelectionChanged(QuickFoodItemUiModel model)
     {
@@ -561,7 +561,7 @@ public partial class FoodLogViewModel
 
         await CommitFoodAsync(date,
             () => _dailyLogUseCase.SaveFoodItemAsync(date, NutritionPresentationMapper.ToLoggedFood(draft)),
-            $"Logged {name} ({NutritionFormat.Calories(calories)}).");
+            $"Logged {name} ({DisplayFormat.Calories(calories)}).");
 
         IsQuickAddCaloriesVisible = false;
         IsBarcodeScannerVisible = false;
@@ -705,7 +705,7 @@ public partial class FoodLogViewModel
 
         await CommitFoodAsync(date,
             () => _dailyLogUseCase.SaveFoodItemAsync(date, NutritionPresentationMapper.ToLoggedFood(loggedItem)),
-            $"Logged {servingsCount:0.##} {(Math.Abs(servingsCount - 1f) < 0.001f ? "serving" : "servings")} of '{recipe.Name}' ({NutritionFormat.Calories(calories)}).");
+            $"Logged {DisplayFormat.Decimal2(servingsCount)} {(Math.Abs(servingsCount - 1f) < 0.001f ? "serving" : "servings")} of '{recipe.Name}' ({DisplayFormat.Calories(calories)}).");
     }
 
     [RelayCommand]

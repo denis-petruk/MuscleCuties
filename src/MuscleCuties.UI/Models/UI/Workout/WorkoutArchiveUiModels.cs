@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Workout.Archive;
 
@@ -24,7 +25,7 @@ public partial class ExerciseSetsUiGroup : ObservableObject
         UiTextCatalog.Format(
             "Workout_History_VolumeSummaryFormat",
             workingSetCount,
-            totalVolumeKg.ToString("F0", CultureInfo.CurrentCulture));
+            DisplayFormat.WholeNumber(totalVolumeKg));
 
     public void RefreshSummary()
     {

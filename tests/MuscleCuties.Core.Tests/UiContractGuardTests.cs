@@ -403,11 +403,13 @@ public sealed class UiContractGuardTests
         Assert.Contains("shared:ModalSheetHeader", mealEditor, StringComparison.Ordinal);
         Assert.DoesNotContain("PillBadge", mealEditor, StringComparison.Ordinal);
         Assert.Contains("SelectedMealDateText", mealEditor, StringComparison.Ordinal);
-        Assert.Contains("SelectedMealTime, StringFormat", mealEditor, StringComparison.Ordinal);
+        Assert.Contains("SelectedMealTimeText", mealEditor, StringComparison.Ordinal);
+        Assert.DoesNotContain("SelectedMealTime, StringFormat", mealEditor, StringComparison.Ordinal);
         Assert.DoesNotContain("UiInsets6_0_0_0", mealEditor, StringComparison.Ordinal);
 
         var workoutPage = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Workout", "WorkoutPage.xaml"));
-        Assert.Contains("StringFormat='{0:dd}'", workoutPage, StringComparison.Ordinal);
+        Assert.Contains("DayNumberText", workoutPage, StringComparison.Ordinal);
+        Assert.DoesNotContain("StringFormat='{0:dd}'", workoutPage, StringComparison.Ordinal);
         Assert.DoesNotContain("StringFormat='{0:dd MMM}'", workoutPage, StringComparison.Ordinal);
 
         Assert.True(
@@ -665,8 +667,86 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// The audit found one value rendered as `32g`, `33г`, `32,8 г`, `3:02 PM` and
+    /// `Чт, нояб. 12, 2026` across surfaces (D10, D26, D28, D33, D38). One helper owns every
+    /// user-visible quantity, weight, duration, date and clock; a screen may not build its own shape.
+    /// </summary>
+    [Fact]
+    public void One_display_formatter_owns_quantity_date_and_time_shapes()
+    {
+        var root = RepositoryRoot();
+        var uiRoot = Path.Combine(root, "src", "MuscleCuties.UI");
+        var formattingRoot = Path.Combine(uiRoot, "Services", "Formatting");
+
+        var helperFiles = Directory.GetFiles(formattingRoot, "*.cs");
+        Assert.True(
+            helperFiles.Length == 1,
+            "User-visible values must come from one formatter; found " +
+            string.Join(", ", helperFiles.Select(Path.GetFileName)));
+
+        var helperPath = helperFiles[0];
+        Assert.Equal("DisplayFormat.cs", Path.GetFileName(helperPath));
+        var helper = File.ReadAllText(helperPath);
+        foreach (var method in new[]
+                 {
+                     "Grams", "GramsShort", "GramsWholeShort", "Milligrams", "Micrograms",
+                     "Calories", "Macros", "WeightKg", "Minutes", "Date", "DateWithWeekday",
+                     "DayMonth", "MonthYear", "FullDate", "Time"
+                 })
+            Assert.Contains($"public static string {method}(", helper, StringComparison.Ordinal);
+
+        var surfaces = new[]
+        {
+            "ViewModels/Nutrition/NutritionViewModel.cs",
+            "ViewModels/Nutrition/NutritionViewModel.Formatting.cs",
+            "ViewModels/Nutrition/NutritionViewModel.Meals.cs",
+            "ViewModels/Nutrition/NutritionViewModel.Suggestions.cs",
+            "ViewModels/Nutrition/NutritionViewModel.Targets.cs",
+            "ViewModels/Nutrition/FoodLogViewModel.cs",
+            "ViewModels/Nutrition/FoodLogViewModel.FastLogging.cs",
+            "ViewModels/Workout/WorkoutViewModel.cs",
+            "ViewModels/Workout/WorkoutHistoryViewModel.cs",
+            "ViewModels/Workout/WorkoutSessionViewModel.cs",
+            "ViewModels/Cycle/CycleViewModel.cs",
+            "ViewModels/Cycle/CycleViewModel.QuickLog.cs",
+            "ViewModels/Cycle/CycleCalendarItemBuilder.cs",
+            "ViewModels/Dashboard/DailyCheckInViewModel.cs",
+            "Models/UI/Nutrition/FoodLogUiModels.cs",
+            "Models/UI/Workout/WorkoutArchiveUiModels.cs",
+            "Models/UI/Workout/WorkoutExerciseItem.cs",
+            "Models/UI/Workout/ExerciseSetInputItem.cs",
+            "Controls/Nutrition/MealEditorModal.xaml",
+            "Controls/Nutrition/NutritionBalanceCard.xaml",
+            "Pages/Nutrition/FoodLogPage.xaml",
+            "Pages/Workout/WorkoutPage.xaml"
+        };
+
+        var inlineValueShape = new Regex(
+            """\.ToString\("[^"]*(?:N[0-9]|F[0-9]|0\.#|dd|MMM|HH|hh|mm)[^"]*"|StringFormat='\{0:(?:[^}']*(?:N[0-9]|F[0-9]|0\.#|dd|MMM|HH|hh|mm)[^}']*)\}'""",
+            RegexOptions.Compiled | RegexOptions.CultureInvariant);
+
+        var violations = new List<string>();
+        foreach (var relative in surfaces)
+        {
+            var source = File.ReadAllText(Path.Combine(uiRoot, relative));
+            if (source.Contains("NutritionFormat.", StringComparison.Ordinal) ||
+                source.Contains("DateText.", StringComparison.Ordinal) ||
+                source.Contains("MealTime.Text", StringComparison.Ordinal))
+                violations.Add($"{relative}: still calls a retired formatter");
+
+            var match = inlineValueShape.Match(source);
+            if (match.Success)
+                violations.Add($"{relative}: builds a value shape itself ({match.Value})");
+        }
+
+        Assert.True(
+            violations.Count == 0,
+            $"Render quantities, dates and clocks through DisplayFormat:\n{string.Join("\n", violations)}");
+    }
+
+    /// <summary>
     /// The QA audit read `32g` against `33г` on two screens and `P 32,8g` inside a Russian sheet (D3, D10,
-    /// D26, D28, D38, D43). Every quantity string must come from NutritionFormat; no file may rebuild one
+    /// D26, D28, D38, D43). Every quantity string must come from DisplayFormat; no file may rebuild one
     /// from a number and an English unit literal.
     /// </summary>
     [Fact]
@@ -690,7 +770,7 @@ public sealed class UiContractGuardTests
         foreach (var relative in files)
         {
             var content = File.ReadAllText(Path.Combine(root, relative));
-            Assert.Contains("NutritionFormat.", content, StringComparison.Ordinal);
+            Assert.Contains("DisplayFormat.", content, StringComparison.Ordinal);
             Assert.DoesNotMatch(@":N[01]\s*}?\s*(kcal|g\b)", content);
         }
     }
@@ -758,11 +838,11 @@ public sealed class UiContractGuardTests
 
         var converter = File.ReadAllText(Path.Combine(
             root, "src", "MuscleCuties.UI", "Resources", "Converters", "SessionDateConverter.cs"));
-        Assert.Contains("DateText.SessionDate", converter, StringComparison.Ordinal);
+        Assert.Contains("DisplayFormat.DateWithWeekday", converter, StringComparison.Ordinal);
 
         var viewModel = File.ReadAllText(Path.Combine(
             root, "src", "MuscleCuties.UI", "ViewModels", "Workout", "WorkoutHistoryViewModel.cs"));
-        Assert.Contains("DateText.SessionStamp", viewModel, StringComparison.Ordinal);
+        Assert.Contains("DisplayFormat.DateWithWeekdayStamp", viewModel, StringComparison.Ordinal);
         Assert.DoesNotContain("ToString(\"D\"", viewModel, StringComparison.Ordinal);
     }
 
@@ -933,7 +1013,7 @@ public sealed class UiContractGuardTests
 
         Assert.True(
             violations.Count == 0,
-            $"Found {violations.Count} culture-short meal time(s). Render them through MealTime.Text (HH:mm):\n"
+            $"Found {violations.Count} culture-short meal time(s). Render them through DisplayFormat.Time (HH:mm):\n"
             + string.Join("\n", violations));
     }
 

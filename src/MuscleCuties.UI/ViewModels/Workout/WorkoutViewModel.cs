@@ -7,6 +7,7 @@ using Microsoft.Maui.Graphics;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Pages.Profile;
 using MuscleCuties.UI.Pages.Workout;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Localization;
@@ -909,7 +910,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             .Select(day => new RescheduleDateOption(
                 DateOnly.FromDateTime(day.Date),
                 day.DayLabel,
-                day.Date.ToString("dd MMM", CultureInfo.InvariantCulture)))
+                DisplayFormat.DayMonth(day.Date)))
             .ToList();
 
         AvailableRescheduleDates = new ObservableCollection<RescheduleDateOption>(emptyDays);

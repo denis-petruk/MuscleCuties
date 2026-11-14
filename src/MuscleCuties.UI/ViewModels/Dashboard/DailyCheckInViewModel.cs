@@ -4,6 +4,7 @@ using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using IHealthSyncService = MuscleCuties.Core.Services.Health.IHealthSyncService;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
@@ -104,7 +105,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         }
     }
 
-    public string SleepDisplay => _isSleepHoursAnswered ? $"{SleepHours:F1}h" : "—";
+    public string SleepDisplay => _isSleepHoursAnswered ? DisplayFormat.Hours(SleepHours) : "—";
 
     /// <summary>True once every required check-in question has an explicit answer.</summary>
     public bool AreAllAnswersProvided => Answers.IsComplete;
@@ -159,7 +160,7 @@ public partial class DailyCheckInViewModel : ObservableObject
             PlanningStress = readiness?.Stress;
             IsCompleted = readiness is { Status: "Available" };
             ReadinessScoreText = IsReadinessScoreDisplayEnabled && readiness is { Status: "Available", RawScore: { } }
-                ? readiness!.RawScore!.Value.ToString("0.##", CultureInfo.CurrentCulture)
+                ? DisplayFormat.Decimal2(readiness!.RawScore!.Value)
                 : string.Empty;
             ReadinessTierText = IsReadinessScoreDisplayEnabled ? BandLocalizationKey(readiness?.Band) : string.Empty;
             SessionSummaryText = string.Empty;
@@ -204,7 +205,7 @@ public partial class DailyCheckInViewModel : ObservableObject
                         IsSleepAutoFilled = true;
                         SleepAutoFilledBadgeText = UiTextCatalog.Format(
                             "Dashboard_CheckIn_HealthKitSleepBadge",
-                            SleepHours.ToString("F1", CultureInfo.CurrentCulture));
+                            DisplayFormat.Decimal1(SleepHours));
                         OnPropertyChanged(nameof(SleepDisplay));
                         OnAnswerChanged();
                     }
@@ -285,7 +286,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         {
             var result = await _checkIn.SubmitAsync(request);
             ReadinessScoreText = IsReadinessScoreDisplayEnabled && result.TodayReadiness?.RawScore is { } rawScore
-                ? rawScore.ToString("0.##", CultureInfo.CurrentCulture)
+                ? DisplayFormat.Decimal2(rawScore)
                 : string.Empty;
             ReadinessTierText = IsReadinessScoreDisplayEnabled ? BandLocalizationKey(result.TodayReadiness?.Band) : string.Empty;
             SessionSummaryText = result.SessionSummary;

@@ -7,6 +7,7 @@ using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
@@ -114,7 +115,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     }
 
     public string PhaseLabel => CurrentPhase.ToString();
-    public string CurrentMonthLabel => DisplayedMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
+    public string CurrentMonthLabel => DisplayFormat.MonthYearFull(DisplayedMonth);
 
     public string CycleDaySummary => HasActiveCycle
         ? _cachedPrediction?.PredictionSource == "default"
@@ -133,7 +134,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     public string PredictionSummary => HasActiveCycle
         ? IsPredictionCached
             ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Format("Ui_Cycle_CachedEstimateFormat",
-                _cachedPrediction!.CachedAsOfDate!.Value.ToString("d", CultureInfo.CurrentCulture))
+                DisplayFormat.ShortDate(_cachedPrediction!.CachedAsOfDate!.Value))
             : _cachedPrediction?.PredictionSource == "default"
                 ? $"Estimate using a {CycleLength}-day baseline; personal cycle length unavailable"
                 : $"Prediction from {CycleLength}d cycle"
@@ -399,7 +400,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         HasPhaseJumpWarning = false;
         PhaseEditStatusText = string.Empty;
         CalendarEditHintText = string.Empty;
-        SelectedCalendarDateText = day.Date.Value.ToString("D", CultureInfo.CurrentCulture);
+        SelectedCalendarDateText = DisplayFormat.FullDate(day.Date.Value);
         SelectedCalendarPhaseText = day.IsNeutral
             ? "Neutral, ready when you are"
             : day.HasRecordedObservation
@@ -545,7 +546,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             ? "No shift logged yet"
             : MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
                 "Cycle_Calendar_LastLogFormat",
-                log.LoggedAt.ToString("d MMM", CultureInfo.CurrentCulture));
+                DisplayFormat.DayMonth(log.LoggedAt));
     }
 
     private ObservableCollection<CycleDayItem> BuildCalendarDays(

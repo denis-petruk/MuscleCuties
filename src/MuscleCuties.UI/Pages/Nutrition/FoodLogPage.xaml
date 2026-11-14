@@ -209,7 +209,7 @@
                                     <Label Text="{loc:LocalizedText Dashboard_Nutrition_Calories}"
                                            Style="{StaticResource MutedLabel}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-                                    <Label Text="{Binding TotalCalories, StringFormat='{0:F0}'}"
+                                    <Label Text="{Binding TotalCaloriesText}"
                                            Style="{StaticResource MetricValue}" />
                                     <Label Text="{Binding TargetCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_TargetCaloriesValueKcal}"
                                            Style="{StaticResource MutedLabel}" />

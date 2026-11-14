@@ -7,7 +7,7 @@ namespace MuscleCuties.UI.Resources.Converters;
 public sealed class SessionDateConverter : IValueConverter
 {
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
-        value is DateTime date ? DateText.SessionDate(date) : string.Empty;
+        value is DateTime date ? DisplayFormat.DateWithWeekday(date) : string.Empty;
 
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();

@@ -6,6 +6,7 @@ using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UseCases.Features.Cycle;
 using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 
@@ -78,8 +79,7 @@ public partial class CycleViewModel
     {
         var targetDate = day?.Date ?? SelectedDate;
         SelectedDate = targetDate;
-        QuickLogDateText = targetDate.ToString("dddd", CultureInfo.CurrentCulture) + ", " +
-                           targetDate.ToString("m", CultureInfo.CurrentCulture) +
+        QuickLogDateText = DisplayFormat.DayMonthLongWithWeekday(targetDate) +
                            (day?.HasRecordedObservation == true ? " · Recorded" :
                                day?.IsPredictedFuture == true ? " · Predicted" : string.Empty);
         QuickLogStatusText = string.Empty;

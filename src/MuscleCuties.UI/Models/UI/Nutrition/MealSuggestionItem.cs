@@ -38,7 +38,7 @@ public class MealSuggestionItem
     public IReadOnlyList<string> SpiceBlendNames => SpiceBlends.Select(s => s.Name).ToList();
 
     public string CaloriesText => $"{(int)Macros.Calories} kcal";
-    public string MacrosText => NutritionFormat.Macros(Macros.Protein, Macros.Carbs, Macros.Fats);
+    public string MacrosText => DisplayFormat.Macros(Macros.Protein, Macros.Carbs, Macros.Fats);
 
     public string SpiceBlendSummary => SpiceBlends.Count > 0
         ? string.Join(" | ", SpiceBlendNames)
@@ -185,7 +185,7 @@ public record MealSuggestionComponentGroup(
     string IconGlyph,
     IReadOnlyList<MealSuggestionComponentItem> Items)
 {
-    public string TotalText => $"{NutritionFormat.GramsShort(Items.Sum(i => i.Grams))} · {NutritionFormat.Calories(Items.Sum(i => i.CaloriesForAmount))}";
+    public string TotalText => $"{DisplayFormat.GramsShort(Items.Sum(i => i.Grams))} · {DisplayFormat.Calories(Items.Sum(i => i.CaloriesForAmount))}";
 }
 
 public class MealSuggestionComponentItem
@@ -217,11 +217,11 @@ public class MealSuggestionComponentItem
         _ => "Item"
     };
 
-    public string PortionText => NutritionFormat.GramsShort(Grams);
+    public string PortionText => DisplayFormat.GramsShort(Grams);
 
-    public string CaloriesText => NutritionFormat.Calories(CaloriesForAmount);
+    public string CaloriesText => DisplayFormat.Calories(CaloriesForAmount);
 
-    public string DetailText => $"{NutritionFormat.GramsShort(Grams)} · {NutritionForAmountText}";
+    public string DetailText => $"{DisplayFormat.GramsShort(Grams)} · {NutritionForAmountText}";
 }
 
 public sealed record DayMealPlanItem(
@@ -253,7 +253,7 @@ public sealed record DayMealPlanItem(
     };
 
     public string TargetSummaryText =>
-        $"{NutritionFormat.Calories(Target.Calories)} · {TargetSharePercent}% of daily target";
+        $"{DisplayFormat.Calories(Target.Calories)} · {TargetSharePercent}% of daily target";
 
     public int TargetSharePercent => !float.IsFinite(DailyCaloriesTarget) || DailyCaloriesTarget <= 0f ||
                                      !float.IsFinite(Target.Calories)

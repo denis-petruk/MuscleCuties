@@ -12,8 +12,8 @@ public class DailyMicronutrientItem
 
     public float Progress => Goal <= 0f ? 0f : Math.Clamp(Amount / Goal, 0f, 1f);
     public bool IsGoalHit => Goal > 0f && Amount >= Goal;
-    public string AmountText => NutritionFormat.Micronutrient(Amount, Unit);
-    public string GoalText => $"/ {NutritionFormat.Micronutrient(Goal, Unit)}";
+    public string AmountText => DisplayFormat.Micronutrient(Amount, Unit);
+    public string GoalText => $"/ {DisplayFormat.Micronutrient(Goal, Unit)}";
     public string ProgressText => Goal <= 0f ? "No target" : $"{Progress * 100f:N0}%";
 
     public string IconGlyph => Name switch

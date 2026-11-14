@@ -1,6 +1,7 @@
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Workout;
+using MuscleCuties.UI.Services.Formatting;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 
@@ -51,8 +52,8 @@ public partial class ExerciseSetInputItem : ObservableObject
         var formatted = FormatWeightAndReps(weightKg, repsCompleted);
         WeightInput = formatted.WeightInput;
         RepsInput = formatted.RepsInput;
-        RpeInput = rpe.HasValue ? rpe.Value.ToString("F1", CultureInfo.CurrentCulture) : string.Empty;
-        RirInput = Rir.HasValue ? Rir.Value.ToString("F1", CultureInfo.CurrentCulture) : string.Empty;
+        RpeInput = rpe.HasValue ? DisplayFormat.Decimal1(rpe.Value) : string.Empty;
+        RirInput = Rir.HasValue ? DisplayFormat.Decimal1(Rir.Value) : string.Empty;
         WasEdited = false;
     }
 
@@ -66,8 +67,7 @@ public partial class ExerciseSetInputItem : ObservableObject
 
     internal static (string WeightInput, string RepsInput) FormatWeightAndReps(double weightKg, int repsCompleted)
     {
-        return (weightKg.ToString("F1", CultureInfo.CurrentCulture),
-            repsCompleted.ToString(CultureInfo.CurrentCulture));
+        return (DisplayFormat.Decimal1(weightKg), repsCompleted.ToString(CultureInfo.CurrentCulture));
     }
 
     internal static (double WeightKg, int RepsCompleted) ParseWeightAndReps(string weightInput, string repsInput,

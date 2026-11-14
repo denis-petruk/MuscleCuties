@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 
 using MuscleCuties.UI.Resources.Styles;
+using MuscleCuties.UI.Services.Formatting;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 
@@ -226,7 +227,7 @@ public partial class WorkoutExerciseItem : ObservableObject
         var avgReps = (int)Math.Round(primarySets.Average(s => s.RepsCompleted));
         LoggedRepsText = avgReps.ToString(CultureInfo.InvariantCulture);
         var maxWeight = primarySets.Max(s => s.WeightKg);
-        LoggedWeightText = maxWeight.ToString("F1", CultureInfo.CurrentCulture);
+        LoggedWeightText = DisplayFormat.Decimal1(maxWeight);
     }
 
     private static bool TryParseWeight(string? value, out double weight)

@@ -8,6 +8,7 @@ using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Api;
@@ -311,7 +312,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         "Workout_Session_ExercisePositionFormat", CurrentExerciseIndex + 1, TotalExercisesInActivity);
     public string TipsButtonText => UiTextCatalog.Get(
         IsTipsExpanded ? "Workout_Session_TipsHide" : "Workout_Session_TipsShow");
-    public string RestTimerDisplay => $"{RestTimerRemainingSeconds / 60:00}:{RestTimerRemainingSeconds % 60:00}";
+    public string RestTimerDisplay => DisplayFormat.Timer(RestTimerRemainingSeconds);
 
     public double RestTimerProgress => RestTimerTotalSeconds > 0
         ? Math.Clamp((double)RestTimerRemainingSeconds / RestTimerTotalSeconds, 0, 1)
@@ -952,7 +953,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         var ids = activity.Exercises.Select(exercise => exercise.WorkoutDayExerciseId).ToHashSet();
         var volume = _savedLogs.Where(pair => ids.Contains(pair.Key))
             .Sum(pair => (double)pair.Value.CompletedSets * pair.Value.CompletedReps * (pair.Value.WeightKg ?? 0));
-        SummaryTotalVolume = volume >= 1000 ? $"{volume / 1000:0.#} t" : $"{volume:0.#} kg";
+        SummaryTotalVolume = DisplayFormat.SummaryVolume(volume);
         SummaryPrCount = _prIds.Count(ids.Contains);
         SummaryDuration = timer is null || timer.Elapsed.TotalMinutes < 1
             ? UiTextCatalog.Get("Workout_Session_SummaryDurationUnderMinute")
@@ -1042,8 +1043,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             ? UiTextCatalog.Format("Workout_Session_SummaryEffortFormat", rating)
             : UiTextCatalog.Get("Workout_Session_SummaryEffortNotRated");
         SummaryDistanceText = distanceKm is { } km
-            ? UiTextCatalog.Format("Workout_Session_SummaryDistanceFormat",
-                km.ToString("0.##", CultureInfo.CurrentCulture))
+            ? UiTextCatalog.Format("Workout_Session_SummaryDistanceFormat", DisplayFormat.Decimal2((double)km))
             : string.Empty;
         SummaryTitle = "Workout_Session_TimedSummaryTitle";
         SummaryStatusText = "Workout_Session_TimedSummaryStatus";

@@ -15,17 +15,17 @@ public static class MacroProgressFormatter
 
     public static string FormatCaloriesConsumed(float consumed)
     {
-        return NutritionFormat.Calories((int)consumed);
+        return DisplayFormat.Calories((int)consumed);
     }
 
     public static string FormatCaloriesGoal(float target)
     {
-        return $"/ {NutritionFormat.Calories((int)target)}";
+        return $"/ {DisplayFormat.Calories((int)target)}";
     }
 
     public static string FormatGramsText(float consumed, float target)
     {
-        return $"{NutritionFormat.GramsWholeShort(consumed)} / {NutritionFormat.GramsWholeShort(target)}";
+        return $"{DisplayFormat.GramsWholeShort(consumed)} / {DisplayFormat.GramsWholeShort(target)}";
     }
 
     public static string GetPhaseIconGlyph(CyclePhase phase)

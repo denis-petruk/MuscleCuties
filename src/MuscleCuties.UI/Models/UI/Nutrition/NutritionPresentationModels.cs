@@ -11,10 +11,10 @@ public readonly record struct NutritionMacros(
     float CarbsCalories,
     float FatsCalories)
 {
-    public string CaloriesText => NutritionFormat.Calories(Calories);
-    public string MacrosText => NutritionFormat.Macros(Protein, Carbs, Fats);
-    public string MacroText => NutritionFormat.Macros(Protein, Carbs, Fats);
-    public string NutritionText => $"{NutritionFormat.Calories(Calories)} · {NutritionFormat.Macros(Protein, Carbs, Fats)}";
+    public string CaloriesText => DisplayFormat.Calories(Calories);
+    public string MacrosText => DisplayFormat.Macros(Protein, Carbs, Fats);
+    public string MacroText => DisplayFormat.Macros(Protein, Carbs, Fats);
+    public string NutritionText => $"{DisplayFormat.Calories(Calories)} · {DisplayFormat.Macros(Protein, Carbs, Fats)}";
 }
 
 /// <summary>UI-local coverage statement; the presentation layer never binds a use-case DTO.</summary>

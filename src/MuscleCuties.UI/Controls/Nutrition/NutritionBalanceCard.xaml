@@ -57,7 +57,7 @@
                 <Label
                     Grid.Row="0"
                     Grid.Column="1"
-                    Text="{Binding ConsumedCalories, StringFormat='{0:F0}'}"
+                    Text="{Binding ConsumedCaloriesText}"
                     Style="{StaticResource MetricValue}" />
                 <Label
                     Grid.Row="1"

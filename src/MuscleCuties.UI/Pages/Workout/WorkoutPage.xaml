@@ -232,7 +232,7 @@
                                         <Label Text="{Binding DayLabel, Converter={StaticResource LocalizedStringConverter}}"
                                                Style="{StaticResource DayStripDayName}"
                                                LineBreakMode="WordWrap" />
-                                        <Label Text="{Binding Date, StringFormat='{0:dd}'}"
+                                        <Label Text="{Binding DayNumberText}"
                                                Style="{StaticResource DayStripDayName}"
                                                LineBreakMode="WordWrap" />
                                         <BoxView WidthRequest="{StaticResource UiDimension4}"

@@ -35,7 +35,7 @@ public class MealIngredientItem
 
             return string.Equals(label, "g", StringComparison.OrdinalIgnoreCase)
                 ? amountText
-                : $"{amountText} · {NutritionFormat.Grams(Grams)}";
+                : $"{amountText} · {DisplayFormat.Grams(Grams)}";
         }
     }
 }

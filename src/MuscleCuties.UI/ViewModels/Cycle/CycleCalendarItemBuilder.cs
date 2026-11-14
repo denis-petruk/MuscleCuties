@@ -5,6 +5,7 @@ using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 
@@ -72,7 +73,7 @@ public static class CycleCalendarItemBuilder
             HasSymptomLog = existingDay?.HasSymptomLog ?? false,
             IsEstimated = existingDay?.IsEstimated ?? false,
             IsPredictedFuture = existingDay?.IsPredictedFuture ?? false,
-            DayOfWeekShort = date.ToString("ddd", CultureInfo.CurrentCulture)[..1].ToUpperInvariant(),
+            DayOfWeekShort = DisplayFormat.DayOfWeekInitial(date),
             PhaseMarkerColor = markerColor,
             BackgroundColor = isSelected
                 ? PhaseThemePalette.GetSelectedDayBackgroundColor(useDarkTheme)
@@ -177,7 +178,7 @@ public static class CycleCalendarItemBuilder
                     : isEstimated
                         ? "UiStrokeWidth1_15"
                         : "UiStrokeWidth0"),
-            DayOfWeekShort = date.ToString("ddd", CultureInfo.CurrentCulture)[..1].ToUpperInvariant(),
+            DayOfWeekShort = DisplayFormat.DayOfWeekInitial(date),
             PhaseMarkerColor = isNeutral
                 ? PhaseThemePalette.GetNeutralDividerColor(useDarkTheme)
                 : PhaseThemePalette.GetPhaseTextColor(phase, useDarkTheme, default)

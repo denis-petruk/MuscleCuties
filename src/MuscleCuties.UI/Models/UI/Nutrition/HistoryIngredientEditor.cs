@@ -69,7 +69,7 @@ public partial class HistoryIngredientEditor : ObservableObject
     public NutritionMacros MacrosForDraft => NutritionPresentationMapper.FromPer100Grams(
         _caloriesPer100Grams, _proteinPer100Grams, _carbsPer100Grams, _fatsPer100Grams, Grams);
 
-    public string DetailText => $"{NutritionFormat.Grams(Grams)} · {MacrosForDraft.NutritionText}";
+    public string DetailText => $"{DisplayFormat.Grams(Grams)} · {MacrosForDraft.NutritionText}";
 
     /// <summary>
     /// The quantity to persist. An untouched or invalid draft keeps the original value, so a failed
