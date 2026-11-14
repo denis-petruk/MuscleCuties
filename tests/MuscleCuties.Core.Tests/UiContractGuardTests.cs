@@ -271,6 +271,26 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// The modal frame owns the keyboard inset and every sheet body scrolls inside it. A sheet that
+    /// skipped either would put its fields back under the keys, which is the defect the frame fixes
+    /// for all of them at once.
+    /// </summary>
+    [Fact]
+    public void Modal_frame_owns_the_keyboard_inset_and_every_sheet_body_scrolls()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var frame = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Shared", "AnimatedModalView.cs"));
+
+        Assert.Contains("ModalKeyboardInset.Subscribe", frame, StringComparison.Ordinal);
+        Assert.Contains("ApplySheetHeight", frame, StringComparison.Ordinal);
+
+        // A sheet may ship its own body, but the frame must wrap the rest: wrapping is what lets the
+        // shortened sheet scroll instead of clipping its last rows behind the keys.
+        Assert.Contains("EnsureScrollBody", frame, StringComparison.Ordinal);
+        Assert.Contains("new ScrollView", frame, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// The meal card header is a three-part row: type icon, meal type, calorie block at the trailing
     /// edge. A wrapped FlexLayout defaults to Start, which put the calories straight after the word
     /// (`Завтрак0 ккал`) instead of at the far edge, so the header must state its distribution.

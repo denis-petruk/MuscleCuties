@@ -17,12 +17,15 @@ public class AnimatedModalView : ContentView
     public static readonly BindableProperty RestoreFocusTargetProperty =
         BindableProperty.Create(nameof(RestoreFocusTarget), typeof(VisualElement), typeof(AnimatedModalView));
 
+
+
     private VisualElement? _capturedFocusTarget;
     private ContentPage? _isolationPage;
     private Page? _hookedPage;
     private long _transitionVersion;
     private bool _focusEntryPending;
     private bool _announcementDelivered;
+    private Action<double>? _keyboardHandler;
 
     public AnimatedModalView()
     {
@@ -102,6 +105,7 @@ public class AnimatedModalView : ContentView
         {
             ModalAccessibilityScope.Release(page, this);
             ModalTabBar.Release(page);
+            DetachKeyboard();
             _isolationPage = null;
         }
     }
@@ -170,6 +174,84 @@ public class AnimatedModalView : ContentView
 #endif
     }
 
+    /// <summary>
+    /// Shortens the sheet by the keyboard overlap so the sheet's own scroll body stays reachable.
+    /// </summary>
+    /// <remarks>
+    /// The sheet is anchored to the bottom of the window; without this the keys covered the lower
+    /// part of every modal, which is where a picker's results and a sheet's commit button live. The
+    /// work is done on the surface border rather than per sheet, so every modal gets the same
+    /// behaviour from the same numbers (see <see cref="ModalKeyboardInset"/>).
+    /// </remarks>
+    private void AttachKeyboard()
+    {
+        _keyboardHandler ??= OnKeyboardInsetChanged;
+        ModalKeyboardInset.Subscribe(_keyboardHandler);
+    }
+
+    private void DetachKeyboard()
+    {
+        if (_keyboardHandler is not null)
+            ModalKeyboardInset.Unsubscribe(_keyboardHandler);
+
+        ApplySheetHeight(0);
+    }
+
+    private void OnKeyboardInsetChanged(double inset) => ApplySheetHeight(inset);
+
+    private void ApplySheetHeight(double keyboardInset)
+    {
+        var surface = SheetSurface();
+        if (surface is null)
+            return;
+
+        var body = EnsureScrollBody(surface);
+        if (body is null)
+            return;
+
+        // Padding grows the scrollable extent by exactly the covered strip; MAUI's own keyboard
+        // handling then brings the focused field above the keys.
+        body.Padding = new Thickness(body.Padding.Left, body.Padding.Top, body.Padding.Right, Math.Max(0, keyboardInset));
+    }
+
+    /// <summary>
+    /// Guarantees the sheet has one scrollable body.
+    /// </summary>
+    /// <remarks>
+    /// Nine sheets drew their content straight into the surface with no scroll view, so shortening the
+    /// sheet for the keyboard had nowhere to scroll and their last rows stayed unreachable. The frame
+    /// wraps the surface content once, on first open, instead of each sheet repeating the wrapper; a
+    /// sheet that already ships its own body (the food picker) keeps it.
+    /// </remarks>
+    private static ScrollView? EnsureScrollBody(Border surface)
+    {
+        if (surface.Content is ScrollView existing)
+            return existing;
+
+        if (surface.Content is null)
+            return null;
+
+        var body = new ScrollView
+        {
+            Content = surface.Content,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Never
+        };
+
+        surface.Content = body;
+        return body;
+    }
+
+    private Border? SheetSurface()
+    {
+        var style = Application.Current?.Resources.TryGetValue("ModalSurface", out var resource) == true
+            ? resource as Style
+            : null;
+
+        return Descendants()
+            .OfType<Border>()
+            .FirstOrDefault(border => style is null || ReferenceEquals(border.Style, style));
+    }
+
     private static void OnIsOpenChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is not AnimatedModalView modal)
@@ -201,6 +283,7 @@ public class AnimatedModalView : ContentView
         HookPage(_isolationPage);
         ModalAccessibilityScope.Acquire(_isolationPage, this);
         ModalTabBar.Acquire(_isolationPage);
+        AttachKeyboard();
         ModalTransition.PlayShow(this);
 
         // Layout of a content-sized sheet completes after this property change. Focus and the
