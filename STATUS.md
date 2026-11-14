@@ -1,63 +1,75 @@
-# Status — QA plan implementation, branch `fix/qa-audit-followups`
+# Status — QA audit fixes, branch `fix/qa-audit-followups`
 
-## 1. Commits
+## 1. Changed files
 
-Six commits on `fix/qa-audit-followups`, D54 kept separate from the Wave A work:
+Nine commits on `fix/qa-audit-followups`; the D54 fix stays its own commit.
 
-- `19887dca` — restored `docs/release-audit/2026-11-05/WORKOUT_POLICY.md`. **D16 fixed.**
-- `cd65f85d` — one 24-hour `MealTime` formatter. **D48's 12-hour half fixed.**
-- `3a2daf1e` — the pre-existing 1,921-line primitives base, committed as its own base.
-- `f28aa3b1` — **D54 fixed.** Meal card header declares `JustifyContent="SpaceBetween"`; the heading grows.
-- `3b55255c` — **Wave A frame:** `ModalKeyboardInset`, one scroll body, keyboard padding.
-- `7023dc81` — **Wave A close-out:** the frame reveals the content below the focused field, keeps a 12 pt
-  footer reserve, the toast hosts use the `UiInsets20_0_20_72` clearance token, and the food editor drops
-  its header/tabs/ingredient list while the search field is focused. Evidence images in
-  `docs/qa-evidence/wave-a/`.
+- `19887dca` — restored `docs/release-audit/2026-11-05/WORKOUT_POLICY.md` (D16).
+- `cd65f85d` — one 24-hour `MealTime` formatter (D48's 12-hour half).
+- `3a2daf1e` — the pre-existing shared-primitives base.
+- `f28aa3b1` — **D54**, meal card header gap.
+- `3b55255c` — modal frame: `ModalKeyboardInset`, one scroll body, keyboard padding.
+- `7023dc81` — reveal content under the focused field, 12 pt sheet footer reserve, toast clearance
+  token, picker search mode.
+- this pass (`Wave A close-out`), uncommitted until the commit below:
+  - `Controls/Shared/AnimatedModalView.cs` — `FindScrollBody` reuses a sheet's own nested `ScrollView`
+    instead of wrapping it (the check-in sheet's pinned footer was being pushed off-screen by a
+    second body).
+  - `Resources/Styles/Styles.xaml` — `PresentationPageContentPadding` bottom 32 → 96 so page content
+    clears the floating tab bar (D37 at rest).
+  - `Controls/Nutrition/MealEditorModal.xaml` — named rows for search mode; the search pane gets an
+    opaque background so the ingredient list cannot show through real result rows.
+  - `Controls/Nutrition/MealEditorModal.xaml.cs` — search mode on focus/blur; submit no longer
+    unfocuses the field.
+  - `ViewModels/Nutrition/NutritionViewModel.Search.cs` / `.Notifications.cs` — 400 ms debounced
+    search on typing, so hits appear while the keys are up (D51).
+  - `Services/Nutrition/LoopbackFoodCatalogSearchStore.cs` (new), `UseCases/.../DevelopmentFoodCatalog.cs`
+    (new), `Composition/ApplicationCompositionExtensions.cs` — a Debug loopback build falls back to a
+    synthetic catalogue when the local API answers empty; production and Beta keep the cloud store.
+  - `tests/MuscleCuties.Core.Tests/DevelopmentFoodCatalogTests.cs` (4 tests),
+    `UiContractGuardTests.cs` (+4 guards).
 
-## 2. What the screenshots show
-
-| Claim | Evidence |
-| --- | --- |
-| D54: `Завтрак … 0 ккал` with the gap, light | `docs/qa-evidence/wave-a/P6-foodlog-cards-light.png` |
-| D54: same in dark | `Q9-foodlog-cards-dark.png` |
-| D51: field, `Поиск` and the result row above the keyboard, light | `Q12-searchmode-light.png`, `Q13-results-light.png` |
-| D51: same in dark | `Q14-results-dark.png` |
-| D52 scroll half: entry sheet scrolls, footer clear of the edge | `R4-entry-sheet-dark.png` |
-| D48: 24-hour time in the entry sheet | `R4-entry-sheet-dark.png` shows `22:08` |
-
-**Not shown on screen:** the built-in food catalogue returned no matches in the simulator, so the result
-row in the picker screenshots is the no-match state. No toast was triggered, so D50's clearance is a
-code-level fix only. The check-in sheet itself was not re-photographed this pass (D5/D37 rest on the frame's
-footer reserve and on the tab bar being hidden while a sheet is open).
-
-## 3. Commands and output
+## 2. Test commands and output
 
 ```
-dotnet build … -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64
+dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64
     0 Warning(s)    0 Error(s)
 
 dotnet test tests/MuscleCuties.Core.Tests
-Passed!  - Failed: 0, Passed: 1384, Skipped: 0, Total: 1384
+Passed!  - Failed: 0, Passed: 1391, Skipped: 0, Total: 1391
+
+dotnet test tests/MuscleCuties.Core.Tests --filter "UiContractGuard|UiStyleGate"
+Passed!  - Failed: 0, Passed: 33, Skipped: 0, Total: 33
 ```
 
-Guard tests added this pass (all green, 30 in the UiContractGuard/UiStyleGate slice):
-`Modal_frame_reveals_the_content_below_the_focused_field`,
-`Toast_hosts_clear_the_floating_tab_bar`,
-`Food_picker_collapses_the_rows_that_do_not_belong_to_the_search`, on top of the earlier frame and meal-card
-guards.
+Screenshots in `docs/qa-evidence/wave-a/`:
 
-## 4. Still open
+| File | What it proves |
+| --- | --- |
+| `picker-keyboard-hit-light.png`, `picker-keyboard-hit-dark.png` | picker with `chicken` typed, keyboard up, `Поиск` and real rows (`Chicken feet`, `Chicken skin`) on screen |
+| `picker-first-result-selected-light.png`, `picker-first-result-selected-dark.png` | tapping the first row lands on the portion sheet for `Chicken feet`, keyboard still up |
+| `checkin-sheet-footer-light.png`, `checkin-sheet-footer-dark.png` | check-in sheet with `Пока пропустить` / `Сохранить отметку` inside the reserved footer, above the home indicator |
+| `checkin-button-clear-of-tabbar-light.png` | `Заполнить отметку` fully above the floating tab bar after the padding fix |
+| `entry-sheet-light.png`, `entry-sheet-dark.png` | entry sheet with its actions inside the sheet; time reads `23:26` |
+| `editor-sheet-footer-light.png`, `editor-sheet-footer-dark.png` | editor with `Отмена` / `Приём пищи` pinned inside the sheet |
+| `breakdown-sheet-light.png`, `breakdown-sheet-dark.png` | breakdown sheet, no tab-bar or footer overlap |
+| `P6-foodlog-cards-light.png`, `Q9-foodlog-cards-dark.png` | D54 meal card header in both themes |
+| `Q12`–`Q14` | the earlier no-match picker states, kept as before/after for D51 |
 
-- **D51 result row with real hits** — the layout half is fixed and photographed against the empty state; a
-  real search hit could not be produced in the simulator.
-- **D5 / D37** — structural fix only, no screenshot of the check-in footer.
-- **D50** — code-level fix, no toast photographed.
-- **D52 template action** — `Использовать шаблон` is still a silent no-op.
-- **Not started:** D1/D46 (accessibility tree and the edit action), D47, D29/D30/D20, the cycle wave
-  (D39–D45), the copy wave, and the remaining formatter/selection/header primitives from the plan.
+## 3. Not verified, and why
 
-## 5. Next step
+- **Toast (D50, D32) is still open.** Both hosts only show a toast on a failed request; the local API is
+  healthy, and `FoodLogPage`'s daily-log link does not respond to taps in this build, so the notes-save
+  toast could not be triggered. No toast screenshot exists, so D50 is not claimed closed.
+- **`FoodLogPage` entry is unreachable from the Nutrition page** — the `Дневник питания` label does not
+  navigate, by text tap or by point tap. This is a separate finding to triage, not fixed here.
+- The picker search for a real hit required a local catalogue: the loopback API answers `401` without a
+  local session and the local Postgres databases have no schema (`\dt` → no relations), so the Debug
+  fallback catalogue is what the picker shows. That fallback does not exist in Beta or Production.
+- Dark screenshots of the check-in sheet, entry sheet, editor and breakdown exist; the check-in
+  **button at rest** is only photographed in light.
 
-Give the food search a reachable catalogue (or seed a custom food) so the picker's result row can be
-photographed with a real hit, then drive the check-in and a toast in both themes. After that, the cycle wave
-and D46 — the frame is now stable enough to carry them.
+## 4. Next step
+
+Trigger a real toast: reach `FoodLogPage` (fix the dead daily-log link first) and save notes, then capture
+the banner in both themes. After that, close Wave A and move to the cycle wave.

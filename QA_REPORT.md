@@ -365,10 +365,9 @@ the same English names to icons; neither resolves through `UiTextCatalog`. The d
 an untranslated or unresolved string as a release defect, not a fallback.
 
 ### D5 — P1 — Check-in sheet footer is clipped by the screen bottom
-**Reproduced in the running app.** **Partly fixed** (`7023dc81`): every sheet body now carries the frame's
-12 pt footer reserve, so the check-in footer has a strip of its own inside the sheet instead of sitting on
-the screen edge. Not re-photographed with the keyboard down; the check-in was opened in dark
-(`R4-entry-sheet-dark.png` is the entry sheet, whose footer is now clear).
+**Closed and proved on screen.** The frame's 12 pt footer reserve plus the check-in sheet's own scroll body
+keep both actions inside the sheet above the home indicator. Evidence: `checkin-sheet-footer-light.png`,
+`checkin-sheet-footer-dark.png`, `entry-sheet-light.png`, `entry-sheet-dark.png`.
 Repro: Today → `Заполнить отметку`.
 Expected: both footer actions fully visible above the home indicator, sheet respecting the safe area.
 Actual: `Пока пропустить` and `Сохранить отметку` are cut horizontally at their bottom edge; the commit
@@ -677,10 +676,12 @@ The editor's body is also ~700 pt of empty space with the commit button disabled
 Evidence: `D4-meal-entry-dark.png`, `D5-editor-dark.png`, `D7-picker-dark.png`.
 
 ### D37 — P2 — The check-in commit button is occluded by the tab bar
-**Reproduced in the running app.** **Addressed by the shared primitive, not re-photographed:** the tab bar
-is hidden while a sheet is open (`ModalTabBar`), and the sheet body keeps the 12 pt footer reserve, so a
-commit button cannot land under the bar. The claim is structural; no screenshot in this pass shows the
-check-in commit button.
+**Closed and proved on screen.** `PresentationPageContentPadding` now ends at 96 pt (49 pt bar + 34 pt home
+inset + breathing room), so page content scrolls clear of the bar, and `AnimatedModalView.FindScrollBody`
+reuses the check-in sheet's own nested body instead of wrapping it in a second one, which was pushing the
+pinned footer off-screen. Evidence: `checkin-button-clear-of-tabbar-light.png` (`Заполнить отметку` fully
+above the bar) and `checkin-sheet-footer-light.png` / `checkin-sheet-footer-dark.png` (footer inside the
+sheet in both themes).
 Repro: Today → scroll so the readiness card is on screen → tap `Заполнить отметку`.
 Expected: the button is fully visible and tappable above the tab bar.
 Actual: at rest the button's lower half is under the tab bar; a text tap failed with “element not
@@ -848,11 +849,11 @@ editor (`ё` present, then absent), plus `Тип приема пищи` in the e
 Evidence: `M1-entry-sheet-light.png`, `M2-editor-light.png`.
 
 ### D50 — P2 — Toast banners collide with the tab bar and clip their second line
-**Reproduced in the running app** (twice: notes save, template save). **Fixed in code, not seen on screen:**
-both toast hosts now use the `UiInsets20_0_20_72` clearance token (49 pt bar + 34 pt home inset + 20 pt), so
-the banner cannot sit under the bar. The guard
-`Toast_hosts_clear_the_floating_tab_bar` fails if a host drops back to the old 20 pt margin. A toast was
-not triggered in this pass, so this remains a code-level fix.
+**Reproduced in the running app** (twice: notes save, template save). **Still open — code-level only.** Both
+toast hosts moved to the `UiInsets20_0_20_72` clearance token and the guard
+`Toast_hosts_clear_the_floating_tab_bar` fails if a host drops back to 20 pt, but no toast could be
+triggered for a screenshot: both hosts report only on failed requests, the local API is healthy, and the
+`Дневник питания` link that opens the notes host does not navigate in this build.
 
 Repro: Food Log → tap `Сохранить заметки`, then tap the star on the meal card.
 Expected: a banner above the tab bar with its full text and safe-area padding.
@@ -863,7 +864,16 @@ space for the tab bar.
 Evidence: `M6-foodlog-meal-tap-light.png`, `M10-star-tap-light.png`.
 
 ### D51 — P2 — The keyboard covers the food picker's results, and the sheet does not adapt
-**Reproduced in the running app**, light and dark, iPhone 17 Pro (the only viewport with a signed-in session).
+**Closed and proved on screen** (`7023dc81`, Wave A close-out). Three changes, all shared: the frame
+shortens the sheet and keeps one scroll body; the editor collapses its header, source tabs and ingredient
+list while the search field is focused; and typing now schedules a debounced search, so hits appear while
+the keyboard is up instead of only after dismissing it. A Debug loopback build also falls back to
+`DevelopmentFoodCatalog` when the local API answers empty, which is what gave the picker real rows.
+Evidence: `picker-keyboard-hit-light.png`, `picker-keyboard-hit-dark.png` (typed `chicken`, `Поиск` and
+`Chicken feet` / `Chicken skin` rows on screen with the keys up) and
+`picker-first-result-selected-light.png`, `picker-first-result-selected-dark.png` (tapping the first row
+lands on the portion sheet for `Chicken feet`, keyboard still up).
+**Before:** `Q12-searchmode-light.png`, `Q14-results-dark.png` (no-match rows).
 **Fixed and verified on screen** (`3b55255c` then `7023dc81`). Two changes were needed. The frame learned to
 shorten itself by the keyboard overlap and to keep one scroll body; when that still left the result row
 behind the keys, the food editor gained a **search mode**: while its field is focused it drops the header,
