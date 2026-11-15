@@ -33,7 +33,7 @@
                             <Picker
                                 Title="{loc:LocalizedText Profile_NutritionSettings_ChooseGoal}"
                                 ItemsSource="{Binding GoalOptions}"
-                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
                                 SelectedItem="{Binding SelectedGoalOption}" />
                         </Border>
                     </Grid>
@@ -48,7 +48,7 @@
                             <Picker
                                 Title="{loc:LocalizedText Profile_NutritionSettings_ChoosePace}"
                                 ItemsSource="{Binding WeightGoalPaceOptions}"
-                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
                                 SelectedItem="{Binding SelectedWeightGoalPaceOption}" />
                         </Border>
                     </Grid>

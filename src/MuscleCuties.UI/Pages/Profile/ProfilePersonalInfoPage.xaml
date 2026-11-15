@@ -147,7 +147,7 @@
                             <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
                                 <Picker Title="{loc:LocalizedText Profile_PersonalInfo_PregnancyOrBreastfeeding}"
                                         ItemsSource="{Binding PregnancyOptions}"
-                                        ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                        ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
                                         SelectedItem="{Binding SelectedPregnancyOption}"
                                         SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_CurrentlyPregnantOrBreastfeeding}" />
                             </Border>
@@ -159,7 +159,7 @@
                             <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
                                 <Picker Title="{loc:LocalizedText Profile_PersonalInfo_ContraceptionOrCyclePattern}"
                                         ItemsSource="{Binding ContraceptionOptions}"
-                                        ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption}"
+                                        ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
                                         SelectedItem="{Binding SelectedContraceptionOption}"
                                         SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_HormonalContraceptionOrCyclePattern}" />
                             </Border>

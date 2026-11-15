@@ -1012,6 +1012,36 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Profile_pickers_localize_enum_labels_in_the_picker_itself()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        foreach (var page in new[]
+                 {
+                     Path.Combine(uiRoot, "Pages", "Profile", "ProfileNutritionSettingsPage.xaml"),
+                     Path.Combine(uiRoot, "Pages", "Profile", "ProfilePersonalInfoPage.xaml")
+                 })
+        {
+            var content = File.ReadAllText(page);
+            foreach (var binding in new[]
+                     {
+                         "ItemDisplayBinding=\"{Binding Label, x:DataType=commonModels:ILabeledOption}\"",
+                         "ItemDisplayBinding=\"{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}\""
+                     })
+            {
+                if (binding.Contains("Converter", StringComparison.Ordinal))
+                    continue;
+                Assert.DoesNotContain(binding, content);
+            }
+        }
+
+        var settings = File.ReadAllText(Path.Combine(
+            uiRoot, "Pages", "Profile", "ProfileNutritionSettingsPage.xaml"));
+        Assert.Contains(
+            "ItemDisplayBinding=\"{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}\"",
+            settings);
+    }
+
+    [Fact]
     public void Meal_card_does_not_collapse_its_actions_into_the_card_description()
     {
         var path = Path.Combine(
