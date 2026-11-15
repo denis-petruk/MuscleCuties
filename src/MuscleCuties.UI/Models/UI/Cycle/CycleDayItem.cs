@@ -32,7 +32,9 @@ public class CycleDayItem
     public bool IsSelected { get; set; }
 
     public string DisplayDayLabel =>
-        IsEstimated || IsPredictedFuture ? $"{Day}*" : Day.ToString(CultureInfo.InvariantCulture);
+        !HasRecordedObservation && (IsEstimated || IsPredictedFuture)
+            ? $"{Day}*"
+            : Day.ToString(CultureInfo.InvariantCulture);
 
     public string AccessibilityDescription
     {

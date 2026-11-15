@@ -1012,6 +1012,15 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Recorded_calendar_days_do_not_keep_the_estimate_asterisk()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Models", "UI", "Cycle", "CycleDayItem.cs"));
+
+        Assert.Contains("!HasRecordedObservation && (IsEstimated || IsPredictedFuture)", source);
+    }
+
+    [Fact]
     public void Future_calendar_days_are_not_saved_as_observations()
     {
         var root = RepositoryRoot();
