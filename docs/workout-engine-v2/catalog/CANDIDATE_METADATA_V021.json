@@ -1,0 +1,729 @@
+{
+  "schemaVersion": "MC-CANDIDATE-CATALOG-1",
+  "status": "CandidateNotReviewed",
+  "exercises": [
+    {
+      "exerciseId": 101,
+      "name": "Barbell Hip Thrust",
+      "pattern": "HipThrust",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Glutes"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "Hamstrings", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 102,
+      "name": "Machine Hip Thrust",
+      "pattern": "HipThrust",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Glutes"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "Hamstrings", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 103,
+      "name": "B-Stance Hip Thrust",
+      "pattern": "HipThrust",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Glutes"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "Hamstrings", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 104,
+      "name": "Single-Leg Glute Bridge",
+      "pattern": "HipThrust",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Glutes"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "Hamstrings", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 105,
+      "name": "Cable Pull-Through",
+      "pattern": "HipHinge",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Glutes"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "Hamstrings", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 106,
+      "name": "45 Degree Back Extension",
+      "pattern": "HipHinge",
+      "reviewed": true,
+      "uniqueMaximum": false,
+      "maximumGroups": ["Glutes", "Hamstrings"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "Hamstrings", "credit": 1 },
+        { "target": "Back", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 107,
+      "name": "Kneeling Cable Kickback",
+      "pattern": "HipThrust",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Glutes"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 111,
+      "name": "Romanian Deadlift",
+      "pattern": "HipHinge",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Hamstrings"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "Hamstrings", "credit": 1 },
+        { "target": "Back", "credit": 0.5 },
+        { "target": "Core", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 112,
+      "name": "Deficit RDL",
+      "pattern": "HipHinge",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Hamstrings"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "Hamstrings", "credit": 1 },
+        { "target": "Back", "credit": 0.5 },
+        { "target": "Core", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 113,
+      "name": "Dumbbell RDL",
+      "pattern": "HipHinge",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Hamstrings"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "Hamstrings", "credit": 1 },
+        { "target": "Back", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 114,
+      "name": "Single-Leg RDL",
+      "pattern": "HipHinge",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Hamstrings"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "HipAbductors", "credit": 0.5 },
+        { "target": "Hamstrings", "credit": 1 },
+        { "target": "Core", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 115,
+      "name": "Seated Leg Curl",
+      "pattern": "KneeFlexion",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Hamstrings"],
+      "credits": [
+        { "target": "Hamstrings", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 116,
+      "name": "Lying Leg Curl",
+      "pattern": "KneeFlexion",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Hamstrings"],
+      "credits": [
+        { "target": "Hamstrings", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 117,
+      "name": "Nordic Curl",
+      "pattern": "KneeFlexion",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Hamstrings"],
+      "credits": [
+        { "target": "Hamstrings", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 118,
+      "name": "Good Morning",
+      "pattern": "HipHinge",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Hamstrings"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "Hamstrings", "credit": 1 },
+        { "target": "Back", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 121,
+      "name": "Back Squat",
+      "pattern": "SquatPattern",
+      "reviewed": true,
+      "uniqueMaximum": false,
+      "maximumGroups": ["Glutes", "Quads"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "Adductors", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 1 },
+        { "target": "Core", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 122,
+      "name": "Hack Squat",
+      "pattern": "SquatPattern",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Quads"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 123,
+      "name": "Leg Press",
+      "pattern": "SquatPattern",
+      "reviewed": true,
+      "uniqueMaximum": false,
+      "maximumGroups": ["Glutes", "Quads"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "Adductors", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 124,
+      "name": "Goblet Squat",
+      "pattern": "SquatPattern",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Quads"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 1 },
+        { "target": "Core", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 125,
+      "name": "Bulgarian Split Squat",
+      "pattern": "Lunge",
+      "reviewed": true,
+      "uniqueMaximum": false,
+      "maximumGroups": ["Glutes", "Quads"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "HipAbductors", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 1 },
+        { "target": "Hamstrings", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 126,
+      "name": "Walking Lunge",
+      "pattern": "Lunge",
+      "reviewed": true,
+      "uniqueMaximum": false,
+      "maximumGroups": ["Glutes", "Quads"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "HipAbductors", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 127,
+      "name": "Step-Up",
+      "pattern": "Lunge",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Glutes"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "HipAbductors", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 128,
+      "name": "Reverse Lunge",
+      "pattern": "Lunge",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Glutes"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "HipAbductors", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 131,
+      "name": "Seated Hip Abduction Lean",
+      "pattern": "HipAbduction",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Abductors"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "HipAbductors", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 132,
+      "name": "Seated Hip Abduction Upright",
+      "pattern": "HipAbduction",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Abductors"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "HipAbductors", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 133,
+      "name": "Standing Cable Abduction",
+      "pattern": "HipAbduction",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Abductors"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "HipAbductors", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 134,
+      "name": "Banded Lateral Walk",
+      "pattern": "HipAbduction",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Abductors"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "HipAbductors", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 135,
+      "name": "Side-Lying Abduction",
+      "pattern": "HipAbduction",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Abductors"],
+      "credits": [
+        { "target": "HipAbductors", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 136,
+      "name": "Copenhagen Plank",
+      "pattern": "HipAdduction",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Adductors"],
+      "credits": [
+        { "target": "Adductors", "credit": 1 },
+        { "target": "Core", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 137,
+      "name": "Seated Adduction Machine",
+      "pattern": "HipAdduction",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Adductors"],
+      "credits": [
+        { "target": "Adductors", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 141,
+      "name": "Pull-Up",
+      "pattern": "VerticalPull",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Lats"],
+      "credits": [
+        { "target": "Back", "credit": 1 },
+        { "target": "Biceps", "credit": 0.5 },
+        { "target": "Core", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 142,
+      "name": "Lat Pulldown",
+      "pattern": "VerticalPull",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Lats"],
+      "credits": [
+        { "target": "Back", "credit": 1 },
+        { "target": "Biceps", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 143,
+      "name": "Chest-Supported Row",
+      "pattern": "HorizontalPull",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["UpperBack"],
+      "credits": [
+        { "target": "Back", "credit": 1 },
+        { "target": "Biceps", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 144,
+      "name": "Seated Cable Row",
+      "pattern": "HorizontalPull",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["UpperBack"],
+      "credits": [
+        { "target": "Back", "credit": 1 },
+        { "target": "Biceps", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 145,
+      "name": "Single-Arm DB Row",
+      "pattern": "HorizontalPull",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["UpperBack"],
+      "credits": [
+        { "target": "Back", "credit": 1 },
+        { "target": "Biceps", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 146,
+      "name": "Straight-Arm Pulldown",
+      "pattern": "VerticalPull",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Lats"],
+      "credits": [
+        { "target": "Back", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 147,
+      "name": "Face Pull",
+      "pattern": "RearDelt",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Delts"],
+      "credits": [
+        { "target": "Back", "credit": 0.5 },
+        { "target": "RearDelts", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 151,
+      "name": "DB Shoulder Press",
+      "pattern": "VerticalPush",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Delts"],
+      "credits": [
+        { "target": "AnteriorDelts", "credit": 1 },
+        { "target": "Triceps", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 152,
+      "name": "Machine Shoulder Press",
+      "pattern": "VerticalPush",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Delts"],
+      "credits": [
+        { "target": "AnteriorDelts", "credit": 1 },
+        { "target": "Triceps", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 153,
+      "name": "Incline DB Press",
+      "pattern": "HorizontalPush",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Chest"],
+      "credits": [
+        { "target": "Chest", "credit": 1 },
+        { "target": "AnteriorDelts", "credit": 0.5 },
+        { "target": "Triceps", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 154,
+      "name": "Machine Chest Press",
+      "pattern": "HorizontalPush",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Chest"],
+      "credits": [
+        { "target": "Chest", "credit": 1 },
+        { "target": "AnteriorDelts", "credit": 0.5 },
+        { "target": "Triceps", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 155,
+      "name": "Push-Up",
+      "pattern": "HorizontalPush",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Chest"],
+      "credits": [
+        { "target": "Chest", "credit": 1 },
+        { "target": "Triceps", "credit": 0.5 },
+        { "target": "Core", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 156,
+      "name": "Cable Lateral Raise",
+      "pattern": "LateralRaise",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Delts"],
+      "credits": [
+        { "target": "LateralDelts", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 157,
+      "name": "DB Lateral Raise",
+      "pattern": "LateralRaise",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Delts"],
+      "credits": [
+        { "target": "LateralDelts", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 158,
+      "name": "Reverse Pec Deck",
+      "pattern": "RearDelt",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Delts"],
+      "credits": [
+        { "target": "Back", "credit": 0.5 },
+        { "target": "RearDelts", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 161,
+      "name": "Incline DB Curl",
+      "pattern": "ElbowFlexion",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Biceps"],
+      "credits": [
+        { "target": "Biceps", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 162,
+      "name": "Cable Curl",
+      "pattern": "ElbowFlexion",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Biceps"],
+      "credits": [
+        { "target": "Biceps", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 163,
+      "name": "Overhead Cable Extension",
+      "pattern": "ElbowExtension",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Triceps"],
+      "credits": [
+        { "target": "Triceps", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 164,
+      "name": "Rope Pushdown",
+      "pattern": "ElbowExtension",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Triceps"],
+      "credits": [
+        { "target": "Triceps", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 171,
+      "name": "Dead Bug",
+      "pattern": "AntiExtension",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Core"],
+      "credits": [
+        { "target": "Core", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 172,
+      "name": "Ab Wheel Rollout",
+      "pattern": "AntiExtension",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Core"],
+      "credits": [
+        { "target": "Back", "credit": 0.5 },
+        { "target": "Core", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 173,
+      "name": "Hollow Hold",
+      "pattern": "AntiExtension",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Core"],
+      "credits": [
+        { "target": "Core", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 174,
+      "name": "Cable Crunch",
+      "pattern": "AntiExtension",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Core"],
+      "credits": [
+        { "target": "Core", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 175,
+      "name": "Pallof Press",
+      "pattern": "AntiRotation",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Core"],
+      "credits": [
+        { "target": "Core", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 176,
+      "name": "Bird Dog",
+      "pattern": "AntiRotation",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Core"],
+      "credits": [
+        { "target": "Core", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 177,
+      "name": "Side Plank",
+      "pattern": "AntiLateralFlexion",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Core"],
+      "credits": [
+        { "target": "Core", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 178,
+      "name": "Suitcase Carry",
+      "pattern": "AntiLateralFlexion",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Core"],
+      "credits": [
+        { "target": "Back", "credit": 0.5 },
+        { "target": "Core", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 181,
+      "name": "Standing Calf Raise",
+      "pattern": "CalfRaise",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Calves"],
+      "credits": [
+        { "target": "Calves", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 182,
+      "name": "Seated Calf Raise",
+      "pattern": "CalfRaise",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Calves"],
+      "credits": [
+        { "target": "Calves", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 191,
+      "name": "Rock Climbing",
+      "pattern": "Climbing",
+      "reviewed": false,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Lats"],
+      "credits": [
+        { "target": "Quadriceps", "credit": 0.5 },
+        { "target": "Back", "credit": 1 },
+        { "target": "Biceps", "credit": 0.5 },
+        { "target": "Core", "credit": 0.5 }
+      ]
+    }
+  ]
+}
