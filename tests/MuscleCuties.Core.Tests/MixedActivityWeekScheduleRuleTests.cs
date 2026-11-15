@@ -419,7 +419,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
     }
 
     [Fact]
-    public void AppliesHiitCapAndReplacesOneSelectedContinuousCardioSession()
+    public void Deferred_hiit_adds_no_session_and_does_not_replace_selected_continuous_cardio()
     {
         const WorkoutActivityType underlyingActivity = WorkoutActivityType.Cycling;
         var result = Evaluate(
@@ -433,24 +433,12 @@ public sealed class MixedActivityWeekScheduleRuleTests
                     hiitEvidence: EligibleHiitEvidence()))),
             hiitUnderlyingCardioActivity: underlyingActivity);
 
-        Assert.Equal(ActivityPrescriptionRule.HiitMaximumSessionsPerWeek,
-            Decision(result, WorkoutActivityType.Hiit).ScheduledSessionsPerWeek);
-        Assert.Equal(ExpectedContinuousSessionsAfterHiit,
-            Decision(result, underlyingActivity).TargetSessionsPerWeek);
-        Assert.Equal(ExpectedContinuousSessionsAfterHiit,
-            Decision(result, underlyingActivity).ScheduledSessionsPerWeek);
-        Assert.Contains(MixedActivityWeekScheduleRule.OneContinuousSessionReplacedByHiit,
-            Decision(result, underlyingActivity).Reasons);
-        Assert.Equal(ExpectedContinuousSessionsAfterHiit + ActivityPrescriptionRule.HiitMaximumSessionsPerWeek,
-            result.Sessions.Count);
-        Assert.All(result.Sessions.Where(session => session.Activity == WorkoutActivityType.Hiit)
-            .GroupBy(session => session.Day), day => Assert.Single(day));
-        Assert.All(result.Sessions.Where(session => session.Activity == WorkoutActivityType.Hiit),
-            session => Assert.Equal((decimal)ActivityPrescriptionRule.HiitSessionDuration.TotalMinutes,
-                session.DurationMinutes));
-        Assert.All(result.Sessions.Where(session => session.Activity == underlyingActivity),
-            session => Assert.Equal(
-                (decimal)CardioSessionDurationRule.CyclingStandaloneDayMinutes, session.DurationMinutes));
+        Assert.Equal(0, Decision(result, WorkoutActivityType.Hiit).ScheduledSessionsPerWeek);
+        Assert.Empty(result.Sessions.Where(session => session.Activity == WorkoutActivityType.Hiit));
+        var continuous = Decision(result, underlyingActivity);
+        Assert.Equal(continuous.TargetSessionsPerWeek, continuous.ScheduledSessionsPerWeek);
+        Assert.DoesNotContain(MixedActivityWeekScheduleRule.OneContinuousSessionReplacedByHiit,
+            continuous.Reasons);
     }
 
     [Fact]
@@ -509,7 +497,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
     }
 
     [Fact]
-    public void UsesSelectedRunningActivityAsHiitReplacementBase()
+    public void Deferred_hiit_leaves_the_selected_running_session_unchanged()
     {
         var result = Evaluate(
             [WorkoutActivityType.Running, WorkoutActivityType.Hiit],
@@ -522,14 +510,13 @@ public sealed class MixedActivityWeekScheduleRuleTests
                     hiitEvidence: EligibleHiitEvidence(WorkoutActivityType.Running)))),
             hiitUnderlyingCardioActivity: WorkoutActivityType.Running);
 
-        Assert.Equal(MixedActivityScheduleDisposition.Scheduled,
+        Assert.Equal(MixedActivityScheduleDisposition.Blocked,
             Decision(result, WorkoutActivityType.Hiit).Disposition);
-        Assert.Equal(ExpectedContinuousSessionsAfterHiit,
-            Decision(result, WorkoutActivityType.Running).TargetSessionsPerWeek);
-        Assert.Contains(MixedActivityWeekScheduleRule.OneContinuousSessionReplacedByHiit,
-            Decision(result, WorkoutActivityType.Running).Reasons);
-        Assert.Equal(ActivityModality.Running,
-            Decision(result, WorkoutActivityType.Hiit).Prescription?.Modality);
+        Assert.Empty(result.Sessions.Where(session => session.Activity == WorkoutActivityType.Hiit));
+        var running = Decision(result, WorkoutActivityType.Running);
+        Assert.Equal(running.TargetSessionsPerWeek, running.ScheduledSessionsPerWeek);
+        Assert.DoesNotContain(MixedActivityWeekScheduleRule.OneContinuousSessionReplacedByHiit,
+            running.Reasons);
     }
 
     [Fact]
@@ -822,7 +809,8 @@ public sealed class MixedActivityWeekScheduleRuleTests
         var strength = Decision(result, WorkoutActivityType.GeneralStrength);
         Assert.Equal(strength.TargetSessionsPerWeek, strength.ScheduledSessionsPerWeek);
         Assert.True(strength.ScheduledSessionsPerWeek >= GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek);
-        Assert.NotEqual(MixedActivityScheduleDisposition.Blocked, Decision(result, WorkoutActivityType.Hiit).Disposition);
+        // Gate 80: HIIT is deferred, so the only valid disposition is a block.
+        Assert.Equal(MixedActivityScheduleDisposition.Blocked, Decision(result, WorkoutActivityType.Hiit).Disposition);
     }
 
     private static MixedActivityWeekScheduleResult Evaluate(

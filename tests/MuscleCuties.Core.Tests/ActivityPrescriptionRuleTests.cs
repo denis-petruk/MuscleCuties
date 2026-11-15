@@ -143,41 +143,40 @@ public sealed class ActivityPrescriptionRuleTests
         (prescription.WarmupMinutes ?? 0) + (prescription.MainMinutes ?? 0) + (prescription.CooldownMinutes ?? 0);
 
     [Fact]
-    public void HiitRequiresThreeQualifyingManageableSessionsInEachPriorWeek()
+    public void Hiit_is_deferred_so_prior_week_evidence_produces_no_prescription()
     {
         var evidence = EligibleHiitEvidence();
-        var eligible = EvaluateHiit(evidence);
+        var deferred = EvaluateHiit(evidence);
         var missingWeek = evidence with
         {
             PreviousFourWeeksAerobicEvidence = evidence.PreviousFourWeeksAerobicEvidence
                 .Where(session => session.WeekOffsetFromCurrent != FourWeeks).ToArray()
         };
-        var blocked = EvaluateHiit(missingWeek);
+        var deferredWithoutWeek = EvaluateHiit(missingWeek);
 
-        Assert.Equal(ActivityPrescriptionStatus.Eligible, eligible.Status);
+        Assert.Equal(ActivityPrescriptionStatus.Unsupported, deferred.Status);
+        Assert.Equal(ActivityPrescriptionStatus.Unsupported, deferredWithoutWeek.Status);
+        Assert.Contains(ActivityPrescriptionRule.HiitDeferredInWorkoutEngineV2, deferred.Reasons);
+        Assert.Empty(deferred.Sessions);
         Assert.Equal(TimeSpan.FromSeconds(ActivityPrescriptionRule.HiitTotalSeconds),
             ActivityPrescriptionRule.HiitSessionDuration);
-        Assert.Equal(ActivityModality.Cycling, eligible.Sessions.Single().Modality);
-        Assert.Equal(ActivityPrescriptionStatus.BlockedByRestriction, blocked.Status);
+        Assert.True(Enum.IsDefined(WorkoutActivityType.Hiit));
     }
 
     [Theory]
-    [InlineData(WorkoutActivityType.Cycling, ActivityModality.Cycling)]
-    [InlineData(WorkoutActivityType.Running, ActivityModality.Running)]
-    [InlineData(WorkoutActivityType.Walking, ActivityModality.Walking)]
-    [InlineData(WorkoutActivityType.Rowing, ActivityModality.Rowing)]
-    [InlineData(WorkoutActivityType.Elliptical, ActivityModality.Elliptical)]
-    public void HiitPrescriptionRetainsTheExplicitlySelectedUnderlyingModality(
-        WorkoutActivityType underlyingActivity,
-        ActivityModality expectedModality)
+    [InlineData(WorkoutActivityType.Cycling)]
+    [InlineData(WorkoutActivityType.Running)]
+    [InlineData(WorkoutActivityType.Walking)]
+    [InlineData(WorkoutActivityType.Rowing)]
+    [InlineData(WorkoutActivityType.Elliptical)]
+    public void Deferred_hiit_ignores_the_selected_underlying_cardio_modality(
+        WorkoutActivityType underlyingActivity)
     {
-        var evidence = EligibleHiitEvidence(underlyingActivity);
+        var result = EvaluateHiit(EligibleHiitEvidence(underlyingActivity));
 
-        var result = EvaluateHiit(evidence);
-
-        Assert.Equal(ActivityPrescriptionStatus.Eligible, result.Status);
-        Assert.Equal(expectedModality, result.Sessions.Single().Modality);
-        Assert.Contains("SelectedUnderlyingCardioActivity", result.Sessions.Single().Reasons);
+        Assert.Equal(ActivityPrescriptionStatus.Unsupported, result.Status);
+        Assert.Contains(ActivityPrescriptionRule.HiitDeferredInWorkoutEngineV2, result.Reasons);
+        Assert.Empty(result.Sessions);
     }
 
     [Fact]
