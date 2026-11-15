@@ -206,39 +206,43 @@ public class AnimatedModalView : ContentView
         if (surface is null)
             return;
 
+        var inset = Math.Max(0, keyboardInset);
         var body = EnsureScrollBody(surface);
-        if (body is null)
-            return;
 
-        // Padding grows the scrollable extent by the covered strip plus the footer reserve, so the
-        // last row and any pinned footer can always be scrolled clear of the keys.
-        body.Padding = new Thickness(
-            body.Padding.Left,
-            body.Padding.Top,
-            body.Padding.Right,
-            Math.Max(0, keyboardInset) + SheetFooterReserve);
+        // The surface padding below shrinks the body viewport above the keys, so the body itself only
+        // needs the footer strip. Adding the whole keyboard height here as well let the scroll view
+        // over-scroll a bottom field above its own viewport, where the user could not see it while
+        // typing.
+        if (body is not null)
+        {
+            body.Padding = new Thickness(
+                body.Padding.Left,
+                body.Padding.Top,
+                body.Padding.Right,
+                SheetFooterReserve);
+        }
 
-        // The body padding keeps scrolled rows reachable; the surface padding is what lifts a pinned
-        // footer row above the keyboard toolbar. Pages such as archive detail draw their footer in the
-        // sheet grid, outside the scroll body, so padding only the body left the save bar under the keys.
-        var surfaceInset = keyboardInset > 0 ? keyboardInset + SheetFooterReserve : 0;
+        // The surface padding is what lifts a pinned footer row above the keyboard. It is applied
+        // even when the sheet's body is a CollectionView rather than a ScrollView: those sheets still
+        // need their footer and results lifted, they just scroll themselves.
         surface.Padding = new Thickness(
             surface.Padding.Left,
             surface.Padding.Top,
             surface.Padding.Right,
-            surfaceInset);
+            inset > 0 ? inset + SheetFooterReserve : 0);
 
-        if (keyboardInset > 0)
+        if (inset > 0 && body is not null)
             RevealContentBelowFocusedField(body);
     }
 
     /// <summary>
-    /// Scrolls the body so the row under the focused field is visible, not just the field itself.
+    /// Scrolls the body so the focused field is fully visible, not just its bottom line.
     /// </summary>
     /// <remarks>
     /// MAUI scrolls a focused entry into view, which for the food picker put the field at the bottom
-    /// of the visible strip and left the result list behind the keyboard. Anchoring the focused row at
-    /// the top of the body gives the picker its first result back and keeps a pinned footer reachable.
+    /// of the visible strip and left the result list behind the keyboard. Centering the field keeps it
+    /// clear of both the header and the keyboard, leaves the rows around it reachable, and still keeps
+    /// a pinned footer on screen.
     /// </remarks>
     private static void RevealContentBelowFocusedField(ScrollView body)
     {
@@ -250,7 +254,9 @@ public class AnimatedModalView : ContentView
         {
             try
             {
-                await body.ScrollToAsync(focused, ScrollToPosition.Start, true);
+                // Centering keeps the whole field on screen instead of pinning it to the body's top
+                // edge, where a short viewport could clip its first line above the header.
+                await body.ScrollToAsync(focused, ScrollToPosition.Center, true);
             }
             catch (Exception)
             {
@@ -294,6 +300,12 @@ public class AnimatedModalView : ContentView
         if (ownBody is not null)
             return ownBody;
 
+        // A CollectionView is already a scroll body. Wrapping it would nest two scrollers and
+        // steal the sheet's scroll gestures, which is what the meal editor and suggestion sheets
+        // would do if the frame only recognised ScrollView.
+        if (HasVisibleItemsView(surface.Content))
+            return null;
+
         var body = new ScrollView
         {
             Content = surface.Content,
@@ -306,16 +318,42 @@ public class AnimatedModalView : ContentView
 
     private static ScrollView? FindScrollBody(IVisualTreeElement root)
     {
+        // Prefer a visible vertical body. A sheet can contain horizontal rails (meal types) and
+        // hidden state panels; either one used to be mistaken for the body, so the keyboard inset
+        // padded the wrong control while the real content stayed put.
+        return FindVerticalScrollBody(root, visibleOnly: true)
+               ?? FindVerticalScrollBody(root, visibleOnly: false);
+    }
+
+    private static ScrollView? FindVerticalScrollBody(IVisualTreeElement root, bool visibleOnly)
+    {
         foreach (var child in root.GetVisualChildren())
         {
-            if (child is ScrollView scroll)
+            if (child is ScrollView { Orientation: not ScrollOrientation.Horizontal } scroll &&
+                (!visibleOnly || IsVisibleInTree(scroll)))
+            {
                 return scroll;
+            }
 
-            if (FindScrollBody(child) is { } nested)
+            if (FindVerticalScrollBody(child, visibleOnly) is { } nested)
                 return nested;
         }
 
         return null;
+    }
+
+    private static bool HasVisibleItemsView(IVisualTreeElement root)
+    {
+        foreach (var child in root.GetVisualChildren())
+        {
+            if (child is ItemsView items && IsVisibleInTree(items))
+                return true;
+
+            if (HasVisibleItemsView(child))
+                return true;
+        }
+
+        return false;
     }
 
     private Border? SheetSurface()

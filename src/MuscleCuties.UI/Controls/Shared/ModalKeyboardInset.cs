@@ -59,9 +59,11 @@ public static class ModalKeyboardInset
             return;
         }
 
+        // UIKit reports the keyboard frame and the scene bounds in the same point coordinate
+        // space; converting by the screen scale applied only a fraction of the overlap.
         var frame = args.FrameEnd;
         var overlap = screen.Bounds.Height - frame.Top;
-        Publish(overlap > 1 ? overlap / UIKit.UIScreen.MainScreen.Scale : 0);
+        Publish(overlap > 1 ? overlap : 0);
     }
 #endif
 

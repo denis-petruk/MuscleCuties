@@ -554,15 +554,33 @@ public sealed class UiContractGuardTests
         Assert.Contains("FindScrollBody(surface.Content)", frame, StringComparison.Ordinal);
         Assert.DoesNotContain("if (surface.Content is ScrollView existing)", frame, StringComparison.Ordinal);
         Assert.Contains(
-            "if (FindScrollBody(child) is { } nested)",
+            "private static ScrollView? FindVerticalScrollBody",
             frame,
             StringComparison.Ordinal);
+        Assert.Contains("ScrollOrientation.Horizontal", frame, StringComparison.Ordinal);
+        Assert.Contains("ItemsView", frame, StringComparison.Ordinal);
     }
 
     /// <summary>
-    /// Shortening the sheet and padding its body keeps the focused field above the keys, but the rows
-    /// under it — the picker's first result — stayed behind the keyboard (D51). The frame must therefore
-    /// move the body so the content below the focused field is on screen, not just the field itself.
+    /// UIKit reports `UIKeyboardFrameEndUserInfoKey` in screen points, not pixels. Dividing the
+    /// overlap by the screen scale applied only a third of the keyboard height, which left a pinned
+    /// footer such as the daily check-in save bar behind the keys (D5/D37).
+    /// </summary>
+    [Fact]
+    public void Modal_keyboard_inset_uses_the_frame_in_points()
+    {
+        var tracker = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Shared", "ModalKeyboardInset.cs"));
+
+        Assert.Contains("frame.Top", tracker, StringComparison.Ordinal);
+        Assert.DoesNotContain("UIScreen.MainScreen.Scale", tracker, StringComparison.Ordinal);
+        Assert.Contains("Publish(overlap > 1 ? overlap : 0)", tracker, StringComparison.Ordinal);
+    }
+
+    /// <summary>
+    /// Shortening the sheet and padding its body keeps the focused field above the keys, but a field
+    /// pinned to the body's top edge was clipped by the header in a short viewport (D5/D37/D51). The
+    /// frame must bring the focused field fully into view and leave the content around it reachable.
     /// </summary>
     [Fact]
     public void Modal_frame_reveals_the_content_below_the_focused_field()
@@ -571,7 +589,7 @@ public sealed class UiContractGuardTests
             RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Shared", "AnimatedModalView.cs"));
 
         Assert.Contains("RevealContentBelowFocusedField", frame, StringComparison.Ordinal);
-        Assert.Contains("ScrollToAsync(focused, ScrollToPosition.Start", frame, StringComparison.Ordinal);
+        Assert.Contains("ScrollToAsync(focused, ScrollToPosition.Center", frame, StringComparison.Ordinal);
         Assert.Contains("SheetFooterReserve", frame, StringComparison.Ordinal);
     }
 
