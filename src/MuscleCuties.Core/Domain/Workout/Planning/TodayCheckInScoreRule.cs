@@ -55,10 +55,16 @@ public sealed record CheckInScoreResult(
 /// Check-in score arithmetic (<see cref="RulesetVersion"/>). The score describes a planning estimate,
 /// not a recovery measurement or medical assessment. This rule never changes a workout or evaluates symptoms.
 /// <para>
+/// Ordinary muscle soreness is not a score input (ratified amendment A-8, 2026-11-15): the score is built
+/// from sleep quality, energy and reported stress only, rescaled to the same 0–100 range so the band
+/// thresholds keep their meaning. Soreness stays in the check-in record for the user's own history and
+/// never reaches a dose decision.
+/// </para>
+/// <para>
 /// Energy carries two scale shares. Stress is optional: when it is reported it can only lower the second
 /// energy share (high stress), never compensate for low energy; when it is not reported the energy share is
 /// used unchanged. Low energy therefore always lowers the score (MC-BETA-WORKOUT-1 decision 4), and for any
-/// reported stress the score is never higher than the 0.2 arithmetic it replaces.
+/// reported stress the score is never higher than the energy shares it replaces.
 /// </para>
 /// </summary>
 public static class TodayCheckInScoreRule
@@ -67,14 +73,19 @@ public static class TodayCheckInScoreRule
     /// Version of this score arithmetic. It is independent of the plan-preview ruleset and is only
     /// compared in memory against the release approval; it is not persisted.
     /// </summary>
-    public const string RulesetVersion = "MC-CHECKIN-SCORE-0.3";
+    public const string RulesetVersion = "MC-CHECKIN-SCORE-0.4";
     public static bool ScoreDisplayEnabled => true;
     public const int ReadinessScaleMinimum = 1;
     public const int ReadinessScaleMaximum = 5;
     public const int ReadinessScoreMaximum = 100;
     public const int FeelingReadyThreshold = 75;
     public const int ConsiderLighterSessionThreshold = 50;
-    private const decimal ScoreDenominator = 16m;
+
+    /// <summary>Rated inputs that carry a score share: sleep quality, energy and stress.</summary>
+    public const int ScoreShareCount = 3;
+
+    private static readonly decimal ScoreDenominator =
+        ScoreShareCount * (ReadinessScaleMaximum - ReadinessScaleMinimum);
 
     /// <summary>Scale shares carried by energy: the energy term itself plus the share stress may lower.</summary>
     public const int EnergyScaleShares = 2;
@@ -121,7 +132,7 @@ public static class TodayCheckInScoreRule
             return Unavailable(CheckInScoreStatus.InvalidInput, observation);
 
         var rawScore = CalculatePrototype(observation.SleepQuality.Value, observation.Energy.Value,
-            observation.Soreness.Value, observation.Stress);
+            observation.Stress);
         var band = rawScore >= TodayCheckInScoreRule.FeelingReadyThreshold
             ? CheckInScoreBand.FeelingReady
             : rawScore >= TodayCheckInScoreRule.ConsiderLighterSessionThreshold
@@ -130,7 +141,7 @@ public static class TodayCheckInScoreRule
         return new CheckInScoreResult(CheckInScoreStatus.Available, rawScore, band, observation);
     }
 
-    internal static decimal CalculatePrototype(decimal sleepQuality, decimal energy, decimal soreness, decimal? stress)
+    internal static decimal CalculatePrototype(decimal sleepQuality, decimal energy, decimal? stress)
     {
         var energyShare = energy - ReadinessScaleMinimum;
         // Reported stress may only lower the second energy share; it never offsets low energy.
@@ -138,8 +149,7 @@ public static class TodayCheckInScoreRule
             ? Math.Min(energyShare, ReadinessScaleMaximum - reportedStress)
             : energyShare;
         return ReadinessScoreMaximum * ((sleepQuality - ReadinessScaleMinimum) +
-            energyShare * (EnergyScaleShares - 1) + stressLimitedEnergyShare +
-            (ReadinessScaleMaximum - soreness)) / ScoreDenominator;
+            energyShare * (EnergyScaleShares - 1) + stressLimitedEnergyShare) / ScoreDenominator;
     }
 
     private static bool IsValidScaleValue(decimal value) =>

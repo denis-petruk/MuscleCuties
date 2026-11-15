@@ -34,7 +34,7 @@ User-visible behaviour that is not already in `AGENTS.md`. The safety rules and 
 
 - **Poor readiness or marked fatigue:** reduce one optional set where one exists. Load is not stepped down; the trainee autoregulates through target RIR.
 - **Menstrual cycle:** a cycle estimate alone never changes reps, sets or load. Symptoms and readiness drive adjustments; optional sets stay off unless recovery evidence is positive.
-- **Injury clearance:** cleared exercises return to normal prescribed work on the clearance day whenever current eligibility permits.
+- **Ordinary muscle soreness (2026-11-15):** the check-in readiness score is built from sleep, energy and reported stress. Soreness is still recorded for the user's history, but it never enters the score, the band or a dose decision. Pain and red-flag handling are separate and unchanged.
 
 ## Apple Health
 

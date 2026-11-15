@@ -129,7 +129,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Readiness_RatingEnergy"] = "Энергия";
         Values["Dashboard_Readiness_RatingSoreness"] = "Мышечная болезненность";
         Values["Dashboard_Readiness_RatingStress"] = "Стресс";
-        Values["Dashboard_Readiness_ScoreExplanation"] = "Оценка основана на ваших ответах о сне, энергии и болезненности мышц. Это ориентир для планирования, а не прямое измерение восстановления или медицинская оценка.";
+        Values["Dashboard_Readiness_ScoreExplanation"] = "Оценка основана на ваших ответах о сне и энергии, а также о стрессе, если вы его указали. Болезненность мышц в оценку не входит. Это ориентир для планирования, а не прямое измерение восстановления или медицинская оценка.";
         Values["Dashboard_Readiness_NoCurrentCheckIn"] = "Заполните сегодняшнюю отметку, чтобы получить подсказки с учётом вашего самочувствия.";
         Values["Dashboard_Readiness_ReviewPending"] = "Отметка сохранена. Рекомендации по тренировке на её основе пока недоступны.";
         Values["Dashboard_Readiness_CompleteCheckIn"] = "Заполнить отметку";

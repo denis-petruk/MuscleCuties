@@ -129,7 +129,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Readiness_RatingEnergy"] = "Energy";
         English["Dashboard_Readiness_RatingSoreness"] = "Soreness";
         English["Dashboard_Readiness_RatingStress"] = "Stress";
-        English["Dashboard_Readiness_ScoreExplanation"] = "Based on your reported sleep, energy and muscle soreness. This is a planning estimate, not a medical assessment or a direct measurement of recovery.";
+        English["Dashboard_Readiness_ScoreExplanation"] = "Based on your reported sleep and energy, plus stress when you report it. Muscle soreness is not scored. This is a planning estimate, not a medical assessment or a direct measurement of recovery.";
         English["Dashboard_Readiness_NoCurrentCheckIn"] = "Complete today’s check-in to see suggestions based on how you feel.";
         English["Dashboard_Readiness_ReviewPending"] = "Your check-in is saved. Training suggestions based on this check-in are not available yet.";
         English["Dashboard_Readiness_CompleteCheckIn"] = "Complete check-in";

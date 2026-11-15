@@ -48,15 +48,19 @@ public sealed class TodayCheckInScoreEnergyTests
     }
 
     [Fact]
-    public void Reported_stress_never_scores_higher_than_the_previous_arithmetic()
+    public void Reported_stress_never_scores_higher_than_an_unlimited_energy_share()
     {
-        foreach (var (sleep, soreness, stress) in Combinations().Where(c => c.Stress is not null))
+        foreach (var (sleep, stress) in Combinations()
+                     .Where(c => c.Stress is not null)
+                     .Select(c => (c.Sleep, c.Stress))
+                     .Distinct())
         {
             for (var energy = Minimum; energy <= Maximum; energy++)
             {
-                var legacy = TodayCheckInScoreRule.ReadinessScoreMaximum *
-                    ((sleep - Minimum) + (energy - Minimum) + (Maximum - soreness) + (Maximum - stress!.Value)) / 16m;
-                Assert.True(Evaluate(sleep, energy, soreness, stress).RawScore <= legacy);
+                // Three equal shares: sleep quality, energy, and the share stress may lower.
+                var unlimited = TodayCheckInScoreRule.ReadinessScoreMaximum *
+                    ((sleep - Minimum) + (energy - Minimum) + (Maximum - stress!.Value)) / 12m;
+                Assert.True(Evaluate(sleep, energy, Minimum, stress).RawScore <= unlimited);
             }
         }
     }

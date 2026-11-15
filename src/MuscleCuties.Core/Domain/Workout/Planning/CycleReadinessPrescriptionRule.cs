@@ -44,10 +44,15 @@ public sealed record CycleReadinessPrescriptionDecision(
 /// then a missing or incomplete approval withholds the adjustment, and only then is evidence used.
 /// Safety therefore never reports a policy gap, and a policy gap never masks a safety stop.
 /// </para>
+/// <para>
+/// The readiness signal is the soreness-free <see cref="TodayCheckInScoreRule"/> 0.4 arithmetic
+/// (ratified amendment A-8, 2026-11-15), so a check-in that differs only in ordinary muscle soreness
+/// cannot change this decision; short sleep and routine symptoms remain independent signals.
+/// </para>
 /// </summary>
 public static class CycleReadinessPrescriptionRule
 {
-    public const string PolicyVersion = "MC-CYCLE-READINESS-0.3";
+    public const string PolicyVersion = "MC-CYCLE-READINESS-0.4";
     public const string NoAdjustment = "CycleReadinessNormalDose";
     public const string DailyReadinessAdjustment = "DailyReadinessOptionalSetReduced";
     public const string ProvisionalPhaseAdjustment = "ConfirmedPhaseProvisionalFeelingOptionalSetReduced";

@@ -26,6 +26,10 @@ Ratified at the evidence-backed recommendations in [WORKOUT_POLICY_RESEARCH.md](
 - **A-6 (decision 6, S-04) — DEFERRED.** In-session pain reporting and substitution is deferred for initial TestFlight and planned for the subsequent update.
 - **A-7 (S-05) — RATIFIED (Option A).** No fixed 7-day post-clearance window. Immediate restoration on clearance day (0-day window): a cleared exercise returns as prescribed from its clearance date when current eligibility permits. Unknown or future clearance keeps the restriction.
 
+## Ratified amendment — 2026-11-15 (owner ratified)
+
+- **A-8 (decision 4) — RATIFIED.** Ordinary muscle soreness is not a training input. It is removed from the check-in readiness score and from every dose decision, and the score is rescaled onto the same 0–100 range from the remaining inputs: sleep quality, energy and reported stress. `MC-CHECKIN-SCORE-0.4` and `MC-CYCLE-READINESS-0.4` name the new arithmetic, so the earlier approval cannot silently authorise it. Decision 4's volume-only behaviour is unchanged: one optional set where one exists, never a load change. Soreness stays in the check-in record for the user's own history. Pain and red-flag handling are unaffected.
+
 
 ## Implementation acceptance
 

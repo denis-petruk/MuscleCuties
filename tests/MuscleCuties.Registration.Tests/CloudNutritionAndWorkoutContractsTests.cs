@@ -306,9 +306,9 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var status = await checkInStore.GetStatusAsync(new DailyCheckInStatusRequest(today, "UTC"), CancellationToken.None);
         Xunit.Assert.Equal("Available", status.TodayReadiness?.Status);
         Xunit.Assert.True(status.IsCompleted);
-        // MC-CHECKIN-SCORE-0.3 (S-01): reported stress only lowers the energy share, so this fixture
-        // scores 87.5 (was 93.75 under 0.2) and stays in the FeelingReady band.
-        Xunit.Assert.Equal("87.5", status.ScoreText);
+        // MC-CHECKIN-SCORE-0.4 (A-8): sleep quality 5, energy 4 and stress 1 score 83.33 from the three
+        // 0–100 shares (soreness is not scored) and stay in the FeelingReady band.
+        Xunit.Assert.Equal("83.33", status.ScoreText);
         Xunit.Assert.Equal("FeelingReady", status.TierText);
 
         var injuryStore = new CloudWorkoutInjuryStore(apiClient);
