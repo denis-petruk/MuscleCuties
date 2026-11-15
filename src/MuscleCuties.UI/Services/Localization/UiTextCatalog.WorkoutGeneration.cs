@@ -4,6 +4,23 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterWorkoutGenerationStrings()
     {
+        English["Workout_Generation_DurationOmissionNotice"] = "Some movements were omitted to fit your selected session time.";
+        English["Workout_Generation_OneDayCoverageNotice"] = "One training day cannot provide two weekly sessions for each muscle group.";
+        English["Workout_Generation_CoverageMuscle_Chest"] = "Chest";
+        English["Workout_Generation_CoverageMuscle_LatsUpperBack"] = "Back";
+        English["Workout_Generation_CoverageMuscle_Deltoids"] = "Shoulders";
+        English["Workout_Generation_CoverageMuscle_Quadriceps"] = "Quadriceps";
+        English["Workout_Generation_CoverageMuscle_Hamstrings"] = "Hamstrings";
+        English["Workout_Generation_CoverageMuscle_Glutes"] = "Glutes";
+        English["Workout_Generation_CoverageMuscle_Biceps"] = "Biceps";
+        English["Workout_Generation_CoverageMuscle_Triceps"] = "Triceps";
+        English["Workout_Generation_CoverageMuscle_Calves"] = "Calves";
+        English["Workout_Generation_CoverageMuscle_Trunk"] = "Core";
+        English["Workout_Generation_CoverageMuscle_Abductors"] = "Hip abductors";
+        English["Workout_Generation_CoverageMuscle_Adductors"] = "Hip adductors";
+        English["Workout_Generation_CoverageGapNotice"] = "Some muscle groups receive less weekly training than the planning target.";
+        English["Workout_Generation_CoveragePreferredNotice"] = "The preferred weekly training frequency is not reached for some muscle groups.";
+        English["Workout_Generation_CoverageNoticeTitle"] = "Your plan is ready";
         English["WorkoutPopulationBirthDateRequired"] = "Add your date of birth in your profile, then create a new preview.";
         English["WorkoutPopulationDateUnavailable"] = "Confirm your account time zone, then create a new preview.";
         English["WorkoutPopulationAgeUnsupported"] = "Workout planning currently supports adults aged 18–64. You can explore the other app features.";

@@ -62,6 +62,65 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
+    public void One_available_day_is_valid_in_saved_preferences()
+    {
+        Assert.True(WorkoutPreferencesRule.HasMinimumDistinctWeekdays(new[] { DayOfWeek.Monday }));
+        Assert.False(WorkoutPreferencesRule.HasMinimumDistinctWeekdays(Array.Empty<DayOfWeek>()));
+    }
+
+    [Fact]
+    public void One_day_planning_uses_a_new_ruleset_version_for_snapshot_staleness()
+    {
+        Assert.NotEqual("MC-PLANNING-0.2", StrengthPlanPreviewRule.RulesetVersion);
+    }
+
+    [Fact]
+    public async Task One_available_day_creates_a_safe_full_body_proposal_with_coverage_disclosure()
+    {
+        var source = OneDayProfile();
+        var store = new ProposalStore();
+        var useCase = new CreateStrengthPlanProposalV020UseCase(new PreviewStrengthPlanV020UseCase(new Source(source)), store);
+
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+
+        Assert.True(result.IsPersisted);
+        Assert.Equal("Feasible", result.Preview.Status);
+        var session = Assert.Single(result.Preview.Sessions);
+        Assert.Equal(DayOfWeek.Monday, session.PlannedWeekday);
+        Assert.All(session.Slots.Where(slot => slot.IsRequired), slot => Assert.NotNull(slot.ExerciseId));
+        Assert.Contains("OneDayFullBodyHasLimitedWeeklyCoverage", result.Preview.AdvisoryCodes);
+    }
+
+    [Fact]
+    public async Task One_available_day_retains_the_selected_high_volume_style()
+    {
+        var source = OneDayProfile() with { SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.HighVolumeStrength } };
+        var request = Request() with { Activity = WorkoutActivityDto.HighVolumeStrength,
+            ExplicitStrengthStyleChoice = WorkoutActivityDto.HighVolumeStrength, AvailableWeekdays = null };
+        var result = await new PreviewStrengthPlanV020UseCase(new Source(source)).ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.Equal("Feasible", result.Status);
+        Assert.Single(result.Sessions);
+        Assert.Equal((int)WorkoutActivityType.HighVolumeStrength, result.EffectiveActivityTypeId);
+        Assert.Contains("OneDayFullBodyHasLimitedWeeklyCoverage", result.AdvisoryCodes);
+    }
+
+    [Fact]
+    public async Task One_day_with_no_allowed_strength_exercises_is_not_persisted()
+    {
+        var source = OneDayProfile() with { ExcludedExerciseIds = new HashSet<int> { 101, 102, 103, 104 } };
+        var store = new ProposalStore();
+        var useCase = new CreateStrengthPlanProposalV020UseCase(new PreviewStrengthPlanV020UseCase(new Source(source)), store);
+
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+
+        Assert.False(result.IsPersisted);
+        Assert.NotEqual("Feasible", result.Preview.Status);
+        Assert.Empty(result.Preview.Sessions);
+        Assert.Equal(0, store.SaveCount);
+    }
+
+    [Fact]
     public void Automatic_Preview_Rejects_An_Unselected_Current_Strength_Style()
     {
         var request = Request() with
@@ -1132,6 +1191,27 @@ public sealed class StrengthPlanPreviewV020Tests
             item => item.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength);
         Assert.Contains(StrengthScheduleAssignmentRule.SessionsReducedForMuscleRecovery, decision.ReasonCodes);
     }
+    private static StrengthPlanPreviewSourceV020 OneDayProfile()
+    {
+        var source = Profile();
+        var template = Assert.Single(StrengthTemplateCatalog.ForSchedule(1));
+        var allowed = source.ReviewedAllowedExerciseIdsByTemplateSlot.ToDictionary(x => x.Key, x => x.Value);
+        var conditions = source.TemplateSlotReviewConditions.ToDictionary(x => x.Key, x => x.Value);
+        foreach (var (slot, index) in template.Slots.Where(x => x.IsRequired).Select((slot, i) => (slot, i)))
+        {
+            var key = $"{template.TemplateId}|{slot.SlotId}";
+            allowed[key] = new HashSet<int> { 101 + index };
+            conditions[key] = "Reviewed slot conditions";
+        }
+        return source with
+        {
+            AvailableWeekdays = new HashSet<DayOfWeek> { DayOfWeek.Monday },
+            SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.GeneralStrength },
+            ReviewedAllowedExerciseIdsByTemplateSlot = allowed,
+            TemplateSlotReviewConditions = conditions
+        };
+    }
+
     private static StrengthPlanPreviewSourceV020 Profile()
     {
         var catalog = new[]

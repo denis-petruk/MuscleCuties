@@ -126,8 +126,24 @@ public sealed class PlanningAcceptanceTransactionTests
             var command = new AcceptStrengthPlanProposalRequestV020(created.ProposalId, lease.LeaseId, lease.Fence,
                 created.ProposalVersion, ReplacementConfirmed: true);
             var store = new PostgresAcceptStrengthPlanProposalStoreV020(db);
+            var proposalRecord = await db.WorkoutPlanProposalsV02.SingleAsync(row => row.Id == created.ProposalId);
+            var currentSnapshot = proposalRecord.ProposalJson;
+            var staleSnapshot = System.Text.Json.Nodes.JsonNode.Parse(currentSnapshot)!;
+            staleSnapshot["rulesetVersion"] = "MC-PLANNING-0.2";
+            proposalRecord.ProposalJson = staleSnapshot.ToJsonString();
+            await db.SaveChangesAsync();
+            var staleRuleset = await store.AcceptAsync(user, command, CancellationToken.None);
+            Xunit.Assert.Equal("InvalidProposal", staleRuleset.Status);
+            Xunit.Assert.True(await db.WorkoutPlans.Where(row => row.Id == oldPlan).Select(row => row.IsActive).SingleAsync());
+            proposalRecord = await db.WorkoutPlanProposalsV02.SingleAsync(row => row.Id == created.ProposalId);
+            proposalRecord.ProposalJson = currentSnapshot;
+            await db.SaveChangesAsync();
             var accepted = await store.AcceptAsync(user, command, CancellationToken.None);
             Xunit.Assert.Equal("Accepted", accepted.Status);
+            // Once accepted, retries remain idempotent even if their historical snapshot has an older ruleset.
+            proposalRecord = await db.WorkoutPlanProposalsV02.SingleAsync(row => row.Id == created.ProposalId);
+            proposalRecord.ProposalJson = staleSnapshot.ToJsonString();
+            await db.SaveChangesAsync();
             var replay = await store.AcceptAsync(user, command, CancellationToken.None);
             Xunit.Assert.Equal(accepted, replay);
             Xunit.Assert.Single(await db.WorkoutPlans.AsNoTracking().Where(row => row.UserId == user && row.IsActive).ToListAsync());

@@ -8,7 +8,7 @@ User-visible behaviour that is not already in `AGENTS.md`. The safety rules and 
 - Keep the active accepted plan while a replacement is prepared.
 - Apply approved conservative adjustments for readiness, sleep, energy or cycle-related conditions automatically, within the reviewed rules.
 - Applying the preview is the only decision: there is no per-exercise acknowledgment step. Injury-excluded movements are already removed and the preview explains the week inline.
-- When the week fits only with reduced volume, the preview says so and **Apply plan** carries that acceptance.
+- When a week fits only with reduced volume, disclose that compromise. A feasible first foreground plan applies automatically; replacing an existing plan requires **Apply plan** and the replacement acknowledgment. Do not record an acknowledgment for an automatic first plan.
 
 ## Generation prerequisites
 
@@ -24,9 +24,9 @@ User-visible behaviour that is not already in `AGENTS.md`. The safety rules and 
 
 ## Training capture and progression
 
-- Strength logging captures per-set rows: reps, load, RIR and technique acceptability. Edited rows are sent as `ObservedSets` with working sets renumbered from one; warm-up, zero-rep and unedited placeholder rows are excluded.
+- Strength logging captures per-set rows: reps, load and optional RIR and technique information. Edited rows are sent as `ObservedSets` with working sets renumbered from one; warm-up, zero-rep and unedited placeholder rows are excluded.
 - Row-less timed sessions (running, walking, cycling, swimming, recovery) send an activity actual with duration and effort, without invented sets.
-- Progression consumes only persisted observed sets. A session with missing RIR or no working sets is omitted, never filled from aggregates.
+- Progression consumes persisted observed sets against completed sessions and their immutable prescriptions. RIR is optional; missing actual data is never filled from aggregates. An incomplete or ambiguous recent exposure must not earn a load increase.
 - Progression uses the exercise's real major muscle group and the user's real effective experience tier, never hardcoded defaults.
 - Recommendation, progression and skipped-summary copy is localized for EN and RU.
 

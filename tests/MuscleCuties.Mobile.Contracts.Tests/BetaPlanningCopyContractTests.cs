@@ -22,6 +22,11 @@ public sealed class BetaPlanningCopyContractTests
     [InlineData("Workout_Generation_SwitchToGeneralStrength")]
     [InlineData("Workout_Generation_SwitchStyleFailed")]
     [InlineData("Workout_Generation_EquipmentBetaNotice")]
+    [InlineData("Workout_Generation_OneDayCoverageNotice")]
+    [InlineData("Workout_Generation_CoverageGapNotice")]
+    [InlineData("Workout_Generation_CoveragePreferredNotice")]
+    [InlineData("Workout_Generation_CoverageNoticeTitle")]
+    [InlineData("Workout_Generation_DurationOmissionNotice")]
     public void KeyHasNonEmptyEnglishAndRussianCopy(string key)
     {
         var english = Catalog("UiTextCatalog");

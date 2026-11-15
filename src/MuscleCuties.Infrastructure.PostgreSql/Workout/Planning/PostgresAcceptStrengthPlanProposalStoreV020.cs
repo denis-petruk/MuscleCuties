@@ -181,7 +181,8 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         }
 
 
-        if (origin == AcceptanceOrigin.User && proposalSnapshot.RequiresReducedVolumeAcknowledgment && !request.ReducedVolumeAcknowledged)
+        if (origin == AcceptanceOrigin.User && activePlanId is not null &&
+            proposalSnapshot.RequiresReducedVolumeAcknowledgment && !request.ReducedVolumeAcknowledged)
             return new(ConflictStatus, proposal.PlanId, null,
                 ReducedVolumeAcknowledgmentRequiredCode);
 

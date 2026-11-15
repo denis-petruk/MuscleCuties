@@ -4,7 +4,7 @@ namespace MuscleCuties.Core.Domain.Workout.Planning;
 
 public static class WorkoutPreferencesRule
 {
-    public const int MinimumDaysPerWeek = WeekPlanRule.MinimumDaysPerWeek;
+    public const int MinimumDaysPerWeek = 1;
     public const int MaximumDaysPerWeek = WeekPlanRule.MaximumDaysPerWeek;
 
     public const int MinimumActivitySessionDurationMinutes =

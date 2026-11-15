@@ -4,6 +4,23 @@ internal static partial class RussianUiText
 {
     static partial void RegisterWorkoutGenerationStrings()
     {
+        Values["Workout_Generation_DurationOmissionNotice"] = "Некоторые движения исключены, чтобы уложиться в выбранное время тренировки.";
+        Values["Workout_Generation_OneDayCoverageNotice"] = "За один тренировочный день невозможно проработать каждую группу мышц дважды за неделю.";
+        Values["Workout_Generation_CoverageMuscle_Chest"] = "Грудь";
+        Values["Workout_Generation_CoverageMuscle_LatsUpperBack"] = "Спина";
+        Values["Workout_Generation_CoverageMuscle_Deltoids"] = "Плечи";
+        Values["Workout_Generation_CoverageMuscle_Quadriceps"] = "Квадрицепсы";
+        Values["Workout_Generation_CoverageMuscle_Hamstrings"] = "Задняя поверхность бедра";
+        Values["Workout_Generation_CoverageMuscle_Glutes"] = "Ягодицы";
+        Values["Workout_Generation_CoverageMuscle_Biceps"] = "Бицепсы";
+        Values["Workout_Generation_CoverageMuscle_Triceps"] = "Трицепсы";
+        Values["Workout_Generation_CoverageMuscle_Calves"] = "Икры";
+        Values["Workout_Generation_CoverageMuscle_Trunk"] = "Мышцы корпуса";
+        Values["Workout_Generation_CoverageMuscle_Abductors"] = "Отводящие мышцы бедра";
+        Values["Workout_Generation_CoverageMuscle_Adductors"] = "Приводящие мышцы бедра";
+        Values["Workout_Generation_CoverageGapNotice"] = "Некоторые группы мышц получают меньше тренировок в неделю, чем предусмотрено планом.";
+        Values["Workout_Generation_CoveragePreferredNotice"] = "Для некоторых групп мышц не достигается предпочтительная частота тренировок в неделю.";
+        Values["Workout_Generation_CoverageNoticeTitle"] = "Ваш план готов";
         Values["WorkoutPopulationBirthDateRequired"] = "Добавьте дату рождения в профиле и создайте новый план для просмотра.";
         Values["WorkoutPopulationDateUnavailable"] = "Подтвердите часовой пояс аккаунта и создайте новый план для просмотра.";
         Values["WorkoutPopulationAgeUnsupported"] = "Планирование тренировок доступно для взрослых от 18 до 64 лет. Вы можете пользоваться другими возможностями приложения.";

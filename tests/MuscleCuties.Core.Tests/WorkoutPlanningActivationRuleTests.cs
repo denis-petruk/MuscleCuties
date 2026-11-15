@@ -7,7 +7,7 @@ namespace MuscleCuties.Core.Tests;
 /// G-01/G-02: activation without an Apply tap is limited to the source's tested first-plan exception.
 /// An existing active plan is replaced only through Apply plan; the initiating Generate/Regenerate
 /// discloses that consequence up front but never activates the replacement by itself. A plan that
-/// fits only with reduced volume waits for Apply, which carries that acknowledgment.
+/// fits only with reduced volume can still activate as a first plan.
 /// </summary>
 public sealed class WorkoutPlanningActivationRuleTests
 {
@@ -30,9 +30,9 @@ public sealed class WorkoutPlanningActivationRuleTests
     }
 
     [Fact]
-    public void ReducedVolumeFirstPlanWaitsForApply()
+    public void ReducedVolumeFirstPlanActivatesWithoutApply()
     {
-        Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
+        Assert.True(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(
             userRequested: true, replacesExistingPlan: false, feasible: true, persisted: true,
             hasLease: true, missingRequiredAnswers: false, styleChoiceRequired: false, reducedVolume: true));
     }

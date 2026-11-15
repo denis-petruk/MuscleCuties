@@ -245,7 +245,10 @@ public static class MauiProgram
             () => NavigateToAsync("//DashboardPage"),
             sp.GetRequiredService<IWorkoutAccountCalendarClient>(),
             overview: sp.GetRequiredService<IWorkoutOverviewUseCase>(),
-            personalInfo: sp.GetService<IProfilePersonalInfoUseCase>()));
+            personalInfo: sp.GetService<IProfilePersonalInfoUseCase>(),
+            showCoverageNoticeAsync: message => MainThread.InvokeOnMainThreadAsync(() => Shell.Current.DisplayAlertAsync(
+                UiTextCatalog.Get("Workout_Generation_CoverageNoticeTitle"), message,
+                UiTextCatalog.Get("Common_Done")))));
 
         services.AddTransient<WorkoutSessionViewModel>(sp => new WorkoutSessionViewModel(
             sp.GetRequiredService<IWorkoutSessionActionUseCase>(),

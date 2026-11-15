@@ -101,7 +101,7 @@ public static class StrengthPlanPreviewRule
 {
     public const string PolicyId = "MC-WORKOUT-POLICY";
     public const string Version = "0.2.0";
-    public const string RulesetVersion = "MC-PLANNING-0.2";
+    public const string RulesetVersion = "MC-PLANNING-0.3";
     public const string InvalidInputCode = "InvalidStrengthPreviewInput";
     public const string PlanningProfileInvalidCode = "PlanningProfileDataInvalid";
     public const string ActivityNotSelectedCode = "ActivityNotSelectedInProfile";
@@ -475,10 +475,8 @@ public static class StrengthPlanPreviewRule
         {
             if (!tenRegionCoverage.MeetsMinimum)
             {
-                if (scheduledSessionsPerWeek < TenRegionMuscleCoverageRule.MinimumWeeklySessionExposures)
-                    limitations.AddRange(tenRegionCoverage.LimitationCodes);
-                else
-                    advisories.AddRange(tenRegionCoverage.LimitationCodes);
+                // Limited weekly exposure is disclosed but does not itself make a safe one-day plan unusable.
+                advisories.AddRange(tenRegionCoverage.LimitationCodes);
             }
             advisories.AddRange(tenRegionCoverage.AdvisoryCodes);
         }
@@ -608,14 +606,17 @@ public static class StrengthPlanPreviewRule
         StrengthPlanPreviewData data,
         StrengthPlanPreviewChoices choices)
     {
+        var availableDays = GeneralStrengthFrequencyResolver.ResolveAvailableWeekdaysCount(
+            choices.RequestedAvailableWeekdays ?? data.AvailableWeekdays);
+        if (availableDays == OneSession)
+            return OneSession;
+
         if (activity == WorkoutActivityType.GeneralStrength)
         {
             var isEstablished = GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(
                 choices.ActivityHistory, choices.LocalDate);
-            var weekdaysCount = GeneralStrengthFrequencyResolver.ResolveAvailableWeekdaysCount(
-                choices.RequestedAvailableWeekdays ?? data.AvailableWeekdays);
             var gsPolicy = GeneralStrengthFrequencyResolver.Resolve(
-                weekdaysCount, isEstablished, data.ProfileTrainingExperience);
+                availableDays, isEstablished, data.ProfileTrainingExperience);
             return Math.Min(gsPolicy.PolicySessionsPerWeek, gsPolicy.TargetSessionsPerWeek);
         }
 

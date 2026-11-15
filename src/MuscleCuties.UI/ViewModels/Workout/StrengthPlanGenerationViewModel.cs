@@ -97,6 +97,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private readonly Func<Task> _navigateToTrainAsync;
     private readonly INavigationContextService? _navigationContext;
     private readonly Func<string, Task<bool>>? _confirmReplacementAsync;
+    private readonly Func<string, Task>? _showCoverageNoticeAsync;
     private readonly Func<Task>? _navigateToDashboardAsync;
     private readonly IWorkoutAccountCalendarClient? _accountCalendar;
     private readonly IWorkoutOverviewUseCase? _overview;
@@ -182,9 +183,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         Func<Task>? navigateToDashboardAsync = null,
         IWorkoutAccountCalendarClient? accountCalendar = null,
         IWorkoutOverviewUseCase? overview = null,
-        IProfilePersonalInfoUseCase? personalInfo = null)
+        IProfilePersonalInfoUseCase? personalInfo = null,
+        Func<string, Task>? showCoverageNoticeAsync = null)
     {
         _personalInfo = personalInfo;
+        _showCoverageNoticeAsync = showCoverageNoticeAsync;
         _proposalClient = proposalClient;
         _preferences = preferences;
         _workoutArchive = workoutArchive;
@@ -1459,7 +1462,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                     return;
                 }
                 lease = renewed.Lease;
-                _pendingAcceptance = StrengthPlanGenerationDecisions.BuildAcceptance(_proposal, lease);
+                _pendingAcceptance = StrengthPlanGenerationDecisions.BuildAcceptance(_proposal, lease, fromApplyTap);
             }
             var result = await _proposalClient.AcceptAsync(_pendingAcceptance);
             if (result.Status != "Accepted")
@@ -1484,6 +1487,9 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             NotifyPreviewChanged();
             try
             {
+                var notice = StrengthPlanGenerationDisplayMapper.PostAcceptanceNotices(Preview);
+                if (!fromApplyTap && notice.Count > 0 && _showCoverageNoticeAsync is not null)
+                    await _showCoverageNoticeAsync(string.Join(Environment.NewLine, notice));
                 if (WorkoutPlanningFlow.Success(_proposal.ReplacesExistingPlan) == WorkoutPlanningSuccessDestinationDto.Dashboard && _navigateToDashboardAsync is not null)
                     await _navigateToDashboardAsync();
                 else
@@ -1598,6 +1604,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     // list carries the remaining advisories only and the screen states the fact once.
     private IEnumerable<string> BuildPreviewNotes() =>
         ScheduleInputReasons
+            .Concat(StrengthPlanGenerationDisplayMapper.CoverageNotes(Preview))
             .Concat([StrengthPlanGenerationDisplayMapper.SessionWithheldNote(Preview)])
             .Concat(HasOmittedMovements ? [UiTextCatalog.Get("Workout_Generation_MovementOmitted")] : [])
             .Concat(HasDurationOmissions ? [DurationOmissionsText] : [])
@@ -1611,7 +1618,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             .Select(StrengthPlanGenerationDisplayMapper.ToMixedActivityDecisionDisplay)
             .Select(decision => $"{decision.Activity}: {decision.Status}. {decision.Frequency} {string.Join(", ", decision.Reasons)}".Trim())
             .ToArray() ?? [];
-        var lines = activities.Prepend(UiTextCatalog.Get(ReplacementSummaryKey));
+        var lines = activities.Prepend(UiTextCatalog.Get(ReplacementSummaryKey))
+            .Concat(StrengthPlanGenerationDisplayMapper.CoverageNotes(Preview));
         if (HasOmittedMovements)
             lines = lines.Append(UiTextCatalog.Get("Workout_Generation_MovementOmitted"));
         if (HasDurationOmissions)
