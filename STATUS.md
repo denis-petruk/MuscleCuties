@@ -1,6 +1,6 @@
 # Status — QA audit base branch
 
-Branch: `fix/qa-audit-followups`, based on `4b4847ee`. Verification head: `acea8e0b`.
+Branch: `fix/qa-audit-followups`, based on `4b4847ee`. Verification head: `1ef6a70a`.
 PR: https://github.com/denis-petruk/MuscleCuties/pull/50 (base `main`).
 
 No source file was changed in this verification pass. The pre-existing shared-UI work is preserved
@@ -53,24 +53,14 @@ Simulator `678048F6-C4C7-406C-A970-7104AED3E00A`, installed Debug build at `afd7
 No repair commit was needed for this set; duplicating patches would have risked the existing shared
 primitives.
 
-## History-rewrite limitation
+## History rewrite
 
-`AGENTS.md:7` states exactly:
-
-> Work on a branch and integrate through a PR into protected `main`; never push directly to `main`,
-> force-push or rewrite remote history.
-
-That rule forbids rewriting the thirteen commits below, all of which predate this pass and are
-ancestors of `origin/fix/qa-audit-followups`. They carry attribution trailers in their messages:
-
-```
-2b0afa30 167a32da d2341f85 113c64ed 1b240bcb 97ea6395 f68bbabf
-cc1b52fd f495de4e b27770a1 5c766e8a f75f5663 86c33f13
-```
-
-No rewrite or force-push was performed. This branch therefore remains non-compliant with the
-no-attribution constraint until the owner permits a history rewrite or accepts a squash/replacement
-merge. The two commits added in this verification pass, the PR title and the PR body are clean.
+The owner authorized a one-time rewrite of this feature branch. All 65 commits in
+`4b4847ee..HEAD` were message-filtered; no commit in the range contains an attribution trailer.
+Every rewritten commit's tree and subject matches its pre-rewrite counterpart (65/65, zero
+mismatches), and the final tree and full diff are identical. The backup ref
+`backup/qa-audit-followups-pre-rewrite` and a local bundle retain the pre-rewrite history; the
+branch was force-pushed with an exact lease and no other branch was touched.
 
 ## Not verified
 
@@ -80,5 +70,6 @@ merge. The two commits added in this verification pass, the PR title and the PR 
 
 ## Next step
 
-Continue the QA fixes from the Wave A base. The first owner decision still open is D43 (cycle phase
-list wording and one canonical recipe).
+Workout logic is scheduled for a rewrite, so workout-behaviour findings (D18, D20, D29, D30, D44) are
+paused. Nutrition/UI work can continue from this base. The first owner decision still open is D43
+(cycle phase list wording and one canonical recipe).
