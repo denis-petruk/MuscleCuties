@@ -90,6 +90,16 @@ The Core baseline on this worktree was 1,417 passed and one failed: `WorkoutSess
 - Cycle-readiness dosing uses a soreness-sensitive score. A soreness-independent policy must preserve pain/red-flag checks and genuine fatigue signals; review/version its calibration and approval rather than silently reusing an older approval. No app-wide DOMS PASS is claimed.
 - The full Core run after the scoped change returned 1,419 passed and one failure in the pre-existing modal source-shape assertion (before the additional canonical test was added). No simulator, database, cloud or release verification is implied. The pre-existing dirty UI changes remain outside this task's commits.
 
+### In-progress changes — 2026-11-15
+
+These changes are committed but are not release evidence. The checkout advanced while preserving the earlier documentation and deload commits.
+
+- `630c3dd0` implements one-day schedule, saved preferences and preview for a Full Body proposal, with safety exclusions and disclosed coverage gaps. First feasible reduced-volume activation and replacement acknowledgment were adjusted; EN/RU informational notes were added. Proposal ruleset was changed to prevent stale unaccepted proposals using earlier scheduling semantics. One-day end-to-end simulator behavior and final independent review remain open.
+- `ea07bda6` connects optional-RIR progression to completed snapshot-matched sessions, requiring every prescribed set and using each snapshot's rep target. Recent partial or unverified substituted sessions block an increase. The prior two-deficit reduction is retained only where actual RIR exists. An independent review and selected PostgreSQL tests covered the substitute barrier; broader progression and scenario coverage remain required.
+- On this worktree, Core tests passed 1,456/1,456; Mobile.Contracts passed 200/200; a selected local PostgreSQL integration run passed 3/3; the iOS simulator build succeeded with zero warnings/errors. These are point-in-time results against the dirty checkout, not a clean committed SHA or visual/device validation. Older tests that required two days or forbade automatic first reduced-volume plans were updated to reflect the explicitly superseding recovered decisions while retaining replacement and safety checks.
+- `630c3dd0` removes unconditional adductor shortfall/priority and adductor-only glute attribution. Explicit need-specific adductor selection remains open. The Gate 56 glute-specific abductor policy and meaningful exposure counting by effective sets also remain open.
+- Other soreness-sensitive readiness paths and many P1–P9 requirements remain open. Independent review has resumed after a temporary workspace credit error; unresolved findings and the final simulator flow remain open. No shared-environment reset, AWS deployment, device acceptance or TestFlight action has been performed.
+
 ## Architecture and generation
 
 - Core owns deterministic, versioned rules; UseCases coordinate operations; Infrastructure owns persistence and catalog; Server is authoritative; MAUI presents inputs and results. Respect actual dependency and platform boundaries.
