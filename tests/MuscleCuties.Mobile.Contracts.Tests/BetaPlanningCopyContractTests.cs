@@ -42,6 +42,30 @@ public sealed class BetaPlanningCopyContractTests
     }
 
     [Fact]
+    public void Cycle_phase_training_copy_never_names_soreness_as_a_training_trigger()
+    {
+        // A-8: ordinary soreness is not a training input, so phase guidance must not tell a user to
+        // pull back because of it. PMS symptoms and sleep remain legitimate readiness signals.
+        var catalog = File.ReadAllText(Path.Combine(RepoRoot(), "src", "MuscleCuties.UI", "ViewModels",
+            "Cycle", "CyclePhaseDetailCatalog.cs"));
+
+        Assert.DoesNotContain("soreness", catalog, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Runtime_map_translates_the_current_luteal_training_tip_without_soreness()
+    {
+        var runtime = File.ReadAllText(Path.Combine(RepoRoot(), "src", "MuscleCuties.UI", "Services",
+            "Localization", "UiTextCatalog.RuntimeText.cs"));
+
+        Assert.DoesNotContain("If PMS, sleep, or soreness spikes", runtime, StringComparison.Ordinal);
+        var line = runtime.Split('\n')
+            .SingleOrDefault(entry => entry.Contains("drop optional work before the crash", StringComparison.Ordinal));
+        Assert.NotNull(line);
+        Assert.DoesNotContain("болезнен", line, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
     public void ReplacementNoticeNoLongerPromisesActivationOnGenerate()
     {
         var en = Catalog("UiTextCatalog")["Workout_Generation_ReplacesActivePlanNotice"];

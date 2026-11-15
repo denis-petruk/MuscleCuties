@@ -541,7 +541,7 @@ public static partial class UiTextCatalog
         ["Hydration estimate"] = "Оценка водного баланса",
         ["I understand this app offers wellness guidance, not medical advice. It cannot diagnose or treat a condition."] = "Я понимаю, что приложение предлагает рекомендации по самочувствию, а не медицинские советы. Оно не диагностирует и не лечит заболевания.",
         ["I understand this is wellness guidance, not medical advice"] = "Я понимаю, что это рекомендации по благополучию, а не медицинские советы",
-        ["If PMS, sleep, or soreness spikes, pull back before the crash. That is strategy, not quitting."] = "Если усиливаются симптомы ПМС, нарушается сон или возрастает болезненность мышц, снизьте нагрузку заранее. Это осознанная корректировка плана.",
+        ["If PMS symptoms or sleep take a hit, drop optional work before the crash. That is strategy, not quitting."] = "Если усиливаются симптомы ПМС или ухудшается сон, уберите дополнительную работу заранее. Это осознанная корректировка плана.",
         ["If last week was rough, progress from your actual baseline, not the fantasy version of you."] = "Если прошлая неделя была тяжёлой, отталкивайтесь от своей реальной подготовки, а не от идеального сценария.",
         ["If pain is high, train the routine: walk, mobilize, eat, sleep. That still counts."] = "Если боль высокая, тренируйтесь в рутине: ходите, двигайтесь, ешьте, спите. Это все еще считается.",
         ["If reps get twisty, grindy, or weird, the set is done."] = "Если повторения становятся скрученными, шумными или странными, подход окончен.",
