@@ -1012,6 +1012,18 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Nutrition_breakdown_localizes_server_supplied_macro_and_micronutrient_names()
+    {
+        var xaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition",
+            "NutritionBreakdownModal.xaml"));
+
+        Assert.DoesNotContain("Text=\"{Binding Name}\"", xaml);
+        Assert.Contains(
+            "Text=\"{Binding Name, Converter={StaticResource LocalizedStringConverter}}\"", xaml);
+    }
+
+    [Fact]
     public void Save_notes_requires_a_change_from_the_stored_value()
     {
         var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");

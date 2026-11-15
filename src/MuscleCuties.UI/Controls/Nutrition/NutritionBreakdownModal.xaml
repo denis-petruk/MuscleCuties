@@ -134,7 +134,7 @@
                                                         VerticalOptions="Center" />
                                                     <Label
                                                         Grid.Column="1"
-                                                        Text="{Binding Name}"
+                                                        Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
                                                         Style="{StaticResource CaptionLabel}"
                                                         LineBreakMode="WordWrap"
                                                         VerticalOptions="Center" />
@@ -220,7 +220,7 @@
                                     <Label
                                         Grid.Row="1"
                                         Grid.Column="1"
-                                        Text="{Binding Name}"
+                                        Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource CardTitle}"
                                         LineBreakMode="WordWrap" />
 
