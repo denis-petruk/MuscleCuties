@@ -135,6 +135,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             reviewedSlots.AllowedIds,
             reviewedSlots.Conditions)
         {
+            GluteFocus = profile?.GluteFocus ?? false,
             EquipmentAnswerMissing = parsedEquipment is null,
             GoalAnswerMissing = parsedGoal is null,
             SelectedActivityTypes = ParseActivityTypes(profile?.PreferredWorkoutActivityTypes),

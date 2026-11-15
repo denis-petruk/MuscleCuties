@@ -133,6 +133,8 @@ public sealed class UserProfileRecord : ITenantRecord
     public string NutritionGoalsJson { get; set; } = string.Empty;
     public string ReproductiveContextJson { get; set; } = string.Empty;
     public string ProfileImagePath { get; set; } = string.Empty;
+    /// <summary>User-selected glute focus. Stored on the profile so planning never has to infer it.</summary>
+    public bool GluteFocus { get; set; }
     public int ConcurrencyVersion { get; set; } = 1;
     public DateTime UpdatedAt { get; set; }
 }

@@ -271,6 +271,7 @@ public sealed class UserProfileConfiguration : IEntityTypeConfiguration<UserProf
         builder.Property(x => x.ExcludedStrengthExerciseIdsJson)
             .HasColumnName("excluded_strength_exercise_ids_json")
             .HasColumnType("jsonb").HasDefaultValueSql("'[]'::jsonb").IsRequired();
+        builder.Property(x => x.GluteFocus).HasColumnName("glute_focus").HasDefaultValue(false).IsRequired();
         builder.ToTable("user_profiles", "app", table =>
         {
             table.HasCheckConstraint("ck_user_profiles_available_workout_weekdays_array",

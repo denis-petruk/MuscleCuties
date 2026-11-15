@@ -105,6 +105,9 @@ public static class PostgresSchemaMigrations
     public const string DeloadOfferIdempotencyResourceName =
         "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.007_deload_offer_idempotency.sql";
 
+    public const string GluteFocusResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.008_glute_focus.sql";
+
     public static readonly MigrationScriptDefinition BaselineScript =
         new(0, "000_model_baseline.sql", BaselineScriptResourceName);
 
@@ -116,7 +119,8 @@ public static class PostgresSchemaMigrations
         new(4, "004_session_distance.sql", SessionDistanceResourceName),
         new(5, "005_observed_set_actuals.sql", ObservedSetActualsResourceName),
         new(6, "006_exercise_definition_source_id.sql", ExerciseDefinitionSourceIdResourceName),
-        new(7, "007_deload_offer_idempotency.sql", DeloadOfferIdempotencyResourceName)
+        new(7, "007_deload_offer_idempotency.sql", DeloadOfferIdempotencyResourceName),
+        new(8, "008_glute_focus.sql", GluteFocusResourceName)
     ];
 
     /// <summary>
