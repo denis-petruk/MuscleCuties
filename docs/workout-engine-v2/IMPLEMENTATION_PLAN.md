@@ -82,6 +82,14 @@ At baseline `a0d537b2fc5bbbc90fb76abd2e040c9c237a350c`, subject to the dirty wor
 
 The Core baseline on this worktree was 1,417 passed and one failed: `WorkoutSessionLifecycleAndModalTests.AnimatedModalView_hooks_unloaded_and_disappearing_with_idempotent_scope`. The existing dirty modal implementation uses an ordered list while the test expects a literal HashSet declaration. Preserve the pre-existing UI changes and investigate the assertion; this result is not a green baseline and does not establish a runtime modal defect.
 
+### Work started — 2026-11-15
+
+- Documentation recovery was committed at `623ebb41`; its review found and corrected two internal inconsistencies. This confirms the captured scope, not historical completeness or implementation.
+- `95ced899` removes soreness from the deload recovery predicate. A test-first soreness-only case failed before the change; the focused deload and canonical-recovery run passed 16/16 afterwards. The existing canonical poor-recovery fixture now reports poor sleep in both weeks; its assertion remains intact. An independent review traced the production caller. This is **partial**: other readiness/score routes can still transmit soreness into dose decisions, so MC-WE2-REQ-006 and MC-WE2-REQ-023 remain NOT VERIFIED.
+- Further audit: the PostgreSQL progression reader currently groups observed rows without confirming completed sessions and a complete immutable prescription, caps rows, and uses category rep ceilings. Merely making RIR nullable could recommend increases after partial work. `PlannedPrescriptionSnapshotJson` provides historical sets/reps for eligible planned sessions; implement completed-session and complete-prescription validation before enabling no-RIR progression. Preserve missing/ambiguous histories as ineligible, with no fabricated RIR or technique. This is an implementation finding, not a verified fix.
+- Cycle-readiness dosing uses a soreness-sensitive score. A soreness-independent policy must preserve pain/red-flag checks and genuine fatigue signals; review/version its calibration and approval rather than silently reusing an older approval. No app-wide DOMS PASS is claimed.
+- The full Core run after the scoped change returned 1,419 passed and one failure in the pre-existing modal source-shape assertion (before the additional canonical test was added). No simulator, database, cloud or release verification is implied. The pre-existing dirty UI changes remain outside this task's commits.
+
 ## Architecture and generation
 
 - Core owns deterministic, versioned rules; UseCases coordinate operations; Infrastructure owns persistence and catalog; Server is authoritative; MAUI presents inputs and results. Respect actual dependency and platform boundaries.
