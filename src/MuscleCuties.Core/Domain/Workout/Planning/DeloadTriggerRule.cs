@@ -19,7 +19,6 @@ public static class DeloadTriggerRule
 
     public const decimal PoorSleepQualityThreshold = 2.0m;
     public const decimal LowEnergyThreshold = 2.0m;
-    public const decimal HighSorenessThreshold = 4.0m;
 
     public const int ZeroConsecutiveWeeks = 0;
     public const decimal ZeroReductionFraction = 0.0m;
@@ -117,9 +116,8 @@ public sealed record WeeklyPerformanceAndRecoveryRecord(
 
             var poorSleep = AverageSleepQuality.HasValue && AverageSleepQuality.Value <= DeloadTriggerRule.PoorSleepQualityThreshold;
             var lowEnergy = AverageEnergy.HasValue && AverageEnergy.Value <= DeloadTriggerRule.LowEnergyThreshold;
-            var highSoreness = AverageSoreness.HasValue && AverageSoreness.Value >= DeloadTriggerRule.HighSorenessThreshold;
-
-            return poorSleep || lowEnergy || highSoreness;
+            // Ordinary soreness alone is not a reason to change the training dose.
+            return poorSleep || lowEnergy;
         }
     }
 }

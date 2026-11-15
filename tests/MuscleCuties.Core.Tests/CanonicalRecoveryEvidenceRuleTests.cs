@@ -14,8 +14,25 @@ public sealed class CanonicalRecoveryEvidenceRuleTests
     {
         var result = CanonicalRecoveryEvidenceRule.Evaluate(Today,
             [new(FirstWeek, 42, 3, 10, 3, 8), new(SecondWeek, 42, 3, 10, 3, 9)],
-            [new(FirstWeek, 1, null, null), new(SecondWeek, null, null, 5)]);
+            [new(FirstWeek, 1, null, null), new(SecondWeek, 1, null, 5)]);
         Assert.True(result.IsDeloadTriggered);
+    }
+
+    [Fact]
+    public void Soreness_alone_does_not_trigger_deload_through_canonical_recovery()
+    {
+        ObservedCompoundPerformance[] performance =
+            [new(FirstWeek, 42, 3, 10, 3, 8), new(SecondWeek, 42, 3, 10, 3, 9)];
+        ObservedRecovery[] rested =
+            [new(FirstWeek, 4, 4, 1), new(SecondWeek, 4, 4, 1)];
+        ObservedRecovery[] sore =
+            [new(FirstWeek, 4, 4, 5), new(SecondWeek, 4, 4, 5)];
+
+        var baseline = CanonicalRecoveryEvidenceRule.Evaluate(Today, performance, rested);
+        var result = CanonicalRecoveryEvidenceRule.Evaluate(Today, performance, sore);
+
+        Assert.False(baseline.IsDeloadTriggered);
+        Assert.Equal(baseline, result);
     }
 
     [Fact]
