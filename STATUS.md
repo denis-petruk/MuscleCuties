@@ -38,10 +38,11 @@ Simulator `678048F6-C4C7-406C-A970-7104AED3E00A`, installed Debug build at `afd7
 - **D19 — already fixed by the existing diff.** Train → `Начать тренировку`: the sheet title is one
   line; `Strength & Sculpt`, `0 из 5 отмечено` and `5 упражнений` occupy separate aligned lines.
   Tapping the row leaves the session screen in the next frame; the sheet is gone.
-- **D21 — already fixed by the existing diff.** Profile → `Личная информация`, scrolled to the end:
-  `Изменить пароль` and `Сохранить личную информацию` are fully visible. The save bar is a page-grid
-  row below the scroll view, not an overlay. Nutrition settings, units and feedback use the same
-  `Auto,*,Auto` grid.
+- **D21 — already fixed by the existing diff.** All four named pages were opened and scrolled to the
+  end. `Личная информация` keeps `Изменить пароль` and `Сохранить личную информацию` fully visible;
+  nutrition settings keeps the calculated-goals helper and save button clear; units keeps the
+  `Энергия` field above the save bar; feedback keeps the `Приоритет` field and attachment row above
+  `Открыть черновик письма`. The save bar is a page-grid row, not an overlay.
 - **D37 — already fixed by the existing diff.** Today: `Заполнить отметку` is fully above the tab bar
   and taps through. The check-in sheet keeps `Пока пропустить` / `Сохранить отметку` inside its
   footer.
@@ -51,8 +52,6 @@ primitives.
 
 ## Not verified
 
-- D21's nutrition-settings, units and feedback pages share the fixed grid but were not re-opened on
-  the simulator in this pass.
 - D8's empty meal-card state was not re-captured; only a populated `Завтрак` card was observed.
 - D19's dismissal was verified as "next frame is the session", not with a millisecond stopwatch.
 - Thirteen commits that were already on the remote branch before this pass contain generated-tool
