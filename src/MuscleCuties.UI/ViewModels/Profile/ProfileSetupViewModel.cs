@@ -42,6 +42,17 @@ public partial class ProfileSetupViewModel : ObservableObject
     [ObservableProperty] private int _selectedWeightKg;
     [ObservableProperty] private int _selectedWeightLbs;
 
+    // Field-level validation: every gap is reported next to the control that owns it, and all gaps
+    // are reported by a single Continue press instead of one per attempt.
+    [ObservableProperty] private string _birthDateError = string.Empty;
+    [ObservableProperty] private string _heightError = string.Empty;
+    [ObservableProperty] private string _weightError = string.Empty;
+    [ObservableProperty] private string _strengthActivityError = string.Empty;
+    [ObservableProperty] private string _wellnessError = string.Empty;
+
+    /// <summary>Set from the wellness checkbox; the plan may never be built without it.</summary>
+    [ObservableProperty] private bool _wellnessAcknowledged;
+
     [ObservableProperty] private bool _useMetricSystem = true;
     [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
 
@@ -181,13 +192,18 @@ public partial class ProfileSetupViewModel : ObservableObject
             age--;
 
         if (age < 18)
-            ErrorMessage = AgeErrorKey;
+            BirthDateError = AgeErrorKey;
         // Clear only the age error this handler raised, so a corrected date never leaves it behind.
-        else if (ErrorMessage == AgeErrorKey)
-            ErrorMessage = string.Empty;
+        else if (BirthDateError == AgeErrorKey)
+            BirthDateError = string.Empty;
     }
 
     private const string AgeErrorKey = "Ui_Onboarding_Error_Age";
+    private const string BirthDateRequiredError = "Ui_Onboarding_Error_BirthDateRequired";
+    private const string HeightRequiredError = "Ui_Onboarding_Error_HeightRequired";
+    private const string WeightRequiredError = "Ui_Onboarding_Error_WeightRequired";
+    private const string StrengthRequiredError = "Ui_Onboarding_Error_StrengthRequired";
+    private const string WellnessRequiredError = "Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo";
 
     /// <summary>
     /// The picker was opened and dismissed. On iOS, closing it with Done on the pre-filled date raises no
@@ -228,8 +244,8 @@ public partial class ProfileSetupViewModel : ObservableObject
     {
         _birthDateWasSelected = true;
         BirthDateConfirmed = true;
-        if (ErrorMessage == "Ui_Onboarding_Error_BirthDateRequired")
-            ErrorMessage = string.Empty;
+        if (BirthDateError == BirthDateRequiredError)
+            BirthDateError = string.Empty;
     }
 
     /// <summary>True only after the user picked a birth date (or one was loaded from a saved profile).</summary>
@@ -257,23 +273,14 @@ public partial class ProfileSetupViewModel : ObservableObject
         ErrorMessage = string.Empty;
         try
         {
+            ClearFieldErrors();
+
             if (!_birthDateWasSelected || BirthDate == default)
-            {
-                ErrorMessage = "Ui_Onboarding_Error_BirthDateRequired";
-                return;
-            }
-
+                BirthDateError = BirthDateRequiredError;
             if (!HasAnsweredHeight)
-            {
-                ErrorMessage = "Ui_Onboarding_Error_HeightRequired";
-                return;
-            }
-
+                HeightError = HeightRequiredError;
             if (!HasAnsweredWeight)
-            {
-                ErrorMessage = "Ui_Onboarding_Error_WeightRequired";
-                return;
-            }
+                WeightError = WeightRequiredError;
 
             var selectedActivities = WorkoutActivityOptions
                 .Where(option => option.IsSelected)
@@ -281,10 +288,15 @@ public partial class ProfileSetupViewModel : ObservableObject
                 .ToArray();
 
             if (!WorkoutActivityOptions.Any(option => option.IsSelected && WorkoutPlanningConstants.IsStrengthActivity(option.ActivityType)))
-            {
-                ErrorMessage = "Ui_Onboarding_Error_StrengthRequired";
+                StrengthActivityError = StrengthRequiredError;
+            if (!WellnessAcknowledged)
+                WellnessError = WellnessRequiredError;
+
+            // Every gap is reported in one pass, beside its own control; nothing is saved while any
+            // answer the planner depends on is missing.
+            if (BirthDateError.Length > 0 || HeightError.Length > 0 || WeightError.Length > 0 ||
+                StrengthActivityError.Length > 0 || WellnessError.Length > 0)
                 return;
-            }
 
             var heightCm = UseMetricSystem
                 ? SelectedHeightCm
@@ -318,6 +330,17 @@ public partial class ProfileSetupViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    private void ClearFieldErrors()
+    {
+        // The age error belongs to the birthday field and survives a Continue press until fixed.
+        if (BirthDateError != AgeErrorKey)
+            BirthDateError = string.Empty;
+        HeightError = string.Empty;
+        WeightError = string.Empty;
+        StrengthActivityError = string.Empty;
+        WellnessError = string.Empty;
     }
 
     private void ToggleWorkoutActivity(WorkoutActivityOptionItem? item)
