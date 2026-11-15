@@ -409,7 +409,9 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         _suggestedPhase = null;
         OnPropertyChanged(nameof(HasSuggestedPhase));
         HasPhaseJumpWarning = false;
-        PhaseEditStatusText = string.Empty;
+        PhaseEditStatusText = day.Date.Value.Date > CurrentDate.Date
+            ? UiTextCatalog.Get("Cycle_PhaseEdit_FutureHint")
+            : string.Empty;
         CalendarEditHintText = string.Empty;
         SelectedCalendarDateText = DisplayFormat.FullDate(day.Date.Value);
         SelectedCalendarPhaseText = day.IsNeutral
@@ -470,6 +472,12 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         if (_selectedCalendarDay?.Date is not DateTime date)
             return;
 
+        if (date.Date > CurrentDate.Date)
+        {
+            PhaseEditStatusText = UiTextCatalog.Get("Cycle_PhaseEdit_FutureHint");
+            return;
+        }
+
         var selectedPhase = GetSelectedPhase();
         if (selectedPhase is null)
         {
@@ -514,7 +522,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     private bool CanSaveDatePhase()
     {
-        return _selectedCalendarDay?.Date is not null;
+        return _selectedCalendarDay?.Date is DateTime date && date.Date <= CurrentDate.Date;
     }
 
     private async Task SavePhaseForDateAsync(DateTime date, CyclePhase phase, string note)

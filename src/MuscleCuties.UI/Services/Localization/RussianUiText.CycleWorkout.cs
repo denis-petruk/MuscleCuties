@@ -452,6 +452,7 @@ internal static partial class RussianUiText
         Values["Cycle_QuickLog_PhaseOrderFormat"] = "Эта фаза пропускает шаг. Сначала отметьте {0}.";
         Values["Cycle_Calendar_LoadFailed"] = "Не удалось загрузить месяц. Выберите другой месяц или вернитесь к сегодня.";
         Values["Cycle_PhaseEdit_ChoosePhase"] = "Выберите фазу для этого дня.";
+        Values["Cycle_PhaseEdit_FutureHint"] = "Этот день ещё впереди. Записать фазу можно будет в сам день.";
         Values["Cycle_PhaseEdit_SuggestedFormat"] = "{0} сохраняет порядок цикла. Нажмите «Сохранить фазу».";
         Values["Cycle_PhaseEdit_SavedFormat"] = "Фаза сохранена на {0}.";
         Values["Cycle_PhaseEdit_ReviewEarlierHint"] = "Это легко исправить. Нажмите день, когда сдвиг действительно начался.";

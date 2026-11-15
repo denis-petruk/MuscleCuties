@@ -452,6 +452,7 @@ public static partial class UiTextCatalog
         English["Cycle_QuickLog_PhaseOrderFormat"] = "This phase would skip a step. Log {0} first.";
         English["Cycle_Calendar_LoadFailed"] = "Could not load this month. Try another month or return to today.";
         English["Cycle_PhaseEdit_ChoosePhase"] = "Pick the phase that fits this day.";
+        English["Cycle_PhaseEdit_FutureHint"] = "This day is a forecast. You can record a phase when the day arrives.";
         English["Cycle_PhaseEdit_SuggestedFormat"] = "{0} keeps the cycle in order. Tap Save phase to log it.";
         English["Cycle_PhaseEdit_SavedFormat"] = "Phase saved for {0}.";
         English["Cycle_PhaseEdit_ReviewEarlierHint"] = "Easy fix. Tap the day the missed shift really began.";
