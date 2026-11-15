@@ -455,6 +455,9 @@ internal static partial class RussianUiText
         Values["Cycle_PhaseEdit_SuggestedFormat"] = "{0} сохраняет порядок цикла. Нажмите «Сохранить фазу».";
         Values["Cycle_PhaseEdit_ReviewEarlierHint"] = "Это легко исправить. Нажмите день, когда сдвиг действительно начался.";
         Values["Cycle_Warning_UseNextPhase"] = "Использовать следующую фазу";
+        Values["Cycle_Advance_ConfirmAction"] = "Перейти к следующей фазе";
+        Values["Cycle_Advance_ConfirmMessage"] = "Будет записана смена фазы на сегодня и пересчитан прогноз цикла.";
+        Values["Cycle_Advance_ConfirmTitle"] = "Перейти к следующей фазе?";
         Values["Cycle_Phase_NoShiftLogged"] = "Сдвиг ещё не отмечен";
         Values["Cycle_Phase_Unknown"] = "Неизвестно";
         Values["Cycle_Guidance_Context"] = "Фаза цикла — это контекст, а не измерение гормонов или возможностей сегодняшней тренировки.";

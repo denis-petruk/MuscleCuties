@@ -8,6 +8,7 @@ using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensi
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Services.Formatting;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
@@ -356,6 +357,15 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             var nextPhase = HasActiveCycle
                 ? _phaseProjection.GetNextPhase(new NextCyclePhaseInputDto(CurrentPhase)).NextPhase
                 : CyclePhase.Menstrual;
+
+            var confirmed = await Shell.Current.DisplayAlertAsync(
+                UiTextCatalog.Get("Cycle_Advance_ConfirmTitle"),
+                UiTextCatalog.Get("Cycle_Advance_ConfirmMessage"),
+                UiTextCatalog.Get("Cycle_Advance_ConfirmAction"),
+                UiTextCatalog.Get("Common_Cancel"));
+            if (!confirmed)
+                return;
+
             var result = await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(CurrentDate, nextPhase,
                 "Manual phase advance"));
 

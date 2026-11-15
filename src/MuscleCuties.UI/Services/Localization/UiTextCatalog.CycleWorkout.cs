@@ -455,6 +455,9 @@ public static partial class UiTextCatalog
         English["Cycle_PhaseEdit_SuggestedFormat"] = "{0} keeps the cycle in order. Tap Save phase to log it.";
         English["Cycle_PhaseEdit_ReviewEarlierHint"] = "Easy fix. Tap the day the missed shift really began.";
         English["Cycle_Warning_UseNextPhase"] = "Use next phase";
+        English["Cycle_Advance_ConfirmAction"] = "Advance phase";
+        English["Cycle_Advance_ConfirmMessage"] = "This records a phase change for today and rebuilds the cycle projection.";
+        English["Cycle_Advance_ConfirmTitle"] = "Advance to the next phase?";
         English["Cycle_Phase_NoShiftLogged"] = "No shift logged yet";
         English["Cycle_Phase_Unknown"] = "Unknown";
         English["Cycle_Guidance_Context"] = "A cycle phase is context, not a measurement of hormone levels or today's exercise capacity.";

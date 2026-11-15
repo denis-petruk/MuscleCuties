@@ -1012,6 +1012,28 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Next_phase_advance_requires_confirmation()
+    {
+        var root = RepositoryRoot();
+        var viewModel = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Cycle", "CycleViewModel.cs"));
+
+        Assert.Contains("Cycle_Advance_ConfirmTitle", viewModel);
+        Assert.Contains("DisplayAlertAsync", viewModel);
+
+        foreach (var catalog in new[]
+                 {
+                     Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Localization",
+                         "UiTextCatalog.CycleWorkout.cs"),
+                     Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Localization",
+                         "RussianUiText.CycleWorkout.cs")
+                 })
+        {
+            Assert.Contains("Cycle_Advance_ConfirmTitle", File.ReadAllText(catalog));
+        }
+    }
+
+    [Fact]
     public void Units_explanation_does_not_embed_an_english_system_name()
     {
         var root = RepositoryRoot();
