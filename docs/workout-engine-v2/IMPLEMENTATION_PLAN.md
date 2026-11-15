@@ -132,6 +132,15 @@ Residual surface, deliberately unchanged and therefore **NOT VERIFIED**: `DailyI
 - **Deliberately unchanged** — `Dashboard_CheckIn_IncompleteAllFourRatings` still says every check-in question must be answered, because the score is still gated on the stored soreness answer. That is a data-capture requirement, not a claim that soreness contributes to the score, and changing it would alter check-in availability semantics that A-8 does not cover.
 - **Not attempted in this package.** No simulator build or run, no PostgreSQL suite, no AWS or GitHub Actions work, no reset, no TestFlight action. P1–P9 remain unstarted.
 
+## P1 catalog validation — started 2026-11-15
+
+Evidence gathered from the shipped review snapshot (`Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json`, policy `MC-WORKOUT-POLICY 0.2.0`, templates `MC-STRENGTH-TEMPLATES-0.2.0`) and the canonical seed manifest.
+
+- **The historic 59-review versus 60-seed lead is resolved.** The manifest carries 60 distinct planning definitions and the review snapshot covers 59 of them. The single unreviewed definition is `ENGINE_191` "Rock Climbing", a cardio-style activity rather than a strength movement; it is not a candidate in any template slot. The gap is now named in a guard rather than left as folklore, so it cannot grow silently and reviewing that activity would force a deliberate update.
+- **Validated by test** (`tests/MuscleCuties.Core.Tests/ReviewedExerciseCatalogIntegrityTests.cs`): all 59 entries are `Approved with conditions` with unique source ids; every entry carries the metadata generation reads (name, pattern, supported experiences, positive setup seconds, non-negative seconds-per-rep, equipment and contraindication values); every directed substitution target exists in the reviewed set and its category agrees with its decision, so a `RejectedAutomaticSubstitution` can never be offered as an eligible replacement; every candidate in all 52 template slots is a reviewed exercise. The existing `WorkoutCatalogCoverageTests` and `CatalogCoverageGuardTests` continue to guard required-slot mapping and equipment/experience eligibility.
+- **Missing coverage is surfaced, not invented.** `CatalogCoverageGuardTests` already records the bodyweight-only gap (withdrawn from new selection by OD-2) and the single upper-pull candidate for dumbbells plus bands. Adding movements to close those gaps is a catalog review action that needs real reviewed data; fabricating entries is out of scope and no entry was added.
+- **P1 is therefore partial.** "Active entries and alternatives validated" and "missing coverage surfaced" have evidence. "Add evidenced gym, dumbbell, band and bodyweight coverage" is not done, because it requires reviewed catalog content rather than code. Gate 49's generator-side pattern selection and Gate 56's persisted glute focus remain P2/P3 work, not catalog work.
+
 ## Architecture and generation
 
 - Core owns deterministic, versioned rules; UseCases coordinate operations; Infrastructure owns persistence and catalog; Server is authoritative; MAUI presents inputs and results. Respect actual dependency and platform boundaries.
