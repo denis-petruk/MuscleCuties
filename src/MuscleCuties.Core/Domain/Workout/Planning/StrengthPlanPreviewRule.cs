@@ -46,6 +46,10 @@ public sealed record StrengthPlanPreviewData(
 {
     public IReadOnlyDictionary<int, int>? GoalPriorityByExerciseId { get; init; }
     public IReadOnlyDictionary<int, ExerciseEvidenceRanking>? EvidenceRankingByExerciseId { get; init; }
+
+    /// <summary>True only when the user selected glute focus in their profile; selection then prefers
+    /// glute-dominant movements inside a slot. Never inferred from goal, body type or history.</summary>
+    public bool GluteFocus { get; init; }
     public IReadOnlyDictionary<int, IReadOnlySet<string>>? MuscleGroupsByExerciseId { get; init; }
     public IReadOnlyDictionary<string, TemplateVolumeFloor>? TemplateVolumeFloors { get; init; }
     /// <summary>Server-derived activities an active injury blocks. Strength styles are never
@@ -99,6 +103,14 @@ public sealed record StrengthPlanPreviewResult(
 /// </summary>
 public static class StrengthPlanPreviewRule
 {
+    /// <summary>
+    /// Version of the preview input contract this build implements. A request that names a different
+    /// version is refused instead of being answered from defaults.
+    /// </summary>
+    public const string InputContractVersion = "MC-PLANNING-INPUT-1";
+
+    public const string UnsupportedInputVersionCode = "UnsupportedPlanningInputVersion";
+
     public const string PolicyId = "MC-WORKOUT-POLICY";
     public const string Version = "0.2.0";
     public const string RulesetVersion = "MC-PLANNING-0.4";
@@ -275,7 +287,8 @@ public static class StrengthPlanPreviewRule
                         choices.UserConfirmedManageableLoadExerciseIds ?? EmptyIds,
                     GoalPriorityByExerciseId: MergeCoveragePriority(
                         data.GoalPriorityByExerciseId, coveragePriority),
-                    EvidenceRankingByExerciseId: data.EvidenceRankingByExerciseId);
+                    EvidenceRankingByExerciseId: data.EvidenceRankingByExerciseId,
+                    GluteFocus: data.GluteFocus);
             var resolution = StrengthTemplateResolver.Resolve(selectionInput, MaximumWorkingExercises(activity, template));
             if (resolution.Slots.Any(slot => slot.IsRequired && slot.Outcome == StrengthSlotResolutionOutcome.NoSafeCandidate))
             {

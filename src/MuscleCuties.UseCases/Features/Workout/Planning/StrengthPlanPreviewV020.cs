@@ -38,6 +38,10 @@ public sealed record StrengthPlanPreviewRequestV020(
     public WorkoutActivityDto? HiitUnderlyingCardioActivity { get; init; }
 
     public HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence { get; init; }
+
+    /// <summary>Input contract version the caller built this request against. Null keeps older
+    /// clients working; any other value must match the build or the preview is refused.</summary>
+    public string? InputContractVersion { get; init; }
 }
 
 public sealed record ActivityEligibilityInputV020(
@@ -118,6 +122,9 @@ public sealed record StrengthPlanPreviewSourceV020(
 
     /// <summary>True when the saved goal answer is missing or unreadable; <see cref="Goal"/> is a placeholder.</summary>
     public bool GoalAnswerMissing { get; init; }
+
+    /// <summary>User-selected glute focus, stored on the profile. Absent means no focus.</summary>
+    public bool GluteFocus { get; init; }
 }
 
 public sealed record ReviewedTemplateFloorDto(string TemplateId, int MinimumWorkingSets, int MinimumExercises,

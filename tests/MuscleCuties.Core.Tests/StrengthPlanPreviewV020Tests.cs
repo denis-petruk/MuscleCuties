@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
@@ -684,14 +685,15 @@ public sealed class StrengthPlanPreviewV020Tests
         var result = await new PreviewStrengthPlanV020UseCase(new Source(source))
             .ExecuteAsync(Guid.NewGuid(), request);
 
+        // Gate 80: HIIT is deferred, so no evidence combination can produce a scheduled HIIT week.
         var hiitDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit);
         Assert.Equal("Blocked", hiitDecision.Disposition);
-        Assert.Contains("HiitEligibilityNotEstablishedByRequiredEvidence", hiitDecision.ReasonCodes);
+        Assert.Equal(0, hiitDecision.ScheduledSessionsPerWeek);
     }
 
     [Fact]
-    public async Task Server_Stamped_Hiit_Evidence_Is_Valid_For_Thirty_Calendar_Days()
+    public async Task Hiit_stays_blocked_regardless_of_evidence_stamp_age()
     {
         var evidence = CompleteHiitEvidence(WorkoutActivityType.Cycling);
         var answers = new SavedActivityAnswersDto(1, [], evidence)
@@ -708,12 +710,17 @@ public sealed class StrengthPlanPreviewV020Tests
             { CurrentAccountLocalDate = LocalDate.AddDays(HiitEvidenceCaptureRule.EvidenceValidityCalendarDays - 1) })).ExecuteAsync(Guid.NewGuid(), Request());
         var expired = await new PreviewStrengthPlanV020UseCase(new Source(source with
             { CurrentAccountLocalDate = LocalDate.AddDays(HiitEvidenceCaptureRule.EvidenceValidityCalendarDays) })).ExecuteAsync(Guid.NewGuid(), Request());
-        Assert.NotEqual("Blocked", Assert.Single(fresh.MixedActivitySchedule!.Activities,
-            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
-        Assert.NotEqual("Blocked", Assert.Single(lastValid.MixedActivitySchedule!.Activities,
-            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
-        Assert.Equal("Blocked", Assert.Single(expired.MixedActivitySchedule!.Activities,
-            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
+
+        // Gate 80 defers HIIT, so stamp age no longer gates a prescription. The historical validity
+        // window stays defined for persisted data compatibility.
+        Assert.True(HiitEvidenceCaptureRule.EvidenceValidityCalendarDays > 0);
+        foreach (var result in new[] { fresh, lastValid, expired })
+        {
+            var hiitDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
+                decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit);
+            Assert.Equal("Blocked", hiitDecision.Disposition);
+            Assert.Equal(0, hiitDecision.ScheduledSessionsPerWeek);
+        }
     }
 
     [Fact]
@@ -733,7 +740,7 @@ public sealed class StrengthPlanPreviewV020Tests
         var hiitDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit);
         Assert.Equal("Blocked", hiitDecision.Disposition);
-        Assert.Contains("HiitEligibilityNotEstablishedByRequiredEvidence", hiitDecision.ReasonCodes);
+        Assert.Equal(0, hiitDecision.ScheduledSessionsPerWeek);
     }
 
     [Theory]
@@ -1161,6 +1168,41 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Contains(PreviewStrengthPlanV020UseCase.EquipmentAnswerMissingCode, preview.LimitationCodes);
         Assert.Contains(PreviewStrengthPlanV020UseCase.GoalAnswerMissingCode, preview.LimitationCodes);
         Assert.Empty(preview.Sessions);
+    }
+
+    [Fact]
+    public async Task Preview_carries_the_v2_generation_result_for_a_planned_preview()
+    {
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), Request());
+
+        Assert.NotNull(preview.GenerationV2);
+        Assert.Equal(WorkoutPolicyV2.Version, preview.GenerationV2!.PolicyVersion);
+        Assert.Equal(WorkoutPolicyV2.InputContractVersion, preview.GenerationV2.InputContractVersion);
+        Assert.Contains(preview.GenerationV2.Status, Enum.GetNames<WorkoutGenerationStatusV2>());
+    }
+
+    [Fact]
+    public async Task Preview_refused_before_planning_carries_no_v2_generation()
+    {
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { InputContractVersion = "stale-contract-version" });
+
+        Assert.Equal("InvalidInput", preview.Status);
+        Assert.Null(preview.GenerationV2);
+    }
+
+    [Fact]
+    public async Task V2_generation_is_deterministic_for_the_same_preview_source()
+    {
+        var first = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), Request());
+        var second = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), Request());
+
+        Assert.NotNull(first.GenerationV2);
+        Assert.Equal(first.GenerationV2!.PrescriptionHash, second.GenerationV2!.PrescriptionHash);
+        Assert.Equal(first.GenerationV2.SessionCount, second.GenerationV2.SessionCount);
     }
 
     private static StrengthPlanPreviewRequestV020 Request() => new(

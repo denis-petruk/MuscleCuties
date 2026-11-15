@@ -25,7 +25,8 @@ public sealed record StrengthTemplateSelectionInput(
     IReadOnlySet<int>? UserConfirmedFamiliarityExerciseIds = null,
     IReadOnlyDictionary<string, IReadOnlySet<int>>? ReviewedAllowedExerciseIdsByTemplateSlot = null,
     IReadOnlySet<int>? UserConfirmedManageableLoadExerciseIds = null,
-    IReadOnlyDictionary<int, ExerciseEvidenceRanking>? EvidenceRankingByExerciseId = null);
+    IReadOnlyDictionary<int, ExerciseEvidenceRanking>? EvidenceRankingByExerciseId = null,
+    bool GluteFocus = false);
 
 public enum StrengthSlotResolutionOutcome { Selected, OptionalOmission, NoSafeCandidate, MissingReviewData }
 
@@ -182,6 +183,7 @@ public static class StrengthTemplateResolver
                 .ThenByDescending(entry => input.UsablePerformanceHistoryExerciseIds.Contains(entry.Candidate.ExerciseId))
                 .ThenByDescending(entry => input.FamiliarExerciseIds.Contains(entry.Candidate.ExerciseId))
                 .ThenByDescending(entry => slotPreferences.Contains(entry.Candidate.ExerciseId))
+                .ThenByDescending(entry => input.GluteFocus && IsGluteFocusPattern(entry.Candidate.Pattern))
                 .ThenByDescending(entry => slot.MovementSlot == StrengthTemplateSlotId.GoalSpecificAccessory
                     ? goalPriorities.GetValueOrDefault(entry.Candidate.ExerciseId)
                     : 0)
@@ -327,6 +329,10 @@ public static class StrengthTemplateResolver
 
         return roleMatchScore + (ranking.HypertrophyEfficacy * 10) + ranking.JointFriendliness;
     }
+
+    /// <summary>Glute-dominant patterns a user-selected glute focus prefers inside a slot.</summary>
+    private static bool IsGluteFocusPattern(MovementPattern pattern) =>
+        pattern is MovementPattern.HipThrust or MovementPattern.HipAbduction;
 
     private static string SelectionReason(StrengthExerciseCatalogEntry entry,
         HashSet<int> preferredIds, StrengthTemplateSelectionInput input,

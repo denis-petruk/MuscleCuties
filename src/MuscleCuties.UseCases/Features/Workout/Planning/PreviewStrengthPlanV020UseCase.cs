@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 
@@ -54,6 +55,13 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         ArgumentNullException.ThrowIfNull(request);
         if (userId == Guid.Empty)
             return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null));
+        if (request.InputContractVersion is { } inputVersion &&
+            !string.Equals(inputVersion, StrengthPlanPreviewRule.InputContractVersion, StringComparison.Ordinal))
+            return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null)) with
+            {
+                Status = nameof(StrengthPlanPreviewStatus.InvalidInput),
+                LimitationCodes = [StrengthPlanPreviewRule.UnsupportedInputVersionCode]
+            };
         if (sourceData?.PopulationLimitationCode is { } populationLimitation)
             return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null)) with
             {
@@ -268,8 +276,36 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
             .SelectMany(session => session.Slots)
             .Where(slot => slot.ExerciseId.HasValue).Select(slot => slot.ExerciseId!.Value).Distinct().ToArray();
         var movementGaps = WeeklyMovementCoverageRule.MissingPatterns(actualExerciseIds, sourceData.Catalog);
+        // The V2 engine runs on the same normalized request the V0.2 preview just approved, so a
+        // consumer can migrate one surface at a time without a second planning source of truth.
+        var generation = WorkoutGenerationV2Service.GenerateFromPreviewSource(request, sourceData);
+        var missingV2Gaps = generation.LimitationCodes
+            .Concat(generation.AdvisoryCodes.Where(code =>
+                code.StartsWith("WeeklyCoverageMissing_", StringComparison.Ordinal) ||
+                code.StartsWith("WeeklyMovementCoverageMissing", StringComparison.Ordinal) ||
+                code.StartsWith("WeeklyCoverageBelowTarget_", StringComparison.Ordinal)))
+            .Concat(movementGaps)
+            .Distinct(StringComparer.Ordinal)
+            .OrderBy(code => code, StringComparer.Ordinal)
+            .ToArray();
+        var generationPlan = new GenerationPlanV2(
+            generation.Status.ToString(),
+            generation.PolicyVersion,
+            WorkoutPolicyV2.InputContractVersion,
+            generation.CatalogVersion,
+            generation.AdaptedSessions.Count,
+            generation.NormalizedPrescriptionHash,
+            generation.LimitationCodes,
+            generation.AdvisoryCodes,
+            generation.RuleTrace)
+        {
+            MissingGaps = missingV2Gaps,
+            ReadinessAdaptationApplied = generation.ReadinessAdaptationApplied,
+            CoachExplanation = generation.CoachExplanation
+        };
         return scheduled with
         {
+            GenerationV2 = generationPlan,
             AdvisoryCodes = scheduled.AdvisoryCodes.Concat(movementGaps).Distinct(StringComparer.Ordinal)
                 .OrderBy(code => code, StringComparer.Ordinal).ToArray(),
             SourceProfileVersion = sourceData.ProfileVersion,
