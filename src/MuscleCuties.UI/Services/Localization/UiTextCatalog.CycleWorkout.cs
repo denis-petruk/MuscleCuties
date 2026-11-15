@@ -342,6 +342,10 @@ public static partial class UiTextCatalog
         English["Workout_History_VolumeHeader"] = "Volume";
         English["Workout_History_WeightInKgAccessibility"] = "Weight in kilograms";
         English["Workout_Page_ActivityScheduleTitle"] = "Activity schedule";
+        English["Workout_Page_PlanSummaryActivities"] = "{0} activities";
+        English["Workout_Page_PlanSummaryNoSessions"] = "No sessions scheduled yet";
+        English["Workout_Page_PlanSummaryRestDays"] = "{0} full rest days";
+        English["Workout_Page_PlanSummaryTrainingDays"] = "{0} training days";
         English["Workout_Page_BlockedActivitiesTitle"] = "Blocked activities";
         English["Workout_Page_BlockedExercisesTitle"] = "Blocked exercises";
         English["Workout_Page_DetailsButton"] = "Details";

@@ -1012,6 +1012,31 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Workout_plan_summary_uses_one_localized_sentence_shape()
+    {
+        var root = RepositoryRoot();
+        var viewModel = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Workout", "WorkoutViewModel.cs"));
+
+        Assert.DoesNotContain("PlanSummaryFormatter.Format", viewModel);
+        Assert.Contains("Workout_Page_PlanSummaryTrainingDays", viewModel);
+        Assert.Contains("Workout_Page_PlanSummaryRestDays", viewModel);
+
+        foreach (var catalog in new[]
+                 {
+                     Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Localization",
+                         "UiTextCatalog.CycleWorkout.cs"),
+                     Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Localization",
+                         "RussianUiText.CycleWorkout.cs")
+                 })
+        {
+            var content = File.ReadAllText(catalog);
+            Assert.Contains("Workout_Page_PlanSummaryTrainingDays", content);
+            Assert.Contains("Workout_Page_PlanSummaryRestDays", content);
+        }
+    }
+
+    [Fact]
     public void Nutrition_breakdown_localizes_server_supplied_macro_and_micronutrient_names()
     {
         var xaml = File.ReadAllText(Path.Combine(

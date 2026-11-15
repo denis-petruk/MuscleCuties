@@ -342,6 +342,10 @@ internal static partial class RussianUiText
         Values["Workout_History_VolumeHeader"] = "Объем";
         Values["Workout_History_WeightInKgAccessibility"] = "Вес в килограммах";
         Values["Workout_Page_ActivityScheduleTitle"] = "Расписание активности";
+        Values["Workout_Page_PlanSummaryActivities"] = "Активностей: {0}";
+        Values["Workout_Page_PlanSummaryNoSessions"] = "Пока нет запланированных тренировок";
+        Values["Workout_Page_PlanSummaryRestDays"] = "Дней полного отдыха: {0}";
+        Values["Workout_Page_PlanSummaryTrainingDays"] = "Тренировочных дней: {0}";
         Values["Workout_Page_BlockedActivitiesTitle"] = "Заблокированные виды деятельности";
         Values["Workout_Page_BlockedExercisesTitle"] = "Заблокированные упражнения";
         Values["Workout_Page_DetailsButton"] = "Детали";

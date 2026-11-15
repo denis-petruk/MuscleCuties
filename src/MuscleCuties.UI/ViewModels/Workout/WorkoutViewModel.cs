@@ -224,9 +224,52 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public string ActivePlanTitle => ActivePlanName ?? "No active plan";
 
     public string PlanSummaryText => _lastOverview is null
-        ? "No sessions scheduled yet"
-        : MuscleCuties.Infrastructure.Workout.Overview.PlanSummaryFormatter.Format(
-            _lastOverview, SelectedWeekIndex);
+        ? UiTextCatalog.Get("Workout_Page_PlanSummaryNoSessions")
+        : FormatPlanSummary(_lastOverview, SelectedWeekIndex);
+
+    /// <summary>
+    /// The overview's week in one localized line. The infrastructure formatter builds English
+    /// grammar, which the catalog can only partially replace; counting here keeps every part of the
+    /// sentence in the user's language and gives the parts one separator.
+    /// </summary>
+    private static string FormatPlanSummary(WorkoutOverviewResponse overview, int weekIndex)
+    {
+        var weekSchedule = overview.Schedule.Where(day => day.WeekIndex == weekIndex).ToArray();
+        var scheduleIds = weekSchedule.Where(day => !day.IsRestDay)
+            .Select(day => day.WorkoutDayId)
+            .ToHashSet();
+        var weekWorkouts = weekSchedule.Length > 0
+            ? overview.Workouts.Where(workout => scheduleIds.Contains(workout.WorkoutDayId)).ToArray()
+            : overview.Workouts.ToArray();
+
+        var trainingDays = weekSchedule.Length > 0
+            ? weekSchedule.Count(day => !day.IsRestDay)
+            : weekWorkouts.Where(workout => !workout.IsRestDay)
+                .Select(workout => workout.DayLabel)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+        if (trainingDays == 0)
+            return UiTextCatalog.Get("Workout_Page_PlanSummaryNoSessions");
+
+        var restDays = weekSchedule.Length > 0
+            ? weekSchedule.Count(day => day.IsRestDay)
+            : weekWorkouts.Where(workout => workout.IsRestDay)
+                .Select(workout => workout.DayLabel)
+                .Distinct(StringComparer.OrdinalIgnoreCase)
+                .Count();
+        var activities = weekWorkouts.Where(workout => !workout.IsRestDay)
+            .Sum(workout => workout.ActivityCount);
+
+        var parts = new List<string>
+        {
+            UiTextCatalog.Format("Workout_Page_PlanSummaryTrainingDays", trainingDays),
+            UiTextCatalog.Format("Workout_Page_PlanSummaryRestDays", restDays)
+        };
+        if (activities > trainingDays)
+            parts.Add(UiTextCatalog.Format("Workout_Page_PlanSummaryActivities", activities));
+
+        return string.Join(" · ", parts);
+    }
 
     public string EmptyWorkoutsTitle => HasNoPlan
         ? "Workout_Generation_PromptNoPlanTitle"
