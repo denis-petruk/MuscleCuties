@@ -383,6 +383,21 @@ public sealed class StrengthPlanPreviewRuleTests
         Assert.Contains(StrengthPlanPreviewRule.NoSafeStrengthContentRemainingCode, result.LimitationCodes);
     }
 
+    [Fact]
+    public void Duplicate_catalog_rows_are_invalid_input_rather_than_an_order_dependent_plan()
+    {
+        // P2 determinism: two rows for one exercise id make selection and duration estimation depend on
+        // catalog order, so the planner must refuse the input instead of emitting a plan.
+        var data = Data();
+        var duplicate = data.Catalog![0] with { Name = "Duplicate row" };
+        var corrupted = data with { Catalog = [.. data.Catalog!, duplicate] };
+
+        var result = StrengthPlanPreviewRule.Evaluate(Choices(), corrupted);
+
+        Assert.Equal(StrengthPlanPreviewStatus.InvalidInput, result.Status);
+        Assert.Empty(result.Sessions);
+    }
+
     private static StrengthPlanPreviewData InjureExercises(StrengthPlanPreviewData data, IReadOnlySet<int> ids) =>
         data with
         {

@@ -141,6 +141,33 @@ Evidence gathered from the shipped review snapshot (`Workout/Planning/ReviewData
 - **Missing coverage is surfaced, not invented.** `CatalogCoverageGuardTests` already records the bodyweight-only gap (withdrawn from new selection by OD-2) and the single upper-pull candidate for dumbbells plus bands. Adding movements to close those gaps is a catalog review action that needs real reviewed data; fabricating entries is out of scope and no entry was added.
 - **P1 is therefore partial.** "Active entries and alternatives validated" and "missing coverage surfaced" have evidence. "Add evidenced gym, dumbbell, band and bodyweight coverage" is not done, because it requires reviewed catalog content rather than code. Gate 49's generator-side pattern selection and Gate 56's persisted glute focus remain P2/P3 work, not catalog work.
 
+## P2 canonical planner — started 2026-11-15
+
+P2 is **partial**. The production selection path is `StrengthPlanPreviewRule` → `StrengthTemplateResolver` (wired through `PostgresStrengthPlanPreviewSourceV020`); `WeeklyWorkoutPlanGeneratorRule` and `ExercisePickerRule` have no production callers.
+
+Delivered and proven:
+
+- **Deterministic selection against catalog order.** `tests/MuscleCuties.Core.Tests/StrengthTemplateResolverDeterminismTests.cs` permutes a five-entry catalog through all 120 orderings and requires a byte-identical slot prescription (`SlotId`, exercise id, name, sets, target RIR). It passed before the change, so reproducibility is now pinned rather than assumed.
+- **Ambiguous catalog input fails closed.** Two catalog rows claiming one exercise id previously resolved to whichever row arrived first, so the emitted exercise name depended on database order; `StrengthTemplateResolver.Resolve` now rejects the input with `DuplicateCatalogExerciseId` and status `Invalid`. The guard test failed against the previous behaviour (`Expected "Invalid"`, `Actual "Resolved"`) and passes after. `StrengthPlanPreviewRuleTests.Duplicate_catalog_rows_are_invalid_input_rather_than_an_order_dependent_plan` keeps the preview-level rejection pinned; note that `ValidProfileData` already rejected duplicates in the preview, so the new resolver check closes the direct-caller hole and the `SingleOrDefault` hazard in duration estimation rather than changing preview behaviour.
+
+Still open in P2, with the reason each is blocked rather than unfinished:
+
+- **Gate 49 week-level pattern coverage** (knee extension, knee flexion, hip extension) cannot be added by selecting an exercise outside a reviewed template slot. Widening a week's patterns needs the reviewed template/ slot content updated first, so it is a review decision, not a code change.
+- **Gate 56 persisted glute focus** needs a user-selected focus persisted in the profile and threaded through the source record, which means a schema change in the PostgreSQL persistence area this task does not own.
+- **Retiring conflicting execution paths.** `WeeklyWorkoutPlanGeneratorRule` (890 lines) and `ExercisePickerRule` (268 lines) have zero production callers and their own test suites. Deleting them is the clean Gate 94 end state, but it is a deliberate decision about dead code rather than a defect fix, so it was not taken unilaterally in this pass.
+- **Versioned input validation** is only partly present: `StrengthPlanPreviewRule.Version`/`RulesetVersion` exist and the proposal store compares policy versions, but no preview request carries an input-schema version to reject.
+
+## P1 catalog coverage — decisions needed
+
+The gaps below cannot be closed from existing reviewed content, and authoring exercise entries without reviewed evidence is forbidden. Each is now a specific question instead of an open blocker.
+
+1. **Bodyweight profile, knee-dominant slot.** No reviewed candidate is eligible with bodyweight only. Bodyweight selection was withdrawn for Beta by OD-2, so the question is whether to keep it withdrawn (recommended: no catalog work) or re-offer it, which would require reviewed bodyweight squat-pattern entries with conditions.
+2. **Bodyweight profile, upper-pull slot.** No reviewed candidate is bodyweight-only; closing it needs a reviewed bodyweight pull (for example a reviewed inverted-row or band-assisted pull) with explicit conditions and equipment listing.
+3. **Dumbbells plus bands, upper-pull slots.** Exactly one eligible candidate exists (Single-Arm DB Row, id 145): there is no vertical pull and no band row in the reviewed catalog. Closing it needs at least one reviewed band or dumbbell vertical-pull movement; until then those slots stay single-candidate and the thinness is disclosed by `CatalogCoverageGuardTests`.
+4. **Band coverage generally.** Band entries exist in the reviewed snapshot, but no band movement covers a vertical pull, so any statement that bands are a complete home profile would be false.
+
+Why review is required for each: the planner may only select or substitute reviewed exercises with conditions, and the review record is the evidence that a movement is safe for a given equipment, experience and restriction set. Writing the entries ourselves would produce exactly the unreviewed catalog content the plan forbids.
+
 ## Architecture and generation
 
 - Core owns deterministic, versioned rules; UseCases coordinate operations; Infrastructure owns persistence and catalog; Server is authoritative; MAUI presents inputs and results. Respect actual dependency and platform boundaries.

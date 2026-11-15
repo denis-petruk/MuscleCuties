@@ -72,6 +72,12 @@ public static class StrengthTemplateResolver
     private const string RequiredSlotUnresolved = "RequiredMovementSlotUnresolved";
     private const string OptionalSlotOmittedByLimit = "OptionalSlotOmittedByExerciseLimit";
     private const string TemplateSlotReviewMissingCode = "TemplateSlotReviewMissing";
+
+    /// <summary>
+    /// Two catalog rows claiming one exercise id make the input ambiguous: the prescription would depend
+    /// on which row persistence returned first. The planner fails closed instead of picking one.
+    /// </summary>
+    private const string DuplicateCatalogExerciseId = "DuplicateCatalogExerciseId";
     private static readonly string[] TemplateSlotReviewMissingCodes = [TemplateSlotReviewMissingCode];
 
     public static StrengthTemplateResolution Resolve(
@@ -87,6 +93,8 @@ public static class StrengthTemplateResolver
         if (input.PrescriptionContext.Activity != input.Activity ||
             input.PrescriptionContext.Experience != input.EligibilityContext.Experience)
             return Failure("ActivityExperienceInputMismatch");
+        if (HasDuplicateExerciseIds(input.Catalog))
+            return Failure(DuplicateCatalogExerciseId);
         var activityPrescription = ActivityPrescriptionRule.Evaluate(input.PrescriptionContext);
         if (activityPrescription.Status != ActivityPrescriptionStatus.Eligible ||
             activityPrescription.Sessions.Count == 0)
@@ -236,6 +244,15 @@ public static class StrengthTemplateResolver
 
     private static StrengthTemplateResolution Failure(string reason) =>
         new(string.Empty, StrengthTemplateCatalog.Version, "Invalid", [], [reason]);
+
+    private static bool HasDuplicateExerciseIds(IReadOnlyList<StrengthExerciseCatalogEntry> catalog)
+    {
+        var seen = new HashSet<int>();
+        foreach (var entry in catalog)
+            if (entry?.Candidate is { } candidate && !seen.Add(candidate.ExerciseId))
+                return true;
+        return false;
+    }
 
     private static StrengthSlotSelection Unselected(StrengthTemplateSlot slot,
         WorkoutActivityType activity, string reason) =>
