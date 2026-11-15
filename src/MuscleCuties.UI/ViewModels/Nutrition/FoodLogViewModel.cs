@@ -88,10 +88,16 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private bool _isStatusVisible;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanChangeHydration))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanChangeHydration), nameof(CanSaveNotes))]
     private bool _isWriting;
 
-    [ObservableProperty] private string _notesText = string.Empty;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanSaveNotes))]
+    private string _notesText = string.Empty;
+
+    private string _savedNotes = string.Empty;
+
+    public bool CanSaveNotes => !IsWriting &&
+                                !string.Equals(NotesText, _savedNotes, StringComparison.Ordinal);
 
     [ObservableProperty] private DateTime _pickerDate;
 
@@ -347,6 +353,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
         TotalCalories = TotalProtein = TotalCarbs = TotalFat = 0;
         WaterIntakeMl = 0;
+        _savedNotes = string.Empty;
         NotesText = string.Empty;
     }
 
@@ -1013,7 +1020,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             _confirmedWaterIntakeMl = log.WaterIntakeMl;
             _pendingWaterIntakeMl = null;
             WaterSaveError = string.Empty;
-            NotesText = log.Notes ?? string.Empty;
+            _savedNotes = log.Notes ?? string.Empty;
+            NotesText = _savedNotes;
 
             BreakfastSection.Items.Clear();
             LunchSection.Items.Clear();

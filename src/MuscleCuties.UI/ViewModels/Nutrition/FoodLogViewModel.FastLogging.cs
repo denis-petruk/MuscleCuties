@@ -762,12 +762,14 @@ public partial class FoodLogViewModel
     [RelayCommand]
     public async Task SaveNotesAsync()
     {
-        if (IsWriting || IsLoading) return;
+        if (IsWriting || IsLoading || !CanSaveNotes) return;
         IsWriting = true;
         try
         {
-            await _dailyLogUseCase.UpdateNotesAsync(SelectedDate,
-                string.IsNullOrWhiteSpace(NotesText) ? null : NotesText.Trim());
+            var saved = string.IsNullOrWhiteSpace(NotesText) ? null : NotesText.Trim();
+            await _dailyLogUseCase.UpdateNotesAsync(SelectedDate, saved);
+            _savedNotes = saved ?? string.Empty;
+            NotesText = _savedNotes;
             ShowStatus(UiTextCatalog.Get("Nutrition_FoodLog_NotesSaved"));
         }
         catch

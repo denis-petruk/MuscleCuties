@@ -328,7 +328,7 @@
                                 <Button Text="{loc:LocalizedText Nutrition_FoodLog_SaveNotes}"
                                         Style="{StaticResource ButtonSecondary}"
                                         Command="{Binding SaveNotesCommand}"
-                                        IsEnabled="{Binding IsWriting, Converter={StaticResource InvertedBoolConverter}}" />
+                                        IsEnabled="{Binding CanSaveNotes}" />
                             </VerticalStackLayout>
                     </Border>
                 </VerticalStackLayout>

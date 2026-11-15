@@ -1012,6 +1012,21 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Save_notes_requires_a_change_from_the_stored_value()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var viewModel = File.ReadAllText(Path.Combine(
+            uiRoot, "ViewModels", "Nutrition", "FoodLogViewModel.FastLogging.cs"));
+        var page = File.ReadAllText(Path.Combine(
+            uiRoot, "Pages", "Nutrition", "FoodLogPage.xaml"));
+
+        Assert.Contains("_savedNotes", viewModel);
+        Assert.Contains("CanSaveNotes", viewModel);
+        Assert.Contains("!CanSaveNotes", viewModel);
+        Assert.Contains("IsEnabled=\"{Binding CanSaveNotes}\"", page);
+    }
+
+    [Fact]
     public void Meal_card_open_gesture_does_not_cover_the_edit_action()
     {
         var path = Path.Combine(
