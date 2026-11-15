@@ -66,25 +66,38 @@
 
                 <Border Style="{StaticResource CardPrimary}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                        <sharedControls:AdaptiveRow Columns="2">
                             <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_PersonalInfo_BodyAndCycle}"
                                                               IconGlyph="HeartCircle24" />
-                            <Label Grid.Column="1"
-                                   Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
-                                   Style="{StaticResource CaptionSmall}"
-                                   VerticalOptions="Center"
-                                   LineBreakMode="WordWrap" />
-                        </Grid>
+                            <Border Style="{StaticResource PillBadge}"
+                                    HorizontalOptions="End"
+                                    VerticalOptions="Center">
+                                <Label Text="{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"
+                                       Style="{StaticResource CaptionLabel}"
+                                       LineBreakMode="WordWrap" />
+                            </Border>
+                        </sharedControls:AdaptiveRow>
 
                         <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
                             <Grid Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Grid.Row="0" Text="{loc:LocalizedText Common_Height}"
                                        Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                    <Entry Placeholder="{Binding HeightUnitLabel}"
-                                           Text="{Binding HeightCm}"
-                                           Keyboard="Numeric"
-                                           SemanticProperties.Description="{loc:LocalizedText Common_Height}" />
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="{StaticResource UiSpaceTight}"
+                                          VerticalOptions="Center">
+                                        <Entry Placeholder="{Binding HeightUnitLabel}"
+                                               Text="{Binding HeightCm}"
+                                               Keyboard="Numeric"
+                                               SemanticProperties.Description="{loc:LocalizedText Common_Height}"
+                                               SemanticProperties.Hint="{Binding HeightMeasurementText}" />
+                                        <Label Grid.Column="1"
+                                               Text="{Binding HeightUnitLabel}"
+                                               IsVisible="{Binding HeightCm, Converter={StaticResource StringToBoolConverter}}"
+                                               Style="{StaticResource MutedLabel}"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True" />
+                                    </Grid>
                                 </Border>
                             </Grid>
 
@@ -92,10 +105,21 @@
                                 <Label Grid.Row="0" Text="{loc:LocalizedText Common_Weight}"
                                        Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                    <Entry Placeholder="{Binding WeightUnitLabel}"
-                                           Text="{Binding WeightKg}"
-                                           Keyboard="Numeric"
-                                           SemanticProperties.Description="{loc:LocalizedText Common_Weight}" />
+                                    <Grid ColumnDefinitions="*,Auto"
+                                          ColumnSpacing="{StaticResource UiSpaceTight}"
+                                          VerticalOptions="Center">
+                                        <Entry Placeholder="{Binding WeightUnitLabel}"
+                                               Text="{Binding WeightKg}"
+                                               Keyboard="Numeric"
+                                               SemanticProperties.Description="{loc:LocalizedText Common_Weight}"
+                                               SemanticProperties.Hint="{Binding WeightMeasurementText}" />
+                                        <Label Grid.Column="1"
+                                               Text="{Binding WeightUnitLabel}"
+                                               IsVisible="{Binding WeightKg, Converter={StaticResource StringToBoolConverter}}"
+                                               Style="{StaticResource MutedLabel}"
+                                               VerticalOptions="Center"
+                                               InputTransparent="True" />
+                                    </Grid>
                                 </Border>
                             </Grid>
                         </Grid>

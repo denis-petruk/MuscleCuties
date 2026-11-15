@@ -200,6 +200,55 @@ public sealed class WaveAWiringGuardTests
             (string?)element.Attribute("BindableLayout.ItemsSource") == "{Binding MealTemplates}");
     }
 
+    /// <summary>
+    /// D24: height and weight were bare numbers once the input had a value, because the unit lived
+    /// only in the placeholder. The value now keeps a visible unit suffix, the full quantity is built
+    /// by the shared formatter for the accessible hint, and the private-details caption uses the shared
+    /// pill badge instead of a muted caption that looked like a dead label.
+    /// </summary>
+    [Fact]
+    public void Personal_info_measurements_keep_their_units_and_shared_caption_treatment()
+    {
+        var page = Load("src", "MuscleCuties.UI", "Pages", "Profile", "ProfilePersonalInfoPage.xaml");
+
+        var heightEntry = page.Descendants().Single(element =>
+            element.Name.LocalName == "Entry" &&
+            (string?)element.Attribute("Text") == "{Binding HeightCm}");
+        var heightContainer = heightEntry.Ancestors().First(element =>
+            element.Name.LocalName == "Border" &&
+            (string?)element.Attribute("Style") == "{StaticResource InputContainer}");
+        Assert.Contains(heightContainer.Descendants(), element =>
+            element.Name.LocalName == "Label" &&
+            (string?)element.Attribute("Text") == "{Binding HeightUnitLabel}");
+
+        var weightEntry = page.Descendants().Single(element =>
+            element.Name.LocalName == "Entry" &&
+            (string?)element.Attribute("Text") == "{Binding WeightKg}");
+        var weightContainer = weightEntry.Ancestors().First(element =>
+            element.Name.LocalName == "Border" &&
+            (string?)element.Attribute("Style") == "{StaticResource InputContainer}");
+        Assert.Contains(weightContainer.Descendants(), element =>
+            element.Name.LocalName == "Label" &&
+            (string?)element.Attribute("Text") == "{Binding WeightUnitLabel}");
+
+        var badge = page.Descendants().Single(element =>
+            element.Name.LocalName == "Border" &&
+            (string?)element.Attribute("Style") == "{StaticResource PillBadge}" &&
+            element.Descendants().Any(child =>
+                (string?)child.Attribute("Text") == "{loc:LocalizedText Profile_PersonalInfo_LocalOnly}"));
+        Assert.NotNull(badge.Ancestors().FirstOrDefault(element => element.Name.LocalName == "AdaptiveRow"));
+
+        var viewModel = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI",
+            "ViewModels", "Profile", "ProfilePersonalInfoViewModel.cs"));
+        Assert.Contains("[NotifyPropertyChangedFor(nameof(HeightMeasurementText))]", viewModel);
+        Assert.Contains("[NotifyPropertyChangedFor(nameof(WeightMeasurementText))]", viewModel);
+        Assert.Contains("DisplayFormat.Measurement", viewModel);
+
+        var formatter = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI",
+            "Services", "Formatting", "DisplayFormat.cs"));
+        Assert.Contains("Common_Format_QuantityWithUnit", formatter);
+    }
+
     private static XDocument Load(params string[] parts) =>
         XDocument.Load(Path.Combine(RepositoryRoot(), Path.Combine(parts)));
 

@@ -218,6 +218,7 @@ internal static partial class RussianUiText
         Values["Common_Unit_Kg"] = "кг";
         Values["Common_Format_Hours"] = "{0:N1} ч";
         Values["Common_Format_Minutes"] = "{0:N0} мин";
+        Values["Common_Format_QuantityWithUnit"] = "{0:0.#} {1}";
         Values["Common_Format_Kilograms"] = "{0} кг";
         Values["Common_Format_Tonnes"] = "{0} т";
         Values["Common_Format_RelativeDate"] = "{0}, {1}";

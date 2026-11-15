@@ -218,6 +218,7 @@ public static partial class UiTextCatalog
         English["Common_Unit_Kg"] = "kg";
         English["Common_Format_Hours"] = "{0:N1} h";
         English["Common_Format_Minutes"] = "{0:N0} min";
+        English["Common_Format_QuantityWithUnit"] = "{0:0.#} {1}";
         English["Common_Format_Kilograms"] = "{0} kg";
         English["Common_Format_Tonnes"] = "{0} t";
         English["Common_Format_RelativeDate"] = "{0}, {1}";

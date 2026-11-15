@@ -42,6 +42,9 @@ public static class DisplayFormat
 
     public static string Minutes(double minutes) => UiTextCatalog.Format("Common_Format_Minutes", minutes);
 
+    public static string Measurement(double value, string unitLabel) =>
+        UiTextCatalog.Format("Common_Format_QuantityWithUnit", value, unitLabel);
+
     public static string WeightKg(double kilograms) =>
         UiTextCatalog.Format("Workout_History_ValueKgFormat", Number(kilograms));
 
