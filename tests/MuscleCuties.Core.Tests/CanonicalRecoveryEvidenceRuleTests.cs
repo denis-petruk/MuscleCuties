@@ -1,3 +1,4 @@
+using System.Reflection;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using Xunit;
 
@@ -14,31 +15,23 @@ public sealed class CanonicalRecoveryEvidenceRuleTests
     {
         var result = CanonicalRecoveryEvidenceRule.Evaluate(Today,
             [new(FirstWeek, 42, 3, 10, 3, 8), new(SecondWeek, 42, 3, 10, 3, 9)],
-            [new(FirstWeek, 1, null, null), new(SecondWeek, 1, null, 5)]);
+            [new(FirstWeek, 1, null), new(SecondWeek, 1, null)]);
         Assert.True(result.IsDeloadTriggered);
     }
 
     [Fact]
-    public void Soreness_alone_does_not_trigger_deload_through_canonical_recovery()
+    public void Recovery_evidence_cannot_carry_a_soreness_rating()
     {
-        ObservedCompoundPerformance[] performance =
-            [new(FirstWeek, 42, 3, 10, 3, 8), new(SecondWeek, 42, 3, 10, 3, 9)];
-        ObservedRecovery[] rested =
-            [new(FirstWeek, 4, 4, 1), new(SecondWeek, 4, 4, 1)];
-        ObservedRecovery[] sore =
-            [new(FirstWeek, 4, 4, 5), new(SecondWeek, 4, 4, 5)];
-
-        var baseline = CanonicalRecoveryEvidenceRule.Evaluate(Today, performance, rested);
-        var result = CanonicalRecoveryEvidenceRule.Evaluate(Today, performance, sore);
-
-        Assert.False(baseline.IsDeloadTriggered);
-        Assert.Equal(baseline, result);
+        // A-8: soreness is not a recovery input. The check previously fed soreness 1 vs 5 through this
+        // path; the field is gone, so the invariance is now enforced by the type itself.
+        Assert.DoesNotContain(typeof(ObservedRecovery).GetProperties(BindingFlags.Public | BindingFlags.Instance),
+            property => property.Name.Contains("Soreness", StringComparison.OrdinalIgnoreCase));
     }
 
     [Fact]
     public void MissingWeekDifferentExerciseOrInsufficientSetsDoNotInventEvidence()
     {
-        var checks = new[] { new ObservedRecovery(FirstWeek, 1, null, null), new ObservedRecovery(SecondWeek, 1, null, null) };
+        var checks = new[] { new ObservedRecovery(FirstWeek, 1, null), new ObservedRecovery(SecondWeek, 1, null) };
         Assert.False(CanonicalRecoveryEvidenceRule.Evaluate(Today,
             [new(FirstWeek, 42, 3, 10, 3, 8)], checks).IsDeloadTriggered);
         Assert.False(CanonicalRecoveryEvidenceRule.Evaluate(Today,
@@ -53,6 +46,6 @@ public sealed class CanonicalRecoveryEvidenceRuleTests
         var performances = new[] { new ObservedCompoundPerformance(FirstWeek, 42, 3, 10, 3, 8),
             new ObservedCompoundPerformance(SecondWeek, 42, 3, 10, 3, 8) };
         Assert.False(CanonicalRecoveryEvidenceRule.Evaluate(Today, performances,
-            [new(FirstWeek, 0, null, null), new(SecondWeek, null, null, 6), new(Today, 1, null, null)]).IsDeloadTriggered);
+            [new(FirstWeek, 0, null), new(SecondWeek, null, null), new(Today, 1, null)]).IsDeloadTriggered);
     }
 }

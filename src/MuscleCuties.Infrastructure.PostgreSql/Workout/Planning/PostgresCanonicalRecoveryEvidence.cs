@@ -79,7 +79,7 @@ internal static class PostgresCanonicalRecoveryEvidence
             r.PlanningRecordedAtUtc != null).ToListAsync(cancellationToken).ConfigureAwait(false);
         var recovery = checks.Where(r => DateOnly.FromDateTime(TimeZoneInfo.ConvertTimeFromUtc(
                 DateTime.SpecifyKind(r.PlanningRecordedAtUtc!.Value, DateTimeKind.Utc), zone)) == r.Date)
-            .Select(r => new ObservedRecovery(r.Date, r.PlanningSleepQuality, r.Energy, r.PlanningSoreness)).ToArray();
+            .Select(r => new ObservedRecovery(r.Date, r.PlanningSleepQuality, r.Energy)).ToArray();
         return CanonicalRecoveryEvidenceRule.Evaluate(today, observations, recovery);
     }
 }

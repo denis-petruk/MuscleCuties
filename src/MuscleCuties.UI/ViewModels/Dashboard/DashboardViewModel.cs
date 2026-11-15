@@ -362,8 +362,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private const int MinimumScoreValue = 0;
     private const int MaximumScoreValue = 100;
     private const int MinimumRatingScale = 1;
-    private const int MaximumRatingScale = 5;
-    private const double CheckInRecoveryScaleRange = 8.0;
+    // Sleep quality is the only check-in rating in this component; soreness is not scored (A-8).
+    private const double CheckInRecoveryScaleRange = 4.0;
     private const double CheckInRecoveryWeight = 0.7;
     private const double BaselineRecoveryWeight = 0.3;
 
@@ -727,9 +727,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
                     MidpointRounding.AwayFromZero);
             }
 
-            if (readiness.SleepQuality is { } sq && readiness.Soreness is { } s)
+            if (readiness.SleepQuality is { } sq)
             {
-                var checkInRecovery = ((sq - MinimumRatingScale) + (MaximumRatingScale - s)) *
+                var checkInRecovery = (sq - MinimumRatingScale) *
                                       MaximumScoreValue / CheckInRecoveryScaleRange;
                 RecoveryScore = (int)Math.Round(
                     Math.Clamp(checkInRecovery * CheckInRecoveryWeight + RecoveryScore * BaselineRecoveryWeight,

@@ -102,7 +102,6 @@ public sealed record WeeklyPerformanceAndRecoveryRecord(
     bool CompoundUnderperformed,
     decimal? AverageSleepQuality = null,
     decimal? AverageEnergy = null,
-    decimal? AverageSoreness = null,
     bool? ExplicitPoorRecovery = null)
 {
     public bool HasPoorRecovery
@@ -116,7 +115,8 @@ public sealed record WeeklyPerformanceAndRecoveryRecord(
 
             var poorSleep = AverageSleepQuality.HasValue && AverageSleepQuality.Value <= DeloadTriggerRule.PoorSleepQualityThreshold;
             var lowEnergy = AverageEnergy.HasValue && AverageEnergy.Value <= DeloadTriggerRule.LowEnergyThreshold;
-            // Ordinary soreness alone is not a reason to change the training dose.
+            // Ordinary soreness is not a recovery input (ratified A-8, 2026-11-15): it has no field on
+            // this record, so it cannot turn underperformance into a deload.
             return poorSleep || lowEnergy;
         }
     }
