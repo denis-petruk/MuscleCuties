@@ -427,18 +427,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .SingleOrDefaultAsync(profile => profile.UserId == userId, cancellationToken)
                 .ConfigureAwait(false);
             var progressionTier = ResolveExperienceTier(userProfile);
-            var exerciseIdStrings = exerciseIds
-                .Select(id => id.ToString(CultureInfo.InvariantCulture))
-                .ToArray();
-            var observedSetRows = exerciseIdStrings.Length == 0
-                ? []
-                : await dbContext.ExerciseSetLogs.AsNoTracking()
-                    .Where(set => set.UserId == userId && !set.IsDeleted && set.IsObserved &&
-                                  set.ExerciseId != null && exerciseIdStrings.Contains(set.ExerciseId))
-                    .OrderByDescending(set => set.CreatedAt)
-                    .Take(500)
-                    .ToListAsync(cancellationToken)
-                    .ConfigureAwait(false);
+            var observedHistory = await PostgresSnapshotProgressionHistory.LoadAsync(
+                dbContext, userId, exerciseIds, recordedSession?.Id, cancellationToken).ConfigureAwait(false);
 
             var notesByExerciseId = exerciseIds.Length == 0
                 ? new Dictionary<int, string>()
@@ -449,21 +439,6 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
-            var observedWeeksByExerciseId = observedSetRows
-                .Where(set => set.ExerciseId is not null)
-                .GroupBy(set => set.ExerciseId!)
-                .ToDictionary(
-                    group => group.Key,
-                    group => ObservedSetProgressionHistoryBuilder.Build(group.Select(set =>
-                        new ObservedSetHistoryRow(
-                            set.WorkoutSessionLogId,
-                            set.CreatedAt,
-                            set.SetNumber,
-                            set.RepsCompleted,
-                            set.WeightKg,
-                            set.RirActual,
-                            set.TechniqueAcceptable,
-                            set.IsWarmup))));
 
             var exerciseDtos = orderedExercises.Select(dayEx =>
             {
@@ -471,8 +446,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 var prevLog = latestPreviousByExerciseId.GetValueOrDefault(dayEx.ExerciseId);
                 var currLog = currentByDayExerciseId.GetValueOrDefault(dayEx.Id);
                 var movementNote = notesByExerciseId.GetValueOrDefault(dayEx.ExerciseId, string.Empty);
-                var observedWeeks = observedWeeksByExerciseId.GetValueOrDefault(
-                    dayEx.ExerciseId.ToString(CultureInfo.InvariantCulture));
+                var observedWeeks = observedHistory.GetValueOrDefault(dayEx.ExerciseId);
                 return BuildExerciseDetailDto(dayEx, day.WorkoutType, catalogEx, prevLog, currLog, movementNote,
                     progressionTier, observedWeeks, bodyweightExerciseIds.Contains(dayEx.ExerciseId));
             }).ToArray();
@@ -1546,7 +1520,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         WorkoutExerciseLogRecord? currentLog,
         string movementNotes,
         EffectiveExperienceTier progressionTier = EffectiveExperienceTier.Tier1BeginnerOrNew,
-        IReadOnlyList<DoubleProgressionWeekPerformance>? observedWeeks = null,
+        IReadOnlyList<SnapshotProgressionExposure>? observedWeeks = null,
         bool isBodyweight = false)
     {
         var name = exercise?.Name ?? "Exercise";
@@ -1666,7 +1640,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         WorkoutDayExerciseRecord dayExercise,
         Exercise? exercise,
         WorkoutExerciseLogRecord previousLog,
-        IReadOnlyList<DoubleProgressionWeekPerformance>? observedWeeks,
+        IReadOnlyList<SnapshotProgressionExposure>? observedWeeks,
         EffectiveExperienceTier tier)
     {
         if (previousLog.WeightKg is not { } currentLoad || currentLoad <= 0m)
@@ -1675,13 +1649,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         var muscle = exercise is null
             ? MajorMuscleGroup.Core
             : MapMajorMuscleGroup(exercise.PrimaryMuscle);
-        return StrengthProgressionAdviceRule.Resolve(
-            muscle,
-            exercise?.Id ?? dayExercise.ExerciseId,
-            currentLoad,
-            dayExercise.Reps,
-            tier,
-            observedWeeks);
+        return SnapshotProgressionRule.Resolve(muscle, tier, dayExercise.ExerciseId, dayExercise.Reps, currentLoad, observedWeeks ?? []);
     }
 
     private static EffectiveExperienceTier ResolveExperienceTier(UserProfileRecord? profile) =>
