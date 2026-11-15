@@ -100,6 +100,13 @@ These changes are committed but are not release evidence. The checkout advanced 
 - `630c3dd0` removes unconditional adductor shortfall/priority and adductor-only glute attribution. Explicit need-specific adductor selection remains open. The Gate 56 glute-specific abductor policy and meaningful exposure counting by effective sets also remain open.
 - Other soreness-sensitive readiness paths and many P1–P9 requirements remain open. Independent review has resumed after a temporary workspace credit error; unresolved findings and the final simulator flow remain open. No shared-environment reset, AWS deployment, device acceptance or TestFlight action has been performed.
 
+### Additional owner decision and movement audit — 2026-11-15
+
+- The owner chose to remove soreness from workout dosing by rescaling the remaining sleep, energy and stress inputs to the same 0–100 range. The scoring and approval versions must identify the new policy; do not reuse earlier approval as if it reviewed new arithmetic. Preserve separately assessed pain, red flags and valid sleep/fatigue signals. A failing test currently demonstrates that the old rule allows soreness alone to change the prescription; it remains an uncommitted regression until fixed.
+- `9d3f58e5` adds localized gap notices for actual scheduled knee-extension, knee-flexion and hip-extension patterns after timing and scheduling; unknown metadata remains unknown. Gate 49 remains partial until the generator safely selects missing patterns where feasible.
+- `9d3f58e5` also removes the unconditional abductor coverage target when no focus is recorded. Gate 56 remains partial: a real, user-selected glute focus must be persisted and propagated before the planner can require weekly direct abduction. Existing general goals and global catalog weights do not establish that choice.
+- The current ten-region exposure model does not count effective sets, so it cannot yet verify the recovered generally-two-effective-set exposure rule. Do not mark weekly exposure compliance complete.
+
 ## Architecture and generation
 
 - Core owns deterministic, versioned rules; UseCases coordinate operations; Infrastructure owns persistence and catalog; Server is authoritative; MAUI presents inputs and results. Respect actual dependency and platform boundaries.
