@@ -72,6 +72,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     [ObservableProperty] private string _selectedCalendarDateText = string.Empty;
 
     private CycleDayItem? _selectedCalendarDay;
+    private DateTime? _selectedDateBeforeCalendarEdit;
     [ObservableProperty] private string _selectedCalendarPhaseText = string.Empty;
     private CyclePhase? _suggestedPhase;
     [ObservableProperty] private bool _useDarkTheme;
@@ -431,9 +432,21 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         await _openPhaseDetailsAsync(phase.Phase);
     }
 
-    private void CloseDatePhaseModal()
+    private void CloseDatePhaseModal() => CloseDatePhaseModal(restoreSelection: true);
+
+    private void CloseDatePhaseModal(bool restoreSelection)
     {
         IsDatePhaseModalVisible = false;
+        if (restoreSelection &&
+            _selectedDateBeforeCalendarEdit is { } previous &&
+            previous.Date != SelectedDate.Date)
+        {
+            SelectedDate = previous;
+            SyncCalendarSelection();
+            RefreshCalendarStrip(CalendarDays, SelectedDate, CurrentDate, UseDarkTheme);
+        }
+
+        _selectedDateBeforeCalendarEdit = null;
     }
 
     private void SelectPhaseOption(CyclePhaseOptionItem? option)
@@ -525,8 +538,10 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 return;
             }
 
-            CloseDatePhaseModal();
+            CloseDatePhaseModal(restoreSelection: false);
             await RefreshCycleDataAsync();
+            CalendarEditHintText = UiTextCatalog.Format(
+                "Cycle_PhaseEdit_SavedFormat", DisplayFormat.DayMonth(date));
             NotifyCycleMutated();
         }
         catch (Exception ex)

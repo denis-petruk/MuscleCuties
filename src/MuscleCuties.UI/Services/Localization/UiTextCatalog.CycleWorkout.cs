@@ -453,6 +453,7 @@ public static partial class UiTextCatalog
         English["Cycle_Calendar_LoadFailed"] = "Could not load this month. Try another month or return to today.";
         English["Cycle_PhaseEdit_ChoosePhase"] = "Pick the phase that fits this day.";
         English["Cycle_PhaseEdit_SuggestedFormat"] = "{0} keeps the cycle in order. Tap Save phase to log it.";
+        English["Cycle_PhaseEdit_SavedFormat"] = "Phase saved for {0}.";
         English["Cycle_PhaseEdit_ReviewEarlierHint"] = "Easy fix. Tap the day the missed shift really began.";
         English["Cycle_Warning_UseNextPhase"] = "Use next phase";
         English["Cycle_Advance_ConfirmAction"] = "Advance phase";

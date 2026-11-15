@@ -1012,6 +1012,31 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Calendar_phase_edit_restores_cancelled_selection_and_confirms_save()
+    {
+        var root = RepositoryRoot();
+        var viewModel = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Cycle", "CycleViewModel.cs"));
+        var calendar = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Cycle", "CycleViewModel.Calendar.cs"));
+
+        Assert.Contains("_selectedDateBeforeCalendarEdit", calendar);
+        Assert.Contains("restoreSelection", viewModel);
+        Assert.Contains("Cycle_PhaseEdit_SavedFormat", viewModel);
+
+        foreach (var catalog in new[]
+                 {
+                     Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Localization",
+                         "UiTextCatalog.CycleWorkout.cs"),
+                     Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Localization",
+                         "RussianUiText.CycleWorkout.cs")
+                 })
+        {
+            Assert.Contains("Cycle_PhaseEdit_SavedFormat", File.ReadAllText(catalog));
+        }
+    }
+
+    [Fact]
     public void Next_phase_advance_requires_confirmation()
     {
         var root = RepositoryRoot();
