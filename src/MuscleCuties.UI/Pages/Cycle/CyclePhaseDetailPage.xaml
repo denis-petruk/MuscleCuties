@@ -64,6 +64,7 @@
 
                     <sharedControls:PhaseVisualView
                         Grid.Row="3"
+                        IsVisible="{Binding HasPhaseImage}"
                         Source="{Binding PhaseImageSource}"
                         WidthRequest="{StaticResource UiDimension150}"
                         HeightRequest="{StaticResource UiDimension150}"

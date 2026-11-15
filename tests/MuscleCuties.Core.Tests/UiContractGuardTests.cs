@@ -1012,6 +1012,19 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Phase_detail_hides_the_visual_when_no_phase_image_exists()
+    {
+        var root = RepositoryRoot();
+        var xaml = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Pages", "Cycle", "CyclePhaseDetailPage.xaml"));
+        var viewModel = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "CyclePhaseDetailViewModel.cs"));
+
+        Assert.Contains("IsVisible=\"{Binding HasPhaseImage}\"", xaml);
+        Assert.Contains("HasPhaseImage", viewModel);
+    }
+
+    [Fact]
     public void Phase_detail_subtitle_uses_the_same_localized_value_as_its_body()
     {
         var xaml = File.ReadAllText(Path.Combine(
