@@ -1012,6 +1012,16 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Phase_detail_subtitle_uses_the_same_localized_value_as_its_body()
+    {
+        var xaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Pages", "Cycle", "CyclePhaseDetailPage.xaml"));
+
+        Assert.Contains(
+            "Subtitle=\"{Binding PhaseWindow, Converter={StaticResource LocalizedStringConverter}}\"", xaml);
+    }
+
+    [Fact]
     public void Recorded_calendar_days_do_not_keep_the_estimate_asterisk()
     {
         var source = File.ReadAllText(Path.Combine(

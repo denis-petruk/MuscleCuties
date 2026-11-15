@@ -23,7 +23,7 @@
 
             <sharedControls:PageHeader
                 Title="{Binding PhaseName, Converter={StaticResource LocalizedStringConverter}}"
-                Subtitle="{Binding PhaseWindow}"
+                Subtitle="{Binding PhaseWindow, Converter={StaticResource LocalizedStringConverter}}"
                 BackCommand="{Binding BackCommand}" />
 
             <!-- Hero phase card -->
