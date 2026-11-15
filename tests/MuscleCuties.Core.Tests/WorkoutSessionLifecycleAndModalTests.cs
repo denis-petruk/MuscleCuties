@@ -105,7 +105,11 @@ public class WorkoutSessionLifecycleAndModalTests
 
         Assert.Contains("Unloaded += OnUnloaded", source);
         Assert.Contains("page.Disappearing += OnPageDisappearing", source);
-        Assert.Contains("HashSet<VisualElement> _activeModals", source);
+        // Stack order is part of the contract: when the entry sheet hands off to the editor,
+        // the editor must be isolated as the top sheet rather than staying inside the chooser's
+        // excluded subtree.
+        Assert.Contains("List<VisualElement> _activeModals", source);
+        Assert.Contains("Reisolate()", source);
         Assert.Contains("ModalAccessibilityScope.Acquire", source);
         Assert.Contains("ModalAccessibilityScope.Release", source);
         Assert.Contains("_activeModals.Add(modal)", source);
