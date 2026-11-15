@@ -5,7 +5,11 @@ internal static partial class RussianUiText
     static partial void RegisterWorkoutGenerationStrings()
     {
         Values["Workout_Generation_DurationOmissionNotice"] = "Некоторые движения исключены, чтобы уложиться в выбранное время тренировки.";
-        Values["Workout_Generation_OneDayCoverageNotice"] = "За один тренировочный день невозможно проработать каждую группу мышц дважды за неделю.";
+        Values["Workout_Generation_MissingKneeExtension"] = "В недельном плане нет движения с разгибанием колена.";
+        Values["Workout_Generation_MissingKneeFlexion"] = "В недельном плане нет движения со сгибанием колена.";
+        Values["Workout_Generation_MissingHipExtension"] = "В недельном плане нет движения с разгибанием бедра.";
+        Values["Workout_Generation_MovementCoverageUnknown"] = "Не удалось определить охват движений для этого плана.";
+        Values["Workout_Generation_OneDayCoverageNotice"] = "За одну силовую тренировку в неделю невозможно проработать каждую группу мышц дважды.";
         Values["Workout_Generation_CoverageMuscle_Chest"] = "Грудь";
         Values["Workout_Generation_CoverageMuscle_LatsUpperBack"] = "Спина";
         Values["Workout_Generation_CoverageMuscle_Deltoids"] = "Плечи";

@@ -129,7 +129,7 @@ public sealed class PlanningAcceptanceTransactionTests
             var proposalRecord = await db.WorkoutPlanProposalsV02.SingleAsync(row => row.Id == created.ProposalId);
             var currentSnapshot = proposalRecord.ProposalJson;
             var staleSnapshot = System.Text.Json.Nodes.JsonNode.Parse(currentSnapshot)!;
-            staleSnapshot["rulesetVersion"] = "MC-PLANNING-0.2";
+            staleSnapshot["rulesetVersion"] = "MC-PLANNING-0.3";
             proposalRecord.ProposalJson = staleSnapshot.ToJsonString();
             await db.SaveChangesAsync();
             var staleRuleset = await store.AcceptAsync(user, command, CancellationToken.None);

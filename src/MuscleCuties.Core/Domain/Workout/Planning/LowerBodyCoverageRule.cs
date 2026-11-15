@@ -18,8 +18,8 @@ public sealed record LowerBodyCoverageResult(
 }
 
 /// <summary>
-/// Tracks lower-body exposures; unconditional coverage targets exclude adductors. Adductor
-/// attribution remains available for a future explicit need-specific policy.
+/// Tracks lower-body exposures. Adductor and abductor attribution remain available, but neither
+/// has an unconditional coverage target; focused programming requires an explicit user selection.
 /// </summary>
 public static class LowerBodyCoverageRule
 {
@@ -35,7 +35,7 @@ public static class LowerBodyCoverageRule
             LowerBodyMuscleGroup.Abductors, LowerBodyMuscleGroup.Adductors];
 
     private static readonly IReadOnlyList<LowerBodyMuscleGroup> UnconditionalCoverageMuscles =
-        [LowerBodyMuscleGroup.Glutes, LowerBodyMuscleGroup.Hamstrings, LowerBodyMuscleGroup.Abductors];
+        [LowerBodyMuscleGroup.Glutes, LowerBodyMuscleGroup.Hamstrings];
 
     private static readonly string[] GlutesNames = ["Glutes", "GluteMax", "GluteMaximus", "GluteusMaximus"];
     private static readonly string[] HamstringsNames = ["Hamstrings", "Hamstring"];
@@ -84,7 +84,7 @@ public static class LowerBodyCoverageRule
         var ids = new HashSet<int>();
         if (muscleGroupsByExerciseId is null || catalog is null) return ids;
 
-        // Gate 55: without an explicit need policy, adductor gaps must not create a default priority.
+        // Gates 55–56: without an explicit focus/need, neither adductor nor abductor gaps create a default priority.
         var gaps = belowMinimum.Where(UnconditionalCoverageMuscles.Contains).ToArray();
         foreach (var entry in catalog)
         {

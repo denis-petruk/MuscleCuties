@@ -168,6 +168,18 @@ public sealed class StrengthPlanActivationAndApplyTests
         Assert.NotEmpty(StrengthPlanGenerationDisplayMapper.CoverageNotes(withLimitation));
     }
 
+    [Theory]
+    [InlineData("WeeklyMovementCoverageMissing_KneeExtension", "Workout_Generation_MissingKneeExtension")]
+    [InlineData("WeeklyMovementCoverageMissing_KneeFlexion", "Workout_Generation_MissingKneeFlexion")]
+    [InlineData("WeeklyMovementCoverageMissing_HipExtension", "Workout_Generation_MissingHipExtension")]
+    [InlineData("WeeklyMovementCoverageUnknown", "Workout_Generation_MovementCoverageUnknown")]
+    public void Weekly_movement_gaps_are_shown_in_preview_and_after_automatic_apply(string code, string expectedKey)
+    {
+        var preview = Preview() with { AdvisoryCodes = [code] };
+        Assert.Contains(expectedKey, StrengthPlanGenerationDisplayMapper.CoverageNotes(preview));
+        Assert.Contains(expectedKey, StrengthPlanGenerationDisplayMapper.PostAcceptanceNotices(preview));
+    }
+
     [Fact]
     public void Automatically_applied_reduced_volume_plan_has_a_visible_compromise_notice()
     {

@@ -5,7 +5,11 @@ public static partial class UiTextCatalog
     static partial void RegisterWorkoutGenerationStrings()
     {
         English["Workout_Generation_DurationOmissionNotice"] = "Some movements were omitted to fit your selected session time.";
-        English["Workout_Generation_OneDayCoverageNotice"] = "One training day cannot provide two weekly sessions for each muscle group.";
+        English["Workout_Generation_MissingKneeExtension"] = "Your week has no knee-extension movement.";
+        English["Workout_Generation_MissingKneeFlexion"] = "Your week has no knee-flexion movement.";
+        English["Workout_Generation_MissingHipExtension"] = "Your week has no hip-extension movement.";
+        English["Workout_Generation_MovementCoverageUnknown"] = "Movement coverage could not be determined for this plan.";
+        English["Workout_Generation_OneDayCoverageNotice"] = "One strength session per week cannot provide two weekly exposures for each muscle group.";
         English["Workout_Generation_CoverageMuscle_Chest"] = "Chest";
         English["Workout_Generation_CoverageMuscle_LatsUpperBack"] = "Back";
         English["Workout_Generation_CoverageMuscle_Deltoids"] = "Shoulders";

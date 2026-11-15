@@ -62,6 +62,75 @@ public sealed class StrengthPlanPreviewV020Tests
     }
 
     [Fact]
+    public async Task Preview_reports_missing_knee_flexion_from_exercises_actually_scheduled()
+    {
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(OneDayProfile()))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+
+        Assert.Equal("Feasible", preview.Status);
+        Assert.Contains("WeeklyMovementCoverageMissing_KneeFlexion", preview.AdvisoryCodes);
+        Assert.DoesNotContain("WeeklyMovementCoverageMissing_KneeExtension", preview.AdvisoryCodes);
+        Assert.DoesNotContain("WeeklyMovementCoverageMissing_HipExtension", preview.AdvisoryCodes);
+    }
+
+    [Fact]
+    public async Task Preview_reports_a_knee_extension_gap_when_all_safe_knee_exercises_are_excluded()
+    {
+        var source = OneDayProfile() with { ExcludedExerciseIds = new HashSet<int> { 101 } };
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(source))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+
+        Assert.NotEmpty(preview.Sessions);
+        Assert.Contains("WeeklyMovementCoverageMissing_KneeExtension", preview.AdvisoryCodes);
+        Assert.Contains("WeeklyMovementCoverageMissing_KneeFlexion", preview.AdvisoryCodes);
+        Assert.DoesNotContain("WeeklyMovementCoverageMissing_HipExtension", preview.AdvisoryCodes);
+    }
+
+    [Fact]
+    public async Task Duration_omitted_knee_flexion_does_not_hide_weekly_pattern_gap()
+    {
+        var source = OneDayProfile();
+        var accessoryKey = "MC-FB-1D-A|goal-specific-accessory";
+        var allowed = source.ReviewedAllowedExerciseIdsByTemplateSlot.ToDictionary(x => x.Key, x => x.Value);
+        var conditions = source.TemplateSlotReviewConditions.ToDictionary(x => x.Key, x => x.Value);
+        allowed[accessoryKey] = new HashSet<int> { 105 };
+        conditions[accessoryKey] = "Reviewed synthetic slot";
+        var catalog = source.Catalog.Concat([Entry(105, MovementPattern.KneeFlexion)]).ToArray();
+        var seconds = source.SecondsPerRepByExerciseId.ToDictionary(x => x.Key, x => x.Value);
+        seconds[105] = 4;
+        var primary = source.PrimaryMuscleByExerciseId.ToDictionary(x => x.Key, x => x.Value);
+        primary[105] = "Hamstrings";
+        var muscles = source.MuscleGroupsByExerciseId!.ToDictionary(x => x.Key, x => x.Value);
+        muscles[105] = new HashSet<string> { "Hamstrings" };
+        var durations = new Dictionary<int, int> { [(int)WorkoutActivityType.GeneralStrength] = 60 };
+        var reviewed = source with { Catalog = catalog, ReviewedAllowedExerciseIdsByTemplateSlot = allowed,
+            TemplateSlotReviewConditions = conditions, SecondsPerRepByExerciseId = seconds,
+            PrimaryMuscleByExerciseId = primary, MuscleGroupsByExerciseId = muscles,
+            ActivitySessionDurationsMinutes = durations };
+        var shortEnough = await new PreviewStrengthPlanV020UseCase(new Source(reviewed))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+        Assert.Contains(shortEnough.Sessions.SelectMany(session => session.Slots), slot => slot.ExerciseId == 105);
+        Assert.DoesNotContain(WeeklyMovementCoverageRule.MissingKneeFlexion, shortEnough.AdvisoryCodes);
+
+        seconds = seconds.ToDictionary(x => x.Key, x => x.Value);
+        seconds[105] = 600;
+        var tooSlow = await new PreviewStrengthPlanV020UseCase(new Source(reviewed with { SecondsPerRepByExerciseId = seconds }))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+        Assert.DoesNotContain(tooSlow.Sessions.SelectMany(session => session.Slots), slot => slot.ExerciseId == 105);
+        Assert.Contains(WeeklyMovementCoverageRule.MissingKneeFlexion, tooSlow.AdvisoryCodes);
+    }
+
+    [Fact]
+    public void Movement_coverage_counts_reviewed_knee_flexion_and_does_not_guess_missing_catalog_metadata()
+    {
+        var catalog = new[] { Entry(101, MovementPattern.Lunge), Entry(102, MovementPattern.HipThrust),
+            Entry(105, MovementPattern.KneeFlexion) };
+        Assert.Empty(WeeklyMovementCoverageRule.MissingPatterns([101, 102, 105], catalog));
+        Assert.Equal([WeeklyMovementCoverageRule.UnknownCoverage],
+            WeeklyMovementCoverageRule.MissingPatterns([101, 999], catalog));
+    }
+
+    [Fact]
     public void One_available_day_is_valid_in_saved_preferences()
     {
         Assert.True(WorkoutPreferencesRule.HasMinimumDistinctWeekdays(new[] { DayOfWeek.Monday }));
@@ -71,7 +140,7 @@ public sealed class StrengthPlanPreviewV020Tests
     [Fact]
     public void One_day_planning_uses_a_new_ruleset_version_for_snapshot_staleness()
     {
-        Assert.NotEqual("MC-PLANNING-0.2", StrengthPlanPreviewRule.RulesetVersion);
+        Assert.NotEqual("MC-PLANNING-0.3", StrengthPlanPreviewRule.RulesetVersion);
     }
 
     [Fact]

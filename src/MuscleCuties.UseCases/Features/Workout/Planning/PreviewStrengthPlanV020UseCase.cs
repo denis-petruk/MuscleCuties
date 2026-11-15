@@ -263,8 +263,15 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         }).ToArray();
         mixedSchedule = StrengthScheduleAssignmentRule.Reconcile(mixedSchedule, muscles,
             mixedContext.AvailableWeekdays ?? [], result.EffectiveActivity ?? WorkoutActivityContractMapper.ToCore(chosenStrengthActivity));
-        return StrengthPlanPreviewMapperV020.AttachMixedSchedule(response, mixedSchedule, chosenStrengthActivity) with
+        var scheduled = StrengthPlanPreviewMapperV020.AttachMixedSchedule(response, mixedSchedule, chosenStrengthActivity);
+        var actualExerciseIds = scheduled.Sessions.Where(session => session.PlannedWeekday.HasValue)
+            .SelectMany(session => session.Slots)
+            .Where(slot => slot.ExerciseId.HasValue).Select(slot => slot.ExerciseId!.Value).Distinct().ToArray();
+        var movementGaps = WeeklyMovementCoverageRule.MissingPatterns(actualExerciseIds, sourceData.Catalog);
+        return scheduled with
         {
+            AdvisoryCodes = scheduled.AdvisoryCodes.Concat(movementGaps).Distinct(StringComparer.Ordinal)
+                .OrderBy(code => code, StringComparer.Ordinal).ToArray(),
             SourceProfileVersion = sourceData.ProfileVersion,
             SourceInjuryFingerprint = sourceData.InjuryFingerprint,
             SourceActivePlanId = sourceData.ActivePlanId,

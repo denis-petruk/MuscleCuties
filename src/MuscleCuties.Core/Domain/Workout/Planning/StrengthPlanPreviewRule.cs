@@ -101,7 +101,7 @@ public static class StrengthPlanPreviewRule
 {
     public const string PolicyId = "MC-WORKOUT-POLICY";
     public const string Version = "0.2.0";
-    public const string RulesetVersion = "MC-PLANNING-0.3";
+    public const string RulesetVersion = "MC-PLANNING-0.4";
     public const string InvalidInputCode = "InvalidStrengthPreviewInput";
     public const string PlanningProfileInvalidCode = "PlanningProfileDataInvalid";
     public const string ActivityNotSelectedCode = "ActivityNotSelectedInProfile";

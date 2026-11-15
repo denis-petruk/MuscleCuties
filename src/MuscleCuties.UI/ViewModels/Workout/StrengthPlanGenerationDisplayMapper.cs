@@ -268,6 +268,14 @@ internal static class StrengthPlanGenerationDisplayMapper
             return [];
         var codes = preview.AdvisoryCodes.Concat(preview.LimitationCodes).ToArray();
         var notes = new List<string>();
+        if (codes.Contains("WeeklyMovementCoverageMissing_KneeExtension"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingKneeExtension"));
+        if (codes.Contains("WeeklyMovementCoverageMissing_KneeFlexion"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingKneeFlexion"));
+        if (codes.Contains("WeeklyMovementCoverageMissing_HipExtension"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingHipExtension"));
+        if (codes.Contains("WeeklyMovementCoverageUnknown"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MovementCoverageUnknown"));
         if (preview.RequiresReducedVolumeAcknowledgment())
             notes.Add(UiTextCatalog.Get("Workout_Generation_ReducedVolumeNotice"));
         if (codes.Contains("OneDayFullBodyHasLimitedWeeklyCoverage") ||

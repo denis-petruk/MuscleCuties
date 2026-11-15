@@ -74,6 +74,6 @@ public sealed class ActivityExperienceRuleTests
         Assert.Equal(TimeSpan.FromMinutes(21.5), ActivityPrescriptionRule.HiitSessionDuration);
         Assert.Equal("MC-WORKOUT-POLICY", StrengthPlanPreviewRule.PolicyId);
         Assert.Equal("0.2.0", StrengthPlanPreviewRule.Version);
-        Assert.Equal("MC-PLANNING-0.3", StrengthPlanPreviewRule.RulesetVersion);
+        Assert.Equal("MC-PLANNING-0.4", StrengthPlanPreviewRule.RulesetVersion);
     }
 }
