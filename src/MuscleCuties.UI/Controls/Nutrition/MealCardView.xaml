@@ -15,13 +15,16 @@
             x:Name="MealCardSurface"
             IsVisible="{Binding HasContent, Source={x:Reference Root}}"
             Style="{StaticResource CardPrimary}">
-        <Border.GestureRecognizers>
-            <TapGestureRecognizer
-                Command="{Binding OpenCommand, Source={x:Reference Root}}"
-                CommandParameter="{Binding OpenCommandParameter, Source={x:Reference Root}}" />
-        </Border.GestureRecognizers>
-
         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+            <!-- The open gesture covers the card body only. Attaching it to the whole surface made
+                 the edit action share the card's tap target, so Edit meal could do nothing. -->
+            <VerticalStackLayout x:Name="MealCardTapArea" Spacing="{StaticResource UiSpaceTight}">
+                <VerticalStackLayout.GestureRecognizers>
+                    <TapGestureRecognizer
+                        Command="{Binding OpenCommand, Source={x:Reference Root}}"
+                        CommandParameter="{Binding OpenCommandParameter, Source={x:Reference Root}}" />
+                </VerticalStackLayout.GestureRecognizers>
+
             <!-- Icon, meal type and calorie block. At accessibility sizes the calorie block is as wide as
                  the heading, so the row wraps instead of crushing the heading into single letters. -->
             <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center" JustifyContent="SpaceBetween">
@@ -79,6 +82,7 @@
                 Style="{StaticResource MutedLabel}"
                 LineBreakMode="WordWrap"
                 IsVisible="{Binding HasContent, Source={x:Reference Root}}" />
+            </VerticalStackLayout>
 
             <!-- One action row on every meal card: Edit meal when the meal is editable as one
                  block, then the save-template star. Actions never share the macro line, so the

@@ -1012,6 +1012,30 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Meal_card_open_gesture_does_not_cover_the_edit_action()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealCardView.xaml");
+
+        var document = XDocument.Load(path);
+        XNamespace maui = "http://schemas.microsoft.com/dotnet/2021/maui";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2009/xaml";
+
+        var surface = document.Descendants(maui + "Border")
+            .FirstOrDefault(element => (string?)element.Attribute(x + "Name") == "MealCardSurface");
+        Assert.True(surface is not null, "MealCardView.xaml no longer has the named meal-card surface.");
+        Assert.True(
+            surface!.Element(maui + "Border.GestureRecognizers") is null,
+            "The card-wide tap gesture must not sit above Edit meal; use the named body tap area.");
+
+        var tapArea = document.Descendants()
+            .FirstOrDefault(element => (string?)element.Attribute(x + "Name") == "MealCardTapArea");
+        Assert.True(tapArea is not null, "MealCardView.xaml no longer has the named card tap area.");
+        Assert.NotNull(tapArea!.Elements().FirstOrDefault(
+            element => element.Name.LocalName == "VerticalStackLayout.GestureRecognizers"));
+    }
+
+    [Fact]
     public void Profile_pickers_localize_enum_labels_in_the_picker_itself()
     {
         var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
