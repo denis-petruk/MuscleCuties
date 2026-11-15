@@ -1,57 +1,66 @@
-# Status — Wave A close-out
+# Status — QA audit base branch
 
-Branch: `fix/qa-audit-followups`. Nothing pushed; no PR opened.
+Branch: `fix/qa-audit-followups`, based on `4b4847ee`. Head before this status commit:
+`afd78d9c`. PR: https://github.com/denis-petruk/MuscleCuties/pull/50 (base `main`).
 
-## Commits in this pass
+No source file was changed in this verification pass. The pre-existing shared-UI work is preserved
+on the branch, not reset, stashed or rewritten. `docs/release-audit/2026-11-05/WORKOUT_POLICY.md`
+is tracked and present at this head.
 
-- `6f520353` — Use the shared page header on Nutrition (D2).
-- `6eb6d92e` — Let the macro-targets header stack beside its action (D22).
-- `272958c1` — Use one 24-hour time field without native picker chrome (D48; birthday half of D24).
-- `c8c94888` — Use the shared sheet header on check-in and breakdown (D36 adoption).
-- `2c8a3dcc` — Guard the template empty state and workout metrics (D52, D44).
+## Changed files
 
-The earlier rest-card fix `cd9b544f` was not redone.
+- `STATUS.md` — this record only.
+- Existing branch work remains in place: `AnimatedModalView.cs`, `Styles.xaml`, `MealCardView.xaml`,
+  `NutritionPage.xaml`, `WorkoutSessionPage.xaml`, the modal XAML and the shared controls.
 
-## What changed
+## Gate
 
-- `NutritionPage.xaml` composes `sharedControls:PageHeader` in the root `Auto,*` row. The empty
-  header row and the bespoke hero are gone.
-- `ProfileNutritionSettingsPage.xaml` puts the macro-targets title and action in
-  `AdaptiveRow Columns="2"`; at an accessibility text size they stack instead of squeezing the title.
-- New `Controls/Shared/TimeField.xaml` / `.xaml.cs` owns one `InputContainer` frame, a fixed 24-hour
-  `HH:mm` format and a two-way time value. Adopted by `MealEntryModal`, `MealEditorModal` and all
-  three `HydrationLogView` time controls. No timer refreshes the value.
-- `PlatformCompositionExtensions` clears the native `UITextField.BorderStyle` on iOS `DatePicker` and
-  `TimePicker`, removing the concentric inner frame from both the birthday and meal-time fields.
-- `DailyCheckInModal` and `NutritionBreakdownModal` now use `sharedControls:ModalSheetHeader` instead
-  of hand-built title rows. Entry/editor/picker already used it.
-- `WaveAWiringGuardTests.cs` pins the page header, adaptive macro row, shared time field/native chrome,
-  shared sheet headers, template empty state and dashboard adaptive metric row.
+```
+$ dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj --no-restore
+Passed!  - Failed: 0, Passed: 1416, Skipped: 0, Total: 1416, Duration: 816 ms
 
-## Verification
+$ dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -c Debug \
+    -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64 --no-restore
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
+```
 
-- Guard subset: 58 passed, 0 failed.
-- Full `MuscleCuties.Core.Tests`: 1415 passed, 0 failed.
-- iOS simulator build: 0 warnings, 0 errors.
-- Simulator evidence under `docs/qa-evidence/wave-a/`, each captured light/dark at normal and
-  `accessibility-large`:
-  - `d2-nutrition-header-*`
-  - `d22-macro-header-*`
-  - `d24-birthday-field-*`
-  - `d48-entry-time-*` and `d48-entry-time-template-*`
-  - `d36-checkin-header-*` and `d36-breakdown-header-*`
-  - `d52-entry-template-empty-*` (the template action was tapped and the no-templates state was
-    visible at all four combinations).
+The Core gate includes the UI contract guards, so the shapes named below are pinned rather than only
+observed once.
 
-## Limitations
+## Findings checked in the simulator
 
-- D44's adaptive metric row was already in the branch when this pass began, so its new guard was green
-  on arrival rather than red-before/green-after. Today is a rest day on the QA account, and changing
-  the account's plan was out of scope, so no training-day after frame was captured. The earlier
-  `C24-today-loaded-light.png` remains the only dashboard evidence.
-- D24 is only partly closed: the birthday frame is fixed, but `Рост 165` / `Вес 62` still have no
-  unit and `Личные данные` still reads as a muted caption.
-- D52 was driven with an empty template catalog. Selecting or editing a saved template was not
-  exercised.
-- The simulator was left in the last evidence state (light, `accessibility-large`) until the final
-  reset to light/`large`.
+Simulator `678048F6-C4C7-406C-A970-7104AED3E00A`, installed Debug build at `afd78d9c`.
+
+- **D8 — already fixed by the existing diff.** Nutrition, default text size: `Завтрак` is at the
+  leading edge and `215 ккал` / `10% дневной цели` at the card's trailing edge, with no overlap.
+- **D19 — already fixed by the existing diff.** Train → `Начать тренировку`: the sheet title is one
+  line; `Strength & Sculpt`, `0 из 5 отмечено` and `5 упражнений` occupy separate aligned lines.
+  Tapping the row leaves the session screen in the next frame; the sheet is gone.
+- **D21 — already fixed by the existing diff.** Profile → `Личная информация`, scrolled to the end:
+  `Изменить пароль` and `Сохранить личную информацию` are fully visible. The save bar is a page-grid
+  row below the scroll view, not an overlay. Nutrition settings, units and feedback use the same
+  `Auto,*,Auto` grid.
+- **D37 — already fixed by the existing diff.** Today: `Заполнить отметку` is fully above the tab bar
+  and taps through. The check-in sheet keeps `Пока пропустить` / `Сохранить отметку` inside its
+  footer.
+
+No repair commit was needed for this set; duplicating patches would have risked the existing shared
+primitives.
+
+## Not verified
+
+- D21's nutrition-settings, units and feedback pages share the fixed grid but were not re-opened on
+  the simulator in this pass.
+- D8's empty meal-card state was not re-captured; only a populated `Завтрак` card was observed.
+- D19's dismissal was verified as "next frame is the session", not with a millisecond stopwatch.
+- Thirteen commits that were already on the remote branch before this pass contain generated-tool
+  trailers in their messages. They were not rewritten or force-pushed because the repository forbids
+  rewriting remote history; all commits created in this pass, the PR title and the PR body are free
+  of attribution.
+
+## Next step
+
+Continue the QA fixes from the Wave A base. The first owner decision still open is D43 (cycle phase
+list wording and one canonical recipe).
