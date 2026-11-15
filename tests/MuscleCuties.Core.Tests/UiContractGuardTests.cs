@@ -1011,6 +1011,31 @@ public sealed class UiContractGuardTests
             $"trailing edge; it declares \"{justify ?? "<none>"}\", which renders as `Затронуто0 ккал`.\\n".Replace("Затронуто", "Завтрак"));
     }
 
+    [Fact]
+    public void Meal_card_does_not_collapse_its_actions_into_the_card_description()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealCardView.xaml");
+
+        var document = XDocument.Load(path);
+        XNamespace maui = "http://schemas.microsoft.com/dotnet/2021/maui";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2009/xaml";
+
+        var surface = document.Descendants(maui + "Border")
+            .FirstOrDefault(element => (string?)element.Attribute(x + "Name") == "MealCardSurface");
+        Assert.True(surface is not null, "MealCardView.xaml no longer has the named meal-card surface.");
+        Assert.True(
+            surface!.Attribute("SemanticProperties.Description") is null,
+            "The meal-card surface must not carry a root description: iOS collapses the whole card\n" +
+            "into one accessibility element and hides Edit meal and Save template.");
+
+        var heading = document.Descendants(maui + "Label")
+            .FirstOrDefault(element =>
+                ((string?)element.Attribute("Text"))?.Contains("Binding Heading", StringComparison.Ordinal) == true);
+        Assert.True(heading is not null, "MealCardView.xaml no longer has the heading label.");
+        Assert.NotNull(heading!.Attribute("SemanticProperties.Description"));
+    }
+
     /// <summary>
     /// A meal time is a clock reading, not a locale greeting: the Russian interface renders one
     /// 24-hour value in the field and in the summary chip beside it. The culture-short pattern
@@ -1346,6 +1371,19 @@ public sealed class UiContractGuardTests
             missingTitle.Count == 0,
             $"Found {missingTitle.Count} shared modal(s) without a ModalTitle heading to announce:\n"
             + string.Join("\n", missingTitle));
+    }
+
+    [Fact]
+    public void Modal_scope_reisolates_when_a_second_sheet_takes_the_top()
+    {
+        var source = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Shared", "AnimatedModalView.cs"));
+        var scopeStart = source.IndexOf("internal static class ModalAccessibilityScope", StringComparison.Ordinal);
+        Assert.True(scopeStart >= 0, "ModalAccessibilityScope is missing.");
+        var scope = source[scopeStart..];
+
+        Assert.Contains("_activeModals[^1]", scope);
+        Assert.Contains("Reisolate", scope);
     }
 
     [Fact]

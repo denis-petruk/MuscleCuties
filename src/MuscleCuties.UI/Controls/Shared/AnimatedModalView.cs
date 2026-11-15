@@ -570,18 +570,18 @@ internal static class ModalAccessibilityScope
 
     private sealed class Scope
     {
-        private readonly HashSet<VisualElement> _activeModals = new();
+        private readonly List<VisualElement> _activeModals = new();
         private readonly List<(VisualElement Element, bool? Excluded)> _isolated = new();
 
         internal int Count => _activeModals.Count;
 
         internal void Acquire(VisualElement modal)
         {
-            if (!_activeModals.Add(modal))
+            if (_activeModals.Contains(modal))
                 return;
 
-            if (_activeModals.Count == 1)
-                Isolate(modal);
+            _activeModals.Add(modal);
+            Reisolate();
         }
 
         internal void Release(VisualElement? modal)
@@ -596,8 +596,19 @@ internal static class ModalAccessibilityScope
                 _activeModals.Clear();
             }
 
-            if (_activeModals.Count == 0)
-                Restore();
+            Reisolate();
+        }
+
+        /// <summary>
+        /// Keeps exactly the topmost sheet reachable when modals overlap during a handoff. The
+        /// previous scope isolated only the first sheet's siblings, so the editor opened above the
+        /// chooser stayed inside an excluded subtree and disappeared from the accessibility tree.
+        /// </summary>
+        private void Reisolate()
+        {
+            Restore();
+            if (_activeModals.Count > 0)
+                Isolate(_activeModals[^1]);
         }
 
         private void Isolate(VisualElement modal)

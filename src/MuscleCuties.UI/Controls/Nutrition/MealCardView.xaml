@@ -14,8 +14,7 @@
         <Border
             x:Name="MealCardSurface"
             IsVisible="{Binding HasContent, Source={x:Reference Root}}"
-            Style="{StaticResource CardPrimary}"
-            SemanticProperties.Description="{Binding SemanticDescription, Source={x:Reference Root}}">
+            Style="{StaticResource CardPrimary}">
         <Border.GestureRecognizers>
             <TapGestureRecognizer
                 Command="{Binding OpenCommand, Source={x:Reference Root}}"
@@ -42,6 +41,7 @@
                     LineBreakMode="WordWrap"
                     HorizontalTextAlignment="Start"
                     FlexLayout.Grow="1"
+                    SemanticProperties.Description="{Binding SemanticDescription, Source={x:Reference Root}}"
                     VerticalOptions="Center" />
 
                 <VerticalStackLayout
