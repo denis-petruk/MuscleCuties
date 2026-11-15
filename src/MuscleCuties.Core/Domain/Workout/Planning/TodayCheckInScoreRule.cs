@@ -97,8 +97,8 @@ public static class TodayCheckInScoreRule
     {
         if (observation is null)
             return Unavailable(CheckInScoreStatus.Incomplete, null);
-        if (observation.SleepQuality is null || observation.Energy is null ||
-            observation.Soreness is null)
+        // Gate 91: 3-question check-in compatibility — soreness is optional and never required for scoring.
+        if (observation.SleepQuality is null || observation.Energy is null)
             return Unavailable(CheckInScoreStatus.Incomplete, observation);
         if (string.IsNullOrWhiteSpace(activeTimeZoneId) || string.IsNullOrWhiteSpace(observation.TimeZoneId))
             return Unavailable(CheckInScoreStatus.InvalidTimeZone, observation);
@@ -127,8 +127,8 @@ public static class TodayCheckInScoreRule
             return Unavailable(CheckInScoreStatus.Stale, observation);
 
         if (!IsValidScaleValue(observation.SleepQuality.Value) || !IsValidScaleValue(observation.Energy.Value) ||
-            !IsValidScaleValue(observation.Soreness.Value) ||
-            observation.Stress is { } stress && !IsValidScaleValue(stress))
+            (observation.Soreness is { } soreness && !IsValidScaleValue(soreness)) ||
+            (observation.Stress is { } stress && !IsValidScaleValue(stress)))
             return Unavailable(CheckInScoreStatus.InvalidInput, observation);
 
         var rawScore = CalculatePrototype(observation.SleepQuality.Value, observation.Energy.Value,

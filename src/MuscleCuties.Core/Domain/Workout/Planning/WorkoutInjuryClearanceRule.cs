@@ -13,6 +13,27 @@ public static class WorkoutInjuryClearanceRule
 {
     public const int OptionalCalendarDaysIncludingClearance = 0;
 
+    // Gate 88: Conservative return load (10-15% reduction -> 0.875x) for the first 2 sessions
+    // after explicit pain clearance.
+    public const decimal ConservativeReturnLoadMultiplier = 0.875m;
+    public const int ConservativeReturnSessionCount = 2;
+
+    public static decimal ComputeConservativeReturnLoad(
+        decimal priorWorkingLoadKg,
+        int completedConservativeSessions,
+        decimal incrementKg = 2.5m)
+    {
+        if (priorWorkingLoadKg <= 0m)
+            return 0m;
+        if (completedConservativeSessions >= ConservativeReturnSessionCount)
+            return priorWorkingLoadKg;
+
+        var step = incrementKg > 0m ? incrementKg : 2.5m;
+        var rawReduced = priorWorkingLoadKg * ConservativeReturnLoadMultiplier;
+        var snapped = Math.Floor(rawReduced / step) * step;
+        return Math.Max(step, snapped);
+    }
+
     /// <summary>All related episodes and current eligibility must be known before restoration.</summary>
     public static InjuryClearanceRestorationDisposition EvaluateRestoration(bool originalWasOptional,
         bool currentEligibilityConfirmed, IReadOnlyCollection<InjuryRestorationEpisode>? episodes,

@@ -123,6 +123,17 @@ public sealed class TodayCheckInScoreRuleTests
         Assert.Equal(ExpectedMidpointScore, score.RawScore);
     }
 
+    [Fact]
+    public void Three_Question_CheckIn_Without_Soreness_Is_Available_And_Identical()
+    {
+        var threeQuestion = TodayCheckInScoreRule.Evaluate(Observation(soreness: null), NowUtc, UtcTimeZone);
+        var fourQuestion = TodayCheckInScoreRule.Evaluate(Observation(soreness: 5m), NowUtc, UtcTimeZone);
+
+        Assert.Equal(CheckInScoreStatus.Available, threeQuestion.Status);
+        Assert.Equal(fourQuestion.RawScore, threeQuestion.RawScore);
+        Assert.Equal(fourQuestion.Band, threeQuestion.Band);
+    }
+
     private static CheckInScoreResult Evaluate(decimal sleep, decimal energy, decimal? soreness, decimal? stress) =>
         TodayCheckInScoreRule.Evaluate(
             Observation(sleep: sleep, energy: energy, soreness: soreness, stress: stress),

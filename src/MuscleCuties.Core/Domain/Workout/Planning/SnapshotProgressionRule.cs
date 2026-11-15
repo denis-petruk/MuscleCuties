@@ -28,7 +28,17 @@ public static class SnapshotProgressionRule
             (s.Rir is null || e.TargetRir is null || s.Rir >= e.TargetRir)));
         if (qualifies && recent[0].PrescribedSets <= recent[1].PrescribedSets)
             return new StrengthProgressionAdvice(StrengthProgressionAdviceRule.EarnedCode, currentLoad + increment, true, muscle, tier);
-        // Preserve the existing reduction behavior only when its RIR inputs were actually recorded.
+        // Gate 73: Two consecutive comparable exposures below minimum prescribed repetitions
+        // recommend a load reduction even when optional RIR is not recorded.
+        if (recent.All(e => e.Sets.All(s => s.Repetitions < e.PrescribedRepetitions)))
+            return new StrengthProgressionAdvice(
+                StrengthProgressionAdviceRule.ReduceCode,
+                Math.Max(increment, currentLoad - increment),
+                false,
+                muscle,
+                tier);
+
+        // Preserve the existing reduction behavior when RIR inputs were recorded.
         // The old rule must never be allowed to authorize an increase against fixed rep bands here.
         if (recent.All(e => e.Sets.All(s => s.Rir.HasValue)))
         {
