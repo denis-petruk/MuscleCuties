@@ -1012,6 +1012,22 @@ public sealed class UiContractGuardTests
     }
 
     [Fact]
+    public void Units_explanation_does_not_embed_an_english_system_name()
+    {
+        var root = RepositoryRoot();
+        foreach (var file in new[]
+                 {
+                     Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Localization",
+                         "RussianUiText.NutritionProfileAuth.cs"),
+                     Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Localization",
+                         "UiTextCatalog.RuntimeText.cs")
+                 })
+        {
+            Assert.DoesNotContain("Система imperial", File.ReadAllText(file));
+        }
+    }
+
+    [Fact]
     public void Workout_plan_summary_uses_one_localized_sentence_shape()
     {
         var root = RepositoryRoot();

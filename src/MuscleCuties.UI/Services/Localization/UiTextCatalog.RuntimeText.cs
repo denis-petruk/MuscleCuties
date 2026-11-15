@@ -706,7 +706,7 @@ public static partial class UiTextCatalog
         ["Metric defaults"] = "Метрические значения по умолчанию",
         ["Metric or imperial defaults for body, food, and training"] = "Метрические или имперские единицы по умолчанию для тела, еды и тренировок",
         ["Metric units"] = "Метрические единицы",
-        ["Metric uses kg, g, cm, and km. Imperial uses lb, oz, in, and mi."] = "Метрическая система использует кг, г, см и км. Система imperial использует фунты, унции, дюймы и мили.",
+        ["Metric uses kg, g, cm, and km. Imperial uses lb, oz, in, and mi."] = "Метрическая система использует кг, г, см и км. Имперская система использует фунты, унции, дюймы и мили.",
         ["Micronutrient targets"] = "Микронутриентные цели",
         ["Micronutrients"] = "Микронутриенты",
         ["Micros"] = "Микроэлементы",

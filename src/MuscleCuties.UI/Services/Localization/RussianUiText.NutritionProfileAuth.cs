@@ -787,7 +787,7 @@ internal static partial class RussianUiText
         Values["Profile_Units_KmOrMi"] = "км или миль";
         Values["Profile_Units_LeaveBlankToUseTheSystem"] = "Оставить пустым, чтобы использовать системное значение выше.";
         Values["Profile_Units_MeasurementSystem"] = "Система измерения";
-        Values["Profile_Units_MetricUsesKgGCmAnd"] = "Метрическая система использует кг, г, см и км. Система imperial использует фунты, унции, дюймы и мили.";
+        Values["Profile_Units_MetricUsesKgGCmAnd"] = "Метрическая система использует кг, г, см и км. Имперская система использует фунты, унции, дюймы и мили.";
         Values["Profile_Units_PerCategoryOverrides"] = "Настройки по категориям";
         Values["Profile_Units_SaveUnits"] = "Сохранить единицы";
         Values["Profile_Units_SelectImperialUnits"] = "Выбрать имперские единицы";
