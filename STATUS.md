@@ -1,27 +1,26 @@
-# Status — Apple sign-in and auth design fixes
+# Status — auth polish and app-wide consistency pass
 
 ## Changed files
 
-- `src/MuscleCuties.Infrastructure.PostgreSql/Account/Authentication/AppleIdentityTokenValidator.cs` — isolated Apple identity-token contract with explicit failure outcomes and verified email extraction.
-- `src/MuscleCuties.Infrastructure.PostgreSql/Account/Authentication/PostgresAccountAuthenticationUseCase.cs` — first Apple sign-in creates an account; an existing verified-email account is linked instead of duplicated.
-- `services/MuscleCuties.Server/ApiApplication.cs` — injects the authentication logger for rejection reasons.
-- `src/MuscleCuties.Infrastructure/Account/SignIn/CloudAccountSignInStore.cs` — a successful Apple sign-in routes to the dashboard.
-- `src/MuscleCuties.UI/Pages/Auth/LoginPage.xaml`, `LoginPage.xaml.cs`, `ViewModels/Auth/LoginViewModel.cs` — standard Sign in with Apple control plus automatic Apple sheet on launch and after logout.
-- `src/MuscleCuties.UI/Pages/Auth/RegisterPage.xaml`, `RegisterPage.xaml.cs` — visible password requirements, Show/Hide controls, and a quiet Privacy Policy link inside the consent block.
-- `src/MuscleCuties.UI/Resources/Styles/{Colors.xaml,Styles.xaml}`, `Resources/Images/icon_apple.svg` — platform-owned `ButtonApple` treatment with the Apple mark.
+- `src/MuscleCuties.UI/Pages/Auth/LoginPage.xaml` — shared `PageHeader` with no back action; form scroll area; account-switch footer anchored to the bottom safe area; standard Apple button; Show/Hide password control.
+- `src/MuscleCuties.UI/Pages/Auth/RegisterPage.xaml` — shared `PageHeader` with the visible back arrow bound to `GoBackCommand`; visible password rules; Show/Hide controls; quiet Privacy Policy link.
+- `src/MuscleCuties.UI/Pages/Auth/OtpVerificationPage.xaml`, `PasswordRecoveryPage.xaml` — shared `PageHeader` composition.
+- `src/MuscleCuties.UI/Pages/Auth/{LoginPage.xaml.cs,RegisterPage.xaml.cs}` — password reveal handlers.
+- `src/MuscleCuties.UI/ViewModels/Auth/{LoginViewModel.cs,RegisterViewModel.cs}` — VoiceOver announcement of auth errors.
+- `src/MuscleCuties.UI/Services/Localization/{UiTextCatalog.NutritionProfileAuth.cs,RussianUiText.NutritionProfileAuth.cs,UiTextCatalog.RuntimeText.cs}` — EN/RU password, consent and Apple copy; sentence-case labels.
+- `src/MuscleCuties.UI/Resources/Styles/{Colors.xaml,Styles.xaml}`, `Resources/Images/icon_apple.svg` — platform-owned `ButtonApple` treatment.
 - `src/MuscleCuties.UI/Services/Auth/PlatformAccountSignInAdapter.cs` — actionable Apple failure copy.
-- `src/MuscleCuties.UI/Services/Localization/{UiTextCatalog.NutritionProfileAuth.cs,RussianUiText.NutritionProfileAuth.cs,UiTextCatalog.RuntimeText.cs}` — EN/RU password, consent and Apple copy; errors announced to VoiceOver.
-- `tests/MuscleCuties.Registration.Tests/AppleIdentityTokenValidatorTests.cs` — seven token-contract tests.
-- `tests/MuscleCuties.Registration.Integration.Tests/AppleSignInPostgresTests.cs` — account creation and email-link tests against disposable Postgres.
-- `tests/MuscleCuties.Core.Tests/UiCleanlinessAndReachabilityTests.cs` — permits the platform Apple button alongside the two brand roles.
+- `tests/MuscleCuties.Core.Tests/UiCleanlinessAndReachabilityTests.cs` — auth layout/header contract and the Apple button exception.
+- `ROADMAP.md`, `docs/workout-engine-v2/IMPLEMENTATION_PLAN.md` — current status reconciled; historical gate rows marked superseded where V2 replaced the legacy path.
+- `docs/design/{AUDIT_2026-11-02.md,SOFT_MINIMAL_PROPOSAL.md,SOFT_MINIMAL_IMPLEMENTATION_EVIDENCE.md,REFERENCES.md}` and `docs/design/references/*` — restored from Git, marked as historical records; all presentation-spec links resolve.
 - `src/MuscleCuties.UI/MuscleCuties.UI.csproj` — TestFlight build 6.
-- Commits: `e411958f` (Apple sign-in), `0204bd2f` (workout fixes and FDC setup), `143bc38c` (auth design fixes).
+- Commits: `e411958f`, `0204bd2f`, `143bc38c`, `23b73055`, `b5078cdd`, `4f5343cb`.
 
 ## Test commands and output
 
 ```
 dotnet test tests/MuscleCuties.Core.Tests --nologo -v:q
-Passed! - Failed: 0, Passed: 1636, Skipped: 0, Total: 1636
+Passed! - Failed: 0, Passed: 1637, Skipped: 0, Total: 1637
 
 dotnet build src/MuscleCuties.UI -c Debug -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64
 Build succeeded. 0 Warning(s) 0 Error(s)
@@ -35,21 +34,20 @@ beta_reports_profile=True get_task_allow_profile=False get_task_allow_app=False
 IPA cleanliness: PASS
 ```
 
+Presentation-spec design links: `broken_design_links= []`.
+
 Earlier in this branch: Registration.Tests 70/70; Server.Tests 125/125; Apple integration 2/2.
-
-Beta API deployment: server alias `beta` at version 16, worker at version 3, both serving the candidate `CodeSha256`; `/health/live` and `/health/ready` return 200.
-
-Visual check: Login and Register were rendered on the iPhone 16 Pro simulator. The Apple row now shows the Apple mark and “Sign in with Apple”; the registration rules are visible; Show switches to Hide. Light appearance only.
 
 ## Not verified
 
-- Real Apple authorization on a physical device was not completed. The simulator’s Apple ID cannot finish the system sheet (“Could Not Connect”), so the sheet-to-live-token step remains unverified.
-- The new account creation/link path was exercised with synthetic Apple-signed tokens against Postgres, not with a live Apple identity token.
-- VoiceOver announcements, dark appearance, and the largest accessibility text sizes were not exercised on a device.
-- Build 6 was not uploaded: no App Store Connect API key and no `MuscleCutiesTestFlight` Keychain item are present on this machine.
+- The full QA journey could not run: registration reached the local API and returned `500` because the local email-challenge HMAC keys are not configured. This is a local environment issue, not a UI regression. The design journey therefore did not reach Today, Cycle, Train, Nutrition or You.
+- Login, Register and Password Recovery were visually checked on the simulator. OTP was not visually reached; its header change is covered by the build and source test.
+- Dark appearance, VoiceOver announcements, and the largest accessibility text sizes were not exercised on a device.
+- App-wide copy-size and button-height proposals below were not applied; they require a separate visual pass across every tab.
+- Build 6 was not uploaded: no `MuscleCutiesTestFlight` Keychain item exists on this machine.
 
 ## Next step / blocker
 
-Store an app-specific password in Keychain with
-`xcrun altool --store-password-in-keychain-item MuscleCutiesTestFlight -u deniska.petruk@icloud.com -p '<app-specific-password>'`,
-then upload `src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/MuscleCuties.UI.ipa` (1.0 build 6). After upload, install the TestFlight build and complete one Apple sign-in on a device.
+1. Store the app-specific password with `xcrun altool --store-password-in-keychain-item MuscleCutiesTestFlight -u deniska.petruk@icloud.com -p '<app-specific-password>'`, then upload `src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/MuscleCuties.UI.ipa` (1.0 build 6).
+2. Configure the local API email-challenge HMAC keys to complete the full design journey and verify every tab.
+3. Package L / Gate 95 remains owner-gated; HIIT, fasting UI, exercise media and Android remain deliberately deferred.
