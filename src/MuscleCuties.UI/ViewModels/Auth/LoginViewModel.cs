@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Accessibility;
 using MuscleCuties.UI.Services.Auth;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UseCases.Features.Account.SignIn.Contracts;
 
@@ -74,6 +76,12 @@ public partial class LoginViewModel : ObservableObject
     partial void OnEmailChanged(string value)
     {
         InfoMessage = string.Empty;
+    }
+
+    partial void OnErrorMessageChanged(string value)
+    {
+        if (!string.IsNullOrWhiteSpace(value))
+            SemanticScreenReader.Default.Announce(UiTextCatalog.Get(value));
     }
 
     public void PrepareForExistingAccount(string email)

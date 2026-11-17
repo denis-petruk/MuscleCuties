@@ -66,35 +66,75 @@
                     </Border>
                 </Grid>
             
-                <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                <Grid Grid.Row="2" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                     <Label Text="{loc:LocalizedText Auth_Password}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                        <Entry
-                            x:Name="RegisterPassword"
-                            AutomationId="RegisterPassword"
-                            Placeholder="{loc:LocalizedText Auth_Register_CreatePassword}"
-                            Text="{Binding Password}"
-                            IsPassword="True"
-                            ReturnType="Next"
-                            Completed="OnPasswordCompleted"
-                            SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatePassword}"
-                            SemanticProperties.Hint="{loc:LocalizedText Auth_Register_UseAtLeastEightCharactersWith}" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <Entry
+                                x:Name="RegisterPassword"
+                                AutomationId="RegisterPassword"
+                                Placeholder="{loc:LocalizedText Auth_Register_CreatePassword}"
+                                Text="{Binding Password}"
+                                IsPassword="True"
+                                ReturnType="Next"
+                                Completed="OnPasswordCompleted"
+                                SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatePassword}"
+                                SemanticProperties.Hint="{loc:LocalizedText Auth_Register_UseAtLeastEightCharactersWith}" />
+                            <Label
+                                x:Name="RegisterPasswordReveal"
+                                Grid.Column="1"
+                                Text="{loc:LocalizedText Auth_ShowPassword}"
+                                Style="{StaticResource AccentLabel}"
+                                HorizontalTextAlignment="End"
+                                VerticalTextAlignment="Center"
+                                MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                SemanticProperties.Description="{loc:LocalizedText Auth_ShowPassword}"
+                                SemanticProperties.Hint="{loc:LocalizedText Auth_TogglePasswordVisibilityHint}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnToggleRegisterPassword" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Grid>
                     </Border>
+                    <Label
+                        Grid.Row="2"
+                        Text="{loc:LocalizedText Auth_Register_PasswordRequirements}"
+                        Style="{StaticResource CaptionLabel}"
+                        LineBreakMode="WordWrap"
+                        Margin="{StaticResource UiInsets0_4_0_0}" />
                 </Grid>
             
                 <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                     <Label Text="{loc:LocalizedText Auth_ConfirmPassword}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                        <Entry
-                            x:Name="RegisterConfirmPassword"
-                            AutomationId="RegisterConfirmPassword"
-                            Placeholder="{loc:LocalizedText Auth_Register_RepeatPassword}"
-                            Text="{Binding ConfirmPassword}"
-                            IsPassword="True"
-                            ReturnType="Done"
-                            ReturnCommand="{Binding RegisterCommand}"
-                            SemanticProperties.Description="{loc:LocalizedText Auth_ConfirmPassword}"
-                            SemanticProperties.Hint="{loc:LocalizedText Auth_Register_ReEnterYourPasswordThenPress}" />
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <Entry
+                                x:Name="RegisterConfirmPassword"
+                                AutomationId="RegisterConfirmPassword"
+                                Placeholder="{loc:LocalizedText Auth_Register_RepeatPassword}"
+                                Text="{Binding ConfirmPassword}"
+                                IsPassword="True"
+                                ReturnType="Done"
+                                ReturnCommand="{Binding RegisterCommand}"
+                                SemanticProperties.Description="{loc:LocalizedText Auth_ConfirmPassword}"
+                                SemanticProperties.Hint="{loc:LocalizedText Auth_Register_ReEnterYourPasswordThenPress}" />
+                            <Label
+                                x:Name="RegisterConfirmPasswordReveal"
+                                Grid.Column="1"
+                                Text="{loc:LocalizedText Auth_ShowPassword}"
+                                Style="{StaticResource AccentLabel}"
+                                HorizontalTextAlignment="End"
+                                VerticalTextAlignment="Center"
+                                MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                SemanticProperties.Description="{loc:LocalizedText Auth_ShowPassword}"
+                                SemanticProperties.Hint="{loc:LocalizedText Auth_TogglePasswordVisibilityHint}">
+                                <Label.GestureRecognizers>
+                                    <TapGestureRecognizer Tapped="OnToggleRegisterConfirmPassword" />
+                                </Label.GestureRecognizers>
+                            </Label>
+                        </Grid>
                     </Border>
                 </Grid>
             
@@ -133,13 +173,18 @@
                             </Label.GestureRecognizers>
                         </Label>
                     </Grid>
-                    <Button
+                    <Label
                         Text="{loc:LocalizedText Profile_Privacy_Policy}"
-                        Style="{StaticResource ButtonSecondary}"
+                        Style="{StaticResource AccentLabel}"
                         HorizontalOptions="Start"
-                        LineBreakMode="WordWrap"
-                        Command="{Binding GoToPrivacyPolicyCommand}"
-                        SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_Policy}" />
+                        VerticalTextAlignment="Center"
+                        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                        SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_Policy}"
+                        SemanticProperties.Hint="{loc:LocalizedText Auth_OpenPrivacyPolicyHint}">
+                        <Label.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding GoToPrivacyPolicyCommand}" />
+                        </Label.GestureRecognizers>
+                    </Label>
                 </VerticalStackLayout>
             
             </Grid>
@@ -160,8 +205,10 @@
                     IsVisible="{Binding IsBusy}"
                     SemanticProperties.Description="{loc:LocalizedText Auth_Register_CreatingAccountPleaseWait}" />
                 <Button
-                    Style="{StaticResource ButtonSecondary}"
+                    AutomationId="RegisterAppleButton"
+                    Style="{StaticResource ButtonApple}"
                     Text="{loc:LocalizedText Auth_SignInWithApple}"
+                    ImageSource="icon_apple.png"
                     Command="{Binding SignInWithAppleCommand}"
                     IsVisible="{Binding IsAppleSignInAvailable}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"

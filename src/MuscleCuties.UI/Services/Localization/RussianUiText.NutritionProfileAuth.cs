@@ -15,7 +15,7 @@ internal static partial class RussianUiText
         Values["Ui_Common_Error_SessionExpired"] = "Сессия завершена. Войдите снова, чтобы продолжить.";
         Values["Ui_Common_Error_SupportRequired"] = "Нужна проверка поддержки. Напишите нам и укажите код ниже.";
         Values["Ui_Common_Error_ReferenceFormat"] = "Код обращения: {0}";
-        Values["Ui_Auth_Error_PrivacyRequired"] = "Примите уведомление о конфиденциальности, чтобы создать аккаунт.";
+        Values["Ui_Auth_Error_PrivacyRequired"] = "Примите политику конфиденциальности, чтобы создать аккаунт.";
         Values["Ui_Auth_Error_VerificationUnavailable"] = "Проверка электронной почты недоступна. Повторите попытку позже.";
         Values["Ui_Auth_Error_CreateAccount"] = "Не удалось безопасно завершить создание аккаунта. Повторите попытку.";
         Values["Ui_Auth_Error_AccountExists"] = "У вас уже есть аккаунт. Войдите с паролем.";
@@ -154,7 +154,7 @@ internal static partial class RussianUiText
         Values["Auth_Register_UseAtLeastEightCharactersWith"] = "Используйте не менее 8 символов с прописными и строчными буквами, цифрой и символом. Не используйте пробелы. Нажмите «Далее», чтобы подтвердить свой пароль.";
         Values["Auth_Register_UsernameLabel"] = "Имя пользователя";
         Values["Auth_Register_UsernamePlaceholder"] = "Имя пользователя";
-        Values["Auth_Register_PrivacyConsent"] = "Я ознакомился(-ась) с уведомлением о конфиденциальности и согласен(-на) на обработку MuscleCuties данных моего аккаунта и здоровья в собственных сервисах.";
+        Values["Auth_Register_PrivacyConsent"] = "Я ознакомился(-ась) с политикой конфиденциальности и согласен(-на) на обработку MuscleCuties данных моего аккаунта и здоровья в собственных сервисах.";
         Values["Auth_Register_Error_Offline"] = "Нет подключения к сети. Подключитесь и попробуйте снова.";
         Values["Auth_Register_Error_ChallengeSendFailed"] = "Не удалось отправить код подтверждения. Подождите немного и снова нажмите «Создать аккаунт».";
         Values["Auth_Register_Error_ChallengeRateLimited"] = "Слишком много запросов кода за последние 24 часа. Попробуйте позже.";
@@ -172,6 +172,11 @@ internal static partial class RussianUiText
         Values["Auth_Register_Error_ReviewDetails"] = "Не удалось завершить регистрацию. Попробуйте снова.";
         Values["Auth_Register_Error_TryAgain"] = "Не удалось завершить регистрацию. Попробуйте снова.";
         Values["Auth_SignInWithApple"] = "Вход через Apple";
+        Values["Auth_ShowPassword"] = "Показать";
+        Values["Auth_HidePassword"] = "Скрыть";
+        Values["Auth_TogglePasswordVisibilityHint"] = "Дважды коснитесь, чтобы показать или скрыть пароль.";
+        Values["Auth_OpenPrivacyPolicyHint"] = "Дважды коснитесь, чтобы открыть политику конфиденциальности.";
+        Values["Auth_Register_PasswordRequirements"] = "Не менее 8 символов, включая заглавные и строчные буквы, цифру и символ. Без пробелов.";
         Values["Auth_LogInWithApple"] = "Войти через Apple";
         Values["Auth_VerifyCode"] = "Верифицировать код";
         Values["Common_Add"] = "Добавить";

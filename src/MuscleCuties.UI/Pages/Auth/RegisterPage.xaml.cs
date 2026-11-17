@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Auth;
 
 namespace MuscleCuties.UI.Pages.Auth;
@@ -22,6 +23,24 @@ public partial class RegisterPage : ContentPage
     private void OnEmailCompleted(object? sender, EventArgs e)
     {
         RegisterUsername.Focus();
+    }
+
+    private void OnToggleRegisterPassword(object? sender, TappedEventArgs e)
+    {
+        RegisterPassword.IsPassword = !RegisterPassword.IsPassword;
+        RegisterPasswordReveal.Text = UiTextCatalog.Get(
+            RegisterPassword.IsPassword ? "Auth_ShowPassword" : "Auth_HidePassword");
+        SemanticProperties.SetDescription(
+            RegisterPasswordReveal, RegisterPasswordReveal.Text);
+    }
+
+    private void OnToggleRegisterConfirmPassword(object? sender, TappedEventArgs e)
+    {
+        RegisterConfirmPassword.IsPassword = !RegisterConfirmPassword.IsPassword;
+        RegisterConfirmPasswordReveal.Text = UiTextCatalog.Get(
+            RegisterConfirmPassword.IsPassword ? "Auth_ShowPassword" : "Auth_HidePassword");
+        SemanticProperties.SetDescription(
+            RegisterConfirmPasswordReveal, RegisterConfirmPasswordReveal.Text);
     }
 
     private void OnUsernameCompleted(object? sender, EventArgs e)

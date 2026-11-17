@@ -15,7 +15,7 @@ public static partial class UiTextCatalog
         English["Ui_Common_Error_SessionExpired"] = "Your session has ended. Sign in again to continue.";
         English["Ui_Common_Error_SupportRequired"] = "This needs a support check before you continue. Contact us with the reference below.";
         English["Ui_Common_Error_ReferenceFormat"] = "Reference: {0}";
-        English["Ui_Auth_Error_PrivacyRequired"] = "Accept the privacy notice before creating an account.";
+        English["Ui_Auth_Error_PrivacyRequired"] = "Accept the Privacy Policy before creating an account.";
         English["Ui_Auth_Error_VerificationUnavailable"] = "Email verification is unavailable. Please try again later.";
         English["Ui_Auth_Error_CreateAccount"] = "We couldn't finish creating your account securely. Please try again.";
         English["Ui_Auth_Error_AccountExists"] = "You already have an account. Log in with your password.";
@@ -154,7 +154,7 @@ public static partial class UiTextCatalog
         English["Auth_Register_UseAtLeastEightCharactersWith"] = "Use at least 8 characters with uppercase and lowercase letters, a number, and a symbol. Do not use spaces. Press next to confirm your password.";
         English["Auth_Register_UsernameLabel"] = "Username";
         English["Auth_Register_UsernamePlaceholder"] = "Username";
-        English["Auth_Register_PrivacyConsent"] = "I have read the Privacy Notice and agree to MuscleCuties processing my account and health data in its first-party services.";
+        English["Auth_Register_PrivacyConsent"] = "I have read the Privacy Policy and agree to MuscleCuties processing my account and health data in its first-party services.";
         English["Auth_Register_Error_Offline"] = "You're offline. Reconnect and try again.";
         English["Auth_Register_Error_ChallengeSendFailed"] = "We couldn't send a verification code. Wait a moment, then tap Create account again.";
         English["Auth_Register_Error_ChallengeRateLimited"] = "Too many code requests in the past 24 hours. Please try again later.";
@@ -172,6 +172,11 @@ public static partial class UiTextCatalog
         English["Auth_Register_Error_ReviewDetails"] = "We couldn't finish registration. Please try again.";
         English["Auth_Register_Error_TryAgain"] = "We couldn't finish registration. Please try again.";
         English["Auth_SignInWithApple"] = "Sign in with Apple";
+        English["Auth_ShowPassword"] = "Show";
+        English["Auth_HidePassword"] = "Hide";
+        English["Auth_TogglePasswordVisibilityHint"] = "Double tap to show or hide the password.";
+        English["Auth_OpenPrivacyPolicyHint"] = "Double tap to open the Privacy Policy.";
+        English["Auth_Register_PasswordRequirements"] = "At least 8 characters, with uppercase and lowercase letters, a number and a symbol. No spaces.";
         English["Auth_LogInWithApple"] = "Log in with Apple";
         English["Auth_VerifyCode"] = "Verify code";
         English["Common_Add"] = "Add";

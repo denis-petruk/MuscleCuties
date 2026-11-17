@@ -1,4 +1,5 @@
 using System.Diagnostics;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.ViewModels.Auth;
 
@@ -41,5 +42,14 @@ public partial class LoginPage : ContentPage
     private void OnEmailCompleted(object? sender, EventArgs e)
     {
         LoginPassword.Focus();
+    }
+
+    private void OnToggleLoginPassword(object? sender, TappedEventArgs e)
+    {
+        LoginPassword.IsPassword = !LoginPassword.IsPassword;
+        LoginPasswordReveal.Text = UiTextCatalog.Get(
+            LoginPassword.IsPassword ? "Auth_ShowPassword" : "Auth_HidePassword");
+        SemanticProperties.SetDescription(
+            LoginPasswordReveal, LoginPasswordReveal.Text);
     }
 }

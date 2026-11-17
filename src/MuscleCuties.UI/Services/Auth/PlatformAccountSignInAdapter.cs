@@ -59,7 +59,7 @@ public static class PlatformSignInCoordinator
             var result = await signIn.SignInWithPlatformAsync(account).ConfigureAwait(false);
             if (!result.Succeeded)
             {
-                setErrorMessage(result.ErrorMessage ?? $"{providerName} sign in could not finish. Please try again.");
+                setErrorMessage(result.ErrorMessage ?? $"{providerName} sign in could not finish. Check your connection and try again.");
                 return;
             }
 
@@ -76,7 +76,7 @@ public static class PlatformSignInCoordinator
         catch (Exception ex)
         {
             Trace.WriteLine($"[{callerName}] {providerName} sign in failed ({ex.GetType().Name}).");
-            setErrorMessage($"{providerName} sign in could not finish. Please try again.");
+            setErrorMessage($"{providerName} sign in could not finish. Check your connection and try again.");
         }
     }
 }

@@ -240,6 +240,13 @@
     <Color x:Key="TextTertiaryDark">#B99AA6</Color>
     <Color x:Key="TextOnAccentLight">#FFFFFF</Color>
     <Color x:Key="TextOnAccentDark">#2B1D24</Color>
+    <!-- Platform-owned Sign in with Apple control; Apple defines this surface, not the brand palette. -->
+    <Color x:Key="AppleButtonSurface">#000000</Color>
+    <Color x:Key="AppleButtonPressed">#1C1C1E</Color>
+    <Color x:Key="AppleButtonText">#FFFFFF</Color>
+    <Color x:Key="AppleButtonBorderDark">#66FFFFFF</Color>
+    <Color x:Key="AppleButtonDisabledSurface">#3A3A3C</Color>
+    <Color x:Key="AppleButtonDisabledText">#C7C7CC</Color>
     <Color x:Key="ContrastInk">#FFFFFF</Color>
     <Color x:Key="ControlThumbLight">#FFFFFF</Color>
     <Color x:Key="ControlThumbDark">#F8EEF4</Color>

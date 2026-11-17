@@ -18,7 +18,7 @@
         <ApplicationTitle>MuscleCuties</ApplicationTitle>
         <ApplicationId>com.musclecuties.app</ApplicationId>
         <ApplicationDisplayVersion>1.0</ApplicationDisplayVersion>
-        <ApplicationVersion>5</ApplicationVersion>
+        <ApplicationVersion>6</ApplicationVersion>
         <AnalysisMode>AllEnabledByDefault</AnalysisMode>
         <AnalysisLevel>latest-recommended</AnalysisLevel>
 
@@ -83,6 +83,7 @@
         <MauiImage Update="Resources\Images\icon_fire_dark.svg" Resize="True" BaseSize="24,24"/>
         <MauiImage Update="Resources\Images\icon_muscle.svg" Resize="True" BaseSize="24,24"/>
         <MauiImage Update="Resources\Images\icon_muscle_dark.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\icon_apple.svg" Resize="True" BaseSize="20,24"/>
         <MauiImage Update="Resources\Images\phase_menstrual.svg" Resize="True" BaseSize="96,96"/>
         <MauiImage Update="Resources\Images\phase_follicular.svg" Resize="True" BaseSize="96,96"/>
         <MauiImage Update="Resources\Images\phase_ovulatory.svg" Resize="True" BaseSize="96,96"/>

@@ -48,7 +48,7 @@ The owner approved the [Soft Minimal proposal](design/SOFT_MINIMAL_PROPOSAL.md) 
 | Family | Permitted visual styles | Consolidation requirement |
 | --- | --- | --- |
 | Page | One shared page frame | Same background, content gutter, header treatment, typography and optional footer across all pages, including auth/onboarding. Back/date/progress/content slots vary without creating a new page skin. |
-| Button | `ButtonPrimary`, `ButtonSecondary` | No independent danger, ghost, link, pill or feature button skin. Use clear copy/state within the two roles; icon vs text content cannot introduce another fill/radius system. Native navigation retains platform behavior. |
+| Button | `ButtonPrimary`, `ButtonSecondary`, `ButtonApple` | No independent danger, ghost, link, pill or feature button skin. Use clear copy/state within the two brand roles; icon vs text content cannot introduce another fill/radius system. `ButtonApple` is the platform-owned Sign in with Apple treatment required by Apple's guidelines, not a brand variant. Native navigation retains platform behavior. |
 | Card / content group | `CardPrimary`, `CardSecondary` | Retire standalone `CardAccent` and `SelectableCard` designs by migrating their callers into these two styles. Selection becomes a state of the relevant permitted style. |
 | Input, choice, badge, status and other families | One default; at most one additional reusable style per family | Reuse shared anatomy/typography/spacing. Control purpose and genuine native interaction can differ; a feature name does not establish another family. Document the permitted pair before adding an alternate. |
 

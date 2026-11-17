@@ -347,10 +347,11 @@ public class UiCleanlinessAndReachabilityTests
 
         var stylesContent = File.ReadAllText(stylesPath);
 
-        // 1. Exactly two button styles own button appearance across the app.
+        // 1. Two brand button roles plus the platform-owned Sign in with Apple treatment.
         Assert.Contains("x:Key=\"ButtonPrimary\"", stylesContent);
         Assert.Contains("x:Key=\"ButtonSecondary\"", stylesContent);
-        Assert.Equal(2, Regex.Matches(stylesContent, "<Style[^>]*TargetType=\"Button\"").Count);
+        Assert.Contains("x:Key=\"ButtonApple\"", stylesContent);
+        Assert.Equal(3, Regex.Matches(stylesContent, "<Style[^>]*TargetType=\"Button\"").Count);
 
         // 2. One picker/search surface and one editor surface; a second alias would be a duplicate style.
         Assert.Contains("x:Key=\"InputContainer\"", stylesContent);
@@ -579,7 +580,7 @@ public class UiCleanlinessAndReachabilityTests
         var appearanceRegex = new Regex(
             @"\b(?:BackgroundColor|TextColor|FontFamily|FontSize|FontAttributes|CornerRadius|BorderColor|BorderWidth|Padding|HeightRequest|MinimumHeightRequest|MinimumWidthRequest)\s*=",
             RegexOptions.Compiled);
-        var styleRegex = new Regex(@"\bStyle\s*=\s*""\{StaticResource Button(?:Primary|Secondary)\}""", RegexOptions.Compiled);
+        var styleRegex = new Regex(@"\bStyle\s*=\s*""\{StaticResource Button(?:Primary|Secondary|Apple)\}""", RegexOptions.Compiled);
         var violations = new List<string>();
 
         foreach (var file in xamlFiles)

@@ -107,6 +107,7 @@ public static partial class UiTextCatalog
         ["Apple Health step counts can be read with your permission. Health Connect and Whoop are not connected in this release."] = "Количество шагов Apple Health может считываться с вашего согласия. Health Connect и Whoop не подключены в этой версии.",
         ["Apple Health updated."] = "Apple Health обновлен.",
         ["Apple sign in is not available in this build."] = "Вход через Apple не доступен в этом выпуске.",
+        ["Apple sign in could not finish. Check your connection and try again."] = "Не удалось завершить вход через Apple. Проверьте подключение и повторите попытку.",
         ["Are you sure you want to delete your account? All workout logs, cycle records, nutrition logs, and progress photos stored on the server will be permanently deleted."] = "Вы уверены, что хотите удалить свой аккаунт? Все журналы тренировок, записи цикла, журналы питания и фотографии прогресса, хранящиеся на сервере, будут навсегда удалены.",
         ["Are you sure you want to log out?"] = "Вы уверены, что хотите выйти?",
         ["Around ovulation, many people feel peak drive, power, and confidence. The goal is clean aggression, not sloppy maxes."] = "Во время овуляции некоторые люди ощущают больше энергии, силы и уверенности. Работайте мощно, сохраняя технику и избегая небрежных максимальных нагрузок.",
