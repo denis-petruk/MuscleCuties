@@ -135,7 +135,7 @@ public static partial class UiTextCatalog
         English["Auth_PasswordRecovery_SendPasswordRecoveryCode"] = "Send password recovery code";
         English["Auth_PasswordRecovery_SendRecoveryCode"] = "Send recovery code";
         English["Auth_PasswordRecovery_SixDigitRecoveryCodeDescription"] = "6-digit recovery code";
-        English["Auth_PasswordRecovery_SixDigitRecoveryCodeLabel"] = "6-Digit Recovery Code";
+        English["Auth_PasswordRecovery_SixDigitRecoveryCodeLabel"] = "6-digit recovery code";
         English["Auth_PasswordRecovery_UpdatePassword"] = "Update password";
         English["Auth_PasswordRecovery_UpdatePasswordSecurely"] = "Update password securely";
         English["Auth_PasswordRecovery_VerifyRecoveryCode"] = "Verify recovery code";
@@ -291,7 +291,7 @@ public static partial class UiTextCatalog
         English["Nutrition_FoodLog_EGGreekYogurtZeroPercent"] = "e.g. Greek Yogurt 0%";
         English["Nutrition_FoodLog_FatInGrams"] = "Fat in grams";
         English["Nutrition_FoodLog_FoodItemName"] = "Food item name";
-        English["Nutrition_FoodLog_FoodName"] = "Food Name";
+        English["Nutrition_FoodLog_FoodName"] = "Food name";
         English["Nutrition_FoodLog_ManualBarcodeLookup"] = "Look up a barcode";
         English["Nutrition_FoodLog_EnterBarcode"] = "Enter the barcode printed on the package";
         English["Nutrition_FoodLog_BarcodeLookup"] = "Look up";
@@ -321,7 +321,7 @@ public static partial class UiTextCatalog
         English["Nutrition_FoodLog_NothingLoggedInThisMealOver"] = "Nothing logged in this meal over the last 14 days.";
         English["Nutrition_FoodLog_OpenDatePicker"] = "Open date picker";
         English["Nutrition_FoodLog_PortionSizeDescription"] = "Portion size";
-        English["Nutrition_FoodLog_PortionSizeLabel"] = "Portion Size";
+        English["Nutrition_FoodLog_PortionSizeLabel"] = "Portion size";
         English["Nutrition_FoodLog_ProteinInGrams"] = "Protein in grams";
         English["Nutrition_FoodLog_RecentAcceptedSuggestions"] = "Recent accepted suggestions";
         English["Nutrition_FoodLog_RecentIngredientsThisMeal"] = "Recent ingredients · this meal";

@@ -12,21 +12,12 @@
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid RowDefinitions="Auto,*">
-    <VerticalStackLayout Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
-        <Label
-           
-            Text="{loc:LocalizedText Auth_Otp_VerifyYourEmail}"
-            Style="{StaticResource PageTitle}"
-            LineBreakMode="WordWrap"
-           
-            SemanticProperties.HeadingLevel="Level1" />
-        <Label
-           
-            Text="{loc:LocalizedText Auth_Otp_WeSentASixDigitConfirmation}"
-            Style="{StaticResource MutedLabel}"
-            LineBreakMode="WordWrap"
-            />
-    </VerticalStackLayout>
+    <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <sharedControls:PageHeader
+            Title="{loc:LocalizedText Auth_Otp_VerifyYourEmail}"
+            Subtitle="{loc:LocalizedText Auth_Otp_WeSentASixDigitConfirmation}"
+            ShowBack="False" />
+    </Grid>
     <ScrollView Grid.Row="1">
         <VerticalStackLayout Padding="{DynamicResource PresentationAuthPagePadding}" Spacing="{StaticResource PresentationFormSpacing}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
             <Label

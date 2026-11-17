@@ -12,21 +12,12 @@
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid RowDefinitions="Auto,*,Auto">
-    <VerticalStackLayout Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
-        <Label
-
-            Text="{loc:LocalizedText Auth_Login_WelcomeBack}"
-            Style="{StaticResource PageTitle}"
-            LineBreakMode="WordWrap"
-
-            SemanticProperties.HeadingLevel="Level1" />
-        <Label
-
-            Text="{loc:LocalizedText Auth_Login_YourPlanIsReadyWhenYou}"
-            Style="{StaticResource MutedLabel}"
-            LineBreakMode="WordWrap"
-            />
-    </VerticalStackLayout>
+    <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <sharedControls:PageHeader
+            Title="{loc:LocalizedText Auth_Login_WelcomeBack}"
+            Subtitle="{loc:LocalizedText Auth_Login_YourPlanIsReadyWhenYou}"
+            ShowBack="False" />
+    </Grid>
     <!-- The form and its actions share one scrolling surface: with the keyboard up, Sign in and
          Create account stay reachable instead of sitting behind the keyboard. -->
     <ScrollView Grid.Row="1">

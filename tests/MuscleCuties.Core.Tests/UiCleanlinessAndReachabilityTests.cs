@@ -342,8 +342,9 @@ public class UiCleanlinessAndReachabilityTests
     [Fact]
     public void Auth_pages_anchor_the_account_switch_footer_and_use_the_shared_back_header()
     {
-        var login = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Auth", "LoginPage.xaml"));
-        var register = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Auth", "RegisterPage.xaml"));
+        var authRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Auth");
+        var login = File.ReadAllText(Path.Combine(authRoot, "LoginPage.xaml"));
+        var register = File.ReadAllText(Path.Combine(authRoot, "RegisterPage.xaml"));
 
         Assert.Contains("LoginCreateAccountRow", login);
         Assert.Contains("Grid.Row=\"2\"", login);
@@ -351,6 +352,9 @@ public class UiCleanlinessAndReachabilityTests
 
         Assert.Contains("<sharedControls:PageHeader", register);
         Assert.Contains("BackCommand=\"{Binding GoBackCommand}\"", register);
+
+        foreach (var page in new[] { "LoginPage.xaml", "RegisterPage.xaml", "OtpVerificationPage.xaml", "PasswordRecoveryPage.xaml" })
+            Assert.Contains("<sharedControls:PageHeader", File.ReadAllText(Path.Combine(authRoot, page)));
     }
 
     [Fact]
