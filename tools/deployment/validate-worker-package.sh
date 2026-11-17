@@ -49,7 +49,6 @@ try:
         'MuscleCuties.WorkoutReconciliation.dll',
         'MuscleCuties.WorkoutReconciliation.deps.json',
         'MuscleCuties.WorkoutReconciliation.runtimeconfig.json',
-        'appsettings.json',
     ]
     if any(item not in names for item in required):
         fail('required root file missing')

@@ -91,6 +91,7 @@ jobs:
       - name: Run deployment offline tests
         run: |
           python3 tests/MuscleCuties.Deployment.Tests/test_package_upload.py
+          python3 tests/MuscleCuties.Deployment.Tests/test_worker_package.py
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_deploy_release.py'
 
       - name: Run Core tests
