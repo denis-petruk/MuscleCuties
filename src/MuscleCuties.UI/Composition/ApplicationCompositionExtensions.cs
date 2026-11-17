@@ -1,8 +1,6 @@
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Cycle;
 using MuscleCuties.Core.Services.Cycle.Planning;
-using MuscleCuties.Core.Services.Dashboard;
-using MuscleCuties.Core.Services.Dashboard.Planning;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Nutrition.Planning;
 using MuscleCuties.Core.Services.Profile;
@@ -59,7 +57,6 @@ public static class ApplicationCompositionExtensions
         services.AddScoped<INutritionPlanner, NutritionPlanner>();
         services.AddScoped<ICyclePhaseCalculator, CyclePhaseCalculator>();
         services.AddScoped<ICyclePredictionPlanner, CyclePredictionPlanner>();
-        services.AddScoped<IDashboardPlanner, DashboardPlanner>();
 
         services.AddScoped<CloudDailyCheckInStore>();
         services.AddSingleton<IDailyCheckInStore, ScopedCloudDailyCheckInStore>();

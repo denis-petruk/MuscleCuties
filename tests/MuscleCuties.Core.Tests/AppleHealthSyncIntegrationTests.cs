@@ -426,6 +426,7 @@ public sealed class AppleHealthSyncIntegrationTests
         Assert.Equal("3 / 5", vm.PlanningSleepDisplay);
 
         // Act: complete remaining answers and verify submission becomes enabled
+        vm.PlanningFatigue = 3;
         vm.PlanningSoreness = 2;
         vm.PainLevel = 0;
         vm.HasBloating = false;

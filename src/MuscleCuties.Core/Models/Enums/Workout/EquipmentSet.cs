@@ -13,5 +13,7 @@ public enum EquipmentSet
     BackExtension45 = 64,
     PullUpBar = 128,
     Kettlebell = 256,
-    ClimbingWall = 512
+    ClimbingWall = 512,
+    Sliders = 1024,
+    BandAnchor = 2048
 }

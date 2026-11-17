@@ -57,7 +57,8 @@ internal static class StrengthPlanPreviewMapperV020
         RestrictedActivities = source.RestrictedActivityTypes?
             .Select(activity => (WorkoutActivityType)activity).ToHashSet(),
         BlockedMovementPatterns = source.BlockedMovementPatterns,
-        GluteFocus = source.GluteFocus
+        GluteFocus = source.GluteFocus,
+        EquipmentCapabilities = source.DraftEquipmentCapabilities ?? source.SavedAnswers?.EquipmentCapabilities
     };
 
     public static StrengthPlanPreviewResponseV020 ToResponse(StrengthPlanPreviewResult result) => new(

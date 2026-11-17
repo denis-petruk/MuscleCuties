@@ -223,7 +223,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
 
     public string PhaseFocusBadgeText => CurrentPhase == CyclePhase.Unknown ||
                                         string.IsNullOrWhiteSpace(CurrentPhaseName)
-        ? "Nutrition"
+        ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_DailyTargets")
         : $"Phase focus · {CurrentPhaseName}";
 
     public string CurrentPhaseIconGlyph =>

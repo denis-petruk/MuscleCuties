@@ -42,12 +42,6 @@ public partial class ProfileSetupPage : ContentPage
         ((ProfileSetupViewModel)BindingContext).MarkBirthDateConfirmedFromPicker();
     }
 
-    private void OnWellnessAcknowledgmentCheckedChanged(object? sender, CheckedChangedEventArgs e)
-    {
-        if (e.Value)
-            AcknowledgmentError.IsVisible = false;
-    }
-
     private async void OnProfileImageButtonClicked(object? sender, EventArgs e)
     {
         await ShowProfileImageActionsAsync();
@@ -57,17 +51,7 @@ public partial class ProfileSetupPage : ContentPage
     {
         Unfocus();
 
-        if (!WellnessAcknowledgment.IsChecked)
-        {
-            AcknowledgmentError.IsVisible = true;
-            // The message is static text, so announce it explicitly when it appears.
-            if (!string.IsNullOrWhiteSpace(AcknowledgmentError.Text))
-                SemanticScreenReader.Default.Announce(AcknowledgmentError.Text);
-            return;
-        }
-
-        AcknowledgmentError.IsVisible = false;
-
+        // Missing answers are collected and reported by the view model, each beside its own control.
         if (BindingContext is not ProfileSetupViewModel viewModel)
             return;
 

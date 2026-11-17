@@ -31,7 +31,7 @@ public static class WorkoutInjuryClearanceRule
         var step = incrementKg > 0m ? incrementKg : 2.5m;
         var rawReduced = priorWorkingLoadKg * ConservativeReturnLoadMultiplier;
         var snapped = Math.Floor(rawReduced / step) * step;
-        return Math.Max(step, snapped);
+        return snapped > 0m ? snapped : rawReduced;
     }
 
     /// <summary>All related episodes and current eligibility must be known before restoration.</summary>

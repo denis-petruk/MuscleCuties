@@ -1,0 +1,63 @@
+appId: com.musclecuties.app
+---
+# Fill observed synthetic values for bilateral and unilateral sets.
+- runFlow:
+    when:
+      visible:
+        id: "${QA_SET_PREFIX}Weight"
+    commands:
+      - tapOn:
+          id: "${QA_SET_PREFIX}Weight"
+      - eraseText
+      - inputText: "20"
+      - takeScreenshot: 11b_numeric_keyboard
+      - runFlow:
+          when:
+            visible: "^Done$|^Готово$"
+          commands:
+            - tapOn: "^Done$|^Готово$"
+- runFlow:
+    when:
+      visible:
+        id: "${QA_SET_PREFIX}Reps"
+    commands:
+      - tapOn:
+          id: "${QA_SET_PREFIX}Reps"
+      - eraseText
+      - inputText: "10"
+      - takeScreenshot: 11b_numeric_keyboard
+      - runFlow:
+          when:
+            visible: "^Done$|^Готово$"
+          commands:
+            - tapOn: "^Done$|^Готово$"
+- runFlow:
+    when:
+      visible:
+        id: "${QA_SET_PREFIX}LeftReps"
+    commands:
+      - tapOn:
+          id: "${QA_SET_PREFIX}LeftReps"
+      - eraseText
+      - inputText: "10"
+      - takeScreenshot: 11b_numeric_keyboard
+      - runFlow:
+          when:
+            visible: "^Done$|^Готово$"
+          commands:
+            - tapOn: "^Done$|^Готово$"
+- runFlow:
+    when:
+      visible:
+        id: "${QA_SET_PREFIX}RightReps"
+    commands:
+      - tapOn:
+          id: "${QA_SET_PREFIX}RightReps"
+      - eraseText
+      - inputText: "10"
+      - takeScreenshot: 11b_numeric_keyboard
+      - runFlow:
+          when:
+            visible: "^Done$|^Готово$"
+          commands:
+            - tapOn: "^Done$|^Готово$"

@@ -107,7 +107,13 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
                 Equipment = request.DraftPreferences?.EquipmentLevel is { } equipment &&
                             Enum.TryParse<Equipment>(equipment, true, out var parsedEquipment)
                     ? parsedEquipment : sourceData.Equipment,
-                ExcludedExerciseIds = request.DraftPreferences?.ExcludedExerciseIds ?? sourceData.ExcludedExerciseIds
+                ExcludedExerciseIds = request.DraftPreferences?.ExcludedExerciseIds ?? sourceData.ExcludedExerciseIds,
+                GluteFocus = request.DraftPreferences?.GluteFocus ?? sourceData.GluteFocus,
+                DraftEquipmentCapabilities = request.DraftPreferences is { } prefs &&
+                    (prefs.HasSliders is not null || prefs.HasConfirmedBandAnchor is not null ||
+                     prefs.HasDumbbells is not null || prefs.HasBands is not null)
+                    ? new EquipmentCapabilities(prefs.HasSliders, prefs.HasConfirmedBandAnchor, prefs.HasDumbbells, prefs.HasBands)
+                    : sourceData.DraftEquipmentCapabilities
             };
         }
 
@@ -278,31 +284,10 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         var movementGaps = WeeklyMovementCoverageRule.MissingPatterns(actualExerciseIds, sourceData.Catalog);
         // The V2 engine runs on the same normalized request the V0.2 preview just approved, so a
         // consumer can migrate one surface at a time without a second planning source of truth.
-        var generation = WorkoutGenerationV2Service.GenerateFromPreviewSource(request, sourceData);
-        var missingV2Gaps = generation.LimitationCodes
-            .Concat(generation.AdvisoryCodes.Where(code =>
-                code.StartsWith("WeeklyCoverageMissing_", StringComparison.Ordinal) ||
-                code.StartsWith("WeeklyMovementCoverageMissing", StringComparison.Ordinal) ||
-                code.StartsWith("WeeklyCoverageBelowTarget_", StringComparison.Ordinal)))
-            .Concat(movementGaps)
-            .Distinct(StringComparer.Ordinal)
-            .OrderBy(code => code, StringComparer.Ordinal)
-            .ToArray();
-        var generationPlan = new GenerationPlanV2(
-            generation.Status.ToString(),
-            generation.PolicyVersion,
-            WorkoutPolicyV2.InputContractVersion,
-            generation.CatalogVersion,
-            generation.AdaptedSessions.Count,
-            generation.NormalizedPrescriptionHash,
-            generation.LimitationCodes,
-            generation.AdvisoryCodes,
-            generation.RuleTrace)
-        {
-            MissingGaps = missingV2Gaps,
-            ReadinessAdaptationApplied = generation.ReadinessAdaptationApplied,
-            CoachExplanation = generation.CoachExplanation
-        };
+        var generation = WorkoutGenerationV2Service.GenerateFromPreviewSource(request, sourceData,
+            distinctCompletedWorkoutDays: sourceData.DistinctCompletedWorkoutDays,
+            isReturningAfterDetraining: sourceData.IsReturningAfterDetraining);
+        var generationPlan = GenerationPlanV2Mapper.ToPlan(generation, sourceData);
         return scheduled with
         {
             GenerationV2 = generationPlan,
@@ -317,6 +302,8 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
             SourceTimeZoneVersion = sourceData.TimeZoneVersion,
             SourceExperienceVersion = sourceData.ExperienceVersion,
             SourceAnswerVersion = sourceData.AnswerVersion,
+            SourceObservedHistoryFingerprint = sourceData.ObservedHistoryFingerprint,
+            SourceReadinessRevision = sourceData.ReadinessRevision,
             SourceMuscleGroupsByExerciseId = sourceData.MuscleGroupsByExerciseId?.ToDictionary(
                 pair => pair.Key, pair => pair.Value.OrderBy(value => value, StringComparer.Ordinal).ToArray())
         };

@@ -11,7 +11,7 @@
     Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
-    <Grid RowDefinitions="Auto,*,Auto">
+    <Grid RowDefinitions="Auto,*">
     <VerticalStackLayout Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
         <Label
            
@@ -69,9 +69,10 @@
                     SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     SemanticProperties.HeadingLevel="Level3" />
             </VerticalStackLayout>
-        </VerticalStackLayout>
-    </ScrollView>
-    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+
+            <!-- Verify sits in the same scrolling surface as the code field: the numeric keyboard
+                 must never be able to cover the only way forward. -->
+            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" Margin="{StaticResource UiInsets0_16_0_0}">
         <Button Style="{StaticResource ButtonPrimary}"
            
             Text="{loc:LocalizedText Auth_VerifyCode}"
@@ -113,6 +114,8 @@
                 LineBreakMode="WordWrap"
                 SemanticProperties.Description="{Binding ResendButtonText, Converter={StaticResource LocalizedStringConverter}}" />
         </Grid>
-    </VerticalStackLayout>
+            </VerticalStackLayout>
+        </VerticalStackLayout>
+    </ScrollView>
 </Grid>
 </ContentPage>

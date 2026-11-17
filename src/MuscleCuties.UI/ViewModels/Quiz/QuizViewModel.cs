@@ -20,6 +20,9 @@ public partial class QuizViewModel : ObservableObject
     private readonly Func<Task> _navigateToProfileAsync;
     private readonly Action? _onAccountCreatedNeedsLogin;
     private readonly Action<int[]>? _onWeekdaysCommitted;
+    private readonly Func<bool, Task<bool>>? _saveGluteFocusAsync;
+    private bool _gluteFocusAnswered;
+    [ObservableProperty] private bool _gluteFocus;
     private bool _quizCommitted;
     private readonly List<(int QuestionId, int AnswerId)> _selectedAnswers = new();
     private readonly IOnboardingQuizUseCase _useCase;
@@ -61,7 +64,8 @@ public partial class QuizViewModel : ObservableObject
         Func<Task>? navigateToLoginAsync,
         Func<Task> navigateToProfileAsync,
         Action? onAccountCreatedNeedsLogin = null,
-        Action<int[]>? onWeekdaysCommitted = null)
+        Action<int[]>? onWeekdaysCommitted = null,
+        Func<bool, Task<bool>>? saveGluteFocusAsync = null)
     {
         _useCase = useCase;
         _navigateToDashboardAsync = navigateToDashboardAsync;
@@ -69,6 +73,7 @@ public partial class QuizViewModel : ObservableObject
         _navigateToProfileAsync = navigateToProfileAsync;
         _onAccountCreatedNeedsLogin = onAccountCreatedNeedsLogin;
         _onWeekdaysCommitted = onWeekdaysCommitted;
+        _saveGluteFocusAsync = saveGluteFocusAsync;
 
         LoadQuestionsCommand = new AsyncRelayCommand(LoadQuestionsAsync);
         RetryLoadQuestionsCommand = new AsyncRelayCommand(RetryLoadQuestionsAsync);
@@ -113,17 +118,15 @@ public partial class QuizViewModel : ObservableObject
         QuizQuestionType.DietaryPreference or QuizQuestionType.AvailableWeekdays;
     public bool IsCurrentQuestionAvailableWeekdays =>
         CurrentQuestion?.QuestionType == QuizQuestionType.AvailableWeekdays;
+    public bool IsCurrentQuestionGoal => CurrentQuestion?.QuestionType == QuizQuestionType.Goal;
     public bool IsCurrentQuestionEquipment => CurrentQuestion?.QuestionType == QuizQuestionType.Equipment;
 
     /// <summary>
-    /// D1/OD-2: the server quiz catalog still seeds the "Bodyweight only" equipment answer (mapped
-    /// value 3, seed urn:musclecuties:seed:v1:2c50cf03-f689-4e36-ace3-770ce3c924eb). It is not offered
-    /// for new selections in the beta; stored bodyweight profiles keep working server-side.
+    /// Gate 60: All equipment tiers (Full gym, Home dumbbells/bands, and Bodyweight only) are selectable in onboarding.
     /// </summary>
     internal const int BodyweightOnlyEquipmentMappedValue = 3;
 
-    internal static bool IsOfferedAnswer(QuizQuestionType questionType, QuizAnswerDto answer) =>
-        questionType != QuizQuestionType.Equipment || answer.MappedValue != BodyweightOnlyEquipmentMappedValue;
+    internal static bool IsOfferedAnswer(QuizQuestionType questionType, QuizAnswerDto answer) => true;
     public bool IsCurrentQuestionPhasePair => IsPainQuestion(CurrentQuestion?.QuestionType);
     public bool IsStandardAnswerListVisible =>
         !IsCurrentQuestionPhasePair;
@@ -620,6 +623,13 @@ public partial class QuizViewModel : ObservableObject
                     $"[Performance][Quiz] Answers and profile saved in {totalStopwatch.ElapsedMilliseconds} ms.");
             }
 
+            if (_gluteFocusAnswered && _saveGluteFocusAsync is not null &&
+                !await _saveGluteFocusAsync(GluteFocus))
+            {
+                ErrorMessage = "Onboarding_Quiz_GluteFocusSaveFailed";
+                return;
+            }
+
             // Finish the quiz overlay layout before opening first-plan setup.
             IsPreparingWorkoutPreferences = false;
             await Task.Delay(50);
@@ -667,11 +677,14 @@ public partial class QuizViewModel : ObservableObject
         OnPropertyChanged(nameof(SelectedWeekdayCount));
     }
 
+    partial void OnGluteFocusChanged(bool value) => _gluteFocusAnswered = true;
+
     private void NotifyComputedProperties()
     {
         OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
         OnPropertyChanged(nameof(IsCurrentQuestionAvailableWeekdays));
         OnPropertyChanged(nameof(IsCurrentQuestionEquipment));
+        OnPropertyChanged(nameof(IsCurrentQuestionGoal));
         OnPropertyChanged(nameof(IsCurrentQuestionPhasePair));
         OnPropertyChanged(nameof(IsStandardAnswerListVisible));
         OnPropertyChanged(nameof(SelectedWeekdayCount));

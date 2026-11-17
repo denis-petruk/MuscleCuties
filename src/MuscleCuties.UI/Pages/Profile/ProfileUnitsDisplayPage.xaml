@@ -23,7 +23,7 @@
     <ScrollView Grid.Row="1">
         <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceContent}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
             <Border Style="{StaticResource CardPrimary}">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceControl}">
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceControl}">
                     <sharedControls:IconSectionHeader Grid.Row="0" Text="{loc:LocalizedText Profile_Units_MeasurementSystem}"
                                                       IconGlyph="ChatSettings24" />
                     <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing3}">
@@ -97,60 +97,6 @@
         </Label.Triggers>
     </Label>
 </Border>
-                    </Grid>
-            
-                    <!-- Unit overrides (consolidated into same card) -->
-                    <BoxView Grid.Row="3" HeightRequest="{StaticResource UiDimension1}"
-                             Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}"
-                             Opacity="{StaticResource UiOpacitySubtle}" />
-                    <Grid Grid.Row="4" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
-                        <Label
-                            Grid.Row="0"
-                            Text="{loc:LocalizedText Profile_Units_PerCategoryOverrides}"
-                            Style="{StaticResource FormFieldLabel}" />
-                        <Label
-                            Grid.Row="1"
-                            Text="{loc:LocalizedText Profile_Units_LeaveBlankToUseTheSystem}"
-                            Style="{StaticResource CaptionLabel}"
-                            LineBreakMode="WordWrap" />
-                    </Grid>
-                    <Grid Grid.Row="5" ColumnDefinitions="*,*" RowDefinitions="Auto,Auto,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
-                          RowSpacing="{StaticResource UiSpacing10}">
-                        <Grid Grid.Row="0" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
-                            <Label Text="{loc:LocalizedText Profile_Units_BodyWeight}" Style="{StaticResource FormFieldLabel}" />
-                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="{loc:LocalizedText Profile_Units_KgOrLb}" Text="{Binding BodyWeightUnit}" />
-                            </Border>
-                        </Grid>
-            
-                        <Grid Grid.Row="0" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
-                            <Label Text="{loc:LocalizedText Profile_Units_FoodMass}" Style="{StaticResource FormFieldLabel}" />
-                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="{loc:LocalizedText Profile_Units_GOrOz}" Text="{Binding FoodMassUnit}" />
-                            </Border>
-                        </Grid>
-            
-                        <Grid Grid.Row="1" Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
-                            <Label Text="{loc:LocalizedText Common_Height}" Style="{StaticResource FormFieldLabel}" />
-                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="{loc:LocalizedText Profile_Units_CmOrIn}" Text="{Binding HeightUnit}" />
-                            </Border>
-                        </Grid>
-            
-                        <Grid Grid.Row="1" Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
-                            <Label Text="{loc:LocalizedText Profile_Units_Distance}" Style="{StaticResource FormFieldLabel}" />
-                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="{loc:LocalizedText Profile_Units_KmOrMi}" Text="{Binding DistanceUnit}" />
-                            </Border>
-                        </Grid>
-            
-                        <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2" RowDefinitions="Auto,Auto"
-                              RowSpacing="{StaticResource PresentationFieldSpacing}">
-                            <Label Text="{loc:LocalizedText Profile_Units_Energy}" Style="{StaticResource FormFieldLabel}" />
-                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="{loc:LocalizedText Common_Unit_Kcal}" Text="{Binding EnergyUnit}" />
-                            </Border>
-                        </Grid>
                     </Grid>
                 </Grid>
             </Border>

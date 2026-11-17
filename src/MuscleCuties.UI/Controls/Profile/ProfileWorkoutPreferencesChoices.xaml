@@ -21,12 +21,63 @@
                     Title="{loc:LocalizedText Profile_WorkoutPrefs_ChooseEquipment}"
                     ItemsSource="{Binding EquipmentOptions}"
                     ItemDisplayBinding="{Binding Label, Converter={StaticResource LocalizedStringConverter}, x:DataType=commonModels:ILabeledOption}"
-                    SelectedItem="{Binding SelectedEquipmentOption, Mode=TwoWay}" />
+                    SelectedItem="{Binding SelectedEquipmentOption, Mode=TwoWay}"
+                    AutomationId="WorkoutPrefsEquipmentPicker" />
             </Border>
-            <!-- D1/OD-2: bodyweight-only is not offered for new selections in the beta. -->
             <Label Text="{loc:LocalizedText Workout_Generation_EquipmentBetaNotice}"
                    Style="{StaticResource MutedLabel}"
                    LineBreakMode="WordWrap" />
+
+            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                 IsVisible="{Binding ShowHomeEquipmentCapabilities}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                    <CheckBox IsChecked="{Binding HasDumbbells, Mode=TwoWay}"
+                              VerticalOptions="Center"
+                              AutomationId="WorkoutPrefsDumbbellsCheckBox"
+                              SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasDumbbells}" />
+                    <Label Grid.Column="1"
+                           Text="{loc:LocalizedText Profile_WorkoutPrefs_HasDumbbells}"
+                           Style="{StaticResource BodyLabel}"
+                           VerticalOptions="Center"
+                           LineBreakMode="WordWrap" />
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                    <CheckBox IsChecked="{Binding HasBands, Mode=TwoWay}"
+                              VerticalOptions="Center"
+                              AutomationId="WorkoutPrefsBandsCheckBox"
+                              SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasBands}" />
+                    <Label Grid.Column="1"
+                           Text="{loc:LocalizedText Profile_WorkoutPrefs_HasBands}"
+                           Style="{StaticResource BodyLabel}"
+                           VerticalOptions="Center"
+                           LineBreakMode="WordWrap" />
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}"
+                      MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                      IsVisible="{Binding ShowBandAnchorConfirmation}">
+                    <CheckBox IsChecked="{Binding HasConfirmedBandAnchor, Mode=TwoWay}"
+                              VerticalOptions="Center"
+                              AutomationId="WorkoutPrefsBandAnchorCheckBox"
+                              SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasConfirmedBandAnchor}" />
+                    <Label Grid.Column="1"
+                           Text="{loc:LocalizedText Profile_WorkoutPrefs_HasConfirmedBandAnchor}"
+                           Style="{StaticResource BodyLabel}"
+                           VerticalOptions="Center"
+                           LineBreakMode="WordWrap" />
+                </Grid>
+            </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                <CheckBox IsChecked="{Binding HasSliders, Mode=TwoWay}"
+                          VerticalOptions="Center"
+                          AutomationId="WorkoutPrefsSlidersCheckBox"
+                          SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasSliders}" />
+                <Label Grid.Column="1"
+                       Text="{loc:LocalizedText Profile_WorkoutPrefs_HasSliders}"
+                       Style="{StaticResource BodyLabel}"
+                       VerticalOptions="Center"
+                       LineBreakMode="WordWrap" />
+            </Grid>
         </VerticalStackLayout>
 
          <!-- C1/OD-7: a saved style the reviewed templates restrict states why and offers the switch. -->
@@ -40,6 +91,17 @@
                      Style="{StaticResource ButtonSecondary}"
                      AutomationId="WorkoutPrefsSwitchToGeneralStrengthButton" />
          </VerticalStackLayout>
+
+         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+             <CheckBox IsChecked="{Binding GluteFocus, Mode=TwoWay}"
+                       VerticalOptions="Center"
+                       SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_GluteFocus}" />
+             <Label Grid.Column="1"
+                    Text="{loc:LocalizedText Profile_WorkoutPrefs_GluteFocus}"
+                    Style="{StaticResource BodyLabel}"
+                    VerticalOptions="Center"
+                    LineBreakMode="WordWrap" />
+         </Grid>
 
          <workoutControls:WorkoutActivityPreferencePicker
              ActivityGroups="{Binding GroupedWorkoutActivityOptions}"

@@ -8,7 +8,7 @@
     xmlns:cycleModels="clr-namespace:MuscleCuties.UI.Models.UI.Cycle"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Cycle"
     x:DataType="vm:CycleViewModel"
-    SemanticProperties.Description="{loc:LocalizedText Cycle_PhaseExplorer_CarouselAccessibility}">
+    SemanticProperties.Hint="{loc:LocalizedText Cycle_PhaseExplorer_CarouselAccessibility}">
 
 
     <Border Style="{StaticResource CardPrimary}">

@@ -51,7 +51,8 @@
                             <Image
                                 IsVisible="{Binding HasNoProfileImage}"
                                 Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
-                                Aspect="AspectFill"
+                                Aspect="AspectFit"
+                                Margin="{StaticResource UiInsets6}"
                                 WidthRequest="{StaticResource UiDimension64}"
                                 HeightRequest="{StaticResource UiDimension64}" />
                         </Grid>

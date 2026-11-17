@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.Planning;
@@ -54,19 +55,34 @@ internal static class PostgresCanonicalRecoveryEvidence
             foreach (var prescribed in snapshot.Exercises.Where(e => !e.IsOptional && e.DurationSeconds is null))
             {
                 var metadata = dayExercises.Where(e => e.Id == prescribed.Id && e.WorkoutDayId == snapshot.DayId &&
-                    e.ExerciseId == prescribed.ExerciseId && e.PlanningTemplateVersion == StrengthTemplateCatalog.Version).ToArray();
+                    e.ExerciseId == prescribed.ExerciseId &&
+                    (e.PlanningTemplateVersion == StrengthTemplateCatalog.Version ||
+                     (e.PlanningTemplateId == "v2-generated" && e.PlanningTemplateVersion == WorkoutPolicyV2.Version))).ToArray();
                 if (metadata.Length != 1) continue;
                 var item = metadata[0];
                 var matchingSlots = previewSessions.Where(s => s.TemplateId == item.PlanningTemplateId &&
                     s.TemplateVersion == item.PlanningTemplateVersion && s.SessionIndex == item.PlanningSessionIndex)
                     .SelectMany(s => s.Slots).Where(s => s.SlotId == item.PlanningSlotId && s.ExerciseId == prescribed.ExerciseId &&
                         s.PrescriptionRole == (int)StrengthPrescriptionRole.Main && s.IsRequired).ToArray();
-                var templateSlot = StrengthTemplateCatalog.Templates.Where(t => t.TemplateId == item.PlanningTemplateId &&
-                    t.Version == item.PlanningTemplateVersion && t.SessionIndex == item.PlanningSessionIndex)
-                    .SelectMany(t => t.Slots).Where(s => s.SlotId == item.PlanningSlotId).ToArray();
-                if (matchingSlots.Length != 1 || templateSlot.Length != 1 || templateSlot[0].MovementSlot is not
-                    (StrengthTemplateSlotId.KneeDominant or StrengthTemplateSlotId.HipDominant or
-                     StrengthTemplateSlotId.UpperPush or StrengthTemplateSlotId.UpperPull)) continue;
+                if (matchingSlots.Length != 1) continue;
+                if (item.PlanningTemplateId == "v2-generated" && item.PlanningTemplateVersion == WorkoutPolicyV2.Version)
+                {
+                    if (item.PlanningSlotId is not { } v2SlotId ||
+                        (!v2SlotId.StartsWith("v2-KneeDominant-", StringComparison.Ordinal) &&
+                         !v2SlotId.StartsWith("v2-HipDominant-", StringComparison.Ordinal) &&
+                         !v2SlotId.StartsWith("v2-UpperPush-", StringComparison.Ordinal) &&
+                         !v2SlotId.StartsWith("v2-UpperPull-", StringComparison.Ordinal)))
+                        continue;
+                }
+                else
+                {
+                    var templateSlot = StrengthTemplateCatalog.Templates.Where(t => t.TemplateId == item.PlanningTemplateId &&
+                        t.Version == item.PlanningTemplateVersion && t.SessionIndex == item.PlanningSessionIndex)
+                        .SelectMany(t => t.Slots).Where(s => s.SlotId == item.PlanningSlotId).ToArray();
+                    if (templateSlot.Length != 1 || templateSlot[0].MovementSlot is not
+                        (StrengthTemplateSlotId.KneeDominant or StrengthTemplateSlotId.HipDominant or
+                         StrengthTemplateSlotId.UpperPush or StrengthTemplateSlotId.UpperPull)) continue;
+                }
                 var matchingExercises = exercises.Where(e => e.WorkoutLogId == matchingLogs[0].Id &&
                     e.WorkoutDayExerciseId == prescribed.Id && e.ExerciseId == prescribed.ExerciseId).ToArray();
                 if (matchingExercises.Length != 1) continue;

@@ -17,6 +17,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
+using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
@@ -373,7 +374,8 @@ public sealed class CloudNutritionAndWorkoutContractsTests
                     Version: 3,
                     Email: "elena@example.test",
                     ReproductiveContextJson: "{\"Pregnancy\":1,\"Contraception\":2}",
-                    RequestedActivitySessionsPerWeekJson: "{\"Yoga\":2}");
+                    RequestedActivitySessionsPerWeekJson: "{\"Yoga\":2}",
+                    GluteFocus: true);
             }
 
             if (path.StartsWith("/api/v1/cycle/overview", StringComparison.Ordinal))
@@ -424,7 +426,14 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var loadedWorkoutPrefs = await workoutPrefsStore.LoadAsync(CancellationToken.None);
         Xunit.Assert.NotNull(loadedWorkoutPrefs);
         Xunit.Assert.Equal(new[] { 1, 3, 5, 6 }, loadedWorkoutPrefs!.AvailableWeekdays);
-        Xunit.Assert.DoesNotContain(("PUT", "/api/v1/profile/workout-preferences"), apiClient.RecordedCalls);
+        Xunit.Assert.True(loadedWorkoutPrefs.GluteFocus);
+        Xunit.Assert.True(await workoutPrefsStore.SaveAsync(
+            loadedWorkoutPrefs with { GluteFocus = false }, CancellationToken.None));
+        var workoutPreferencesWrite = Xunit.Assert.Single(apiClient.RecordedPayloads,
+            call => call.Method == "PUT" && call.Path == "/api/v1/profile/workout-preferences");
+        var payload = JsonSerializer.SerializeToElement(workoutPreferencesWrite.Body,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Xunit.Assert.False(payload.GetProperty("gluteFocus").GetBoolean());
     }
 
     private sealed class RecordingApiClient(Func<string, object> responder) : IMuscleCutiesBackendApiClient

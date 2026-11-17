@@ -44,7 +44,7 @@
                         <!-- Tap-to-Reveal Privacy Blur Preview Box -->
                         <Border
                             Grid.Row="1"
-                            MinimumHeightRequest="{StaticResource UiDimension110}"
+                            MinimumHeightRequest="{StaticResource UiDimension72}"
                             StrokeShape="{StaticResource UiRoundRectangleRadius14}"
                             StrokeThickness="{StaticResource UiStrokeWidth0}"
                             Stroke="{StaticResource Transparent}"

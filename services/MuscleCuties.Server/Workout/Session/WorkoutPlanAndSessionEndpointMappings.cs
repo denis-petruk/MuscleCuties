@@ -119,6 +119,23 @@ public static class WorkoutPlanAndSessionEndpointMappings
             }
         });
 
+        group.MapPut("/day-sessions/superset-split", async (
+            [FromBody] SplitWorkoutSupersetRequest request,
+            ClaimsPrincipal principal,
+            [FromServices] PostgresWorkoutPlanAndSessionStore store,
+            CancellationToken cancellationToken) =>
+        {
+            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            try
+            {
+                await store.SplitSupersetAsync(userId, request, cancellationToken).ConfigureAwait(false);
+                return Results.Ok();
+            }
+            catch (KeyNotFoundException) { return Results.NotFound(); }
+            catch (Exception ex) when (ex is ArgumentException or InvalidOperationException)
+            { return Results.BadRequest(new { error = ex.Message }); }
+        });
+
         group.MapPost("/day-sessions/log", async (
             [FromBody] LogWorkoutSessionRequest request,
             ClaimsPrincipal principal,

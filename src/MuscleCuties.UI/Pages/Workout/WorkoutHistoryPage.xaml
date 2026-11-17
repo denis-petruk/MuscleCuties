@@ -169,7 +169,7 @@
                             <!-- Session Name -->
                             <Label LineBreakMode="WordWrap" Style="{StaticResource CardTitle}"
                                 Grid.Row="1"
-                                Text="{Binding WorkoutName}" />
+                                Text="{Binding WorkoutName, Converter={StaticResource LocalizedStringConverter}}" />
                             <Label LineBreakMode="WordWrap" Grid.Row="2"
                                    Text="{Binding DetailLabel, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource CaptionLabel}" />
@@ -267,7 +267,7 @@
                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                             <Label LineBreakMode="WordWrap"
                                 Grid.Row="0"
-                                Text="{Binding SelectedSessionDetail.WorkoutName}"
+                                Text="{Binding SelectedSessionDetail.WorkoutName, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource ModalTitle}" />
                             <Label LineBreakMode="WordWrap"
                                 Grid.Row="1"

@@ -264,6 +264,7 @@ internal static partial class RussianUiText
         Values["Injury_LogTitle"] = "Журнал травм";
         Values["Injury_Modal_CloseInjuryLog"] = "Закрыть журнал травм";
         Values["Nutrition_AddFood"] = "Добавить еду";
+        Values["Nutrition_Balance_ActivityFormat"] = "{0} активность";
         Values["Nutrition_Balance_Micros"] = "Микроэлементы";
         Values["Nutrition_Balance_TodaySBalance"] = "Сегодняшний баланс";
         Values["Nutrition_Balance_ViewMicronutrientTargets"] = "Посмотреть микронутриентные цели";
@@ -796,6 +797,9 @@ internal static partial class RussianUiText
         Values["Profile_WorkoutPrefs_ActivityPreferences"] = "Предпочтения активности";
         Values["Profile_WorkoutPrefs_AvailableWeekdays"] = "Доступные дни недели";
         Values["Profile_WorkoutPrefs_AvailableWeekdaysHint"] = "Выберите от 2 до 7 дней недели, когда вы можете тренироваться.";
+        Values["Onboarding_Quiz_GluteFocusSaveFailed"] = "Ответы сохранены. Не удалось сохранить акцент на ягодицы. Нажмите «Завершить», чтобы повторить попытку перед созданием первого плана.";
+        Values["Profile_WorkoutPrefs_GluteFocus"] = "Сосредоточить силовые планы на развитии ягодичных мышц";
+        Values["Profile_WorkoutPrefs_HiitNotAvailable"] = "HIIT недоступен для нового выбора активности.";
         Values["Profile_WorkoutPrefs_SelectedWeekdaysFormat"] = "Выбрано дней недели: {0}";
         Values["Profile_WorkoutPrefs_WeeklyFrequency"] = "Занятий в неделю";
         Values["Profile_WorkoutPrefs_ChooseActivityWeeklyFrequency"] =
@@ -828,6 +832,11 @@ internal static partial class RussianUiText
         Values["Profile_WorkoutPrefs_EquipmentFullGym"] = "Полный тренажёрный зал";
         Values["Profile_WorkoutPrefs_EquipmentHome"] = "Гантели и эспандеры";
         Values["Profile_WorkoutPrefs_EquipmentBodyweight"] = "Только вес тела";
+        Values["Profile_WorkoutPrefs_HasDumbbells"] = "Гантели";
+        Values["Profile_WorkoutPrefs_HasBands"] = "Эспандеры (резинки)";
+        Values["Profile_WorkoutPrefs_HasConfirmedBandAnchor"] = "Подтверждено надёжное крепление-якорь (для тяги и жима с резинкой)";
+        Values["Profile_WorkoutPrefs_HasSliders"] = "Слайдеры (глайдеры) и подходящее скользящее покрытие";
+        Values["Profile_WorkoutPrefs_HomeNeedsEquipment"] = "Выберите гантели, эспандеры или переключитесь на «Только вес тела».";
         Values["Fasting_TimerTitle"] = "Таймер голодания";
         Values["Fasting_Intro"] = "Отмечайте время, которое вы сами решили провести без еды. Таймер не рекомендует длительность и не определяет, подходит ли вам голодание.";
         Values["Fasting_EligibilityTitle"] = "Перед использованием таймера";

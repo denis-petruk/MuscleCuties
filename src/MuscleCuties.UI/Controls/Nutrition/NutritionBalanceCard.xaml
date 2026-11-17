@@ -54,20 +54,24 @@
                     WidthRequest="{StaticResource UiDimension22}"
                     HeightRequest="{StaticResource UiDimension22}"
                     VerticalOptions="Center" />
-                <Label
+                <HorizontalStackLayout
                     Grid.Row="0"
                     Grid.Column="1"
-                    Text="{Binding ConsumedCaloriesText}"
-                    Style="{StaticResource MetricValue}" />
+                    Spacing="{StaticResource UiSpaceMicro}"
+                    VerticalOptions="Center">
+                    <Label
+                        Text="{Binding ConsumedCaloriesText}"
+                        Style="{StaticResource MetricValue}"
+                        VerticalOptions="End" />
+                    <Label
+                        Text="{Binding TargetCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_TargetCaloriesValueKcal}"
+                        Style="{StaticResource CaptionLabel}"
+                        VerticalOptions="End" />
+                </HorizontalStackLayout>
                 <Label
                     Grid.Row="1"
                     Grid.Column="1"
-                    Text="{Binding TargetCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_TargetCaloriesValueKcal}"
-                    Style="{StaticResource CaptionLabel}" />
-                <Label
-                    Grid.Row="2"
-                    Grid.Column="1"
-                    Text="{Binding ActivityAdjustmentText, StringFormat='{0} activity'}"
+                    Text="{Binding ActivityAdjustmentText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Balance_ActivityFormat}"
                     IsVisible="{Binding HasActivityAdjustment}"
                     Style="{StaticResource CaptionLabel}"
                     TextColor="{StaticResource Primary}" />

@@ -396,6 +396,8 @@ public sealed class DailyReadinessLogConfiguration : IEntityTypeConfiguration<Da
         builder.ToTable("daily_readiness_logs", "app", table =>
         {
             table.HasCheckConstraint("ck_daily_readiness_logs_planning_scales", PlanningScaleConstraint);
+            table.HasCheckConstraint("ck_daily_readiness_logs_planning_fatigue",
+                "planning_fatigue IS NULL OR planning_fatigue BETWEEN 1 AND 5");
             table.HasCheckConstraint("ck_daily_readiness_logs_planning_revision", PlanningRevisionConstraint);
         });
     }
@@ -528,6 +530,13 @@ public sealed class ExerciseSetLogConfiguration : IEntityTypeConfiguration<Exerc
         AppModelConfiguration.ConfigureTenant(builder, "exercise_set_logs");
         builder.Property(x => x.TechniqueAcceptable).HasDefaultValue(true);
         builder.Property(x => x.IsObserved).HasDefaultValue(false);
+        builder.Property(x => x.LeftSideReps).HasColumnName("left_side_reps");
+        builder.Property(x => x.RightSideReps).HasColumnName("right_side_reps");
+        builder.ToTable("exercise_set_logs", "app", table => table.HasCheckConstraint(
+            "ck_exercise_set_logs_unilateral_reps",
+            "(left_side_reps IS NULL AND right_side_reps IS NULL) OR " +
+            "(left_side_reps IS NOT NULL AND right_side_reps IS NOT NULL AND " +
+            "left_side_reps BETWEEN 1 AND 1000 AND right_side_reps BETWEEN 1 AND 1000)"));
         builder.HasOne<WorkoutSessionLogRecord>().WithMany().HasForeignKey(x => new { x.UserId, x.WorkoutSessionLogId })
             .HasPrincipalKey(x => new { x.UserId, x.Id }).OnDelete(DeleteBehavior.Cascade);
     }

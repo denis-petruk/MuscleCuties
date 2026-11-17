@@ -6,7 +6,6 @@ using Microsoft.Maui.Storage;
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Notifications;
-using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.Core.Data;
 using MuscleCuties.UI.Pages.Dashboard;
@@ -86,7 +85,6 @@ public partial class App : Application, IDisposable
             resolved = AppInfo.RequestedTheme == AppTheme.Unspecified ? AppTheme.Light : AppInfo.RequestedTheme;
 
         WorkoutPresentationPalette.IsDarkTheme = resolved == AppTheme.Dark;
-        WorkoutActivityClassifier.IsDarkTheme = resolved == AppTheme.Dark;
     }
 
     protected override Window CreateWindow(IActivationState? activationState)

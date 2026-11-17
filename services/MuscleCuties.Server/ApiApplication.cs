@@ -615,7 +615,9 @@ public static class ApiApplication
                 request.ActivitySessionDurationsMinutes,
                 request.EquipmentLevel,
                 request.RequestedSessionsPerWeek,
-                request.ExcludedExerciseIds), cancellationToken).ConfigureAwait(false));
+                request.ExcludedExerciseIds,
+                request.GluteFocus,
+                request.EquipmentCapabilities), cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
         app.MapPut("/api/v1/profile/nutrition-targets", async (
             UpdateServerNutritionTargetsBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
@@ -625,6 +627,17 @@ public static class ApiApplication
             return MapProfileWrite(await profile.UpdateNutritionTargetsAsync(new UpdateServerNutritionTargetsRequest(
                 userId, request.ExpectedVersion, stringTargets), cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
+        // Development-only: lets an automated simulator journey read the code the local delivery just
+        // generated. Registered only in Development; it is absent from every other environment.
+        if (app.Environment.IsDevelopment())
+        {
+            app.MapGet("/api/v1/dev/email-challenge/latest", (string email, int purpose) =>
+                MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge
+                    .LocalDevelopmentEmailChallengeDelivery.TryGetLatestCode(email, purpose, out var code)
+                    ? Results.Ok(new { code })
+                    : Results.NotFound());
+        }
+
         app.MapGet("/api/v1/accounts/registration/quiz", async (
                 GetRegistrationQuizUseCase quiz,
                 CancellationToken cancellationToken) =>
@@ -885,7 +898,9 @@ public static class ApiApplication
         IReadOnlyList<int> AvailableWeekdays, IReadOnlyDictionary<int, int> ActivitySessionDurationsMinutes,
         string? EquipmentLevel = null,
         IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek = null,
-        HashSet<int>? ExcludedExerciseIds = null);
+        HashSet<int>? ExcludedExerciseIds = null,
+        bool? GluteFocus = null,
+        MuscleCuties.Core.Domain.Workout.Planning.EquipmentCapabilities? EquipmentCapabilities = null);
     private sealed record UpdateServerNutritionTargetsBody(int ExpectedVersion, IReadOnlyDictionary<string, JsonElement> Targets);
 
     private static readonly JsonSerializerOptions ChallengeJsonOptions = new() { PropertyNamingPolicy = null };

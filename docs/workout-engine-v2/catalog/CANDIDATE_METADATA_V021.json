@@ -87,6 +87,18 @@
       ]
     },
     {
+      "exerciseId": 108,
+      "name": "Floor Glute Bridge",
+      "pattern": "HipThrust",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Glutes"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "Hamstrings", "credit": 0.5 }
+      ]
+    },
+    {
       "exerciseId": 111,
       "name": "Romanian Deadlift",
       "pattern": "HipHinge",
@@ -185,6 +197,18 @@
         { "target": "GluteMaximus", "credit": 0.5 },
         { "target": "Hamstrings", "credit": 1 },
         { "target": "Back", "credit": 0.5 }
+      ]
+    },
+    {
+      "exerciseId": 119,
+      "name": "Slider Leg Curl",
+      "pattern": "KneeFlexion",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Hamstrings"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "Hamstrings", "credit": 1 }
       ]
     },
     {
@@ -293,6 +317,31 @@
       ]
     },
     {
+      "exerciseId": 129,
+      "name": "Bodyweight Squat",
+      "pattern": "SquatPattern",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Quads"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 130,
+      "name": "Bodyweight Reverse Lunge",
+      "pattern": "Lunge",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Glutes"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 1 },
+        { "target": "HipAbductors", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 0.5 }
+      ]
+    },
+    {
       "exerciseId": 131,
       "name": "Seated Hip Abduction Lean",
       "pattern": "HipAbduction",
@@ -372,6 +421,19 @@
       "maximumGroups": ["Adductors"],
       "credits": [
         { "target": "Adductors", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 138,
+      "name": "Bodyweight Split Squat",
+      "pattern": "Lunge",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Quads"],
+      "credits": [
+        { "target": "GluteMaximus", "credit": 0.5 },
+        { "target": "HipAbductors", "credit": 0.5 },
+        { "target": "Quadriceps", "credit": 1 }
       ]
     },
     {
@@ -456,6 +518,18 @@
       "credits": [
         { "target": "Back", "credit": 0.5 },
         { "target": "RearDelts", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 148,
+      "name": "Resistance Band Row",
+      "pattern": "HorizontalPull",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["UpperBack"],
+      "credits": [
+        { "target": "Back", "credit": 1 },
+        { "target": "Biceps", "credit": 0.5 }
       ]
     },
     {
@@ -556,6 +630,19 @@
       ]
     },
     {
+      "exerciseId": 159,
+      "name": "Resistance Band Chest Press",
+      "pattern": "HorizontalPush",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Chest"],
+      "credits": [
+        { "target": "Chest", "credit": 1 },
+        { "target": "AnteriorDelts", "credit": 0.5 },
+        { "target": "Triceps", "credit": 0.5 }
+      ]
+    },
+    {
       "exerciseId": 161,
       "name": "Incline DB Curl",
       "pattern": "ElbowFlexion",
@@ -597,6 +684,17 @@
       "maximumGroups": ["Triceps"],
       "credits": [
         { "target": "Triceps", "credit": 1 }
+      ]
+    },
+    {
+      "exerciseId": 165,
+      "name": "Resistance Band Biceps Curl",
+      "pattern": "ElbowFlexion",
+      "reviewed": true,
+      "uniqueMaximum": true,
+      "maximumGroups": ["Biceps"],
+      "credits": [
+        { "target": "Biceps", "credit": 1 }
       ]
     },
     {

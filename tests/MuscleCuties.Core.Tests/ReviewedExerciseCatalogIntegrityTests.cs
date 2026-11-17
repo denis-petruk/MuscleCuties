@@ -20,8 +20,8 @@ public sealed class ReviewedExerciseCatalogIntegrityTests
     /// unreviewed entry is intentional and named here so the gap cannot grow silently, and so reviewing
     /// it later forces this guard and the plan to be updated deliberately.
     /// </summary>
-    private const int ExpectedReviewedExercises = 59;
-    private const int ExpectedPlanningDefinitions = 60;
+    private const int ExpectedReviewedExercises = 67;
+    private const int ExpectedPlanningDefinitions = 68;
     private const string OnlyUnreviewedPlanningDefinitionCatalogCode = "ENGINE_191";
     private const string OnlyUnreviewedPlanningDefinitionName = "Rock Climbing";
 

@@ -1,0 +1,92 @@
+appId: com.musclecuties.app
+---
+- tapOn: "Train|Тренировки"
+- extendedWaitUntil:
+    visible: "Start workout|Resume workout|Начать тренировку|Продолжить тренировку"
+    timeout: 25000
+- takeScreenshot: 09_train
+- tapOn: "Start workout|Resume workout|Начать тренировку|Продолжить тренировку"
+- extendedWaitUntil:
+    visible: "Session activities|Активности тренировки|Back|Назад"
+    timeout: 15000
+- runFlow:
+    when:
+      visible: "Session activities|Активности тренировки"
+    commands:
+      - takeScreenshot: 10_session_activities
+      - tapOn: "Strength & Sculpt|Cardio & Conditioning|Mobility & Recovery|Rest & Recovery|.*exercises|.*упражнен.*"
+      - extendedWaitUntil:
+          visible: "Back|Назад"
+          timeout: 15000
+- runFlow:
+    when:
+      visible:
+        id: WorkoutSessionStartButton
+    commands:
+      - waitForAnimationToEnd
+      - takeScreenshot: 10b_session_intro
+      - runFlow:
+          when:
+            visible:
+              id: WorkoutSessionStartButton
+          commands:
+            - tapOn:
+                id: WorkoutSessionStartButton
+- extendedWaitUntil:
+    visible:
+      id: WorkoutSessionNextExerciseButton
+    timeout: 30000
+- takeScreenshot: 11_workout_session_active
+# Log weight on Exercise 1 so Next persists it across restart
+- runFlow: log-current-exercise.yaml
+# Terminate mid-session and relaunch to prove in-progress session persistence
+- stopApp
+- launchApp:
+    stopApp: false
+    arguments:
+      AppleLanguages: "(${QA_LANGUAGE})"
+      AppleLocale: "${QA_LOCALE}"
+- extendedWaitUntil:
+    visible: "Resume workout|Продолжить тренировку"
+    timeout: 30000
+- tapOn: "Resume workout|Продолжить тренировку"
+- extendedWaitUntil:
+    visible: "Session activities|Активности тренировки|Back|Назад"
+    timeout: 15000
+- runFlow:
+    when:
+      visible: "Session activities|Активности тренировки"
+    commands:
+      - tapOn: "Strength & Sculpt|Cardio & Conditioning|Mobility & Recovery|Rest & Recovery|.*exercises|.*упражнен.*"
+      - extendedWaitUntil:
+          visible: "Back|Назад"
+          timeout: 15000
+- extendedWaitUntil:
+    visible:
+      id: WorkoutSessionNextExerciseButton
+    timeout: 30000
+# Advance through remaining unlogged exercises via Next (logging sets) to session summary & complete session
+- repeat:
+    times: 12
+    commands:
+      - runFlow: log-current-exercise.yaml
+- extendedWaitUntil:
+    visible:
+      id: WorkoutSessionCompleteButton
+    timeout: 20000
+- tapOn:
+    id: WorkoutSessionCompleteButton
+- extendedWaitUntil:
+    visible: "Today|Сегодня|Train|Тренировки"
+    timeout: 30000
+- tapOn: "Train|Тренировки"
+- extendedWaitUntil:
+    visible: "Workout Archive|Архив тренировок"
+    timeout: 20000
+- tapOn: "Workout Archive|Архив тренировок"
+- extendedWaitUntil:
+    visible:
+      id: WorkoutHistorySessionCard
+    timeout: 20000
+- takeScreenshot: 12_workout_history
+- tapOn: "Back|Назад"

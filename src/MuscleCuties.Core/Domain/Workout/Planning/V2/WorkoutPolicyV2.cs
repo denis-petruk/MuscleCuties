@@ -54,6 +54,11 @@ public static class WorkoutPolicyV2
     public const string RulesetVersion = "MC-PLANNING-2.0";
     public const string InputContractVersion = "MC-PLANNING-INPUT-2.0";
 
+    public const int DetrainingGapDays = 28;
+    public const int RollingLoadWindowDays = 7;
+    public const int HighRollingStrengthDayCount = 4;
+    public const int MaximumWorkingSetsPerExercise = 5;
+    public const int MinimumRoutineWorkingSetsPerExercise = 2;
     public const int MeaningfulExposureMinimumDirectSets = 2;
     public const int GeneralWarmupMinimumMinutes = 5;
     public const int GeneralWarmupMaximumMinutes = 8;

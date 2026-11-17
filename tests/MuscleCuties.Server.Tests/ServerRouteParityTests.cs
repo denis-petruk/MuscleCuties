@@ -493,6 +493,26 @@ public sealed class ServerRouteParityTests
     }
 
     [Fact]
+    public async Task WorkoutPreferenceWriteForwardsGluteFocusToProfileStore()
+    {
+        await using var fixture = await ServerFixture.StartAsync();
+        fixture.SetBearer(Guid.NewGuid());
+
+        var response = await fixture.Client.PutAsJsonAsync("/api/v1/profile/workout-preferences", new
+        {
+            expectedVersion = 1,
+            activityTypes = new[] { 8 },
+            availableWeekdays = new[] { 1 },
+            activitySessionDurationsMinutes = new Dictionary<int, int> { [8] = 30 },
+            equipmentLevel = "FullGym",
+            gluteFocus = true
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(fixture.Profile.LastWorkoutPreferences?.GluteFocus);
+    }
+
+    [Fact]
     public async Task InjurySaveRejectsUnknownTriggerAndDefaultsAnOmittedAnswer()
     {
         await using var fixture = await ServerFixture.StartAsync();

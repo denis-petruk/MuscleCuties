@@ -14,6 +14,7 @@ public sealed class InjuryLogItem
     public DateOnly Since { get; init; }
     public string SinceText { get; init; } = string.Empty;
     public bool IsActive { get; init; }
+    public bool IsPainReassessmentDue { get; init; }
 
     /// <summary>Closed-set answer to the worsening-movement question, as stored.</summary>
     public MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger WorseningTrigger { get; init; }

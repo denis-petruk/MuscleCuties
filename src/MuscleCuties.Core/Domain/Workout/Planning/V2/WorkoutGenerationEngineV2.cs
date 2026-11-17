@@ -112,7 +112,8 @@ public static class WorkoutGenerationEngineV2
         // Determine strength training days (availability != automatic 7 strength days)
         var orderedWeekdays = OrderWeekdays(input.AvailableWeekdays);
         var strengthDaysCount = DetermineStrengthDaysCount(orderedWeekdays.Length, effectiveExperience, input);
-        var strengthWeekdays = SelectSpacedWeekdays(orderedWeekdays, strengthDaysCount);
+        var strengthWeekdays = SelectSpacedWeekdays(orderedWeekdays, strengthDaysCount)
+            .OrderBy(day => DateForWeekdayInCurrentWeek(input.AccountLocalDate, day)).ToArray();
         if (strengthDaysCount == 1)
             advisories.Add(OneDayFullBodyAdvisoryCode);
 
@@ -140,7 +141,7 @@ public static class WorkoutGenerationEngineV2
         var catalogById = input.Catalog.ToDictionary(c => c.ExerciseId);
         var coverageSummary = MuscleAccountingRuleV2.Evaluate(sessions, catalogById, effectiveExperience, input.Focus);
 
-        CheckCoverageGaps(coverageSummary, input.Focus, limitations, advisories);
+        CheckCoverageGaps(coverageSummary, input, sessions, limitations, advisories);
 
         // Gate 84, 89, 90, 92: Readiness adaptation (DOMS and phase alone never alter dose)
         var (adaptedSessions, readinessApplied, coachExplanation) = ApplyReadinessAdaptation(
@@ -186,6 +187,11 @@ public static class WorkoutGenerationEngineV2
         if (item.ReviewStatus != CatalogReviewStatusV2.ApprovedWithConditions)
             return false;
 
+        // Timed-only core holds / isometric holds remain optional outside repetition straight-set slots.
+        if (item.SupportedTimingMethods is { Count: > 0 } timingMethods &&
+            !timingMethods.Contains(ExerciseTimingMethod.StraightSets))
+            return false;
+
         // Gate 53: No routine automatic neck prescription
         if (item.VarietyTag == ExerciseVarietyTag.Neck)
             return false;
@@ -220,16 +226,19 @@ public static class WorkoutGenerationEngineV2
         if (availableDays <= 1)
             return 1;
 
-        if (input.RequestedStrengthDaysPerWeek is { } requested and >= 1)
-            return Math.Min(availableDays, Math.Min(requested, 5));
+        if (input.IsReturningAfterDetraining)
+            return Math.Min(availableDays, 2);
 
-        return experience switch
+        var tierMaximum = experience switch
         {
-            TrainingExperienceLevel.Beginner => Math.Min(availableDays, input.IsReturningAfterDetraining ? 2 : 3),
-            TrainingExperienceLevel.Intermediate => Math.Min(availableDays, 4),
-            TrainingExperienceLevel.Advanced => Math.Min(availableDays, 4),
-            _ => Math.Min(availableDays, 2)
+            TrainingExperienceLevel.Beginner => 3,
+            TrainingExperienceLevel.Intermediate => 4,
+            TrainingExperienceLevel.Advanced => 5,
+            _ => 2
         };
+        var requested = input.RequestedStrengthDaysPerWeek is >= 1
+            ? input.RequestedStrengthDaysPerWeek.Value : tierMaximum;
+        return Math.Min(availableDays, Math.Min(requested, tierMaximum));
     }
 
     private static SplitKindV2 DetermineSplitKind(int strengthDays) => strengthDays switch
@@ -301,13 +310,27 @@ public static class WorkoutGenerationEngineV2
 
         var sessions = new List<PlannedSessionV2>(sessionCount);
         var usedCounts = new Dictionary<int, int>();
+        var priorSets = (input.PriorObservedSets ?? []).Where(set => set.SetKind == SetKindV2.Working &&
+            set.RepsCompleted > 0 && set.LocalDate >= input.AccountLocalDate.AddDays(-WorkoutPolicyV2.RollingLoadWindowDays) &&
+            set.LocalDate < input.AccountLocalDate).ToArray();
+        var priorDays = input.PreviousWeekStrengthDays ?? priorSets.Select(set => set.LocalDate).ToHashSet();
+        var firstDate = DateForWeekdayInCurrentWeek(input.AccountLocalDate, strengthWeekdays[0]);
+        var lowerYesterday = priorSets.Any(set => set.LocalDate == firstDate.AddDays(-1) &&
+            input.Catalog.Any(item => item.ExerciseId == set.ExerciseId && IsLowerPattern(item.Pattern)));
+        var highRollingLoad = priorDays.Count(date => date >= firstDate.AddDays(-WorkoutPolicyV2.RollingLoadWindowDays) &&
+            date < firstDate) >= WorkoutPolicyV2.HighRollingStrengthDayCount;
+        if (priorDays.Count > 0 || priorSets.Length > 0)
+            trace.Add("Rolling7DayLoadAccounted");
+        var upperFirst = lowerYesterday || highRollingLoad;
+
 
         for (var i = 0; i < sessionCount; i++)
         {
             var weekday = strengthWeekdays[i];
             var localDate = DateForWeekdayInCurrentWeek(input.AccountLocalDate, weekday);
-            var isUpperDay = splitKind == SplitKindV2.UpperLower && (i % 2 == 1);
-            var isLowerDay = splitKind == SplitKindV2.UpperLower && (i % 2 == 0);
+            var alternatingSplit = splitKind is SplitKindV2.UpperLower or SplitKindV2.Hybrid;
+            var isUpperDay = alternatingSplit && (i % 2 == (upperFirst ? 0 : 1));
+            var isLowerDay = alternatingSplit && !isUpperDay;
 
             var slots = new List<ExerciseCatalogItemV2>();
 
@@ -407,7 +430,17 @@ public static class WorkoutGenerationEngineV2
             }
 
             var prescribed = BuildExercisePrescriptions(
-                slots, styleSpec, input, activeRestrictions, nowUtc);
+                slots, styleSpec, input, activeRestrictions, nowUtc, trace);
+
+            if (i == 0 && upperFirst && !alternatingSplit)
+            {
+                prescribed = prescribed.Select(exercise => IsLowerPattern(exercise.Pattern)
+                    ? exercise with { WorkingSets = 1, EstimatedMinutes = EstimateSingleExerciseMinutes(
+                        eligibleCatalog.Single(item => item.ExerciseId == exercise.ExerciseId), exercise.WarmUpSets,
+                        1, exercise.MaxRepetitions, exercise.RestSeconds, 1m) }
+                    : exercise).ToList();
+                trace.Add("Rolling7DayInitialLowerVolumeCapped");
+            }
 
             // Apply 7-step duration optimization ladder (Gate 63, 76, §11)
             var optimized = OptimizeSessionToFitBudget(
@@ -430,7 +463,110 @@ public static class WorkoutGenerationEngineV2
                 Exercises: optimized));
         }
 
+        AllocateWeeklyDirectVolume(sessions, eligibleCatalog, experience, input.Focus, budgetMinutes, limitations, trace,
+            allowIncreases: !input.IsReturningAfterDetraining && !upperFirst);
         return sessions;
+    }
+
+    private static bool IsLowerPattern(MovementPattern pattern) => pattern is MovementPattern.SquatPattern
+        or MovementPattern.Lunge or MovementPattern.HipHinge or MovementPattern.HipThrust
+        or MovementPattern.KneeFlexion or MovementPattern.HipAbduction;
+
+    private static void AllocateWeeklyDirectVolume(List<PlannedSessionV2> sessions,
+        ExerciseCatalogItemV2[] catalog, TrainingExperienceLevel experience, TrainingFocus focus,
+        int budgetMinutes, List<string> limitations, List<string> trace, bool allowIncreases)
+    {
+        if (experience == TrainingExperienceLevel.Beginner)
+            return;
+        var byId = catalog.ToDictionary(item => item.ExerciseId);
+        foreach (var muscle in Enum.GetValues<MuscleGroupV2>())
+        {
+            var target = WorkoutPolicyV2.GetWeeklyVolumeTarget(muscle, experience, focus);
+            decimal DirectTotal() => sessions.SelectMany(session => session.Exercises).Sum(exercise =>
+                exercise.WorkingSets * byId[exercise.ExerciseId].MuscleContributions.Where(contribution =>
+                    contribution.Muscle == muscle && contribution.Kind == MuscleContributionKind.Direct)
+                    .Sum(contribution => contribution.CreditPerWorkingSet));
+            while (target.MaximumSets > 0 && DirectTotal() > target.MaximumSets)
+            {
+                var candidate = sessions.SelectMany((session, sessionIndex) => session.Exercises
+                        .Select((exercise, exerciseIndex) => (session, sessionIndex, exercise, exerciseIndex)))
+                    .Where(candidate => candidate.exercise.WorkingSets > WorkoutPolicyV2.MinimumRoutineWorkingSetsPerExercise &&
+                        byId[candidate.exercise.ExerciseId].MuscleContributions.Any(contribution =>
+                            contribution.Muscle == muscle && contribution.Kind == MuscleContributionKind.Direct))
+                    .OrderByDescending(candidate => candidate.exercise.WorkingSets)
+                    .ThenByDescending(candidate => candidate.sessionIndex).FirstOrDefault();
+                if (candidate.exercise is null)
+                {
+                    var removable = sessions.SelectMany((session, sessionIndex) => session.Exercises
+                            .Select((exercise, exerciseIndex) => (session, sessionIndex, exercise, exerciseIndex)))
+                        .Where(candidate => !candidate.exercise.IsPriorityOrCompound && candidate.exercise.SupersetGroupId is null &&
+                            byId[candidate.exercise.ExerciseId].MuscleContributions.Any(contribution =>
+                                contribution.Muscle == muscle && contribution.Kind == MuscleContributionKind.Direct &&
+                                DirectTotal() - candidate.exercise.WorkingSets * contribution.CreditPerWorkingSet >= target.MinimumSets))
+                        .OrderByDescending(candidate => candidate.sessionIndex).FirstOrDefault();
+                    if (removable.exercise is null)
+                    {
+                        limitations.Add($"WeeklyDirectVolumeAboveTarget:{muscle}");
+                        break;
+                    }
+                    var remaining = removable.session.Exercises.Where((_, index) => index != removable.exerciseIndex)
+                        .Select((exercise, index) => exercise with { OrderIndex = index }).ToArray();
+                    sessions[removable.sessionIndex] = removable.session with { Exercises = remaining,
+                        PhysicalWorkingSets = remaining.Sum(exercise => exercise.WorkingSets),
+                        EstimatedTotalMinutes = CalculateSessionMinutes(remaining) };
+                    trace.Add($"WeeklyDirectAccessoryOccurrenceRemoved:{muscle}:{removable.exercise.ExerciseId}");
+                    continue;
+                }
+                var exercise = candidate.exercise;
+                var exercises = candidate.session.Exercises.ToArray();
+                var minutes = EstimateSingleExerciseMinutes(byId[exercise.ExerciseId], exercise.WarmUpSets,
+                    exercise.WorkingSets - 1, exercise.MaxRepetitions, exercise.RestSeconds, 1m);
+                if (exercise.SupersetGroupId is not null) minutes = Math.Round(minutes * SupersetRestSavingFactor, 2);
+                exercises[candidate.exerciseIndex] = exercise with { WorkingSets = exercise.WorkingSets - 1,
+                    EstimatedMinutes = minutes };
+                sessions[candidate.sessionIndex] = candidate.session with { Exercises = exercises,
+                    PhysicalWorkingSets = exercises.Sum(item => item.WorkingSets),
+                    EstimatedTotalMinutes = CalculateSessionMinutes(exercises) };
+                trace.Add($"WeeklyDirectVolumeCapped:{muscle}:{exercise.ExerciseId}");
+            }
+            if (!allowIncreases) continue;
+            // Unavailable equipment coverage (e.g., upper-body pull on bodyweight-only) is disclosed honestly via
+            // CheckCoverageGaps rather than blocking feasible strength plans as volume-limited.
+            if (!catalog.Any(item => item.MuscleContributions.Any(contribution =>
+                    contribution.Muscle == muscle && contribution.Kind == MuscleContributionKind.Direct)))
+                continue;
+            while (DirectTotal() < target.MinimumSets)
+            {
+                var candidates = sessions.SelectMany((session, sessionIndex) => session.Exercises
+                    .Select((exercise, exerciseIndex) => (session, sessionIndex, exercise, exerciseIndex)))
+                    .Where(candidate => candidate.exercise.WorkingSets < WorkoutPolicyV2.MaximumWorkingSetsPerExercise &&
+                        byId[candidate.exercise.ExerciseId].MuscleContributions.Any(contribution =>
+                            contribution.Muscle == muscle && contribution.Kind == MuscleContributionKind.Direct))
+                    .OrderBy(candidate => candidate.exercise.WorkingSets).ThenBy(candidate => candidate.sessionIndex)
+                    .ThenBy(candidate => candidate.exerciseIndex).ToArray();
+                var added = false;
+                foreach (var candidate in candidates)
+                {
+                    var exercise = candidate.exercise;
+                    var minutes = EstimateSingleExerciseMinutes(byId[exercise.ExerciseId], exercise.WarmUpSets,
+                        exercise.WorkingSets + 1, exercise.MaxRepetitions, exercise.RestSeconds, 1m);
+                    if (candidate.session.EstimatedTotalMinutes - exercise.EstimatedMinutes + minutes > budgetMinutes)
+                        continue;
+                    var exercises = candidate.session.Exercises.ToArray();
+                    exercises[candidate.exerciseIndex] = exercise with { WorkingSets = exercise.WorkingSets + 1,
+                        EstimatedMinutes = minutes };
+                    sessions[candidate.sessionIndex] = candidate.session with { Exercises = exercises,
+                        PhysicalWorkingSets = exercises.Sum(item => item.WorkingSets),
+                        EstimatedTotalMinutes = CalculateSessionMinutes(exercises) };
+                    added = true;
+                    trace.Add($"WeeklyDirectSetAdded:{muscle}:{exercise.ExerciseId}");
+                    break;
+                }
+                if (added) continue;
+                limitations.Add($"WeeklyDirectVolumeBelowTarget:{muscle}");
+                break;
+            }
+        }
     }
 
     private static void AddBestCandidate(
@@ -465,9 +601,11 @@ public static class WorkoutGenerationEngineV2
         StrengthStylePrescriptionSpec styleSpec,
         WorkoutGenerationInputV2 input,
         PainRestrictionV2[] activeRestrictions,
-        DateTimeOffset nowUtc)
+        DateTimeOffset nowUtc,
+        List<string> trace)
     {
         var list = new List<PlannedExercisePrescriptionV2>(slots.Count);
+        var recoveryIsAdequate = !HasPoorReadiness(input.DailyReadiness);
         for (var idx = 0; idx < slots.Count; idx++)
         {
             var item = slots[idx];
@@ -478,8 +616,10 @@ public static class WorkoutGenerationEngineV2
             var restSeconds = item.IsCompound ? styleSpec.CompoundRestSeconds : styleSpec.IsolationRestSeconds;
             var warmupSets = item.IsCompound ? 1 : 0;
 
-            // Gate 77 & Gate 88: Load prescription from actual history, conservative return, or calibration
-            var (loadStatus, prescribedLoad, reason) = ResolveInitialLoad(item, input, nowUtc);
+            // Gates 71-75, 77 & 88: Load and progression prescription from actual history, conservative return, or calibration
+            var (loadStatus, prescribedLoad, reason, adjustedWorkingSets) = ResolveInitialLoadAndProgression(
+                item, workingSets, minReps, maxReps, styleSpec.TargetRir, input, recoveryIsAdequate, nowUtc, trace);
+            workingSets = adjustedWorkingSets;
 
             var estMinutes = EstimateSingleExerciseMinutes(item, warmupSets, workingSets, maxReps, restSeconds, supersetFactor: 1.0m);
 
@@ -505,11 +645,23 @@ public static class WorkoutGenerationEngineV2
         return list;
     }
 
-    private static (SessionLoadStatusV2 Status, decimal? LoadKg, string Reason) ResolveInitialLoad(
+    private static (SessionLoadStatusV2 Status, decimal? LoadKg, string Reason, int WorkingSets) ResolveInitialLoadAndProgression(
         ExerciseCatalogItemV2 item,
+        int workingSets,
+        int minReps,
+        int maxReps,
+        int targetRir,
         WorkoutGenerationInputV2 input,
-        DateTimeOffset nowUtc)
+        bool recoveryIsAdequate,
+        DateTimeOffset nowUtc,
+        List<string> trace)
     {
+        if (!item.IsBodyweightOnly &&
+            (input.ActivePainRestrictions ?? []).Any(restriction => restriction.IsResolved &&
+            restriction.RequiresReturnCalibration &&
+            restriction.ConservativeReturnSessionsCompleted < WorkoutPolicyV2.ConservativeReturnSessionCount &&
+            (restriction.ExerciseId == item.ExerciseId || restriction.BlockedPattern == item.Pattern)))
+            return (SessionLoadStatusV2.CalibrationRequired, null, "InitialLoadCalibrationRequired", workingSets);
         var priorSets = (input.PriorObservedSets ?? [])
             .Where(s => s.ExerciseId == item.ExerciseId && s.SetKind == SetKindV2.Working && s.LoadKg > 0m)
             .OrderByDescending(s => s.CompletedAtUtc)
@@ -518,8 +670,8 @@ public static class WorkoutGenerationEngineV2
         if (priorSets.Length == 0)
         {
             return item.IsBodyweightOnly
-                ? (SessionLoadStatusV2.BodyweightZeroAddedLoad, 0m, "BodyweightZeroAddedLoad")
-                : (SessionLoadStatusV2.CalibrationRequired, null, "InitialLoadCalibrationRequired");
+                ? (SessionLoadStatusV2.BodyweightZeroAddedLoad, 0m, "BodyweightZeroAddedLoad", workingSets)
+                : (SessionLoadStatusV2.CalibrationRequired, null, "InitialLoadCalibrationRequired", workingSets);
         }
 
         var latestLoad = priorSets[0].LoadKg;
@@ -531,14 +683,48 @@ public static class WorkoutGenerationEngineV2
         if (resolvedRestriction is not null)
         {
             var painReturn = WorkoutProgressionAndRecoveryV2.EvaluatePainReturn(
-                resolvedRestriction, nowUtc, latestLoad, item.MinimumLoadIncrementKg);
+                resolvedRestriction, nowUtc, resolvedRestriction.ReturnBaselineLoadKg ?? latestLoad, item.MinimumLoadIncrementKg);
             if (painReturn.CanReturnWithConservativeLoad)
             {
-                return (SessionLoadStatusV2.ConservativeReturnLoad, painReturn.ConservativeLoadKg, painReturn.ReasonCode);
+                return (SessionLoadStatusV2.ConservativeReturnLoad, painReturn.ConservativeLoadKg, painReturn.ReasonCode, workingSets);
             }
         }
 
-        return (SessionLoadStatusV2.PrescribedLoad, latestLoad, "PriorComparableHistory");
+        var progression = WorkoutProgressionAndRecoveryV2.EvaluateStrengthProgression(
+            item,
+            workingSets,
+            minReps,
+            maxReps,
+            targetRir,
+            priorSets,
+            input.Focus,
+            recoveryIsAdequate);
+
+        switch (progression.Decision)
+        {
+            case ProgressionDecisionKindV2.RecommendIncrease when progression.RecommendedLoadKg is > 0m:
+                trace.Add($"StrengthProgression:{item.ExerciseId}:{progression.ReasonCode}:{progression.RecommendedLoadKg.Value.ToString(CultureInfo.InvariantCulture)}");
+                return (SessionLoadStatusV2.PrescribedLoad, progression.RecommendedLoadKg, progression.ReasonCode, workingSets);
+
+            case ProgressionDecisionKindV2.RecommendDecrease when progression.RecommendedLoadKg is >= 0m:
+                trace.Add($"StrengthProgression:{item.ExerciseId}:{progression.ReasonCode}:{progression.RecommendedLoadKg.Value.ToString(CultureInfo.InvariantCulture)}");
+                return (SessionLoadStatusV2.PrescribedLoad, progression.RecommendedLoadKg, progression.ReasonCode, workingSets);
+
+            case ProgressionDecisionKindV2.RecommendGlutePlateauPlusOneSet:
+                var boostedSets = Math.Min(
+                    WorkoutPolicyV2.MaximumWorkingSetsPerExercise,
+                    workingSets + (progression.RecommendedAdditionalWeeklySets ?? 1));
+                trace.Add($"GlutePlateauSetAdded:{item.ExerciseId}:{boostedSets}");
+                return (SessionLoadStatusV2.PrescribedLoad, progression.RecommendedLoadKg ?? latestLoad, progression.ReasonCode, boostedSets);
+
+            default:
+                var holdReason = progression.ReasonCode is
+                    WorkoutProgressionAndRecoveryV2.SingleDeficitHoldsLoadCode or
+                    WorkoutProgressionAndRecoveryV2.TechniqueBlockedIncreaseCode
+                    ? progression.ReasonCode
+                    : "PriorComparableHistory";
+                return (SessionLoadStatusV2.PrescribedLoad, progression.RecommendedLoadKg ?? latestLoad, holdReason, workingSets);
+        }
     }
 
     private static List<PlannedExercisePrescriptionV2> OptimizeSessionToFitBudget(
@@ -720,7 +906,16 @@ public static class WorkoutGenerationEngineV2
 
         foreach (var cardio in selectedCardio)
         {
-            var requestedMinutes = input.SessionDurationMinutesByActivity.TryGetValue(cardio, out var m) && m > 0 ? m : 25;
+            var cardioProgression = WorkoutProgressionAndRecoveryV2.EvaluateCardioProgression(cardio, input.PriorCardioActuals);
+            var hasExplicitDuration = input.SessionDurationMinutesByActivity.TryGetValue(cardio, out var m) && m > 0;
+            var requestedMinutes = hasExplicitDuration
+                ? (cardioProgression.ReasonCode == "SingleVariableDurationStepRecommended" &&
+                   cardioProgression.RecommendedDurationMinutes is { } stepMin && stepMin > 0
+                    ? Math.Min(m, stepMin)
+                    : m)
+                : (cardioProgression.RecommendedDurationMinutes ?? 25);
+            if (cardioProgression.ReasonCode == "SingleVariableDurationStepRecommended")
+                trace.Add($"CardioProgression:{cardio}:{cardioProgression.ReasonCode}:{requestedMinutes}m");
 
             if (nonStrengthDays.Length > 0)
             {
@@ -767,15 +962,10 @@ public static class WorkoutGenerationEngineV2
         return result;
     }
 
-    private static (List<PlannedSessionV2> Adapted, bool Applied, string? Explanation) ApplyReadinessAdaptation(
-        List<PlannedSessionV2> originalSessions,
-        WorkoutGenerationInputV2 input,
-        Dictionary<int, ExerciseCatalogItemV2> catalogById,
-        List<string> trace)
+    private static bool HasPoorReadiness(DailyReadinessInputV2? readiness)
     {
-        var readiness = input.DailyReadiness;
         if (readiness is null)
-            return (originalSessions, false, null);
+            return false;
 
         // Gate 89: SorenessDoms NEVER affects readiness dosing.
         // Gate 84: CycleContext phase alone NEVER affects readiness dosing.
@@ -784,7 +974,16 @@ public static class WorkoutGenerationEngineV2
         var poorSleep = readiness.SleepQuality is <= 1 || readiness.SleepHours is < 6.5m;
         var significantCycleSymptoms = readiness.HasSignificantMenstrualSymptoms;
 
-        if (!lowEnergy && !highFatigue && !poorSleep && !significantCycleSymptoms)
+        return lowEnergy || highFatigue || poorSleep || significantCycleSymptoms;
+    }
+
+    private static (List<PlannedSessionV2> Adapted, bool Applied, string? Explanation) ApplyReadinessAdaptation(
+        List<PlannedSessionV2> originalSessions,
+        WorkoutGenerationInputV2 input,
+        Dictionary<int, ExerciseCatalogItemV2> catalogById,
+        List<string> trace)
+    {
+        if (!HasPoorReadiness(input.DailyReadiness))
             return (originalSessions, false, null);
 
         // Gate 90: Reduce 1 optional accessory working set on the first strength session; keep main exercises & weights intact
@@ -822,17 +1021,27 @@ public static class WorkoutGenerationEngineV2
 
     private static void CheckCoverageGaps(
         MuscleAccountingSummaryV2 summary,
-        TrainingFocus focus,
+        WorkoutGenerationInputV2 input,
+        IReadOnlyList<PlannedSessionV2> sessions,
         List<string> limitations,
         List<string> advisories)
     {
         if (!summary.CoversKneeDominant) advisories.Add(WeeklyMovementCoverageRule.MissingKneeExtension);
         if (!summary.CoversKneeFlexion) advisories.Add(WeeklyMovementCoverageRule.MissingKneeFlexion);
         if (!summary.CoversHipExtension) advisories.Add(WeeklyMovementCoverageRule.MissingHipExtension);
+        if (!sessions.SelectMany(session => session.Exercises).Any(exercise =>
+                exercise.Pattern is MovementPattern.HorizontalPull or MovementPattern.VerticalPull))
+        {
+            var hasBandsWithoutAnchor = input.AvailableEquipment.Contains(ExerciseEquipmentKind.ResistanceBand) &&
+                !input.AvailableEquipment.Contains(ExerciseEquipmentKind.BandAnchor);
+            advisories.Add(hasBandsWithoutAnchor
+                ? "WeeklyCoverageMissing_UpperPull_BandAnchorRequired"
+                : "WeeklyCoverageMissing_UpperPull_Equipment");
+        }
         if (!summary.CoversDirectCalves) advisories.Add("WeeklyCoverageMissing_DirectCalves");
         if (!summary.CoversDirectRearDelts) advisories.Add("WeeklyCoverageMissing_DirectRearDelts");
         if (summary.DynamicCoreOccasions < 2) advisories.Add("WeeklyCoverageBelowTarget_DynamicCore");
-        if (focus == TrainingFocus.GluteSpecialization && !summary.CoversDirectHipAbduction)
+        if (input.Focus == TrainingFocus.GluteSpecialization && !summary.CoversDirectHipAbduction)
             advisories.Add("WeeklyCoverageMissing_GluteFocusHipAbduction");
     }
 

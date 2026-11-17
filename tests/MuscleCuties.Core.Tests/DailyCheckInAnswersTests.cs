@@ -12,7 +12,23 @@ public sealed class DailyCheckInAnswersTests
     private const string TimeZone = "UTC";
     private static readonly DateOnly Today = new(2026, 11, 8);
     private static readonly DailyCheckInAnswers Complete = new(
-        SleepHours: 6.5, SleepQuality: 2, Energy: 1, Soreness: 4, PainLevel: 0, HasBloating: false);
+        SleepHours: 6.5, SleepQuality: 2, Energy: 1, Soreness: 4, PainLevel: 0, HasBloating: false,
+        Fatigue: 3);
+
+    [Fact]
+    public void Three_readiness_answers_can_save_without_fabricating_optional_observations()
+    {
+        var answers = new DailyCheckInAnswers(SleepQuality: 3, Energy: 3, Fatigue: 1);
+        var request = Assert.IsType<UseCases.Features.Dashboard.CheckIn.Contracts.SubmitDailyCheckInRequest>(
+            answers.ToRequest(Today, TimeZone, requireSupplementaryAnswers: false));
+        Assert.Null(request.SleepHours);
+        Assert.Null(request.PainLevel);
+        Assert.Null(request.HasBloating);
+        Assert.Null(request.PlanningSoreness);
+        Assert.Equal(3, request.PlanningSleepQuality);
+        Assert.Equal(3, request.EnergyLevel);
+        Assert.Equal(1, request.PlanningFatigue);
+    }
 
     [Fact]
     public void Nothing_is_preselected()
@@ -28,7 +44,7 @@ public sealed class DailyCheckInAnswersTests
         Complete with { SleepHours = null },
         Complete with { SleepQuality = null },
         Complete with { Energy = null },
-        Complete with { Soreness = null },
+        Complete with { Fatigue = null },
         Complete with { PainLevel = null },
         Complete with { HasBloating = null }
     };
@@ -50,11 +66,77 @@ public sealed class DailyCheckInAnswersTests
         Assert.Equal(6.5, request.SleepHours);
         Assert.Equal(2, request.PlanningSleepQuality);
         Assert.Equal(1, request.EnergyLevel);
+        Assert.Equal(3, request.PlanningFatigue);
         Assert.Equal(4, request.PlanningSoreness);
         Assert.Equal(0, request.PainLevel);
         Assert.False(request.HasBloating);
         Assert.Null(request.BodyWeightKg);
         Assert.Equal(TimeZone, request.PlanningTimeZoneId);
+    }
+
+    [Fact]
+    public void Omitted_soreness_is_optional_and_remains_unreported()
+    {
+        var answers = Complete with { Soreness = null };
+
+        Assert.True(answers.IsComplete);
+        var request = Assert.IsType<UseCases.Features.Dashboard.CheckIn.Contracts.SubmitDailyCheckInRequest>(
+            answers.ToRequest(Today, TimeZone));
+        Assert.Null(request.PlanningSoreness);
+        Assert.Equal(Complete.SleepQuality, request.PlanningSleepQuality);
+        Assert.Equal(Complete.Energy, request.EnergyLevel);
+        Assert.Equal(Complete.Fatigue, request.PlanningFatigue);
+    }
+
+    [Fact]
+    public void Fatigue_is_a_distinct_required_answer_and_is_not_fabricated_from_energy()
+    {
+        var source = AnswersSource();
+        var viewModel = ViewModelSource();
+        var page = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "Controls",
+            "Dashboard", "DailyCheckInContent.xaml"));
+
+        Assert.Contains("Fatigue", source, StringComparison.Ordinal);
+        Assert.Contains("Fatigue", viewModel, StringComparison.Ordinal);
+        Assert.Contains("FatigueChip5", page, StringComparison.Ordinal);
+        Assert.Contains("SorenessChip5", page, StringComparison.Ordinal);
+        Assert.DoesNotContain("PlanningStressCompatibilityValue => Energy", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Workout_preferences_keep_glute_focus_in_the_profile_editor_and_cloud_round_trip()
+    {
+        var root = RepositoryRoot();
+        var viewModel = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "ViewModels", "Profile",
+            "ProfileWorkoutPreferencesViewModel.cs"));
+        var page = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "Controls", "Profile",
+            "ProfileWorkoutPreferencesChoices.xaml"));
+        var cloud = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.Infrastructure", "Cloud",
+            "CloudAccountAndProfileStores.cs"));
+
+        Assert.Contains("GluteFocus", viewModel, StringComparison.Ordinal);
+        Assert.Contains("GluteFocus", page, StringComparison.Ordinal);
+        Assert.Contains("gluteFocus", cloud, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Hiit_is_not_a_new_activity_selection_but_existing_selection_remains_editable()
+    {
+        var root = RepositoryRoot();
+        var catalog = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Workout",
+            "WorkoutActivityOptionCatalog.cs"));
+        var option = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "Models", "UI", "Workout",
+            "WorkoutActivityOptionItem.cs"));
+        var localization = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Localization",
+            "UiTextCatalog.NutritionProfileAuth.cs"));
+        var russian = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "Services", "Localization",
+            "RussianUiText.NutritionProfileAuth.cs"));
+
+        Assert.Contains("!selectedTypes.Contains(WorkoutActivityDto.Hiit)", catalog, StringComparison.Ordinal);
+        Assert.Contains("UnavailableReason", catalog, StringComparison.Ordinal);
+        Assert.Contains("IsOffered || IsSelected", option, StringComparison.Ordinal);
+        Assert.Contains("Profile_WorkoutPrefs_HiitNotAvailable", localization, StringComparison.Ordinal);
+        Assert.Contains("Profile_WorkoutPrefs_HiitNotAvailable", russian, StringComparison.Ordinal);
     }
 
     [Theory]
@@ -77,6 +159,7 @@ public sealed class DailyCheckInAnswersTests
         Assert.DoesNotContain("_sleepHours = 7", source, StringComparison.Ordinal);
         Assert.DoesNotContain("_planningSoreness = MinimumPlanningScaleValue", source, StringComparison.Ordinal);
         Assert.Contains("private int? _painLevel;", source, StringComparison.Ordinal);
+        Assert.Contains("private int? _planningFatigue;", source, StringComparison.Ordinal);
         Assert.Contains("private bool? _hasBloating;", source, StringComparison.Ordinal);
         Assert.Contains("Answers.ToRequest(", source, StringComparison.Ordinal);
         Assert.Contains("Answers.IsComplete", source, StringComparison.Ordinal);
@@ -151,10 +234,19 @@ public sealed class DailyCheckInAnswersTests
 
     private static string ViewModelSource()
     {
+        return File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "ViewModels", "Dashboard",
+            "DailyCheckInViewModel.cs"));
+    }
+
+    private static string AnswersSource() =>
+        File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UseCases", "Features", "Dashboard",
+            "CheckIn", "DailyCheckInAnswers.cs"));
+
+    private static string RepositoryRoot()
+    {
         var current = AppContext.BaseDirectory;
         while (!File.Exists(Path.Combine(current, "MuscleCuties.sln")))
             current = Directory.GetParent(current)?.FullName ?? throw new InvalidOperationException("Repository root not found.");
-        return File.ReadAllText(Path.Combine(current, "src", "MuscleCuties.UI", "ViewModels", "Dashboard",
-            "DailyCheckInViewModel.cs"));
+        return current;
     }
 }

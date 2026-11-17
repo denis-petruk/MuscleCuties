@@ -330,7 +330,27 @@ public static partial class UiTextCatalog
         English["Workout_Generation_StyleNeedsHistory"] = "Needs an established strength training history. Start with General strength instead.";
         English["Workout_Generation_SwitchToGeneralStrength"] = "Switch to General strength";
         English["Workout_Generation_SwitchStyleFailed"] = "Could not switch your strength style. Please try again.";
-        English["Workout_Generation_EquipmentBetaNotice"] = "Bodyweight-only plans aren't offered in the beta yet. Dumbbell-and-band plans don't include a vertical pull yet.";
+        English["Workout_Generation_EquipmentBetaNotice"] = "Bodyweight-only plans omit upper-body pulling when no pulling hardware or confirmed band anchor is available. Confirm sliders or a secure anchor only if you actually have them.";
+        English["Workout_Generation_QuizEquipmentNotice"] = "Bodyweight-only plans omit upper-body pulling when no pulling hardware or confirmed band anchor is available. You can fine-tune sliders, dumbbells, and anchors anytime in Workout Availability.";
+        English["Workout_Generation_SelectionReason_BodyweightZeroAddedLoad"] = "Bodyweight (no added weight)";
+        English["Workout_Generation_SelectionReason_InitialLoadCalibrationRequired"] = "Choose starting weight in session";
+        English["Workout_Generation_SelectionReason_PriorComparableHistory"] = "Based on previous logged weight";
+        English["Workout_Generation_SelectionReason_ConservativeReturnLoadApplied"] = "Conservative return weight";
+        English["Workout_Generation_SelectionReason_DoubleProgressionLoadIncreaseRecommended"] = "Weight increased after hitting rep target";
+        English["Workout_Generation_SelectionReason_ConsecutiveBelowMinRepDecreaseRecommended"] = "Weight reduced after two below-target sessions";
+        English["Workout_Generation_SelectionReason_GlutePlateauAddOneDirectSetRecommended"] = "+1 direct glute set for plateau progression";
+        English["Workout_Generation_SelectionReason_SingleUnderTargetSessionMaintainsLoad"] = "Keeping weight after one below-target session";
+        English["Workout_Generation_SelectionReason_UnacceptableTechniqueBlocksIncrease"] = "Keeping weight to consolidate technique";
+        English["Workout_Generation_SelectionReason_MaintainCurrentLoad"] = "Based on previous logged weight";
+        English["Workout_Generation_MissingUpperPullEquipment"] = "Upper-body pulling is unavailable with bodyweight-only equipment, so back pulling is omitted. Update your equipment setup if you have bands with a secure anchor, dumbbells, or pulling hardware.";
+        English["Workout_Generation_MissingUpperPullBandAnchor"] = "Resistance band row and chest press stay excluded until you confirm a secure fixed anchor in workout setup.";
+        English["Workout_Generation_MissingDirectCalves"] = "Direct calf work could not be included with your current equipment setup.";
+        English["Workout_Generation_MissingDirectRearDelts"] = "Direct rear-delt work could not be included with your current equipment setup.";
+        English["Workout_Generation_BelowTargetDynamicCore"] = "Dynamic core work is included across your scheduled sessions within your current days.";
+        English["Workout_Generation_MissingGluteFocusAbduction"] = "Direct hip abduction was limited with your current equipment setup.";
+        English["Workout_Generation_ReadinessAdaptation"] = "One optional set was reduced to match today’s recovery.";
+        English["Workout_Generation_FinisherFormat"] = "After strength: {0} min of {1} · RPE {2}–{3}.";
+        English["Workout_Generation_CoachExplanation"] = "Today’s recovery called for a small volume adjustment.";
     }
 }
 

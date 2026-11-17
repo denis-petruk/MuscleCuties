@@ -23,4 +23,5 @@ public interface IWorkoutSessionActionStore
     Task<WorkoutMovementNoteDto> GetMovementNoteAsync(int workoutDayExerciseId, CancellationToken cancellationToken);
     Task SaveMovementNoteAsync(SaveWorkoutMovementNoteRequest request, CancellationToken cancellationToken);
     Task SetExerciseOptionalAsync(SetWorkoutExerciseOptionalRequest request, CancellationToken cancellationToken);
+    Task SplitSupersetAsync(SplitWorkoutSupersetRequest request, CancellationToken cancellationToken);
 }

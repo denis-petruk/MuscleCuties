@@ -75,6 +75,8 @@ public sealed record StrengthPlanPreviewResponseV020(
     public long SourceTimeZoneVersion { get; init; }
     public long SourceExperienceVersion { get; init; }
     public long SourceAnswerVersion { get; init; }
+    public string? SourceObservedHistoryFingerprint { get; init; }
+    public long? SourceReadinessRevision { get; init; }
     public IReadOnlyDictionary<int, string[]>? SourceMuscleGroupsByExerciseId { get; init; }
     public IReadOnlyList<int> FittingStrengthStyleIds { get; init; } = [];
     public bool StrengthStyleChoiceRequired { get; init; }
@@ -97,10 +99,30 @@ public sealed record GenerationPlanV2(
     IReadOnlyList<string> AdvisoryCodes,
     IReadOnlyList<string> RuleTrace)
 {
+    public IReadOnlyList<GenerationSessionV2> Sessions { get; init; } = [];
     public IReadOnlyList<string> MissingGaps { get; init; } = [];
     public bool ReadinessAdaptationApplied { get; init; }
     public string? CoachExplanation { get; init; }
 }
+
+public sealed record GenerationExerciseV2(
+    int OrderIndex, int ExerciseId, string ExerciseName, int WarmUpSets, int WorkingSets,
+    int MinRepetitions, int MaxRepetitions, int TargetRir, int RestSeconds,
+    string LoadStatus, decimal? PrescribedLoadKg, int? SupersetGroupId,
+    bool IsUnilateral, string SelectionReasonCode)
+{
+    public bool IsOptional { get; init; }
+    public string Pattern { get; init; } = string.Empty;
+    public string SlotId { get; init; } = string.Empty;
+}
+
+public sealed record GenerationFinisherV2(
+    int ActivityTypeId, int DurationMinutes, string IntensityBand, int TargetRpeMin, int TargetRpeMax);
+
+public sealed record GenerationSessionV2(
+    int SessionIndex, DayOfWeek Weekday, DateOnly LocalDate, int ActivityTypeId,
+    int GeneralWarmupMinutes, decimal EstimatedTotalMinutes,
+    IReadOnlyList<GenerationExerciseV2> Exercises, GenerationFinisherV2? AttachedFinisher = null);
 
 public sealed record MixedActivityScheduleSessionV020(
     int ActivityTypeId,

@@ -98,6 +98,8 @@ public static class WorkoutProgressionAndRecoveryV2
         if (sessions.Length == 0)
         {
             var latestLoad = workingHistory.OrderByDescending(s => s.CompletedAtUtc).First().LoadKg;
+            if (!exercise.IsBodyweightOnly && exercise.MinimumLoadIncrementKg is null && latestLoad <= 0m)
+                return new(exercise.ExerciseId, ProgressionDecisionKindV2.Maintain, null, MaintainCurrentLoadCode);
             if (!exercise.IsBodyweightOnly && latestLoad <= 0m)
                 return new(exercise.ExerciseId, ProgressionDecisionKindV2.CalibrationRequired, null, CalibrationRequiredCode);
 
@@ -106,6 +108,8 @@ public static class WorkoutProgressionAndRecoveryV2
 
         var latestSession = sessions[^1];
         var currentLoad = latestSession.Sets[0].LoadKg;
+        if (!exercise.IsBodyweightOnly && exercise.MinimumLoadIncrementKg is null && currentLoad <= 0m)
+            return new(exercise.ExerciseId, ProgressionDecisionKindV2.Maintain, null, MaintainCurrentLoadCode);
         if (!exercise.IsBodyweightOnly && currentLoad <= 0m)
             return new(exercise.ExerciseId, ProgressionDecisionKindV2.CalibrationRequired, null, CalibrationRequiredCode);
 
@@ -199,8 +203,8 @@ public static class WorkoutProgressionAndRecoveryV2
     {
         ArgumentNullException.ThrowIfNull(restriction);
 
-        var hoursSinceReport = (nowUtc - restriction.ReportedAtUtc).TotalHours;
-        var reassessmentDue = hoursSinceReport >= WorkoutPolicyV2.PainReassessmentHours;
+        var reassessmentDue = restriction.ReportedAtUtc is { } reported &&
+            (nowUtc - reported).TotalHours >= WorkoutPolicyV2.PainReassessmentHours;
 
         // Passage of time alone NEVER clears a restriction.
         if (!restriction.IsResolved)
@@ -227,7 +231,9 @@ public static class WorkoutProgressionAndRecoveryV2
         var rawConservative = priorWorkingLoadKg.Value * WorkoutPolicyV2.ConservativeReturnLoadMultiplier;
         var conservativeLoad = incrementKg is > 0m
             ? Math.Floor(rawConservative / incrementKg.Value) * incrementKg.Value
-            : Math.Round(rawConservative, 1, MidpointRounding.AwayFromZero);
+            : Math.Floor(rawConservative * 10m) / 10m;
+        if (conservativeLoad <= 0m)
+            conservativeLoad = rawConservative;
 
         return new PainReturnEligibilityV2(
             ReassessmentDue: false,

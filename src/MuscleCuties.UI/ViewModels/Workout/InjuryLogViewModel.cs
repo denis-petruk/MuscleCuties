@@ -328,6 +328,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
                 Since = log.Since,
                 SinceText = log.Since.ToString("d", CultureInfo.CurrentCulture),
                 IsActive = isActive,
+                IsPainReassessmentDue = isActive && log.PainReassessmentDueAtUtc is { } due && due <= DateTimeOffset.UtcNow,
                 WorseningTrigger = log.WorseningTrigger,
                 ClinicianAdvisedAvoid = log.ClinicianAdvisedAvoid
             };

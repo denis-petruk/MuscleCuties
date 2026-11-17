@@ -15,11 +15,11 @@
         Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
 
-            <!-- Header Row: Icon Tile, Title/Badge, and Status Pill. At accessibility sizes the pill is
-                 as wide as the title, so the row wraps rather than squeezing the name into one letter per line. -->
-            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
+            <!-- Header Row: Icon Tile + Title/Badge/Optional Rest Status Pill without horizontal collision -->
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                 <!-- Icon Tile -->
                 <Border
+                    Grid.Column="0"
                     WidthRequest="{StaticResource UiDimension42}"
                     HeightRequest="{StaticResource UiDimension42}"
                     StrokeThickness="{StaticResource UiStrokeWidth0}"
@@ -64,52 +64,31 @@
                     </Grid>
                 </Border>
 
-                <!-- Titles: Badge + Main Name -->
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" VerticalOptions="Center" Margin="{StaticResource UiInsets0_0_8_0}">
+                <!-- Titles: Badge + Main Name + Rest Day Pill -->
+                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpaceMicro}" VerticalOptions="Center">
                     <Label LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
                         Text="{Binding BadgeText, Source={x:Reference Root}}"
                         TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                         VerticalOptions="Center" />
                     <Label
-                        Text="{Binding WorkoutTitle, Source={x:Reference Root}}"
+                        Text="{Binding WorkoutTitle, Source={x:Reference Root}, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource SectionTitle}"
                         LineBreakMode="WordWrap" />
+                    <Border
+                        IsVisible="{Binding IsRestDay, Source={x:Reference Root}}"
+                        HorizontalOptions="Start"
+                        StrokeShape="{StaticResource UiRoundRectangleRadius999}"
+                        StrokeThickness="{StaticResource UiStrokeWidth0}"
+                        Padding="{StaticResource UiInsets10_4}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}">
+                        <Label LineBreakMode="WordWrap"
+                               Style="{StaticResource CaptionLabel}"
+                               Text="{loc:LocalizedText Workout_Featured_RestDayBadge}"
+                               TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                               VerticalOptions="Center" />
+                    </Border>
                 </VerticalStackLayout>
-
-                <!-- Status Pill on the Right -->
-                <Border
-                    StrokeShape="{StaticResource UiRoundRectangleRadius999}"
-                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                    Padding="{StaticResource UiInsets10_4}"
-                    VerticalOptions="Center">
-                    <Border.Triggers>
-                        <DataTrigger TargetType="Border" Binding="{Binding IsRestDay, Source={x:Reference Root}}" Value="True">
-                            <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}" />
-                        </DataTrigger>
-                        <DataTrigger TargetType="Border" Binding="{Binding IsRestDay, Source={x:Reference Root}}" Value="False">
-                            <Setter Property="BackgroundColor"
-                                    Value="{Binding AccentColor, Source={x:Reference Root}}" />
-                        </DataTrigger>
-                    </Border.Triggers>
-
-                    <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}"
-                        VerticalOptions="Center">
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay, Source={x:Reference Root}}" Value="True">
-                                <Setter Property="Text" Value="{loc:LocalizedText Workout_Featured_RestDayBadge}" />
-                                <Setter Property="TextColor"
-                                        Value="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}" />
-                            </DataTrigger>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay, Source={x:Reference Root}}" Value="False">
-                                <Setter Property="Text" Value="{Binding PrimaryActivityTitle, Source={x:Reference Root}}" />
-                                <Setter Property="TextColor"
-                                        Value="{Binding AccentTextColor, Source={x:Reference Root}}" />
-                            </DataTrigger>
-                        </Label.Triggers>
-                    </Label>
-                </Border>
-            </FlexLayout>
+            </Grid>
 
             <!-- Multiple Activity Chips (if more than 1 activity on workout days) -->
             <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Start"
@@ -121,7 +100,7 @@
                     Margin="{StaticResource UiInsets0_0_6_6}"
                     BackgroundColor="{Binding PrimaryActivityBackground, Source={x:Reference Root}}">
                     <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}"
-                        Text="{Binding PrimaryActivityTitle, Source={x:Reference Root}}"
+                        Text="{Binding PrimaryActivityTitle, Source={x:Reference Root}, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{Binding PrimaryActivityTextColor, Source={x:Reference Root}}" />
                 </Border>
                 <Border
@@ -131,14 +110,14 @@
                     Margin="{StaticResource UiInsets0_0_6_6}"
                     BackgroundColor="{Binding SecondaryActivityBackground, Source={x:Reference Root}}">
                     <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}"
-                        Text="{Binding SecondaryActivityTitle, Source={x:Reference Root}}"
+                        Text="{Binding SecondaryActivityTitle, Source={x:Reference Root}, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{Binding SecondaryActivityTextColor, Source={x:Reference Root}}" />
                 </Border>
             </FlexLayout>
 
             <!-- Subtitle -->
             <Label Style="{StaticResource BodyLabel}"
-                Text="{Binding Subtitle, Source={x:Reference Root}}"
+                Text="{Binding Subtitle, Source={x:Reference Root}, Converter={StaticResource LocalizedStringConverter}}"
                 TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                 LineBreakMode="WordWrap" />
 
@@ -217,13 +196,13 @@
                   ColumnSpacing="{StaticResource UiSpaceControl}" RowSpacing="{StaticResource UiSpaceTight}"
                   IsVisible="{Binding IsRestDay, Source={x:Reference Root}, Converter={StaticResource InvertedBoolConverter}}">
                 <Label Text="{loc:LocalizedText Workout_Featured_Duration}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
-                <Label Grid.Column="1" Text="{Binding DurationText, Source={x:Reference Root}}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
+                <Label Grid.Column="1" Text="{Binding DurationText, Source={x:Reference Root}, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
                 <Label Grid.Row="1" Text="{loc:LocalizedText Workout_Featured_Exercises}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                 <Label Grid.Row="1" Grid.Column="1"
                        Text="{Binding ExercisesCount, Source={x:Reference Root}, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Featured_ExercisesCountFormat}"
                        Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
                 <Label Grid.Row="2" Text="{loc:LocalizedText Workout_Featured_Intensity}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
-                <Label Grid.Row="2" Grid.Column="1" Text="{Binding Intensity, Source={x:Reference Root}}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
+                <Label Grid.Row="2" Grid.Column="1" Text="{Binding Intensity, Source={x:Reference Root}, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
             </Grid>
 
             <!-- Expandable Exercise Preview Toggle -->

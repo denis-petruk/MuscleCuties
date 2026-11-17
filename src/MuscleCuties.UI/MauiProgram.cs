@@ -154,7 +154,14 @@ public static class MauiProgram
             () => sp.GetRequiredService<INavigationContextService>()
                 .Set(WorkoutPreferencesAfterOnboardingContextKey, true),
             weekdays => sp.GetRequiredService<INavigationContextService>()
-                .Set(ProfileWorkoutPreferencesViewModel.OnboardingWeekdaysContextKey, weekdays)));
+                .Set(ProfileWorkoutPreferencesViewModel.OnboardingWeekdaysContextKey, weekdays),
+            async gluteFocus =>
+            {
+                var preferencesUseCase = sp.GetRequiredService<IProfileWorkoutPreferencesUseCase>();
+                var preferences = await preferencesUseCase.LoadAsync();
+                return preferences is not null && (preferences.GluteFocus == gluteFocus ||
+                    await preferencesUseCase.SaveAsync(preferences with { GluteFocus = gluteFocus }));
+            }));
 
         services.AddTransient<ProfileSetupViewModel>(sp => new ProfileSetupViewModel(
             sp.GetRequiredService<IProfileSetupUseCase>(),

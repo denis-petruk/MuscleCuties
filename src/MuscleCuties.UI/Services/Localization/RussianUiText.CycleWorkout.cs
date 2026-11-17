@@ -4,6 +4,7 @@ internal static partial class RussianUiText
 {
     static partial void RegisterCycleWorkoutStrings()
     {
+        Values["Injury_PainReassessmentDue"] = "Прошло 72 часа. Нажмите «Изменить», чтобы повторно оценить боль и ограничения перед возвращением к упражнению.";
         Values["Workout_Session_AdjustmentDaily"] = "По отметке за сегодня добавочный подход сокращён на один. Основная нагрузка сохранена.";
         Values["Workout_Session_AdjustmentPhase"] = "С учётом вашего обычного самочувствия в этой фазе сегодня на один дополнительный подход меньше.";
         Values["Workout_Session_AdjustmentPattern"] = "Ваши прошлые отметки и тренировки указывают, что сегодня стоит убрать один дополнительный подход.";
@@ -236,7 +237,7 @@ internal static partial class RussianUiText
         Values["Cycle_PhaseDetail_WorkoutsTab"] = "Тренировки";
         Values["Cycle_PhaseExplorer_CarouselAccessibility"] = "Четыре строки фаз цикла";
         Values["Cycle_PhaseExplorer_ExplorePhaseFormat"] = "Исследовать фазу {0}";
-        Values["Cycle_PhaseExplorer_NowBadge"] = "NOW";
+        Values["Cycle_PhaseExplorer_NowBadge"] = "СЕЙЧАС";
         Values["Cycle_PhaseExplorer_SectionTitle"] = "Исследователь 4-фазы";
         Values["Cycle_PhaseExplorer_Subtitle"] = "Нажмите на любую фазу для резюме и руководства";
         Values["Cycle_PhaseSummary_CloseAccessibility"] = "Закрыть сводку фазы";
@@ -540,10 +541,26 @@ internal static partial class RussianUiText
         Values["Workout_Session_NoteSaved"] = "Заметка сохранена.";
         Values["Workout_Session_NoteSaveFailed"] = "Не удалось сохранить заметку к упражнению.";
         Values["Workout_Recommendation_StartingWeight"] = "Начните с лёгкого веса: каждое повторение с запасом 2–3 повторения.";
+        Values["Workout_Recommendation_BandStartingTension"] = "Выберите лёгкий эспандер, чтобы выполнять каждый повтор с запасом в 2–3 повторения.";
+        Values["Workout_Recommendation_BandProgressReps"] = "Записывайте чистые повторения; переходите на более тугой эспандер, когда дойдёте до верха диапазона.";
         Values["Workout_Recommendation_Endurance"] = "Держите ровный, комфортный темп, который сможете сохранить весь подход.";
         Values["Workout_Recommendation_LogEachSet"] = "Записывайте вес, повторения и запас повторений в каждом подходе, чтобы следующие цели подстраивались.";
         Values["Workout_Recommendation_EarnedFormat"] = "Вы заработали шаг вперёд: сегодня попробуйте {0} кг.";
         Values["Workout_Recommendation_MaintainFormat"] = "Сегодня оставайтесь на {0} кг.";
         Values["Workout_Recommendation_ReduceFormat"] = "Сегодня снизьте вес до {0} кг.";
+        Values["Workout_Session_TargetRangeFormat"] = "{0} рабочих подходов · {1}–{2} повторений · RIR {3}";
+        Values["Workout_Session_SupersetLabelFormat"] = "Суперсет {0}";
+        Values["Workout_Session_UnilateralPerSide"] = "Повторения на каждую сторону";
+        Values["Workout_Session_CalibrationPrompt"] = "Выберите посильный начальный вес и запишите его сегодня.";
+        Values["Workout_Session_WarmupSetFormat"] = "Разминочный подход {0}";
+        Values["Workout_Session_WorkingSetFormat"] = "Подход {0}";
+        Values["Workout_Session_SplitSuperset"] = "Выполнять отдельно";
+        Values["Workout_Session_LeftSideReps"] = "Повторы слева";
+        Values["Workout_Session_RightSideReps"] = "Повторы справа";
+        Values["Workout_Session_GeneralWarmupFormat"] = "Общая разминка: {0} мин";
+        Values["Workout_Session_FinisherFormat"] = "После силовой: {0} мин — {1} · RPE {2}–{3}.";
+        Values["Workout_Session_FinisherActivity"] = "кардио";
+        Values["Workout_Session_SplitSupersetUnavailable"] = "Начните тренировку, чтобы изменить формат суперсета.";
+        Values["Workout_Session_SplitSupersetFailed"] = "Не удалось изменить суперсет. Проверьте подключение и попробуйте снова.";
     }
 }

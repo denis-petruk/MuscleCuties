@@ -43,7 +43,7 @@ public sealed class WorkoutPlanningApplicationService(
     private readonly IPlanningClockPort _clockPort = clockPort ?? new SystemPlanningClockPort();
     private readonly IPlanningSafetyPort _safetyPort = safetyPort ?? new DefaultPlanningSafetyPort();
 
-    public Task<StrengthPlanPreviewResponseV020> PreviewPlanAsync(
+    public async Task<StrengthPlanPreviewResponseV020> PreviewPlanAsync(
         Guid userId,
         StrengthPlanPreviewRequestV020 request,
         CancellationToken cancellationToken = default)
@@ -55,7 +55,8 @@ public sealed class WorkoutPlanningApplicationService(
             request = request with { LocalDate = _clockPort.GetCurrentLocalDate() };
         }
 
-        return previewUseCase.ExecuteAsync(userId, request, cancellationToken);
+        return GenerationPlanV2Mapper.ForCanonicalUse(
+            await previewUseCase.ExecuteAsync(userId, request, cancellationToken).ConfigureAwait(false));
     }
 
     public Task<StrengthPlanProposalCreatedV020> CreateProposalAsync(

@@ -2,6 +2,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Workout;
 using MuscleCuties.UI.Services.Formatting;
+using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 
@@ -10,6 +11,10 @@ public partial class ExerciseSetInputItem : ObservableObject
     [ObservableProperty] private bool _isWarmup;
     [ObservableProperty] private int _repsCompleted;
     [ObservableProperty] private string _repsInput = string.Empty;
+    [ObservableProperty] private int? _leftSideReps;
+    [ObservableProperty] private string _leftSideRepsInput = string.Empty;
+    [ObservableProperty] private int? _rightSideReps;
+    [ObservableProperty] private string _rightSideRepsInput = string.Empty;
     [ObservableProperty] private int _restTimeSeconds = 90;
     [ObservableProperty] private double? _rpe;
     [ObservableProperty] private string _rpeInput = string.Empty;
@@ -36,7 +41,9 @@ public partial class ExerciseSetInputItem : ObservableObject
         int repsCompleted,
         double? rpe,
         bool isWarmup,
-        int restTimeSeconds)
+        int restTimeSeconds,
+        int? leftSideReps = null,
+        int? rightSideReps = null)
     {
         Id = id == Guid.Empty ? Guid.NewGuid() : id;
         WorkoutSessionLogId = sessionId;
@@ -49,9 +56,13 @@ public partial class ExerciseSetInputItem : ObservableObject
         Rir = rpe.HasValue ? Math.Clamp(10 - rpe.Value, 0, 10) : null;
         IsWarmup = isWarmup;
         RestTimeSeconds = restTimeSeconds;
+        _leftSideReps = leftSideReps;
+        _rightSideReps = rightSideReps;
         var formatted = FormatWeightAndReps(weightKg, repsCompleted);
         WeightInput = formatted.WeightInput;
         RepsInput = formatted.RepsInput;
+        _leftSideRepsInput = leftSideReps?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
+        _rightSideRepsInput = rightSideReps?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
         RpeInput = rpe.HasValue ? DisplayFormat.Decimal1(rpe.Value) : string.Empty;
         RirInput = Rir.HasValue ? DisplayFormat.Decimal1(Rir.Value) : string.Empty;
         WasEdited = false;
@@ -62,8 +73,44 @@ public partial class ExerciseSetInputItem : ObservableObject
     public string? ExerciseId { get; set; }
     public string ExerciseName { get; set; } = string.Empty;
     public bool ShowWeight { get; set; } = true;
+    public bool ShowPerSideReps { get; set; }
+    public string SetDisplayText => IsWarmup
+        ? UiTextCatalog.Format("Workout_Session_WarmupSetFormat", SetNumber)
+        : UiTextCatalog.Format("Workout_Session_WorkingSetFormat", SetNumber);
+    private string AutomationPrefix => $"{(IsWarmup ? "Warmup" : "Working")}Set{SetNumber}";
+    public string WeightAutomationId => $"{AutomationPrefix}Weight";
+    public string RepsAutomationId => $"{AutomationPrefix}Reps";
+    public string LeftRepsAutomationId => $"{AutomationPrefix}LeftReps";
+    public string RightRepsAutomationId => $"{AutomationPrefix}RightReps";
+    public string RirAutomationId => $"{AutomationPrefix}Rir";
+    public int EffectiveReps => ShowPerSideReps && LeftSideReps is { } left && RightSideReps is { } right
+        ? Math.Min(left, right)
+        : RepsCompleted;
     public System.Windows.Input.ICommand? RemoveCommand { get; set; }
     public Action? OnChanged { get; set; }
+
+    private bool _isHydratingInputs;
+
+    internal void HydrateSideRepetitions(int? left, int? right)
+    {
+        _isHydratingInputs = true;
+        try
+        {
+            LeftSideReps = left;
+            RightSideReps = right;
+            LeftSideRepsInput = left?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
+            RightSideRepsInput = right?.ToString(CultureInfo.CurrentCulture) ?? string.Empty;
+            OnPropertyChanged(nameof(EffectiveReps));
+        }
+        finally { _isHydratingInputs = false; }
+    }
+
+    internal void ClearUnobservedCalibrationWeightInput()
+    {
+        _isHydratingInputs = true;
+        try { WeightInput = string.Empty; }
+        finally { _isHydratingInputs = false; }
+    }
 
     internal static (string WeightInput, string RepsInput) FormatWeightAndReps(double weightKg, int repsCompleted)
     {
@@ -88,6 +135,7 @@ public partial class ExerciseSetInputItem : ObservableObject
 
     public void SyncFromInputs()
     {
+        if (_isHydratingInputs) return;
         WasEdited = true;
         var parsed = ParseWeightAndReps(WeightInput, RepsInput, WeightKg, RepsCompleted);
         WeightKg = parsed.WeightKg;
@@ -143,6 +191,26 @@ public partial class ExerciseSetInputItem : ObservableObject
     partial void OnIsWarmupChanged(bool value)
     {
         WasEdited = true;
+        OnPropertyChanged(nameof(SetDisplayText));
+        OnChanged?.Invoke();
+    }
+
+    partial void OnSetNumberChanged(int value) => OnPropertyChanged(nameof(SetDisplayText));
+
+    partial void OnLeftSideRepsInputChanged(string value) => UpdateSideRepetitions(value, isLeft: true);
+
+    partial void OnRightSideRepsInputChanged(string value) => UpdateSideRepetitions(value, isLeft: false);
+
+    private void UpdateSideRepetitions(string value, bool isLeft)
+    {
+        if (_isHydratingInputs) return;
+        var parsed = int.TryParse(value, NumberStyles.Integer, CultureInfo.CurrentCulture, out var reps) && reps > 0
+            ? reps
+            : (int?)null;
+        if (isLeft) LeftSideReps = parsed;
+        else RightSideReps = parsed;
+        WasEdited = true;
+        OnPropertyChanged(nameof(EffectiveReps));
         OnChanged?.Invoke();
     }
 

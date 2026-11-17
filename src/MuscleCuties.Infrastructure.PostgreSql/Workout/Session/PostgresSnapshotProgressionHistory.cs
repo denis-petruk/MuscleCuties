@@ -9,7 +9,8 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 internal static class PostgresSnapshotProgressionHistory
 {
     internal static async Task<Dictionary<int, IReadOnlyList<SnapshotProgressionExposure>>> LoadAsync(
-        PostgresDbContext db, Guid userId, int[] exerciseIds, Guid? currentSessionId, CancellationToken ct)
+        PostgresDbContext db, Guid userId, int[] exerciseIds, Guid? currentSessionId, CancellationToken ct,
+        IReadOnlySet<int>? unilateralExerciseIds = null)
     {
         if (exerciseIds.Length == 0) return [];
         var now = DateTime.UtcNow;
@@ -53,9 +54,17 @@ internal static class PostgresSnapshotProgressionHistory
                     break;
                 }
                 var one = prescribed.Length == 1 ? prescribed[0] : null;
-                exposures.Add(new(session.CompletedAt!.Value, one?.Sets ?? 0, one?.Reps ?? 0,
-                    one?.TargetRepetitionsInReserve, matchingSets.Select(s => new SnapshotProgressionSet(
-                        s.SetNumber, s.RepsCompleted, s.WeightKg, s.RirActual, s.TechniqueAcceptable)).ToArray()));
+                var generationExercise = snapshot.GenerationV2?.Exercises.SingleOrDefault(item => item.ExerciseId == exerciseId);
+                var isUnilateral = unilateralExerciseIds?.Contains(exerciseId) == true || generationExercise?.IsUnilateral == true;
+                exposures.Add(new(session.CompletedAt!.Value,
+                    generationExercise?.WorkingSets ?? one?.Sets ?? 0,
+                    generationExercise?.MinRepetitions ?? one?.Reps ?? 0,
+                    generationExercise?.TargetRir ?? one?.TargetRepetitionsInReserve,
+                    matchingSets.Select(s => new SnapshotProgressionSet(
+                        s.SetNumber, s.RepsCompleted, s.WeightKg, s.RirActual, s.TechniqueAcceptable,
+                        s.LeftSideReps, s.RightSideReps)).ToArray(),
+                    isUnilateral,
+                    generationExercise?.MaxRepetitions ?? one?.Reps));
                 if (exposures.Count == 2) break;
             }
             result.Add(exerciseId, exposures);

@@ -248,18 +248,6 @@
                                     </VerticalStackLayout>
 
                                     <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
-                                        <Label Text="{loc:LocalizedText Profile_Measurement_Unit}"
-                                               Style="{StaticResource FormFieldLabel}" />
-                                        <Border Style="{StaticResource PickerContainer}">
-                                            <Picker Title="{loc:LocalizedText Profile_Measurement_Unit}"
-                                                    ItemsSource="{Binding MeasurementUnits}"
-                                                    ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
-                                                    SelectedItem="{Binding MeasurementUnit}"
-                                                    SemanticProperties.Description="{loc:LocalizedText Profile_Measurement_Unit}" />
-                                        </Border>
-                                    </VerticalStackLayout>
-
-                                    <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
                                         <Label Text="{Binding MeasurementValueLabel}"
                                                Style="{StaticResource FormFieldLabel}" />
                                         <Border Style="{StaticResource InputContainer}">

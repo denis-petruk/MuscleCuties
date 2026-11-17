@@ -11,8 +11,7 @@
     x:DataType="vm:DashboardViewModel">
 
     <Border
-        Style="{StaticResource CardPrimary}"
-        SemanticProperties.Description="{Binding WorkoutTitle, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Workout_SemanticTodayPlan}">
+        Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
 
             <!-- Header: the icon owns a fixed column; the status line and title stay in the text
@@ -126,7 +125,7 @@
                 Wrap="Wrap"
                 Direction="Row"
                 BindableLayout.ItemsSource="{Binding WorkoutActivitySections}"
-                IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}">
+                IsVisible="{Binding HasMultipleActivities}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="workoutModels:WorkoutActivitySection">
                         <Border
@@ -269,6 +268,7 @@
             <Button
                 Style="{StaticResource ButtonPrimary}"
                 Text="{Binding WorkoutActionText}"
+                AutomationId="DashboardStartWorkoutButton"
                 Command="{Binding StartWorkoutCommand}"
                 SemanticProperties.Description="{loc:LocalizedText Dashboard_Workout_OpenTodayPlanA11y}" />
 

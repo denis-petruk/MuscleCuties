@@ -672,15 +672,22 @@
                                    Style="{StaticResource SectionTitle}"
                                    SemanticProperties.HeadingLevel="Level3" />
                             <Border Style="{StaticResource CardSecondary}">
-                                <VerticalStackLayout BindableLayout.ItemsSource="{Binding PreviewNotes}"
-                                                     Spacing="{StaticResource UiSpaceTight}">
-                                    <BindableLayout.ItemTemplate>
-                                        <DataTemplate x:DataType="x:String">
-                                            <Label Text="{Binding .}"
-                                                   Style="{StaticResource MutedLabel}"
-                                                   LineBreakMode="WordWrap" />
-                                        </DataTemplate>
-                                    </BindableLayout.ItemTemplate>
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding PreviewNotes}"
+                                                         Spacing="{StaticResource UiSpaceTight}">
+                                        <BindableLayout.ItemTemplate>
+                                            <DataTemplate x:DataType="x:String">
+                                                <Label Text="{Binding .}"
+                                                       Style="{StaticResource MutedLabel}"
+                                                       LineBreakMode="WordWrap" />
+                                            </DataTemplate>
+                                        </BindableLayout.ItemTemplate>
+                                    </VerticalStackLayout>
+                                    <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
+                                            Command="{Binding EditDetailsCommand}"
+                                            IsVisible="{Binding HasMissingGapsWithAction}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            AutomationId="StrengthPlanMissingGapsActionButton" />
                                 </VerticalStackLayout>
                             </Border>
                         </VerticalStackLayout>
@@ -821,7 +828,7 @@
                             AutomationId="StrengthPlanApplyButton" />
                     <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
                             Command="{Binding EditDetailsCommand}"
-                            IsVisible="{Binding CanReviewPreview}"
+                            IsVisible="{Binding CanEditDetailsFromPreview}"
                             Style="{StaticResource ButtonSecondary}"
                             AutomationId="StrengthPlanEditDetailsButton" />
                     <Button Text="{Binding ExploreOtherFeaturesButtonText}"

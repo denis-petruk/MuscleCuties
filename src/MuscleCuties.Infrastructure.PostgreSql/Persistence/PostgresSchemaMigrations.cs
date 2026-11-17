@@ -108,6 +108,15 @@ public static class PostgresSchemaMigrations
     public const string GluteFocusResourceName =
         "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.008_glute_focus.sql";
 
+    public const string CheckInFatigueResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.009_checkin_fatigue.sql";
+
+    public const string UnilateralObservedSetsResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.010_unilateral_observed_sets.sql";
+
+    public const string PainReassessmentTimestampsResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.011_pain_reassessment_timestamps.sql";
+
     public static readonly MigrationScriptDefinition BaselineScript =
         new(0, "000_model_baseline.sql", BaselineScriptResourceName);
 
@@ -120,7 +129,10 @@ public static class PostgresSchemaMigrations
         new(5, "005_observed_set_actuals.sql", ObservedSetActualsResourceName),
         new(6, "006_exercise_definition_source_id.sql", ExerciseDefinitionSourceIdResourceName),
         new(7, "007_deload_offer_idempotency.sql", DeloadOfferIdempotencyResourceName),
-        new(8, "008_glute_focus.sql", GluteFocusResourceName)
+        new(8, "008_glute_focus.sql", GluteFocusResourceName),
+        new(9, "009_checkin_fatigue.sql", CheckInFatigueResourceName),
+        new(10, "010_unilateral_observed_sets.sql", UnilateralObservedSetsResourceName),
+        new(11, "011_pain_reassessment_timestamps.sql", PainReassessmentTimestampsResourceName)
     ];
 
     /// <summary>

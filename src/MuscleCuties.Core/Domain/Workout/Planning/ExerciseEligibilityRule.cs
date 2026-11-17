@@ -14,7 +14,9 @@ public enum ExerciseEquipmentKind
     BackExtension45,
     PullUpBar,
     Kettlebell,
-    ClimbingWall
+    ClimbingWall,
+    Sliders,
+    BandAnchor
 }
 
 public enum ExerciseTimingMethod

@@ -35,16 +35,32 @@ public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
                     sets.ToString(CultureInfo.CurrentCulture), minimum.ToString(CultureInfo.CurrentCulture),
                     maximum.ToString(CultureInfo.CurrentCulture))
                 : UiTextCatalog.Get("Workout_Generation_PrescriptionPending");
-            var rationale = string.IsNullOrWhiteSpace(slot.SelectionReason)
-                ? string.Empty
-                : UiTextCatalog.HasKey(slot.SelectionReason)
-                    ? UiTextCatalog.Get(slot.SelectionReason)
-                    : slot.SelectionReason;
+            var rationale = ResolveSlotRationale(slot.SelectionReason);
             return new StrengthPlanSlotDisplay(name, details, slot.IsRequired) { Rationale = rationale };
         }).ToList();
 
         return new StrengthPlanSessionDisplay(title, duration,
             new ObservableCollection<StrengthPlanSlotDisplay>(slots));
+    }
+
+    private static string ResolveSlotRationale(string? selectionReason)
+    {
+        if (string.IsNullOrWhiteSpace(selectionReason))
+            return string.Empty;
+
+        if (UiTextCatalog.HasKey(selectionReason))
+            return UiTextCatalog.Get(selectionReason);
+
+        if (!selectionReason.Contains(' ', StringComparison.Ordinal))
+        {
+            var selectionReasonKey = $"Workout_Generation_SelectionReason_{selectionReason}";
+            if (UiTextCatalog.HasKey(selectionReasonKey))
+                return UiTextCatalog.Get(selectionReasonKey);
+        }
+
+        return selectionReason.Contains(' ', StringComparison.Ordinal)
+            ? selectionReason
+            : string.Empty;
     }
 
     private static string FormatLocalized(string key, params string[] arguments)

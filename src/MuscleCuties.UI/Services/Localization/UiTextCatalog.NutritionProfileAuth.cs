@@ -264,6 +264,7 @@ public static partial class UiTextCatalog
         English["Injury_LogTitle"] = "Injury log";
         English["Injury_Modal_CloseInjuryLog"] = "Close injury log";
         English["Nutrition_AddFood"] = "Add food";
+        English["Nutrition_Balance_ActivityFormat"] = "{0} activity";
         English["Nutrition_Balance_Micros"] = "Micros";
         English["Nutrition_Balance_TodaySBalance"] = "Today's balance";
         English["Nutrition_Balance_ViewMicronutrientTargets"] = "View micronutrient targets";
@@ -796,6 +797,9 @@ public static partial class UiTextCatalog
         English["Profile_WorkoutPrefs_ActivityPreferences"] = "Activity preferences";
         English["Profile_WorkoutPrefs_AvailableWeekdays"] = "Available weekdays";
         English["Profile_WorkoutPrefs_AvailableWeekdaysHint"] = "Select 2 to 7 weekdays when you are available to train.";
+        English["Onboarding_Quiz_GluteFocusSaveFailed"] = "Your answers were saved. Glute focus could not be saved. Tap Finish to retry before creating your first plan.";
+        English["Profile_WorkoutPrefs_GluteFocus"] = "Focus strength plans on glute development";
+        English["Profile_WorkoutPrefs_HiitNotAvailable"] = "HIIT is not available for new activity selections.";
         English["Profile_WorkoutPrefs_SelectedWeekdaysFormat"] = "{0} weekdays selected";
         English["Profile_WorkoutPrefs_WeeklyFrequency"] = "Sessions per week";
         English["Profile_WorkoutPrefs_ChooseActivityWeeklyFrequency"] =
@@ -828,6 +832,11 @@ public static partial class UiTextCatalog
         English["Profile_WorkoutPrefs_EquipmentFullGym"] = "Full gym";
         English["Profile_WorkoutPrefs_EquipmentHome"] = "Dumbbells and bands";
         English["Profile_WorkoutPrefs_EquipmentBodyweight"] = "Bodyweight only";
+        English["Profile_WorkoutPrefs_HasDumbbells"] = "Dumbbells";
+        English["Profile_WorkoutPrefs_HasBands"] = "Resistance bands";
+        English["Profile_WorkoutPrefs_HasConfirmedBandAnchor"] = "Secure fixed anchor confirmed (for band row & press)";
+        English["Profile_WorkoutPrefs_HasSliders"] = "Exercise sliders and safe sliding floor surface";
+        English["Profile_WorkoutPrefs_HomeNeedsEquipment"] = "Select Dumbbells, Resistance bands, or switch to Bodyweight only.";
         English["Fasting_TimerTitle"] = "Fasting timer";
         English["Fasting_Intro"] = "Record time you choose to go without food. This timer does not recommend a duration or tell you whether fasting is right for you.";
         English["Fasting_EligibilityTitle"] = "Before using the timer";

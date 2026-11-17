@@ -15,7 +15,7 @@ public sealed class CatalogMetadataContractTests
             .ToArray();
 
         Assert.Empty(incomplete);
-        Assert.Equal(59, CatalogAuditFixture.Reviews.Count);
+        Assert.Equal(67, CatalogAuditFixture.Reviews.Count);
     }
 
     [Fact]

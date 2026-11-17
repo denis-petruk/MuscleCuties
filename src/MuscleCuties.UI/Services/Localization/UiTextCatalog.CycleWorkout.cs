@@ -4,6 +4,7 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterCycleWorkoutStrings()
     {
+        English["Injury_PainReassessmentDue"] = "It has been 72 hours. Use Edit to reassess pain and movement restrictions before returning to this exercise.";
         English["Workout_Session_AdjustmentDaily"] = "Today’s check-in suggests one fewer optional set. Your main work stays the same.";
         English["Workout_Session_AdjustmentPhase"] = "Based on how you usually feel in this phase, today has one fewer optional set.";
         English["Workout_Session_AdjustmentPattern"] = "Your past check-ins and workouts suggest one fewer optional set today.";
@@ -540,10 +541,26 @@ public static partial class UiTextCatalog
         English["Workout_Session_NoteSaved"] = "Note saved.";
         English["Workout_Session_NoteSaveFailed"] = "Could not save movement note.";
         English["Workout_Recommendation_StartingWeight"] = "Start light: pick a weight you can lift for every rep with 2–3 reps left in reserve.";
+        English["Workout_Recommendation_BandStartingTension"] = "Pick a light band that lets you complete every rep with 2–3 reps left in reserve.";
+        English["Workout_Recommendation_BandProgressReps"] = "Track your clean reps; step up band tension once you hit the top of the rep range.";
         English["Workout_Recommendation_Endurance"] = "Keep a steady, comfortable pace you can sustain for the whole set.";
         English["Workout_Recommendation_LogEachSet"] = "Log each set's weight, reps and reps in reserve so your next targets can adapt.";
         English["Workout_Recommendation_EarnedFormat"] = "You earned a step up: try {0} kg today.";
         English["Workout_Recommendation_MaintainFormat"] = "Stay at {0} kg today.";
         English["Workout_Recommendation_ReduceFormat"] = "Ease back to {0} kg today.";
+        English["Workout_Session_TargetRangeFormat"] = "{0} working sets · {1}–{2} reps · RIR {3}";
+        English["Workout_Session_SupersetLabelFormat"] = "Superset {0}";
+        English["Workout_Session_UnilateralPerSide"] = "Reps per side";
+        English["Workout_Session_CalibrationPrompt"] = "Choose a manageable starting weight and record it today.";
+        English["Workout_Session_WarmupSetFormat"] = "Warm-up {0}";
+        English["Workout_Session_WorkingSetFormat"] = "Set {0}";
+        English["Workout_Session_SplitSuperset"] = "Do separately";
+        English["Workout_Session_LeftSideReps"] = "Left reps";
+        English["Workout_Session_RightSideReps"] = "Right reps";
+        English["Workout_Session_GeneralWarmupFormat"] = "General warm-up: {0} min";
+        English["Workout_Session_FinisherFormat"] = "After strength: {0} min of {1} · RPE {2}–{3}.";
+        English["Workout_Session_FinisherActivity"] = "conditioning";
+        English["Workout_Session_SplitSupersetUnavailable"] = "Start this workout before changing the superset format.";
+        English["Workout_Session_SplitSupersetFailed"] = "Could not update this superset. Check your connection and try again.";
     }
 }

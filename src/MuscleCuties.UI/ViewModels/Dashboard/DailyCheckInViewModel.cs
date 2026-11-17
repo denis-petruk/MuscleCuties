@@ -27,8 +27,10 @@ public partial class DailyCheckInViewModel : ObservableObject
     private readonly ICurrentProfileUserIdProvider? _userIdProvider;
     [ObservableProperty] private double? _bodyWeight;
     [ObservableProperty] private int? _energyLevel;
+    [ObservableProperty] private int? _planningFatigue;
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private bool? _hasBloating;
+    [ObservableProperty] private bool _showAdditionalDetails;
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isCompleted;
     [ObservableProperty] private int? _painLevel;
@@ -62,7 +64,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         _onCompletedAsync = onCompletedAsync;
         _healthSync = healthSync;
         _userIdProvider = userIdProvider;
-        SubmitCommand = new AsyncRelayCommand(SubmitAsync, () => !IsBusy && !IsCompleted && Answers.IsComplete);
+        SubmitCommand = new AsyncRelayCommand(SubmitAsync, () => !IsBusy && !IsCompleted && Answers.IsReadyForPlanning);
         SkipCommand = new AsyncRelayCommand(SkipAsync);
         ConnectHealthCommand = new AsyncRelayCommand(ConnectHealthAsync);
         NotNowHealthCommand = new AsyncRelayCommand(NotNowHealthAsync);
@@ -107,13 +109,14 @@ public partial class DailyCheckInViewModel : ObservableObject
 
     public string SleepDisplay => _isSleepHoursAnswered ? DisplayFormat.Hours(SleepHours) : "—";
 
-    /// <summary>True once every required check-in question has an explicit answer.</summary>
+    /// <summary>Whether all supplemental observations are also answered; planning uses CanSubmit.</summary>
     public bool AreAllAnswersProvided => Answers.IsComplete;
 
     private DailyCheckInAnswers Answers => new(
         _isSleepHoursAnswered ? SleepHours : null, PlanningSleepQuality, EnergyLevel, PlanningSoreness,
-        PainLevel, HasBloating, BodyWeight);
+        PainLevel, HasBloating, BodyWeight, PlanningFatigue);
     public string EnergyDisplay => EnergyLevel is { } value ? $"{value} / 5" : "— / 5";
+    public string FatigueDisplay => FormatPlanningRating(PlanningFatigue);
     public string PlanningSleepDisplay => FormatPlanningRating(PlanningSleepQuality);
     public string PlanningSorenessDisplay => FormatPlanningRating(PlanningSoreness);
     public string PlanningStressDisplay => FormatPlanningRating(PlanningStress);
@@ -135,13 +138,13 @@ public partial class DailyCheckInViewModel : ObservableObject
     public AsyncRelayCommand SkipCommand { get; }
 
     /// <summary>True when the commit action can run; false names a prerequisite in <see cref="SubmitHint" />.</summary>
-    public bool CanSubmit => !IsBusy && !IsCompleted && Answers.IsComplete;
+    public bool CanSubmit => !IsBusy && !IsCompleted && Answers.IsReadyForPlanning;
 
     /// <summary>
     /// D14: a disabled commit must explain what is missing instead of only going grey. The same
     /// string feeds the visible caption and the accessibility hint, so they cannot disagree.
     /// </summary>
-    public string SubmitHint => Answers.IsComplete
+    public string SubmitHint => Answers.IsReadyForPlanning
         ? UiTextCatalog.Get("Dashboard_CheckIn_SubmitHint")
         : UiTextCatalog.Get("Dashboard_CheckIn_SubmitPrerequisiteHint");
 
@@ -154,6 +157,7 @@ public partial class DailyCheckInViewModel : ObservableObject
                 new DailyCheckInStatusRequest(DateOnly.FromDateTime(DateTime.Today), TimeZoneInfo.Local.Id));
             var readiness = status.TodayReadiness;
             EnergyLevel = readiness?.Energy;
+            PlanningFatigue = readiness?.Fatigue;
             PlanningSleepQuality = readiness?.SleepQuality;
             PlanningSoreness = readiness?.Soreness;
             // Display only what was stored; stress is never derived from energy here.
@@ -165,6 +169,7 @@ public partial class DailyCheckInViewModel : ObservableObject
             ReadinessTierText = IsReadinessScoreDisplayEnabled ? BandLocalizationKey(readiness?.Band) : string.Empty;
             SessionSummaryText = string.Empty;
             OnPropertyChanged(nameof(EnergyDisplay));
+            OnPropertyChanged(nameof(FatigueDisplay));
             OnPropertyChanged(nameof(PlanningSleepDisplay));
             OnPropertyChanged(nameof(PlanningSorenessDisplay));
 
@@ -268,15 +273,19 @@ public partial class DailyCheckInViewModel : ObservableObject
         OnAnswerChanged();
     }
 
+    [RelayCommand]
+    private void ToggleAdditionalDetails() => ShowAdditionalDetails = !ShowAdditionalDetails;
+
     private async Task SubmitAsync()
     {
         if (IsBusy || IsCompleted)
             return;
 
-        var request = Answers.ToRequest(DateOnly.FromDateTime(DateTime.Today), TimeZoneInfo.Local.Id);
+        var request = Answers.ToRequest(DateOnly.FromDateTime(DateTime.Today), TimeZoneInfo.Local.Id,
+            requireSupplementaryAnswers: false);
         if (request is null)
         {
-            ErrorMessage = "Dashboard_CheckIn_IncompleteAllFourRatings";
+            ErrorMessage = "Dashboard_CheckIn_IncompleteRequiredRatings";
             return;
         }
 
@@ -323,6 +332,12 @@ public partial class DailyCheckInViewModel : ObservableObject
     partial void OnEnergyLevelChanged(int? value)
     {
         OnPropertyChanged(nameof(EnergyDisplay));
+        OnAnswerChanged();
+    }
+
+    partial void OnPlanningFatigueChanged(int? value)
+    {
+        OnPropertyChanged(nameof(FatigueDisplay));
         OnAnswerChanged();
     }
 

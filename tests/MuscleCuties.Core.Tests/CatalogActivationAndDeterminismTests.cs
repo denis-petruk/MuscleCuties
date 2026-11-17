@@ -109,6 +109,6 @@ public sealed class CatalogActivationAndDeterminismTests
         Assert.True(first > 0);
         Assert.True(first < second);
         Assert.True(second < last);
-        Assert.Equal(60, CatalogAuditFixture.Audit.Exercises.Count);
+        Assert.Equal(68, CatalogAuditFixture.Audit.Exercises.Count);
     }
 }

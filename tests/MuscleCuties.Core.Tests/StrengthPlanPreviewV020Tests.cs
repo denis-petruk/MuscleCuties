@@ -9,6 +9,55 @@ namespace MuscleCuties.Core.Tests;
 
 public sealed class StrengthPlanPreviewV020Tests
 {
+    [Fact]
+    public async Task V2_preview_transports_the_full_prescription_for_canonical_acceptance_projection()
+    {
+        var source = Profile();
+        var request = Request();
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(source)).ExecuteAsync(Guid.NewGuid(), request);
+        var expected = WorkoutGenerationV2Service.GenerateFromPreviewSource(request, source);
+        var json = System.Text.Json.JsonSerializer.SerializeToElement(preview.GenerationV2,
+            new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+
+        Assert.True(json.TryGetProperty("sessions", out var sessions));
+        Assert.Equal(expected.AdaptedSessions.Count, sessions.GetArrayLength());
+        Assert.Equal(expected.AdaptedSessions.Where(session => session.Exercises.Count > 0)
+                .SelectMany(session => session.Exercises).Select(exercise => exercise.ExerciseId),
+            GenerationPlanV2Mapper.ToStrengthSessions(preview.GenerationV2!).SelectMany(session => session.Slots)
+                .Select(slot => slot.ExerciseId!.Value));
+        foreach (var session in sessions.EnumerateArray())
+        foreach (var exercise in session.GetProperty("exercises").EnumerateArray())
+        {
+            Assert.True(exercise.TryGetProperty("warmUpSets", out _));
+            Assert.True(exercise.TryGetProperty("supersetGroupId", out _));
+            Assert.True(exercise.TryGetProperty("isUnilateral", out _));
+            Assert.True(exercise.TryGetProperty("loadStatus", out _));
+            Assert.True(exercise.TryGetProperty("prescribedLoadKg", out _));
+        }
+    }
+
+    [Theory]
+    [InlineData(20, false, "Intermediate", 4)]
+    [InlineData(130, false, "Advanced", 5)]
+    [InlineData(130, true, "Advanced", 2)]
+    public void V2_adapter_uses_durable_day_promotion_and_detraining(int days, bool returning,
+        string expectedTier, int expectedSessions)
+    {
+        var source = Profile() with
+        {
+            ProfileTrainingExperience = TrainingExperienceLevel.Beginner,
+            Catalog = Profile().Catalog.Select(entry => entry with { Candidate = entry.Candidate with
+                { SupportedExperiences = new HashSet<ActivityExperience> { ActivityExperience.Beginner, ActivityExperience.Established } } }).ToArray(),
+            DistinctCompletedWorkoutDays = days,
+            IsReturningAfterDetraining = returning,
+            RequestedSessionsPerWeek = null
+        };
+        var request = Request() with { AvailableWeekdays = Enum.GetValues<DayOfWeek>().ToHashSet(), ActivityHistory = null };
+        var result = WorkoutGenerationV2Service.GenerateFromPreviewSource(request, source);
+        Assert.Contains(result.RuleTrace, entry => entry.StartsWith($"Experience:{expectedTier};", StringComparison.Ordinal));
+        Assert.Equal(expectedSessions, result.AdaptedSessions.Count(session => session.Exercises.Count > 0));
+    }
+
     private const int OwnerMaximumActivitiesPerDay = 2;
     private const int HistoryConsistentWeeks = 1;
     private const int HistoryAverageSessions = 1;
@@ -1205,6 +1254,21 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Equal(first.GenerationV2.SessionCount, second.GenerationV2.SessionCount);
     }
 
+    [Fact]
+    public async Task Preview_surfaces_v2_movement_gaps_once_so_the_sheet_can_offer_one_action()
+    {
+        var source = Profile() with { ExcludedExerciseIds = new HashSet<int> { 101 } };
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(source))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+
+        Assert.NotNull(preview.GenerationV2);
+        Assert.Contains(WeeklyMovementCoverageRule.MissingKneeExtension, preview.GenerationV2!.MissingGaps);
+        Assert.Equal(preview.GenerationV2.MissingGaps.Distinct(StringComparer.Ordinal).Count(),
+            preview.GenerationV2.MissingGaps.Count);
+        Assert.Equal(preview.GenerationV2.MissingGaps.OrderBy(code => code, StringComparer.Ordinal),
+            preview.GenerationV2.MissingGaps);
+    }
+
     private static StrengthPlanPreviewRequestV020 Request() => new(
         WorkoutActivityDto.GeneralStrength, LocalDate,
         HistoryFor(WorkoutActivityType.GeneralStrength),
@@ -1346,6 +1410,7 @@ public sealed class StrengthPlanPreviewV020Tests
                 entry => entry.Candidate.Pattern.ToString()),
             allowed, conditions)
         {
+            BirthDate = new DateOnly(1990, 1, 1),
             MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
                 _ => (IReadOnlySet<string>)new HashSet<string> { "synthetic-muscle" }),
             AvailableWeekdays = new HashSet<DayOfWeek>

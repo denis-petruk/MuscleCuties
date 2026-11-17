@@ -14,7 +14,7 @@ public sealed class CatalogContributionIntegrityTests
             .ToArray();
 
         Assert.Empty(missing);
-        Assert.Equal(60, CatalogAuditFixture.Definitions.Count);
+        Assert.Equal(68, CatalogAuditFixture.Definitions.Count);
     }
 
     [Fact]
@@ -22,9 +22,9 @@ public sealed class CatalogContributionIntegrityTests
     {
         var audit = CatalogAuditFixture.Audit;
 
-        Assert.Equal(127, audit.TotalRows);
-        Assert.Equal(65, audit.Exercises.Sum(exercise => exercise.DirectCount));
-        Assert.Equal(62, audit.Exercises.Sum(exercise => exercise.IndirectCount));
+        Assert.Equal(146, audit.TotalRows);
+        Assert.Equal(73, audit.Exercises.Sum(exercise => exercise.DirectCount));
+        Assert.Equal(73, audit.Exercises.Sum(exercise => exercise.IndirectCount));
         Assert.Empty(audit.InvalidFractions);
         Assert.Empty(audit.DuplicatePairs);
     }

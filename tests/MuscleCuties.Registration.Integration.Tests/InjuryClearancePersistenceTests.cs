@@ -55,6 +55,10 @@ public sealed class InjuryClearancePersistenceTests
             var saved = Xunit.Assert.Single(await store.LoadInjuriesAsync(userId, false, CancellationToken.None));
             Xunit.Assert.Equal(InjuryWorseningTrigger.OverheadReach, saved.WorseningTrigger);
             Xunit.Assert.True(saved.ClinicianAdvisedAvoid);
+            var reported = System.Text.Json.JsonSerializer.SerializeToElement(saved,
+                new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+            Xunit.Assert.True(reported.TryGetProperty("painReassessmentDueAtUtc", out var due));
+            Xunit.Assert.Equal(FirstClearanceInstant.AddHours(72), due.GetDateTimeOffset());
 
             const int editedPain = 2;
             await store.SaveInjuryAsync(request with { Pain = editedPain }, CancellationToken.None);

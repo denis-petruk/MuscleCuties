@@ -330,7 +330,27 @@ internal static partial class RussianUiText
         Values["Workout_Generation_StyleNeedsHistory"] = "Нужен опыт регулярных силовых тренировок. Начните с общей силовой.";
         Values["Workout_Generation_SwitchToGeneralStrength"] = "Перейти на общую силовую";
         Values["Workout_Generation_SwitchStyleFailed"] = "Не удалось сменить силовой стиль. Попробуйте ещё раз.";
-        Values["Workout_Generation_EquipmentBetaNotice"] = "Планы только с весом тела пока недоступны в бета-версии. В планах с гантелями и резинками пока нет вертикальной тяги.";
+        Values["Workout_Generation_EquipmentBetaNotice"] = "Планы только с весом тела не содержат тягу для верха спины без подходящего оборудования или подтверждённого якоря. Отмечайте слайдеры и крепление только при их наличии.";
+        Values["Workout_Generation_QuizEquipmentNotice"] = "Планы только с весом тела не содержат тягу для верха спины без подходящего оборудования или подтверждённого якоря. Слайдеры, гантели и крепление эспандера можно уточнить в разделе «Доступность для тренировок».";
+        Values["Workout_Generation_SelectionReason_BodyweightZeroAddedLoad"] = "С весом тела (без отягощения)";
+        Values["Workout_Generation_SelectionReason_InitialLoadCalibrationRequired"] = "Подберите рабочий вес на тренировке";
+        Values["Workout_Generation_SelectionReason_PriorComparableHistory"] = "На основе предыдущего веса";
+        Values["Workout_Generation_SelectionReason_ConservativeReturnLoadApplied"] = "Сниженный вес для возврата";
+        Values["Workout_Generation_SelectionReason_DoubleProgressionLoadIncreaseRecommended"] = "Вес увеличен после выполнения целевых повторений";
+        Values["Workout_Generation_SelectionReason_ConsecutiveBelowMinRepDecreaseRecommended"] = "Вес снижен после двух тренировок ниже цели";
+        Values["Workout_Generation_SelectionReason_GlutePlateauAddOneDirectSetRecommended"] = "+1 подход на ягодицы для преодоления плато";
+        Values["Workout_Generation_SelectionReason_SingleUnderTargetSessionMaintainsLoad"] = "Вес сохранён после одной тренировки ниже цели";
+        Values["Workout_Generation_SelectionReason_UnacceptableTechniqueBlocksIncrease"] = "Вес сохранён для закрепления техники";
+        Values["Workout_Generation_SelectionReason_MaintainCurrentLoad"] = "На основе предыдущего веса";
+        Values["Workout_Generation_MissingUpperPullEquipment"] = "Тяговые упражнения для верха спины недоступны при тренировках только с весом тела, поэтому они не включены в план. Добавьте оборудование или подтвердите крепление для эспандера в настройках.";
+        Values["Workout_Generation_MissingUpperPullBandAnchor"] = "Тяга и жим с эспандером остаются недоступны, пока вы не подтвердите надёжное крепление (якорь) в настройках тренировок.";
+        Values["Workout_Generation_MissingDirectCalves"] = "Изолированная работа на икры не может быть включена с текущим оборудованием.";
+        Values["Workout_Generation_MissingDirectRearDelts"] = "Изолированная работа на заднюю дельту не может быть включена с текущим оборудованием.";
+        Values["Workout_Generation_BelowTargetDynamicCore"] = "Динамическая работа на кор распределена по доступным дням тренировок.";
+        Values["Workout_Generation_MissingGluteFocusAbduction"] = "Изолированное отведение бедра ограничено при текущем выборе оборудования.";
+        Values["Workout_Generation_ReadinessAdaptation"] = "Количество одного дополнительного подхода уменьшено с учётом сегодняшнего восстановления.";
+        Values["Workout_Generation_FinisherFormat"] = "После силовой тренировки: {0} мин — {1}, RPE {2}–{3}.";
+        Values["Workout_Generation_CoachExplanation"] = "Сегодняшнее восстановление потребовало немного снизить объём.";
     }
 }
 

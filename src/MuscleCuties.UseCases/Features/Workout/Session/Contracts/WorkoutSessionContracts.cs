@@ -5,7 +5,9 @@ public sealed record ObservedSetRecord(
     int RepsCompleted,
     decimal LoadKg,
     int? RirActual = null,
-    bool TechniqueAcceptable = true);
+    bool TechniqueAcceptable = true,
+    int? LeftSideReps = null,
+    int? RightSideReps = null);
 
 public sealed record WorkoutExerciseLogDto(
     int WorkoutDayExerciseId,
@@ -58,6 +60,7 @@ public sealed record WorkoutSwapCandidateDto(
 
 public sealed record SaveWorkoutMovementNoteRequest(int WorkoutDayExerciseId, string? Notes);
 public sealed record SetWorkoutExerciseOptionalRequest(int WorkoutDayExerciseId, bool IsOptional, int OptionalSets);
+public sealed record SplitWorkoutSupersetRequest(Guid SessionId, int WorkoutDayExerciseId, int SupersetGroupId);
 
 public sealed record WorkoutMovementNoteDto(int WorkoutDayExerciseId, string Notes);
 
@@ -67,7 +70,12 @@ public sealed record WorkoutSetDetailDto(
     int RepsCompleted,
     double? Rpe,
     bool IsWarmup,
-    int RestTimeSeconds);
+    int RestTimeSeconds,
+    int? LeftSideReps = null,
+    int? RightSideReps = null)
+{
+    public bool IsObserved { get; init; }
+}
 
 public sealed record WorkoutExerciseDetailDto(
     int WorkoutDayExerciseId,
@@ -78,6 +86,16 @@ public sealed record WorkoutExerciseDetailDto(
     IReadOnlyList<WorkoutSetDetailDto> Sets)
 {
     public int PlannedSets { get; init; }
+    public int PlannedWarmUpSets { get; init; }
+    public int MinRepetitions { get; init; }
+    public int MaxRepetitions { get; init; }
+    public int TargetRir { get; init; }
+    public int RestSeconds { get; init; }
+    public int? SupersetGroupId { get; init; }
+    public bool IsUnilateral { get; init; }
+    public string LoadStatus { get; init; } = string.Empty;
+    public decimal? PrescribedLoadKg { get; init; }
+    public bool RequiresInitialCalibration { get; init; }
     public int OptionalSets { get; init; }
     public bool IsOptional { get; init; }
     public string ActivityTitle { get; init; } = string.Empty;
@@ -143,6 +161,9 @@ public sealed record WorkoutSessionDetailDto(
     IReadOnlyList<WorkoutExerciseDetailDto> Exercises,
     IReadOnlyList<WorkoutActivityDetailDto> Activities)
 {
+    public int? GeneralWarmupMinutes { get; init; }
+    public decimal? EstimatedTotalMinutes { get; init; }
+    public MuscleCuties.UseCases.Features.Workout.Planning.GenerationFinisherV2? AttachedFinisher { get; init; }
     public bool IsOptional { get; init; }
     public bool IsEasierAlternative { get; init; }
     public WorkoutDoseAdjustmentReason? DoseAdjustmentReason { get; init; }

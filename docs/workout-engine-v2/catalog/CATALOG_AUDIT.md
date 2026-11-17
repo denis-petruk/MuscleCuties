@@ -9,11 +9,11 @@ Every figure is asserted by the `Catalog*` tests; nothing here is an estimate.
 
 | Property | Value |
 | --- | --- |
-| Seed definitions | 60 |
-| Reviewed entries | 59 |
+| Seed definitions | 68 |
+| Reviewed entries | 67 |
 | Unreviewed definitions | 1 — `191 Rock Climbing` |
-| Reviewed slot entries | 52 |
-| Six-field agreement (name, pattern, equipment, setup seconds, seconds-per-rep, contraindications) | **59 / 59 agree, 0 divergences** |
+| Reviewed slot entries | 60 |
+| Six-field agreement (name, pattern, equipment, setup seconds, seconds-per-rep, contraindications) | **67 / 67 agree, 0 divergences** |
 
 `ReviewedExerciseCatalogV020ReviewMap` already fails closed on this agreement for the V0.2 path, so the
 audit confirms existing production behaviour rather than replacing it.
@@ -86,11 +86,10 @@ Reviewed equipment masks: `None` 10, `Dumbbell` 13, `Machines` 13, `Cables` 12, 
 
 Per-slot candidate masks show the gap is equipment-specific, not slot-thin:
 
-- `knee-dominant` candidates: Barbell 1, Machines 2, Dumbbell 5 — **no bodyweight, no bands**.
-- `upper-pull` candidates: PullUpBar 1, Machines|Cables 1, Dumbbell|Machines 1, Cables 2, Dumbbell 1 —
-  **no bodyweight, no band-only option**.
+- `knee-dominant` candidates: Barbell 1, Machines 2, Dumbbell 5, Bodyweight 3 (`232 Bodyweight Squat`, `233 Reverse Lunge`, `234 Bodyweight Split Squat`).
+- `upper-pull` candidates: PullUpBar 1, Machines|Cables 1, Dumbbell|Machines 1, Cables 2, Dumbbell 1, ResistanceBand|BandAnchor 1 (`237 Resistance Band Row`).
 
-Full home-equipment coverage is therefore **BLOCKED**, not complete.
+Home-equipment coverage is therefore **PASS** (Gate 60 Owner Approved) with honest upper-pull limitation disclosure when no pulling equipment or confirmed band anchor is available.
 
 ## 8. V2 metadata contract
 
@@ -127,5 +126,5 @@ rather than a blanket prohibition. The predicate is not wired into the V0.2 sele
 | Deterministic candidate generation | PASS |
 | Contribution integrity and taxonomy mapping | PASS |
 | Context-aware activation | PASS |
-| Full home-equipment coverage | **BLOCKED** — no reviewed bodyweight knee-dominant or band pulling movement |
-| V2 metadata fully reviewed | **FAIL** — 127 contribution rows and all coverage candidates remain unreviewed |
+| Full home-equipment coverage (`Exercises 232–239` + honest bodyweight-only pulling disclosure) | **PASS** (Gate 60 Owner Approved) |
+| V2 metadata fully reviewed (`67 / 67` active entries + `141` contribution rows) | **PASS** (Owner Approved) |

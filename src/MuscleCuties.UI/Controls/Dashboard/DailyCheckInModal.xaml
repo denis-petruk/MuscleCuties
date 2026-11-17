@@ -48,6 +48,7 @@
                             SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_SkipHint}" />
                     <Button Style="{StaticResource ButtonPrimary}"
                             Text="{loc:LocalizedText Dashboard_CheckIn_SubmitButton}"
+                            AutomationId="CheckInSaveButton"
                             Command="{Binding SubmitCommand}"
                             IsEnabled="{Binding CanSubmit}"
                             SemanticProperties.Hint="{Binding SubmitHint}" />

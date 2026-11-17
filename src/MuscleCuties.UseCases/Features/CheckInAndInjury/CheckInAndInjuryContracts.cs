@@ -22,7 +22,8 @@ public sealed record DailyCheckInRecord(
     int? PlanningStress = null,
     string? PlanningTimeZoneId = null,
     DateTimeOffset? PlanningRecordedAtUtc = null,
-    long PlanningRevision = 0);
+    long PlanningRevision = 0,
+    int? PlanningFatigue = null);
 
 public sealed record SaveDailyCheckInRequest(
     Guid UserId,
@@ -43,7 +44,8 @@ public sealed record SaveDailyCheckInRequest(
     int? PlanningSleepQuality = null,
     int? PlanningSoreness = null,
     int? PlanningStress = null,
-    string? PlanningTimeZoneId = null);
+    string? PlanningTimeZoneId = null,
+    int? PlanningFatigue = null);
 
 public sealed record InjuryObservationRecord(
     Guid Id,
@@ -55,7 +57,8 @@ public sealed record InjuryObservationRecord(
     bool IsActive,
     MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger WorseningTrigger =
         MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
-    bool? ClinicianAdvisedAvoid = null);
+    bool? ClinicianAdvisedAvoid = null,
+    DateTimeOffset? PainReassessmentDueAtUtc = null);
 
 public sealed record SaveInjuryObservationRequest(
     Guid UserId,

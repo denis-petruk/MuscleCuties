@@ -315,7 +315,8 @@ public sealed class PostgresDashboardOverviewStore(
                         : null,
                     todayCheckIn.PlanningRevision,
                     timeProvider.GetUtcNow(),
-                    timeZoneId));
+                    timeZoneId,
+                    todayCheckIn.PlanningFatigue));
         }).ConfigureAwait(false);
 
     private async Task<(DashboardWeeklyNutritionDto?, IReadOnlyList<DashboardWeeklyWeightDto>,
@@ -595,8 +596,14 @@ public sealed class PostgresDashboardOverviewStore(
         var todayStart = today.ToDateTime(TimeOnly.MinValue, DateTimeKind.Utc);
         var todayEnd = today.ToDateTime(TimeOnly.MaxValue, DateTimeKind.Utc);
 
-        var todaySession = await dbContext.WorkoutSessionLogs.AsNoTracking()
-            .Where(s => s.UserId == userId && s.StartedAt >= todayStart && s.StartedAt <= todayEnd)
+        var activePlannedSession = await dbContext.WorkoutSessionLogs.AsNoTracking()
+            .Where(s => s.UserId == userId && !s.IsDeleted && s.CompletedAt == null && s.PlannedWorkoutDayId != null)
+            .OrderByDescending(s => s.StartedAt)
+            .FirstOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        var todaySession = activePlannedSession ?? await dbContext.WorkoutSessionLogs.AsNoTracking()
+            .Where(s => s.UserId == userId && !s.IsDeleted && s.StartedAt >= todayStart && s.StartedAt <= todayEnd)
             .OrderByDescending(s => s.StartedAt)
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
@@ -609,6 +616,9 @@ public sealed class PostgresDashboardOverviewStore(
                 .Where(s => s.UserId == userId && s.WorkoutSessionLogId == todaySession.Id && !s.IsDeleted)
                 .CountAsync(cancellationToken)
                 .ConfigureAwait(false);
+            var sessionWorkoutDayId = todaySession.PlannedWorkoutDayId is { } plannedDayId
+                ? MuscleCuties.Infrastructure.PostgreSql.Workout.Session.PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(plannedDayId)
+                : 0;
 
             return (
                 todaySession.WorkoutName,
@@ -618,7 +628,7 @@ public sealed class PostgresDashboardOverviewStore(
                 "Moderate",
                 isFinished ? $"Completed ({todaySession.TotalVolumeKg:N0} kg volume)" : "Active Session",
                 "Strength",
-                1,
+                sessionWorkoutDayId,
                 [new DashboardWorkoutActivityDto("Strength", todaySession.WorkoutName, setsCount)]);
         }
 

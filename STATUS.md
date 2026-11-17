@@ -1,59 +1,46 @@
-# Status — Workout Engine 2.0: V2 exercise catalog audit and metadata contract
+# Status — Workout Engine 2.0 verification and shared reset
 
-Branch `fix/qa-audit-followups`. Baseline HEAD before this task: `5cecd0eb`.
+## 1. Changed files
 
-## Changed files
+The existing Workout Engine V2 domain, catalog, persistence, API, UI/localization, and test changes are being integrated from `fix/qa-audit-followups`. The scope is recorded in `docs/workout-engine-v2/IMPLEMENTATION_PLAN.md`. `.codex/config.toml` is excluded. This pass also updates Maestro observed-set input helpers, removes trailing whitespace from the plan/login XAML, and records current evidence here.
 
-New Core rules under `src/MuscleCuties.Core/Domain/Workout/Planning/Catalog/`:
+## 2. Test commands with output
 
-- `ExerciseCatalogMetadataContract.cs` — 14 required V2 fields with `Verified` / `Inherited` / `Missing`
-  provenance. Nothing is defaulted; a gap is returned as `Missing`.
-- `ExerciseCatalogAuditRule.cs` — six-field source agreement, contribution integrity (duplicate pairs,
-  invalid fractions, ambiguous maximum), and the accounting taxonomy that collapses Lats+UpperBack to one
-  Back credit and splits deltoids by movement pattern.
-- `ExerciseCatalogActivationRule.cs` — context-aware activation (`RepetitionStrength`, `TimedStrength`,
-  `AerobicOrSkill`); timed-only movements stay usable for timed work, static core is advisory only, and a
-  missing experience tag raises a familiarity condition instead of a ban.
-- `CandidateCatalogMetadataDocument.cs` — canonical JSON builder: fixed key order, invariant formatting,
-  no timestamps.
+```text
+dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -f net10.0-ios -r iossimulator-arm64 -c Debug -v minimal
+Build succeeded.
+    0 Warning(s)
+    0 Error(s)
 
-Tests in `tests/MuscleCuties.Core.Tests/`: `CatalogAuditFixture.cs`, `CatalogMetadataContractTests.cs`,
-`CatalogContributionIntegrityTests.cs`, `CatalogActivationAndDeterminismTests.cs`,
-`CandidateCatalogArtifactTests.cs`.
+dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj -c Release -v minimal
+Passed!  - Failed:     0, Passed:  1602, Skipped:     0, Total:  1602, Duration: 1 s - MuscleCuties.Core.Tests.dll (net10.0)
 
-Generated artifact: `docs/workout-engine-v2/catalog/CANDIDATE_METADATA_V021.json` (60 entries, status
-`CandidateNotReviewed`, reproducible and drift-guarded by test).
+dotnet test tests/MuscleCuties.Mobile.Contracts.Tests/MuscleCuties.Mobile.Contracts.Tests.csproj -c Release -v minimal
+Passed!  - Failed:     0, Passed:   237, Skipped:     0, Total:   237, Duration: 201 ms - MuscleCuties.Mobile.Contracts.Tests.dll (net10.0)
 
-Documents: `docs/workout-engine-v2/catalog/CATALOG_AUDIT.md`,
-`docs/workout-engine-v2/catalog/REVIEW_PACKET.md`, and this file.
+dotnet test tests/MuscleCuties.Registration.Tests/MuscleCuties.Registration.Tests.csproj -c Release -v minimal
+Passed!  - Failed:     0, Passed:    63, Skipped:     0, Total:    63, Duration: 533 ms - MuscleCuties.Registration.Tests.dll (net10.0)
 
-## Verification
+source /tmp/mc-ux.integration; dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj -c Release -v minimal
+Passed!  - Failed:     0, Passed:   122, Skipped:     0, Total:   122, Duration: 3 m 2 s - MuscleCuties.Registration.Integration.Tests.dll (net10.0)
+
+source /tmp/mc-ux.integration; dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj -c Release -v minimal
+Passed!  - Failed:     0, Passed:   125, Skipped:     0, Total:   125, Duration: 1 m 8 s - MuscleCuties.Server.Tests.dll (net10.0)
 
 ```
-$ dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj -c Release --filter "FullyQualifiedName~Catalog"
-Passed!  - Failed:     0, Passed:    85, Skipped:     0, Total:    85, Duration: 143 ms
 
-$ dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj -c Release
-Passed!  - Failed:     0, Passed:  1500, Skipped:     0, Total:  1500, Duration: 624 ms
-```
+The initial Server invocation lacked its required latency fixture; the initial integration invocation skipped database tests without the marker, then three tests rejected noncanonical fixture database names. After preparing the required disposable fixtures, the full suites above passed with no skips.
 
-Corrected audit facts now asserted by tests: 60 definitions, 59 reviewed, 127 contribution rows
-(65 direct / 62 indirect), no duplicate `(exercise, muscle)` pairs, no invalid fractions, and **five**
-exercises with two direct contributions and therefore no unique maximum (106, 121, 123, 125, 126). An
-earlier draft claimed "no ties"; that check compared a scalar against a list of tuples and was wrong.
+## 3. What was not verified and why
 
-## Not verified
+- Russian full-gym Maestro run on the freshly built simulator app reached active-session logging, then failed to find `WorkoutSessionNextExerciseButton`. All 17 saved journey screenshots were visually reviewed. Cyrillic labels wrap in the captured layouts, but quiz questions/answers, Strength Focus/Strength & Sculpt, exercise names and RIR remain English. This is a localization acceptance failure, not a visual PASS. Evidence: `/tmp/mc-ux-ru-gym/2026-11-16_203214/`.
+- The first English Home Dumbbells & Bands run was stopped after observed unilateral repetitions remained blank: the existing helper only populated weight. The helper now fills bilateral/per-side observed repetitions and captures the numeric keyboard; a full retry is in progress. Bodyweight-only full journey is pending.
+- Shared reset completed on 2026-11-16 following explicit owner approval and confirmation that Development, Staging and Beta share the Staging deployment. Production was excluded. Resetting these environments sequentially is impossible while they share resources.
+- Account `028417007003`, region `us-east-2`: shared RDS `musclecuties-staging-db` / database `musclecuties_staging`; API `musclecuties-backend-api`; worker `musclecuties-workout-reconciliation`; active media `musclecuties-media-staging-028417007003`. Inventory across all 17 enabled regions found no additional RDS instances or Lambda functions. The separate CloudFormation bucket `musclecuties-staging-media-028417007003` was empty and unused by the API. Production bucket `musclecuties-media-prod-028417007003` was not mutated.
+- Fresh encrypted snapshot `mc-g95-staging-pre-reset-20261116` is available. Isolated RDS restore matched all 75 source tables by aggregated data fingerprint SHA256 `d86a65546b6d9bb0a4c94feced92e3152e46ab147608b866632ae55b4cb5d028`; reset rehearsal then passed migration 11, 781 seeded rows, compatible schema, zero users. Temporary restore instance deletion was requested.
+- Versioned private encrypted S3 backup: `mc-g95-staging-backup-028417007003`, prefix `backup-20261116/`; all 10 object versions backed up and all 8 current objects restored under a separate drill prefix with matching sizes/ETags. Manifest SHA256 `c640baa264ada60bfd77a0296e073c3afc7d68ec401533c8c97c9fa8e5a4b8aa`. Two delete markers were also preserved in the manifest. Source reset deleted 12 versions/markers; zero remain.
+- Shared database reset output: `{"status":"reset","schema_version":11,"seeded_rows":781,"compatible":true,"users_remaining":0}`. Both functions resumed their prior concurrency configuration. API liveness is HTTP 200; readiness is HTTP 503 with the older deployed binary. Latest backend package deployment is pending to restore compatibility. No TestFlight/App Store Connect actions occurred.
 
-- No PostgreSQL-backed suite ran, so the catalog importer and review-map path are untouched but not
-  exercised against a database in this task.
-- No simulator or device run: no UI surface changed.
-- The V2 activation predicate is **not wired** into `ExercisePlanPreview`/`ExerciseEligibilityRule`, so
-  V0.2 production selection behaviour is unchanged; only unit-level decisions exist.
-- Assignment of the 127 contribution rows remains unreviewed by the snapshot — the audit treats them as
-  `Inherited`, never `Verified`.
-- Full home-equipment coverage is BLOCKED: no reviewed bodyweight knee-dominant or band pulling movement.
+## 4. Next step or blocker
 
-## Next step
-
-Owner decision on the eight items in `docs/workout-engine-v2/catalog/REVIEW_PACKET.md`, then W2 muscle
-accounting over the 59 valid entries with synthetic fixtures.
+Deploy and verify the tested backend package through published Lambda aliases, complete the remaining Maestro journeys and visual review, then merge the PR only when required checks are green. Preserve the RDS snapshot and S3 backup. Gate 95 reset is executed; release readiness remains incomplete until API readiness and deployment evidence pass.

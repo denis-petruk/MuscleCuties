@@ -129,6 +129,16 @@ public sealed class WorkoutGenerationEngineV2Tests
         Assert.Equal(
             result.OriginalSessions[0].PhysicalWorkingSets - 1,
             result.AdaptedSessions[0].PhysicalWorkingSets);
+        var originalByPosition = result.OriginalSessions.SelectMany(session => session.Exercises.Select(exercise =>
+                (Session: session, Exercise: exercise)))
+            .ToDictionary(item => (item.Session.SessionIndex, item.Exercise.OrderIndex), item => item.Exercise);
+        foreach (var (session, exercise) in result.AdaptedSessions.SelectMany(session => session.Exercises.Select(exercise =>
+                     (session, exercise))))
+        {
+            var original = originalByPosition[(session.SessionIndex, exercise.OrderIndex)];
+            Assert.Equal(original.LoadStatus, exercise.LoadStatus);
+            Assert.Equal(original.PrescribedLoadKg, exercise.PrescribedLoadKg);
+        }
     }
 
     [Fact]
@@ -153,7 +163,7 @@ public sealed class WorkoutGenerationEngineV2Tests
     }
 
     [Fact]
-    public void Hiit_is_deferred_and_cardio_finisher_is_capped_at_30_minutes()
+    public void S17_strength_cardio_finisher_stays_attached_and_is_capped_at_30_minutes()
     {
         var input = CreateBaseInput([DayOfWeek.Monday, DayOfWeek.Thursday], TrainingFocus.Balanced, StrengthStyleV2.GeneralStrength) with
         {
@@ -178,6 +188,8 @@ public sealed class WorkoutGenerationEngineV2Tests
         Assert.NotNull(finisher);
         Assert.Equal(WorkoutActivityType.Cycling, finisher!.Activity);
         Assert.True(finisher.DurationMinutes <= 30);
+        Assert.Equal(result.OriginalSessions.Count, result.AdaptedSessions.Count);
+        Assert.All(result.AdaptedSessions, session => Assert.NotEmpty(session.Exercises));
     }
 
     [Fact]

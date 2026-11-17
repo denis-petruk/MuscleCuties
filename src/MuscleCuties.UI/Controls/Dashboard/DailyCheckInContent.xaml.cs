@@ -25,6 +25,7 @@ public partial class DailyCheckInContent : ContentView
         [SleepQualityChip1, SleepQualityChip2, SleepQualityChip3, SleepQualityChip4, SleepQualityChip5];
 
     private Button[] EnergyChips => [EnergyChip1, EnergyChip2, EnergyChip3, EnergyChip4, EnergyChip5];
+    private Button[] FatigueChips => [FatigueChip1, FatigueChip2, FatigueChip3, FatigueChip4, FatigueChip5];
     private Button[] PainChips => [PainChip0, PainChip1, PainChip2, PainChip3];
     private Button[] SorenessChips => [SorenessChip1, SorenessChip2, SorenessChip3, SorenessChip4, SorenessChip5];
     private Button[] BloatingChips => [BloatingNoChip, BloatingYesChip];
@@ -90,6 +91,7 @@ public partial class DailyCheckInContent : ContentView
     {
         if (e.PropertyName is nameof(DailyCheckInViewModel.PlanningSleepQuality)
             or nameof(DailyCheckInViewModel.EnergyLevel)
+            or nameof(DailyCheckInViewModel.PlanningFatigue)
             or nameof(DailyCheckInViewModel.PainLevel)
             or nameof(DailyCheckInViewModel.PlanningSoreness)
             or nameof(DailyCheckInViewModel.HasBloating))
@@ -110,6 +112,15 @@ public partial class DailyCheckInContent : ContentView
         if (TryReadLevel(sender, out var level) && BindingContext is DailyCheckInViewModel vm)
         {
             vm.EnergyLevel = level;
+            UpdateChipGroups();
+        }
+    }
+
+    private void OnFatigueClicked(object? sender, EventArgs e)
+    {
+        if (TryReadLevel(sender, out var level) && BindingContext is DailyCheckInViewModel vm)
+        {
+            vm.PlanningFatigue = level;
             UpdateChipGroups();
         }
     }
@@ -155,6 +166,7 @@ public partial class DailyCheckInContent : ContentView
 
         UpdateChipGroup(SleepQualityChips, (vm.PlanningSleepQuality ?? 0) - 1);
         UpdateChipGroup(EnergyChips, (vm.EnergyLevel ?? 0) - 1);
+        UpdateChipGroup(FatigueChips, (vm.PlanningFatigue ?? 0) - 1);
         UpdateChipGroup(PainChips, vm.PainLevel ?? -1);
         UpdateChipGroup(SorenessChips, (vm.PlanningSoreness ?? 0) - 1);
         UpdateChipGroup(BloatingChips, vm.HasBloating switch { false => 0, true => 1, null => -1 });

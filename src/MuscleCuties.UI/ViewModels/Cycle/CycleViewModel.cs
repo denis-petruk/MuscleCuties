@@ -673,9 +673,9 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         return CycleCalendarItemBuilder.GetNeutralDayTextColor(useDarkTheme);
     }
 
-    private static Color GetTodayDayTextColor(bool useDarkTheme)
+    private static Color GetTodayDayTextColor(bool isNeutral, bool useDarkTheme)
     {
-        return CycleCalendarItemBuilder.GetTodayDayTextColor(useDarkTheme);
+        return CycleCalendarItemBuilder.GetTodayDayTextColor(isNeutral, useDarkTheme);
     }
 
     private static Color GetPredictedDayStrokeColor(CyclePhase phase, bool useDarkTheme)
@@ -872,7 +872,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                     ? GetNeutralDayBackground(day.IsToday, UseDarkTheme)
                     : GetDayBackground(day.Phase, day.IsToday, UseDarkTheme),
                 TextColor = day.IsToday
-                    ? GetTodayDayTextColor(UseDarkTheme)
+                    ? GetTodayDayTextColor(day.IsNeutral, UseDarkTheme)
                     : day.IsNeutral
                         ? GetNeutralDayTextColor(UseDarkTheme)
                         : GetPhaseTextColor(day.Phase, UseDarkTheme),

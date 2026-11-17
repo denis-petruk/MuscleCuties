@@ -78,9 +78,11 @@ public static class CycleCalendarItemBuilder
             BackgroundColor = isSelected
                 ? PhaseThemePalette.GetSelectedDayBackgroundColor(useDarkTheme)
                 : existingDay?.BackgroundColor ?? AppThemeResources.GetRequired<Color>("Transparent"),
-            TextColor = isToday
-                ? GetTodayDayTextColor(useDarkTheme)
-                : existingDay?.TextColor ?? GetPhaseTextColor(phase, useDarkTheme),
+            TextColor = isSelected
+                ? GetSelectedDayTextColor(useDarkTheme)
+                : isToday
+                    ? GetTodayDayTextColor(isNeutral, useDarkTheme)
+                    : existingDay?.TextColor ?? GetPhaseTextColor(phase, useDarkTheme),
             StrokeColor = isSelected
                 ? PhaseThemePalette.GetSelectedDayStrokeColor(useDarkTheme)
                 : (existingDay?.StrokeColor != default && existingDay?.StrokeColor is not null
@@ -168,7 +170,7 @@ public static class CycleCalendarItemBuilder
             BackgroundColor = isNeutral
                 ? GetNeutralDayBackground(isToday, useDarkTheme)
                 : GetDayBackground(phase, isToday, useDarkTheme),
-            TextColor = isToday ? GetTodayDayTextColor(useDarkTheme) :
+            TextColor = isToday ? GetTodayDayTextColor(isNeutral, useDarkTheme) :
                 isNeutral ? GetNeutralDayTextColor(useDarkTheme) : GetPhaseTextColor(phase, useDarkTheme),
             StrokeColor = ResolveDayStrokeColor(phase, isToday, hasRecordedObservation, isEstimated, useDarkTheme),
             StrokeThickness = AppThemeResources.GetDouble(isToday
@@ -224,9 +226,21 @@ public static class CycleCalendarItemBuilder
         return AppThemeResources.GetColor(useDarkTheme ? "TextPrimaryDark" : "CycleNeutralTextLight", default);
     }
 
-    public static Color GetTodayDayTextColor(bool useDarkTheme)
+    public static Color GetSelectedDayTextColor(bool useDarkTheme)
     {
-        return AppThemeResources.GetColor("ContrastInk", default);
+        return AppThemeResources.GetColor(useDarkTheme ? "TextPrimaryDark" : "TextPrimary", default);
+    }
+
+    public static Color GetTodayDayTextColor(bool useDarkTheme) =>
+        GetTodayDayTextColor(isNeutral: false, useDarkTheme);
+
+    public static Color GetTodayDayTextColor(bool isNeutral, bool useDarkTheme)
+    {
+        // Neutral Today sits on CycleNeutralTodaySurface (#1F2937) in both themes; phased Today in Dark
+        // mode sits on bright pastel CyclePhase*TextDark so contrast requires dark ink.
+        return useDarkTheme && !isNeutral
+            ? AppThemeResources.GetColor("PageBackgroundDark", default)
+            : AppThemeResources.GetColor("ContrastInk", default);
     }
 
     public static Color GetPredictedDayStrokeColor(CyclePhase phase, bool useDarkTheme)

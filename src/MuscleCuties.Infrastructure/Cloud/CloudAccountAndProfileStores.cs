@@ -1043,7 +1043,20 @@ public sealed class CloudProfileWorkoutPreferencesStore(
                 activitySessionDurationsMinutes = preferences.ActivitySessionDurationsMinutes,
                 equipmentLevel = preferences.EquipmentLevel ?? currentResponse.Data.EquipmentLevel,
                 requestedSessionsPerWeek = preferences.RequestedSessionsPerWeek ?? new Dictionary<int, int>(),
-                excludedExerciseIds = preferences.ExcludedExerciseIds?.ToArray() ?? []
+                excludedExerciseIds = preferences.ExcludedExerciseIds?.ToArray() ?? [],
+                gluteFocus = preferences.GluteFocus,
+                equipmentCapabilities = (preferences.HasSliders is not null ||
+                    preferences.HasConfirmedBandAnchor is not null ||
+                    preferences.HasDumbbells is not null ||
+                    preferences.HasBands is not null)
+                    ? new
+                    {
+                        hasSliders = preferences.HasSliders,
+                        hasConfirmedBandAnchor = preferences.HasConfirmedBandAnchor,
+                        hasDumbbells = preferences.HasDumbbells,
+                        hasBands = preferences.HasBands
+                    }
+                    : null
             },
             idempotencyKey: Guid.NewGuid().ToString("N"),
             cancellationToken).ConfigureAwait(false);

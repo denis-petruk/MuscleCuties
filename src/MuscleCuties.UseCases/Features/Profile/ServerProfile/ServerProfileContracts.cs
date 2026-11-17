@@ -1,3 +1,5 @@
+using MuscleCuties.Core.Domain.Workout.Planning;
+
 namespace MuscleCuties.UseCases.Features.Profile.ServerProfile;
 
 public sealed record ServerProfileSnapshot(
@@ -28,7 +30,9 @@ public sealed record ServerProfileSnapshot(
     DateTime? CreatedAtUtc = null,
     string ProfileImagePath = "",
     string RequestedActivitySessionsPerWeekJson = "{}",
-    string ExcludedStrengthExerciseIdsJson = "[]");
+    string ExcludedStrengthExerciseIdsJson = "[]",
+    bool GluteFocus = false,
+    EquipmentCapabilities? EquipmentCapabilities = null);
 
 public sealed record UpdateServerProfileRequest(
     Guid UserId,
@@ -72,7 +76,9 @@ public sealed record UpdateServerWorkoutPreferencesRequest(
     IReadOnlyDictionary<int, int> ActivitySessionDurationsMinutes,
     string? EquipmentLevel = null,
     IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek = null,
-    IReadOnlySet<int>? ExcludedExerciseIds = null);
+    IReadOnlySet<int>? ExcludedExerciseIds = null,
+    bool? GluteFocus = null,
+    EquipmentCapabilities? EquipmentCapabilities = null);
 
 public sealed record UpdateServerNutritionTargetsRequest(
     Guid UserId,

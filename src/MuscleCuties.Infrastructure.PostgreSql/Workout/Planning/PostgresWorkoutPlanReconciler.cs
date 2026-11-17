@@ -134,7 +134,8 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
             DraftPreferences = draft,
             ExplicitStrengthStyleChoice = styleDto
         };
-        var preview = PreviewStrengthPlanV020UseCase.EvaluateAutomaticLoadedSource(userId, request, source, styleDto);
+        var preview = GenerationPlanV2Mapper.ForCanonicalUse(
+            PreviewStrengthPlanV020UseCase.EvaluateAutomaticLoadedSource(userId, request, source, styleDto));
         var hasStrengthContent = preview.Sessions.Count > 0 && preview.Sessions.All(session =>
             session.Slots.Any(slot => slot.ExerciseId.HasValue));
         if (preview.Status != FeasibleStatus || !hasStrengthContent ||
@@ -219,8 +220,9 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                          StrengthStyleSelectionRule.IsStrengthStyle((WorkoutActivityType)id)).Distinct())
             {
                 var selectedStyle = WorkoutActivityContractMapper.ToDto((WorkoutActivityType)selectedStyleId);
-                var candidate = PreviewStrengthPlanV020UseCase.EvaluateAutomaticLoadedSource(userId,
-                    request with { Activity = selectedStyle, ExplicitStrengthStyleChoice = selectedStyle }, source, selectedStyle);
+                var candidate = GenerationPlanV2Mapper.ForCanonicalUse(
+                    PreviewStrengthPlanV020UseCase.EvaluateAutomaticLoadedSource(userId,
+                        request with { Activity = selectedStyle, ExplicitStrengthStyleChoice = selectedStyle }, source, selectedStyle));
                 if (candidate.Status == FeasibleStatus && candidate.EffectiveActivityTypeId == selectedStyleId &&
                     !candidate.RequiresReducedVolumeAcknowledgment &&
                     candidate.Sessions.Any(session => session.Slots.Any(slot => slot.ExerciseId.HasValue)))
@@ -712,7 +714,14 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         EqualEntries(draft.ActivitySessionDurationsMinutes, source.ActivitySessionDurationsMinutes!) &&
         EqualEntries(draft.RequestedSessionsPerWeek ?? new Dictionary<int, int>(), source.RequestedSessionsPerWeek!) &&
         (draft.ExcludedExerciseIds ?? new HashSet<int>()).SetEquals(source.ExcludedExerciseIds!) &&
-        Enum.TryParse<Equipment>(draft.EquipmentLevel, true, out var draftEquipment) && draftEquipment == equipment;
+        Enum.TryParse<Equipment>(draft.EquipmentLevel, true, out var draftEquipment) && draftEquipment == equipment &&
+        MatchesEquipmentCapabilities(draft, source.SavedAnswers?.EquipmentCapabilities);
+
+    private static bool MatchesEquipmentCapabilities(WorkoutPreferencesDto draft, EquipmentCapabilities? saved) =>
+        (draft.HasSliders ?? false) == (saved?.HasSliders ?? false) &&
+        (draft.HasConfirmedBandAnchor ?? false) == (saved?.HasConfirmedBandAnchor ?? false) &&
+        (draft.HasDumbbells ?? true) == (saved?.HasDumbbells ?? true) &&
+        (draft.HasBands ?? true) == (saved?.HasBands ?? true);
 
     private static bool EqualEntries(IReadOnlyDictionary<int, int> left, IReadOnlyDictionary<int, int> right) =>
         left.Count == right.Count && left.All(pair => right.TryGetValue(pair.Key, out var value) && value == pair.Value);

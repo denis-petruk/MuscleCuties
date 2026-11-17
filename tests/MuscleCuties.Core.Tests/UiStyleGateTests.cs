@@ -86,7 +86,13 @@ public sealed class UiStyleGateTests
         ("SuccessDark", "CardSurfaceSecondaryDark"),
         ("ErrorDark", "CardSurfaceSecondaryDark"),
         ("TextPrimary", "ActionSurfaceDark"),
-        ("ContrastInk", "CycleNeutralTodaySurface")
+        ("ContrastInk", "CycleNeutralTodaySurface"),
+        ("TextPrimary", "PhaseThemeSelectedDaySurfaceLight"),
+        ("TextPrimaryDark", "PhaseThemeSelectedDaySurfaceDark"),
+        ("PageBackgroundDark", "CyclePhaseMenstrualTextDark"),
+        ("PageBackgroundDark", "CyclePhaseFollicularTextDark"),
+        ("PageBackgroundDark", "CyclePhaseOvulatoryTextDark"),
+        ("PageBackgroundDark", "CyclePhaseLutealTextDark")
     ];
 
     [Fact]
@@ -316,6 +322,20 @@ public sealed class UiStyleGateTests
         Assert.True(failures.Count == 0,
             $"{failures.Count} declared text pair(s) miss the normal-text contrast floor:\n"
             + string.Join("\n", failures));
+    }
+
+    [Fact]
+    public void Cycle_strip_and_slot_rationale_preserve_contrast_and_localization()
+    {
+        var builderPath = Path.Combine(RepositoryRoot, "src", "MuscleCuties.UI", "ViewModels", "Cycle", "CycleCalendarItemBuilder.cs");
+        var builderSource = File.ReadAllText(builderPath);
+        Assert.Contains("TextColor = isSelected", builderSource, StringComparison.Ordinal);
+        Assert.Contains("GetSelectedDayTextColor", builderSource, StringComparison.Ordinal);
+
+        var sessionDisplayPath = Path.Combine(RepositoryRoot, "src", "MuscleCuties.UI", "ViewModels", "Workout", "StrengthPlanSessionDisplay.cs");
+        var sessionDisplaySource = File.ReadAllText(sessionDisplayPath);
+        Assert.Contains("ResolveSlotRationale", sessionDisplaySource, StringComparison.Ordinal);
+        Assert.Contains("Workout_Generation_SelectionReason_", sessionDisplaySource, StringComparison.Ordinal);
     }
 
     private static string StyleSignature(XElement style)

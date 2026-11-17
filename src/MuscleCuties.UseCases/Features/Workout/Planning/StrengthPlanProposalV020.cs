@@ -20,6 +20,7 @@ public sealed record SavedActivityAnswersDto(long Version, IReadOnlyList<Activit
 {
     public WorkoutActivityDto? HiitUnderlyingCardioActivity { get; init; }
     public HiitEvidenceCaptureStamp? HiitCapture { get; init; }
+    public EquipmentCapabilities? EquipmentCapabilities { get; init; }
 }
 public sealed record SaveActivityAnswersRequest(long ExpectedVersion, IReadOnlyList<ActivityEligibilityInputV020> ActivityEligibilityEvidence,
     HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence)
@@ -109,8 +110,8 @@ public sealed class CreateStrengthPlanProposalV020UseCase(
         StrengthPlanPreviewRequestV020 request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
-        var preview = await previewUseCase.ExecuteAsync(userId, request, cancellationToken)
-            .ConfigureAwait(false);
+        var preview = GenerationPlanV2Mapper.ForCanonicalUse(
+            await previewUseCase.ExecuteAsync(userId, request, cancellationToken).ConfigureAwait(false));
         var hasStrengthContent = preview.Sessions.Count > 0 && preview.Sessions.All(session =>
             session.Slots.Any(slot => slot.ExerciseId.HasValue));
         if (!string.Equals(preview.Status, "Feasible", StringComparison.Ordinal) ||

@@ -47,6 +47,11 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(SaveActionText))]
     private bool _isPlanSetupNavigationPending;
     [ObservableProperty] private SelectionOption<string>? _selectedEquipmentOption;
+    [ObservableProperty] private bool _gluteFocus;
+    [ObservableProperty] private bool _hasDumbbells = true;
+    [ObservableProperty] private bool _hasBands = true;
+    [ObservableProperty] private bool _hasConfirmedBandAnchor;
+    [ObservableProperty] private bool _hasSliders;
     [ObservableProperty] private string _statusMessage = string.Empty;
     [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
     [ObservableProperty] private ObservableCollection<WorkoutWeekdayOptionItem> _availableWeekdays = new();
@@ -86,24 +91,22 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         new(BodyweightEquipmentValue, "Profile_WorkoutPrefs_EquipmentBodyweight");
 
     /// <summary>
-    /// D1/OD-2: "Bodyweight only" is not offered for new selections in the beta (the reviewed catalog
-    /// has no bodyweight squat, lunge or pull). A saved bodyweight setting is still listed so it is
-    /// displayed and preserved; the server keeps planning it.
+    /// Gate 60: All approved equipment profiles including bodyweight-only and explicit home hardware capabilities are offered.
     /// </summary>
     [ObservableProperty]
     private IReadOnlyList<SelectionOption<string>> _equipmentOptions = OfferedEquipmentOptions(null);
 
-    internal static IReadOnlyList<SelectionOption<string>> OfferedEquipmentOptions(string? savedEquipmentLevel)
-    {
-        List<SelectionOption<string>> options =
-        [
-            new(FullGymEquipmentValue, "Profile_WorkoutPrefs_EquipmentFullGym"),
-            new(HomeDumbbellsBandsEquipmentValue, "Profile_WorkoutPrefs_EquipmentHome")
-        ];
-        if (string.Equals(savedEquipmentLevel, BodyweightEquipmentValue, StringComparison.OrdinalIgnoreCase))
-            options.Add(BodyweightEquipmentOption);
-        return options;
-    }
+    internal static IReadOnlyList<SelectionOption<string>> OfferedEquipmentOptions(string? savedEquipmentLevel) =>
+    [
+        new(FullGymEquipmentValue, "Profile_WorkoutPrefs_EquipmentFullGym"),
+        new(HomeDumbbellsBandsEquipmentValue, "Profile_WorkoutPrefs_EquipmentHome"),
+        BodyweightEquipmentOption
+    ];
+
+    public bool ShowHomeEquipmentCapabilities =>
+        string.Equals(SelectedEquipmentOption?.Value, HomeDumbbellsBandsEquipmentValue, StringComparison.OrdinalIgnoreCase);
+
+    public bool ShowBandAnchorConfirmation => ShowHomeEquipmentCapabilities && HasBands;
 
     /// <summary>C1/OD-7: a saved strength style that is no longer offered for this profile.</summary>
     public bool HasIneligibleSavedStyle =>
@@ -196,6 +199,11 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                                           string.Equals(option.Value, preferences?.EquipmentLevel,
                                               StringComparison.OrdinalIgnoreCase)) ??
                                       EquipmentOptions.First(option => option.Value == FullGymEquipmentValue);
+            GluteFocus = preferences?.GluteFocus ?? false;
+            HasDumbbells = preferences?.HasDumbbells ?? true;
+            HasBands = preferences?.HasBands ?? true;
+            HasConfirmedBandAnchor = preferences?.HasConfirmedBandAnchor ?? false;
+            HasSliders = preferences?.HasSliders ?? false;
 
             var excludedExerciseIds = preferences?.ExcludedExerciseIds ?? new HashSet<int>();
             var exclusionOptions = await _exerciseExclusionCatalog.ExecuteAsync();
@@ -279,6 +287,14 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                 return;
             }
 
+            var isHomeEquipment = string.Equals(SelectedEquipmentOption.Value, HomeDumbbellsBandsEquipmentValue,
+                StringComparison.OrdinalIgnoreCase);
+            if (isHomeEquipment && !HasDumbbells && !HasBands)
+            {
+                StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_HomeNeedsEquipment");
+                return;
+            }
+
             var draftPreferences = new WorkoutPreferencesDto(
                 selectedActivities.Select(option => (int)option.ActivityType).ToArray(),
                 availableWeekdays,
@@ -295,7 +311,12 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                         option => WorkoutPreferencesConstraints.DefaultWeeklyFrequency(
                             option.ActivityType, availableWeekdays.Length)!.Value),
                 ExerciseExclusionOptions.Where(option => option.IsSelected)
-                    .Select(option => option.ExerciseId).ToHashSet());
+                    .Select(option => option.ExerciseId).ToHashSet(),
+                GluteFocus: GluteFocus,
+                HasSliders: HasSliders,
+                HasConfirmedBandAnchor: isHomeEquipment && HasBands && HasConfirmedBandAnchor,
+                HasDumbbells: isHomeEquipment ? HasDumbbells : null,
+                HasBands: isHomeEquipment ? HasBands : null);
             if (!await _useCase.SaveAsync(draftPreferences).ConfigureAwait(true))
             {
                 StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_SaveServerUnavailable");
@@ -440,6 +461,11 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
 
         return string.Join("|",
             SelectedEquipmentOption?.Value ?? string.Empty,
+            GluteFocus.ToString(CultureInfo.InvariantCulture),
+            HasDumbbells.ToString(CultureInfo.InvariantCulture),
+            HasBands.ToString(CultureInfo.InvariantCulture),
+            HasConfirmedBandAnchor.ToString(CultureInfo.InvariantCulture),
+            HasSliders.ToString(CultureInfo.InvariantCulture),
             selectedActivities,
             selectedWeekdays,
             excludedExercises);
@@ -482,6 +508,30 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
 
     partial void OnIsLoadingDataChanged(bool value) => OnPropertyChanged(nameof(IsPageLoading));
 
-    partial void OnSelectedEquipmentOptionChanged(SelectionOption<string>? value) =>
+    partial void OnSelectedEquipmentOptionChanged(SelectionOption<string>? value)
+    {
+        OnPropertyChanged(nameof(ShowHomeEquipmentCapabilities));
+        OnPropertyChanged(nameof(ShowBandAnchorConfirmation));
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+    }
+
+    partial void OnHasDumbbellsChanged(bool value) =>
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+
+    partial void OnHasBandsChanged(bool value)
+    {
+        if (!value)
+            HasConfirmedBandAnchor = false;
+        OnPropertyChanged(nameof(ShowBandAnchorConfirmation));
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+    }
+
+    partial void OnHasConfirmedBandAnchorChanged(bool value) =>
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+
+    partial void OnHasSlidersChanged(bool value) =>
+        OnPropertyChanged(nameof(HasUnsavedChanges));
+
+    partial void OnGluteFocusChanged(bool value) =>
         OnPropertyChanged(nameof(HasUnsavedChanges));
 }

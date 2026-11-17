@@ -104,7 +104,8 @@ public sealed record ExerciseCatalogItemV2(
     ExerciseVarietyTag VarietyTag = ExerciseVarietyTag.None,
     CatalogReviewStatusV2 ReviewStatus = CatalogReviewStatusV2.ApprovedWithConditions,
     string ReviewVersion = "MC-CATALOG-V2.0",
-    bool IsGluteDominant = false)
+    bool IsGluteDominant = false,
+    IReadOnlySet<ExerciseTimingMethod>? SupportedTimingMethods = null)
 {
     public bool PrefersMachineOrCable =>
         RequiredEquipment.Contains(ExerciseEquipmentKind.Machine) ||
@@ -140,9 +141,11 @@ public sealed record PainRestrictionV2(
     int? ExerciseId,
     MovementPattern? BlockedPattern,
     InjuryFlag SiteFlag,
-    DateTimeOffset ReportedAtUtc,
+    DateTimeOffset? ReportedAtUtc,
     bool IsResolved,
-    int ConservativeReturnSessionsCompleted = 0);
+    int ConservativeReturnSessionsCompleted = 0,
+    decimal? ReturnBaselineLoadKg = null,
+    bool RequiresReturnCalibration = false);
 
 public sealed record DailyReadinessInputV2(
     int? EnergyLevel,     // 1-3 (Low/Normal/High) or 1-5
@@ -194,7 +197,8 @@ public sealed record WorkoutGenerationInputV2(
     IReadOnlyList<int>? PriorWeekExerciseIds = null,
     string PolicyVersion = WorkoutPolicyV2.Version,
     string InputContractVersion = WorkoutPolicyV2.InputContractVersion,
-    string CatalogVersion = "MC-CATALOG-V2.0");
+    string CatalogVersion = "MC-CATALOG-V2.0",
+    IReadOnlySet<DateOnly>? PreviousWeekStrengthDays = null);
 
 public sealed record PlannedExercisePrescriptionV2(
     int OrderIndex,

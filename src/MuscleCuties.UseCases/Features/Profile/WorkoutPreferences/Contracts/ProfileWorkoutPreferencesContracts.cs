@@ -98,7 +98,12 @@ public sealed record WorkoutPreferencesDto(
     IReadOnlyDictionary<int, int> ActivitySessionDurationsMinutes,
     string? EquipmentLevel = null,
     IReadOnlyDictionary<int, int>? RequestedSessionsPerWeek = null,
-    HashSet<int>? ExcludedExerciseIds = null);
+    HashSet<int>? ExcludedExerciseIds = null,
+    bool? GluteFocus = null,
+    bool? HasSliders = null,
+    bool? HasConfirmedBandAnchor = null,
+    bool? HasDumbbells = null,
+    bool? HasBands = null);
 
 public interface IProfileWorkoutPreferencesUseCase
 {

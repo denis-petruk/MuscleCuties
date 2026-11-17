@@ -9,7 +9,8 @@ public sealed record TodayReadinessCheckInDto(
     int? SleepQuality,
     int? Energy,
     int? Soreness,
-    int? Stress);
+    int? Stress,
+    int? Fatigue = null);
 
 public sealed record DailyCheckInStatusResponse(
     bool IsCompleted,
@@ -23,15 +24,16 @@ public sealed record DailyCheckInPresentationSettings(
 
 public sealed record SubmitDailyCheckInRequest(
     DateOnly Date,
-    double SleepHours,
+    double? SleepHours,
     int EnergyLevel,
-    int PainLevel,
-    bool HasBloating,
+    int? PainLevel,
+    bool? HasBloating,
     double? BodyWeightKg,
     int? PlanningSleepQuality = null,
     int? PlanningSoreness = null,
     int? PlanningStress = null,
-    string? PlanningTimeZoneId = null);
+    string? PlanningTimeZoneId = null,
+    int? PlanningFatigue = null);
 
 public sealed record SubmitDailyCheckInResponse(
     int ReadinessScore,

@@ -45,6 +45,14 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_SleepQuality5A11y"] = "Sleep quality 5 of 5";
         English["Dashboard_CheckIn_Energy5Hint"] = "Very high energy";
         English["Dashboard_CheckIn_EnergyTitle"] = "Energy";
+        English["Dashboard_CheckIn_FatigueTitle"] = "Fatigue";
+        English["Dashboard_CheckIn_FatigueLowLabel"] = "None";
+        English["Dashboard_CheckIn_FatigueHighLabel"] = "Very high";
+        English["Dashboard_CheckIn_Fatigue1A11y"] = "Fatigue 1 of 5, none";
+        English["Dashboard_CheckIn_Fatigue2A11y"] = "Fatigue 2 of 5, low";
+        English["Dashboard_CheckIn_Fatigue3A11y"] = "Fatigue 3 of 5, moderate";
+        English["Dashboard_CheckIn_Fatigue4A11y"] = "Fatigue 4 of 5, high";
+        English["Dashboard_CheckIn_Fatigue5A11y"] = "Fatigue 5 of 5, very high";
         English["Dashboard_CheckIn_EnergySectionTitle"] = "ENERGY";
         English["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Very high";
         English["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Very low";
@@ -81,6 +89,7 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_SleepTitle"] = "Sleep last night";
         English["Dashboard_CheckIn_SleepSectionTitle"] = "SLEEP LAST NIGHT";
         English["Dashboard_CheckIn_StorageNotice"] = "Saved to your private account";
+        English["Dashboard_CheckIn_AdditionalDetails"] = "Additional details (optional)";
         English["Dashboard_CheckIn_SubmitButton"] = "Save check-in";
         English["Dashboard_CheckIn_SubmitHint"] = "Save your daily check-in";
         English["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Answer every required question to save your check-in.";
@@ -133,7 +142,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Readiness_NoCurrentCheckIn"] = "Complete today’s check-in to see suggestions based on how you feel.";
         English["Dashboard_Readiness_ReviewPending"] = "Your check-in is saved. Training suggestions based on this check-in are not available yet.";
         English["Dashboard_Readiness_CompleteCheckIn"] = "Complete check-in";
-        English["Dashboard_CheckIn_IncompleteAllFourRatings"] = "Answer every check-in question to see your check-in score.";
+        English["Dashboard_CheckIn_IncompleteRequiredRatings"] = "Answer every required check-in question to see your check-in score.";
         English["Dashboard_Readiness_ReadinessLabel"] = "Readiness";
         English["Dashboard_Readiness_ReadinessScoreFormat"] = "Readiness score: {0}";
         English["Dashboard_Readiness_RecoveryLabel"] = "Recovery";

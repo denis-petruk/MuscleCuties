@@ -45,6 +45,14 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_SleepQuality5A11y"] = "Качество сна 5 из 5";
         Values["Dashboard_CheckIn_Energy5Hint"] = "Очень высокая энергия";
         Values["Dashboard_CheckIn_EnergyTitle"] = "Энергия";
+        Values["Dashboard_CheckIn_FatigueTitle"] = "Усталость";
+        Values["Dashboard_CheckIn_FatigueLowLabel"] = "Нет";
+        Values["Dashboard_CheckIn_FatigueHighLabel"] = "Очень высокая";
+        Values["Dashboard_CheckIn_Fatigue1A11y"] = "Усталость 1 из 5, нет";
+        Values["Dashboard_CheckIn_Fatigue2A11y"] = "Усталость 2 из 5, низкая";
+        Values["Dashboard_CheckIn_Fatigue3A11y"] = "Усталость 3 из 5, умеренная";
+        Values["Dashboard_CheckIn_Fatigue4A11y"] = "Усталость 4 из 5, высокая";
+        Values["Dashboard_CheckIn_Fatigue5A11y"] = "Усталость 5 из 5, очень высокая";
         Values["Dashboard_CheckIn_EnergySectionTitle"] = "ЭНЕРГИЯ";
         Values["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Очень высокая";
         Values["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Очень низкий";
@@ -81,6 +89,7 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_SleepTitle"] = "Сон прошлой ночью";
         Values["Dashboard_CheckIn_SleepSectionTitle"] = "СОН ПРОШЛОЙ НОЧЬЮ";
         Values["Dashboard_CheckIn_StorageNotice"] = "Сохранено в вашей личной учётной записи";
+        Values["Dashboard_CheckIn_AdditionalDetails"] = "Дополнительные сведения (необязательно)";
         Values["Dashboard_CheckIn_SubmitButton"] = "Сохранить отметку";
         Values["Dashboard_CheckIn_SubmitHint"] = "Сохранить ежедневную отметку";
         Values["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Ответьте на все обязательные вопросы, чтобы сохранить отметку.";
@@ -133,7 +142,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Readiness_NoCurrentCheckIn"] = "Заполните сегодняшнюю отметку, чтобы получить подсказки с учётом вашего самочувствия.";
         Values["Dashboard_Readiness_ReviewPending"] = "Отметка сохранена. Рекомендации по тренировке на её основе пока недоступны.";
         Values["Dashboard_Readiness_CompleteCheckIn"] = "Заполнить отметку";
-        Values["Dashboard_CheckIn_IncompleteAllFourRatings"] = "Ответьте на все вопросы отметки, чтобы увидеть её результат.";
+        Values["Dashboard_CheckIn_IncompleteRequiredRatings"] = "Ответьте на все обязательные вопросы отметки, чтобы увидеть её результат.";
         Values["Dashboard_Readiness_ReadinessLabel"] = "Готовность";
         Values["Dashboard_Readiness_ReadinessScoreFormat"] = "Оценка готовности: {0}";
         Values["Dashboard_Readiness_RecoveryLabel"] = "Восстановление";
@@ -205,7 +214,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Trend_SixDaysAgo"] = "6 дней назад";
         Values["Dashboard_Trend_WeightDisclaimer"] = "Фаза цикла и изменение уровня жидкости могут влиять на ежедневный вес. Медиана сглаживает краткосрочные колебания; она не измеряет уровень гормонов.";
         Values["Dashboard_Trend_WeightMedian"] = "Вес · скользящая медиана";
-        Values["Dashboard_Workout_Duration"] = "Продолжительность";
+        Values["Dashboard_Workout_Duration"] = "Длительность";
         Values["Dashboard_Workout_CountActivity"] = "Активность";
         Values["Dashboard_Workout_PillRest"] = "ДЕНЬ ОТДЫХА";
         Values["Dashboard_Workout_PillTraining"] = "ТРЕНИРОВКА";

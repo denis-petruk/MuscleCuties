@@ -144,7 +144,7 @@
                    IsVisible="{Binding NeedsDailyCheckIn}">
                 <Label.Triggers>
                     <DataTrigger TargetType="Label" Binding="{Binding TodayReadinessIncomplete}" Value="True">
-                        <Setter Property="Text" Value="{loc:LocalizedText Dashboard_CheckIn_IncompleteAllFourRatings}" />
+                        <Setter Property="Text" Value="{loc:LocalizedText Dashboard_CheckIn_IncompleteRequiredRatings}" />
                     </DataTrigger>
                 </Label.Triggers>
             </Label>
