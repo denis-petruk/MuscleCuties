@@ -172,6 +172,7 @@ internal static partial class RussianUiText
         Values["Auth_Register_Error_ReviewDetails"] = "Не удалось завершить регистрацию. Попробуйте снова.";
         Values["Auth_Register_Error_TryAgain"] = "Не удалось завершить регистрацию. Попробуйте снова.";
         Values["Auth_SignInWithApple"] = "Вход через Apple";
+        Values["Auth_LogInWithApple"] = "Войти через Apple";
         Values["Auth_VerifyCode"] = "Верифицировать код";
         Values["Common_Add"] = "Добавить";
         Values["Common_Back"] = "Назад";

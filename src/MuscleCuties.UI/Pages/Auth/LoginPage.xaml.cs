@@ -26,12 +26,16 @@ public partial class LoginPage : ContentPage
 
         // Consumes the one-time email handoff from RegisterPage when an existing account is detected,
         // then delays focus by 75ms so the Shell transition completes before invoking the soft keyboard.
-        if (!_navigationContext.TryTake<string>(ExistingEmailContextKey, out var email) ||
-            string.IsNullOrWhiteSpace(email))
+        if (_navigationContext.TryTake<string>(ExistingEmailContextKey, out var email) &&
+            !string.IsNullOrWhiteSpace(email))
+        {
+            _viewModel.PrepareForExistingAccount(email);
+            Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(75), () => LoginPassword.Focus());
             return;
+        }
 
-        _viewModel.PrepareForExistingAccount(email);
-        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(75), () => LoginPassword.Focus());
+        // Launch and post-logout both land here. Present Apple once the Shell transition settles.
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(350), _viewModel.TryStartAutomaticAppleSignIn);
     }
 
     private void OnEmailCompleted(object? sender, EventArgs e)

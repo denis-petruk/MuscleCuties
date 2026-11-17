@@ -172,6 +172,7 @@ public static partial class UiTextCatalog
         English["Auth_Register_Error_ReviewDetails"] = "We couldn't finish registration. Please try again.";
         English["Auth_Register_Error_TryAgain"] = "We couldn't finish registration. Please try again.";
         English["Auth_SignInWithApple"] = "Sign in with Apple";
+        English["Auth_LogInWithApple"] = "Log in with Apple";
         English["Auth_VerifyCode"] = "Verify code";
         English["Common_Add"] = "Add";
         English["Common_Back"] = "Back";

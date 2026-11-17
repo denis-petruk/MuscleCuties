@@ -349,7 +349,8 @@ public static class ApiApplication
                 signingKey!, issuer!, audience!,
                 builder.Configuration["AppleSignIn:Audience"] ?? string.Empty,
                 appleKeys,
-                serviceProvider.GetService<IAppleAccountTokenRevoker>()));
+                serviceProvider.GetService<IAppleAccountTokenRevoker>(),
+                serviceProvider.GetService<Microsoft.Extensions.Logging.ILogger<PostgresAccountAuthenticationUseCase>>()));
         builder.Services.AddHttpClient("ResendEmailDelivery", client => client.Timeout = TimeSpan.FromSeconds(15))
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         builder.Services.AddHttpClient("FirstPartyEmailChallengeRelay", client => client.Timeout = TimeSpan.FromSeconds(15))

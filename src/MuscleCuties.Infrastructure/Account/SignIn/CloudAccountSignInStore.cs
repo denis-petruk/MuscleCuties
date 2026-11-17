@@ -37,7 +37,7 @@ public sealed class CloudAccountSignInStore(
         var response = await cloudGateway.SignInWithAppleAsync(identityToken ?? string.Empty,
             nonce ?? string.Empty, nonceChallengeId ?? string.Empty, cancellationToken, authorizationCode).ConfigureAwait(false);
         if (response.Status == BackendApiStatus.Success && response.Data is not null)
-            return new PlatformAccountOutcome(true, false, true);
+            return new PlatformAccountOutcome(true, true, false);
 
         return new PlatformAccountOutcome(
             false,

@@ -113,11 +113,11 @@
                 <Button
 
                     Style="{StaticResource ButtonSecondary}"
-                    Text="{loc:LocalizedText Auth_SignInWithApple}"
+                    Text="{loc:LocalizedText Auth_LogInWithApple}"
                     Command="{Binding SignInWithAppleCommand}"
                     IsVisible="{Binding IsAppleSignInAvailable}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                    SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
+                    SemanticProperties.Description="{loc:LocalizedText Auth_LogInWithApple}" />
                 <Grid
 
                     AutomationId="LoginCreateAccountRow"
