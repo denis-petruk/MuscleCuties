@@ -9,6 +9,7 @@ appId: com.musclecuties.app
     direction: DOWN
     centerElement: true
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: ProfileSetupMetricHeightPicker
 - repeat:
@@ -25,6 +26,7 @@ appId: com.musclecuties.app
     direction: DOWN
     centerElement: true
     timeout: 15000
+- waitForAnimationToEnd
 - tapOn:
     id: ProfileSetupMetricWeightPicker
 - repeat:
@@ -41,13 +43,15 @@ appId: com.musclecuties.app
     direction: DOWN
     centerElement: true
     timeout: 30000
+- waitForAnimationToEnd
 - tapOn: "General strength.*|Общая силовая.*"
 - scrollUntilVisible:
     element:
       id: WellnessAcknowledgmentCheckBox
     direction: DOWN
-    centerElement: true
+    centerElement: false
     timeout: 30000
+- waitForAnimationToEnd
 - tapOn:
     id: WellnessAcknowledgmentCheckBox
 - tapOn:
