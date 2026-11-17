@@ -1506,6 +1506,7 @@ public static partial class UiTextCatalog
         NewNumericRuntimePattern("{0} g", "{0} г"),
         NewNumericRuntimePattern("{0}g", "{0} г"),
         NewRuntimePattern("<1 min", "<1 мин"),
+        NewRuntimePattern("Last {0} with {1} x {2}", "В прошлый раз: {0}, {1} × {2}"),
         NewRuntimePattern("{0} training days", "Тренировочных дней: {0}"),
         NewRuntimePattern("{0} full rest days", "Дней полного отдыха: {0}"),
         NewRuntimePattern("No {0} workouts", "Нет тренировок: {0}"),

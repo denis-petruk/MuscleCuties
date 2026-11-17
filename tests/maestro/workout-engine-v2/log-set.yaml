@@ -1,6 +1,17 @@
 appId: com.musclecuties.app
 ---
-# Fill observed synthetic values for bilateral and unilateral sets.
+# Fill observed synthetic values for bilateral and unilateral sets. Each row is addressed by its
+# own automation id: falling back to the Add-set button used to satisfy scrollUntilVisible while the
+# working-set rows were still below the fold, so only the warm-up row was ever filled. The keyboard
+# is dismissed with the numeric toolbar's Done key because MAUI does not expose hideKeyboard.
+- scrollUntilVisible:
+    element:
+      id: "${QA_SET_PREFIX}Weight"
+    direction: DOWN
+    speed: 25
+    visibilityPercentage: 50
+    centerElement: false
+    timeout: 15000
 - runFlow:
     when:
       visible:
@@ -25,7 +36,6 @@ appId: com.musclecuties.app
           id: "${QA_SET_PREFIX}Reps"
       - eraseText
       - inputText: "10"
-      - takeScreenshot: 11b_numeric_keyboard
       - runFlow:
           when:
             visible: "^Done$|^Готово$"
@@ -40,7 +50,6 @@ appId: com.musclecuties.app
           id: "${QA_SET_PREFIX}LeftReps"
       - eraseText
       - inputText: "10"
-      - takeScreenshot: 11b_numeric_keyboard
       - runFlow:
           when:
             visible: "^Done$|^Готово$"
@@ -55,7 +64,6 @@ appId: com.musclecuties.app
           id: "${QA_SET_PREFIX}RightReps"
       - eraseText
       - inputText: "10"
-      - takeScreenshot: 11b_numeric_keyboard
       - runFlow:
           when:
             visible: "^Done$|^Готово$"

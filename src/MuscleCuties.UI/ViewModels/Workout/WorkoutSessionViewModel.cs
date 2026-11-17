@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
+using MuscleCuties.Infrastructure.Services.Workout;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Workout;
@@ -1862,7 +1863,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
                                              ParsePositiveInt(exercise.LoggedRepsText) == 0))
             ErrorText = "Ui_Workout_Error_SetsReps";
         else if (exercise.UsesStrengthMetrics && exercise.UsesWeight &&
-                 ParseOptionalFloat(exercise.LoggedWeightText) is null)
+                 !WorkoutWeightEntryRule.IsAcceptable(ResolveEnteredWeight(exercise)))
             ErrorText = "Ui_Workout_Error_Weight";
         else if (exercise.UsesDurationMetric && ParseDurationSeconds(exercise.LoggedDurationMinutesText) is null)
             ErrorText = "Ui_Workout_Error_Duration";
@@ -1877,6 +1878,13 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             ErrorText = "Workout_Session_OptionalMetricsError";
         return !HasError;
     }
+
+    /// <summary>Gate 77: one resolution of the entered load, shared by validation and the payload.</summary>
+    private static double? ResolveEnteredWeight(WorkoutExerciseItem exercise) =>
+        WorkoutWeightEntryRule.ResolveEnteredWeightKg(
+            exercise.Sets.Select(set => new WorkoutEnteredSet(set.WeightInput, set.IsWarmup, set.WasEdited))
+                .ToArray(),
+            exercise.LoggedWeightText);
 
     private static bool InvalidOptionalFloat(string value)
     {
@@ -1900,8 +1908,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     private static float? ParseOptionalFloat(string? value)
     {
-        if ((float.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var parsed) ||
-             float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed)) &&
+        const NumberStyles styles = NumberStyles.Float | NumberStyles.AllowThousands;
+        if ((float.TryParse(value, styles, CultureInfo.CurrentCulture, out var parsed) ||
+             float.TryParse(value, styles, CultureInfo.InvariantCulture, out parsed)) &&
             float.IsFinite(parsed) && parsed >= 0)
             return parsed;
         return null;
@@ -1934,7 +1943,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
                 set.SetNumber,
                 set.EffectiveReps,
                 item.UsesWeight
-                    ? (decimal)(ParseOptionalFloat(set.WeightInput) ?? ParseOptionalFloat(item.LoggedWeightText) ?? set.WeightKg)
+                    ? (decimal)(ParseOptionalFloat(set.WeightInput) ?? ResolveEnteredWeight(item) ?? set.WeightKg)
                     : 0m,
                 set.Rir is >= 0 and <= 10 ? (int)Math.Round(set.Rir.Value) : null,
                 set.TechniqueAcceptable,
@@ -1949,7 +1958,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             : item.UsesStrengthMetrics ? ParsePositiveInt(item.LoggedRepsText) : 0;
         var completedWeight = observedSets is { Count: > 0 }
             ? (float?)observedSets.Max(set => set.LoadKg)
-            : item.UsesStrengthMetrics && item.UsesWeight ? ParseOptionalFloat(item.LoggedWeightText) : 0f;
+            : item.UsesStrengthMetrics && item.UsesWeight ? (float?)ResolveEnteredWeight(item) : 0f;
 
         return new WorkoutExerciseLogDto(
             item.WorkoutDayExerciseId, item.ExerciseId,

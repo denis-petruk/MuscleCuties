@@ -61,6 +61,14 @@ appId: com.musclecuties.app
       - extendedWaitUntil:
           visible: "Back|Назад"
           timeout: 15000
+# A resumed session reopens on the activity intro; its Start button resumes the same session.
+- runFlow:
+    when:
+      visible:
+        id: WorkoutSessionStartButton
+    commands:
+      - tapOn:
+          id: WorkoutSessionStartButton
 - extendedWaitUntil:
     visible:
       id: WorkoutSessionNextExerciseButton

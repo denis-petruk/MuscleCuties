@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 
+using MuscleCuties.Infrastructure.Services.Workout;
 using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Localization;
@@ -201,6 +202,7 @@ public partial class WorkoutExerciseItem : ObservableObject
             WasEdited = true
         };
         Sets.Add(set);
+        RenumberSets();
         UpdateAggregatesFromSets(fromUser: true);
     }
 
@@ -209,7 +211,7 @@ public partial class WorkoutExerciseItem : ObservableObject
     {
         if (set is null || Sets.Count <= 1) return;
         Sets.Remove(set);
-        for (var i = 0; i < Sets.Count; i++) Sets[i].SetNumber = i + 1;
+        RenumberSets();
         UpdateAggregatesFromSets(fromUser: true);
     }
 
@@ -247,18 +249,38 @@ public partial class WorkoutExerciseItem : ObservableObject
         UpdateAggregatesFromSets();
     }
 
+    /// <summary>
+    /// Assigns the absolute set number used for persistence and the per-kind ordinal used by the row
+    /// label and automation ids, so a warm-up no longer hides "Working set 1".
+    /// </summary>
+    public void RenumberSets()
+    {
+        var numbers = WorkoutSetNumbering.Number(Sets.Select(set => set.IsWarmup).ToArray());
+        for (var index = 0; index < Sets.Count; index++)
+        {
+            Sets[index].SetNumber = numbers[index].AbsoluteNumber;
+            Sets[index].DisplaySetNumber = numbers[index].DisplayNumber;
+        }
+    }
+
     public void UpdateAggregatesFromSets(bool fromUser = false)
     {
         SetsWereEdited |= fromUser || Sets.Any(s => s.WasEdited);
+        RenumberSets();
         if (Sets.Count == 0) return;
         LoggedSetsText = Sets.Count.ToString(CultureInfo.InvariantCulture);
         var workingSets = Sets.Where(s => !s.IsWarmup).ToList();
         var primarySets = workingSets.Count > 0 ? workingSets : Sets.ToList();
         var avgReps = (int)Math.Round(primarySets.Average(s => s.EffectiveReps));
         LoggedRepsText = avgReps.ToString(CultureInfo.InvariantCulture);
-        var maxWeight = primarySets.Max(s => s.WeightKg);
-        if (!RequiresInitialCalibration || primarySets.Any(set => !string.IsNullOrWhiteSpace(set.WeightInput)))
-            LoggedWeightText = DisplayFormat.Decimal1(maxWeight);
+        // A calibration exercise clears its unobserved rows, so the exercise-level load has to come
+        // from whatever the user actually typed, including a warm-up row, or validation sees no load
+        // even though the screen holds one.
+        var enteredWeight = WorkoutWeightEntryRule.ResolveEnteredWeightKg(
+            Sets.Select(set => new WorkoutEnteredSet(set.WeightInput, set.IsWarmup, set.WasEdited)).ToArray(),
+            fallbackText: null);
+        if (enteredWeight is { } weight)
+            LoggedWeightText = DisplayFormat.Decimal1(weight);
     }
 
     private static bool TryParseWeight(string? value, out double weight)

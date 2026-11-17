@@ -31,10 +31,10 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
     private const int FallbackMinutesPerExercise = 12;
     private const int MaximumSwapCandidates = 8;
     private const string PlannedDurationMinuteFormat = "0";
-    private const string StrengthTag = "STRENGTH";
-    private const string CardioTag = "CARDIO";
-    private const string RecoveryTag = "RECOVERY";
-    private const string RestTag = "REST";
+    private const string StrengthTag = WorkoutActivityTagRule.Strength;
+    private const string CardioTag = WorkoutActivityTagRule.Cardio;
+    private const string RecoveryTag = WorkoutActivityTagRule.Recovery;
+    private const string RestTag = WorkoutActivityTagRule.Rest;
 
     public static int ToStableWorkoutIntId(Guid id)
     {
@@ -1655,7 +1655,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         var isRunning = ContainsAny(name, "run", "jog", "sprint", "tempo");
         var isSwimming = ContainsAny(name, "swim", "pool");
         var isHiit = ContainsAny(name, "hiit", "interval") && !isCycling && !isRunning;
-        var isDistanceCardio = isCycling || isRunning || isSwimming || ContainsAny(name, "walk");
+        var isDistanceCardio = isCycling || isRunning || isSwimming ||
+            WorkoutActivityTagRule.IsTimedWalk(name, dayExercise.DurationSeconds);
 
         var activityTag = ClassifyExerciseTag(dayExercise, workoutType, exercise);
         var isLogged = IsExerciseLogComplete(currentLog, dayExercise, name);
@@ -1959,10 +1960,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
     }
 
     private static bool UsesEnduranceMetrics(WorkoutDayExerciseRecord dayExercise, string name) =>
-        dayExercise.DurationSeconds is > 0 ||
-        ContainsAny(name, "plank", "copenhagen", "bike", "cycle", "cycling", "ride", "run", "jog",
-            "sprint", "tempo", "swim", "pool", "hiit", "interval", "yoga", "vinyasa", "mobility",
-            "recovery", "breathing", "pilates", "walk");
+        WorkoutActivityTagRule.UsesEnduranceMetrics(name, dayExercise.DurationSeconds);
 
     private static string BuildPrimaryTag(
         WorkoutDayRecord day,
@@ -2009,19 +2007,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
     private static string ClassifyExerciseTag(
         WorkoutDayExerciseRecord exercise,
         string workoutType,
-        Exercise? catalogExercise)
-    {
-        var name = catalogExercise?.Name ?? string.Empty;
-        if (ContainsAny(name, "yoga", "vinyasa", "mobility", "recovery", "breathing", "pilates", "stretch"))
-            return RecoveryTag;
-        if (ContainsAny(name, "run", "jog", "sprint", "tempo", "cycle", "cycling", "ride", "bike", "swim", "pool", "hiit", "interval", "walk", "dance"))
-            return CardioTag;
-        if (string.Equals(workoutType, nameof(WorkoutType.Recovery), StringComparison.OrdinalIgnoreCase))
-            return RecoveryTag;
-        if (string.Equals(workoutType, nameof(WorkoutType.Cardio), StringComparison.OrdinalIgnoreCase) && exercise.DurationSeconds is > 0)
-            return CardioTag;
-        return StrengthTag;
-    }
+        Exercise? catalogExercise) =>
+        WorkoutActivityTagRule.Classify(workoutType, catalogExercise?.Name, exercise.DurationSeconds);
 
     private static string BuildSectionTitle(string tag) => tag switch
     {

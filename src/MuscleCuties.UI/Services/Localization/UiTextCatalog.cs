@@ -31,6 +31,9 @@ public static partial class UiTextCatalog
         RegisterWorkoutPhaseAdjustmentStrings();
         RegisterHydrationStrings();
         RegisterBodyMeasurementStrings();
+        // Server-seeded quiz, exercise and session copy is translated by exact English text.
+        foreach (var (english, russian) in SeededCopyRussian)
+            RuntimeRussian.TryAdd(english, russian);
         AuthoredKeyByEnglish = English
             .Where(pair => !IsHashKey(pair.Key))
             .GroupBy(pair => pair.Value, StringComparer.Ordinal)

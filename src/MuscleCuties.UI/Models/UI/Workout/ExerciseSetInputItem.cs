@@ -23,6 +23,8 @@ public partial class ExerciseSetInputItem : ObservableObject
     [ObservableProperty] private bool _techniqueAcceptable = true;
 
     [ObservableProperty] private int _setNumber;
+    // Per-kind ordinal: the first working set is "Working set 1" even when a warm-up exists.
+    [ObservableProperty] private int _displaySetNumber;
     [ObservableProperty] private string _weightInput = string.Empty;
     [ObservableProperty] private double _weightKg;
     [ObservableProperty] private bool _wasEdited;
@@ -74,10 +76,11 @@ public partial class ExerciseSetInputItem : ObservableObject
     public string ExerciseName { get; set; } = string.Empty;
     public bool ShowWeight { get; set; } = true;
     public bool ShowPerSideReps { get; set; }
+    private int LabelSetNumber => DisplaySetNumber > 0 ? DisplaySetNumber : SetNumber;
     public string SetDisplayText => IsWarmup
-        ? UiTextCatalog.Format("Workout_Session_WarmupSetFormat", SetNumber)
-        : UiTextCatalog.Format("Workout_Session_WorkingSetFormat", SetNumber);
-    private string AutomationPrefix => $"{(IsWarmup ? "Warmup" : "Working")}Set{SetNumber}";
+        ? UiTextCatalog.Format("Workout_Session_WarmupSetFormat", LabelSetNumber)
+        : UiTextCatalog.Format("Workout_Session_WorkingSetFormat", LabelSetNumber);
+    private string AutomationPrefix => $"{(IsWarmup ? "Warmup" : "Working")}Set{LabelSetNumber}";
     public string WeightAutomationId => $"{AutomationPrefix}Weight";
     public string RepsAutomationId => $"{AutomationPrefix}Reps";
     public string LeftRepsAutomationId => $"{AutomationPrefix}LeftReps";
@@ -196,6 +199,16 @@ public partial class ExerciseSetInputItem : ObservableObject
     }
 
     partial void OnSetNumberChanged(int value) => OnPropertyChanged(nameof(SetDisplayText));
+
+    partial void OnDisplaySetNumberChanged(int value)
+    {
+        OnPropertyChanged(nameof(SetDisplayText));
+        OnPropertyChanged(nameof(WeightAutomationId));
+        OnPropertyChanged(nameof(RepsAutomationId));
+        OnPropertyChanged(nameof(LeftRepsAutomationId));
+        OnPropertyChanged(nameof(RightRepsAutomationId));
+        OnPropertyChanged(nameof(RirAutomationId));
+    }
 
     partial void OnLeftSideRepsInputChanged(string value) => UpdateSideRepetitions(value, isLeft: true);
 

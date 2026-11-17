@@ -126,6 +126,7 @@ internal static class WorkoutSessionPresentationMapper
         if (item.Sets.Count == 0 && item.UsesStrengthMetrics)
             item.EnsureSets(source.PlannedSets + source.PlannedWarmUpSets > 0
                 ? source.PlannedSets + source.PlannedWarmUpSets : 3);
+        item.RenumberSets();
         item.SyncSavedOptionalState();
         return item;
     }

@@ -1,53 +1,84 @@
 appId: com.musclecuties.app
 ---
+# Log the visible exercise. Set composition varies (some movements have no warm-up row, a unilateral
+# movement may prescribe two working sets), so each row is logged only when it exists. Warm-up and
+# working rows carry per-kind automation ids, so a warm-up no longer renames the first working row.
+# A background event can return a resumed session to its intro; Start resumes the same session.
+- runFlow:
+    when:
+      visible:
+        id: WorkoutSessionStartButton
+    commands:
+      - tapOn:
+          id: WorkoutSessionStartButton
+      - extendedWaitUntil:
+          visible:
+            id: WorkoutSessionNextExerciseButton
+          timeout: 15000
 - runFlow:
     when:
       visible:
         id: WorkoutSessionNextExerciseButton
     commands:
+      # Return to the top of the set list before looking for the first rows.
       - swipe:
           start: "50%,40%"
           end: "50%,78%"
           duration: 400
-      - scrollUntilVisible:
-          element:
-            id: "WarmupSet1(Reps|LeftReps)|WorkoutSessionAddSetButton"
-          direction: DOWN
-          centerElement: true
-          timeout: 15000
+      - swipe:
+          start: "50%,40%"
+          end: "50%,78%"
+          duration: 400
       - runFlow:
-          file: log-set.yaml
-          env:
-            QA_SET_PREFIX: WarmupSet1
-      - scrollUntilVisible:
-          element:
-            id: "WorkingSet1(Reps|LeftReps)|WorkoutSessionAddSetButton"
-          direction: DOWN
-          centerElement: true
-          timeout: 15000
+          when:
+            visible:
+              id: WarmupSet1Weight
+          commands:
+            - runFlow:
+                file: log-set.yaml
+                env:
+                  QA_SET_PREFIX: WarmupSet1
+      - swipe:
+          start: "50%,62%"
+          end: "50%,40%"
+          duration: 400
       - runFlow:
-          file: log-set.yaml
-          env:
-            QA_SET_PREFIX: WorkingSet1
-      - scrollUntilVisible:
-          element:
-            id: "WorkingSet2(Reps|LeftReps)|WorkoutSessionAddSetButton"
-          direction: DOWN
-          centerElement: true
-          timeout: 15000
+          when:
+            visible:
+              id: WorkingSet1Weight
+          commands:
+            - runFlow:
+                file: log-set.yaml
+                env:
+                  QA_SET_PREFIX: WorkingSet1
+      - swipe:
+          start: "50%,62%"
+          end: "50%,40%"
+          duration: 400
       - runFlow:
-          file: log-set.yaml
-          env:
-            QA_SET_PREFIX: WorkingSet2
-      - scrollUntilVisible:
-          element:
-            id: "WorkingSet3(Reps|LeftReps)|WorkoutSessionAddSetButton"
-          direction: DOWN
-          centerElement: true
-          timeout: 15000
+          when:
+            visible:
+              id: WorkingSet2Weight
+          commands:
+            - runFlow:
+                file: log-set.yaml
+                env:
+                  QA_SET_PREFIX: WorkingSet2
+      - swipe:
+          start: "50%,62%"
+          end: "50%,40%"
+          duration: 400
       - runFlow:
-          file: log-set.yaml
-          env:
-            QA_SET_PREFIX: WorkingSet3
+          when:
+            visible:
+              id: WorkingSet3Weight
+          commands:
+            - runFlow:
+                file: log-set.yaml
+                env:
+                  QA_SET_PREFIX: WorkingSet3
+      # The guard is evaluated before the last Next navigates to the summary; the tap then finds
+      # no button and must not fail the run, because the completion button below proves the state.
       - tapOn:
           id: WorkoutSessionNextExerciseButton
+          optional: true
