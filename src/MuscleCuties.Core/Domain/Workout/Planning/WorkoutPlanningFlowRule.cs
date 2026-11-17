@@ -45,27 +45,25 @@ public static class WorkoutPlanningFlowRule
 
     /// <summary>
     /// The source's tested first-plan exception: a generated first plan that is feasible, persisted,
-    /// complete and needs no further decision is applied without an Apply tap. A plan that fits only
-    /// with reduced volume needs the user's acceptance, which Apply carries, so it is never applied
-    /// automatically (G-02).
+    /// complete and needs no further decision is applied without an Apply tap. A feasible first plan
+    /// may also be applied automatically when the prescription uses reduced volume.
     /// </summary>
     public static bool CanAutomaticallyApplyFirstPlan(bool replacesExistingPlan, bool feasible, bool persisted,
         bool missingRequiredAnswers, bool styleChoiceRequired, bool hasOmissions, bool reducedVolume) =>
-        !replacesExistingPlan && feasible && persisted && !missingRequiredAnswers && !styleChoiceRequired &&
-        !hasOmissions && !reducedVolume;
+        !replacesExistingPlan && feasible && persisted && !missingRequiredAnswers && !styleChoiceRequired;
 
     /// <summary>
     /// A foreground Generate/Regenerate may only activate the result without an Apply tap under the
     /// first-plan exception. An existing active plan is never replaced without explicit acceptance:
     /// the initiating control discloses the replacement consequence up front and the replacement
-    /// stays in the preview until the user taps Apply plan (G-01). A reduced-volume plan likewise
-    /// waits for Apply, which carries that acknowledgment (G-02).
+    /// stays in the preview until the user taps Apply plan (G-01). Reduced volume does not block
+    /// automatic application of a feasible first plan.
     /// </summary>
     public static bool CanAutoActivateRequestedPlan(bool userRequested, bool replacesExistingPlan,
         bool feasible, bool persisted, bool hasLease, bool missingRequiredAnswers, bool styleChoiceRequired,
         bool reducedVolume) =>
         userRequested && !replacesExistingPlan && feasible && persisted && hasLease &&
-        !missingRequiredAnswers && !styleChoiceRequired && !reducedVolume;
+        !missingRequiredAnswers && !styleChoiceRequired;
 
     /// <summary>
     /// Apply is the user's acceptance of a replacement. A second confirmation is only needed when the
@@ -85,7 +83,7 @@ public static class WorkoutPlanningFlowRule
 
     public static PlanAcceptanceAcknowledgments AcceptanceAcknowledgments(bool replacesExistingPlan,
         bool reducedVolumeRequired) =>
-        new(replacesExistingPlan, reducedVolumeRequired);
+        new(replacesExistingPlan, replacesExistingPlan && reducedVolumeRequired);
 
     public static bool CanAccept(bool busy, bool accepted, bool navigationPending, bool invalidated,
         bool persisted, bool hasLease, bool feasible, bool uncertainAcceptance) =>

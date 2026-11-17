@@ -54,13 +54,34 @@ public sealed class CatalogCoverageGuardTests
     }
 
     [Fact]
-    public void Bodyweight_only_gap_is_real_and_documented()
+    public void Bodyweight_only_gap_is_limited_to_upper_pull_with_gate60_coverage()
     {
         var empty = RequiredSlots().Where(slot =>
             EligibleCount(slot.Ids, Equipment.Bodyweight, ActivityExperience.Beginner) == 0).ToArray();
 
-        Assert.Contains(empty, slot => slot.SlotId == "knee-dominant");
-        Assert.Contains(empty, slot => slot.SlotId == "upper-pull");
+        Assert.NotEmpty(empty);
+        Assert.All(empty, slot => Assert.Equal("upper-pull", slot.SlotId));
+        Assert.DoesNotContain(empty, slot => slot.SlotId == "knee-dominant");
+        Assert.DoesNotContain(empty, slot => slot.SlotId == "hip-dominant");
+        Assert.DoesNotContain(empty, slot => slot.SlotId == "upper-push");
+    }
+
+    [Fact]
+    public void Home_profile_with_confirmed_band_anchor_covers_upper_pull_and_upper_push()
+    {
+        var equipment = StrengthPlanPreviewRule.AvailableEquipmentFor(Equipment.HomeDumbbellsBands)
+            .Append(ExerciseEquipmentKind.BandAnchor)
+            .ToHashSet();
+
+        foreach (var (_, _, ids) in RequiredSlots())
+        {
+            var candidates = ids.Select(id => ReviewedCatalogFixture.Entry(id).Candidate).ToArray();
+            var context = new ExerciseEligibilityContext(equipment, ActivityExperience.Beginner,
+                new HashSet<int>(), new HashSet<MovementPattern>(), new HashSet<ActivityDemandTag>(), false);
+            var count = ExerciseEligibilityRule.Filter(candidates, context).EligibleCandidates
+                .Count(candidate => candidate.SupportedTimingMethods?.Contains(ExerciseTimingMethod.StraightSets) == true);
+            Assert.True(count >= RecommendedCandidates);
+        }
     }
 
     private static int EligibleCount(IReadOnlyCollection<int> ids, Equipment equipment, ActivityExperience experience)

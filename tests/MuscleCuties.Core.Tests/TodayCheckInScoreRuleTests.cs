@@ -15,10 +15,11 @@ public sealed class TodayCheckInScoreRuleTests
     private const decimal ExpectedMinimumScore = 0m;
     private const decimal ExpectedMaximumScore = 100m;
     private const decimal ExpectedMidpointScore = 50m;
-    private const decimal ExpectedOneStepChange = 6.25m;
-    private const decimal ExpectedLowBandScore = 43.75m;
-    private const decimal ExpectedModerateBandScore = 68.75m;
-    private const decimal ExpectedHighBandScore = 75m;
+    // Three scale shares (sleep quality, energy, stress) rescale onto the same 0–100 range.
+    private const decimal ExpectedOneStepChange = TodayCheckInScoreRule.ReadinessScoreMaximum * 1m / 12m;
+    private const decimal ExpectedLowBandScore = TodayCheckInScoreRule.ReadinessScoreMaximum * 4m / 12m;
+    private const decimal ExpectedModerateBandScore = TodayCheckInScoreRule.ReadinessScoreMaximum * 8m / 12m;
+    private const decimal ExpectedHighBandScore = TodayCheckInScoreRule.ReadinessScoreMaximum * 9m / 12m;
     private const int PreviousDayOffset = -1;
 
     private static readonly DateTimeOffset NowUtc = DateTimeOffset.Parse(
@@ -29,39 +30,51 @@ public sealed class TodayCheckInScoreRuleTests
     public void Prototype_Endpoints_And_Midpoint_Match_Specified_Arithmetic()
     {
         Assert.Equal(ExpectedMinimumScore, TodayCheckInScoreRule.CalculatePrototype(
-            WorstFavorableScaleValue, WorstFavorableScaleValue,
-            BestFavorableScaleValue, BestFavorableScaleValue));
+            WorstFavorableScaleValue, WorstFavorableScaleValue, BestFavorableScaleValue));
         Assert.Equal(ExpectedMaximumScore, TodayCheckInScoreRule.CalculatePrototype(
-            BestFavorableScaleValue, BestFavorableScaleValue,
-            WorstFavorableScaleValue, WorstFavorableScaleValue));
+            BestFavorableScaleValue, BestFavorableScaleValue, WorstFavorableScaleValue));
         Assert.Equal(ExpectedMidpointScore, TodayCheckInScoreRule.CalculatePrototype(
-            MidpointScaleValue, MidpointScaleValue, MidpointScaleValue, MidpointScaleValue));
+            MidpointScaleValue, MidpointScaleValue, MidpointScaleValue));
     }
 
     [Fact]
     public void One_Scale_Step_Changes_Raw_Score_By_Expected_Amount()
     {
         const decimal nextFavorableStep = 4m;
-        const decimal nextSorenessStep = 4m;
         var midpoint = TodayCheckInScoreRule.CalculatePrototype(
-            MidpointScaleValue, MidpointScaleValue, MidpointScaleValue, MidpointScaleValue);
+            MidpointScaleValue, MidpointScaleValue, MidpointScaleValue);
 
         Assert.Equal(ExpectedOneStepChange,
             TodayCheckInScoreRule.CalculatePrototype(nextFavorableStep, MidpointScaleValue,
-                MidpointScaleValue, MidpointScaleValue) - midpoint);
+                MidpointScaleValue) - midpoint);
+        // Only the stress share moves, so higher stress lowers the score by that one share.
         Assert.Equal(-ExpectedOneStepChange,
             TodayCheckInScoreRule.CalculatePrototype(MidpointScaleValue, MidpointScaleValue,
-                nextSorenessStep, MidpointScaleValue) - midpoint);
+                nextFavorableStep) - midpoint);
+    }
+
+    [Fact]
+    public void Soreness_answers_do_not_move_the_score_or_its_band()
+    {
+        foreach (var sleep in new[] { 1m, 3m, 5m })
+        foreach (var energy in new[] { 1m, 3m, 5m })
+        foreach (var stress in new decimal?[] { null, 1m, 3m, 5m })
+        {
+            var lowest = Evaluate(sleep, energy, 1m, stress);
+            var highest = Evaluate(sleep, energy, 5m, stress);
+
+            Assert.Equal((lowest.RawScore, lowest.Band), (highest.RawScore, highest.Band));
+        }
     }
 
     [Fact]
     public void Raw_Boundaries_Select_Bands_Before_Any_Display_Rounding()
     {
-        var low = Evaluate(5m, 4m, 5m, 5m);
+        var low = Evaluate(3m, 3m, MidpointScaleValue, 5m);
         var midpoint = Evaluate(MidpointScaleValue, MidpointScaleValue,
             MidpointScaleValue, MidpointScaleValue);
-        var moderate = Evaluate(5m, 4m, 3m, 3m);
-        var high = Evaluate(5m, 5m, 3m, 3m);
+        var moderate = Evaluate(5m, 4m, MidpointScaleValue, 4m);
+        var high = Evaluate(5m, 4m, MidpointScaleValue, 3m);
 
         Assert.Equal((ExpectedLowBandScore, CheckInScoreBand.ConsiderEasierDay),
             (low.RawScore, low.Band));
@@ -110,7 +123,18 @@ public sealed class TodayCheckInScoreRuleTests
         Assert.Equal(ExpectedMidpointScore, score.RawScore);
     }
 
-    private static CheckInScoreResult Evaluate(decimal sleep, decimal energy, decimal soreness, decimal stress) =>
+    [Fact]
+    public void Three_Question_CheckIn_Without_Soreness_Is_Available_And_Identical()
+    {
+        var threeQuestion = TodayCheckInScoreRule.Evaluate(Observation(soreness: null), NowUtc, UtcTimeZone);
+        var fourQuestion = TodayCheckInScoreRule.Evaluate(Observation(soreness: 5m), NowUtc, UtcTimeZone);
+
+        Assert.Equal(CheckInScoreStatus.Available, threeQuestion.Status);
+        Assert.Equal(fourQuestion.RawScore, threeQuestion.RawScore);
+        Assert.Equal(fourQuestion.Band, threeQuestion.Band);
+    }
+
+    private static CheckInScoreResult Evaluate(decimal sleep, decimal energy, decimal? soreness, decimal? stress) =>
         TodayCheckInScoreRule.Evaluate(
             Observation(sleep: sleep, energy: energy, soreness: soreness, stress: stress),
             NowUtc, UtcTimeZone);

@@ -55,7 +55,7 @@ public static class TenRegionMuscleCoverageRule
     private static readonly string[] DeltoidsNames = ["Delts", "Deltoids", "Shoulders", "AnteriorDeltoid", "LateralDeltoid", "PosteriorDeltoid", "SideShoulders", "RearShoulders", "VerticalPush", "LateralRaise", "RearDelt"];
     private static readonly string[] QuadricepsNames = ["Quads", "Quadriceps", "RectusFemoris", "VastusLateralis", "VastusMedialis", "SquatPattern", "Lunge", "KneeExtension"];
     private static readonly string[] HamstringsNames = ["Hamstrings", "Hamstring", "BicepsFemoris", "KneeFlexion", "HipHinge", "RomanianDeadlift"];
-    private static readonly string[] GlutesNames = ["Glutes", "GluteMax", "GluteMaximus", "GluteusMaximus", "GluteMed", "GluteMedius", "Abductors", "Adductors", "HipThrust", "HipHinge", "HipAbduction", "HipAdduction", "Lunge", "SquatPattern"];
+    private static readonly string[] GlutesNames = ["Glutes", "GluteMax", "GluteMaximus", "GluteusMaximus", "GluteMed", "GluteMedius", "Abductors", "HipThrust", "HipHinge", "HipAbduction", "Lunge", "SquatPattern"];
     private static readonly string[] BicepsNames = ["Biceps", "BicepsBrachii", "ElbowFlexion"];
     private static readonly string[] TricepsNames = ["Triceps", "TricepsBrachii", "ElbowExtension"];
     private static readonly string[] CalvesNames = ["Calves", "Calf", "Gastrocnemius", "Soleus", "CalfRaise"];

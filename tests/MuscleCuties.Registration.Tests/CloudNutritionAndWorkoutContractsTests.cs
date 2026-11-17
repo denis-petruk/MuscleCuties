@@ -17,6 +17,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
+using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
@@ -306,9 +307,9 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var status = await checkInStore.GetStatusAsync(new DailyCheckInStatusRequest(today, "UTC"), CancellationToken.None);
         Xunit.Assert.Equal("Available", status.TodayReadiness?.Status);
         Xunit.Assert.True(status.IsCompleted);
-        // MC-CHECKIN-SCORE-0.3 (S-01): reported stress only lowers the energy share, so this fixture
-        // scores 87.5 (was 93.75 under 0.2) and stays in the FeelingReady band.
-        Xunit.Assert.Equal("87.5", status.ScoreText);
+        // MC-CHECKIN-SCORE-0.4 (A-8): sleep quality 5, energy 4 and stress 1 score 83.33 from the three
+        // 0–100 shares (soreness is not scored) and stay in the FeelingReady band.
+        Xunit.Assert.Equal("83.33", status.ScoreText);
         Xunit.Assert.Equal("FeelingReady", status.TierText);
 
         var injuryStore = new CloudWorkoutInjuryStore(apiClient);
@@ -373,7 +374,8 @@ public sealed class CloudNutritionAndWorkoutContractsTests
                     Version: 3,
                     Email: "elena@example.test",
                     ReproductiveContextJson: "{\"Pregnancy\":1,\"Contraception\":2}",
-                    RequestedActivitySessionsPerWeekJson: "{\"Yoga\":2}");
+                    RequestedActivitySessionsPerWeekJson: "{\"Yoga\":2}",
+                    GluteFocus: true);
             }
 
             if (path.StartsWith("/api/v1/cycle/overview", StringComparison.Ordinal))
@@ -424,7 +426,14 @@ public sealed class CloudNutritionAndWorkoutContractsTests
         var loadedWorkoutPrefs = await workoutPrefsStore.LoadAsync(CancellationToken.None);
         Xunit.Assert.NotNull(loadedWorkoutPrefs);
         Xunit.Assert.Equal(new[] { 1, 3, 5, 6 }, loadedWorkoutPrefs!.AvailableWeekdays);
-        Xunit.Assert.DoesNotContain(("PUT", "/api/v1/profile/workout-preferences"), apiClient.RecordedCalls);
+        Xunit.Assert.True(loadedWorkoutPrefs.GluteFocus);
+        Xunit.Assert.True(await workoutPrefsStore.SaveAsync(
+            loadedWorkoutPrefs with { GluteFocus = false }, CancellationToken.None));
+        var workoutPreferencesWrite = Xunit.Assert.Single(apiClient.RecordedPayloads,
+            call => call.Method == "PUT" && call.Path == "/api/v1/profile/workout-preferences");
+        var payload = JsonSerializer.SerializeToElement(workoutPreferencesWrite.Body,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+        Xunit.Assert.False(payload.GetProperty("gluteFocus").GetBoolean());
     }
 
     private sealed class RecordingApiClient(Func<string, object> responder) : IMuscleCutiesBackendApiClient

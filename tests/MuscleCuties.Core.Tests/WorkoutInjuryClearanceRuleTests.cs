@@ -6,6 +6,17 @@ namespace MuscleCuties.Core.Tests;
 // S-05: no post-clearance optional window. Restoration is decided by current eligibility from the clearance date.
 public sealed class WorkoutInjuryClearanceRuleTests
 {
+    [Theory]
+    [InlineData(1)]
+    [InlineData(2)]
+    [InlineData(10)]
+    public void Conservative_return_load_never_increases_a_small_prior_load(decimal prior)
+    {
+        var cap = WorkoutInjuryClearanceRule.ComputeConservativeReturnLoad(prior, 0);
+        Assert.InRange(cap, 0.01m, prior * WorkoutInjuryClearanceRule.ConservativeReturnLoadMultiplier);
+        Assert.Equal(prior, WorkoutInjuryClearanceRule.ComputeConservativeReturnLoad(prior, 2));
+    }
+
     private const int LaterClearanceOffset = 2;
     private static readonly DateOnly DayBeforeClearance = DateOnly.Parse("2026-09-30");
     private static readonly DateOnly ClearanceDate = DateOnly.Parse("2026-10-01");

@@ -23,7 +23,8 @@ public partial class ProfileImageCropModal : AnimatedModalView
     {
         base.OnSizeAllocated(width, height);
         if (_hasContent)
-            BottomSheetSizing.Apply(SheetSurface, height);
+            // Content-fit: the crop frame and one hint line do not need the full sheet ceiling.
+            BottomSheetSizing.ApplyContentFit(SheetSurface, height);
     }
 
     public Task<string?> ShowAsync(string imagePath)
@@ -37,7 +38,7 @@ public partial class ProfileImageCropModal : AnimatedModalView
         _tcs = new TaskCompletionSource<string?>();
         CropImage.Source = ImageSource.FromFile(imagePath);
         ResetTransforms();
-        BottomSheetSizing.Apply(SheetSurface, Height);
+        BottomSheetSizing.ApplyContentFit(SheetSurface, Height);
         IsOpen = true;
         return _tcs.Task;
     }

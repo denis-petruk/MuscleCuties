@@ -9,7 +9,7 @@ public sealed class PlanningCatalogFingerprintTests
 {
     private const int FirstExerciseId = 1;
     private const int SecondExerciseId = 2;
-    [Fact]
+    [PostgresFact]
     public void SafetyMetadataAndPreferenceChangesInvalidateFingerprint()
     {
         var exercise = new WorkoutExerciseDefinition { Id = FirstExerciseId, SeedCode = "synthetic", Name = "Synthetic" };
@@ -25,7 +25,7 @@ public sealed class PlanningCatalogFingerprintTests
         Assert.NotEqual(safetyChanged, preferenceChanged);
     }
 
-    [Fact]
+    [PostgresFact]
     public void InputOrderingDoesNotChangeFingerprint()
     {
         var first = new WorkoutExerciseDefinition { Id = FirstExerciseId, SeedCode = "first" };
@@ -33,7 +33,7 @@ public sealed class PlanningCatalogFingerprintTests
         Assert.Equal(PlanningCatalogFingerprint.FromInputs([first, second], [], [], []),
             PlanningCatalogFingerprint.FromInputs([second, first], [], [], []));
     }
-    [Fact]
+    [PostgresFact]
     public void FloorValuesAndReviewEvidenceInvalidateFingerprint()
     {
         const int originalFloor = 4;

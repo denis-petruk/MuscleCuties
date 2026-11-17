@@ -1,5 +1,5 @@
-using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Models.UI.Nutrition;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
@@ -24,6 +24,9 @@ public partial class NutritionViewModel
     [ObservableProperty] private string _phaseAdjustmentText = string.Empty;
     [ObservableProperty] private string _calculatedTargetText = string.Empty;
     [ObservableProperty] private string _savedCalorieRequestText = string.Empty;
+    [ObservableProperty] private bool _hasActivityAdjustment;
+    [ObservableProperty] private string _activityAdjustmentText = string.Empty;
+    [ObservableProperty] private float _activityAdjustmentCalories;
 
     private void ApplyTargetBreakdown(NutritionTargetBreakdown? breakdown)
     {
@@ -60,8 +63,7 @@ public partial class NutritionViewModel
         HasUnavailableBreakdown = breakdown is null || breakdown.Source == UnavailableSource;
     }
 
-    private static string FormatCalories(float value) =>
-        $"{value.ToString("N0", CultureInfo.CurrentCulture)} kcal";
+    private static string FormatCalories(float value) => DisplayFormat.Calories(value);
 
     private static string FormatSignedCalories(float value) =>
         value > NoTargetAdjustment ? $"+{FormatCalories(value)}" : FormatCalories(value);

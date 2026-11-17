@@ -21,7 +21,7 @@ public sealed class InjuryOmittedSlotPersistenceTests
     private const int ExpectedCauseCount = 2;
     private const int SyntheticUsernameSuffixLength = 10;
 
-    [Fact]
+    [PostgresFact]
     public async Task OmittedLineageRollsBackAndRetainsDistinctCausalEpisodes()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);

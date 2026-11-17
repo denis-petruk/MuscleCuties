@@ -39,7 +39,7 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
     private const string ProposedStatus = "Proposed";
     private const string ExpiredStatus = "Expired";
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task HiitCaptureRetriesExactRequestAndRollsBackRejectedConsumption()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
@@ -107,7 +107,7 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task PendingRevisionDoesNotCreateFirstPlanAndDefersToLivePreview()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
@@ -181,7 +181,7 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task GroupedMealsAndCustomFoodsRoundTripAgainstPostgreSql()
     {
         var connectionString = RequireLocalTestConnectionString();
@@ -293,7 +293,7 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task WorkoutOverviewAndSessionActionsRoundTripAgainstPostgreSql()
     {
         var connectionString = RequireLocalTestConnectionString();
@@ -465,7 +465,7 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task UnsafeAnswerStopsActiveWorkoutAndPreservesItsLogsAndCompletedSessions()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
@@ -606,7 +606,7 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task CompletingPlannedSessionDoesNotDemoteDurableExperienceWithIncompleteCredits()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(RequireLocalTestConnectionString()).Options;
@@ -661,7 +661,7 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task FinishingRestDayWithExerciseRowsDoesNotEarnExperienceCredit()
     {
         const int completedPercent = 100;

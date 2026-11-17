@@ -266,7 +266,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
     }
 
     [Fact]
-    public void One_Available_Day_Cannot_Meet_Two_General_Strength_Sessions()
+    public void One_Available_Day_Produces_One_Strength_Session_And_Discloses_Reduced_Frequency()
     {
         var evidence = new ActivityPrescriptionContext(
             WorkoutActivityType.GeneralStrength, ActivityExperience.Beginner,
@@ -283,13 +283,12 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         var decision = Assert.Single(result.Activities);
         Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
             decision.PolicySessionsPerWeek);
-        Assert.Equal(GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek,
-            decision.TargetSessionsPerWeek);
-        Assert.Equal(0, decision.ScheduledSessionsPerWeek);
-        Assert.Equal(MixedActivityScheduleDisposition.Blocked, decision.Disposition);
-        Assert.Empty(result.Sessions);
-        Assert.Contains(MixedActivityWeekScheduleRule.AvailableWeekdaysMustContainOneToSevenDistinctDays,
-            result.InputReasons);
+        Assert.Equal(1, decision.TargetSessionsPerWeek);
+        Assert.Equal(1, decision.ScheduledSessionsPerWeek);
+        Assert.Equal(MixedActivityScheduleDisposition.Scheduled, decision.Disposition);
+        Assert.Single(result.Sessions);
+        Assert.Contains(MixedActivityWeekScheduleRule.ActivityFrequencyLimitedByAvailableWeekdays,
+            decision.Reasons);
     }
 
     [Fact]

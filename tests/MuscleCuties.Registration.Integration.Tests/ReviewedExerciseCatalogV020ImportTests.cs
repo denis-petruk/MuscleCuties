@@ -8,7 +8,7 @@ namespace MuscleCuties.Registration.Integration.Tests;
 
 public sealed class ReviewedExerciseCatalogV020ImportTests
 {
-    [Fact]
+    [PostgresFact]
     public void Supplied_Review_Matches_Repository_Snapshot_Without_Claiming_Database_Match()
     {
         using var review = ReadJson("src/MuscleCuties.Infrastructure.PostgreSql/Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json");
@@ -18,12 +18,12 @@ public sealed class ReviewedExerciseCatalogV020ImportTests
             review.RootElement, definitions);
 
         Assert.True(result.CanImport, string.Join("; ", result.Issues));
-        Assert.Equal(59, result.ExercisesInReview);
-        Assert.Equal(59, result.MatchedDatabaseRecords);
-        Assert.Equal(160, result.DirectedPairsInReview);
+        Assert.Equal(67, result.ExercisesInReview);
+        Assert.Equal(67, result.MatchedDatabaseRecords);
+        Assert.Equal(181, result.DirectedPairsInReview);
         Assert.Equal(52, result.TemplateSlotsInReview);
-        Assert.Equal(59, result.ExerciseRestrictionAssessmentsCompleted);
-        Assert.Equal(59, result.OwnerDirectInstructionVerifiedAssessments);
+        Assert.Equal(67, result.ExerciseRestrictionAssessmentsCompleted);
+        Assert.Equal(67, result.OwnerDirectInstructionVerifiedAssessments);
         Assert.Equal(0, result.AutomaticSubstitutionsEnabled);
         Assert.All(review.RootElement.GetProperty("exercises").EnumerateArray(), exercise =>
         {
@@ -35,7 +35,7 @@ public sealed class ReviewedExerciseCatalogV020ImportTests
             review.RootElement.GetProperty("ownerDirectVerification").GetProperty("scope").GetString());
     }
 
-    [Fact]
+    [PostgresFact]
     public void Changed_Or_Missing_Catalog_Row_Blocks_Import()
     {
         using var review = ReadJson("src/MuscleCuties.Infrastructure.PostgreSql/Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json");
@@ -56,7 +56,7 @@ public sealed class ReviewedExerciseCatalogV020ImportTests
         Assert.False(missing.CanImport);
     }
 
-    [Fact]
+    [PostgresFact]
     public void Directed_Reviews_Do_Not_Approve_All_Pairs_As_Automatic_Equivalents()
     {
         using var review = ReadJson("src/MuscleCuties.Infrastructure.PostgreSql/Workout/Planning/ReviewData/ReviewedExerciseCatalogV020.json");
@@ -64,11 +64,11 @@ public sealed class ReviewedExerciseCatalogV020ImportTests
             .SelectMany(exercise => exercise.GetProperty("directedSubstitutionReviews").EnumerateArray())
             .ToArray();
 
-        Assert.Equal(70, pairs.Count(pair => pair.GetProperty("category").GetString() ==
+        Assert.Equal(75, pairs.Count(pair => pair.GetProperty("category").GetString() ==
             "CloseProgrammingAlternative"));
-        Assert.Equal(79, pairs.Count(pair => pair.GetProperty("category").GetString() ==
+        Assert.Equal(94, pairs.Count(pair => pair.GetProperty("category").GetString() ==
             "ManualProgrammingAlternative"));
-        Assert.Equal(11, pairs.Count(pair => pair.GetProperty("category").GetString() ==
+        Assert.Equal(12, pairs.Count(pair => pair.GetProperty("category").GetString() ==
             "RejectedAutomaticSubstitution"));
         Assert.False(review.RootElement.GetProperty("automaticSubstitutionsEnabled").GetBoolean());
         Assert.All(pairs, pair => Assert.False(string.IsNullOrWhiteSpace(

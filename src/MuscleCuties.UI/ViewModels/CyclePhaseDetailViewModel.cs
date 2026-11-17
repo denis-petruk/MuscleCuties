@@ -23,8 +23,12 @@ public partial class CyclePhaseDetailViewModel : ObservableObject
     [ObservableProperty] private string _nutritionSignalText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_Unknown");
     [ObservableProperty] private string _phaseIconGlyph = "QuestionCircle24";
-    [ObservableProperty] private string _phaseImageSource = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasPhaseImage))]
+    private string _phaseImageSource = string.Empty;
     [ObservableProperty] private bool _phaseImageUsesAnimation;
+
+    public bool HasPhaseImage => !string.IsNullOrWhiteSpace(PhaseImageSource);
     [ObservableProperty] private string _phaseName = "Cycle phase unknown";
     [ObservableProperty] private string _phaseWindow = "No phase estimate";
     [ObservableProperty] private string _quickRule = string.Empty;

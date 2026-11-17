@@ -95,7 +95,6 @@ public sealed class ReadinessEngine : IReadinessEngine
                 ["phase"] = DefaultZeroReadinessScore,
                 ["health"] = DefaultZeroReadinessScore,
                 ["sleepQuality"] = DefaultZeroReadinessScore,
-                ["soreness"] = DefaultZeroReadinessScore,
                 ["load"] = DefaultZeroReadinessScore,
                 ["previousDayLoad"] = DefaultZeroReadinessScore
             });

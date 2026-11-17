@@ -4,6 +4,27 @@ public static partial class UiTextCatalog
 {
     static partial void RegisterWorkoutGenerationStrings()
     {
+        English["Workout_Generation_DurationOmissionNotice"] = "Some movements were omitted to fit your selected session time.";
+        English["Workout_Generation_MissingKneeExtension"] = "Your week has no knee-extension movement.";
+        English["Workout_Generation_MissingKneeFlexion"] = "Your week has no knee-flexion movement.";
+        English["Workout_Generation_MissingHipExtension"] = "Your week has no hip-extension movement.";
+        English["Workout_Generation_MovementCoverageUnknown"] = "Movement coverage could not be determined for this plan.";
+        English["Workout_Generation_OneDayCoverageNotice"] = "One strength session per week cannot provide two weekly exposures for each muscle group.";
+        English["Workout_Generation_CoverageMuscle_Chest"] = "Chest";
+        English["Workout_Generation_CoverageMuscle_LatsUpperBack"] = "Back";
+        English["Workout_Generation_CoverageMuscle_Deltoids"] = "Shoulders";
+        English["Workout_Generation_CoverageMuscle_Quadriceps"] = "Quadriceps";
+        English["Workout_Generation_CoverageMuscle_Hamstrings"] = "Hamstrings";
+        English["Workout_Generation_CoverageMuscle_Glutes"] = "Glutes";
+        English["Workout_Generation_CoverageMuscle_Biceps"] = "Biceps";
+        English["Workout_Generation_CoverageMuscle_Triceps"] = "Triceps";
+        English["Workout_Generation_CoverageMuscle_Calves"] = "Calves";
+        English["Workout_Generation_CoverageMuscle_Trunk"] = "Core";
+        English["Workout_Generation_CoverageMuscle_Abductors"] = "Hip abductors";
+        English["Workout_Generation_CoverageMuscle_Adductors"] = "Hip adductors";
+        English["Workout_Generation_CoverageGapNotice"] = "Some muscle groups receive less weekly training than the planning target.";
+        English["Workout_Generation_CoveragePreferredNotice"] = "The preferred weekly training frequency is not reached for some muscle groups.";
+        English["Workout_Generation_CoverageNoticeTitle"] = "Your plan is ready";
         English["WorkoutPopulationBirthDateRequired"] = "Add your date of birth in your profile, then create a new preview.";
         English["WorkoutPopulationDateUnavailable"] = "Confirm your account time zone, then create a new preview.";
         English["WorkoutPopulationAgeUnsupported"] = "Workout planning currently supports adults aged 18–64. You can explore the other app features.";
@@ -309,7 +330,27 @@ public static partial class UiTextCatalog
         English["Workout_Generation_StyleNeedsHistory"] = "Needs an established strength training history. Start with General strength instead.";
         English["Workout_Generation_SwitchToGeneralStrength"] = "Switch to General strength";
         English["Workout_Generation_SwitchStyleFailed"] = "Could not switch your strength style. Please try again.";
-        English["Workout_Generation_EquipmentBetaNotice"] = "Bodyweight-only plans aren't offered in the beta yet. Dumbbell-and-band plans don't include a vertical pull yet.";
+        English["Workout_Generation_EquipmentBetaNotice"] = "Bodyweight-only plans omit upper-body pulling when no pulling hardware or confirmed band anchor is available. Confirm sliders or a secure anchor only if you actually have them.";
+        English["Workout_Generation_QuizEquipmentNotice"] = "Bodyweight-only plans omit upper-body pulling when no pulling hardware or confirmed band anchor is available. You can fine-tune sliders, dumbbells, and anchors anytime in Workout Availability.";
+        English["Workout_Generation_SelectionReason_BodyweightZeroAddedLoad"] = "Bodyweight (no added weight)";
+        English["Workout_Generation_SelectionReason_InitialLoadCalibrationRequired"] = "Choose starting weight in session";
+        English["Workout_Generation_SelectionReason_PriorComparableHistory"] = "Based on previous logged weight";
+        English["Workout_Generation_SelectionReason_ConservativeReturnLoadApplied"] = "Conservative return weight";
+        English["Workout_Generation_SelectionReason_DoubleProgressionLoadIncreaseRecommended"] = "Weight increased after hitting rep target";
+        English["Workout_Generation_SelectionReason_ConsecutiveBelowMinRepDecreaseRecommended"] = "Weight reduced after two below-target sessions";
+        English["Workout_Generation_SelectionReason_GlutePlateauAddOneDirectSetRecommended"] = "+1 direct glute set for plateau progression";
+        English["Workout_Generation_SelectionReason_SingleUnderTargetSessionMaintainsLoad"] = "Keeping weight after one below-target session";
+        English["Workout_Generation_SelectionReason_UnacceptableTechniqueBlocksIncrease"] = "Keeping weight to consolidate technique";
+        English["Workout_Generation_SelectionReason_MaintainCurrentLoad"] = "Based on previous logged weight";
+        English["Workout_Generation_MissingUpperPullEquipment"] = "Upper-body pulling is unavailable with bodyweight-only equipment, so back pulling is omitted. Update your equipment setup if you have bands with a secure anchor, dumbbells, or pulling hardware.";
+        English["Workout_Generation_MissingUpperPullBandAnchor"] = "Resistance band row and chest press stay excluded until you confirm a secure fixed anchor in workout setup.";
+        English["Workout_Generation_MissingDirectCalves"] = "Direct calf work could not be included with your current equipment setup.";
+        English["Workout_Generation_MissingDirectRearDelts"] = "Direct rear-delt work could not be included with your current equipment setup.";
+        English["Workout_Generation_BelowTargetDynamicCore"] = "Dynamic core work is included across your scheduled sessions within your current days.";
+        English["Workout_Generation_MissingGluteFocusAbduction"] = "Direct hip abduction was limited with your current equipment setup.";
+        English["Workout_Generation_ReadinessAdaptation"] = "One optional set was reduced to match today’s recovery.";
+        English["Workout_Generation_FinisherFormat"] = "After strength: {0} min of {1} · RPE {2}–{3}.";
+        English["Workout_Generation_CoachExplanation"] = "Today’s recovery called for a small volume adjustment.";
     }
 }
 

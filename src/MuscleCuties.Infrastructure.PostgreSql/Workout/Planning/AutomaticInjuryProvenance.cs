@@ -165,7 +165,14 @@ internal static class AutomaticInjuryProvenance
                 session.TemplateId == group.Key.TemplateId && session.TemplateVersion == group.Key.TemplateVersion &&
                 session.SessionIndex == group.Key.SessionIndex).ToArray();
             var selected = sessions.Length == 1 ? sessions[0].Slots.Where(slot => slot.SlotId == group.Key.SlotId).ToArray() : [];
-            if (selected.Length != 1) return null;
+            if (selected.Length > 1 || sessions.Length != 1) return null;
+            // A canonical V2 session can omit a logical slot when every exercise in
+            // that slot is blocked. Preserve that omission only when the original
+            // prescription itself is proven contraindicated by a currently active
+            // episode. An absent slot for any other reason remains NeedsReview.
+            var originalDefinition = definitions.Single(row => row.Id == match.OriginalExerciseId);
+            if (selected.Length == 0 && !activeEpisodes.Any(episode =>
+                    (originalDefinition.Contraindications & (InjuryFlag)episode.SiteFlag) != InjuryFlag.None)) return null;
             var selectedSlot = selected.SingleOrDefault();
             var alternative = selectedSlot?.ExerciseId;
             var alternativeSets = selectedSlot?.Sets;

@@ -196,8 +196,11 @@ public sealed class PostgresWorkoutActiveSessionStore(
                 if (command.PlannedWorkoutDayId is { } plannedId)
                 {
                     var activeDays = await context.WorkoutDays.AsNoTracking().Where(day => day.UserId == userId &&
-                        !day.IsRemovedByReadiness && !day.IsRemovedBySafety && !day.IsRemovedByUserAdjustment &&
-                        context.WorkoutPlans.Any(plan => plan.UserId == userId && plan.Id == day.WorkoutPlanId && plan.IsActive))
+                        !day.IsRemovedBySafety &&
+                        ((!day.IsRemovedByReadiness && !day.IsRemovedByUserAdjustment &&
+                          context.WorkoutPlans.Any(plan => plan.UserId == userId && plan.Id == day.WorkoutPlanId && plan.IsActive)) ||
+                         context.WorkoutSessionLogs.Any(open => open.UserId == userId && !open.IsDeleted &&
+                             open.CompletedAt == null && open.PlannedWorkoutDayId == day.Id)))
                         .ToListAsync(ct).ConfigureAwait(false);
                     var matches = activeDays.Where(day => PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(day.Id) == plannedId).ToArray();
                     if (matches.Length != 1 || matches[0].WorkoutType == nameof(WorkoutType.Rest))
@@ -221,7 +224,9 @@ public sealed class PostgresWorkoutActiveSessionStore(
                         plannedDay.WorkoutType, plannedDay.ActivityTypeId, plannedDay.PlannedMainDurationMinutes,
                         plannedExercises.Select(PlannedExerciseSnapshot.FromRecord).ToArray())
                     {
-                        ActivityPrescriptionJson = plannedDay.PlannedActivityPrescriptionJson
+                        ActivityPrescriptionJson = plannedDay.PlannedActivityPrescriptionJson,
+                        GenerationV2 = await AcceptedGenerationPlanV2.LoadSessionAsync(context, userId, plannedDay, ct)
+                            .ConfigureAwait(false)
                     };
                     // Readiness reconciliation is best effort. An open preview, an unfinished session or a
                     // missing timezone leaves it without work; training must continue on the day's own
@@ -240,8 +245,13 @@ public sealed class PostgresWorkoutActiveSessionStore(
                     {
                         if (adjusted.DoseAdjustmentReasonCode == CycleReadinessPrescriptionRule.SafetyReviewRequired)
                             throw new WorkoutSessionStartBlockedException(WorkoutSessionStartBlockCode.SafetyReviewRequired);
-                        plannedPrescription = adjusted;
+                        plannedPrescription = adjusted with { GenerationV2 = plannedPrescription.GenerationV2 };
                     }
+                    plannedPrescription = plannedPrescription with
+                    {
+                        GenerationV2 = AcceptedGenerationPlanV2.ApplyOccurrenceDose(
+                            plannedPrescription.GenerationV2, plannedPrescription.Exercises)
+                    };
                     plannedPrescriptionJson = plannedPrescription.Serialize();
                 }
 
@@ -559,6 +569,9 @@ public sealed class PostgresWorkoutActiveSessionStore(
         row.RepsCompleted = input.RepsCompleted;
         row.Rpe = input.Rpe;
         row.IsWarmup = input.IsWarmup;
+        row.LeftSideReps = input.LeftSideReps;
+        row.RightSideReps = input.RightSideReps;
+        row.IsObserved = true;
         row.RestTimeSeconds = input.RestTimeSeconds;
         row.IsDeleted = false;
         row.DeletedAt = null;
@@ -624,7 +637,9 @@ public sealed class PostgresWorkoutActiveSessionStore(
                 row.Rpe,
                 row.IsWarmup,
                 row.RestTimeSeconds,
-                DateTime.SpecifyKind(row.UpdatedAt, DateTimeKind.Utc)))
+                DateTime.SpecifyKind(row.UpdatedAt, DateTimeKind.Utc),
+                row.LeftSideReps,
+                row.RightSideReps))
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
 

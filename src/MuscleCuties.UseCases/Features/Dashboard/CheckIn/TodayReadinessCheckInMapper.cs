@@ -16,9 +16,11 @@ public static class TodayReadinessCheckInMapper
         DateTimeOffset? recordedAtUtc,
         long revision,
         DateTimeOffset nowUtc,
-        string? activeTimeZoneId)
+        string? activeTimeZoneId,
+        int? fatigue = null)
     {
         var observation = energy.HasValue || sleepQuality.HasValue || soreness.HasValue || stress.HasValue ||
+                          fatigue.HasValue ||
                           recordedTimeZoneId is not null || recordedAtUtc.HasValue
             ? new TodayCheckInObservation(date, recordedTimeZoneId ?? string.Empty,
                 recordedAtUtc ?? DateTimeOffset.MinValue, revision,
@@ -26,6 +28,6 @@ public static class TodayReadinessCheckInMapper
             : null;
         var result = TodayCheckInScoreRule.Evaluate(observation, nowUtc, activeTimeZoneId ?? string.Empty);
         return new TodayReadinessCheckInDto(result.Status.ToString(), result.RawScore, result.Band?.ToString(),
-            sleepQuality, energy, soreness, stress);
+            sleepQuality, energy, soreness, stress, fatigue);
     }
 }

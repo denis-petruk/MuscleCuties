@@ -39,14 +39,18 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up .NET SDK
+      - name: Set up .NET SDK 10.0.403 for Xcode 27.1
         uses: actions/setup-dotnet@v4
         with:
-          global-json-file: global.json
+          # Workload set 10.0.403 selects .NET for iOS 27.1.10018, the
+          # supported pairing for the xcode-27 image's Xcode 27.1.
+          # The repository global.json still selects the local 10.0.2xx
+          # band; latestFeature resolves this explicitly installed 4xx SDK.
+          dotnet-version: 10.0.403
 
       - name: Install MAUI iOS workload
         run: |
-          dotnet workload install maui-ios
+          dotnet workload install maui-ios --version 10.0.403
 
       - name: Report Xcode version
         run: xcodebuild -version

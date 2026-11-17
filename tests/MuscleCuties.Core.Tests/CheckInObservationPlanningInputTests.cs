@@ -7,7 +7,7 @@ public sealed class CheckInObservationPlanningInputTests
     [Fact]
     public void PlanningInputs_AcceptCompleteValuesInSupportedRanges()
     {
-        Assert.True(CheckInObservationRule.ArePlanningInputsValid(4, 1, 5, 3, "America/Toronto"));
+        Assert.True(CheckInObservationRule.ArePlanningInputsValid(4, 1, 5, 3, "America/Toronto", fatigue: 4));
     }
 
     [Theory]
@@ -25,6 +25,7 @@ public sealed class CheckInObservationPlanningInputTests
     public void PlanningInputs_RejectMissingRatingsButAllowLegacyCheckInWithoutPlanningInputs()
     {
         Assert.False(CheckInObservationRule.ArePlanningInputsValid(4, 4, null, null, "America/Toronto"));
+        Assert.True(CheckInObservationRule.ArePlanningInputsValid(4, 4, null, null, "America/Toronto", fatigue: 3));
         Assert.True(CheckInObservationRule.ArePlanningInputsValid(null, null, null, null, null));
     }
 
@@ -32,5 +33,14 @@ public sealed class CheckInObservationPlanningInputTests
     public void PlanningInputs_RejectPartialCheckInWithoutTimezoneAssociation()
     {
         Assert.False(CheckInObservationRule.ArePlanningInputsValid(4, 4, null, null, null));
+    }
+
+    [Fact]
+    public void PlanningInputs_RejectOutOfRangeFatigue()
+    {
+        Assert.False(CheckInObservationRule.ArePlanningInputsValid(4, 4, null, null,
+            "America/Toronto", fatigue: 0));
+        Assert.False(CheckInObservationRule.ArePlanningInputsValid(4, 4, null, null,
+            "America/Toronto", fatigue: 6));
     }
 }

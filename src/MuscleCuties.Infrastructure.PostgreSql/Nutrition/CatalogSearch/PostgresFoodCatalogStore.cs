@@ -158,7 +158,7 @@ public sealed class PostgresFoodCatalogStore(PostgresDbContext dbContext)
         food.ServingSizeUnit,
         food.ServingOptionsJson);
 
-    private static FoodCatalogCandidate ToCandidate(Models.App.UserFoodItemRecord food) => new(
+    internal static FoodCatalogCandidate ToCandidate(Models.App.UserFoodItemRecord food) => new(
         LegacyCustomNumericId(food.Id),
         FoodCatalogRankingRule.FormatFoodName(food.Name),
         food.Calories is null ? null : (float)food.Calories.Value,

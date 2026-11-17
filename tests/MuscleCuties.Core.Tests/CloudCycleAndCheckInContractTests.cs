@@ -28,7 +28,8 @@ public sealed class CloudCycleAndCheckInContractTests
         var localNow = TimeZoneInfo.ConvertTime(DateTimeOffset.UtcNow, TimeZoneInfo.Local);
         return new SubmitDailyCheckInRequest(DateOnly.FromDateTime(localNow.DateTime),
             SyntheticSleepHours, SyntheticEnergy, SyntheticPain, false, null,
-            PlanningRating, PlanningRating, PlanningRating, TimeZoneInfo.Local.Id);
+            PlanningRating, PlanningRating, PlanningRating, TimeZoneInfo.Local.Id,
+            PlanningFatigue: PlanningRating);
     }
 
     [Fact]
@@ -68,6 +69,76 @@ public sealed class CloudCycleAndCheckInContractTests
                 ValidCheckInRequest(), CancellationToken.None));
 
         Assert.Single(api.Mutations);
+        Assert.Equal(PlanningRating,
+            api.Mutations[0].Payload.GetProperty("planningFatigue").GetInt32());
+    }
+
+    [Fact]
+    public async Task CheckInSave_preserves_unknown_sleep_duration_pain_bloating_and_soreness_as_null()
+    {
+        var api = new RecordingApiClient
+        {
+            GetResponse = (_, _) => (BackendApiStatus.Success, "[]"),
+            MutationResponse = (_, _, payload) => (BackendApiStatus.Success, JsonSerializer.Serialize(new
+            {
+                id = payload.GetProperty("id").GetGuid(), date = payload.GetProperty("date").GetString(),
+                energy = PlanningRating, readinessScore = 60, readinessTier = "ConsiderLighterSession", phase = "Unknown",
+                planningSleepQuality = PlanningRating, planningFatigue = PlanningRating,
+                planningTimeZoneId = TimeZoneInfo.Local.Id, planningRecordedAtUtc = DateTimeOffset.UtcNow, planningRevision = 1
+            }))
+        };
+        await new CloudDailyCheckInStore(api).SubmitAsync(ValidCheckInRequest() with
+            { SleepHours = null, PainLevel = null, HasBloating = null, PlanningSoreness = null }, CancellationToken.None);
+        var body = Assert.Single(api.Mutations).Payload;
+        foreach (var property in new[] { "sleepHours", "pain", "bloating", "planningSoreness" })
+            Assert.Equal(JsonValueKind.Null, body.GetProperty(property).ValueKind);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData(4)]
+    public async Task CheckInSave_RequiresServerAcknowledgementOfSubmittedFatigue(int? savedFatigue)
+    {
+        var api = new RecordingApiClient
+        {
+            GetResponse = (path, _) => path.StartsWith(CheckInsRoute, StringComparison.Ordinal)
+                ? (BackendApiStatus.Success, "[]")
+                : (BackendApiStatus.ServerError, null),
+            MutationResponse = (_, _, payload) => (BackendApiStatus.Success, JsonSerializer.Serialize(new
+            {
+                id = payload.GetProperty("id").GetGuid(),
+                date = DateOnly.Parse(payload.GetProperty("date").GetString()!),
+                energy = payload.GetProperty("energy").GetInt32(),
+                readinessScore = 60,
+                readinessTier = "ConsiderLighterSession",
+                phase = "Unknown",
+                planningSleepQuality = PlanningRating,
+                planningSoreness = (int?)null,
+                planningStress = (int?)null,
+                planningTimeZoneId = payload.GetProperty("planningTimeZoneId").GetString(),
+                planningRecordedAtUtc = DateTimeOffset.UtcNow,
+                planningRevision = 1,
+                planningFatigue = savedFatigue
+            }))
+        };
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            new CloudDailyCheckInStore(api).SubmitAsync(ValidCheckInRequest(), CancellationToken.None));
+
+        Assert.Single(api.Mutations);
+        Assert.Equal(PlanningRating, api.Mutations[0].Payload.GetProperty("planningFatigue").GetInt32());
+    }
+
+    [Fact]
+    public async Task CheckInSave_RequiresFatigueWithoutFabricatingSoreness()
+    {
+        var api = new RecordingApiClient();
+        var request = ValidCheckInRequest() with { PlanningFatigue = null, PlanningSoreness = null };
+
+        await Assert.ThrowsAsync<ArgumentException>(() =>
+            new CloudDailyCheckInStore(api).SubmitAsync(request, CancellationToken.None));
+
+        Assert.Empty(api.Mutations);
     }
 
     [Fact]

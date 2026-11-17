@@ -106,7 +106,6 @@
                                                 </Label.Triggers>
                                             </Label>
 
-                                            <!-- C1/OD-7: why this style is not offered, with the alternative. -->
                                             <Label
                                                 Grid.Row="2"
                                                 Text="{Binding UnavailableReason}"

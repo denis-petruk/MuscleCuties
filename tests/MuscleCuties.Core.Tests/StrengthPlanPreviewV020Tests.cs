@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
@@ -8,6 +9,55 @@ namespace MuscleCuties.Core.Tests;
 
 public sealed class StrengthPlanPreviewV020Tests
 {
+    [Fact]
+    public async Task V2_preview_transports_the_full_prescription_for_canonical_acceptance_projection()
+    {
+        var source = Profile();
+        var request = Request();
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(source)).ExecuteAsync(Guid.NewGuid(), request);
+        var expected = WorkoutGenerationV2Service.GenerateFromPreviewSource(request, source);
+        var json = System.Text.Json.JsonSerializer.SerializeToElement(preview.GenerationV2,
+            new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web));
+
+        Assert.True(json.TryGetProperty("sessions", out var sessions));
+        Assert.Equal(expected.AdaptedSessions.Count, sessions.GetArrayLength());
+        Assert.Equal(expected.AdaptedSessions.Where(session => session.Exercises.Count > 0)
+                .SelectMany(session => session.Exercises).Select(exercise => exercise.ExerciseId),
+            GenerationPlanV2Mapper.ToStrengthSessions(preview.GenerationV2!).SelectMany(session => session.Slots)
+                .Select(slot => slot.ExerciseId!.Value));
+        foreach (var session in sessions.EnumerateArray())
+        foreach (var exercise in session.GetProperty("exercises").EnumerateArray())
+        {
+            Assert.True(exercise.TryGetProperty("warmUpSets", out _));
+            Assert.True(exercise.TryGetProperty("supersetGroupId", out _));
+            Assert.True(exercise.TryGetProperty("isUnilateral", out _));
+            Assert.True(exercise.TryGetProperty("loadStatus", out _));
+            Assert.True(exercise.TryGetProperty("prescribedLoadKg", out _));
+        }
+    }
+
+    [Theory]
+    [InlineData(20, false, "Intermediate", 4)]
+    [InlineData(130, false, "Advanced", 5)]
+    [InlineData(130, true, "Advanced", 2)]
+    public void V2_adapter_uses_durable_day_promotion_and_detraining(int days, bool returning,
+        string expectedTier, int expectedSessions)
+    {
+        var source = Profile() with
+        {
+            ProfileTrainingExperience = TrainingExperienceLevel.Beginner,
+            Catalog = Profile().Catalog.Select(entry => entry with { Candidate = entry.Candidate with
+                { SupportedExperiences = new HashSet<ActivityExperience> { ActivityExperience.Beginner, ActivityExperience.Established } } }).ToArray(),
+            DistinctCompletedWorkoutDays = days,
+            IsReturningAfterDetraining = returning,
+            RequestedSessionsPerWeek = null
+        };
+        var request = Request() with { AvailableWeekdays = Enum.GetValues<DayOfWeek>().ToHashSet(), ActivityHistory = null };
+        var result = WorkoutGenerationV2Service.GenerateFromPreviewSource(request, source);
+        Assert.Contains(result.RuleTrace, entry => entry.StartsWith($"Experience:{expectedTier};", StringComparison.Ordinal));
+        Assert.Equal(expectedSessions, result.AdaptedSessions.Count(session => session.Exercises.Count > 0));
+    }
+
     private const int OwnerMaximumActivitiesPerDay = 2;
     private const int HistoryConsistentWeeks = 1;
     private const int HistoryAverageSessions = 1;
@@ -59,6 +109,134 @@ public sealed class StrengthPlanPreviewV020Tests
                 .Take(first.Sessions.Count)
                 .ToArray(),
             first.Sessions.Select(session => session.PlannedWeekday).ToArray());
+    }
+
+    [Fact]
+    public async Task Preview_reports_missing_knee_flexion_from_exercises_actually_scheduled()
+    {
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(OneDayProfile()))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+
+        Assert.Equal("Feasible", preview.Status);
+        Assert.Contains("WeeklyMovementCoverageMissing_KneeFlexion", preview.AdvisoryCodes);
+        Assert.DoesNotContain("WeeklyMovementCoverageMissing_KneeExtension", preview.AdvisoryCodes);
+        Assert.DoesNotContain("WeeklyMovementCoverageMissing_HipExtension", preview.AdvisoryCodes);
+    }
+
+    [Fact]
+    public async Task Preview_reports_a_knee_extension_gap_when_all_safe_knee_exercises_are_excluded()
+    {
+        var source = OneDayProfile() with { ExcludedExerciseIds = new HashSet<int> { 101 } };
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(source))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+
+        Assert.NotEmpty(preview.Sessions);
+        Assert.Contains("WeeklyMovementCoverageMissing_KneeExtension", preview.AdvisoryCodes);
+        Assert.Contains("WeeklyMovementCoverageMissing_KneeFlexion", preview.AdvisoryCodes);
+        Assert.DoesNotContain("WeeklyMovementCoverageMissing_HipExtension", preview.AdvisoryCodes);
+    }
+
+    [Fact]
+    public async Task Duration_omitted_knee_flexion_does_not_hide_weekly_pattern_gap()
+    {
+        var source = OneDayProfile();
+        var accessoryKey = "MC-FB-1D-A|goal-specific-accessory";
+        var allowed = source.ReviewedAllowedExerciseIdsByTemplateSlot.ToDictionary(x => x.Key, x => x.Value);
+        var conditions = source.TemplateSlotReviewConditions.ToDictionary(x => x.Key, x => x.Value);
+        allowed[accessoryKey] = new HashSet<int> { 105 };
+        conditions[accessoryKey] = "Reviewed synthetic slot";
+        var catalog = source.Catalog.Concat([Entry(105, MovementPattern.KneeFlexion)]).ToArray();
+        var seconds = source.SecondsPerRepByExerciseId.ToDictionary(x => x.Key, x => x.Value);
+        seconds[105] = 4;
+        var primary = source.PrimaryMuscleByExerciseId.ToDictionary(x => x.Key, x => x.Value);
+        primary[105] = "Hamstrings";
+        var muscles = source.MuscleGroupsByExerciseId!.ToDictionary(x => x.Key, x => x.Value);
+        muscles[105] = new HashSet<string> { "Hamstrings" };
+        var durations = new Dictionary<int, int> { [(int)WorkoutActivityType.GeneralStrength] = 60 };
+        var reviewed = source with { Catalog = catalog, ReviewedAllowedExerciseIdsByTemplateSlot = allowed,
+            TemplateSlotReviewConditions = conditions, SecondsPerRepByExerciseId = seconds,
+            PrimaryMuscleByExerciseId = primary, MuscleGroupsByExerciseId = muscles,
+            ActivitySessionDurationsMinutes = durations };
+        var shortEnough = await new PreviewStrengthPlanV020UseCase(new Source(reviewed))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+        Assert.Contains(shortEnough.Sessions.SelectMany(session => session.Slots), slot => slot.ExerciseId == 105);
+        Assert.DoesNotContain(WeeklyMovementCoverageRule.MissingKneeFlexion, shortEnough.AdvisoryCodes);
+
+        seconds = seconds.ToDictionary(x => x.Key, x => x.Value);
+        seconds[105] = 600;
+        var tooSlow = await new PreviewStrengthPlanV020UseCase(new Source(reviewed with { SecondsPerRepByExerciseId = seconds }))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+        Assert.DoesNotContain(tooSlow.Sessions.SelectMany(session => session.Slots), slot => slot.ExerciseId == 105);
+        Assert.Contains(WeeklyMovementCoverageRule.MissingKneeFlexion, tooSlow.AdvisoryCodes);
+    }
+
+    [Fact]
+    public void Movement_coverage_counts_reviewed_knee_flexion_and_does_not_guess_missing_catalog_metadata()
+    {
+        var catalog = new[] { Entry(101, MovementPattern.Lunge), Entry(102, MovementPattern.HipThrust),
+            Entry(105, MovementPattern.KneeFlexion) };
+        Assert.Empty(WeeklyMovementCoverageRule.MissingPatterns([101, 102, 105], catalog));
+        Assert.Equal([WeeklyMovementCoverageRule.UnknownCoverage],
+            WeeklyMovementCoverageRule.MissingPatterns([101, 999], catalog));
+    }
+
+    [Fact]
+    public void One_available_day_is_valid_in_saved_preferences()
+    {
+        Assert.True(WorkoutPreferencesRule.HasMinimumDistinctWeekdays(new[] { DayOfWeek.Monday }));
+        Assert.False(WorkoutPreferencesRule.HasMinimumDistinctWeekdays(Array.Empty<DayOfWeek>()));
+    }
+
+    [Fact]
+    public void One_day_planning_uses_a_new_ruleset_version_for_snapshot_staleness()
+    {
+        Assert.NotEqual("MC-PLANNING-0.3", StrengthPlanPreviewRule.RulesetVersion);
+    }
+
+    [Fact]
+    public async Task One_available_day_creates_a_safe_full_body_proposal_with_coverage_disclosure()
+    {
+        var source = OneDayProfile();
+        var store = new ProposalStore();
+        var useCase = new CreateStrengthPlanProposalV020UseCase(new PreviewStrengthPlanV020UseCase(new Source(source)), store);
+
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+
+        Assert.True(result.IsPersisted);
+        Assert.Equal("Feasible", result.Preview.Status);
+        var session = Assert.Single(result.Preview.Sessions);
+        Assert.Equal(DayOfWeek.Monday, session.PlannedWeekday);
+        Assert.All(session.Slots.Where(slot => slot.IsRequired), slot => Assert.NotNull(slot.ExerciseId));
+        Assert.Contains("OneDayFullBodyHasLimitedWeeklyCoverage", result.Preview.AdvisoryCodes);
+    }
+
+    [Fact]
+    public async Task One_available_day_retains_the_selected_high_volume_style()
+    {
+        var source = OneDayProfile() with { SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.HighVolumeStrength } };
+        var request = Request() with { Activity = WorkoutActivityDto.HighVolumeStrength,
+            ExplicitStrengthStyleChoice = WorkoutActivityDto.HighVolumeStrength, AvailableWeekdays = null };
+        var result = await new PreviewStrengthPlanV020UseCase(new Source(source)).ExecuteAsync(Guid.NewGuid(), request);
+
+        Assert.Equal("Feasible", result.Status);
+        Assert.Single(result.Sessions);
+        Assert.Equal((int)WorkoutActivityType.HighVolumeStrength, result.EffectiveActivityTypeId);
+        Assert.Contains("OneDayFullBodyHasLimitedWeeklyCoverage", result.AdvisoryCodes);
+    }
+
+    [Fact]
+    public async Task One_day_with_no_allowed_strength_exercises_is_not_persisted()
+    {
+        var source = OneDayProfile() with { ExcludedExerciseIds = new HashSet<int> { 101, 102, 103, 104 } };
+        var store = new ProposalStore();
+        var useCase = new CreateStrengthPlanProposalV020UseCase(new PreviewStrengthPlanV020UseCase(new Source(source)), store);
+
+        var result = await useCase.ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+
+        Assert.False(result.IsPersisted);
+        Assert.NotEqual("Feasible", result.Preview.Status);
+        Assert.Empty(result.Preview.Sessions);
+        Assert.Equal(0, store.SaveCount);
     }
 
     [Fact]
@@ -556,14 +734,15 @@ public sealed class StrengthPlanPreviewV020Tests
         var result = await new PreviewStrengthPlanV020UseCase(new Source(source))
             .ExecuteAsync(Guid.NewGuid(), request);
 
+        // Gate 80: HIIT is deferred, so no evidence combination can produce a scheduled HIIT week.
         var hiitDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit);
         Assert.Equal("Blocked", hiitDecision.Disposition);
-        Assert.Contains("HiitEligibilityNotEstablishedByRequiredEvidence", hiitDecision.ReasonCodes);
+        Assert.Equal(0, hiitDecision.ScheduledSessionsPerWeek);
     }
 
     [Fact]
-    public async Task Server_Stamped_Hiit_Evidence_Is_Valid_For_Thirty_Calendar_Days()
+    public async Task Hiit_stays_blocked_regardless_of_evidence_stamp_age()
     {
         var evidence = CompleteHiitEvidence(WorkoutActivityType.Cycling);
         var answers = new SavedActivityAnswersDto(1, [], evidence)
@@ -580,12 +759,17 @@ public sealed class StrengthPlanPreviewV020Tests
             { CurrentAccountLocalDate = LocalDate.AddDays(HiitEvidenceCaptureRule.EvidenceValidityCalendarDays - 1) })).ExecuteAsync(Guid.NewGuid(), Request());
         var expired = await new PreviewStrengthPlanV020UseCase(new Source(source with
             { CurrentAccountLocalDate = LocalDate.AddDays(HiitEvidenceCaptureRule.EvidenceValidityCalendarDays) })).ExecuteAsync(Guid.NewGuid(), Request());
-        Assert.NotEqual("Blocked", Assert.Single(fresh.MixedActivitySchedule!.Activities,
-            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
-        Assert.NotEqual("Blocked", Assert.Single(lastValid.MixedActivitySchedule!.Activities,
-            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
-        Assert.Equal("Blocked", Assert.Single(expired.MixedActivitySchedule!.Activities,
-            decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit).Disposition);
+
+        // Gate 80 defers HIIT, so stamp age no longer gates a prescription. The historical validity
+        // window stays defined for persisted data compatibility.
+        Assert.True(HiitEvidenceCaptureRule.EvidenceValidityCalendarDays > 0);
+        foreach (var result in new[] { fresh, lastValid, expired })
+        {
+            var hiitDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
+                decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit);
+            Assert.Equal("Blocked", hiitDecision.Disposition);
+            Assert.Equal(0, hiitDecision.ScheduledSessionsPerWeek);
+        }
     }
 
     [Fact]
@@ -605,7 +789,7 @@ public sealed class StrengthPlanPreviewV020Tests
         var hiitDecision = Assert.Single(result.MixedActivitySchedule!.Activities,
             decision => decision.ActivityTypeId == (int)WorkoutActivityType.Hiit);
         Assert.Equal("Blocked", hiitDecision.Disposition);
-        Assert.Contains("HiitEligibilityNotEstablishedByRequiredEvidence", hiitDecision.ReasonCodes);
+        Assert.Equal(0, hiitDecision.ScheduledSessionsPerWeek);
     }
 
     [Theory]
@@ -1035,6 +1219,56 @@ public sealed class StrengthPlanPreviewV020Tests
         Assert.Empty(preview.Sessions);
     }
 
+    [Fact]
+    public async Task Preview_carries_the_v2_generation_result_for_a_planned_preview()
+    {
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), Request());
+
+        Assert.NotNull(preview.GenerationV2);
+        Assert.Equal(WorkoutPolicyV2.Version, preview.GenerationV2!.PolicyVersion);
+        Assert.Equal(WorkoutPolicyV2.InputContractVersion, preview.GenerationV2.InputContractVersion);
+        Assert.Contains(preview.GenerationV2.Status, Enum.GetNames<WorkoutGenerationStatusV2>());
+    }
+
+    [Fact]
+    public async Task Preview_refused_before_planning_carries_no_v2_generation()
+    {
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { InputContractVersion = "stale-contract-version" });
+
+        Assert.Equal("InvalidInput", preview.Status);
+        Assert.Null(preview.GenerationV2);
+    }
+
+    [Fact]
+    public async Task V2_generation_is_deterministic_for_the_same_preview_source()
+    {
+        var first = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), Request());
+        var second = await new PreviewStrengthPlanV020UseCase(new Source(Profile()))
+            .ExecuteAsync(Guid.NewGuid(), Request());
+
+        Assert.NotNull(first.GenerationV2);
+        Assert.Equal(first.GenerationV2!.PrescriptionHash, second.GenerationV2!.PrescriptionHash);
+        Assert.Equal(first.GenerationV2.SessionCount, second.GenerationV2.SessionCount);
+    }
+
+    [Fact]
+    public async Task Preview_surfaces_v2_movement_gaps_once_so_the_sheet_can_offer_one_action()
+    {
+        var source = Profile() with { ExcludedExerciseIds = new HashSet<int> { 101 } };
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(source))
+            .ExecuteAsync(Guid.NewGuid(), Request() with { AvailableWeekdays = null });
+
+        Assert.NotNull(preview.GenerationV2);
+        Assert.Contains(WeeklyMovementCoverageRule.MissingKneeExtension, preview.GenerationV2!.MissingGaps);
+        Assert.Equal(preview.GenerationV2.MissingGaps.Distinct(StringComparer.Ordinal).Count(),
+            preview.GenerationV2.MissingGaps.Count);
+        Assert.Equal(preview.GenerationV2.MissingGaps.OrderBy(code => code, StringComparer.Ordinal),
+            preview.GenerationV2.MissingGaps);
+    }
+
     private static StrengthPlanPreviewRequestV020 Request() => new(
         WorkoutActivityDto.GeneralStrength, LocalDate,
         HistoryFor(WorkoutActivityType.GeneralStrength),
@@ -1132,6 +1366,27 @@ public sealed class StrengthPlanPreviewV020Tests
             item => item.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength);
         Assert.Contains(StrengthScheduleAssignmentRule.SessionsReducedForMuscleRecovery, decision.ReasonCodes);
     }
+    private static StrengthPlanPreviewSourceV020 OneDayProfile()
+    {
+        var source = Profile();
+        var template = Assert.Single(StrengthTemplateCatalog.ForSchedule(1));
+        var allowed = source.ReviewedAllowedExerciseIdsByTemplateSlot.ToDictionary(x => x.Key, x => x.Value);
+        var conditions = source.TemplateSlotReviewConditions.ToDictionary(x => x.Key, x => x.Value);
+        foreach (var (slot, index) in template.Slots.Where(x => x.IsRequired).Select((slot, i) => (slot, i)))
+        {
+            var key = $"{template.TemplateId}|{slot.SlotId}";
+            allowed[key] = new HashSet<int> { 101 + index };
+            conditions[key] = "Reviewed slot conditions";
+        }
+        return source with
+        {
+            AvailableWeekdays = new HashSet<DayOfWeek> { DayOfWeek.Monday },
+            SelectedActivityTypes = new HashSet<int> { (int)WorkoutActivityType.GeneralStrength },
+            ReviewedAllowedExerciseIdsByTemplateSlot = allowed,
+            TemplateSlotReviewConditions = conditions
+        };
+    }
+
     private static StrengthPlanPreviewSourceV020 Profile()
     {
         var catalog = new[]
@@ -1155,6 +1410,7 @@ public sealed class StrengthPlanPreviewV020Tests
                 entry => entry.Candidate.Pattern.ToString()),
             allowed, conditions)
         {
+            BirthDate = new DateOnly(1990, 1, 1),
             MuscleGroupsByExerciseId = catalog.ToDictionary(entry => entry.Candidate.ExerciseId,
                 _ => (IReadOnlySet<string>)new HashSet<string> { "synthetic-muscle" }),
             AvailableWeekdays = new HashSet<DayOfWeek>

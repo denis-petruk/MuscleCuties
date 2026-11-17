@@ -10,14 +10,15 @@
     x:DataType="vm:NutritionViewModel">
 
     <Border Style="{StaticResource CardPrimary}">
-        <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto, *, Auto"
+        <!-- The card reads top to bottom: title, the calorie headline, the calorie track, the
+             macro columns, then one trailing action. The micros action used to sit under the
+             title, where it read as a second header and left the right half of the card empty. -->
+        <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto"
               RowSpacing="{StaticResource UiSpacing14}">
 
-            <!-- Row 0: Section header + Micros button -->
+            <!-- Row 0: Section header. It owns the full card width, so the title never competes
+                 with a button for the first line. -->
             <Grid
-                Grid.Row="0"
-                Grid.Column="0"
-                Grid.ColumnSpan="2"
                 ColumnDefinitions="24,*"
                 ColumnSpacing="{StaticResource UiSpaceTight}"
                 VerticalOptions="Center">
@@ -35,63 +36,75 @@
                     LineBreakMode="WordWrap"
                     VerticalOptions="Center" />
             </Grid>
-            <Button Grid.Row="0" Grid.Column="2"
-                    Style="{StaticResource ButtonSecondary}"
-                    Text="{loc:LocalizedText Nutrition_Balance_Micros}"
-                    Command="{Binding OpenMicronutrientsModalCommand}"
-                    SemanticProperties.Description="{loc:LocalizedText Nutrition_Balance_ViewMicronutrientTargets}" />
 
-            <!-- Row 2: Calorie icon + value + goal (In-line) -->
+            <!-- Row 1: Calorie icon beside the headline only; the goal and activity captions
+                 belong to the value column, so a visible activity line cannot drag the icon
+                 down against the number. -->
             <Grid
                 Grid.Row="1"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
                 ColumnDefinitions="Auto, *"
+                RowDefinitions="Auto,Auto,Auto"
                 ColumnSpacing="{StaticResource UiSpacing10}"
-                VerticalOptions="Center">
+                RowSpacing="{StaticResource UiSpacing2}">
                 <Image
+                    Grid.Row="0"
                     Grid.Column="0"
                     Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
                     Aspect="AspectFit"
                     WidthRequest="{StaticResource UiDimension22}"
                     HeightRequest="{StaticResource UiDimension22}"
                     VerticalOptions="Center" />
-                <!-- The number is the card's headline; the goal is a caption under it, so the two
-                     no longer read as one inline run-on string. -->
-                <VerticalStackLayout
+                <HorizontalStackLayout
+                    Grid.Row="0"
                     Grid.Column="1"
-                    Spacing="{StaticResource UiSpacing2}"
+                    Spacing="{StaticResource UiSpaceMicro}"
                     VerticalOptions="Center">
                     <Label
-                        Text="{Binding ConsumedCalories, StringFormat='{0:F0}'}"
-                        Style="{StaticResource MetricValue}" />
+                        Text="{Binding ConsumedCaloriesText}"
+                        Style="{StaticResource MetricValue}"
+                        VerticalOptions="End" />
                     <Label
                         Text="{Binding TargetCalories, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Format_TargetCaloriesValueKcal}"
-                        Style="{StaticResource CaptionLabel}" />
-                </VerticalStackLayout>
+                        Style="{StaticResource CaptionLabel}"
+                        VerticalOptions="End" />
+                </HorizontalStackLayout>
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Text="{Binding ActivityAdjustmentText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Balance_ActivityFormat}"
+                    IsVisible="{Binding HasActivityAdjustment}"
+                    Style="{StaticResource CaptionLabel}"
+                    TextColor="{StaticResource Primary}" />
             </Grid>
 
-            <!-- Row 4: Progress bar -->
+            <!-- Row 2: Progress bar -->
             <ProgressBar
                 Grid.Row="2"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
                 Progress="{Binding CaloriesProgress}"
                 ProgressColor="{StaticResource Primary}"
                 BackgroundColor="{AppThemeBinding Light={StaticResource TrackMutedLight}, Dark={StaticResource TrackMutedDark}}"
                 HeightRequest="{StaticResource UiDimension8}" />
 
-            <!-- Row 6: Macro grid -->
+            <!-- Row 3: Macro grid -->
             <sharedControls:MacroProgressGrid
                 Grid.Row="3"
-                Grid.Column="0"
-                Grid.ColumnSpan="3"
                 ProteinText="{Binding ProteinText}"
                 ProteinProgress="{Binding ProteinProgress}"
                 CarbsText="{Binding CarbsText}"
                 CarbsProgress="{Binding CarbsProgress}"
                 FatsText="{Binding FatsText}"
                 FatsProgress="{Binding FatsProgress}" />
+
+            <!-- Row 4: The card's one action, as a trailing footer rather than a header ornament. -->
+            <FlexLayout Grid.Row="4" Direction="Row" Wrap="Wrap"
+                        AlignItems="Center" JustifyContent="End">
+                <Button
+                    Style="{StaticResource ButtonSecondary}"
+                    Text="{loc:LocalizedText Nutrition_Balance_Micros}"
+                    Command="{Binding OpenMicronutrientsModalCommand}"
+                    FlexLayout.AlignSelf="End"
+                    SemanticProperties.Description="{loc:LocalizedText Nutrition_Balance_ViewMicronutrientTargets}" />
+            </FlexLayout>
         </Grid>
     </Border>
 </ContentView>

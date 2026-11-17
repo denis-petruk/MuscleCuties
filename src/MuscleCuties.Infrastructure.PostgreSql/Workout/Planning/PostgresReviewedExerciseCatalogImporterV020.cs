@@ -27,12 +27,12 @@ public sealed record ReviewedCatalogImportDryRunV020(
 /// <summary>Applies workbook review fields and the separately attributed owner restriction decision.</summary>
 public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContext context)
 {
-    private const int ExpectedExerciseCount = 59;
-    private const int ExpectedDirectedPairCount = 160;
+    private const int ExpectedExerciseCount = 67;
+    private const int ExpectedDirectedPairCount = 181;
     private const int ExpectedTemplateSlotCount = 52;
-    private const string ExpectedExerciseReviewVersion = "MC-EXERCISE-REVIEW-2026-10-23";
-    private const string ExpectedSubstitutionReviewVersion = "MC-SUBSTITUTIONS-2026-10-23";
-    private const string ExpectedCatalogSnapshot = "REPO-SEED-SNAPSHOT-2026-10-23";
+    private const string ExpectedExerciseReviewVersion = "MC-EXERCISE-REVIEW-2026-11-16";
+    private const string ExpectedSubstitutionReviewVersion = "MC-SUBSTITUTIONS-2026-11-16";
+    private const string ExpectedCatalogSnapshot = "REPO-SEED-SNAPSHOT-2026-11-16";
 
 
     /// <summary>
@@ -176,7 +176,8 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
                 issues.Add($"DatabaseExerciseChanged:{sourceId}");
                 continue;
             }
-            if (row.ReviewEvidenceV020Json is { Length: > 0 } prior &&
+            if (string.Equals(row.TrainingCatalogVersionV020, catalogSnapshot, StringComparison.Ordinal) &&
+                row.ReviewEvidenceV020Json is { Length: > 0 } prior &&
                 !prior.Contains(workbookSha, StringComparison.OrdinalIgnoreCase))
                 issues.Add($"DifferentReviewAlreadyStored:{sourceId}");
             matched++;

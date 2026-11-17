@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Domain.Workout.Planning.Catalog;
+using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
@@ -76,6 +78,25 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         var episodes = await dbContext.WorkoutInjuryEpisodes.AsNoTracking()
             .Where(row => row.UserId == userId).ToListAsync(cancellationToken).ConfigureAwait(false);
         var today = PlanningSafetyInputs.AccountToday(planningState?.TimeZoneId);
+        var observed = await V2ObservedHistory.LoadAsync(dbContext, userId,
+            planningState?.TimeZoneId ?? "UTC", cancellationToken).ConfigureAwait(false);
+        var observedCardio = await V2ObservedHistory.LoadCardioAsync(dbContext, userId,
+            planningState?.TimeZoneId ?? "UTC", cancellationToken).ConfigureAwait(false);
+        var creditedDates = await dbContext.WorkoutCompletionDayCredits.AsNoTracking()
+            .Where(row => row.UserId == userId)
+            .Select(row => row.LocalDate).Distinct().ToListAsync(cancellationToken).ConfigureAwait(false);
+        var experience = PlanningSafetyInputs.ProfileTrainingExperience(planningState, profile);
+        var lastCompletedDate = creditedDates.Select(date => (DateOnly?)date)
+            .Concat(observed.Where(set => set.LocalDate <= today).Select(set => (DateOnly?)set.LocalDate)).Max();
+        var establishedHistory = creditedDates.Count >= WorkoutExperiencePromotionRule.IntermediateCompletedDays ||
+            experience is TrainingExperienceLevel.Intermediate or TrainingExperienceLevel.Advanced;
+        var returningAfterDetraining = establishedHistory && lastCompletedDate is { } last &&
+            today is { } accountToday && accountToday.DayNumber - last.DayNumber > WorkoutPolicyV2.DetrainingGapDays;
+        var painReturns = await V2PainReturnSource.LoadAsync(dbContext, userId, observed, cancellationToken).ConfigureAwait(false);
+        var readiness = today is { } localToday
+            ? await dbContext.DailyReadinessLogs.AsNoTracking().SingleOrDefaultAsync(row =>
+                row.UserId == userId && row.Date == localToday, cancellationToken).ConfigureAwait(false)
+            : null;
         var relevantInjuries = PlanningSafetyInputs.RelevantInjuries(injuries, episodes, today);
         var blockedMovementPatterns = PlanningSafetyInputs.BlockedMovementPatterns(relevantInjuries, definitions);
         // The reviewed site/status table is the only source of activity-level injury restriction.
@@ -135,6 +156,17 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             reviewedSlots.AllowedIds,
             reviewedSlots.Conditions)
         {
+            BirthDate = profile?.DateOfBirth,
+            AccountTimeZoneId = planningState?.TimeZoneId ?? "UTC",
+            PriorObservedSets = observed,
+            PriorCardioActuals = observedCardio,
+            DistinctCompletedWorkoutDays = creditedDates.Count,
+            IsReturningAfterDetraining = returningAfterDetraining,
+            PainRestrictions = painReturns,
+            DailyReadiness = readiness is null ? null : new DailyReadinessInputV2(readiness.Energy,
+                readiness.PlanningFatigue, readiness.PlanningSleepQuality, readiness.SleepHours, readiness.PlanningSoreness),
+            PregnancyStatus = ReproductiveContextCodec.Parse(profile?.ReproductiveContextJson).Pregnancy,
+            GluteFocus = profile?.GluteFocus ?? false,
             EquipmentAnswerMissing = parsedEquipment is null,
             GoalAnswerMissing = parsedGoal is null,
             SelectedActivityTypes = ParseActivityTypes(profile?.PreferredWorkoutActivityTypes),
@@ -152,6 +184,15 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
                     .Where(contribution => contribution.Fraction > 0)
                     .Select(contribution => contribution.MuscleGroup!.Name)
                     .ToHashSet(StringComparer.OrdinalIgnoreCase)),
+            MuscleContributionsByExerciseId = definitions
+                .Where(row => row.MuscleContributions.Any(contribution => contribution.Fraction > 0) &&
+                    row.MuscleContributions.Where(contribution => contribution.Fraction > 0)
+                        .All(contribution => !string.IsNullOrWhiteSpace(contribution.MuscleGroup?.Name)))
+                .ToDictionary(row => row.Id, row => (IReadOnlyList<CatalogMuscleRow>)row.MuscleContributions
+                    .Where(contribution => contribution.Fraction > 0)
+                    .Select(contribution => new CatalogMuscleRow(
+                        contribution.MuscleGroupId, contribution.MuscleGroup!.Name, contribution.Fraction))
+                    .ToArray()),
             GoalPriorityByExerciseId = goalPriorityByExerciseId,
             TemplateVolumeFloors = ReviewedTemplateFloorSource.Map(floorRows),
             ProfileVersion = profile?.ConcurrencyVersion,
@@ -168,6 +209,8 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             CurrentAccountLocalDate = today,
             ExperienceVersion = planningState?.ExperienceVersion ?? 0,
             AnswerVersion = planningState?.AnswerVersion ?? 0,
+            ObservedHistoryFingerprint = PlanningInputFingerprint.Hash(observed),
+            ReadinessRevision = readiness?.PlanningRevision,
             SavedAnswers = string.IsNullOrWhiteSpace(planningState?.AnswersJson)
                 ? new SavedActivityAnswersDto(0, [], null)
                 : JsonSerializer.Deserialize<SavedActivityAnswersDto>(planningState.AnswersJson,

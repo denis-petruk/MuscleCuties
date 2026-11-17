@@ -22,7 +22,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
     private const string SyntheticWorkoutRulesetVersion = "SyntheticWorkoutRuleset";
     private const string SyntheticTrainingPolicyVersion = "SyntheticTrainingPolicy";
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task PhotoCleanupLeaseCompletesOnceWithFencing()
     {
         var connectionString = RequireLocalTestConnectionString();
@@ -73,7 +73,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task AccountPurgeRemovesOwnerPhotoMetadataAndPreservesOtherOwner()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
@@ -175,7 +175,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task StageAccountPhotoPurgePersistsCanonicalUploadAndPublishedTargets()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
@@ -212,7 +212,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task StageAccountPhotoPurgeRejectsMissingOrEmptyTenantContext()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
@@ -260,7 +260,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             .AnyAsync(row => row.TargetKey == uploadKey));
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task StageAccountPhotoPurgeRejectsMismatchedOwnerAndNonCanonicalKeys()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
@@ -307,7 +307,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             .AnyAsync(row => row.TargetKey == activeOwnerKey || row.TargetKey == otherOwnerKey));
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task StageAccountPhotoPurgeDuplicatePreservesLongerDeadlineAndActiveLease()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
@@ -375,7 +375,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task StageAccountPhotoPurgeRollsBackWhenTransactionAborts()
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()
@@ -400,7 +400,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             .AnyAsync(row => row.TargetKey == targetKey));
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task StageAccountPhotoPurgeEnforcesRestrictedSecurityDefinerAndBlocksDirectAppTableAccess()
     {
         var connectionString = RequireLocalTestConnectionString();

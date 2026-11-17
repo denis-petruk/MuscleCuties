@@ -44,7 +44,8 @@ public sealed class CloudDailyCheckInStore(
         var latest = records[^1];
         var readiness = TodayReadinessCheckInMapper.Map(latest.PlanningSleepQuality, latest.Energy,
             latest.PlanningSoreness, latest.PlanningStress, latest.Date, latest.PlanningTimeZoneId,
-            latest.PlanningRecordedAtUtc, latest.PlanningRevision, timeProvider.GetUtcNow(), request.TimeZoneId);
+            latest.PlanningRecordedAtUtc, latest.PlanningRevision, timeProvider.GetUtcNow(), request.TimeZoneId,
+            latest.PlanningFatigue);
         return new DailyCheckInStatusResponse(readiness.Status == "Available",
             readiness.RawScore?.ToString("0.##", CultureInfo.InvariantCulture) ?? UnknownScoreText,
             readiness.Band ?? readiness.Status, readiness);
@@ -53,9 +54,11 @@ public sealed class CloudDailyCheckInStore(
     public async Task<SubmitDailyCheckInResponse> SubmitAsync(SubmitDailyCheckInRequest request, CancellationToken ct)
     {
         if (request.EnergyLevel is < 1 or > 5 || request.PlanningSleepQuality is not (>= 1 and <= 5) ||
-            request.PlanningSoreness is not (>= 1 and <= 5) || request.PlanningStress is not (>= 1 and <= 5) ||
+            request.PlanningFatigue is not (>= 1 and <= 5) ||
+            request.PlanningSoreness is not (null or >= 1 and <= 5) ||
+            request.PlanningStress is not (null or >= 1 and <= 5) ||
             !IsValidTimeZoneId(request.PlanningTimeZoneId))
-            throw new ArgumentException("All four planning ratings and a valid local time zone are required.", nameof(request));
+            throw new ArgumentException("Energy, fatigue, sleep quality and a valid local time zone are required.", nameof(request));
         var localZone = TimeZoneInfo.FindSystemTimeZoneById(request.PlanningTimeZoneId!);
         var todayInLocalZone = DateOnly.FromDateTime(
             TimeZoneInfo.ConvertTime(timeProvider.GetUtcNow(), localZone).DateTime);
@@ -80,15 +83,14 @@ public sealed class CloudDailyCheckInStore(
             ? existingRecords[^1].Id
             : Guid.CreateVersion7();
 
-        var effectiveSleepHours = request.SleepHours > 0
-            ? request.SleepHours
-            : (healthSummary?.LastNightSleepHours is > 0 ? healthSummary.LastNightSleepHours.Value : request.SleepHours);
+        // The check-in view model is the single pre-fill owner; what is saved equals what the user saw and confirmed.
+        var effectiveSleepHours = request.SleepHours;
 
         var body = new
         {
             id = checkInId,
             date = request.Date,
-            sleepHours = (decimal)effectiveSleepHours,
+            sleepHours = effectiveSleepHours is { } hours ? (decimal?)hours : null,
             stepsYesterday = healthSummary?.YesterdaySteps ?? (healthSummary?.HasMovementData == true ? healthSummary.AverageSteps : (int?)null),
             energy = request.EnergyLevel,
             pain = request.PainLevel,
@@ -97,6 +99,7 @@ public sealed class CloudDailyCheckInStore(
             sleep3dAvg = healthSummary?.AverageSleep3dHours is > 0 ? (decimal?)healthSummary.AverageSleep3dHours.Value : null,
             steps7dAvg = healthSummary?.HasMovementData == true ? (int?)healthSummary.AverageSteps : null,
             planningSleepQuality = request.PlanningSleepQuality,
+            planningFatigue = request.PlanningFatigue,
             planningSoreness = request.PlanningSoreness,
             planningStress = request.PlanningStress,
             planningTimeZoneId = request.PlanningTimeZoneId
@@ -111,12 +114,13 @@ public sealed class CloudDailyCheckInStore(
 
         var saved = CloudStoreResponse.RequireData(response, "submit daily check-in");
         if (saved.Id != checkInId || saved.Date != request.Date ||
-            saved.ReadinessScore is < MinimumReadinessScore or > MaximumReadinessScore)
+            saved.ReadinessScore is < MinimumReadinessScore or > MaximumReadinessScore ||
+            saved.PlanningFatigue != request.PlanningFatigue)
             throw new InvalidOperationException("Cloud submit daily check-in returned an invalid record.");
         var readiness = TodayReadinessCheckInMapper.Map(saved.PlanningSleepQuality, saved.Energy,
             saved.PlanningSoreness, saved.PlanningStress, saved.Date, saved.PlanningTimeZoneId,
             saved.PlanningRecordedAtUtc, saved.PlanningRevision, timeProvider.GetUtcNow(),
-            request.PlanningTimeZoneId);
+            request.PlanningTimeZoneId, saved.PlanningFatigue);
         if (readiness.Status != "Available")
             throw new InvalidOperationException("The saved check-in did not contain a valid score for today.");
         return new SubmitDailyCheckInResponse(saved.ReadinessScore,
@@ -180,7 +184,7 @@ public sealed class CloudWorkoutInjuryStore(
                 record.Date,
                 record.IsActive && status != WorkoutInjuryStatus.Cleared,
                 record.WorseningTrigger,
-                record.ClinicianAdvisedAvoid));
+                record.ClinicianAdvisedAvoid, record.PainReassessmentDueAtUtc));
         }
 
         return list;
@@ -271,9 +275,9 @@ public sealed class CloudWorkoutInjuryStore(
         var response = await apiClient.SendMutationAsync<object, WorkoutReconciliationResponse>(
             HttpMethod.Post, ReconcileRoute, new { },
             idempotencyKey: Guid.NewGuid().ToString("N"), ct).ConfigureAwait(false);
-        var result = CloudStoreResponse.RequireData(response, "refresh workout plan after injury change");
-        if (string.Equals(result.Status, nameof(WorkoutReconciliationOutcome.NeedsReview), StringComparison.Ordinal))
-            throw new InvalidOperationException("The workout plan needs review after the injury change.");
+        // F08: NeedsReview is a successful reconcile that flags days for review, not a failure.
+        // Throwing here made the injury screen claim the plan was not updated after it had been.
+        CloudStoreResponse.RequireData(response, "refresh workout plan after injury change");
     }
 
     private async Task<InjuryObservationRecord?> TryResolveRecordAsync(int injuryId, CancellationToken ct)

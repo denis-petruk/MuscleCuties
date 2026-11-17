@@ -23,7 +23,7 @@ public sealed class DeloadTriggerRuleTests
     {
         var history = new List<WeeklyPerformanceAndRecoveryRecord>
         {
-            new(WeekIndex: 1, CompoundUnderperformed: true, AverageSleepQuality: 1.5m, AverageEnergy: 1.8m, AverageSoreness: 4.5m)
+            new(WeekIndex: 1, CompoundUnderperformed: true, AverageSleepQuality: 1.5m, AverageEnergy: 1.8m)
         };
 
         var result = DeloadTriggerRule.Evaluate(history);
@@ -74,8 +74,8 @@ public sealed class DeloadTriggerRuleTests
     {
         var history = new List<WeeklyPerformanceAndRecoveryRecord>
         {
-            new(WeekIndex: 1, CompoundUnderperformed: true, AverageSleepQuality: 4.5m, AverageEnergy: 4.0m, AverageSoreness: 1.5m),
-            new(WeekIndex: 2, CompoundUnderperformed: true, AverageSleepQuality: 4.0m, AverageEnergy: 4.5m, AverageSoreness: 2.0m)
+            new(WeekIndex: 1, CompoundUnderperformed: true, AverageSleepQuality: 4.5m, AverageEnergy: 4.0m),
+            new(WeekIndex: 2, CompoundUnderperformed: true, AverageSleepQuality: 4.0m, AverageEnergy: 4.5m)
         };
 
         var result = DeloadTriggerRule.Evaluate(history);

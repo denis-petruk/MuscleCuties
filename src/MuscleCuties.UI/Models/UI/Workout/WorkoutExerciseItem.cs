@@ -4,6 +4,8 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 
 using MuscleCuties.UI.Resources.Styles;
+using MuscleCuties.UI.Services.Formatting;
+using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 
@@ -47,6 +49,7 @@ public partial class WorkoutExerciseItem : ObservableObject
 
     public int WorkoutDayExerciseId { get; set; }
     public int PlannedSets { get; set; }
+    public int PlannedWarmUpSets { get; set; }
     public int MaxOptionalSets => Math.Max(0, PlannedSets - 1);
     public bool CanMarkOptional => !IsLogged;
     public int ExerciseId { get; set; }
@@ -141,6 +144,32 @@ public partial class WorkoutExerciseItem : ObservableObject
 
     public bool HasQuickTips => !string.IsNullOrWhiteSpace(QuickTipsText);
 
+    // Gate 75, 76, 77: Unilateral, Superset split, and Initial Calibration UI metadata.
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsInSuperset), nameof(SupersetLabel))] private int? _supersetGroupId;
+    public bool IsInSuperset => SupersetGroupId.HasValue;
+    public string SupersetLabel => SupersetGroupId is { } groupId
+        ? UiTextCatalog.Format("Workout_Session_SupersetLabelFormat", groupId)
+        : string.Empty;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(UnilateralModeLabel))] private bool _isUnilateral;
+    public string UnilateralModeLabel => IsUnilateral ? UiTextCatalog.Get("Workout_Session_UnilateralPerSide") : string.Empty;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CalibrationPromptText))] private bool _requiresInitialCalibration;
+    public string CalibrationPromptText => RequiresInitialCalibration && !IsLogged
+        ? UiTextCatalog.Get("Workout_Session_CalibrationPrompt")
+        : string.Empty;
+    public Func<WorkoutExerciseItem, Task>? SplitSupersetAction { get; set; }
+
+    [RelayCommand]
+    private async Task SplitSuperset()
+    {
+        if (!IsInSuperset) return;
+        if (SplitSupersetAction is null)
+        {
+            SupersetGroupId = null;
+            return;
+        }
+        await SplitSupersetAction(this).ConfigureAwait(false);
+    }
+
     [RelayCommand]
     public void AddSet()
     {
@@ -168,6 +197,7 @@ public partial class WorkoutExerciseItem : ObservableObject
             OnChanged = () => UpdateAggregatesFromSets(fromUser: true),
             RemoveCommand = RemoveSetCommand,
             ShowWeight = UsesWeight,
+            ShowPerSideReps = IsUnilateral,
             WasEdited = true
         };
         Sets.Add(set);
@@ -208,7 +238,8 @@ public partial class WorkoutExerciseItem : ObservableObject
             {
                 OnChanged = () => UpdateAggregatesFromSets(fromUser: true),
                 RemoveCommand = RemoveSetCommand,
-                ShowWeight = UsesWeight
+                ShowWeight = UsesWeight,
+                ShowPerSideReps = IsUnilateral
             };
             Sets.Add(set);
         }
@@ -223,10 +254,11 @@ public partial class WorkoutExerciseItem : ObservableObject
         LoggedSetsText = Sets.Count.ToString(CultureInfo.InvariantCulture);
         var workingSets = Sets.Where(s => !s.IsWarmup).ToList();
         var primarySets = workingSets.Count > 0 ? workingSets : Sets.ToList();
-        var avgReps = (int)Math.Round(primarySets.Average(s => s.RepsCompleted));
+        var avgReps = (int)Math.Round(primarySets.Average(s => s.EffectiveReps));
         LoggedRepsText = avgReps.ToString(CultureInfo.InvariantCulture);
         var maxWeight = primarySets.Max(s => s.WeightKg);
-        LoggedWeightText = maxWeight.ToString("F1", CultureInfo.CurrentCulture);
+        if (!RequiresInitialCalibration || primarySets.Any(set => !string.IsNullOrWhiteSpace(set.WeightInput)))
+            LoggedWeightText = DisplayFormat.Decimal1(maxWeight);
     }
 
     private static bool TryParseWeight(string? value, out double weight)

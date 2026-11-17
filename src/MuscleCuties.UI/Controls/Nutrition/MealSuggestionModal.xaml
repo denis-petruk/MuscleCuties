@@ -332,7 +332,9 @@
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="nutritionModels:DayMealPlanItem">
                             <Border Style="{StaticResource CardSecondary}">
-                                <Grid RowDefinitions="Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,*,Auto"
+                                <!-- The type label keeps its natural width; the target summary takes the
+                                     remainder and wraps, so a Russian meal name cannot break mid-word. -->
+                                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" ColumnDefinitions="Auto,Auto,*"
                                       ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpacing5}">
                                     <Path
                                         Data="{Binding MealTypeIconPathData, Converter={StaticResource StringToGeometryConverter}}"
@@ -368,18 +370,21 @@
                                         LineBreakMode="WordWrap" />
                                     <Label
                                         Grid.Row="3"
-                                        Grid.ColumnSpan="2"
+                                        Grid.ColumnSpan="3"
                                         Text="{Binding MacrosText, Converter={StaticResource LocalizedStringConverter}}"
                                         Style="{StaticResource MutedLabel}"
                                         LineBreakMode="WordWrap"
                                         IsVisible="{Binding HasSuggestion}" />
+                                    <!-- The action takes the row's remainder and the refresh keeps its own
+                                         column: measured at its natural width the primary label outran the
+                                         card at accessibility sizes and was clipped mid-word. -->
                                     <Grid
-                                        Grid.Row="3"
-                                        Grid.Column="2"
-                                        ColumnDefinitions="Auto,Auto"
+                                        Grid.Row="4"
+                                        Grid.ColumnSpan="3"
+                                        ColumnDefinitions="*,Auto"
                                         ColumnSpacing="{StaticResource UiSpaceTight}"
                                         VerticalOptions="End"
-                                        HorizontalOptions="End">
+                                        HorizontalOptions="Fill">
                                         <Button
                                             Style="{StaticResource ButtonPrimary}"
                                             Text="{loc:LocalizedText Nutrition_MealSuggestion_UseMeal}"

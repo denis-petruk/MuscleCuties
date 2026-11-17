@@ -67,12 +67,19 @@ internal static class WorkoutSessionPresentationMapper
             IsOptional = source.IsOptional,
             OptionalSets = source.OptionalSets,
             PlannedSets = source.PlannedSets,
+            PlannedWarmUpSets = source.PlannedWarmUpSets,
+            SupersetGroupId = source.SupersetGroupId,
+            IsUnilateral = source.IsUnilateral,
+            RequiresInitialCalibration = source.RequiresInitialCalibration,
             Description = source.Description,
             ImageUrl = source.ImageUrl,
             VideoUrl = source.VideoUrl,
             TechniqueNotes = source.TechniqueNotes,
             QuickTipsText = source.QuickTipsText,
-            TargetText = source.TargetText,
+            TargetText = source.MinRepetitions > 0 && source.MaxRepetitions >= source.MinRepetitions
+                ? UiTextCatalog.Format("Workout_Session_TargetRangeFormat", source.PlannedSets,
+                    source.MinRepetitions, source.MaxRepetitions, source.TargetRir)
+                : source.TargetText,
             PreviousText = source.PreviousText,
             RecommendationText = FormatRecommendation(source),
             MovementNotes = source.MovementNotes,
@@ -108,12 +115,17 @@ internal static class WorkoutSessionPresentationMapper
             {
                 OnChanged = () => item.UpdateAggregatesFromSets(fromUser: true),
                 RemoveCommand = item.RemoveSetCommand,
-                ShowWeight = item.UsesWeight
+                ShowWeight = item.UsesWeight,
+                ShowPerSideReps = item.IsUnilateral
             };
+            if (source.RequiresInitialCalibration && !set.IsObserved)
+                input.ClearUnobservedCalibrationWeightInput();
+            input.HydrateSideRepetitions(set.LeftSideReps, set.RightSideReps);
             item.Sets.Add(input);
         }
         if (item.Sets.Count == 0 && item.UsesStrengthMetrics)
-            item.EnsureSets(source.PlannedSets > 0 ? source.PlannedSets : 3);
+            item.EnsureSets(source.PlannedSets + source.PlannedWarmUpSets > 0
+                ? source.PlannedSets + source.PlannedWarmUpSets : 3);
         item.SyncSavedOptionalState();
         return item;
     }

@@ -41,6 +41,19 @@ public sealed class ObservedSetCaptureAndProgressionContractTests
     }
 
     [Fact]
+    public void UnilateralRows_PreserveBothSideRepetitionsOnObservedSets()
+    {
+        var observed = ObservedSetInputMapping.Build(
+            rowsEdited: true,
+            [new EditableObservedSet(3, 12, 20m, 2, LeftSideReps: 10, RightSideReps: 12)]);
+
+        Assert.NotNull(observed);
+        var set = Assert.Single(observed);
+        Assert.Equal(10, set.LeftSideReps);
+        Assert.Equal(12, set.RightSideReps);
+    }
+
+    [Fact]
     public void TimedActivity_BuildsRowLessActualPayload()
     {
         var actual = TimedActivityActualFactory.Build(WorkoutActivityDto.Yoga, 1_800);

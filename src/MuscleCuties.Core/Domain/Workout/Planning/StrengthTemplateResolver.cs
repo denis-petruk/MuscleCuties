@@ -25,7 +25,8 @@ public sealed record StrengthTemplateSelectionInput(
     IReadOnlySet<int>? UserConfirmedFamiliarityExerciseIds = null,
     IReadOnlyDictionary<string, IReadOnlySet<int>>? ReviewedAllowedExerciseIdsByTemplateSlot = null,
     IReadOnlySet<int>? UserConfirmedManageableLoadExerciseIds = null,
-    IReadOnlyDictionary<int, ExerciseEvidenceRanking>? EvidenceRankingByExerciseId = null);
+    IReadOnlyDictionary<int, ExerciseEvidenceRanking>? EvidenceRankingByExerciseId = null,
+    bool GluteFocus = false);
 
 public enum StrengthSlotResolutionOutcome { Selected, OptionalOmission, NoSafeCandidate, MissingReviewData }
 
@@ -72,6 +73,12 @@ public static class StrengthTemplateResolver
     private const string RequiredSlotUnresolved = "RequiredMovementSlotUnresolved";
     private const string OptionalSlotOmittedByLimit = "OptionalSlotOmittedByExerciseLimit";
     private const string TemplateSlotReviewMissingCode = "TemplateSlotReviewMissing";
+
+    /// <summary>
+    /// Two catalog rows claiming one exercise id make the input ambiguous: the prescription would depend
+    /// on which row persistence returned first. The planner fails closed instead of picking one.
+    /// </summary>
+    private const string DuplicateCatalogExerciseId = "DuplicateCatalogExerciseId";
     private static readonly string[] TemplateSlotReviewMissingCodes = [TemplateSlotReviewMissingCode];
 
     public static StrengthTemplateResolution Resolve(
@@ -87,6 +94,8 @@ public static class StrengthTemplateResolver
         if (input.PrescriptionContext.Activity != input.Activity ||
             input.PrescriptionContext.Experience != input.EligibilityContext.Experience)
             return Failure("ActivityExperienceInputMismatch");
+        if (HasDuplicateExerciseIds(input.Catalog))
+            return Failure(DuplicateCatalogExerciseId);
         var activityPrescription = ActivityPrescriptionRule.Evaluate(input.PrescriptionContext);
         if (activityPrescription.Status != ActivityPrescriptionStatus.Eligible ||
             activityPrescription.Sessions.Count == 0)
@@ -174,6 +183,7 @@ public static class StrengthTemplateResolver
                 .ThenByDescending(entry => input.UsablePerformanceHistoryExerciseIds.Contains(entry.Candidate.ExerciseId))
                 .ThenByDescending(entry => input.FamiliarExerciseIds.Contains(entry.Candidate.ExerciseId))
                 .ThenByDescending(entry => slotPreferences.Contains(entry.Candidate.ExerciseId))
+                .ThenByDescending(entry => input.GluteFocus && IsGluteFocusPattern(entry.Candidate.Pattern))
                 .ThenByDescending(entry => slot.MovementSlot == StrengthTemplateSlotId.GoalSpecificAccessory
                     ? goalPriorities.GetValueOrDefault(entry.Candidate.ExerciseId)
                     : 0)
@@ -236,6 +246,15 @@ public static class StrengthTemplateResolver
 
     private static StrengthTemplateResolution Failure(string reason) =>
         new(string.Empty, StrengthTemplateCatalog.Version, "Invalid", [], [reason]);
+
+    private static bool HasDuplicateExerciseIds(IReadOnlyList<StrengthExerciseCatalogEntry> catalog)
+    {
+        var seen = new HashSet<int>();
+        foreach (var entry in catalog)
+            if (entry?.Candidate is { } candidate && !seen.Add(candidate.ExerciseId))
+                return true;
+        return false;
+    }
 
     private static StrengthSlotSelection Unselected(StrengthTemplateSlot slot,
         WorkoutActivityType activity, string reason) =>
@@ -310,6 +329,10 @@ public static class StrengthTemplateResolver
 
         return roleMatchScore + (ranking.HypertrophyEfficacy * 10) + ranking.JointFriendliness;
     }
+
+    /// <summary>Glute-dominant patterns a user-selected glute focus prefers inside a slot.</summary>
+    private static bool IsGluteFocusPattern(MovementPattern pattern) =>
+        pattern is MovementPattern.HipThrust or MovementPattern.HipAbduction;
 
     private static string SelectionReason(StrengthExerciseCatalogEntry entry,
         HashSet<int> preferredIds, StrengthTemplateSelectionInput input,

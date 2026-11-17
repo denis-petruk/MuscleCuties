@@ -23,7 +23,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
     private const int MinimumRepetitionCount = 1;
     private const int MondayWeekOrderOffset = 1;
     private const decimal MinimumPlannedActivityDurationMinutes = 0m;
-    private const string PlannedDurationMinuteFormat = "0.#";
+    private const string PlannedDurationMinuteFormat = "0";
     private const string MixedActivityPlanName = "Mixed activity plan";
     private const string RestDayName = "Rest day";
     private const string MixedScheduleInvalidCode = "ProposalMixedScheduleInvalid";
@@ -157,6 +157,21 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         catch (TimeZoneNotFoundException) { return new(LimitedStatus, null, null, CalendarNotEstablishedCode); }
         catch (InvalidTimeZoneException) { return new(LimitedStatus, null, null, CalendarNotEstablishedCode); }
 
+        if (proposalSnapshot.GenerationV2 is not null)
+        {
+            var observed = await V2ObservedHistory.LoadAsync(dbContext, userId, zoneId, cancellationToken)
+                .ConfigureAwait(false);
+            var readinessLocalDate = WorkoutAccountCalendarRule.LocalDate(DateTimeOffset.UtcNow, zone);
+            var readinessRevision = await dbContext.DailyReadinessLogs.AsNoTracking().Where(row =>
+                    row.UserId == userId && row.Date == readinessLocalDate)
+                .Select(row => (long?)row.PlanningRevision).SingleOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+            if (string.IsNullOrWhiteSpace(proposalSnapshot.SourceObservedHistoryFingerprint) ||
+                proposalSnapshot.SourceObservedHistoryFingerprint != PlanningInputFingerprint.Hash(observed) ||
+                proposalSnapshot.SourceReadinessRevision != readinessRevision)
+                return new(StaleStatus, proposal.PlanId, null, PlanningInputsChangedSinceProposalCode);
+        }
+
         var activePlanId = await dbContext.WorkoutPlans.AsNoTracking()
             .Where(plan => plan.UserId == userId && plan.IsActive)
             .OrderByDescending(plan => plan.CreatedAt)
@@ -181,7 +196,8 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         }
 
 
-        if (origin == AcceptanceOrigin.User && proposalSnapshot.RequiresReducedVolumeAcknowledgment && !request.ReducedVolumeAcknowledged)
+        if (origin == AcceptanceOrigin.User && activePlanId is not null &&
+            proposalSnapshot.RequiresReducedVolumeAcknowledgment && !request.ReducedVolumeAcknowledged)
             return new(ConflictStatus, proposal.PlanId, null,
                 ReducedVolumeAcknowledgmentRequiredCode);
 
@@ -335,7 +351,32 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             profile.ExcludedStrengthExerciseIdsJson = JsonSerializer.Serialize((draft.ExcludedExerciseIds ??
                 new HashSet<int>()).OrderBy(value => value).ToArray());
             if (draft.EquipmentLevel is not null) profile.EquipmentLevel = draft.EquipmentLevel;
+            if (draft.GluteFocus is { } gluteFocus) profile.GluteFocus = gluteFocus;
             profile.UpdatedAt = nowUtc;
+
+            if (draft.HasSliders.HasValue || draft.HasConfirmedBandAnchor.HasValue ||
+                draft.HasDumbbells.HasValue || draft.HasBands.HasValue)
+            {
+                var trackedState = await dbContext.WorkoutAccountPlanningStates.SingleOrDefaultAsync(
+                    row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
+                if (trackedState is not null)
+                {
+                    var savedAnswers = (string.IsNullOrWhiteSpace(trackedState.AnswersJson)
+                        ? null
+                        : Deserialize<SavedActivityAnswersDto>(trackedState.AnswersJson))
+                        ?? new SavedActivityAnswersDto(trackedState.AnswerVersion, [], null);
+                    trackedState.AnswersJson = JsonSerializer.Serialize(
+                        savedAnswers with
+                        {
+                            EquipmentCapabilities = new EquipmentCapabilities(
+                                draft.HasSliders,
+                                draft.HasConfirmedBandAnchor,
+                                draft.HasDumbbells,
+                                draft.HasBands)
+                        },
+                        JsonOptions);
+                }
+            }
         }
         var revisionId = Guid.CreateVersion7();
         var plan = new WorkoutPlanRecord
@@ -722,7 +763,10 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         long SourceAnswerVersion = 0,
         IReadOnlyDictionary<int, string[]>? SourceMuscleGroupsByExerciseId = null,
         bool RequiresReducedVolumeAcknowledgment = false,
-        string? InjuryProvenanceFingerprint = null);
+        string? InjuryProvenanceFingerprint = null,
+        GenerationPlanV2? GenerationV2 = null,
+        string? SourceObservedHistoryFingerprint = null,
+        long? SourceReadinessRevision = null);
 
     private sealed record AcceptedPlanSnapshot(
         ProposalSnapshot Proposal,

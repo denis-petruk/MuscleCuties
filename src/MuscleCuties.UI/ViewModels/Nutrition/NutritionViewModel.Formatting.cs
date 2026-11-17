@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
 using MuscleCuties.UI.Models.UI.Nutrition;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
@@ -207,10 +208,9 @@ public partial class NutritionViewModel
     private static string FormatConvertedAmount(float amount)
     {
         var rounded = MathF.Round(amount);
-        if (MathF.Abs(amount - rounded) < 0.0001f)
-            return rounded.ToString("0", CultureInfo.CurrentCulture);
-
-        return amount.ToString("0.####", CultureInfo.CurrentCulture);
+        return MathF.Abs(amount - rounded) < 0.0001f
+            ? DisplayFormat.WholeNumber(rounded)
+            : DisplayFormat.Decimal4(amount);
     }
 
     private static string FormatServingAmount(float amount, string label)
@@ -222,8 +222,8 @@ public partial class NutritionViewModel
     {
         var rounded = MathF.Round(amount);
         return MathF.Abs(amount - rounded) < 0.01f
-            ? rounded.ToString("0", CultureInfo.CurrentCulture)
-            : amount.ToString("0.##", CultureInfo.CurrentCulture);
+            ? DisplayFormat.WholeNumber(rounded)
+            : DisplayFormat.Decimal2(amount);
     }
 
     private static MealItem MapMealDtoToItem(NutritionMealSummary dto)

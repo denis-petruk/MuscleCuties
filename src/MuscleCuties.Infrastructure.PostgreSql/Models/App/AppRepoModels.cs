@@ -133,6 +133,8 @@ public sealed class UserProfileRecord : ITenantRecord
     public string NutritionGoalsJson { get; set; } = string.Empty;
     public string ReproductiveContextJson { get; set; } = string.Empty;
     public string ProfileImagePath { get; set; } = string.Empty;
+    /// <summary>User-selected glute focus. Stored on the profile so planning never has to infer it.</summary>
+    public bool GluteFocus { get; set; }
     public int ConcurrencyVersion { get; set; } = 1;
     public DateTime UpdatedAt { get; set; }
 }
@@ -250,6 +252,7 @@ public sealed class DailyReadinessLogRecord : ITenantRecord
     public int? SleepQuality { get; set; }
     public int? Soreness { get; set; }
     public int? PlanningSleepQuality { get; set; }
+    public int? PlanningFatigue { get; set; }
     public int? PlanningSoreness { get; set; }
     public int? PlanningStress { get; set; }
     public string? PlanningTimeZoneId { get; set; }
@@ -280,6 +283,8 @@ public sealed class WorkoutInjuryLogRecord : ITenantRecord
 
     public DateOnly Date { get; set; }
     public DateOnly? ClearedDate { get; set; }
+    public DateTime? ReportedAtUtc { get; set; }
+    public DateTime? ClearedAtUtc { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
@@ -433,6 +438,8 @@ public sealed class ExerciseSetLogRecord : ITenantRecord
     public bool TechniqueAcceptable { get; set; } = true;
     public bool IsObserved { get; set; }
     public bool IsWarmup { get; set; }
+    public int? LeftSideReps { get; set; }
+    public int? RightSideReps { get; set; }
     public int RestTimeSeconds { get; set; }
     public bool IsDeleted { get; set; }
     public DateTime? DeletedAt { get; set; }

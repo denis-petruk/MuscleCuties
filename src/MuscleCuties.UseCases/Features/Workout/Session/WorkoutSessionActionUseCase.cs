@@ -27,6 +27,7 @@ public interface IWorkoutSessionActionUseCase
 
     Task SaveMovementNoteAsync(SaveWorkoutMovementNoteRequest request, CancellationToken cancellationToken = default);
     Task SetExerciseOptionalAsync(SetWorkoutExerciseOptionalRequest request, CancellationToken cancellationToken = default);
+    Task SplitSupersetAsync(SplitWorkoutSupersetRequest request, CancellationToken cancellationToken = default);
 }
 
 public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store) : IWorkoutSessionActionUseCase
@@ -56,6 +57,10 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
             exercise.WeightKg));
         if (!WorkoutSessionActionRule.IsValidSessionLog(request.WorkoutDayId, request.Date, exerciseLogs))
             throw new ArgumentException("Invalid workout session input.", nameof(request));
+        if (request.Exercises?.SelectMany(exercise => exercise.ObservedSets ?? [])
+            .Any(set => set.LeftSideReps.HasValue != set.RightSideReps.HasValue ||
+                set.LeftSideReps is < 1 or > 1000 || set.RightSideReps is < 1 or > 1000) == true)
+            throw new ArgumentException("Unilateral set repetitions must be supplied for both sides.", nameof(request));
         return store.LogAsync(request, cancellationToken);
     }
 
@@ -99,5 +104,15 @@ public sealed class WorkoutSessionActionUseCase(IWorkoutSessionActionStore store
         if (!WorkoutSessionActionRule.IsValidOptionalExercise(request.WorkoutDayExerciseId, request.OptionalSets))
             throw new ArgumentException("Invalid optional exercise input.", nameof(request));
         return store.SetExerciseOptionalAsync(request, cancellationToken);
+    }
+
+    public Task SplitSupersetAsync(SplitWorkoutSupersetRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.SessionId == Guid.Empty || !WorkoutSessionActionRule.IsValidIdentifier(request.WorkoutDayExerciseId) ||
+            request.SupersetGroupId <= 0)
+            throw new ArgumentException("Invalid superset split input.", nameof(request));
+        return store.SplitSupersetAsync(request, cancellationToken);
     }
 }

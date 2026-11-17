@@ -53,7 +53,7 @@ public sealed record MixedActivityWeekScheduleResult(
 /// <summary>Places selected activities over available weekdays under activity and hard-day safety rules.</summary>
 public static class MixedActivityWeekScheduleRule
 {
-    public const int MinimumAvailableWeekdays = 2;
+    public const int MinimumAvailableWeekdays = 1;
     public const int MaximumAvailableWeekdays = 7;
     public const int MaximumHardDaysPerWeek = 6;
     public const int MaximumRequestedSessionsPerWeek = MaximumAvailableWeekdays;
@@ -70,7 +70,7 @@ public static class MixedActivityWeekScheduleRule
     public const string ActivitySelectionMissing = "ActivitySelectionMissing";
     public const string NoActivitiesSelected = "NoActivitiesSelected";
     // The value is a serialized client reason code and stays stable; the rule it names is
-    // MinimumAvailableWeekdays..MaximumAvailableWeekdays (2–7 distinct days).
+    // MinimumAvailableWeekdays..MaximumAvailableWeekdays (1–7 distinct days).
     public const string AvailableWeekdaysMustContainOneToSevenDistinctDays =
         "AvailableWeekdaysMustContainOneToSevenDistinctDays";
     public const string AvailableWeekdayValueInvalid = "AvailableWeekdayValueInvalid";
@@ -571,9 +571,22 @@ public static class MixedActivityWeekScheduleRule
     {
         var candidates = decisions.Where(IsScheduleCandidate).ToArray();
         foreach (var decision in candidates)
-            if (IsStrengthChoice(decision.EffectiveActivity ?? decision.Activity) &&
-                decision.TargetSessionsPerWeek < GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek)
+        {
+            if (!IsStrengthChoice(decision.EffectiveActivity ?? decision.Activity))
+                continue;
+
+            if (availableDayCount == OneSessionPerOccurrence &&
+                decision.TargetSessionsPerWeek > OneSessionPerOccurrence)
+            {
+                decision.TargetSessionsPerWeek = OneSessionPerOccurrence;
+                decision.AddReason(ActivityFrequencyLimitedByAvailableWeekdays);
+            }
+            else if (availableDayCount > OneSessionPerOccurrence &&
+                     decision.TargetSessionsPerWeek < GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek)
+            {
                 decision.TargetSessionsPerWeek = GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek;
+            }
+        }
 
         var hardCandidates = candidates.Where(decision =>
             IsHardActivity(decision.EffectiveActivity ?? decision.Activity, decision.Prescription)).ToArray();

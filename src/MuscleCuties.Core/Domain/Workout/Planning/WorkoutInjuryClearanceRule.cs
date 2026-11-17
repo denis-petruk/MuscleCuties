@@ -4,14 +4,35 @@ public sealed record InjuryRestorationEpisode(bool IsActive, DateOnly? ClearedOn
 public enum InjuryClearanceRestorationDisposition { Blocked, RestoreOptional, RestoreRequired }
 
 /// <summary>
-/// S-05 (2026-11-09, pending owner ratification): no fixed post-clearance window. No primary source supports a
+/// S-05 (2026-11-09, owner ratified Option A): no fixed post-clearance window. No primary source supports a
 /// seven-day optional period for healthy adult trainees, and the preview never showed it. A cleared exercise is
 /// restored as prescribed from its clearance date, and only when current eligibility permits; unknown or future
-/// clearance still blocks. The window length stays a single constant so the earlier behaviour can be restored.
+/// clearance still blocks. The 0-day window is the ratified policy; the constant is kept only so legacy rows and the persisted vocabulary stay readable.
 /// </summary>
 public static class WorkoutInjuryClearanceRule
 {
     public const int OptionalCalendarDaysIncludingClearance = 0;
+
+    // Gate 88: Conservative return load (10-15% reduction -> 0.875x) for the first 2 sessions
+    // after explicit pain clearance.
+    public const decimal ConservativeReturnLoadMultiplier = 0.875m;
+    public const int ConservativeReturnSessionCount = 2;
+
+    public static decimal ComputeConservativeReturnLoad(
+        decimal priorWorkingLoadKg,
+        int completedConservativeSessions,
+        decimal incrementKg = 2.5m)
+    {
+        if (priorWorkingLoadKg <= 0m)
+            return 0m;
+        if (completedConservativeSessions >= ConservativeReturnSessionCount)
+            return priorWorkingLoadKg;
+
+        var step = incrementKg > 0m ? incrementKg : 2.5m;
+        var rawReduced = priorWorkingLoadKg * ConservativeReturnLoadMultiplier;
+        var snapped = Math.Floor(rawReduced / step) * step;
+        return snapped > 0m ? snapped : rawReduced;
+    }
 
     /// <summary>All related episodes and current eligibility must be known before restoration.</summary>
     public static InjuryClearanceRestorationDisposition EvaluateRestoration(bool originalWasOptional,

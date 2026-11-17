@@ -12,7 +12,7 @@
     x:DataType="vm:CycleViewModel"
     Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
-    SemanticProperties.Description="{loc:LocalizedText Cycle_Page_Title}">
+    >
 
 
     <Grid RowDefinitions="Auto, *">

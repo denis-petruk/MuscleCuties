@@ -1,4 +1,5 @@
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 
@@ -54,6 +55,13 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         ArgumentNullException.ThrowIfNull(request);
         if (userId == Guid.Empty)
             return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null));
+        if (request.InputContractVersion is { } inputVersion &&
+            !string.Equals(inputVersion, StrengthPlanPreviewRule.InputContractVersion, StringComparison.Ordinal))
+            return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null)) with
+            {
+                Status = nameof(StrengthPlanPreviewStatus.InvalidInput),
+                LimitationCodes = [StrengthPlanPreviewRule.UnsupportedInputVersionCode]
+            };
         if (sourceData?.PopulationLimitationCode is { } populationLimitation)
             return StrengthPlanPreviewMapperV020.ToResponse(StrengthPlanPreviewRule.Evaluate(null, null)) with
             {
@@ -99,7 +107,13 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
                 Equipment = request.DraftPreferences?.EquipmentLevel is { } equipment &&
                             Enum.TryParse<Equipment>(equipment, true, out var parsedEquipment)
                     ? parsedEquipment : sourceData.Equipment,
-                ExcludedExerciseIds = request.DraftPreferences?.ExcludedExerciseIds ?? sourceData.ExcludedExerciseIds
+                ExcludedExerciseIds = request.DraftPreferences?.ExcludedExerciseIds ?? sourceData.ExcludedExerciseIds,
+                GluteFocus = request.DraftPreferences?.GluteFocus ?? sourceData.GluteFocus,
+                DraftEquipmentCapabilities = request.DraftPreferences is { } prefs &&
+                    (prefs.HasSliders is not null || prefs.HasConfirmedBandAnchor is not null ||
+                     prefs.HasDumbbells is not null || prefs.HasBands is not null)
+                    ? new EquipmentCapabilities(prefs.HasSliders, prefs.HasConfirmedBandAnchor, prefs.HasDumbbells, prefs.HasBands)
+                    : sourceData.DraftEquipmentCapabilities
             };
         }
 
@@ -263,8 +277,22 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         }).ToArray();
         mixedSchedule = StrengthScheduleAssignmentRule.Reconcile(mixedSchedule, muscles,
             mixedContext.AvailableWeekdays ?? [], result.EffectiveActivity ?? WorkoutActivityContractMapper.ToCore(chosenStrengthActivity));
-        return StrengthPlanPreviewMapperV020.AttachMixedSchedule(response, mixedSchedule, chosenStrengthActivity) with
+        var scheduled = StrengthPlanPreviewMapperV020.AttachMixedSchedule(response, mixedSchedule, chosenStrengthActivity);
+        var actualExerciseIds = scheduled.Sessions.Where(session => session.PlannedWeekday.HasValue)
+            .SelectMany(session => session.Slots)
+            .Where(slot => slot.ExerciseId.HasValue).Select(slot => slot.ExerciseId!.Value).Distinct().ToArray();
+        var movementGaps = WeeklyMovementCoverageRule.MissingPatterns(actualExerciseIds, sourceData.Catalog);
+        // The V2 engine runs on the same normalized request the V0.2 preview just approved, so a
+        // consumer can migrate one surface at a time without a second planning source of truth.
+        var generation = WorkoutGenerationV2Service.GenerateFromPreviewSource(request, sourceData,
+            distinctCompletedWorkoutDays: sourceData.DistinctCompletedWorkoutDays,
+            isReturningAfterDetraining: sourceData.IsReturningAfterDetraining);
+        var generationPlan = GenerationPlanV2Mapper.ToPlan(generation, sourceData);
+        return scheduled with
         {
+            GenerationV2 = generationPlan,
+            AdvisoryCodes = scheduled.AdvisoryCodes.Concat(movementGaps).Distinct(StringComparer.Ordinal)
+                .OrderBy(code => code, StringComparer.Ordinal).ToArray(),
             SourceProfileVersion = sourceData.ProfileVersion,
             SourceInjuryFingerprint = sourceData.InjuryFingerprint,
             SourceActivePlanId = sourceData.ActivePlanId,
@@ -274,6 +302,8 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
             SourceTimeZoneVersion = sourceData.TimeZoneVersion,
             SourceExperienceVersion = sourceData.ExperienceVersion,
             SourceAnswerVersion = sourceData.AnswerVersion,
+            SourceObservedHistoryFingerprint = sourceData.ObservedHistoryFingerprint,
+            SourceReadinessRevision = sourceData.ReadinessRevision,
             SourceMuscleGroupsByExerciseId = sourceData.MuscleGroupsByExerciseId?.ToDictionary(
                 pair => pair.Key, pair => pair.Value.OrderBy(value => value, StringComparer.Ordinal).ToArray())
         };

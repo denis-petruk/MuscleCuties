@@ -26,6 +26,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
     public async Task<StrengthPlanProposalCreatedV020> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
         StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken)
     {
+        preview = GenerationPlanV2Mapper.ForCanonicalUse(preview);
         ValidateProposalInput(userId, request, preview);
 
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -51,6 +52,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
     {
         if (dbContext.Database.CurrentTransaction is null)
             throw new InvalidOperationException("A planning transaction is required.");
+        preview = GenerationPlanV2Mapper.ForCanonicalUse(preview);
         ValidateProposalInput(userId, request, preview);
         if (!automaticOrigin && automaticStartDate is not null)
             throw new ArgumentException("A user proposal cannot specify an automatic start date.");
@@ -100,6 +102,23 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             throw new WorkoutPlanningInputsChangedException();
         var planningState = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
             .SingleOrDefaultAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
+        if (preview.GenerationV2 is not null)
+        {
+            var timeZoneId = planningState?.TimeZoneId ?? "UTC";
+            var observed = await V2ObservedHistory.LoadAsync(dbContext, userId, timeZoneId, cancellationToken)
+                .ConfigureAwait(false);
+            var today = PlanningSafetyInputs.AccountToday(planningState?.TimeZoneId);
+            var readinessRevision = today is { } localDate
+                ? await dbContext.DailyReadinessLogs.AsNoTracking().Where(row =>
+                        row.UserId == userId && row.Date == localDate)
+                    .Select(row => (long?)row.PlanningRevision).SingleOrDefaultAsync(cancellationToken)
+                    .ConfigureAwait(false)
+                : null;
+            if (string.IsNullOrWhiteSpace(preview.SourceObservedHistoryFingerprint) ||
+                preview.SourceObservedHistoryFingerprint != PlanningInputFingerprint.Hash(observed) ||
+                preview.SourceReadinessRevision != readinessRevision)
+                throw new WorkoutPlanningInputsChangedException();
+        }
         if (preview.SourceTimeZoneVersion != (planningState?.TimeZoneVersion ?? WorkoutAccountCalendarRule.InitialTimeZoneVersion) ||
             preview.SourceExperienceVersion != (planningState?.ExperienceVersion ?? 0) ||
             preview.SourceAnswerVersion != (planningState?.AnswerVersion ?? 0))
@@ -245,7 +264,8 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             request.HiitEligibilityEvidence)
         {
             HiitUnderlyingCardioActivity = request.HiitUnderlyingCardioActivity,
-            HiitCapture = capture
+            HiitCapture = capture,
+            EquipmentCapabilities = previous.EquipmentCapabilities
         };
         var json = JsonSerializer.Serialize(answers, JsonOptions);
         var previousComparable = JsonSerializer.Serialize(previous with

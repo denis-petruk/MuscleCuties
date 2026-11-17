@@ -70,8 +70,8 @@ public sealed class WorkoutPlanningFlowRuleTests
     [InlineData(false, true, false, false, false, false, false, false)]
     [InlineData(false, true, true, true, false, false, false, false)]
     [InlineData(false, true, true, false, true, false, false, false)]
-    [InlineData(false, true, true, false, false, true, false, false)]
-    [InlineData(false, true, true, false, false, false, true, false)]
+    [InlineData(false, true, true, false, false, true, false, true)]
+    [InlineData(false, true, true, false, false, false, true, true)]
     public void FirstPlanAutoApplyRequiresCompleteFeasiblePersistedProposal(
         bool replacesExistingPlan,
         bool feasible,
@@ -95,10 +95,10 @@ public sealed class WorkoutPlanningFlowRuleTests
     }
 
     [Fact]
-    public void ReducedVolumeFirstPlanIsNotAutoAppliedAndApplyCarriesTheAcknowledgment()
+    public void ReducedVolumeFirstPlanAutoAppliesWithoutClaimingAcknowledgment()
     {
-        // G-02: a first plan that fits only with reduced volume waits for the user's Apply tap...
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
+        // The recovered decision permits automatic application of a feasible first plan.
+        Assert.True(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
             replacesExistingPlan: false,
             feasible: true,
             persisted: true,
@@ -107,12 +107,12 @@ public sealed class WorkoutPlanningFlowRuleTests
             hasOmissions: false,
             reducedVolume: true));
 
-        // ...and that Apply is what supplies the reduced-volume acknowledgment.
+        // Automatic application must not claim an acknowledgment that was never given.
         var acceptance = WorkoutPlanningFlowRule.AcceptanceAcknowledgments(
             replacesExistingPlan: false,
             reducedVolumeRequired: true);
 
-        Assert.True(acceptance.ReducedVolumeAcknowledged);
+        Assert.False(acceptance.ReducedVolumeAcknowledged);
         Assert.False(acceptance.ReplacementConfirmed);
     }
 

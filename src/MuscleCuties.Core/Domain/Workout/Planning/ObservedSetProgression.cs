@@ -73,6 +73,8 @@ public sealed record StrengthProgressionAdvice(
 public static class StrengthProgressionAdviceRule
 {
     public const string StartingWeightCode = "Workout_Recommendation_StartingWeight";
+    public const string BandStartingTensionCode = "Workout_Recommendation_BandStartingTension";
+    public const string BandProgressRepsCode = "Workout_Recommendation_BandProgressReps";
     public const string EnduranceCode = "Workout_Recommendation_Endurance";
     public const string LogEachSetCode = "Workout_Recommendation_LogEachSet";
     public const string EarnedCode = "Workout_Recommendation_EarnedFormat";
@@ -81,6 +83,12 @@ public static class StrengthProgressionAdviceRule
 
     public static StrengthProgressionAdvice StartingWeight() =>
         new(StartingWeightCode, null, LoadIncreased: false);
+
+    public static StrengthProgressionAdvice BandStartingTension() =>
+        new(BandStartingTensionCode, null, LoadIncreased: false);
+
+    public static StrengthProgressionAdvice BandProgressReps() =>
+        new(BandProgressRepsCode, null, LoadIncreased: false);
 
     public static StrengthProgressionAdvice Endurance() =>
         new(EnduranceCode, null, LoadIncreased: false);

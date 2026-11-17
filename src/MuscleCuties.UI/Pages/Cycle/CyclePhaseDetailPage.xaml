@@ -12,7 +12,7 @@
     x:DataType="vm:CyclePhaseDetailViewModel"
     Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
-    SemanticProperties.Description="{loc:LocalizedText Cycle_PhaseDetail_PageAccessibility}">
+    >
 
     <ScrollView>
         <VerticalStackLayout
@@ -23,7 +23,7 @@
 
             <sharedControls:PageHeader
                 Title="{Binding PhaseName, Converter={StaticResource LocalizedStringConverter}}"
-                Subtitle="{Binding PhaseWindow}"
+                Subtitle="{Binding PhaseWindow, Converter={StaticResource LocalizedStringConverter}}"
                 BackCommand="{Binding BackCommand}" />
 
             <!-- Hero phase card -->
@@ -64,6 +64,7 @@
 
                     <sharedControls:PhaseVisualView
                         Grid.Row="3"
+                        IsVisible="{Binding HasPhaseImage}"
                         Source="{Binding PhaseImageSource}"
                         WidthRequest="{StaticResource UiDimension150}"
                         HeightRequest="{StaticResource UiDimension150}"

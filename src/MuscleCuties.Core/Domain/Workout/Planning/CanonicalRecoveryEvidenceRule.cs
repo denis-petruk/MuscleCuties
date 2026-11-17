@@ -3,7 +3,12 @@ namespace MuscleCuties.Core.Domain.Workout.Planning;
 // Inputs must come from completed planned sessions with immutable prescriptions and dated check-ins.
 public sealed record ObservedCompoundPerformance(DateOnly LocalDate, int ExerciseId,
     int PrescribedSets, int PrescribedRepetitions, int CompletedSets, int CompletedRepetitions);
-public sealed record ObservedRecovery(DateOnly LocalDate, int? SleepQuality, int? Energy, int? Soreness);
+
+/// <summary>
+/// Recovery evidence carries sleep quality and energy only. Ordinary soreness is not a training input
+/// (ratified A-8, 2026-11-15), so it has no field here and cannot reach a deload decision.
+/// </summary>
+public sealed record ObservedRecovery(DateOnly LocalDate, int? SleepQuality, int? Energy);
 
 public static class CanonicalRecoveryEvidenceRule
 {
@@ -36,10 +41,9 @@ public static class CanonicalRecoveryEvidenceRule
             var checks = (recovery ?? []).Where(r => r.LocalDate >= start && r.LocalDate < end).ToArray();
             var sleep = AverageValid(checks.Select(r => r.SleepQuality));
             var energy = AverageValid(checks.Select(r => r.Energy));
-            var soreness = AverageValid(checks.Select(r => r.Soreness));
             weeks.Add(new WeeklyPerformanceAndRecoveryRecord(index,
                 weekPerformance.Length > 0 && weekPerformance.All(p => p.CompletedRepetitions < p.PrescribedRepetitions),
-                sleep, energy, soreness));
+                sleep, energy));
         }
         return DeloadTriggerRule.Evaluate(weeks);
     }

@@ -17,7 +17,7 @@ public sealed class StrengthStyleOfferStoreIntegrationTests
     private static readonly int CurrentStyleId = (int)WorkoutActivityType.GeneralStrength;
     private static readonly int AlternativeStyleId = (int)WorkoutActivityType.StrengthHighIntensity;
 
-    [Fact]
+    [PostgresFact]
     public async Task DuplicateAndSubsequentCreationLeavesOneActiveOfferPerPlan()
     {
         await using var database = Open();

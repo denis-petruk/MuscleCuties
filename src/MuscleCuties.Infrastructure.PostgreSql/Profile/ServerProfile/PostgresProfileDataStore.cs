@@ -10,6 +10,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 
@@ -44,8 +45,12 @@ public sealed class PostgresProfileDataStore(
                 ? null
                 : await dbContext.Users.AsNoTracking()
                     .SingleOrDefaultAsync(item => item.Id == userId, token).ConfigureAwait(false);
+            var planningState = profile is null
+                ? null
+                : await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
+                    .SingleOrDefaultAsync(item => item.UserId == userId, token).ConfigureAwait(false);
             await transaction.CommitAsync(token).ConfigureAwait(false);
-            return profile is null ? null : ToSnapshot(profile, user);
+            return profile is null ? null : ToSnapshot(profile, user, planningState?.AnswersJson);
         }).ConfigureAwait(false);
     }
 
@@ -212,6 +217,35 @@ public sealed class PostgresProfileDataStore(
             profile.ExcludedStrengthExerciseIdsJson = serializedExcludedExerciseIds;
             if (request.EquipmentLevel is not null)
                 profile.EquipmentLevel = request.EquipmentLevel;
+            if (request.GluteFocus is { } gluteFocus)
+                profile.GluteFocus = gluteFocus;
+            if (request.EquipmentCapabilities is { } capabilities)
+            {
+                var planningState = await dbContext.WorkoutAccountPlanningStates
+                    .SingleOrDefaultAsync(row => row.UserId == request.UserId, token).ConfigureAwait(false);
+                if (planningState is null)
+                {
+                    var baselineExperience = PlanningSafetyInputs.ProfileTrainingExperience(null, profile) ??
+                        Core.Models.Enums.Users.TrainingExperienceLevel.Beginner;
+                    planningState = new WorkoutAccountPlanningStateRecord
+                    {
+                        Id = Guid.CreateVersion7(),
+                        UserId = request.UserId,
+                        BaselineExperience = baselineExperience,
+                        EffectiveExperience = baselineExperience
+                    };
+                    dbContext.WorkoutAccountPlanningStates.Add(planningState);
+                }
+
+                var previousAnswers = DeserializeAnswers(planningState.AnswersJson);
+                var updatedAnswers = previousAnswers with
+                {
+                    Version = planningState.AnswerVersion + 1,
+                    EquipmentCapabilities = capabilities
+                };
+                planningState.AnswerVersion = updatedAnswers.Version;
+                planningState.AnswersJson = JsonSerializer.Serialize(updatedAnswers, WebJsonOptions);
+            }
             profile.UpdatedAt = now;
             return await SaveVersionedAsync(transaction, profile, token).ConfigureAwait(false);
         }).ConfigureAwait(false);
@@ -362,7 +396,17 @@ public sealed class PostgresProfileDataStore(
         return snapshot;
     }
 
-    private static ServerProfileSnapshot ToSnapshot(UserProfileRecord profile, UserRecord? user = null) => new(
+    private static readonly JsonSerializerOptions WebJsonOptions = new(JsonSerializerDefaults.Web);
+
+    private static SavedActivityAnswersDto DeserializeAnswers(string? json) => string.IsNullOrWhiteSpace(json)
+        ? new SavedActivityAnswersDto(0, [], null)
+        : JsonSerializer.Deserialize<SavedActivityAnswersDto>(json, WebJsonOptions)
+          ?? new SavedActivityAnswersDto(0, [], null);
+
+    private static ServerProfileSnapshot ToSnapshot(
+        UserProfileRecord profile,
+        UserRecord? user = null,
+        string? answersJson = null) => new(
         profile.Name,
         profile.DateOfBirth,
         profile.Height,
@@ -390,7 +434,9 @@ public sealed class PostgresProfileDataStore(
         user?.CreatedAt,
         profile.ProfileImagePath,
         profile.RequestedActivitySessionsPerWeekJson,
-        profile.ExcludedStrengthExerciseIdsJson);
+        profile.ExcludedStrengthExerciseIdsJson,
+        profile.GluteFocus,
+        DeserializeAnswers(answersJson).EquipmentCapabilities);
 
     private static string MergeTargets(string currentJson, IReadOnlyDictionary<string, string> updates)
     {

@@ -18,7 +18,11 @@ public static class PlanningReleaseApproval
         new(2026, 11, 5, 0, 0, 0, TimeSpan.Zero);
 
     /// <summary>
-    /// Active approval record. It covers exactly the two sections that authorise a dose change:
+    /// Active approval record for MC-CYCLE-READINESS-0.4. The volume-only behaviour was owner-approved on
+    /// 2026-11-09 under amendments A-4/A-5; the 2026-11-15 amendment A-8 rescored the same 0–100 readiness
+    /// range from sleep, energy and stress after removing ordinary muscle soreness. Both rule versions must
+    /// name the current policy, so an older approval cannot silently authorise the new arithmetic.
+    /// It covers exactly the two sections that authorise a dose change:
     /// prescribed training and automated progression. Symptom stop logic and injury substitution
     /// deliberately need no approval because they never change a dose. The reference is only
     /// checked in memory; no persisted row, fingerprint or provenance column carries it.

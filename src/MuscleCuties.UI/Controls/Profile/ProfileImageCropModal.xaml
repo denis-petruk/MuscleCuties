@@ -33,7 +33,7 @@
                     </Border>
                 </Grid>
 
-                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" Margin="{StaticResource UiInsets20_0}" />
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
 
                 <ScrollView
                     Grid.Row="2"
@@ -68,18 +68,21 @@
                     </VerticalStackLayout>
                 </ScrollView>
 
-                <Grid Grid.Row="3" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{DynamicResource PresentationActionFooterPadding}">
+                <!-- Two buttons share the footer at the standard sizes and stack at accessibility sizes,
+                     where "Использовать фото" no longer fits half the sheet. -->
+                <sharedControls:AdaptiveRow Grid.Row="3" Columns="2"
+                                            ColumnSpacing="{StaticResource UiSpaceCompact}"
+                                            RowSpacing="{StaticResource UiSpaceCompact}"
+                                            Padding="{DynamicResource PresentationActionFooterPadding}">
                     <Button
-                        Grid.Column="0"
                         Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Common_Cancel}"
                         Clicked="OnCancelTapped" />
                     <Button
-                        Grid.Column="1"
                         Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Profile_ImageCrop_UsePhoto}"
                         Clicked="OnUsePhotoTapped" />
-                </Grid>
+                </sharedControls:AdaptiveRow>
 
             </Grid>
         </Border>

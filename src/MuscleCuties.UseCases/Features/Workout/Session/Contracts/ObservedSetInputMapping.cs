@@ -9,7 +9,9 @@ public sealed record EditableObservedSet(
     decimal LoadKg,
     int? RirActual,
     bool TechniqueAcceptable = true,
-    bool IsWarmup = false);
+    bool IsWarmup = false,
+    int? LeftSideReps = null,
+    int? RightSideReps = null);
 
 public static class ObservedSetInputMapping
 {
@@ -32,7 +34,9 @@ public static class ObservedSetInputMapping
                 row.RepsCompleted,
                 row.LoadKg,
                 row.RirActual,
-                row.TechniqueAcceptable))
+                row.TechniqueAcceptable,
+                row.LeftSideReps,
+                row.RightSideReps))
             .ToArray();
 
         return observed.Length > 0 ? observed : null;

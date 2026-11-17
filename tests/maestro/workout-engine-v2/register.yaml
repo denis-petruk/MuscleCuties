@@ -1,0 +1,53 @@
+appId: com.musclecuties.app
+---
+- runScript: new-synthetic-user.js
+- tapOn:
+    id: LoginCreateAccountRow
+- extendedWaitUntil:
+    visible:
+      id: RegisterEmail
+    timeout: 20000
+- takeScreenshot: 02_register
+- tapOn:
+    id: RegisterEmail
+- inputText: "${output.qaEmail}"
+- tapOn:
+    id: RegisterUsername
+- inputText: "${output.qaUsername}"
+- tapOn:
+    id: RegisterPassword
+- inputText: "Synthet1cTestOnly2026."
+- tapOn:
+    id: RegisterConfirmPassword
+- inputText: "Synthet1cTestOnly2026."
+- tapOn: "Done|Готово"
+- scrollUntilVisible:
+    element:
+      id: PrivacyConsentCheckBox
+    direction: DOWN
+    centerElement: true
+    timeout: 20000
+- tapOn:
+    id: PrivacyConsentCheckBox
+- scrollUntilVisible:
+    element:
+      id: RegisterButton
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: RegisterButton
+- extendedWaitUntil:
+    visible:
+      id: OtpEntry
+    timeout: 40000
+- takeScreenshot: 03_otp
+- runScript: fetch-development-otp.js
+- tapOn:
+    id: OtpEntry
+- inputText: "${output.otp}"
+- tapOn:
+    id: OtpVerifyButton
+- extendedWaitUntil:
+    visible:
+      id: ProfileSetupNameEntry
+    timeout: 40000

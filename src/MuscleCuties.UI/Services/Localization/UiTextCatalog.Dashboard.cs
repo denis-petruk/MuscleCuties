@@ -45,9 +45,18 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_SleepQuality5A11y"] = "Sleep quality 5 of 5";
         English["Dashboard_CheckIn_Energy5Hint"] = "Very high energy";
         English["Dashboard_CheckIn_EnergyTitle"] = "Energy";
+        English["Dashboard_CheckIn_FatigueTitle"] = "Fatigue";
+        English["Dashboard_CheckIn_FatigueLowLabel"] = "None";
+        English["Dashboard_CheckIn_FatigueHighLabel"] = "Very high";
+        English["Dashboard_CheckIn_Fatigue1A11y"] = "Fatigue 1 of 5, none";
+        English["Dashboard_CheckIn_Fatigue2A11y"] = "Fatigue 2 of 5, low";
+        English["Dashboard_CheckIn_Fatigue3A11y"] = "Fatigue 3 of 5, moderate";
+        English["Dashboard_CheckIn_Fatigue4A11y"] = "Fatigue 4 of 5, high";
+        English["Dashboard_CheckIn_Fatigue5A11y"] = "Fatigue 5 of 5, very high";
         English["Dashboard_CheckIn_EnergySectionTitle"] = "ENERGY";
         English["Dashboard_CheckIn_EnergyVeryHighLabel"] = "Very high";
         English["Dashboard_CheckIn_EnergyVeryLowLabel"] = "Very low";
+        English["Dashboard_CheckIn_HealthKitSleepBadge"] = "Auto-filled from Apple Health ({0}h)";
         English["Dashboard_CheckIn_PlanningTitle"] = "Workout planning";
         English["Dashboard_CheckIn_PlanningSleepQuality"] = "Sleep quality";
         English["Dashboard_CheckIn_PlanningSoreness"] = "Muscle soreness";
@@ -80,10 +89,13 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_SleepTitle"] = "Sleep last night";
         English["Dashboard_CheckIn_SleepSectionTitle"] = "SLEEP LAST NIGHT";
         English["Dashboard_CheckIn_StorageNotice"] = "Saved to your private account";
+        English["Dashboard_CheckIn_AdditionalDetails"] = "Additional details (optional)";
         English["Dashboard_CheckIn_SubmitButton"] = "Save check-in";
         English["Dashboard_CheckIn_SubmitHint"] = "Save your daily check-in";
+        English["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Answer every required question to save your check-in.";
         English["Dashboard_CheckIn_Subtitle"] = "How are you feeling today?";
         English["Dashboard_CheckIn_SuccessMessage"] = "Check-in saved";
+        English["Dashboard_CheckIn_SuggestFromAppleHealth"] = "Suggest ratings from Apple Health";
         English["Dashboard_CheckIn_WeightA11y"] = "Optional body weight in kilograms";
         English["Dashboard_CheckIn_WeightHint"] = "Leave empty to skip weight entry";
         English["Dashboard_CheckIn_WeightPlaceholderKg"] = "kg";
@@ -126,11 +138,11 @@ public static partial class UiTextCatalog
         English["Dashboard_Readiness_RatingEnergy"] = "Energy";
         English["Dashboard_Readiness_RatingSoreness"] = "Soreness";
         English["Dashboard_Readiness_RatingStress"] = "Stress";
-        English["Dashboard_Readiness_ScoreExplanation"] = "Based on your reported sleep, energy and muscle soreness. This is a planning estimate, not a medical assessment or a direct measurement of recovery.";
+        English["Dashboard_Readiness_ScoreExplanation"] = "Based on your reported sleep and energy, plus stress when you report it. Muscle soreness is not scored. This is a planning estimate, not a medical assessment or a direct measurement of recovery.";
         English["Dashboard_Readiness_NoCurrentCheckIn"] = "Complete today’s check-in to see suggestions based on how you feel.";
         English["Dashboard_Readiness_ReviewPending"] = "Your check-in is saved. Training suggestions based on this check-in are not available yet.";
         English["Dashboard_Readiness_CompleteCheckIn"] = "Complete check-in";
-        English["Dashboard_CheckIn_IncompleteAllFourRatings"] = "Answer every check-in question to see your check-in score.";
+        English["Dashboard_CheckIn_IncompleteRequiredRatings"] = "Answer every required check-in question to see your check-in score.";
         English["Dashboard_Readiness_ReadinessLabel"] = "Readiness";
         English["Dashboard_Readiness_ReadinessScoreFormat"] = "Readiness score: {0}";
         English["Dashboard_Readiness_RecoveryLabel"] = "Recovery";
@@ -161,6 +173,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Phase_MissingHeader"] = "This week · Set your cycle phase";
         English["Dashboard_Phase_HeaderFormat"] = "This week · {0}";
         English["Dashboard_Phase_StatusDayFormat"] = "{0} · Day {1} / {2}";
+        English["Dashboard_Phase_StatusDayEstimateFormat"] = "{0} · Day {1} of ~{2} · estimate";
         English["Dashboard_Phase_StatusSelectedFormat"] = "{0} · Phase selected";
         English["Dashboard_Phase_TitleRecovery"] = "Recovery rhythm";
         English["Dashboard_Phase_TitleBuild"] = "Build momentum";
@@ -203,6 +216,8 @@ public static partial class UiTextCatalog
         English["Dashboard_Trend_WeightMedian"] = "Weight · rolling median";
         English["Dashboard_Workout_Duration"] = "Duration";
         English["Dashboard_Workout_CountActivity"] = "Activity";
+        English["Dashboard_Workout_PillRest"] = "REST DAY";
+        English["Dashboard_Workout_PillTraining"] = "TRAINING";
         English["Dashboard_Workout_CountSets"] = "Sets";
         English["Dashboard_Workout_CountExercises"] = "Exercises";
         English["Dashboard_Workout_CountRecovery"] = "Recovery";
@@ -232,5 +247,10 @@ public static partial class UiTextCatalog
         English["Dashboard_Workout_RestGuidance"] =
             "Rest day: keep movement light and let sleep and hydration do the work.";
         English["Dashboard_Workout_ViewRestDay"] = "View rest day";
+        English["Dashboard_CheckIn_HealthRationaleTitle"] = "Use Apple Health for today's check-in?";
+        English["Dashboard_CheckIn_HealthRationaleBody"] = "MuscleCuties reads steps, sleep, heart rate and HRV from Apple Health only to suggest your check-in values and your calorie target. Read-only; you can turn it off in Profile.";
+        English["Dashboard_CheckIn_HealthConnect"] = "Connect Apple Health";
+        English["Dashboard_CheckIn_HealthNotNow"] = "Not now";
+        English["Dashboard_Workout_ViewCompleted"] = "View workout";
     }
 }

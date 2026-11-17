@@ -65,7 +65,7 @@ internal static class StrengthPlanGenerationDecisions
 
     /// <summary>Everything the Apply tap accepts for the visible preview and its live lease.</summary>
     public static AcceptStrengthPlanProposalRequestV020 BuildAcceptance(StrengthPlanProposalCreatedV020 proposal,
-        PlanningLeaseDto lease)
+        PlanningLeaseDto lease, bool fromApplyTap = true)
     {
         var acceptance = WorkoutPlanningFlow.AcceptanceAcknowledgments(
             proposal.ReplacesExistingPlan,
@@ -73,7 +73,7 @@ internal static class StrengthPlanGenerationDecisions
         return new AcceptStrengthPlanProposalRequestV020(
             proposal.ProposalId, lease.LeaseId, lease.Fence, proposal.ProposalVersion,
             ReplacementConfirmed: acceptance.ReplacementConfirmed,
-            ReducedVolumeAcknowledged: acceptance.ReducedVolumeAcknowledged);
+            ReducedVolumeAcknowledged: fromApplyTap && proposal.Preview.RequiresReducedVolumeAcknowledgment());
     }
 
     /// <summary>

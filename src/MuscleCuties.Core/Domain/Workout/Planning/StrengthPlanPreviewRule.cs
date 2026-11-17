@@ -24,6 +24,12 @@ public sealed record StrengthPlanPreviewChoices(
     IReadOnlySet<DayOfWeek>? RequestedAvailableWeekdays = null,
     bool AllowMovementOmissionsForDuration = false);
 
+public sealed record EquipmentCapabilities(
+    bool? HasSliders = null,
+    bool? HasConfirmedBandAnchor = null,
+    bool? HasDumbbells = null,
+    bool? HasBands = null);
+
 /// <summary>Trusted server profile, activity preferences, and reviewed catalog snapshot used by the planner.</summary>
 public sealed record StrengthPlanPreviewData(
     UserGoal Goal,
@@ -46,6 +52,10 @@ public sealed record StrengthPlanPreviewData(
 {
     public IReadOnlyDictionary<int, int>? GoalPriorityByExerciseId { get; init; }
     public IReadOnlyDictionary<int, ExerciseEvidenceRanking>? EvidenceRankingByExerciseId { get; init; }
+
+    /// <summary>True only when the user selected glute focus in their profile; selection then prefers
+    /// glute-dominant movements inside a slot. Never inferred from goal, body type or history.</summary>
+    public bool GluteFocus { get; init; }
     public IReadOnlyDictionary<int, IReadOnlySet<string>>? MuscleGroupsByExerciseId { get; init; }
     public IReadOnlyDictionary<string, TemplateVolumeFloor>? TemplateVolumeFloors { get; init; }
     /// <summary>Server-derived activities an active injury blocks. Strength styles are never
@@ -55,6 +65,7 @@ public sealed record StrengthPlanPreviewData(
     /// <summary>Movement patterns blocked by recorded injury safety answers. Selecting an exercise
     /// with one of these patterns is a safety failure, exactly like a site contraindication.</summary>
     public IReadOnlySet<MovementPattern>? BlockedMovementPatterns { get; init; }
+    public EquipmentCapabilities? EquipmentCapabilities { get; init; }
 }
 
 public sealed record StrengthPlanPreviewSession(
@@ -99,9 +110,17 @@ public sealed record StrengthPlanPreviewResult(
 /// </summary>
 public static class StrengthPlanPreviewRule
 {
+    /// <summary>
+    /// Version of the preview input contract this build implements. A request that names a different
+    /// version is refused instead of being answered from defaults.
+    /// </summary>
+    public const string InputContractVersion = "MC-PLANNING-INPUT-1";
+
+    public const string UnsupportedInputVersionCode = "UnsupportedPlanningInputVersion";
+
     public const string PolicyId = "MC-WORKOUT-POLICY";
     public const string Version = "0.2.0";
-    public const string RulesetVersion = "MC-PLANNING-0.2";
+    public const string RulesetVersion = "MC-PLANNING-0.4";
     public const string InvalidInputCode = "InvalidStrengthPreviewInput";
     public const string PlanningProfileInvalidCode = "PlanningProfileDataInvalid";
     public const string ActivityNotSelectedCode = "ActivityNotSelectedInProfile";
@@ -226,7 +245,7 @@ public static class StrengthPlanPreviewRule
             experience == ActivityExperience.Unknown)
             experience = ActivityExperience.Beginner;
 
-        var availableEquipment = AvailableEquipmentFor(data.Equipment);
+        var availableEquipment = AvailableEquipmentFor(data.Equipment, data.EquipmentCapabilities);
         var eligibilityContext = new ExerciseEligibilityContext(availableEquipment, prescriptionExperience,
             choices.ExcludedExerciseIds ?? EmptyIds, data.BlockedMovementPatterns ?? EmptyMovementPatterns,
             new HashSet<ActivityDemandTag>(), false, data.ActiveInjuryFlags,
@@ -275,7 +294,8 @@ public static class StrengthPlanPreviewRule
                         choices.UserConfirmedManageableLoadExerciseIds ?? EmptyIds,
                     GoalPriorityByExerciseId: MergeCoveragePriority(
                         data.GoalPriorityByExerciseId, coveragePriority),
-                    EvidenceRankingByExerciseId: data.EvidenceRankingByExerciseId);
+                    EvidenceRankingByExerciseId: data.EvidenceRankingByExerciseId,
+                    GluteFocus: data.GluteFocus);
             var resolution = StrengthTemplateResolver.Resolve(selectionInput, MaximumWorkingExercises(activity, template));
             if (resolution.Slots.Any(slot => slot.IsRequired && slot.Outcome == StrengthSlotResolutionOutcome.NoSafeCandidate))
             {
@@ -475,10 +495,8 @@ public static class StrengthPlanPreviewRule
         {
             if (!tenRegionCoverage.MeetsMinimum)
             {
-                if (scheduledSessionsPerWeek < TenRegionMuscleCoverageRule.MinimumWeeklySessionExposures)
-                    limitations.AddRange(tenRegionCoverage.LimitationCodes);
-                else
-                    advisories.AddRange(tenRegionCoverage.LimitationCodes);
+                // Limited weekly exposure is disclosed but does not itself make a safe one-day plan unusable.
+                advisories.AddRange(tenRegionCoverage.LimitationCodes);
             }
             advisories.AddRange(tenRegionCoverage.AdvisoryCodes);
         }
@@ -608,14 +626,17 @@ public static class StrengthPlanPreviewRule
         StrengthPlanPreviewData data,
         StrengthPlanPreviewChoices choices)
     {
+        var availableDays = GeneralStrengthFrequencyResolver.ResolveAvailableWeekdaysCount(
+            choices.RequestedAvailableWeekdays ?? data.AvailableWeekdays);
+        if (availableDays == OneSession)
+            return OneSession;
+
         if (activity == WorkoutActivityType.GeneralStrength)
         {
             var isEstablished = GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(
                 choices.ActivityHistory, choices.LocalDate);
-            var weekdaysCount = GeneralStrengthFrequencyResolver.ResolveAvailableWeekdaysCount(
-                choices.RequestedAvailableWeekdays ?? data.AvailableWeekdays);
             var gsPolicy = GeneralStrengthFrequencyResolver.Resolve(
-                weekdaysCount, isEstablished, data.ProfileTrainingExperience);
+                availableDays, isEstablished, data.ProfileTrainingExperience);
             return Math.Min(gsPolicy.PolicySessionsPerWeek, gsPolicy.TargetSessionsPerWeek);
         }
 
@@ -664,18 +685,60 @@ public static class StrengthPlanPreviewRule
             : decision.PrescriptionExperience;
 
     /// <summary>Equipment kinds a saved equipment profile provides; an undefined profile provides none.</summary>
-    public static IReadOnlySet<ExerciseEquipmentKind> AvailableEquipmentFor(Equipment equipment) => equipment switch
+    public static IReadOnlySet<ExerciseEquipmentKind> AvailableEquipmentFor(Equipment equipment) =>
+        AvailableEquipmentFor(equipment, null);
+
+    /// <summary>Equipment kinds available when explicit optional slider and anchor capabilities are considered.</summary>
+    public static IReadOnlySet<ExerciseEquipmentKind> AvailableEquipmentFor(
+        Equipment equipment,
+        EquipmentCapabilities? capabilities)
     {
-        Equipment.FullGym => Enum.GetValues<ExerciseEquipmentKind>().ToHashSet(),
-        Equipment.HomeDumbbellsBands => new HashSet<ExerciseEquipmentKind>
+        HashSet<ExerciseEquipmentKind> set = equipment switch
         {
-            ExerciseEquipmentKind.Bodyweight,
-            ExerciseEquipmentKind.Dumbbell,
-            ExerciseEquipmentKind.ResistanceBand
-        },
-        Equipment.Bodyweight => new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Bodyweight },
-        _ => new HashSet<ExerciseEquipmentKind>()
-    };
+            Equipment.FullGym =>
+            [
+                ExerciseEquipmentKind.Bodyweight,
+                ExerciseEquipmentKind.Barbell,
+                ExerciseEquipmentKind.Dumbbell,
+                ExerciseEquipmentKind.ResistanceBand,
+                ExerciseEquipmentKind.Cable,
+                ExerciseEquipmentKind.Machine,
+                ExerciseEquipmentKind.HipThrustBench,
+                ExerciseEquipmentKind.BackExtension45,
+                ExerciseEquipmentKind.PullUpBar,
+                ExerciseEquipmentKind.Kettlebell
+            ],
+            Equipment.HomeDumbbellsBands => BuildHomeDumbbellsBandsSet(capabilities),
+            Equipment.Bodyweight => BuildBodyweightSet(capabilities),
+            _ => new HashSet<ExerciseEquipmentKind>()
+        };
+
+        // Gate 60: sliders and secure band anchors must be explicitly confirmed and are never inferred.
+        if (capabilities?.HasSliders == true)
+            set.Add(ExerciseEquipmentKind.Sliders);
+        if (capabilities?.HasConfirmedBandAnchor == true && set.Contains(ExerciseEquipmentKind.ResistanceBand))
+            set.Add(ExerciseEquipmentKind.BandAnchor);
+
+        return set;
+    }
+
+    private static HashSet<ExerciseEquipmentKind> BuildHomeDumbbellsBandsSet(EquipmentCapabilities? capabilities)
+    {
+        var set = new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Bodyweight };
+        if (capabilities?.HasDumbbells != false)
+            set.Add(ExerciseEquipmentKind.Dumbbell);
+        if (capabilities?.HasBands != false)
+            set.Add(ExerciseEquipmentKind.ResistanceBand);
+        return set;
+    }
+
+    private static HashSet<ExerciseEquipmentKind> BuildBodyweightSet(EquipmentCapabilities? capabilities)
+    {
+        var set = new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Bodyweight };
+        if (capabilities?.HasBands == true)
+            set.Add(ExerciseEquipmentKind.ResistanceBand);
+        return set;
+    }
 
     private static decimal? EstimateAndTrimOptional(List<StrengthSlotSelection> selected,
         StrengthPlanPreviewData data, int availableMinutes, int warmupMinutes, int cooldownMinutes,

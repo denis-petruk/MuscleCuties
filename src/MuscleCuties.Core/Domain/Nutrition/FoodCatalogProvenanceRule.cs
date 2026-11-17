@@ -23,11 +23,13 @@ public static class FoodCatalogProvenanceRule
     public static FoodCatalogSourceKind Classify(FoodCatalogCandidate candidate)
     {
         ArgumentNullException.ThrowIfNull(candidate);
-        if (candidate.IsCustom)
-            return FoodCatalogSourceKind.CustomFood;
+        // An FDC identifier marks USDA data even on an owner-scoped row: foods imported by the
+        // external search fallback are stored per account but did not originate from the user.
+        if (candidate.FdcId.HasValue)
+            return FoodCatalogSourceKind.UsdaFoodDataCentral;
 
-        return candidate.FdcId.HasValue
-            ? FoodCatalogSourceKind.UsdaFoodDataCentral
+        return candidate.IsCustom
+            ? FoodCatalogSourceKind.CustomFood
             : FoodCatalogSourceKind.LocalFood;
     }
 

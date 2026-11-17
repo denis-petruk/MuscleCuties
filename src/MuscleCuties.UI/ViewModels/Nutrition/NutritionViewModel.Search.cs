@@ -10,6 +10,8 @@ namespace MuscleCuties.UI.ViewModels.Nutrition;
 public partial class NutritionViewModel
 {
     private const int FoodSearchPageSize = 15;
+    private const int SearchDebounceMilliseconds = 400;
+    private CancellationTokenSource? _searchDebounce;
     private string _activeFoodSearchQuery = string.Empty;
 
     private int _foodSearchPageNumber;
@@ -116,6 +118,42 @@ public partial class NutritionViewModel
         _foodSearchPageNumber = 1;
         HasMoreFoodResults = false;
         BrowseMoreFoodsCommand.NotifyCanExecuteChanged();
+    }
+
+    /// <summary>
+    ///     Searching on submit alone meant the keyboard had to be dismissed before a result could be
+    ///     seen (D51). Typing now schedules a debounced search, so the hits appear under the field while
+    ///     the keys are still up.
+    /// </summary>
+    private void ScheduleFoodSearch(string value)
+    {
+        _searchDebounce?.Cancel();
+        _searchDebounce?.Dispose();
+        _searchDebounce = null;
+
+        if (string.IsNullOrWhiteSpace(value))
+            return;
+
+        var cancellation = new CancellationTokenSource();
+        _searchDebounce = cancellation;
+        _ = DebouncedSearchAsync(cancellation.Token);
+    }
+
+    private async Task DebouncedSearchAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            await Task.Delay(SearchDebounceMilliseconds, cancellationToken).ConfigureAwait(true);
+        }
+        catch (OperationCanceledException)
+        {
+            return;
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+            return;
+
+        await SearchFoodCommand.ExecuteAsync(null);
     }
 
     private bool CanSearchFood()

@@ -22,6 +22,9 @@
             <converters:BoolToWarmupTextConverter x:Key="BoolToWarmupTextConverter" />
             <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />
             <converters:LocalizedFormatConverter x:Key="LocalizedFormatConverter" />
+            <converters:SessionDateConverter x:Key="SessionDateConverter" />
+            <converters:ArchiveDurationConverter x:Key="ArchiveDurationConverter" />
+            <converters:ArchiveSetsConverter x:Key="ArchiveSetsConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

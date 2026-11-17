@@ -23,7 +23,7 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
 
     // The swap API speaks reviewed definition ids; the day exercise carries the planning id in its
     // ENGINE_<id> catalog code and the store translates it through the persisted source id.
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task BodyweightProfileSwapNeverOffersOrAcceptsAPullUp()
     {
         await using var database = Open();
@@ -49,7 +49,7 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
         }
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task MissingEquipmentProfileYieldsNoSwapCandidates()
     {
         await using var database = Open();
@@ -73,7 +73,7 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
 
     // The synthetic day carries the reviewed metadata of its ENGINE_<id> exercise, so this asserts the
     // two-session rule rather than the fail-closed metadata guard.
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task RescheduleMovesTheWholeOccurrenceAndRejectsAThirdActivityOnADay()
     {
         await using var database = Open();

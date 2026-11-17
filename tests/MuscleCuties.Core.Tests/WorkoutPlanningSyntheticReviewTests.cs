@@ -204,10 +204,10 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     }
 
     [Fact]
-    public void FlowRule_CanAutomaticallyApplyFirstPlan_RequiresAllSevenPreconditionsSatisfied()
+    public void FlowRule_CanAutomaticallyApplyFirstPlan_RequiresSafetyAndLifecyclePreconditions()
     {
         // All conditions satisfied: first plan, feasible, persisted, no missing answers, no style choice
-        // required, no omissions and no reduced-volume acceptance pending.
+        // required and no omissions; reduced-volume first plans can also apply automatically.
         Assert.True(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(
             replacesExistingPlan: false,
             feasible: true,
@@ -223,8 +223,8 @@ public sealed class WorkoutPlanningSyntheticReviewTests
         Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, false, false, false, false, false));
         Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, true, false, false, false));
         Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, true, false, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, false, true, false));
-        Assert.False(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, false, false, true));
+        Assert.True(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, false, true, false));
+        Assert.True(WorkoutPlanningFlowRule.CanAutomaticallyApplyFirstPlan(false, true, true, false, false, false, true));
     }
 
     [Theory]

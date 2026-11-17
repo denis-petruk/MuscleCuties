@@ -59,7 +59,11 @@ internal static class CloudWorkoutPreferencesSnapshotMapper
         var excludedExerciseIds = ParseExcludedExerciseIds(snapshot.ExcludedStrengthExerciseIdsJson);
 
         return new WorkoutPreferencesDto(activities, weekdays, durations, equipmentLevel, frequencies,
-            excludedExerciseIds);
+            excludedExerciseIds, snapshot.GluteFocus,
+            snapshot.EquipmentCapabilities?.HasSliders,
+            snapshot.EquipmentCapabilities?.HasConfirmedBandAnchor,
+            snapshot.EquipmentCapabilities?.HasDumbbells,
+            snapshot.EquipmentCapabilities?.HasBands);
     }
 
     private static HashSet<int> ParseExcludedExerciseIds(string? json)

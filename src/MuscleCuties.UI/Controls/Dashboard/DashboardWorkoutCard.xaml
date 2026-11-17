@@ -7,15 +7,20 @@
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="vm:DashboardViewModel">
 
     <Border
-        Style="{StaticResource CardPrimary}"
-        SemanticProperties.Description="{Binding WorkoutTitle, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Workout_SemanticTodayPlan}">
+        Style="{StaticResource CardPrimary}">
         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
 
-            <!-- Header Row: Icon Tile, Title/Badge, and Status Pill -->
-            <Grid ColumnDefinitions="42,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+            <!-- Header: the icon owns a fixed column; the status line and title stay in the text
+                 column so the support line below aligns with the title, not with the icon. -->
+            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto"
+                  ColumnSpacing="{StaticResource UiSpaceCompact}"
+                  RowSpacing="{StaticResource UiSpaceTight}">
+                <!-- At accessibility sizes the status pill is as wide as the title, so the header wraps
+                     instead of squeezing the workout name into one letter per line. -->
                 <Border
                     WidthRequest="{StaticResource UiDimension42}"
                     HeightRequest="{StaticResource UiDimension42}"
@@ -61,53 +66,58 @@
                     </Grid>
                 </Border>
 
-                <!-- Titles: Badge + Main Name -->
-                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
-                    <Label
-                        Text="{Binding WorkoutBadgeText, Converter={StaticResource LocalizedStringConverter}}"
-                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                        Style="{StaticResource MutedLabel}"
-                        VerticalOptions="Center" />
-                    <Label
-                        Text="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource SectionTitle}"
-                        LineBreakMode="WordWrap" />
-                </VerticalStackLayout>
+                <FlexLayout Grid.Column="1" Direction="Row" Wrap="Wrap" AlignItems="Center">
+                    <!-- Titles: Badge + Main Name -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center" Margin="{StaticResource UiInsets0_0_8_0}">
+                        <Label
+                            Text="{Binding WorkoutBadgeText, Converter={StaticResource LocalizedStringConverter}}"
+                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                            Style="{StaticResource MutedLabel}"
+                            VerticalOptions="Center" />
+                        <Label
+                            Text="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}"
+                            Style="{StaticResource SectionTitle}"
+                            LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
 
-                <!-- Pill on the right: REST DAY or TRAINING -->
-                <Border
-                    Grid.Column="2"
-                    StrokeShape="{StaticResource UiRoundRectangleRadius999}"
-                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                    Padding="{StaticResource UiInsets10_4}"
-                    VerticalOptions="Center">
-                    <Border.Triggers>
-                        <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="True">
-                            <Setter Property="BackgroundColor"
-                                    Value="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}" />
-                        </DataTrigger>
-                        <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="False">
-                            <Setter Property="BackgroundColor"
-                                    Value="{Binding WorkoutActivityBackground}" />
-                        </DataTrigger>
-                    </Border.Triggers>
-
-                    <Label
-                        Style="{StaticResource CaptionLabel}"
+                    <!-- Pill on the right: REST DAY or TRAINING -->
+                    <Border
+                        IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
+                        StrokeShape="{StaticResource UiRoundRectangleRadius999}"
+                        StrokeThickness="{StaticResource UiStrokeWidth0}"
+                        Padding="{StaticResource UiInsets10_4}"
                         VerticalOptions="Center">
-                        <Label.Triggers>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="True">
-                                <Setter Property="Text" Value="REST DAY" />
-                                <Setter Property="TextColor"
-                                        Value="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}" />
+                        <Border.Triggers>
+                            <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="True">
+                                <Setter Property="BackgroundColor"
+                                        Value="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}" />
                             </DataTrigger>
-                            <DataTrigger TargetType="Label" Binding="{Binding IsRestDay}" Value="False">
-                                <Setter Property="Text" Value="TRAINING" />
-                                <Setter Property="TextColor" Value="{Binding WorkoutActivityTextColor}" />
+                            <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="False">
+                                <Setter Property="BackgroundColor"
+                                        Value="{Binding WorkoutActivityBackground}" />
                             </DataTrigger>
-                        </Label.Triggers>
-                    </Label>
-                </Border>
+                        </Border.Triggers>
+
+                        <Border>
+                            <Grid>
+                                <Label
+                                    Text="{loc:LocalizedText Dashboard_Workout_PillTraining}"
+                                    IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
+                                    TextColor="{Binding WorkoutActivityTextColor}"
+                                    Style="{StaticResource CaptionLabel}"
+                                    VerticalOptions="Center" />
+                            </Grid>
+                        </Border>
+                    </Border>
+                </FlexLayout>
+
+                <!-- Subtitle stays in the text column. -->
+                <Label
+                    Grid.Row="1"
+                    Grid.Column="1"
+                    Text="{Binding WorkoutSubtitle, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource MutedLabel}"
+                    LineBreakMode="WordWrap" />
             </Grid>
 
             <!-- Activity Sections for Workout days -->
@@ -115,7 +125,7 @@
                 Wrap="Wrap"
                 Direction="Row"
                 BindableLayout.ItemsSource="{Binding WorkoutActivitySections}"
-                IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}">
+                IsVisible="{Binding HasMultipleActivities}">
                 <BindableLayout.ItemTemplate>
                     <DataTemplate x:DataType="workoutModels:WorkoutActivitySection">
                         <Border
@@ -134,19 +144,19 @@
                 </BindableLayout.ItemTemplate>
             </FlexLayout>
 
-            <!-- Subtitle -->
-            <Label
-                Text="{Binding WorkoutSubtitle, Converter={StaticResource LocalizedStringConverter}}"
-                Style="{StaticResource MutedLabel}"
-                LineBreakMode="WordWrap"
-                Margin="{StaticResource UiInsets0_Minus4_0_0}" />
-
-            <!-- Structured 3-column Visual Metric Tiles -->
-            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
-                  IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}">
+            <!-- Metric tiles. Each tile holds one unbreakable Russian word ("Продолжительность",
+                 "Интенсивность"), so three star columns cannot hold them at accessibility sizes: the
+                 headers measured unconstrained and painted over each other. The shared adaptive row
+                 keeps three across at the standard sizes and gives each tile its own row when the
+                 reader's text size is an accessibility size. -->
+            <sharedControls:AdaptiveRow Columns="3"
+                        IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}">
                 <!-- Tile 1: Duration -->
                 <Grid
-                    Padding="{StaticResource UiInsets0_8}">
+                    Padding="{StaticResource UiInsets0_8}"
+                    FlexLayout.Grow="1"
+                    FlexLayout.Basis="Auto"
+                    Margin="{StaticResource UiInsets0_0_6_4}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -172,8 +182,10 @@
 
                 <!-- Tile 2: Exercises -->
                 <Grid
-                    Grid.Column="1"
-                    Padding="{StaticResource UiInsets0_8}">
+                    Padding="{StaticResource UiInsets0_8}"
+                    FlexLayout.Grow="1"
+                    FlexLayout.Basis="Auto"
+                    Margin="{StaticResource UiInsets0_0_6_4}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -199,8 +211,10 @@
 
                 <!-- Tile 3: Intensity -->
                 <Grid
-                    Grid.Column="2"
-                    Padding="{StaticResource UiInsets0_8}">
+                    Padding="{StaticResource UiInsets0_8}"
+                    FlexLayout.Grow="1"
+                    FlexLayout.Basis="Auto"
+                    Margin="{StaticResource UiInsets0_0_6_4}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing3}" HorizontalOptions="Center">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                             <Path
@@ -223,11 +237,17 @@
                             HorizontalTextAlignment="Center" />
                     </VerticalStackLayout>
                 </Grid>
-            </Grid>
+            </sharedControls:AdaptiveRow>
 
-            <!-- Rest Day Recovery Tip / Guidance (Only on Rest Day) -->
-            <Border IsVisible="{Binding IsRestDay}" Style="{StaticResource CardSecondary}">
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing9}" VerticalOptions="Center">
+            <!-- Rest Day Recovery Tip / Guidance (Only on Rest Day). An inline callout, not a
+                 second card: the primary card already supplies the outer inset. -->
+            <Border IsVisible="{Binding IsRestDay}"
+                    BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSunkenLight}, Dark={StaticResource SurfaceSunkenDark}}"
+                    Stroke="{AppThemeBinding Light={StaticResource BorderMutedLight}, Dark={StaticResource BorderMutedDark}}"
+                    StrokeThickness="{StaticResource UiStrokeWidth1}"
+                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                    Padding="{StaticResource UiInsets14_12}">
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                     <Path
                         Data="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4-6.2-4.5-6.2 4.5 2.4-7.4L2 9.4h7.6z"
                         Fill="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
@@ -238,7 +258,7 @@
                     <Label
                         Grid.Column="1"
                         Text="{loc:LocalizedText Dashboard_Workout_RestGuidance}"
-                        Style="{StaticResource CaptionSmall}"
+                        Style="{StaticResource MutedLabel}"
                         LineBreakMode="WordWrap"
                         VerticalOptions="Center" />
                 </Grid>
@@ -247,15 +267,10 @@
             <!-- Action Button -->
             <Button
                 Style="{StaticResource ButtonPrimary}"
-                Text="{loc:LocalizedText Dashboard_Workout_StartWorkout}"
+                Text="{Binding WorkoutActionText}"
+                AutomationId="DashboardStartWorkoutButton"
                 Command="{Binding StartWorkoutCommand}"
-                SemanticProperties.Description="{loc:LocalizedText Dashboard_Workout_OpenTodayPlanA11y}">
-                <Button.Triggers>
-                    <DataTrigger TargetType="Button" Binding="{Binding IsRestDay}" Value="True">
-                        <Setter Property="Text" Value="{loc:LocalizedText Dashboard_Workout_ViewRestDay}" />
-                    </DataTrigger>
-                </Button.Triggers>
-            </Button>
+                SemanticProperties.Description="{loc:LocalizedText Dashboard_Workout_OpenTodayPlanA11y}" />
 
         </VerticalStackLayout>
     </Border>

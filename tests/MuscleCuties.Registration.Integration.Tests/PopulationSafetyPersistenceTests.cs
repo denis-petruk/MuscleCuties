@@ -17,7 +17,7 @@ public sealed class PopulationSafetyPersistenceTests
     private static readonly DateOnly SyntheticBirthDate = new(1990, 1, 1);
     private static readonly TimeSpan LockObservationDelay = TimeSpan.FromMilliseconds(200);
 
-    [Fact]
+    [PostgresFact]
     public async Task Pregnancy_update_waits_for_planning_lock_and_suppresses_active_and_future_work()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);

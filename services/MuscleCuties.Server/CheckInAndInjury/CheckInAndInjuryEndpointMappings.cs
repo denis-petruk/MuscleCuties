@@ -61,7 +61,8 @@ public static class CheckInAndInjuryEndpointMappings
                         body.PlanningSleepQuality,
                         body.PlanningSoreness,
                         body.PlanningStress,
-                        body.PlanningTimeZoneId),
+                        body.PlanningTimeZoneId,
+                        body.PlanningFatigue),
                     cancellationToken).ConfigureAwait(false);
                 return Results.Ok(record);
             }
@@ -198,7 +199,8 @@ public static class CheckInAndInjuryEndpointMappings
         int? PlanningSleepQuality = null,
         int? PlanningSoreness = null,
         int? PlanningStress = null,
-        string? PlanningTimeZoneId = null);
+        string? PlanningTimeZoneId = null,
+        int? PlanningFatigue = null);
 
     public sealed record SaveInjuryObservationBody(
         Guid? Id,

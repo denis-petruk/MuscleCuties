@@ -68,6 +68,12 @@ public partial class WorkoutSessionPage : ContentPage
 
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
+        if (e.PropertyName == nameof(WorkoutSessionViewModel.CurrentExercise))
+        {
+            await MainThread.InvokeOnMainThreadAsync(() =>
+                ExerciseScrollView.ScrollToAsync(0, 0, animated: false));
+            return;
+        }
         if (e.PropertyName == nameof(WorkoutSessionViewModel.CurrentScreen) &&
             _viewModel.IsActivitySummary && _viewModel.IsActivityComplete)
         {

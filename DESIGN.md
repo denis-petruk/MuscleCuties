@@ -2,13 +2,13 @@
 
 Design entry point for every UI task. The detailed authority is [the presentation specification](docs/UI_PRESENTATION_DESIGN_SPEC.md); executable token values belong to the existing MAUI resource dictionaries. This file routes agents to those sources rather than maintaining another token catalog.
 
-**Current verification state:** local automated gates are green. Deployed staging latency is measured and failing; production is undeployed, so production p99 is unavailable. Owner device verification remains. The authoritative checklist is [docs/design/GATE_REGISTER.md](docs/design/GATE_REGISTER.md), including the registered-page entry/back guard and `UiStyleGateTests` for token-only values, duplicate definitions, catalog copy and declared contrast pairs. **Design authority changes by proposal.** A change to this file or to the presentation specification is proposed in writing under [`docs/design/`](docs/design/), with the evidence that motivates it, and applied only after owner approval. Screens are restyled under the approved rules in separate, reviewable steps.
+**Design authority changes by owner decision.** A change to this file or to the presentation specification is proposed in a PR with the evidence that motivates it and applied only after owner approval. `UiStyleGateTests` and `UiContractGuardTests` enforce token-only values, duplicate definitions, catalog copy and declared contrast pairs; run them for every UI change.
 
 ## Overview
 
 **Direction: a warm, reassuring wellness companion with capable fitness tools.** Confirmed by the owner on 2026-11-02. Preserve the current soft rose, warm neutral and phase palettes. Borrow the supplied references' information hierarchy, direct logging, compact data rows and clear choice flows.
 
-**Approved visual values:** [Soft Minimal](docs/design/SOFT_MINIMAL_PROPOSAL.md) records the owner's prototype handoff and was approved on 2026-11-02. Its palette, type scale and geometry are implemented in the resource dictionaries, with dark pairs, component states and the two contrast corrections recorded in [the implementation evidence](docs/design/SOFT_MINIMAL_IMPLEMENTATION_EVIDENCE.md). Visual changes to those values now need a new owner decision, not a fresh reinterpretation of the proposal.
+**Approved visual values:** the Soft Minimal palette, type scale and geometry (owner-approved 2026-11-02) are implemented in the resource dictionaries with dark pairs and component states. Changing those values needs a new owner decision, not a reinterpretation.
 
 **Hard consistency budget:** one shared page style across the app; at most two visual styles per component family. Buttons: `ButtonPrimary` and `ButtonSecondary`. Cards: `CardPrimary` and `CardSecondary`. Use one style by default; a second needs a distinct reusable purpose. No per-feature skins, third-style variants or renamed lookalikes. The former `CardAccent`/`SelectableCard` definitions are retired, and the card-budget assertion rejects any new Card-family Border style beyond the two permitted cards.
 
@@ -87,7 +87,7 @@ Reuse shared card, input, choice and sheet shapes. Value-shaped compatibility to
 
 **Motion explains state; it never decorates.** Native transitions are the default. Custom motion is reserved for state the user just caused — selection, save, sheet enter and exit — short enough to read as feedback, with a reduced-motion branch that carries the same information statically. If the information exists only in the animation, the design is incomplete.
 
-**Shared sheet lifecycle.** `AnimatedModalView` owns the sheet contract. It captures the focused control before covering it, moves focus to the first actionable control after layout, excludes covered sibling content from the accessibility tree through a page-scoped isolation shared by overlapping sheets, announces the `ModalTitle` heading once, and restores isolation and focus on close. A monotonic transition generation makes a hide that loses a race with a reopen a no-op. All modal sheets present through this base. The only non-sheet exception is the non-dismissible day-overview state in `WorkoutSessionPage`: it has no close or backdrop action, is not an overlay entry point, and is recorded in the dated audit rather than treated as a second sheet style.
+**Shared sheet lifecycle.** `AnimatedModalView` owns the sheet contract. It captures the focused control before covering it, moves focus to the first actionable control after layout, excludes covered sibling content from the accessibility tree through a page-scoped isolation shared by overlapping sheets, announces the `ModalTitle` heading once, and restores isolation and focus on close. A monotonic transition generation makes a hide that loses a race with a reopen a no-op. All modal sheets present through this base. The only non-sheet exception is the non-dismissible day-overview state in `WorkoutSessionPage`: it has no close or backdrop action, is not an overlay entry point, and is not a second sheet style.
 
 ## Components
 
@@ -101,12 +101,10 @@ Nutrition views consume the UI-local macro/target models above; the mapper is th
 
 ## Do's and Don'ts
 
-- Read `AGENTS.md`, this file, the relevant specification section and the nearest existing component before editing.
+- Read this file, the relevant section of the specification (not the whole file) and the nearest existing component before editing.
 - Keep design in the UI layer, formatting in `.editorconfig`, business decisions in Core, orchestration and DTO contracts in UseCases.
 - Reuse tokens/styles; do not add page-local styles, raw colors or unexplained geometry. Keep XAML-bound contracts intact.
 - Route copy and selection semantics through the catalog and the shared styles; a per-page literal, ad-hoc key or restated state word is a defect to fix, not a local convention.
 - Keep one expression per screen: one dominant action, one selection recipe, one status treatment. A screen needing a second of any of these needs a design decision, not another style.
 - Design for large text and the longer language first; if a label cannot grow, the layout is the defect.
-- Use the [reference manifest](docs/design/REFERENCES.md) to understand which decisions to borrow. Reference copy, numbers, imagery and advertised features are not product requirements.
-- Use the [dated audit](docs/design/AUDIT_2026-11-02.md) for evidence and the implementation queue. A new rule does not imply every existing screen complies.
-- Verify source structure with the existing backend test project where appropriate. Agents must not build, run, test or capture the UI under the current owner rule. Device appearance and interaction checks belong to the owner.
+- Verify with the UI guard tests first. Simulator build, run and screenshots are allowed (`AGENTS.md` §4); take screenshots only for the final check. Device acceptance belongs to the owner.

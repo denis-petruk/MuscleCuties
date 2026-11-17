@@ -29,7 +29,7 @@ internal static class StrengthPlanGenerationDisplayMapper
             : "Workout_Generation_RegularEffortSession";
         var duration = session.DurationMinutes > NoDurationMinutes
             ? FormatLocalized("Workout_Generation_MixedSessionDurationFormat",
-                session.DurationMinutes.ToString("0.#", CultureInfo.CurrentCulture))
+                session.DurationMinutes.ToString("0", CultureInfo.CurrentCulture))
             : UiTextCatalog.Get("Workout_Generation_EstimateUnavailable");
         var details = FormatLocalized("Workout_Generation_MixedSessionDetailsFormat", duration,
             UiTextCatalog.Get(effortKey));
@@ -258,8 +258,97 @@ internal static class StrengthPlanGenerationDisplayMapper
         "ChooseAnEligibleCatalogOrUserDuration" => "Workout_Generation_Reason_ChooseActivityDuration",
         "ClassifiedByActualContent" => "Workout_Generation_Reason_YogaClassifiedByContent",
         "UseEligibleCatalogMovementsAndRestrictionMappings" => "Workout_Generation_Reason_ReviewedMovements",
+        "WeeklyCoverageMissing_UpperPull_Equipment" => "Workout_Generation_MissingUpperPullEquipment",
+        "WeeklyCoverageMissing_UpperPull_BandAnchorRequired" => "Workout_Generation_MissingUpperPullBandAnchor",
+        "WeeklyCoverageMissing_DirectCalves" => "Workout_Generation_MissingDirectCalves",
+        "WeeklyCoverageMissing_DirectRearDelts" => "Workout_Generation_MissingDirectRearDelts",
+        "WeeklyCoverageBelowTarget_DynamicCore" => "Workout_Generation_BelowTargetDynamicCore",
+        "WeeklyCoverageMissing_GluteFocusHipAbduction" => "Workout_Generation_MissingGluteFocusAbduction",
         _ => "Workout_Generation_Reason_General"
     });
+
+    /// <summary>Summarizes weekly coverage without exposing internal reason codes.</summary>
+    public static IReadOnlyList<string> CoverageNotes(StrengthPlanPreviewResponseV020? preview)
+    {
+        if (preview is null)
+            return [];
+        var codes = preview.AdvisoryCodes.Concat(preview.LimitationCodes)
+            .Concat(preview.GenerationV2?.MissingGaps ?? [])
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+        var notes = new List<string>();
+        if (codes.Contains("WeeklyCoverageMissing_UpperPull_Equipment"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingUpperPullEquipment"));
+        if (codes.Contains("WeeklyCoverageMissing_UpperPull_BandAnchorRequired"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingUpperPullBandAnchor"));
+        if (codes.Contains("WeeklyCoverageMissing_DirectCalves"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingDirectCalves"));
+        if (codes.Contains("WeeklyCoverageMissing_DirectRearDelts"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingDirectRearDelts"));
+        if (codes.Contains("WeeklyCoverageBelowTarget_DynamicCore"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_BelowTargetDynamicCore"));
+        if (codes.Contains("WeeklyCoverageMissing_GluteFocusAbduction"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingGluteFocusAbduction"));
+        if (codes.Contains("WeeklyMovementCoverageMissing_KneeExtension"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingKneeExtension"));
+        if (codes.Contains("WeeklyMovementCoverageMissing_KneeFlexion"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingKneeFlexion"));
+        if (codes.Contains("WeeklyMovementCoverageMissing_HipExtension"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MissingHipExtension"));
+        if (codes.Contains("WeeklyMovementCoverageUnknown"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MovementCoverageUnknown"));
+        if (preview.RequiresReducedVolumeAcknowledgment())
+            notes.Add(UiTextCatalog.Get("Workout_Generation_ReducedVolumeNotice"));
+        if (codes.Contains("OneDayFullBodyHasLimitedWeeklyCoverage") ||
+            codes.Contains("StrengthDaysInsufficientForMinimumCoverage"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_OneDayCoverageNotice"));
+        if (codes.Any(code => code.StartsWith("PrimaryRegionCoverageBelowMinimum_", StringComparison.Ordinal) ||
+                              code.StartsWith("LowerBodyCoverageBelowMinimum_", StringComparison.Ordinal)))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_CoverageGapNotice"));
+        var knownRegions = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "Chest", "LatsUpperBack", "Deltoids", "Quadriceps", "Hamstrings", "Glutes",
+            "Biceps", "Triceps", "Calves", "Trunk", "Abductors", "Adductors"
+        };
+        var gapRegions = codes.Where(code => code.StartsWith("PrimaryRegionCoverageBelowMinimum_", StringComparison.Ordinal) ||
+                                             code.StartsWith("LowerBodyCoverageBelowMinimum_", StringComparison.Ordinal))
+            .Select(code => code[(code.LastIndexOf('_') + 1)..])
+            .Where(knownRegions.Contains).Distinct(StringComparer.Ordinal);
+        foreach (var region in gapRegions)
+        {
+            var key = "Workout_Generation_CoverageMuscle_" + region;
+            notes.Add(UiTextCatalog.Get(key));
+        }
+        if (codes.Contains("ThreeExposuresUnavailableWithTwoStrengthDays") ||
+            codes.Any(code => code.StartsWith("PrimaryRegionCoverageBelowPreferred_", StringComparison.Ordinal)))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_CoveragePreferredNotice"));
+        return notes;
+    }
+
+    public static IReadOnlyList<string> PostAcceptanceNotices(StrengthPlanPreviewResponseV020? preview)
+    {
+        if (preview is null)
+            return [];
+        var notes = CoverageNotes(preview).ToList();
+        var withheld = SessionWithheldNote(preview);
+        if (!string.IsNullOrWhiteSpace(withheld))
+            notes.Add(withheld);
+        foreach (var decision in preview.MixedActivitySchedule?.Activities ?? [])
+        {
+            if (decision.ActivityTypeId == (int)WorkoutActivityDto.RestDay ||
+                decision.Disposition is not ("Blocked" or "Omitted" or "PartiallyScheduled"))
+                continue;
+            var display = ToMixedActivityDecisionDisplay(decision);
+            notes.Add($"{display.Activity}: {display.Status}. {display.Frequency} {string.Join(", ", display.Reasons)}".Trim());
+        }
+        if (preview.RequiresReducedVolumeAcknowledgment())
+            notes.Add(UiTextCatalog.Get("Workout_Generation_ReducedVolumeNotice"));
+        if (preview.AdvisoryCodes.Any(code => code.StartsWith("MovementOmitted:", StringComparison.Ordinal)))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_MovementOmitted"));
+        if (preview.AdvisoryCodes.Any(code => code.StartsWith("MovementOmittedForDuration:", StringComparison.Ordinal)))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_DurationOmissionNotice"));
+        return notes.Distinct().ToArray();
+    }
 
     public static string GetPreviewLimitationMessage(StrengthPlanPreviewResponseV020? preview)
     {

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using MuscleCuties.UI.Services.Formatting;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Workout;
@@ -131,7 +132,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
                 {
                     var dt = new DateTime(option.Year, option.Month, 1);
                     AvailableMonths.Add(new MonthFilterItem(option.Year, option.Month,
-                        dt.ToString("MMM yyyy", CultureInfo.CurrentCulture)));
+                        DisplayFormat.MonthYear(dt)));
                 }
             }
 
@@ -312,9 +313,9 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             DetailDistanceFormatted = detail.DistanceKm is { } distanceKm
                 ? UiTextCatalog.Format("Workout_History_DistanceFormat", distanceKm)
                 : string.Empty;
-            var startedText = detail.StartedAt.ToString(
-                detail.StartedAt.TimeOfDay == TimeSpan.Zero ? "D" : "f",
-                CultureInfo.CurrentCulture);
+            var startedText = detail.StartedAt.TimeOfDay == TimeSpan.Zero
+                ? DisplayFormat.DateWithWeekday(detail.StartedAt)
+                : DisplayFormat.DateWithWeekdayStamp(detail.StartedAt);
             DetailStartedFormatted = detail.TimePrecision == "legacyUnknown"
                 ? UiTextCatalog.Format("Workout_History_TimeZoneUnknownFormat", startedText)
                 : startedText;
@@ -494,9 +495,9 @@ public partial class WorkoutHistoryViewModel : ObservableObject
     private static string FormatKilograms(double kilograms) =>
         UiTextCatalog.Format(
             "Workout_History_ValueKgFormat",
-            kilograms.ToString(
-                kilograms > KilogramRoundingThreshold ? "N0" : "F0",
-                CultureInfo.CurrentCulture));
+            kilograms > KilogramRoundingThreshold
+                ? DisplayFormat.Number(kilograms)
+                : DisplayFormat.WholeNumber(kilograms));
 
     private void ShowStatus(string message)
     {

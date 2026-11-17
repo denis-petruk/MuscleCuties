@@ -18,8 +18,8 @@ public sealed record LowerBodyCoverageResult(
 }
 
 /// <summary>
-/// Owner rule: glutes, hamstrings, abductors and adductors each appear in at least two training
-/// sessions per week. The remaining muscle groups stay best effort.
+/// Tracks lower-body exposures. Adductor and abductor attribution remain available, but neither
+/// has an unconditional coverage target; focused programming requires an explicit user selection.
 /// </summary>
 public static class LowerBodyCoverageRule
 {
@@ -33,6 +33,9 @@ public static class LowerBodyCoverageRule
     private static readonly IReadOnlyList<LowerBodyMuscleGroup> OrderedMuscles =
         [LowerBodyMuscleGroup.Glutes, LowerBodyMuscleGroup.Hamstrings,
             LowerBodyMuscleGroup.Abductors, LowerBodyMuscleGroup.Adductors];
+
+    private static readonly IReadOnlyList<LowerBodyMuscleGroup> UnconditionalCoverageMuscles =
+        [LowerBodyMuscleGroup.Glutes, LowerBodyMuscleGroup.Hamstrings];
 
     private static readonly string[] GlutesNames = ["Glutes", "GluteMax", "GluteMaximus", "GluteusMaximus"];
     private static readonly string[] HamstringsNames = ["Hamstrings", "Hamstring"];
@@ -63,7 +66,7 @@ public static class LowerBodyCoverageRule
             }
 
         return new LowerBodyCoverageResult(exposures,
-            OrderedMuscles.Where(muscle => exposures[muscle] < MinimumWeeklySessionExposures).ToArray());
+            UnconditionalCoverageMuscles.Where(muscle => exposures[muscle] < MinimumWeeklySessionExposures).ToArray());
     }
 
     public static string GapCode(LowerBodyMuscleGroup muscle) => $"{CoverageGapCodePrefix}_{muscle}";
@@ -81,7 +84,8 @@ public static class LowerBodyCoverageRule
         var ids = new HashSet<int>();
         if (muscleGroupsByExerciseId is null || catalog is null) return ids;
 
-        var gaps = belowMinimum.ToArray();
+        // Gates 55–56: without an explicit focus/need, neither adductor nor abductor gaps create a default priority.
+        var gaps = belowMinimum.Where(UnconditionalCoverageMuscles.Contains).ToArray();
         foreach (var entry in catalog)
         {
             if (entry?.Candidate is null) continue;

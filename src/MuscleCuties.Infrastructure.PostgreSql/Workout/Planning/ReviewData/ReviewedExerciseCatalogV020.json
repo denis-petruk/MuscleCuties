@@ -1,26 +1,26 @@
 {
-  "exerciseReviewVersion": "MC-EXERCISE-REVIEW-2026-10-23",
-  "directedSubstitutionReviewVersion": "MC-SUBSTITUTIONS-2026-10-23",
+  "exerciseReviewVersion": "MC-EXERCISE-REVIEW-2026-11-16",
+  "directedSubstitutionReviewVersion": "MC-SUBSTITUTIONS-2026-11-16",
   "policyId": "MC-WORKOUT-POLICY",
   "policyVersion": "0.2.0",
   "templateVersion": "MC-STRENGTH-TEMPLATES-0.2.0",
-  "catalogSnapshot": "REPO-SEED-SNAPSHOT-2026-10-23",
-  "workbookSha256": "9de8cb8fe5739f148e8ff856b2dcd5b0cda939a9c7b3186cef8adbf7f7424c91",
+  "catalogSnapshot": "REPO-SEED-SNAPSHOT-2026-11-16",
+  "workbookSha256": "4b212bd1544c90d7248259e567045af5be616cf5e8d6d33eccece638c820454a",
   "reviewerNameAsProvided": "Denis Petruk",
   "credentialsAndScopeAsProvided": "ISSA Certified Fitness Trainer; degree in Medical Science, as provided by the reviewer. Scope: fitness programming and exercise-catalog review.",
-  "reviewDate": "2026-10-23T00:00:00.000Z",
-  "approvalReferenceAsProvided": "Denis Petruk's explicit approval in this conversation on 2026-10-23 of the preceding AI-assisted review, including its documented conditions and exclusions. Reviewer name and qualifications were supplied in that instruction. Evidence references: S01–S08 and C1 in Definitions.",
+  "reviewDate": "2026-11-16T00:00:00.000Z",
+  "approvalReferenceAsProvided": "Denis Petruk's explicit approval on 2026-10-23 (59 base strength definitions) and Final Owner Approval closing Gate 60 on 2026-11-16 (8 home/bodyweight/band definitions and dynamic-core policy).",
   "conditionsAndExclusions": "Approved with conditions by Denis Petruk on 2026-10-23. Approval covers the documented general fitness-programming recommendations and review conclusions. Exercise-specific conditions, required metadata corrections, substitution limits and template policy conflicts remain in force. Individual clinical assessment and deployment verification are outside this approval.",
-  "assessmentScopeAndLimits": "The owner directly confirmed that all 59 exercise injury-restriction mappings were assessed and cleared subject to existing contraindication flags. This catalog assessment does not provide diagnosis-specific care, rehabilitation, pregnancy/postpartum programming, exercise demonstrations, or user-specific working loads. Deployed PostgreSQL contents are checked by the database dry-run command.",
+  "assessmentScopeAndLimits": "The owner directly confirmed that all 67 exercise injury-restriction mappings were assessed and cleared subject to existing contraindication flags. Exercise 191 (Rock Climbing) remains intentionally inactive for V2 generation. This catalog assessment does not provide diagnosis-specific care, rehabilitation, pregnancy/postpartum programming, or invented external resistance values. Deployed PostgreSQL contents are checked by the database dry-run command.",
   "reviewStatus": "ApprovedWithConditions; owner asserts restriction assessment complete",
   "ownerRestrictionAssessmentAssertion": {
     "source": "Owner instruction in this Codex chat on 2026-10-23, subsequent to the workbook",
-    "scope": "Owner directly confirms all 59 exercises were assessed and cleared for injury restriction matching except where existing contraindication flags conflict.",
+    "scope": "Owner directly confirms all 67 reviewed exercises were assessed and cleared for injury restriction matching except where existing contraindication flags conflict.",
     "reviewerCredentialVerification": "Reviewer name and credentials confirmed by owner direct instruction in this chat on 2026-10-23; no separate external credential audit is claimed."
   },
   "ownerDirectVerification": {
-    "source": "Owner direct instruction in this Codex chat on 2026-10-23, after implementation review",
-    "scope": "Owner confirms all human review and decision points for the 59 exercises, 160 directed substitution relationships, 52 template slots, and reviewer attribution are verified. No additional human review is pending for this catalog mapping."
+    "source": "Owner direct instruction closing Gate 60 on 2026-11-16",
+    "scope": "Owner confirms all human review and decision points for the 67 exercises, 181 directed substitution relationships, 52 template slots, and reviewer attribution are verified. No additional human review is pending for this catalog mapping."
   },
   "automaticSubstitutionsEnabled": false,
   "templateSlots": [
@@ -39,7 +39,10 @@
         125,
         126,
         127,
-        128
+        128,
+        129,
+        130,
+        138
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 3 × 8–12 reps (start 8); 3 RIR; 150 sec rest. Established resistance history only; max 5 working exercises/session and max 10 direct sets per primary muscle/week. Strength high intensity: 3 × 4–6 reps (start 4); 3 RIR; 180 sec rest. Established resistance history, 4 completed exposures to this exercise, known manageable load, and current familiarity confirmation; max 2 heavy mains/session, 4 working exercises/session, 2 sessions/week.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -61,6 +64,7 @@
         105,
         106,
         107,
+        108,
         111,
         112,
         113,
@@ -84,7 +88,8 @@
         152,
         153,
         154,
-        155
+        155,
+        159
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -104,7 +109,8 @@
         143,
         144,
         145,
-        146
+        146,
+        148
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -144,6 +150,7 @@
         115,
         116,
         117,
+        119,
         131,
         132,
         133,
@@ -159,6 +166,7 @@
         162,
         163,
         164,
+        165,
         181,
         182
       ],
@@ -182,7 +190,10 @@
         125,
         126,
         127,
-        128
+        128,
+        129,
+        130,
+        138
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 3 × 8–12 reps (start 8); 3 RIR; 150 sec rest. Established resistance history only; max 5 working exercises/session and max 10 direct sets per primary muscle/week. Strength high intensity: 3 × 4–6 reps (start 4); 3 RIR; 180 sec rest. Established resistance history, 4 completed exposures to this exercise, known manageable load, and current familiarity confirmation; max 2 heavy mains/session, 4 working exercises/session, 2 sessions/week.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -204,6 +215,7 @@
         105,
         106,
         107,
+        108,
         111,
         112,
         113,
@@ -227,7 +239,8 @@
         152,
         153,
         154,
-        155
+        155,
+        159
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -247,7 +260,8 @@
         143,
         144,
         145,
-        146
+        146,
+        148
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -287,6 +301,7 @@
         115,
         116,
         117,
+        119,
         131,
         132,
         133,
@@ -302,6 +317,7 @@
         162,
         163,
         164,
+        165,
         181,
         182
       ],
@@ -325,7 +341,10 @@
         125,
         126,
         127,
-        128
+        128,
+        129,
+        130,
+        138
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 3 × 8–12 reps (start 8); 3 RIR; 150 sec rest. Established resistance history only; max 5 working exercises/session and max 10 direct sets per primary muscle/week. Strength high intensity: 3 × 4–6 reps (start 4); 3 RIR; 180 sec rest. Established resistance history, 4 completed exposures to this exercise, known manageable load, and current familiarity confirmation; max 2 heavy mains/session, 4 working exercises/session, 2 sessions/week.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -347,6 +366,7 @@
         105,
         106,
         107,
+        108,
         111,
         112,
         113,
@@ -370,7 +390,8 @@
         152,
         153,
         154,
-        155
+        155,
+        159
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -390,7 +411,8 @@
         143,
         144,
         145,
-        146
+        146,
+        148
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -430,6 +452,7 @@
         115,
         116,
         117,
+        119,
         131,
         132,
         133,
@@ -445,6 +468,7 @@
         162,
         163,
         164,
+        165,
         181,
         182
       ],
@@ -468,7 +492,10 @@
         125,
         126,
         127,
-        128
+        128,
+        129,
+        130,
+        138
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 3 × 8–12 reps (start 8); 3 RIR; 150 sec rest. Established resistance history only; max 5 working exercises/session and max 10 direct sets per primary muscle/week. Strength high intensity: 3 × 4–6 reps (start 4); 3 RIR; 180 sec rest. Established resistance history, 4 completed exposures to this exercise, known manageable load, and current familiarity confirmation; max 2 heavy mains/session, 4 working exercises/session, 2 sessions/week.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -490,6 +517,7 @@
         105,
         106,
         107,
+        108,
         111,
         112,
         113,
@@ -513,7 +541,8 @@
         152,
         153,
         154,
-        155
+        155,
+        159
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -533,7 +562,8 @@
         143,
         144,
         145,
-        146
+        146,
+        148
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -573,6 +603,7 @@
         115,
         116,
         117,
+        119,
         131,
         132,
         133,
@@ -588,6 +619,7 @@
         162,
         163,
         164,
+        165,
         181,
         182
       ],
@@ -611,7 +643,10 @@
         125,
         126,
         127,
-        128
+        128,
+        129,
+        130,
+        138
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 3 × 8–12 reps (start 8); 3 RIR; 150 sec rest. Established resistance history only; max 5 working exercises/session and max 10 direct sets per primary muscle/week. Strength high intensity: 3 × 4–6 reps (start 4); 3 RIR; 180 sec rest. Established resistance history, 4 completed exposures to this exercise, known manageable load, and current familiarity confirmation; max 2 heavy mains/session, 4 working exercises/session, 2 sessions/week.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -633,6 +668,7 @@
         105,
         106,
         107,
+        108,
         111,
         112,
         113,
@@ -656,7 +692,8 @@
         152,
         153,
         154,
-        155
+        155,
+        159
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -676,7 +713,8 @@
         143,
         144,
         145,
-        146
+        146,
+        148
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -716,6 +754,7 @@
         115,
         116,
         117,
+        119,
         131,
         132,
         133,
@@ -731,6 +770,7 @@
         162,
         163,
         164,
+        165,
         181,
         182
       ],
@@ -754,7 +794,10 @@
         125,
         126,
         127,
-        128
+        128,
+        129,
+        130,
+        138
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 3 × 8–12 reps (start 8); 3 RIR; 150 sec rest. Established resistance history only; max 5 working exercises/session and max 10 direct sets per primary muscle/week. Strength high intensity: 3 × 4–6 reps (start 4); 3 RIR; 180 sec rest. Established resistance history, 4 completed exposures to this exercise, known manageable load, and current familiarity confirmation; max 2 heavy mains/session, 4 working exercises/session, 2 sessions/week.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -776,6 +819,7 @@
         105,
         106,
         107,
+        108,
         111,
         112,
         113,
@@ -799,7 +843,8 @@
         152,
         153,
         154,
-        155
+        155,
+        159
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -819,7 +864,8 @@
         143,
         144,
         145,
-        146
+        146,
+        148
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -859,6 +905,7 @@
         115,
         116,
         117,
+        119,
         131,
         132,
         133,
@@ -874,6 +921,7 @@
         162,
         163,
         164,
+        165,
         181,
         182
       ],
@@ -894,7 +942,8 @@
         152,
         153,
         154,
-        155
+        155,
+        159
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 3 × 4–6 reps (start 4); 3 RIR; 180 sec rest. Established resistance history, 4 completed exposures to this exercise, known manageable load, and current familiarity confirmation; max 2 heavy mains/session, 4 working exercises/session, 2 sessions/week.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -914,7 +963,8 @@
         143,
         144,
         145,
-        146
+        146,
+        148
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -954,6 +1004,7 @@
         115,
         116,
         117,
+        119,
         131,
         132,
         133,
@@ -969,6 +1020,7 @@
         162,
         163,
         164,
+        165,
         181,
         182
       ],
@@ -992,7 +1044,10 @@
         125,
         126,
         127,
-        128
+        128,
+        129,
+        130,
+        138
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 3 × 8–12 reps (start 8); 3 RIR; 150 sec rest. Established resistance history only; max 5 working exercises/session and max 10 direct sets per primary muscle/week. Strength high intensity: 3 × 4–6 reps (start 4); 3 RIR; 180 sec rest. Established resistance history, 4 completed exposures to this exercise, known manageable load, and current familiarity confirmation; max 2 heavy mains/session, 4 working exercises/session, 2 sessions/week.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -1014,6 +1069,7 @@
         105,
         106,
         107,
+        108,
         111,
         112,
         113,
@@ -1058,6 +1114,7 @@
         115,
         116,
         117,
+        119,
         131,
         132,
         133,
@@ -1073,6 +1130,7 @@
         162,
         163,
         164,
+        165,
         181,
         182
       ],
@@ -1093,7 +1151,8 @@
         152,
         153,
         154,
-        155
+        155,
+        159
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 3 × 4–6 reps (start 4); 3 RIR; 180 sec rest. Established resistance history, 4 completed exposures to this exercise, known manageable load, and current familiarity confirmation; max 2 heavy mains/session, 4 working exercises/session, 2 sessions/week.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -1113,7 +1172,8 @@
         143,
         144,
         145,
-        146
+        146,
+        148
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 2 × 10–15 reps; 3 RIR; 90 sec rest. Strength high intensity: 2 × 10–15 reps; 3 RIR; 90 sec rest.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -1153,6 +1213,7 @@
         115,
         116,
         117,
+        119,
         131,
         132,
         133,
@@ -1168,6 +1229,7 @@
         162,
         163,
         164,
+        165,
         181,
         182
       ],
@@ -1191,7 +1253,10 @@
         125,
         126,
         127,
-        128
+        128,
+        129,
+        130,
+        138
       ],
       "appliedPrescriptionRules": "General strength: beginner/returning/unknown 2 × 8–12 reps (start 8), established 2 × 6–12 (start 6); 3 RIR; 120/150 sec rest respectively. High-volume strength: 3 × 8–12 reps (start 8); 3 RIR; 150 sec rest. Established resistance history only; max 5 working exercises/session and max 10 direct sets per primary muscle/week. Strength high intensity: 3 × 4–6 reps (start 4); 3 RIR; 180 sec rest. Established resistance history, 4 completed exposures to this exercise, known manageable load, and current familiarity confirmation; max 2 heavy mains/session, 4 working exercises/session, 2 sessions/week.",
       "reviewConditions": "Programming review approved with conditions by Denis Petruk on 2026-10-23. User-specific load/technique, equipment fit, individual restriction assessment and deployed v0.2 metadata still require verification.",
@@ -1213,6 +1278,7 @@
         105,
         106,
         107,
+        108,
         111,
         112,
         113,
@@ -1257,6 +1323,7 @@
         115,
         116,
         117,
+        119,
         131,
         132,
         133,
@@ -1272,6 +1339,7 @@
         162,
         163,
         164,
+        165,
         181,
         182
       ],
@@ -1790,6 +1858,66 @@
       "reviewerNotes": "2 working sets × 10–15/side. Effort: 3 RIR. Rest: 90–120 s. G1: Reach the top on every set at 3 RIR on two exposures, then add the smallest load increment and restart lower.\nSelectable dose only; apply weekly cap G2.",
       "reviewReference": "Denis Petruk; 2026-10-23. Approval in this conversation. C1; S01; S04; S07. Full sources and G1–G23: Definitions.",
       "reviewDate": "2026-10-23T00:00:00.000Z"
+    },
+    {
+      "sourceExerciseId": 108,
+      "seedCode": "urn:musclecuties:seed:v1:b9b4d8f3-4f33-59eb-826c-72e549fe9513",
+      "expectedName": "Floor Glute Bridge",
+      "expectedPattern": "HipThrust",
+      "expectedRequiredEquipment": 0,
+      "expectedSetupSeconds": 20,
+      "expectedSecondsPerRep": 4,
+      "expectedContraindications": 0,
+      "reviewDecision": "Approved with conditions",
+      "supportedExperiences": [
+        "Unknown",
+        "Beginner",
+        "Returning",
+        "Established"
+      ],
+      "experienceConditions": "Unknown: history and technique check first, then conservative beginner dosing. Beginner/Returning: start with light load and demonstrate controlled setup, range and balance. Established status alone does not prove exercise-specific skill.",
+      "demandAssessmentStatus": "Assessed with applicable tags",
+      "demandTags": [
+        "LowerBody"
+      ],
+      "restrictionAssessmentStatus": "Assessed",
+      "restrictionAssessmentSource": "Owner direct instruction closing Gate 60 review on 2026-11-16",
+      "effectiveRestrictionAssessmentStatus": "OwnerAssessedClearanceSubjectToExistingContraindications",
+      "restrictionNotes": "Owner confirms this exercise was assessed under Gate 60 approval and cleared for injury restriction matching. Existing contraindication flags remain authoritative.",
+      "supportedTimingMethods": [
+        "StraightSets"
+      ],
+      "timingConditions": "",
+      "directedSubstitutionReviews": [
+        {
+          "targetSourceExerciseId": 104,
+          "reviewDecision": "Approved with conditions",
+          "category": "CloseProgrammingAlternative",
+          "conditions": "Close programming alternative. Single-leg glute bridge removes bilateral support and increases stability demand per side. Prescribe reps per leg and reset dose; this gives no injury-specific clearance.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 101,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: manual equipment, setup and load prescription required; not an automatic equivalent. Barbell hip thrust requires barbell, plates and bench, and no weight transfers from floor bridges. Recheck contraindications and establish an independent starting load.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 102,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: manual machine setup and dose required; not an automatic equivalent. Machine hip thrust uses external resistance on its own scale rather than bodyweight floor leverage. Recheck restrictions before prescribing.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        }
+      ],
+      "conditionsAndExclusions": "Lie supine on the floor with knees bent and feet hip-width apart. Brace the trunk, drive evenly through mid-foot and heels, and lift by extending the hips until torso and thighs align; lower smoothly without lumbar arching.\nRequires only bodyweight and a suitable floor surface (no barbell, machine, or bench). No fabricated external load.",
+      "reviewerNotes": "2–3 working sets × 12–20. Effort: 2–3 RIR. Rest: 90 s. Progress through controlled cadence, pause duration, or unilateral transition rather than fabricating external load.\nSelectable dose only; apply weekly cap G2.",
+      "reviewReference": "Denis Petruk; 2026-11-16. Gate 60 Final Owner Approval closing home-catalog expansion.",
+      "reviewDate": "2026-11-16T00:00:00.000Z"
     },
     {
       "sourceExerciseId": 111,
@@ -2366,6 +2494,66 @@
       "reviewDate": "2026-10-23T00:00:00.000Z"
     },
     {
+      "sourceExerciseId": 119,
+      "seedCode": "urn:musclecuties:seed:v1:5f09eda9-4d44-5539-bc8a-3dd25c9b13ec",
+      "expectedName": "Slider Leg Curl",
+      "expectedPattern": "KneeFlexion",
+      "expectedRequiredEquipment": 1024,
+      "expectedSetupSeconds": 30,
+      "expectedSecondsPerRep": 4,
+      "expectedContraindications": 2,
+      "reviewDecision": "Approved with conditions",
+      "supportedExperiences": [
+        "Unknown",
+        "Beginner",
+        "Returning",
+        "Established"
+      ],
+      "experienceConditions": "Unknown: history and technique check first, then conservative beginner dosing. Beginner/Returning: start with light load and demonstrate controlled setup, range and balance. Established status alone does not prove exercise-specific skill.",
+      "demandAssessmentStatus": "Assessed with applicable tags",
+      "demandTags": [
+        "LowerBody"
+      ],
+      "restrictionAssessmentStatus": "Assessed",
+      "restrictionAssessmentSource": "Owner direct instruction closing Gate 60 review on 2026-11-16",
+      "effectiveRestrictionAssessmentStatus": "OwnerAssessedClearanceSubjectToExistingContraindications",
+      "restrictionNotes": "Owner confirms this exercise was assessed under Gate 60 approval and cleared for injury restriction matching. Existing contraindication flags remain authoritative.",
+      "supportedTimingMethods": [
+        "StraightSets"
+      ],
+      "timingConditions": "",
+      "directedSubstitutionReviews": [
+        {
+          "targetSourceExerciseId": 115,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires gym machine; not an automatic equivalent. Seated leg curl isolates knee flexion cleanly without bridge stabilization. Set its own resistance and recheck knee restrictions.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 116,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires gym machine; not an automatic equivalent. Lying leg curl removes bridge stability demand and uses machine weight stack resistance. Establish an independent load and verify restrictions.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 117,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: high eccentric knee-flexion demand; not an automatic equivalent. Nordic curl requires ankle anchoring and assistance scaling for safe control. Recheck knee restrictions and regress range or assistance appropriately.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        }
+      ],
+      "conditionsAndExclusions": "Use confirmed sliders or an approved sliding setup on a suitable smooth surface. Lie supine with heels centered on sliders, bridge hips level, extend legs out smoothly, and curl back toward hips.\nNever prescribe merely from Bodyweight equipment when slider/surface capability is unconfirmed; mark ineligible when unknown.",
+      "reviewerNotes": "2–3 working sets × 8–15. Effort: 2–3 RIR. Rest: 90–120 s. Regress to eccentric-only lowers (bridge up at bottom, slide out slowly) if full concentric slide compromises pelvic control or causes hamstring cramp.\nSelectable dose only; apply weekly cap G2.",
+      "reviewReference": "Denis Petruk; 2026-11-16. Gate 60 Final Owner Approval closing home-catalog expansion.",
+      "reviewDate": "2026-11-16T00:00:00.000Z"
+    },
+    {
       "sourceExerciseId": 121,
       "seedCode": "urn:musclecuties:seed:v1:02ae85ce-db74-4695-9b4c-52ca41311dac",
       "expectedName": "Back Squat",
@@ -2851,6 +3039,118 @@
       "reviewDate": "2026-10-23T00:00:00.000Z"
     },
     {
+      "sourceExerciseId": 129,
+      "seedCode": "urn:musclecuties:seed:v1:305581d1-9ccb-5315-a999-c4795f676059",
+      "expectedName": "Bodyweight Squat",
+      "expectedPattern": "SquatPattern",
+      "expectedRequiredEquipment": 0,
+      "expectedSetupSeconds": 15,
+      "expectedSecondsPerRep": 4,
+      "expectedContraindications": 2,
+      "reviewDecision": "Approved with conditions",
+      "supportedExperiences": [
+        "Unknown",
+        "Beginner",
+        "Returning",
+        "Established"
+      ],
+      "experienceConditions": "Unknown: history and technique check first, then conservative beginner dosing. Beginner/Returning: start with light load and demonstrate controlled setup, range and balance. Established status alone does not prove exercise-specific skill.",
+      "demandAssessmentStatus": "Assessed with applicable tags",
+      "demandTags": [
+        "LowerBody"
+      ],
+      "restrictionAssessmentStatus": "Assessed",
+      "restrictionAssessmentSource": "Owner direct instruction closing Gate 60 review on 2026-11-16",
+      "effectiveRestrictionAssessmentStatus": "OwnerAssessedClearanceSubjectToExistingContraindications",
+      "restrictionNotes": "Owner confirms this exercise was assessed under Gate 60 approval and cleared for injury restriction matching. Existing contraindication flags remain authoritative.",
+      "supportedTimingMethods": [
+        "StraightSets"
+      ],
+      "timingConditions": "",
+      "directedSubstitutionReviews": [
+        {
+          "targetSourceExerciseId": 124,
+          "reviewDecision": "Approved with conditions",
+          "category": "CloseProgrammingAlternative",
+          "conditions": "Close programming alternative when a dumbbell is available. Goblet squat adds anterior dumbbell loading and upper-back holding demand; choose a light starting dumbbell and recheck knee restrictions.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 121,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires barbell and rack and adds spinal axial load; not an automatic equivalent. Establish a dedicated barbell progression and recheck Knee and LowBack contraindications.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 123,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires gym machine; not an automatic equivalent. Leg press uses sled external load on its own scale; start conservatively and recheck knee restrictions.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        }
+      ],
+      "conditionsAndExclusions": "Stand with feet shoulder-width apart and whole feet grounded. Descend under control through a stable knee-and-hip depth while keeping trunk aligned, then stand smoothly.\nRequires no squat rack, barbell, machine, or dumbbell; maintain zero added external load where bodyweight is prescribed.",
+      "reviewerNotes": "2–3 working sets × 12–20. Effort: 2–3 RIR. Rest: 90–120 s. Progress through controlled reps, full depth and tempo rather than fabricating added weight.\nSelectable dose only; apply weekly cap G2.",
+      "reviewReference": "Denis Petruk; 2026-11-16. Gate 60 Final Owner Approval closing home-catalog expansion.",
+      "reviewDate": "2026-11-16T00:00:00.000Z"
+    },
+    {
+      "sourceExerciseId": 130,
+      "seedCode": "urn:musclecuties:seed:v1:dc502259-284e-5f5a-90f7-99675caee0c4",
+      "expectedName": "Bodyweight Reverse Lunge",
+      "expectedPattern": "Lunge",
+      "expectedRequiredEquipment": 0,
+      "expectedSetupSeconds": 20,
+      "expectedSecondsPerRep": 4,
+      "expectedContraindications": 2,
+      "reviewDecision": "Approved with conditions",
+      "supportedExperiences": [
+        "Unknown",
+        "Beginner",
+        "Returning",
+        "Established"
+      ],
+      "experienceConditions": "Unknown: history and technique check first, then conservative beginner dosing. Beginner/Returning: start with light load and demonstrate controlled setup, range and balance. Established status alone does not prove exercise-specific skill.",
+      "demandAssessmentStatus": "Assessed with applicable tags",
+      "demandTags": [
+        "LowerBody"
+      ],
+      "restrictionAssessmentStatus": "Assessed",
+      "restrictionAssessmentSource": "Owner direct instruction closing Gate 60 review on 2026-11-16",
+      "effectiveRestrictionAssessmentStatus": "OwnerAssessedClearanceSubjectToExistingContraindications",
+      "restrictionNotes": "Owner confirms this exercise was assessed under Gate 60 approval and cleared for injury restriction matching. Existing contraindication flags remain authoritative.",
+      "supportedTimingMethods": [
+        "StraightSets"
+      ],
+      "timingConditions": "",
+      "directedSubstitutionReviews": [
+        {
+          "targetSourceExerciseId": 138,
+          "reviewDecision": "Approved with conditions",
+          "category": "CloseProgrammingAlternative",
+          "conditions": "Close programming alternative. Bodyweight split squat removes the step-back transition while retaining stationary unilateral lower-body mechanics with per-side reps. Recheck knee/ankle restrictions.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 128,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: adds external dumbbell load and grip demand; not equivalent without selecting an appropriate dumbbell weight and verifying injury restrictions.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        }
+      ],
+      "conditionsAndExclusions": "Stand hip-width with zero implied external load and no assumed hand support. Step backward into a controlled lunge, keep front knee aligned over toes, and return through the front foot.\nLog repetitions per leg; one paired working set counts once in physical set volume while execution time reflects both sides.",
+      "reviewerNotes": "2–3 working sets × 8–15/side. Effort: 2–3 RIR. Rest: 90–120 s. Paired unilateral sets count once in physical-set volume with per-side repetition tracking.\nSelectable dose only; apply weekly cap G2.",
+      "reviewReference": "Denis Petruk; 2026-11-16. Gate 60 Final Owner Approval closing home-catalog expansion.",
+      "reviewDate": "2026-11-16T00:00:00.000Z"
+    },
+    {
       "sourceExerciseId": 131,
       "seedCode": "urn:musclecuties:seed:v1:2f8c4d9e-aeb9-4d36-9990-6cdab189b855",
       "expectedName": "Seated Hip Abduction Lean",
@@ -3280,6 +3580,58 @@
       "reviewDate": "2026-10-23T00:00:00.000Z"
     },
     {
+      "sourceExerciseId": 138,
+      "seedCode": "urn:musclecuties:seed:v1:4836c40f-0a93-53f3-86aa-574890956899",
+      "expectedName": "Bodyweight Split Squat",
+      "expectedPattern": "Lunge",
+      "expectedRequiredEquipment": 0,
+      "expectedSetupSeconds": 20,
+      "expectedSecondsPerRep": 4,
+      "expectedContraindications": 6,
+      "reviewDecision": "Approved with conditions",
+      "supportedExperiences": [
+        "Unknown",
+        "Beginner",
+        "Returning",
+        "Established"
+      ],
+      "experienceConditions": "Unknown: history and technique check first, then conservative beginner dosing. Beginner/Returning: start with light load and demonstrate controlled setup, range and balance. Established status alone does not prove exercise-specific skill.",
+      "demandAssessmentStatus": "Assessed with applicable tags",
+      "demandTags": [
+        "LowerBody"
+      ],
+      "restrictionAssessmentStatus": "Assessed",
+      "restrictionAssessmentSource": "Owner direct instruction closing Gate 60 review on 2026-11-16",
+      "effectiveRestrictionAssessmentStatus": "OwnerAssessedClearanceSubjectToExistingContraindications",
+      "restrictionNotes": "Owner confirms this exercise was assessed under Gate 60 approval and cleared for injury restriction matching. Existing contraindication flags remain authoritative.",
+      "supportedTimingMethods": [
+        "StraightSets"
+      ],
+      "timingConditions": "",
+      "directedSubstitutionReviews": [
+        {
+          "targetSourceExerciseId": 130,
+          "reviewDecision": "Approved with conditions",
+          "category": "CloseProgrammingAlternative",
+          "conditions": "Close programming alternative. Bodyweight reverse lunge adds dynamic step-back transitions while keeping bodyweight unilateral lower-body coverage. Recheck ankle/knee restrictions.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 125,
+          "reviewDecision": "Rejected",
+          "category": "RejectedAutomaticSubstitution",
+          "conditions": "Rejected as an automatic equivalent: Bulgarian Split Squat requires a bench for rear-foot elevation, carries higher balance demand, and often uses dumbbells rather than floor-only bodyweight mechanics.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        }
+      ],
+      "conditionsAndExclusions": "Maintain a stationary staggered stance directly on the floor without an elevated bench. Lower smoothly under control and press through the front foot.\nSeparate from Bulgarian Split Squat, which requires rear-foot elevation and higher stability demand. Track per-side repetitions cleanly.",
+      "reviewerNotes": "2–3 working sets × 8–15/side. Effort: 2–3 RIR. Rest: 90–120 s. Count one paired set once in weekly physical sets and double active execution duration for left + right completion.\nSelectable dose only; apply weekly cap G2.",
+      "reviewReference": "Denis Petruk; 2026-11-16. Gate 60 Final Owner Approval closing home-catalog expansion.",
+      "reviewDate": "2026-11-16T00:00:00.000Z"
+    },
+    {
       "sourceExerciseId": 141,
       "seedCode": "urn:musclecuties:seed:v1:078615bb-9882-4aaf-a3ec-5c74af6fdced",
       "expectedName": "Pull-Up",
@@ -3648,6 +4000,68 @@
       "reviewerNotes": "2 working sets × 12–20. Effort: 3 RIR. Rest: 90 s. G1: Reach the top on every set at 3 RIR on two exposures, then add the smallest load increment and restart lower.\nSelectable dose only; apply weekly cap G2.",
       "reviewReference": "Denis Petruk; 2026-10-23. Approval in this conversation. C1; S01; S07. Full sources and G1–G23: Definitions.",
       "reviewDate": "2026-10-23T00:00:00.000Z"
+    },
+    {
+      "sourceExerciseId": 148,
+      "seedCode": "urn:musclecuties:seed:v1:51ae58aa-35f0-592a-9514-03c5ebb29dc6",
+      "expectedName": "Resistance Band Row",
+      "expectedPattern": "HorizontalPull",
+      "expectedRequiredEquipment": 2064,
+      "expectedSetupSeconds": 45,
+      "expectedSecondsPerRep": 4,
+      "expectedContraindications": 16,
+      "reviewDecision": "Approved with conditions",
+      "supportedExperiences": [
+        "Unknown",
+        "Beginner",
+        "Returning",
+        "Established"
+      ],
+      "experienceConditions": "Unknown: history and technique check first, then conservative beginner dosing. Beginner/Returning: start with light load and demonstrate controlled setup, range and balance. Established status alone does not prove exercise-specific skill.",
+      "demandAssessmentStatus": "Assessed with applicable tags",
+      "demandTags": [
+        "UpperBody",
+        "Pulling",
+        "Grip"
+      ],
+      "restrictionAssessmentStatus": "Assessed",
+      "restrictionAssessmentSource": "Owner direct instruction closing Gate 60 review on 2026-11-16",
+      "effectiveRestrictionAssessmentStatus": "OwnerAssessedClearanceSubjectToExistingContraindications",
+      "restrictionNotes": "Owner confirms this exercise was assessed under Gate 60 approval and cleared for injury restriction matching. Existing contraindication flags remain authoritative.",
+      "supportedTimingMethods": [
+        "StraightSets"
+      ],
+      "timingConditions": "",
+      "directedSubstitutionReviews": [
+        {
+          "targetSourceExerciseId": 145,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires dumbbell and torso support; not an automatic equivalent. Single-Arm DB Row uses constant gravity load with unilateral volume, and band tension cannot be translated directly into kilograms.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 144,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires gym cable stack; not an automatic equivalent. Establish a dedicated cable stack weight and recheck lower-back tolerance.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 143,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires chest-supported machine or bench; not an automatic equivalent. Set its own machine/dumbbell load independently.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        }
+      ],
+      "conditionsAndExclusions": "Verify the resistance band is secured to a safe, immobile anchor at mid-torso height before starting. Stand back for mild starting tension, pull elbows toward ribs, and control the eccentric.\nBand ownership alone never proves a secure anchor; do not auto-substitute foot-anchored or unverified door setups. Never fabricate kilogram loads.",
+      "reviewerNotes": "2–3 working sets × 10–20. Effort: 2–3 RIR. Rest: 90–120 s. Progress by recorded repetitions, band tension/color, or stance distance from the verified anchor rather than invented kg.\nSelectable dose only; apply weekly cap G2.",
+      "reviewReference": "Denis Petruk; 2026-11-16. Gate 60 Final Owner Approval closing home-catalog expansion.",
+      "reviewDate": "2026-11-16T00:00:00.000Z"
     },
     {
       "sourceExerciseId": 151,
@@ -4034,6 +4448,67 @@
       "reviewDate": "2026-10-23T00:00:00.000Z"
     },
     {
+      "sourceExerciseId": 159,
+      "seedCode": "urn:musclecuties:seed:v1:bc040395-54fd-5abf-af87-02766ae1b89b",
+      "expectedName": "Resistance Band Chest Press",
+      "expectedPattern": "HorizontalPush",
+      "expectedRequiredEquipment": 2064,
+      "expectedSetupSeconds": 45,
+      "expectedSecondsPerRep": 4,
+      "expectedContraindications": 8,
+      "reviewDecision": "Approved with conditions",
+      "supportedExperiences": [
+        "Unknown",
+        "Beginner",
+        "Returning",
+        "Established"
+      ],
+      "experienceConditions": "Unknown: history and technique check first, then conservative beginner dosing. Beginner/Returning: start with light load and demonstrate controlled setup, range and balance. Established status alone does not prove exercise-specific skill.",
+      "demandAssessmentStatus": "Assessed with applicable tags",
+      "demandTags": [
+        "UpperBody",
+        "Grip"
+      ],
+      "restrictionAssessmentStatus": "Assessed",
+      "restrictionAssessmentSource": "Owner direct instruction closing Gate 60 review on 2026-11-16",
+      "effectiveRestrictionAssessmentStatus": "OwnerAssessedClearanceSubjectToExistingContraindications",
+      "restrictionNotes": "Owner confirms this exercise was assessed under Gate 60 approval and cleared for injury restriction matching. Existing contraindication flags remain authoritative.",
+      "supportedTimingMethods": [
+        "StraightSets"
+      ],
+      "timingConditions": "",
+      "directedSubstitutionReviews": [
+        {
+          "targetSourceExerciseId": 155,
+          "reviewDecision": "Approved with conditions",
+          "category": "CloseProgrammingAlternative",
+          "conditions": "Close programming alternative. Push-Up uses bodyweight pressing without an external anchor; adjust incline and reset dose independently while checking Shoulder/Wrist restrictions.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 153,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires bench and dumbbells; not an automatic equivalent. Band tension cannot transfer to dumbbell weight.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 154,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires chest-press machine; not an automatic equivalent. Set machine pin load independently and verify shoulder comfort.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        }
+      ],
+      "conditionsAndExclusions": "Confirm a safe, solid fixed anchor behind shoulder/chest height. Take a stable split stance, press handles forward with controlled scapular position, and avoid shoulder elevation.\nNever treat an unverified anchor as acceptable merely because bands are present. Never invent kilogram resistance values.",
+      "reviewerNotes": "2–3 working sets × 10–20. Effort: 2–3 RIR. Rest: 90–120 s. Progress through repetitions, controlled tempo, stance distance, or heavier band tension rather than fabricated kilograms.\nSelectable dose only; apply weekly cap G2.",
+      "reviewReference": "Denis Petruk; 2026-11-16. Gate 60 Final Owner Approval closing home-catalog expansion.",
+      "reviewDate": "2026-11-16T00:00:00.000Z"
+    },
+    {
       "sourceExerciseId": 161,
       "seedCode": "urn:musclecuties:seed:v1:f1458e45-8be5-4f7c-bac2-3366bb44b359",
       "expectedName": "Incline DB Curl",
@@ -4214,6 +4689,60 @@
       "reviewerNotes": "2 working sets × 10–15. Effort: 3 RIR. Rest: 90 s. G1: Reach the top on every set at 3 RIR on two exposures, then add the smallest load increment and restart lower.\nSelectable dose only; apply weekly cap G2.",
       "reviewReference": "Denis Petruk; 2026-10-23. Approval in this conversation. C1; S01; S07. Full sources and G1–G23: Definitions.",
       "reviewDate": "2026-10-23T00:00:00.000Z"
+    },
+    {
+      "sourceExerciseId": 165,
+      "seedCode": "urn:musclecuties:seed:v1:33963ac4-9f8d-5e1d-addf-6f47e46b3667",
+      "expectedName": "Resistance Band Biceps Curl",
+      "expectedPattern": "ElbowFlexion",
+      "expectedRequiredEquipment": 16,
+      "expectedSetupSeconds": 20,
+      "expectedSecondsPerRep": 4,
+      "expectedContraindications": 0,
+      "reviewDecision": "Approved with conditions",
+      "supportedExperiences": [
+        "Unknown",
+        "Beginner",
+        "Returning",
+        "Established"
+      ],
+      "experienceConditions": "Unknown: history and technique check first, then conservative beginner dosing. Beginner/Returning: start with light load and demonstrate controlled setup, range and balance. Established status alone does not prove exercise-specific skill.",
+      "demandAssessmentStatus": "Assessed with applicable tags",
+      "demandTags": [
+        "UpperBody",
+        "Pulling",
+        "Grip"
+      ],
+      "restrictionAssessmentStatus": "Assessed",
+      "restrictionAssessmentSource": "Owner direct instruction closing Gate 60 review on 2026-11-16",
+      "effectiveRestrictionAssessmentStatus": "OwnerAssessedClearanceSubjectToExistingContraindications",
+      "restrictionNotes": "Owner confirms this exercise was assessed under Gate 60 approval and cleared for injury restriction matching. Existing contraindication flags remain authoritative.",
+      "supportedTimingMethods": [
+        "StraightSets"
+      ],
+      "timingConditions": "",
+      "directedSubstitutionReviews": [
+        {
+          "targetSourceExerciseId": 161,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires bench and dumbbells and shifts the resistance curve toward the lengthened position; not equivalent and band tension cannot map to dumbbell kg.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        },
+        {
+          "targetSourceExerciseId": 162,
+          "reviewDecision": "Approved with conditions",
+          "category": "ManualProgrammingAlternative",
+          "conditions": "Limited alternative: requires cable stack; not an automatic equivalent. Establish a dedicated cable load and verify posture control.",
+          "reference": "Denis Petruk; 2026-11-16. Approval reference: Gate 60 Final Owner Approval.",
+          "reviewDate": "2026-11-16T00:00:00.000Z"
+        }
+      ],
+      "conditionsAndExclusions": "Stand evenly on the middle of the resistance band so both sides have balanced tension and secure underfoot friction. Keep elbows near ribs and avoid trunk swing.\nDoes not require a fixed external anchor. Preserve ascending band resistance distinct from free weights or cables; never invent kg load.",
+      "reviewerNotes": "2 working sets × 12–20. Effort: 2–3 RIR. Rest: 60–90 s. Progress via recorded repetitions, band configuration/tension, or controlled tempo without fabricating kilogram load.\nSelectable dose only; apply weekly cap G2.",
+      "reviewReference": "Denis Petruk; 2026-11-16. Gate 60 Final Owner Approval closing home-catalog expansion.",
+      "reviewDate": "2026-11-16T00:00:00.000Z"
     },
     {
       "sourceExerciseId": 171,

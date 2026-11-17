@@ -17,6 +17,8 @@ public static class EquipmentSetExtensions
         if (equipment.HasFlag(EquipmentSet.PullUpBar)) names.Add("Pull-Up Bar");
         if (equipment.HasFlag(EquipmentSet.Kettlebell)) names.Add("Kettlebell");
         if (equipment.HasFlag(EquipmentSet.ClimbingWall)) names.Add("Climbing Wall");
+        if (equipment.HasFlag(EquipmentSet.Sliders)) names.Add("Sliders");
+        if (equipment.HasFlag(EquipmentSet.BandAnchor)) names.Add("Band Anchor");
         return string.Join(", ", names);
     }
 }

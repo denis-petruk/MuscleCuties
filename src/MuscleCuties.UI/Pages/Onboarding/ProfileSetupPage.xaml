@@ -122,6 +122,13 @@
                                    Style="{StaticResource AccentLabel}"
                                    LineBreakMode="WordWrap"
                                    IsVisible="{Binding BirthDateConfirmed}" />
+                            <Label
+                                AutomationId="ProfileSetupBirthDateError"
+                                Text="{Binding BirthDateError, Converter={StaticResource LocalizedStringConverter}}"
+                                Style="{StaticResource ErrorLabel}"
+                                LineBreakMode="WordWrap"
+                                IsVisible="{Binding BirthDateError, Converter={StaticResource StringToBoolConverter}}"
+                                SemanticProperties.Description="{Binding BirthDateError, Converter={StaticResource LocalizedStringConverter}}" />
                         </VerticalStackLayout>
                     </Grid>
             
@@ -182,7 +189,7 @@
                         </Grid>
                     </Grid>
             
-                    <Grid Grid.Row="5" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}" IsVisible="{Binding UseMetricSystem}">
+                    <Grid Grid.Row="5" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}" IsVisible="{Binding UseMetricSystem}">
                         <Label Text="{loc:LocalizedText Common_Height}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}">
                             <Border Style="{StaticResource PickerContainer}">
@@ -196,6 +203,13 @@
                             <Label Grid.Column="1" Text="{loc:LocalizedText Common_Unit_Cm}"
                                    Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
                         </Grid>
+                        <Label Grid.Row="2"
+                               AutomationId="ProfileSetupHeightError"
+                               Text="{Binding HeightError, Converter={StaticResource LocalizedStringConverter}}"
+                               Style="{StaticResource ErrorLabel}"
+                               LineBreakMode="WordWrap"
+                               IsVisible="{Binding HeightError, Converter={StaticResource StringToBoolConverter}}"
+                               SemanticProperties.Description="{Binding HeightError, Converter={StaticResource LocalizedStringConverter}}" />
                     </Grid>
             
                     <Grid Grid.Row="6" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}"
@@ -225,7 +239,7 @@
                         </Grid>
                     </Grid>
             
-                    <Grid Grid.Row="7" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                    <Grid Grid.Row="7" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                         <Label Text="{loc:LocalizedText Common_Weight}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}">
                             <Border Style="{StaticResource PickerContainer}" IsVisible="{Binding UseMetricSystem}">
@@ -249,6 +263,13 @@
                                    Text="{Binding WeightUnit, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
                         </Grid>
+                        <Label Grid.Row="2"
+                               AutomationId="ProfileSetupWeightError"
+                               Text="{Binding WeightError, Converter={StaticResource LocalizedStringConverter}}"
+                               Style="{StaticResource ErrorLabel}"
+                               LineBreakMode="WordWrap"
+                               IsVisible="{Binding WeightError, Converter={StaticResource StringToBoolConverter}}"
+                               SemanticProperties.Description="{Binding WeightError, Converter={StaticResource LocalizedStringConverter}}" />
                     </Grid>
             
                 </Grid>
@@ -271,6 +292,13 @@
                 <workoutControls:WorkoutActivityPreferencePicker
                     ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
                     ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
+                <Label
+                    AutomationId="ProfileSetupStrengthActivityError"
+                    Text="{Binding StrengthActivityError, Converter={StaticResource LocalizedStringConverter}}"
+                    Style="{StaticResource ErrorLabel}"
+                    LineBreakMode="WordWrap"
+                    IsVisible="{Binding StrengthActivityError, Converter={StaticResource StringToBoolConverter}}"
+                    SemanticProperties.Description="{Binding StrengthActivityError, Converter={StaticResource LocalizedStringConverter}}" />
             </VerticalStackLayout>
 
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing10}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
@@ -278,7 +306,7 @@
                     x:Name="WellnessAcknowledgment"
                     AutomationId="WellnessAcknowledgmentCheckBox"
                     Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
-                    CheckedChanged="OnWellnessAcknowledgmentCheckedChanged"
+                    IsChecked="{Binding WellnessAcknowledged, Mode=TwoWay}"
                     MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                     MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
                     VerticalOptions="Center"
@@ -290,6 +318,18 @@
                     LineBreakMode="WordWrap"
                     VerticalOptions="Center" />
             </Grid>
+
+            <Label
+                AutomationId="ProfileSetupWellnessError"
+                Text="{Binding WellnessError, Converter={StaticResource LocalizedStringConverter}}"
+                Style="{StaticResource ErrorLabel}"
+                LineBreakMode="WordWrap"
+                IsVisible="{Binding WellnessError, Converter={StaticResource StringToBoolConverter}}"
+                SemanticProperties.Description="{Binding WellnessError, Converter={StaticResource LocalizedStringConverter}}">
+                <Label.Behaviors>
+                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                </Label.Behaviors>
+            </Label>
 
         </VerticalStackLayout>
     </ScrollView>
@@ -305,12 +345,7 @@
                 <sharedControls:ScreenReaderStatusAnnouncementBehavior />
             </Label.Behaviors>
         </Label>
-        <Label
-            x:Name="AcknowledgmentError"
-            IsVisible="False"
-            Text="{loc:LocalizedText Onboarding_ProfileSetup_PleaseAcknowledgeTheWellnessNoticeTo}"
-            Style="{StaticResource ErrorLabel}"
-            LineBreakMode="WordWrap" />
+
         <ActivityIndicator
                         Style="{StaticResource StateBusyInline}"
             IsRunning="{Binding IsBusy}"

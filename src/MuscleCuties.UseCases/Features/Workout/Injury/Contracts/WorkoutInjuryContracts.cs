@@ -30,7 +30,8 @@ public sealed record WorkoutInjuryLogDto(
     bool IsActive,
     MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger WorseningTrigger =
         MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
-    bool? ClinicianAdvisedAvoid = null);
+    bool? ClinicianAdvisedAvoid = null,
+    DateTimeOffset? PainReassessmentDueAtUtc = null);
 
 public sealed record SaveWorkoutInjuryInput(
     int Id,

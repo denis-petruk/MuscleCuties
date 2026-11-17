@@ -4,6 +4,7 @@ using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Services.Auth;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Units;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
@@ -29,12 +30,16 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
     [ObservableProperty] private string _cycleLength = string.Empty;
     [ObservableProperty] private string _email = string.Empty;
     [ObservableProperty] private UserGoal _goal;
-    [ObservableProperty] private string _heightCm = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HeightMeasurementText))]
+    private string _heightCm = string.Empty;
 
     [ObservableProperty] private string _name = string.Empty;
     [ObservableProperty] private TrainingExperienceLevel _trainingExperienceLevel = TrainingExperienceLevel.Unknown;
     [ObservableProperty] private WeightGoalPace _weightGoalPace;
-    [ObservableProperty] private string _weightKg = string.Empty;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WeightMeasurementText))]
+    private string _weightKg = string.Empty;
     [ObservableProperty] private string _currentPassword = string.Empty;
     [ObservableProperty] private string _newPassword = string.Empty;
     [ObservableProperty] private string _confirmNewPassword = string.Empty;
@@ -87,6 +92,10 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
 
     public string WeightUnitLabel => UnitsFormatter.WeightUnitLabel(_useMetricSystem);
 
+    public string HeightMeasurementText => FormatMeasurement(HeightCm, HeightUnitLabel);
+
+    public string WeightMeasurementText => FormatMeasurement(WeightKg, WeightUnitLabel);
+
     public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
     public DateTime MaxBirthDate { get; } = DateTime.Today.AddYears(-18);
     public AsyncRelayCommand LoadDataCommand { get; }
@@ -117,6 +126,8 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             _useMetricSystem = units.Settings?.UseMetricSystem ?? _useMetricSystem;
             OnPropertyChanged(nameof(HeightUnitLabel));
             OnPropertyChanged(nameof(WeightUnitLabel));
+            OnPropertyChanged(nameof(HeightMeasurementText));
+            OnPropertyChanged(nameof(WeightMeasurementText));
 
             Name = profile.Name;
             _hasStoredBirthDate = profile.DateOfBirth != default;
@@ -285,6 +296,13 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
     private static string FormatNumber(float value)
     {
         return value <= 0f ? string.Empty : value.ToString("0.#", CultureInfo.CurrentCulture);
+    }
+
+    private static string FormatMeasurement(string value, string unitLabel)
+    {
+        return double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var parsed)
+            ? DisplayFormat.Measurement(parsed, unitLabel)
+            : string.Empty;
     }
 
     private static bool UsesWeightGoalPace(UserGoal goal)

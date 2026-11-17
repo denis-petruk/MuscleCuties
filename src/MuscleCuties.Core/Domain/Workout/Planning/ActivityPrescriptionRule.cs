@@ -136,6 +136,7 @@ public static class ActivityPrescriptionRule
     public const int HiitRecoveryIntervalSeconds = 90;
     public const int HiitCooldownMinutes = 5;
     public const int HiitTotalSeconds = 1290;
+    public const string HiitDeferredInWorkoutEngineV2 = "HiitDeferredInWorkoutEngineV2";
     private const int GeneralStrengthAccessoryRestSeconds = AccessoryRestSeconds;
     private const int HighVolumeMainRestSeconds = EstablishedMainRestSeconds;
     private const int ClimbingMaximumSessionsPerWeek = 1;
@@ -290,21 +291,9 @@ public static class ActivityPrescriptionRule
 
     private static ActivityPrescriptionResult Hiit(ActivityPrescriptionContext context)
     {
-        var evidence = context.HiitEvidence;
-        if (!HiitEligibilityEvidenceRule.IsEligible(evidence) ||
-            evidence?.UnderlyingCardioActivity is not { } underlyingActivity)
-            return Result(ActivityPrescriptionStatus.BlockedByRestriction,
-                HiitEligibilityEvidenceRule.EvidenceNotEstablishedByRequiredEvidence);
-
-        return new ActivityPrescriptionResult(ActivityPrescriptionStatus.Eligible,
-            [new ActivitySessionPrescription(context.Activity, SessionPurpose.Conditioning,
-                ToModality(underlyingActivity), IntendedIntensity.Vigorous, SessionTrainingStyle.Hiit,
-                ActivityPrescriptionRule.HiitMaximumSessionsPerWeek, ActivityPrescriptionRule.HiitWarmupMinutes,
-                null, ActivityPrescriptionRule.HiitCooldownMinutes, null, null, null, null, null,
-                ActivityPrescriptionRule.HiitWorkIntervals, ActivityPrescriptionRule.HiitWorkIntervalSeconds,
-                ActivityPrescriptionRule.HiitRecoveryIntervals, ActivityPrescriptionRule.HiitRecoveryIntervalSeconds,
-                false, ["SelectedUnderlyingCardioActivity", "ReplacesOneCardioSession", "NotOnStrengthOrClimbingDay",
-                    "NoProgression", "HardButNotAllOut"])], []);
+        // Gate 80: HIIT is deferred for new active generation/selection in Workout Engine 2.0.
+        // Historical HIIT constants and DTO enum values remain intact for persisted data compatibility.
+        return Result(ActivityPrescriptionStatus.Unsupported, HiitDeferredInWorkoutEngineV2);
     }
 
     private static ActivityPrescriptionResult Climbing(ActivityPrescriptionContext context)

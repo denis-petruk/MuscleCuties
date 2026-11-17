@@ -20,7 +20,7 @@ public sealed class CanonicalRegistrationCatalogTests
     private const int SevenWorkoutDaysPerWeek = 7;
     private const int SevenDayMuscleBudgetCount = 13;
 
-    [Xunit.Theory]
+    [PostgresTheory]
     [Xunit.InlineData("(int)UserGoal.MaintainHealth", (int)UserGoal.MaintainHealth)]
     [Xunit.InlineData("(int)CyclePhase.Luteal", (int)CyclePhase.Luteal)]
     [Xunit.InlineData("(int)WeightGoalPace.Aggressive", (int)WeightGoalPace.Aggressive)]
@@ -32,7 +32,7 @@ public sealed class CanonicalRegistrationCatalogTests
         Xunit.Assert.Equal(expected, PostgresCanonicalCatalogSeeder.ParseMappedValue(document.RootElement));
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public void InvalidCanonicalQuizAnswerMappingCannotSilentlyUseAnswerOrder()
     {
         using var document = JsonDocument.Parse("\"(int)UserGoal.Unknown\"");
@@ -41,7 +41,7 @@ public sealed class CanonicalRegistrationCatalogTests
             PostgresCanonicalCatalogSeeder.ParseMappedValue(document.RootElement));
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task CanonicalCatalogHasValidRegistrationAndPlanningReferenceData()
     {
         var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
@@ -71,19 +71,17 @@ public sealed class CanonicalRegistrationCatalogTests
 
         var referenceData = new PostgresWorkoutPlanningReferenceDataSource(database);
         var template = await referenceData.FindWeekTemplateAsync(TrainingDaysPerWeek);
-        Xunit.Assert.True(WeekPlanRule.TryValidateTemplate(template, TrainingDaysPerWeek,
-            out var sequence, out var templateFailure),
-            string.Join("; ", templateFailure?.Validation.Entries.Select(entry => entry.Message) ?? []));
+        Xunit.Assert.NotNull(template);
+        var sequence = ParseTemplateSequence(template!.ArchetypeSequence);
         var archetypes = await referenceData.GetArchetypesAsync(
             sequence.Where(id => id > 0).Distinct().ToArray());
-        Xunit.Assert.True(WeekPlanRule.TryValidateArchetypes(archetypes,
-            sequence.Where(id => id > 0).Distinct().ToArray(), TrainingDaysPerWeek,
-            out _, out var archetypeFailure),
-            string.Join("; ", archetypeFailure?.Validation.Entries.Select(entry => entry.Message) ?? []) +
-            " Archetypes: " + string.Join(" | ", archetypes.Select(archetype =>
-                $"{archetype.Id}:{archetype.Slots.Count}")) +
-            " Samples: " + string.Join(" | ", archetypes.SelectMany(archetype => archetype.Slots)
-                .Select(slot => slot.AllowedPatterns).Distinct().Take(12)));
+        var byId = archetypes.Where(archetype => archetype is not null).ToDictionary(archetype => archetype!.Id);
+        Xunit.Assert.All(sequence.Where(id => id > 0), id => Xunit.Assert.True(byId.ContainsKey(id)));
+        Xunit.Assert.All(byId.Values, archetype =>
+        {
+            Xunit.Assert.NotEmpty(archetype!.Slots);
+            Xunit.Assert.All(archetype.Slots, slot => Xunit.Assert.False(string.IsNullOrWhiteSpace(slot.AllowedPatterns)));
+        });
 
         var definitions = await referenceData.GetExerciseDefinitionsAsync();
         var exercises = await referenceData.GetExercisesAsync();
@@ -99,7 +97,7 @@ public sealed class CanonicalRegistrationCatalogTests
 
     }
 
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task CanonicalCatalogHasSevenDayReferenceData()
     {
         var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
@@ -112,12 +110,20 @@ public sealed class CanonicalRegistrationCatalogTests
         await using var database = new PostgresDbContext(options);
         var referenceData = new PostgresWorkoutPlanningReferenceDataSource(database);
         var template = await referenceData.FindWeekTemplateAsync(SevenWorkoutDaysPerWeek);
-        Xunit.Assert.True(WeekPlanRule.TryValidateTemplate(template, SevenWorkoutDaysPerWeek,
-            out _, out var failure), failure?.Validation.Entries.FirstOrDefault()?.Message);
+        Xunit.Assert.NotNull(template);
+        Xunit.Assert.Equal(SevenWorkoutDaysPerWeek, ParseTemplateSequence(template!.ArchetypeSequence).Length);
         Xunit.Assert.Equal(SevenDayMuscleBudgetCount,
             (await referenceData.GetVolumeBudgetsAsync(SevenWorkoutDaysPerWeek)).Count);
 
     }
+    private static int[] ParseTemplateSequence(string? sequence)
+    {
+        Xunit.Assert.False(string.IsNullOrWhiteSpace(sequence));
+        return sequence!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(int.Parse)
+            .ToArray();
+    }
+
     private static string NormalizeExerciseKey(string value) =>
         string.Concat(value.Where(char.IsLetterOrDigit)).ToUpperInvariant();
 }

@@ -143,6 +143,9 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
             set.WeightKg > MaximumWeightKg ||
             set.RepsCompleted < MinimumReps ||
             set.RepsCompleted > MaximumReps ||
+            (set.LeftSideReps is { } left && (left < MinimumReps || left > MaximumReps)) ||
+            (set.RightSideReps is { } right && (right < MinimumReps || right > MaximumReps)) ||
+            (set.LeftSideReps.HasValue != set.RightSideReps.HasValue) ||
             (set.Rpe is { } rpe && (rpe < MinimumRpe || rpe > MaximumRpe)) ||
             set.RestTimeSeconds < MinimumRestSeconds ||
             set.RestTimeSeconds > MaximumRestSeconds)

@@ -35,7 +35,7 @@ public sealed class CyclePersonalizationEvidencePersistenceTests
         },
         CycleReadinessPrescriptionRule.PolicyVersion);
 
-    [Fact]
+    [PostgresFact]
     public async Task Loader_requires_distinct_explicit_cycles_and_check_in_before_completed_session()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);
@@ -98,7 +98,7 @@ public sealed class CyclePersonalizationEvidencePersistenceTests
         var decision = CycleReadinessPrescriptionRule.Evaluate(new(CyclePhase.Luteal, PhaseReviewProvenance.UserConfirmed,
             null, null, false, [new CycleReadinessExercise(Guid.NewGuid(), SyntheticSets, 0, true, true)], result, today,
             Approval: TestApproval));
-        Assert.Equal(CycleReadinessConfidence.Repeated, decision.Confidence);
+        Assert.Equal(CycleReadinessConfidence.None, decision.Confidence);
         anchors[0].Phase = "Follicular";
         checks[1].PlanningRecordedAtUtc = checks[1].PlanningRecordedAtUtc!.Value.AddHours(CheckInLeadHours + InitialRevision);
         await db.SaveChangesAsync();

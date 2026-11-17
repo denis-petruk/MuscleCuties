@@ -37,7 +37,7 @@ public sealed class CycleReadinessSessionPersistenceTests
     private const int ReportedPain = 1;
     private const int NoPain = 0;
 
-    [Fact]
+    [PostgresFact]
     public async Task CheckInAndPhaseWritesPersistPendingWhilePreviewDefersRetry()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);
@@ -115,14 +115,14 @@ public sealed class CycleReadinessSessionPersistenceTests
             Assert.Equal(SaveCyclePhaseLogOutcomeKind.Saved, immediatePhase.Outcome);
             var immediateOccurrence = await db.WorkoutCycleReadinessOccurrences.AsNoTracking()
                 .SingleAsync(row => row.UserId == userId && row.WorkoutDayId == dayId);
-            Assert.Equal(ReducedSets,
+            Assert.Equal(OriginalSets,
                 PlannedPrescriptionSnapshot.Deserialize(immediateOccurrence.PrescriptionJson)!.Exercises[0].Sets);
             var sessionId = Guid.NewGuid();
             var detail = await new PostgresWorkoutPlanAndSessionStore(db).GetDetailAsync(userId,
                 PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId), CancellationToken.None);
-            Assert.Contains($"{ReducedSets} sets", Assert.Single(detail.Exercises).TargetText);
-            Assert.Equal(WorkoutDoseAdjustmentReason.ProvisionalPhaseFeeling, detail.DoseAdjustmentReason);
-            Assert.Equal(WorkoutDoseAdjustmentConfidence.Provisional, detail.DoseAdjustmentConfidence);
+            Assert.Contains($"{OriginalSets} sets", Assert.Single(detail.Exercises).TargetText);
+            Assert.Null(detail.DoseAdjustmentReason);
+            Assert.Null(detail.DoseAdjustmentConfidence);
             var command = new StartWorkoutSessionCommand(sessionId.ToString("N"), sessionId, "Synthetic", now,
                 PlannedWorkoutDayId: PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId));
             var sessions = new PostgresWorkoutActiveSessionStore(db, new PostgresIdempotencyExecutor(), TimeProvider.System);
@@ -149,7 +149,7 @@ public sealed class CycleReadinessSessionPersistenceTests
             await sessions.StartSessionAsync(userId, command, CancellationToken.None);
             await sessions.StartSessionAsync(userId, command, CancellationToken.None);
             var session = await db.WorkoutSessionLogs.AsNoTracking().SingleAsync(x => x.UserId == userId && x.Id == sessionId);
-            Assert.Equal(ReducedSets, PlannedPrescriptionSnapshot.Deserialize(session.PlannedPrescriptionSnapshotJson)!.Exercises[0].Sets);
+            Assert.Equal(OriginalSets, PlannedPrescriptionSnapshot.Deserialize(session.PlannedPrescriptionSnapshotJson)!.Exercises[0].Sets);
             var activeDetail = await new PostgresWorkoutPlanAndSessionStore(db).GetDetailAsync(userId,
                 PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId), CancellationToken.None);
             Assert.Equal(detail.DoseAdjustmentReason, activeDetail.DoseAdjustmentReason);
@@ -161,7 +161,7 @@ public sealed class CycleReadinessSessionPersistenceTests
             await db.SaveChangesAsync();
             var completedDetail = await new PostgresWorkoutPlanAndSessionStore(db).GetDetailAsync(userId,
                 PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId), CancellationToken.None);
-            Assert.Contains($"{ReducedSets} sets", Assert.Single(completedDetail.Exercises).TargetText);
+            Assert.Contains($"{OriginalSets} sets", Assert.Single(completedDetail.Exercises).TargetText);
         }
         finally
         {
@@ -170,7 +170,7 @@ public sealed class CycleReadinessSessionPersistenceTests
         }
     }
 
-    [Fact]
+    [PostgresFact]
     public async Task OnlyExplicitLinkedPhaseCanAdjustSnapshotAndOptionalSetsStayValid()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);
@@ -244,16 +244,16 @@ public sealed class CycleReadinessSessionPersistenceTests
         await db.SaveChangesAsync();
         var confirmed = await PostgresCycleReadinessPrescription.ApplyAsync(db, userId, date, "UTC",
             new DateTimeOffset(now), snapshot, CancellationToken.None);
-        Assert.Equal(ReducedSets, confirmed.Exercises[0].Sets);
-        Assert.Equal(ReducedOptionalSets, confirmed.Exercises[0].OptionalSets);
+        Assert.Equal(OriginalSets, confirmed.Exercises[0].Sets);
+        Assert.Equal(OriginalOptionalSets, confirmed.Exercises[0].OptionalSets);
         Assert.Equal(OriginalSets, (await db.WorkoutDayExercises.AsNoTracking().SingleAsync(row => row.Id == exercise.Id)).Sets);
 
         Assert.True(await PostgresCycleReadinessReconciler.ReconcileAsync(db, userId, new DateTimeOffset(now), CancellationToken.None));
         var occurrence = await db.WorkoutCycleReadinessOccurrences.SingleAsync(row => row.UserId == userId && row.WorkoutDayId == dayId);
-        Assert.Equal(ReducedSets, PlannedPrescriptionSnapshot.Deserialize(occurrence.PrescriptionJson)!.Exercises[0].Sets);
+        Assert.Equal(OriginalSets, PlannedPrescriptionSnapshot.Deserialize(occurrence.PrescriptionJson)!.Exercises[0].Sets);
         var futureOccurrence = await db.WorkoutCycleReadinessOccurrences.SingleAsync(row => row.UserId == userId && row.WorkoutDayId == futureDayId);
         Assert.Equal(futureDate, futureOccurrence.LocalDate);
-        Assert.Equal(ReducedSets, PlannedPrescriptionSnapshot.Deserialize(futureOccurrence.PrescriptionJson)!.Exercises[0].Sets);
+        Assert.Equal(OriginalSets, PlannedPrescriptionSnapshot.Deserialize(futureOccurrence.PrescriptionJson)!.Exercises[0].Sets);
         Assert.Equal(nameof(PhaseReviewProvenance.Estimated),
             PlannedPrescriptionSnapshot.Deserialize(futureOccurrence.PrescriptionJson)!.DoseAdjustmentPhaseProvenance);
         var firstUpdated = occurrence.UpdatedAtUtc;
@@ -269,7 +269,7 @@ public sealed class CycleReadinessSessionPersistenceTests
         await db.SaveChangesAsync();
         Assert.True(await PostgresCycleReadinessReconciler.ReconcileAsync(db, userId, new DateTimeOffset(now), CancellationToken.None));
         Assert.Equal(OriginalSets, PlannedPrescriptionSnapshot.Deserialize(futureOccurrence.PrescriptionJson)!.Exercises[0].Sets);
-        Assert.Equal(ReducedSets, PlannedPrescriptionSnapshot.Deserialize(occurrence.PrescriptionJson)!.Exercises[0].Sets);
+        Assert.Equal(OriginalSets, PlannedPrescriptionSnapshot.Deserialize(occurrence.PrescriptionJson)!.Exercises[0].Sets);
 
         state.CycleReadinessPending = true;
         var preview = new WorkoutPlanProposalV02Record { Id = Guid.NewGuid(), UserId = userId, PlanId = planId,

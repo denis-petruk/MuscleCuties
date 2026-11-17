@@ -18,7 +18,7 @@ public sealed class InjuryPlanningTransactionTests
     private const int SyntheticRepetitions = 10;
 
     // This exercises transactional provenance, not clinical eligibility or review metadata.
-    [Xunit.Fact]
+    [PostgresFact]
     public async Task OverlappingInjuriesFencePreviewPreservePrescriptionAndAnchorClearance()
     {
         var connection = Environment.GetEnvironmentVariable(ConnectionVariable);

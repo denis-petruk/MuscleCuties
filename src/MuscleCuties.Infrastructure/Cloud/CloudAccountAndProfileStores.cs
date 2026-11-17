@@ -764,14 +764,15 @@ public sealed class CloudProfilePersonalInfoStore(
 {
     private const string ProfileRoute = "/api/v1/profile";
     private const string PasswordChangeRoute = "/api/v1/auth/password/change";
+    // Missing values stay missing: an absent birth date maps to default(DateTime), which the view model
+    // treats as "not stored", an absent cycle length maps to 0 and an unknown experience to Unknown.
+    private static readonly DateTime UnsetBirthDate = default;
 
     public async Task<LoadPersonalInfoResult> LoadAsync(CancellationToken cancellationToken)
     {
         var response = await apiClient.GetAsync<ServerProfileSnapshot>(ProfileRoute, cancellationToken).ConfigureAwait(false);
         var snapshot = CloudStoreResponse.RequireData(response, "personal info profile");
-        // S-02: a missing date of birth stays missing (default) so the population gate keeps
-        // asking for it; never substitute an invented adult age.
-        var birthDate = snapshot.DateOfBirth?.ToDateTime(TimeOnly.MinValue) ?? default;
+        var birthDate = snapshot.DateOfBirth?.ToDateTime(TimeOnly.MinValue) ?? UnsetBirthDate;
         var goal = Enum.TryParse<UserGoal>(snapshot.Goal, true, out var parsedGoal) && Enum.IsDefined(parsedGoal)
             ? (int)parsedGoal
             : (int)UserGoal.MaintainHealth;
@@ -792,7 +793,7 @@ public sealed class CloudProfilePersonalInfoStore(
             goal,
             pace,
             experience,
-            snapshot.CycleLength > 0 ? snapshot.CycleLength : 0,
+            snapshot.CycleLength > 0 ? snapshot.CycleLength : PersonalInfoConstraints.UnsetCycleLength,
             (int)context.Pregnancy,
             (int)context.Contraception);
 
@@ -812,13 +813,21 @@ public sealed class CloudProfilePersonalInfoStore(
         var pace = Enum.IsDefined(typeof(WeightGoalPace), request.WeightGoalPace)
             ? ((WeightGoalPace)request.WeightGoalPace).ToString()
             : currentResponse.Data.WeightGoalPace;
+        // Personal info never edits experience; an unknown value echoes the stored one so it is not invented.
         var experience = Enum.IsDefined(typeof(TrainingExperienceLevel), request.TrainingExperienceLevel) &&
                          request.TrainingExperienceLevel != (int)TrainingExperienceLevel.Unknown
             ? ((TrainingExperienceLevel)request.TrainingExperienceLevel).ToString()
             : currentResponse.Data.TrainingExperienceLevel;
-        // Only write a birth date or cycle length the user actually has; never persist a placeholder.
-        var hasBirthDate = request.BirthDate != default;
-        var cycleLength = request.CycleLength > 0 ? request.CycleLength : currentResponse.Data.CycleLength;
+        var requestedBirthDate = request.BirthDate == UnsetBirthDate
+            ? (DateOnly?)null
+            : DateOnly.FromDateTime(request.BirthDate);
+        // Only write the birth date when the person set or changed it; an unset date is never sent.
+        var setDateOfBirth = requestedBirthDate is not null && requestedBirthDate != currentResponse.Data.DateOfBirth;
+        // An unset cycle length keeps a stored value; when nothing is stored, it stays null
+        // rather than becoming a fabricated zero.
+        int? cycleLength = request.CycleLength == PersonalInfoConstraints.UnsetCycleLength
+            ? currentResponse.Data.CycleLength > 0 ? currentResponse.Data.CycleLength : null
+            : request.CycleLength;
         var pregnancy = Enum.IsDefined(typeof(PregnancyStatus), request.PregnancyStatus)
             ? (PregnancyStatus)request.PregnancyStatus
             : PregnancyStatus.Unknown;
@@ -834,8 +843,8 @@ public sealed class CloudProfilePersonalInfoStore(
             {
                 expectedVersion = currentResponse.Data.Version,
                 name = request.Name.Trim(),
-                dateOfBirth = hasBirthDate ? DateOnly.FromDateTime(request.BirthDate) : (DateOnly?)null,
-                setDateOfBirth = hasBirthDate,
+                dateOfBirth = setDateOfBirth ? requestedBirthDate : null,
+                setDateOfBirth,
                 height = (decimal)request.Height,
                 weight = (decimal)request.Weight,
                 goal,
@@ -1034,7 +1043,20 @@ public sealed class CloudProfileWorkoutPreferencesStore(
                 activitySessionDurationsMinutes = preferences.ActivitySessionDurationsMinutes,
                 equipmentLevel = preferences.EquipmentLevel ?? currentResponse.Data.EquipmentLevel,
                 requestedSessionsPerWeek = preferences.RequestedSessionsPerWeek ?? new Dictionary<int, int>(),
-                excludedExerciseIds = preferences.ExcludedExerciseIds?.ToArray() ?? []
+                excludedExerciseIds = preferences.ExcludedExerciseIds?.ToArray() ?? [],
+                gluteFocus = preferences.GluteFocus,
+                equipmentCapabilities = (preferences.HasSliders is not null ||
+                    preferences.HasConfirmedBandAnchor is not null ||
+                    preferences.HasDumbbells is not null ||
+                    preferences.HasBands is not null)
+                    ? new
+                    {
+                        hasSliders = preferences.HasSliders,
+                        hasConfirmedBandAnchor = preferences.HasConfirmedBandAnchor,
+                        hasDumbbells = preferences.HasDumbbells,
+                        hasBands = preferences.HasBands
+                    }
+                    : null
             },
             idempotencyKey: Guid.NewGuid().ToString("N"),
             cancellationToken).ConfigureAwait(false);

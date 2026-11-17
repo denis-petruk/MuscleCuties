@@ -7,6 +7,13 @@ namespace MuscleCuties.Core.Domain.Workout;
 
 public static class ReadinessRule
 {
+    /// <summary>
+    /// Version of this readiness arithmetic. Reported soreness is not an input (ratified A-8, 2026-11-15),
+    /// so a score produced here cannot move when only the soreness answer changes. The caller still passes
+    /// <see cref="DailyInputs.Soreness"/> because the check-in record keeps the answer for the user's history.
+    /// </summary>
+    public const string ArithmeticVersion = "MC-READINESS-ARITHMETIC-0.2";
+
     /// <summary>Missing check-in coverage cannot produce a positive readiness recommendation.</summary>
     public static Readiness ComputeForCheckInCoverage(
         DailyInputs? inputs, bool hasSleep, bool hasEnergy, bool hasPain,
@@ -43,7 +50,6 @@ public static class ReadinessRule
         var phaseScore = ComputePhaseScore(rc, effectivePhase, baselines);
         var healthAdjustment = ComputeHealthAdjustment(inputs);
         var sleepQualityScore = ComputeSleepQualityAdjustment(inputs.SleepQuality);
-        var sorenessScore = ComputeSorenessAdjustment(inputs.Soreness);
         var loadScore = ComputePreviousDayLoadAdjustment(inputs.PreviousDayLoad);
 
         var breakdown = new Dictionary<string, int>
@@ -56,15 +62,13 @@ public static class ReadinessRule
             ["phase"] = phaseScore,
             ["health"] = healthAdjustment,
             ["sleepQuality"] = sleepQualityScore,
-            ["soreness"] = sorenessScore,
             ["load"] = loadScore,
             ["previousDayLoad"] = loadScore
         };
 
         var rawScore = (long)breakdown["sleep"] + breakdown["sleep3d"] + breakdown["steps"] +
                        breakdown["energy"] + breakdown["pain"] + breakdown["phase"] +
-                       breakdown["health"] + breakdown["sleepQuality"] + breakdown["soreness"] +
-                       breakdown["load"];
+                       breakdown["health"] + breakdown["sleepQuality"] + breakdown["load"];
         var score = (int)Math.Clamp(rawScore, 0L, 100L);
 
         var tier = score >= rc.HighTier
@@ -88,21 +92,6 @@ public static class ReadinessRule
             SleepQuality.Fair => 0,
             SleepQuality.Good => 3,
             SleepQuality.VeryGood => 5,
-            _ => 0
-        };
-    }
-
-    private static int ComputeSorenessAdjustment(SorenessLevel? soreness)
-    {
-        if (soreness is null)
-            return 0;
-
-        return soreness.Value switch
-        {
-            SorenessLevel.None => 0,
-            SorenessLevel.Mild => -3,
-            SorenessLevel.Moderate => -6,
-            SorenessLevel.Severe => -10,
             _ => 0
         };
     }
@@ -224,7 +213,6 @@ public static class ReadinessRule
                 ["phase"] = 0,
                 ["health"] = 0,
                 ["sleepQuality"] = 0,
-                ["soreness"] = 0,
                 ["load"] = 0,
                 ["previousDayLoad"] = 0
             });

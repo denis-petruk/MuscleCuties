@@ -85,6 +85,20 @@ public sealed class StrengthPlanPreviewRationaleTests
         Assert.Equal("Workout_Generation_ReasonBalancedWeeklyVolume", slot.Rationale);
     }
 
+    [Theory]
+    [InlineData("BodyweightZeroAddedLoad")]
+    [InlineData("InitialLoadCalibrationRequired")]
+    [InlineData("PriorComparableHistory")]
+    [InlineData("ConservativeReturnLoadApplied")]
+    public void Session_WithEngineLoadReasonCode_ResolvesSelectionReasonCatalogKey(string reasonCode)
+    {
+        var display = StrengthPlanSessionDisplay.From(Session(reasonCode));
+
+        var slot = Assert.Single(display.Slots);
+        Assert.True(slot.HasRationale);
+        Assert.Equal($"Workout_Generation_SelectionReason_{reasonCode}", slot.Rationale);
+    }
+
     private static StrengthPlanPreviewSessionV020 Session(string? selectionReason) =>
         new("template-strength-three-day", "v1", 0, 45m,
             new[] { Slot(selectionReason) },

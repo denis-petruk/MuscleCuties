@@ -17,12 +17,16 @@ public class AnimatedModalView : ContentView
     public static readonly BindableProperty RestoreFocusTargetProperty =
         BindableProperty.Create(nameof(RestoreFocusTarget), typeof(VisualElement), typeof(AnimatedModalView));
 
+    /// <summary>Bottom strip a sheet always keeps for its pinned footer.</summary>
+    private const double SheetFooterReserve = 12;
+
     private VisualElement? _capturedFocusTarget;
     private ContentPage? _isolationPage;
     private Page? _hookedPage;
     private long _transitionVersion;
     private bool _focusEntryPending;
     private bool _announcementDelivered;
+    private Action<double>? _keyboardHandler;
 
     public AnimatedModalView()
     {
@@ -101,6 +105,8 @@ public class AnimatedModalView : ContentView
         if (page is not null)
         {
             ModalAccessibilityScope.Release(page, this);
+            ModalTabBar.Release(page);
+            DetachKeyboard();
             _isolationPage = null;
         }
     }
@@ -109,6 +115,7 @@ public class AnimatedModalView : ContentView
     {
         var page = HostPage();
         HookPage(page);
+        ApplyBottomSafeAreaBleed();
 
         if (!IsOpen)
         {
@@ -124,10 +131,240 @@ public class AnimatedModalView : ContentView
         {
             _isolationPage = page;
             ModalAccessibilityScope.Acquire(_isolationPage, this);
+            ModalTabBar.Acquire(_isolationPage);
         }
 
         _capturedFocusTarget ??= RestoreFocusTarget ?? FocusedOutsideSheet();
         CompleteOpen(_transitionVersion);
+    }
+
+    /// <summary>
+    /// Lets the sheet reach the physical bottom edge.
+    /// </summary>
+    /// <remarks>
+    /// Pages that set <c>SafeAreaEdges="All"</c> inset their content above the home indicator, and a
+    /// sheet anchored to the bottom of that content stops one indicator-height short of the screen.
+    /// Negative bottom margin extends the host over that strip; the shared footer inset keeps the
+    /// footer content clear of the indicator. Pages without the inset get the same treatment, so the
+    /// frame reaches the edge identically everywhere.
+    /// </remarks>
+    private void ApplyBottomSafeAreaBleed()
+    {
+#if IOS
+        var bottom = 0.0;
+        foreach (var scene in UIKit.UIApplication.SharedApplication.ConnectedScenes)
+        {
+            if (scene is not UIKit.UIWindowScene windowScene)
+                continue;
+
+            foreach (var window in windowScene.Windows)
+            {
+                if (window.IsKeyWindow)
+                {
+                    bottom = window.SafeAreaInsets.Bottom;
+                    break;
+                }
+            }
+
+            if (bottom > 0)
+                break;
+        }
+
+        if (bottom > 0)
+            Margin = new Thickness(Margin.Left, Margin.Top, Margin.Right, -bottom);
+#endif
+    }
+
+    /// <summary>
+    /// Shortens the sheet by the keyboard overlap so the sheet's own scroll body stays reachable.
+    /// </summary>
+    /// <remarks>
+    /// The sheet is anchored to the bottom of the window; without this the keys covered the lower
+    /// part of every modal, which is where a picker's results and a sheet's commit button live. The
+    /// work is done on the surface border rather than per sheet, so every modal gets the same
+    /// behaviour from the same numbers (see <see cref="ModalKeyboardInset"/>).
+    /// </remarks>
+    private void AttachKeyboard()
+    {
+        _keyboardHandler ??= OnKeyboardInsetChanged;
+        ModalKeyboardInset.Subscribe(_keyboardHandler);
+    }
+
+    private void DetachKeyboard()
+    {
+        if (_keyboardHandler is not null)
+            ModalKeyboardInset.Unsubscribe(_keyboardHandler);
+
+        ApplySheetHeight(0);
+    }
+
+    private void OnKeyboardInsetChanged(double inset) => ApplySheetHeight(inset);
+
+    private void ApplySheetHeight(double keyboardInset)
+    {
+        var surface = SheetSurface();
+        if (surface is null)
+            return;
+
+        var inset = Math.Max(0, keyboardInset);
+        var body = EnsureScrollBody(surface);
+
+        // The surface padding below shrinks the body viewport above the keys, so the body itself only
+        // needs the footer strip. Adding the whole keyboard height here as well let the scroll view
+        // over-scroll a bottom field above its own viewport, where the user could not see it while
+        // typing.
+        if (body is not null)
+        {
+            body.Padding = new Thickness(
+                body.Padding.Left,
+                body.Padding.Top,
+                body.Padding.Right,
+                SheetFooterReserve);
+        }
+
+        // The surface padding is what lifts a pinned footer row above the keyboard. It is applied
+        // even when the sheet's body is a CollectionView rather than a ScrollView: those sheets still
+        // need their footer and results lifted, they just scroll themselves.
+        surface.Padding = new Thickness(
+            surface.Padding.Left,
+            surface.Padding.Top,
+            surface.Padding.Right,
+            inset > 0 ? inset + SheetFooterReserve : 0);
+
+        if (inset > 0 && body is not null)
+            RevealContentBelowFocusedField(body);
+    }
+
+    /// <summary>
+    /// Scrolls the body so the focused field is fully visible, not just its bottom line.
+    /// </summary>
+    /// <remarks>
+    /// MAUI scrolls a focused entry into view, which for the food picker put the field at the bottom
+    /// of the visible strip and left the result list behind the keyboard. Centering the field keeps it
+    /// clear of both the header and the keyboard, leaves the rows around it reachable, and still keeps
+    /// a pinned footer on screen.
+    /// </remarks>
+    private static void RevealContentBelowFocusedField(ScrollView body)
+    {
+        var focused = FindFocusedDescendant(body);
+        if (focused is null)
+            return;
+
+        body.Dispatcher.Dispatch(async () =>
+        {
+            try
+            {
+                // Centering keeps the whole field on screen instead of pinning it to the body's top
+                // edge, where a short viewport could clip its first line above the header.
+                await body.ScrollToAsync(focused, ScrollToPosition.Center, true);
+            }
+            catch (Exception)
+            {
+                // A body that is being replaced while the keyboard animates must not crash the sheet.
+            }
+        });
+    }
+
+    private static VisualElement? FindFocusedDescendant(IVisualTreeElement root)
+    {
+        foreach (var child in root.GetVisualChildren())
+        {
+            if (child is VisualElement { IsFocused: true } focused)
+                return focused;
+
+            if (FindFocusedDescendant(child) is { } nested)
+                return nested;
+        }
+
+        return null;
+    }
+
+    /// <summary>
+    /// Guarantees the sheet has one scrollable body.
+    /// </summary>
+    /// <remarks>
+    /// Nine sheets drew their content straight into the surface with no scroll view, so shortening the
+    /// sheet for the keyboard had nowhere to scroll and their last rows stayed unreachable. The frame
+    /// wraps the surface content once, on first open, instead of each sheet repeating the wrapper; a
+    /// sheet that already ships its own body (the food picker) keeps it.
+    /// </remarks>
+    private static ScrollView? EnsureScrollBody(Border surface)
+    {
+        if (surface.Content is null)
+            return null;
+
+        // A sheet that already owns a body keeps it — wrapping it again gives the sheet two
+        // scroll views and the inner one stops scrolling. The check-in sheet is the case that
+        // matters: it draws a header, its own ScrollView and a pinned footer into the surface.
+        var ownBody = FindScrollBody(surface.Content);
+        if (ownBody is not null)
+            return ownBody;
+
+        // A CollectionView is already a scroll body. Wrapping it would nest two scrollers and
+        // steal the sheet's scroll gestures, which is what the meal editor and suggestion sheets
+        // would do if the frame only recognised ScrollView.
+        if (HasVisibleItemsView(surface.Content))
+            return null;
+
+        var body = new ScrollView
+        {
+            Content = surface.Content,
+            VerticalScrollBarVisibility = ScrollBarVisibility.Never
+        };
+
+        surface.Content = body;
+        return body;
+    }
+
+    private static ScrollView? FindScrollBody(IVisualTreeElement root)
+    {
+        // Prefer a visible vertical body. A sheet can contain horizontal rails (meal types) and
+        // hidden state panels; either one used to be mistaken for the body, so the keyboard inset
+        // padded the wrong control while the real content stayed put.
+        return FindVerticalScrollBody(root, visibleOnly: true)
+               ?? FindVerticalScrollBody(root, visibleOnly: false);
+    }
+
+    private static ScrollView? FindVerticalScrollBody(IVisualTreeElement root, bool visibleOnly)
+    {
+        foreach (var child in root.GetVisualChildren())
+        {
+            if (child is ScrollView { Orientation: not ScrollOrientation.Horizontal } scroll &&
+                (!visibleOnly || IsVisibleInTree(scroll)))
+            {
+                return scroll;
+            }
+
+            if (FindVerticalScrollBody(child, visibleOnly) is { } nested)
+                return nested;
+        }
+
+        return null;
+    }
+
+    private static bool HasVisibleItemsView(IVisualTreeElement root)
+    {
+        foreach (var child in root.GetVisualChildren())
+        {
+            if (child is ItemsView items && IsVisibleInTree(items))
+                return true;
+
+            if (HasVisibleItemsView(child))
+                return true;
+        }
+
+        return false;
+    }
+
+    private Border? SheetSurface()
+    {
+        var style = Application.Current?.Resources.TryGetValue("ModalSurface", out var resource) == true
+            ? resource as Style
+            : null;
+
+        return Descendants()
+            .OfType<Border>()
+            .FirstOrDefault(border => style is null || ReferenceEquals(border.Style, style));
     }
 
     private static void OnIsOpenChanged(BindableObject bindable, object oldValue, object newValue)
@@ -160,6 +397,8 @@ public class AnimatedModalView : ContentView
         _isolationPage = HostPage();
         HookPage(_isolationPage);
         ModalAccessibilityScope.Acquire(_isolationPage, this);
+        ModalTabBar.Acquire(_isolationPage);
+        AttachKeyboard();
         ModalTransition.PlayShow(this);
 
         // Layout of a content-sized sheet completes after this property change. Focus and the
@@ -369,18 +608,18 @@ internal static class ModalAccessibilityScope
 
     private sealed class Scope
     {
-        private readonly HashSet<VisualElement> _activeModals = new();
+        private readonly List<VisualElement> _activeModals = new();
         private readonly List<(VisualElement Element, bool? Excluded)> _isolated = new();
 
         internal int Count => _activeModals.Count;
 
         internal void Acquire(VisualElement modal)
         {
-            if (!_activeModals.Add(modal))
+            if (_activeModals.Contains(modal))
                 return;
 
-            if (_activeModals.Count == 1)
-                Isolate(modal);
+            _activeModals.Add(modal);
+            Reisolate();
         }
 
         internal void Release(VisualElement? modal)
@@ -395,8 +634,19 @@ internal static class ModalAccessibilityScope
                 _activeModals.Clear();
             }
 
-            if (_activeModals.Count == 0)
-                Restore();
+            Reisolate();
+        }
+
+        /// <summary>
+        /// Keeps exactly the topmost sheet reachable when modals overlap during a handoff. The
+        /// previous scope isolated only the first sheet's siblings, so the editor opened above the
+        /// chooser stayed inside an excluded subtree and disappeared from the accessibility tree.
+        /// </summary>
+        private void Reisolate()
+        {
+            Restore();
+            if (_activeModals.Count > 0)
+                Isolate(_activeModals[^1]);
         }
 
         private void Isolate(VisualElement modal)

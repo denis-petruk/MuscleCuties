@@ -96,6 +96,9 @@ public partial class CycleViewModel
     {
         if (day?.Date is null) return;
 
+        if (!IsDatePhaseModalVisible)
+            _selectedDateBeforeCalendarEdit = SelectedDate;
+
         SelectedDate = day.Date.Value;
         var movedToAnotherMonth =
             SelectedDate.Year != DisplayedMonth.Year || SelectedDate.Month != DisplayedMonth.Month;

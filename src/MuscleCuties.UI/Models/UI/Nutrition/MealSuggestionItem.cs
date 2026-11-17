@@ -1,3 +1,4 @@
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
@@ -37,7 +38,7 @@ public class MealSuggestionItem
     public IReadOnlyList<string> SpiceBlendNames => SpiceBlends.Select(s => s.Name).ToList();
 
     public string CaloriesText => $"{(int)Macros.Calories} kcal";
-    public string MacrosText => $"P {Macros.Protein:N0}g  C {Macros.Carbs:N0}g  F {Macros.Fats:N0}g";
+    public string MacrosText => DisplayFormat.Macros(Macros.Protein, Macros.Carbs, Macros.Fats);
 
     public string SpiceBlendSummary => SpiceBlends.Count > 0
         ? string.Join(" | ", SpiceBlendNames)
@@ -184,7 +185,7 @@ public record MealSuggestionComponentGroup(
     string IconGlyph,
     IReadOnlyList<MealSuggestionComponentItem> Items)
 {
-    public string TotalText => $"{Items.Sum(i => i.Grams):N0}g · {Items.Sum(i => i.CaloriesForAmount):N0} kcal";
+    public string TotalText => $"{DisplayFormat.GramsShort(Items.Sum(i => i.Grams))} · {DisplayFormat.Calories(Items.Sum(i => i.CaloriesForAmount))}";
 }
 
 public class MealSuggestionComponentItem
@@ -216,11 +217,11 @@ public class MealSuggestionComponentItem
         _ => "Item"
     };
 
-    public string PortionText => $"{Grams:N0}g";
+    public string PortionText => DisplayFormat.GramsShort(Grams);
 
-    public string CaloriesText => $"{CaloriesForAmount:N0} kcal";
+    public string CaloriesText => DisplayFormat.Calories(CaloriesForAmount);
 
-    public string DetailText => $"{Grams:N0}g · {NutritionForAmountText}";
+    public string DetailText => $"{DisplayFormat.GramsShort(Grams)} · {NutritionForAmountText}";
 }
 
 public sealed record DayMealPlanItem(
@@ -252,7 +253,7 @@ public sealed record DayMealPlanItem(
     };
 
     public string TargetSummaryText =>
-        $"{Target.Calories:N0} kcal · {TargetSharePercent}% of daily target";
+        $"{DisplayFormat.Calories(Target.Calories)} · {TargetSharePercent}% of daily target";
 
     public int TargetSharePercent => !float.IsFinite(DailyCaloriesTarget) || DailyCaloriesTarget <= 0f ||
                                      !float.IsFinite(Target.Calories)

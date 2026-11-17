@@ -1,6 +1,7 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
 using MuscleCuties.UI.Resources.Styles;
+using MuscleCuties.UI.Services.Localization;
 using Path = Microsoft.Maui.Controls.Shapes.Path;
 
 namespace MuscleCuties.UI.Controls.Shared;
@@ -41,22 +42,22 @@ public class MacroProgressGrid : ContentView
         "M10 3C7 7 5 10 5 13a5 5 0 0 0 10 0c0-3-2-6-5-10z"
     ];
 
-    private static readonly string[] MacroLabels = ["Protein", "Carbs", "Fats"];
+    private static readonly string[] MacroLabelKeys =
+        ["Nutrition_Macro_Protein", "Nutrition_Macro_Carbs", "Nutrition_Macro_Fat"];
     private static readonly string[] StrokeWidthResourceKeys =
         ["UiStrokeWidth1_7", "UiStrokeWidth1_5", "UiStrokeWidth1_6"];
     private readonly BoxView[] _fillBars = new BoxView[3];
     private readonly Path[] _icons = new Path[3];
-
+    private readonly BoxView[] _trackBars = new BoxView[3];
     private readonly Label[] _valueLabels = new Label[3];
 
     public MacroProgressGrid()
     {
-        var grid = new Grid
+        var macroRow = new AdaptiveRow
         {
-            ColumnDefinitions = [new(), new(), new()],
-            RowDefinitions = [new(GridLength.Auto), new(GridLength.Auto), new(GridLength.Auto)],
+            Columns = 3,
             ColumnSpacing = AppThemeResources.GetDouble("UiSpaceCompact"),
-            RowSpacing = AppThemeResources.GetDouble("UiSpaceMicro")
+            RowSpacing = AppThemeResources.GetDouble("UiSpaceControl")
         };
 
         var converter = new PathGeometryConverter();
@@ -76,33 +77,30 @@ public class MacroProgressGrid : ContentView
                 Aspect = Stretch.Uniform,
                 WidthRequest = AppThemeResources.GetDouble("UiDimension15"),
                 HeightRequest = AppThemeResources.GetDouble("UiDimension15"),
+                HorizontalOptions = LayoutOptions.Start,
                 VerticalOptions = LayoutOptions.Center
             };
             _icons[i] = icon;
 
             var nameLabel = new Label
             {
-                Text = MacroLabels[i],
+                Text = UiTextCatalog.Get(MacroLabelKeys[i]),
                 Style = (Style)Application.Current!.Resources["MutedLabel"]
             };
+            nameLabel.LineBreakMode = LineBreakMode.WordWrap;
 
-            var header = new HorizontalStackLayout
+            var header = new VerticalStackLayout
             {
-                Spacing = AppThemeResources.GetDouble("UiSpacing5"),
+                Spacing = AppThemeResources.GetDouble("UiSpacing2"),
                 Children = { icon, nameLabel }
             };
-            Grid.SetRow(header, 0);
-            Grid.SetColumn(header, i);
-            grid.Add(header);
 
             var valueLabel = new Label
             {
-                Style = (Style)Application.Current!.Resources["BodyStrong"]
+                Style = (Style)Application.Current!.Resources["BodyStrong"],
+                LineBreakMode = LineBreakMode.WordWrap
             };
             _valueLabels[i] = valueLabel;
-            Grid.SetRow(valueLabel, 1);
-            Grid.SetColumn(valueLabel, i);
-            grid.Add(valueLabel);
 
             var track = new BoxView
             {
@@ -111,6 +109,7 @@ public class MacroProgressGrid : ContentView
                 HorizontalOptions = LayoutOptions.Fill,
                 CornerRadius = AppThemeResources.GetDouble("UiCornerRadius2_5")
             };
+            _trackBars[i] = track;
 
             var fill = new BoxView
             {
@@ -127,16 +126,20 @@ public class MacroProgressGrid : ContentView
             {
                 Children = { track, fill }
             };
-            Grid.SetRow(barContainer, 2);
-            Grid.SetColumn(barContainer, i);
-            grid.Add(barContainer);
+
+            var tile = new VerticalStackLayout
+            {
+                Spacing = AppThemeResources.GetDouble("UiSpaceMicro"),
+                Children = { header, valueLabel, barContainer }
+            };
+            macroRow.Add(tile);
         }
 
         UpdateValueText(0, ProteinText);
         UpdateValueText(1, CarbsText);
         UpdateValueText(2, FatsText);
 
-        Content = grid;
+        Content = macroRow;
     }
 
     public string ProteinText
@@ -210,18 +213,13 @@ public class MacroProgressGrid : ContentView
 
     private void OnThemeChanged(object? sender, AppThemeChangedEventArgs e)
     {
+        var trackColor = AppThemeResources.GetColor(e.RequestedTheme, "TrackSubtleLight", "TrackSubtleDark");
         for (var i = 0; i < 3; i++)
         {
             var macroColor = AppThemeResources.GetColor(e.RequestedTheme, LightKeys[i], DarkKeys[i]);
             _icons[i].Stroke = macroColor;
             _fillBars[i].Color = macroColor;
+            _trackBars[i].Color = trackColor;
         }
-
-        var trackColor = AppThemeResources.GetColor(e.RequestedTheme, "TrackMutedLight", "TrackMutedDark");
-        if (Content is Grid grid)
-            foreach (var child in grid.Children)
-                if (child is Grid barContainer && barContainer.Children.Count == 2 &&
-                    barContainer.Children[0] is BoxView trackBox)
-                    trackBox.Color = trackColor;
     }
 }

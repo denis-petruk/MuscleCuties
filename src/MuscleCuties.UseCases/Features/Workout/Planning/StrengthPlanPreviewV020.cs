@@ -1,4 +1,7 @@
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Domain.Workout.Planning.Catalog;
+using MuscleCuties.Core.Domain.Health;
+using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
@@ -38,6 +41,10 @@ public sealed record StrengthPlanPreviewRequestV020(
     public WorkoutActivityDto? HiitUnderlyingCardioActivity { get; init; }
 
     public HiitEligibilityEvidenceInputV020? HiitEligibilityEvidence { get; init; }
+
+    /// <summary>Input contract version the caller built this request against. Null keeps older
+    /// clients working; any other value must match the build or the preview is refused.</summary>
+    public string? InputContractVersion { get; init; }
 }
 
 public sealed record ActivityEligibilityInputV020(
@@ -82,6 +89,15 @@ public sealed record StrengthPlanPreviewSourceV020(
     IReadOnlyDictionary<string, IReadOnlySet<int>> ReviewedAllowedExerciseIdsByTemplateSlot,
     IReadOnlyDictionary<string, string> TemplateSlotReviewConditions)
 {
+    public DateOnly? BirthDate { get; init; }
+    public PregnancyStatus PregnancyStatus { get; init; } = PregnancyStatus.No;
+    public string AccountTimeZoneId { get; init; } = "UTC";
+    public int DistinctCompletedWorkoutDays { get; init; }
+    public bool IsReturningAfterDetraining { get; init; }
+    public IReadOnlyList<ObservedSetRecordV2> PriorObservedSets { get; init; } = [];
+    public IReadOnlyList<CardioActualRecordV2> PriorCardioActuals { get; init; } = [];
+    public IReadOnlyList<PainRestrictionV2> PainRestrictions { get; init; } = [];
+    public DailyReadinessInputV2? DailyReadiness { get; init; }
     public IReadOnlySet<int>? SelectedActivityTypes { get; init; }
     public IReadOnlySet<int>? ExcludedExerciseIds { get; init; }
     public IReadOnlySet<DayOfWeek>? AvailableWeekdays { get; init; }
@@ -103,6 +119,8 @@ public sealed record StrengthPlanPreviewSourceV020(
     public DateOnly? CurrentAccountLocalDate { get; init; }
     public long ExperienceVersion { get; init; }
     public long AnswerVersion { get; init; }
+    public string? ObservedHistoryFingerprint { get; init; }
+    public long? ReadinessRevision { get; init; }
     public SavedActivityAnswersDto? SavedAnswers { get; init; }
     /// <summary>Activities an active injury blocks under the reviewed site/status rules.
     /// Strength styles are never listed; their safety is enforced per exercise.</summary>
@@ -118,6 +136,12 @@ public sealed record StrengthPlanPreviewSourceV020(
 
     /// <summary>True when the saved goal answer is missing or unreadable; <see cref="Goal"/> is a placeholder.</summary>
     public bool GoalAnswerMissing { get; init; }
+
+    /// <summary>User-selected glute focus, stored on the profile. Absent means no focus.</summary>
+    public bool GluteFocus { get; init; }
+
+    public IReadOnlyDictionary<int, IReadOnlyList<CatalogMuscleRow>>? MuscleContributionsByExerciseId { get; init; }
+    public EquipmentCapabilities? DraftEquipmentCapabilities { get; init; }
 }
 
 public sealed record ReviewedTemplateFloorDto(string TemplateId, int MinimumWorkingSets, int MinimumExercises,

@@ -236,7 +236,7 @@ public static class CyclePhaseDetailCatalog
                     Point("Tempo and control",
                         "Controlled eccentrics, machines, accessories, and moderate conditioning.", "Timer24"),
                     Point("Late luteal deload",
-                        "If PMS, sleep, or soreness spikes, pull back before the crash. That is strategy, not quitting.",
+                        "If PMS symptoms or sleep take a hit, drop optional work before the crash. That is strategy, not quitting.",
                         "ArrowTrendingDown24")
                 ],
                 [

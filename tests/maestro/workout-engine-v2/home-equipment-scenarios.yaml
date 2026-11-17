@@ -1,0 +1,168 @@
+appId: com.musclecuties.app
+---
+# 1. Open Workout Preferences from You tab
+- tapOn: "You|Профиль"
+- scrollUntilVisible:
+    element: "Workout Availability|Доступность для тренировок"
+    direction: DOWN
+    centerElement: true
+    timeout: 15000
+- tapOn: "Workout Availability|Доступность для тренировок"
+- extendedWaitUntil:
+    visible: "Available weekdays|Доступные дни недели"
+    timeout: 20000
+- takeScreenshot: 16_workout_preferences
+
+# 2. Switch to Bodyweight only (sliders UNCHECKED) -> verify honest upper-pull gap + setup CTA + no Slider Leg Curl
+- swipe:
+    start: "50%,70%"
+    end: "50%,30%"
+    duration: 400
+- tapOn:
+    id: WorkoutPrefsEquipmentPicker
+- repeat:
+    times: 2
+    commands:
+      - swipe:
+          start: "50%,88%"
+          end: "50%,78%"
+          duration: 300
+- tapOn: "Done|Готово"
+- tapOn: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+- extendedWaitUntil:
+    visible:
+      id: StrengthPlanApplyButton
+    timeout: 40000
+- takeScreenshot: 10_plan_generation
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: "50%,62%"
+          end: "50%,43%"
+          duration: 500
+- assertVisible:
+    id: StrengthPlanMissingGapsActionButton
+- assertNotVisible: "Slider Leg Curl"
+- takeScreenshot: 10b_plan_bw_gap
+
+# 3. Tap MissingGaps action -> confirm Sliders -> regenerate -> verify Slider Leg Curl unlocked
+- tapOn:
+    id: StrengthPlanMissingGapsActionButton
+- extendedWaitUntil:
+    visible: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+    timeout: 20000
+- tapOn:
+    id: WorkoutPrefsSlidersCheckBox
+- tapOn: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+- extendedWaitUntil:
+    visible:
+      id: StrengthPlanApplyButton
+    timeout: 40000
+- scrollUntilVisible:
+    element: ".*Slider Leg Curl.*"
+    direction: DOWN
+    speed: 15
+    timeout: 15000
+- swipe:
+    start: "50%,62%"
+    end: "50%,45%"
+    duration: 450
+- assertVisible: ".*Slider Leg Curl.*"
+- takeScreenshot: 10c_plan_bw_sliders
+
+# 4. Bands WITHOUT anchor: switch to HomeDumbbellsBands, uncheck Dumbbells, uncheck Sliders, keep Bands checked & BandAnchor unchecked
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: "50%,45%"
+          end: "50%,72%"
+          duration: 350
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: "50%,62%"
+          end: "50%,43%"
+          duration: 500
+- tapOn:
+    id: StrengthPlanMissingGapsActionButton
+- extendedWaitUntil:
+    visible: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+    timeout: 20000
+- tapOn:
+    id: WorkoutPrefsSlidersCheckBox
+- tapOn:
+    id: WorkoutPrefsEquipmentPicker
+- swipe:
+    start: "50%,78%"
+    end: "50%,88%"
+    duration: 300
+- tapOn:
+    point: "50%,91%"
+- tapOn: "Done|Готово"
+- tapOn:
+    id: WorkoutPrefsDumbbellsCheckBox
+- tapOn: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+- extendedWaitUntil:
+    visible:
+      id: StrengthPlanApplyButton
+    timeout: 40000
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: "50%,62%"
+          end: "50%,43%"
+          duration: 500
+- assertVisible:
+    id: StrengthPlanMissingGapsActionButton
+- assertNotVisible: "^Resistance Band Row$"
+- assertNotVisible: "^Resistance Band Chest Press$"
+- takeScreenshot: 10d_plan_bands_no_anchor
+
+# 5. Confirm Band Anchor -> regenerate -> verify Band Row/Chest Press unlocked & Apply replaces active plan
+- tapOn:
+    id: StrengthPlanMissingGapsActionButton
+- extendedWaitUntil:
+    visible: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+    timeout: 20000
+- tapOn:
+    id: WorkoutPrefsBandAnchorCheckBox
+- tapOn: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+- extendedWaitUntil:
+    visible:
+      id: StrengthPlanApplyButton
+    timeout: 40000
+- repeat:
+    times: 4
+    commands:
+      - swipe:
+          start: "50%,62%"
+          end: "50%,43%"
+          duration: 500
+- tapOn: "Plan details|Детали плана"
+- scrollUntilVisible:
+    element: "^Resistance Band Row$|^Resistance Band Chest Press$"
+    direction: DOWN
+    speed: 15
+    timeout: 15000
+- swipe:
+    start: "50%,62%"
+    end: "50%,45%"
+    duration: 450
+- assertVisible: "^Resistance Band Row$|^Resistance Band Chest Press$"
+- takeScreenshot: 10e_plan_bands_with_anchor
+- tapOn:
+    id: StrengthPlanApplyButton
+- runFlow:
+    when:
+      visible: "Replace your current plan.*|Заменить текущий план.*"
+    commands:
+      - tapOn:
+          text: "Apply plan|Применить план"
+          below: "Replace your current plan.*|Заменить текущий план.*"
+- extendedWaitUntil:
+    visible: "Today|Сегодня|Train|Тренировки"
+    timeout: 40000

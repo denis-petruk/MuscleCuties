@@ -1,6 +1,8 @@
+using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Graphics;
 
 using MuscleCuties.UI.Resources.Styles;
+using MuscleCuties.UI.Services.Formatting;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 
@@ -20,13 +22,19 @@ public sealed record ScheduleSessionChip(
 ///     Represents one day in the 7-day Mon–Sun cycle-synced schedule strip
 ///     shown on the WorkoutPage.
 /// </summary>
-public sealed class ScheduleDayItem
+public sealed partial class ScheduleDayItem : ObservableObject
 {
+    /// <summary>True when this is the day whose featured workout is open.</summary>
+    [ObservableProperty] private bool _isSelected;
+
     /// <summary>Short day label (MON, TUE, … SUN).</summary>
     public string DayLabel { get; init; } = string.Empty;
 
     /// <summary>Calendar date for this schedule slot.</summary>
     public DateTime Date { get; init; }
+
+    /// <summary>Day number rendered through the shared value formatter.</summary>
+    public string DayNumberText => DisplayFormat.DayNumberPadded(Date);
 
     /// <summary>0-indexed week within the multi-week schedule (0..3).</summary>
     public int WeekIndex { get; init; }

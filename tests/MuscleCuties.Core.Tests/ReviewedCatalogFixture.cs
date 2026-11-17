@@ -32,7 +32,9 @@ internal static class ReviewedCatalogFixture
             [EquipmentSet.BackExtension45] = ExerciseEquipmentKind.BackExtension45,
             [EquipmentSet.PullUpBar] = ExerciseEquipmentKind.PullUpBar,
             [EquipmentSet.Kettlebell] = ExerciseEquipmentKind.Kettlebell,
-            [EquipmentSet.ClimbingWall] = ExerciseEquipmentKind.ClimbingWall
+            [EquipmentSet.ClimbingWall] = ExerciseEquipmentKind.ClimbingWall,
+            [EquipmentSet.Sliders] = ExerciseEquipmentKind.Sliders,
+            [EquipmentSet.BandAnchor] = ExerciseEquipmentKind.BandAnchor
         };
         return map.Where(pair => (required & pair.Key) == pair.Key).Select(pair => pair.Value).ToHashSet();
     }

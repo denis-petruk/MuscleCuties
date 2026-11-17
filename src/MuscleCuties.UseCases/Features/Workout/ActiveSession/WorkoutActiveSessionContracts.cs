@@ -64,7 +64,9 @@ public sealed record ActiveExerciseSetInput(
     int RepsCompleted,
     decimal? Rpe,
     bool IsWarmup,
-    int RestTimeSeconds);
+    int RestTimeSeconds,
+    int? LeftSideReps = null,
+    int? RightSideReps = null);
 
 public sealed record ActiveExerciseSetSnapshot(
     Guid SetId,
@@ -76,7 +78,9 @@ public sealed record ActiveExerciseSetSnapshot(
     decimal? Rpe,
     bool IsWarmup,
     int RestTimeSeconds,
-    DateTime UpdatedAtUtc);
+    DateTime UpdatedAtUtc,
+    int? LeftSideReps = null,
+    int? RightSideReps = null);
 
 public sealed record ActiveWorkoutSessionSnapshot(
     Guid SessionId,

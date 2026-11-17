@@ -166,6 +166,10 @@ public sealed class ServerRouteParityTests
         const int warmSamples = 20;
         const string reportEnvironmentVariable = "MC_WRITE_LATENCY_REPORT";
         var databaseConnectionString = Environment.GetEnvironmentVariable("MC_LATENCY_POSTGRES");
+        Assert.True(!string.IsNullOrWhiteSpace(databaseConnectionString),
+            "MC_LATENCY_POSTGRES is required for the all-route latency gate. Run " +
+            "./scripts/prepare-integration-postgres.sh, source .env.integration, and rerun. " +
+            "The synthetic unreachable-DB fallback is intentionally not measured.");
         var owner = Guid.NewGuid();
 
         await using var mapFixture = await ServerFixture.StartAsync(databaseConnectionString: databaseConnectionString);
@@ -486,6 +490,26 @@ public sealed class ServerRouteParityTests
         var response = await fixture.Client.PutAsJsonAsync(ProfileRoute, new { ExpectedVersion = 0 });
 
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task WorkoutPreferenceWriteForwardsGluteFocusToProfileStore()
+    {
+        await using var fixture = await ServerFixture.StartAsync();
+        fixture.SetBearer(Guid.NewGuid());
+
+        var response = await fixture.Client.PutAsJsonAsync("/api/v1/profile/workout-preferences", new
+        {
+            expectedVersion = 1,
+            activityTypes = new[] { 8 },
+            availableWeekdays = new[] { 1 },
+            activitySessionDurationsMinutes = new Dictionary<int, int> { [8] = 30 },
+            equipmentLevel = "FullGym",
+            gluteFocus = true
+        });
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.True(fixture.Profile.LastWorkoutPreferences?.GluteFocus);
     }
 
     [Fact]

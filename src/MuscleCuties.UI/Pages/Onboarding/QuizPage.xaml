@@ -200,9 +200,9 @@
                         Style="{StaticResource MutedLabel}"
                         LineBreakMode="WordWrap"
                         IsVisible="{Binding IsCurrentQuestionAvailableWeekdays}" />
-                    <!-- D1/OD-2: bodyweight-only is not offered in the beta. -->
+                    <!-- Gate 60: bodyweight-only and home equipment options are available; honest limitations are disclosed. -->
                     <Label
-                        Text="{loc:LocalizedText Workout_Generation_EquipmentBetaNotice}"
+                        Text="{loc:LocalizedText Workout_Generation_QuizEquipmentNotice}"
                         Style="{StaticResource MutedLabel}"
                         LineBreakMode="WordWrap"
                         IsVisible="{Binding IsCurrentQuestionEquipment}" />
@@ -262,6 +262,16 @@
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}"
+                          MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                          IsVisible="{Binding IsCurrentQuestionGoal}">
+                        <CheckBox AutomationId="OnboardingGluteFocusCheckBox"
+                                  IsChecked="{Binding GluteFocus, Mode=TwoWay}"
+                                  VerticalOptions="Center"
+                                  SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_GluteFocus}" />
+                        <Label Grid.Column="1" Text="{loc:LocalizedText Profile_WorkoutPrefs_GluteFocus}"
+                               Style="{StaticResource BodyLabel}" VerticalOptions="Center" LineBreakMode="WordWrap" />
+                    </Grid>
                     <Label
                         Text="{Binding SelectedWeekdayCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_SelectedWeekdaysFormat}"
                         Style="{StaticResource MutedCentered}"

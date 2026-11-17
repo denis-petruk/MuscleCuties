@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
@@ -146,9 +147,15 @@ public static class WorkoutActivityOptionCatalog
         return new WorkoutActivityOptionItem
         {
             ActivityType = definition.ActivityType,
-            Title = definition.Title,
-            Subtitle = definition.Subtitle,
-            GroupTitle = GetGroupTitle(definition.Group),
+            // Activity copy is authored in English; the runtime catalog translates it on a Russian
+            // device so a card never mixes languages with the rest of the screen.
+            Title = UiTextCatalog.TranslateRuntimeText(definition.Title),
+            Subtitle = UiTextCatalog.TranslateRuntimeText(definition.Subtitle),
+            UnavailableReason = definition.ActivityType == WorkoutActivityDto.Hiit &&
+                                !selectedTypes.Contains(WorkoutActivityDto.Hiit)
+                ? UiTextCatalog.Get("Profile_WorkoutPrefs_HiitNotAvailable")
+                : string.Empty,
+            GroupTitle = UiTextCatalog.TranslateRuntimeText(GetGroupTitle(definition.Group)),
             GroupDescription = string.Empty,
             Tag = GetGroupTag(definition.Group),
             IconGlyph = definition.IconGlyph,

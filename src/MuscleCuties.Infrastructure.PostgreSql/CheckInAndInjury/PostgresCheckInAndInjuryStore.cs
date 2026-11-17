@@ -133,7 +133,8 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 row.Steps7dAvg == steps7dAvg && row.Energy == request.Energy && row.Pain == request.Pain &&
                 row.Bloating == request.Bloating && row.WeightKg == request.WeightKg &&
                 row.SleepQuality == request.SleepQuality && row.Soreness == request.Soreness &&
-                row.PlanningSleepQuality == request.PlanningSleepQuality && row.PlanningSoreness == request.PlanningSoreness &&
+                row.PlanningSleepQuality == request.PlanningSleepQuality &&
+                row.PlanningFatigue == request.PlanningFatigue && row.PlanningSoreness == request.PlanningSoreness &&
                 row.PlanningStress == request.PlanningStress && row.PlanningTimeZoneId == request.PlanningTimeZoneId &&
                 row.PreviousDayLoad == request.PreviousDayLoad && row.ReadinessScore == readiness.Score &&
                 row.ReadinessTier == readiness.Tier && row.Phase == effectivePhase.ToString())
@@ -163,6 +164,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             row.SleepQuality = request.SleepQuality;
             row.Soreness = request.Soreness;
             row.PlanningSleepQuality = request.PlanningSleepQuality;
+            row.PlanningFatigue = request.PlanningFatigue;
             row.PlanningSoreness = request.PlanningSoreness;
             row.PlanningStress = request.PlanningStress;
             row.PlanningTimeZoneId = request.PlanningTimeZoneId;
@@ -325,6 +327,12 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             row.ClinicianAdvisedAvoid = request.ClinicianAdvisedAvoid;
             row.Date = request.Date;
             row.ClearedDate = isClearing ? originalClearanceDate : null;
+            if (!isClearing && (isNewInjury || wasAlreadyCleared || row.ReportedAtUtc is null))
+                row.ReportedAtUtc = timeProvider.GetUtcNow().UtcDateTime;
+            if (isClearing && !wasAlreadyCleared)
+                row.ClearedAtUtc = timeProvider.GetUtcNow().UtcDateTime;
+            else if (!isClearing)
+                row.ClearedAtUtc = null;
 
             if (dbContext.Entry(row).State == EntityState.Detached)
                 dbContext.WorkoutInjuryLogs.Add(row);
@@ -658,7 +666,8 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             row.PlanningStress,
             row.PlanningTimeZoneId,
             row.PlanningRecordedAtUtc is { } recorded ? new DateTimeOffset(DateTime.SpecifyKind(recorded, DateTimeKind.Utc)) : null,
-            row.PlanningRevision);
+            row.PlanningRevision,
+            row.PlanningFatigue);
 
     private static InjuryObservationRecord MapInjury(WorkoutInjuryLogRecord row) =>
         new(
@@ -672,7 +681,10 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             InjuryObservationRule.TryNormalizeWorseningTrigger(row.WorseningTrigger, out var worsening)
                 ? worsening
                 : InjuryWorseningTrigger.NotAnswered,
-            row.ClinicianAdvisedAvoid);
+            row.ClinicianAdvisedAvoid,
+            row.ReportedAtUtc is { } reported && !string.Equals(row.Status, ClearedStatus, StringComparison.OrdinalIgnoreCase)
+                ? new DateTimeOffset(DateTime.SpecifyKind(reported, DateTimeKind.Utc)).AddHours(
+                    MuscleCuties.Core.Domain.Workout.Planning.V2.WorkoutPolicyV2.PainReassessmentHours) : null);
 
     private static CyclePhase TryParsePhase(string? phase) =>
         Enum.TryParse<CyclePhase>(phase, ignoreCase: true, out var parsed) && Enum.IsDefined(parsed)

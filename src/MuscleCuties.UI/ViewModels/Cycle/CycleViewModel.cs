@@ -7,6 +7,8 @@ using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
+using MuscleCuties.UI.Services.Formatting;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
@@ -70,6 +72,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     [ObservableProperty] private string _selectedCalendarDateText = string.Empty;
 
     private CycleDayItem? _selectedCalendarDay;
+    private DateTime? _selectedDateBeforeCalendarEdit;
     [ObservableProperty] private string _selectedCalendarPhaseText = string.Empty;
     private CyclePhase? _suggestedPhase;
     [ObservableProperty] private bool _useDarkTheme;
@@ -114,7 +117,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     }
 
     public string PhaseLabel => CurrentPhase.ToString();
-    public string CurrentMonthLabel => DisplayedMonth.ToString("MMMM yyyy", CultureInfo.CurrentCulture);
+    public string CurrentMonthLabel => DisplayFormat.MonthYearFull(DisplayedMonth);
 
     public string CycleDaySummary => HasActiveCycle
         ? _cachedPrediction?.PredictionSource == "default"
@@ -133,7 +136,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     public string PredictionSummary => HasActiveCycle
         ? IsPredictionCached
             ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Format("Ui_Cycle_CachedEstimateFormat",
-                _cachedPrediction!.CachedAsOfDate!.Value.ToString("d", CultureInfo.CurrentCulture))
+                DisplayFormat.ShortDate(_cachedPrediction!.CachedAsOfDate!.Value))
             : _cachedPrediction?.PredictionSource == "default"
                 ? $"Estimate using a {CycleLength}-day baseline; personal cycle length unavailable"
                 : $"Prediction from {CycleLength}d cycle"
@@ -355,6 +358,15 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             var nextPhase = HasActiveCycle
                 ? _phaseProjection.GetNextPhase(new NextCyclePhaseInputDto(CurrentPhase)).NextPhase
                 : CyclePhase.Menstrual;
+
+            var confirmed = await Shell.Current.DisplayAlertAsync(
+                UiTextCatalog.Get("Cycle_Advance_ConfirmTitle"),
+                UiTextCatalog.Get("Cycle_Advance_ConfirmMessage"),
+                UiTextCatalog.Get("Cycle_Advance_ConfirmAction"),
+                UiTextCatalog.Get("Common_Cancel"));
+            if (!confirmed)
+                return;
+
             var result = await _phaseEdit.SaveAsync(new CyclePhaseEditRequest(CurrentDate, nextPhase,
                 "Manual phase advance"));
 
@@ -397,9 +409,11 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         _suggestedPhase = null;
         OnPropertyChanged(nameof(HasSuggestedPhase));
         HasPhaseJumpWarning = false;
-        PhaseEditStatusText = string.Empty;
+        PhaseEditStatusText = day.Date.Value.Date > CurrentDate.Date
+            ? UiTextCatalog.Get("Cycle_PhaseEdit_FutureHint")
+            : string.Empty;
         CalendarEditHintText = string.Empty;
-        SelectedCalendarDateText = day.Date.Value.ToString("D", CultureInfo.CurrentCulture);
+        SelectedCalendarDateText = DisplayFormat.FullDate(day.Date.Value);
         SelectedCalendarPhaseText = day.IsNeutral
             ? "Neutral, ready when you are"
             : day.HasRecordedObservation
@@ -420,9 +434,21 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         await _openPhaseDetailsAsync(phase.Phase);
     }
 
-    private void CloseDatePhaseModal()
+    private void CloseDatePhaseModal() => CloseDatePhaseModal(restoreSelection: true);
+
+    private void CloseDatePhaseModal(bool restoreSelection)
     {
         IsDatePhaseModalVisible = false;
+        if (restoreSelection &&
+            _selectedDateBeforeCalendarEdit is { } previous &&
+            previous.Date != SelectedDate.Date)
+        {
+            SelectedDate = previous;
+            SyncCalendarSelection();
+            RefreshCalendarStrip(CalendarDays, SelectedDate, CurrentDate, UseDarkTheme);
+        }
+
+        _selectedDateBeforeCalendarEdit = null;
     }
 
     private void SelectPhaseOption(CyclePhaseOptionItem? option)
@@ -445,6 +471,12 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     {
         if (_selectedCalendarDay?.Date is not DateTime date)
             return;
+
+        if (date.Date > CurrentDate.Date)
+        {
+            PhaseEditStatusText = UiTextCatalog.Get("Cycle_PhaseEdit_FutureHint");
+            return;
+        }
 
         var selectedPhase = GetSelectedPhase();
         if (selectedPhase is null)
@@ -490,7 +522,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     private bool CanSaveDatePhase()
     {
-        return _selectedCalendarDay?.Date is not null;
+        return _selectedCalendarDay?.Date is DateTime date && date.Date <= CurrentDate.Date;
     }
 
     private async Task SavePhaseForDateAsync(DateTime date, CyclePhase phase, string note)
@@ -514,8 +546,10 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 return;
             }
 
-            CloseDatePhaseModal();
+            CloseDatePhaseModal(restoreSelection: false);
             await RefreshCycleDataAsync();
+            CalendarEditHintText = UiTextCatalog.Format(
+                "Cycle_PhaseEdit_SavedFormat", DisplayFormat.DayMonth(date));
             NotifyCycleMutated();
         }
         catch (Exception ex)
@@ -541,7 +575,11 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     private static string FormatLastPhaseLog(CyclePhaseEntry? log)
     {
-        return log is null ? "No shift logged yet" : $"{log.Phase} logged {log.LoggedAt:MMM d}";
+        return log is null
+            ? "No shift logged yet"
+            : MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+                "Cycle_Calendar_LastLogFormat",
+                DisplayFormat.DayMonth(log.LoggedAt));
     }
 
     private ObservableCollection<CycleDayItem> BuildCalendarDays(
@@ -635,9 +673,9 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         return CycleCalendarItemBuilder.GetNeutralDayTextColor(useDarkTheme);
     }
 
-    private static Color GetTodayDayTextColor(bool useDarkTheme)
+    private static Color GetTodayDayTextColor(bool isNeutral, bool useDarkTheme)
     {
-        return CycleCalendarItemBuilder.GetTodayDayTextColor(useDarkTheme);
+        return CycleCalendarItemBuilder.GetTodayDayTextColor(isNeutral, useDarkTheme);
     }
 
     private static Color GetPredictedDayStrokeColor(CyclePhase phase, bool useDarkTheme)
@@ -834,7 +872,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                     ? GetNeutralDayBackground(day.IsToday, UseDarkTheme)
                     : GetDayBackground(day.Phase, day.IsToday, UseDarkTheme),
                 TextColor = day.IsToday
-                    ? GetTodayDayTextColor(UseDarkTheme)
+                    ? GetTodayDayTextColor(day.IsNeutral, UseDarkTheme)
                     : day.IsNeutral
                         ? GetNeutralDayTextColor(UseDarkTheme)
                         : GetPhaseTextColor(day.Phase, UseDarkTheme),

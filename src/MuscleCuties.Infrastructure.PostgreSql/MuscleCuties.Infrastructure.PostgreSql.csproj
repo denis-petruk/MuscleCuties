@@ -36,6 +36,10 @@
         <EmbeddedResource Include="Persistence/Schema/005_observed_set_actuals.sql"/>
         <EmbeddedResource Include="Persistence/Schema/006_exercise_definition_source_id.sql"/>
         <EmbeddedResource Include="Persistence/Schema/007_deload_offer_idempotency.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/008_glute_focus.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/009_checkin_fatigue.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/010_unilateral_observed_sets.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/011_pain_reassessment_timestamps.sql"/>
         <EmbeddedResource Include="Persistence/Schema/security.sql"/>
         <EmbeddedResource Include="Persistence/Schema/schema_supplement.sql"/>
         <EmbeddedResource Include="Persistence/Seed/CanonicalCatalogManifest.json"/>

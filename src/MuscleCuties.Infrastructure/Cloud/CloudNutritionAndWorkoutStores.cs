@@ -568,6 +568,11 @@ public sealed class CloudWorkoutSessionActionStore(
     public async Task SetExerciseOptionalAsync(SetWorkoutExerciseOptionalRequest request, CancellationToken cancellationToken) =>
         CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<SetWorkoutExerciseOptionalRequest, object>(
             HttpMethod.Put, "/api/v1/workouts/optional-exercise", request, cancellationToken: cancellationToken).ConfigureAwait(false), "mark optional workout exercise");
+
+    public async Task SplitSupersetAsync(SplitWorkoutSupersetRequest request, CancellationToken cancellationToken) =>
+        CloudStoreResponse.RequireSuccess(await apiClient.SendMutationAsync<SplitWorkoutSupersetRequest, object>(
+            HttpMethod.Put, "/api/v1/workouts/day-sessions/superset-split", request, cancellationToken: cancellationToken)
+            .ConfigureAwait(false), "split workout superset");
 }
 
 public sealed class CloudWorkoutArchiveStore(

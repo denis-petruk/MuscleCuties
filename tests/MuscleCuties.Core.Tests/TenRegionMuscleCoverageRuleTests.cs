@@ -5,6 +5,31 @@ namespace MuscleCuties.Core.Tests;
 
 public sealed class TenRegionMuscleCoverageRuleTests
 {
+    [Theory]
+    [InlineData("Adductors")]
+    [InlineData("Adductor")]
+    [InlineData("HipAdductors")]
+    [InlineData("HipAdduction")]
+    public void Adductor_only_metadata_does_not_count_as_glute_exposure(string metadata)
+    {
+        var result = TenRegionMuscleCoverageRule.Evaluate([new[] { metadata }], scheduledStrengthDays: 1);
+
+        Assert.Equal(0m, result.WeeklyExposures[PrimaryMuscleRegion.Glutes]);
+        Assert.Contains(PrimaryMuscleRegion.Glutes, result.BelowMinimum);
+    }
+
+    [Theory]
+    [InlineData("Glutes")]
+    [InlineData("HipHinge")]
+    [InlineData("HipThrust")]
+    public void Actual_glute_and_existing_compound_coverage_remain_counted(string gluteMetadata)
+    {
+        var result = TenRegionMuscleCoverageRule.Evaluate(
+            [new[] { "Adductors", gluteMetadata }], scheduledStrengthDays: 1);
+
+        Assert.Equal(1m, result.WeeklyExposures[PrimaryMuscleRegion.Glutes]);
+    }
+
     [Fact]
     public void ExactlyTenPrimaryRegionsAreDefined()
     {

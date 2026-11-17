@@ -1,0 +1,53 @@
+appId: com.musclecuties.app
+---
+- runFlow:
+    when:
+      visible:
+        id: WorkoutSessionNextExerciseButton
+    commands:
+      - swipe:
+          start: "50%,40%"
+          end: "50%,78%"
+          duration: 400
+      - scrollUntilVisible:
+          element:
+            id: "WarmupSet1(Reps|LeftReps)|WorkoutSessionAddSetButton"
+          direction: DOWN
+          centerElement: true
+          timeout: 15000
+      - runFlow:
+          file: log-set.yaml
+          env:
+            QA_SET_PREFIX: WarmupSet1
+      - scrollUntilVisible:
+          element:
+            id: "WorkingSet1(Reps|LeftReps)|WorkoutSessionAddSetButton"
+          direction: DOWN
+          centerElement: true
+          timeout: 15000
+      - runFlow:
+          file: log-set.yaml
+          env:
+            QA_SET_PREFIX: WorkingSet1
+      - scrollUntilVisible:
+          element:
+            id: "WorkingSet2(Reps|LeftReps)|WorkoutSessionAddSetButton"
+          direction: DOWN
+          centerElement: true
+          timeout: 15000
+      - runFlow:
+          file: log-set.yaml
+          env:
+            QA_SET_PREFIX: WorkingSet2
+      - scrollUntilVisible:
+          element:
+            id: "WorkingSet3(Reps|LeftReps)|WorkoutSessionAddSetButton"
+          direction: DOWN
+          centerElement: true
+          timeout: 15000
+      - runFlow:
+          file: log-set.yaml
+          env:
+            QA_SET_PREFIX: WorkingSet3
+      - tapOn:
+          id: WorkoutSessionNextExerciseButton

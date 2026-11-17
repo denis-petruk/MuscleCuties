@@ -8,6 +8,7 @@ using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Api;
@@ -16,6 +17,7 @@ using MuscleCuties.UseCases.Features.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
@@ -62,6 +64,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _activityIntroIntensity = string.Empty;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivityPrescription))]
     private string _activityPrescriptionText = string.Empty;
+    private string _sessionWarmupText = string.Empty;
+    private string _sessionFinisherText = string.Empty;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasCelebration))]
     private CelebrationType _celebration;
@@ -311,7 +315,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         "Workout_Session_ExercisePositionFormat", CurrentExerciseIndex + 1, TotalExercisesInActivity);
     public string TipsButtonText => UiTextCatalog.Get(
         IsTipsExpanded ? "Workout_Session_TipsHide" : "Workout_Session_TipsShow");
-    public string RestTimerDisplay => $"{RestTimerRemainingSeconds / 60:00}:{RestTimerRemainingSeconds % 60:00}";
+    public string RestTimerDisplay => DisplayFormat.Timer(RestTimerRemainingSeconds);
 
     public double RestTimerProgress => RestTimerTotalSeconds > 0
         ? Math.Clamp((double)RestTimerRemainingSeconds / RestTimerTotalSeconds, 0, 1)
@@ -436,6 +440,16 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             var detail = await _session.GetDetailAsync(workoutDayId);
             var existingSession = await _session.GetPlannedSessionAsync(workoutDayId);
             _isRestDay = detail.IsRestDay;
+            _sessionWarmupText = detail.GeneralWarmupMinutes is > 0
+                ? UiTextCatalog.Format("Workout_Session_GeneralWarmupFormat", detail.GeneralWarmupMinutes.Value)
+                : string.Empty;
+            _sessionFinisherText = detail.AttachedFinisher is { } finisher
+                ? UiTextCatalog.Format("Workout_Session_FinisherFormat", finisher.DurationMinutes,
+                    WorkoutActivityOptionCatalog.Build(Enum.GetValues<WorkoutActivityDto>().ToHashSet())
+                        .FirstOrDefault(option => (int)option.ActivityType == finisher.ActivityTypeId)?.Title ??
+                    UiTextCatalog.Get("Workout_Session_FinisherActivity"),
+                    finisher.TargetRpeMin, finisher.TargetRpeMax)
+                : string.Empty;
             OnPropertyChanged(nameof(CanStartActivity));
             OnPropertyChanged(nameof(IsRestDaySession));
             OnPropertyChanged(nameof(ShowStartButton));
@@ -588,7 +602,12 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             : UiTextCatalog.Get(targets.Contains("steady", StringComparison.OrdinalIgnoreCase)
                 ? "Workout_Session_SteadyEffort"
                 : "Workout_Session_ComfortableEffort");
-        ActivityPrescriptionText = FormatPrescription(SelectedActivity.Prescription);
+        var prescription = FormatPrescription(SelectedActivity.Prescription);
+        if (SelectedActivity.Tag.Equals("STRENGTH", StringComparison.OrdinalIgnoreCase))
+            prescription = string.Join(Environment.NewLine,
+                new[] { _sessionWarmupText, prescription, _sessionFinisherText }
+                    .Where(text => !string.IsNullOrWhiteSpace(text)));
+        ActivityPrescriptionText = prescription;
     }
 
     private void ApplyFailure(ApiFailureNotice notice)
@@ -952,7 +971,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         var ids = activity.Exercises.Select(exercise => exercise.WorkoutDayExerciseId).ToHashSet();
         var volume = _savedLogs.Where(pair => ids.Contains(pair.Key))
             .Sum(pair => (double)pair.Value.CompletedSets * pair.Value.CompletedReps * (pair.Value.WeightKg ?? 0));
-        SummaryTotalVolume = volume >= 1000 ? $"{volume / 1000:0.#} t" : $"{volume:0.#} kg";
+        SummaryTotalVolume = DisplayFormat.SummaryVolume(volume);
         SummaryPrCount = _prIds.Count(ids.Contains);
         SummaryDuration = timer is null || timer.Elapsed.TotalMinutes < 1
             ? UiTextCatalog.Get("Workout_Session_SummaryDurationUnderMinute")
@@ -1042,8 +1061,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             ? UiTextCatalog.Format("Workout_Session_SummaryEffortFormat", rating)
             : UiTextCatalog.Get("Workout_Session_SummaryEffortNotRated");
         SummaryDistanceText = distanceKm is { } km
-            ? UiTextCatalog.Format("Workout_Session_SummaryDistanceFormat",
-                km.ToString("0.##", CultureInfo.CurrentCulture))
+            ? UiTextCatalog.Format("Workout_Session_SummaryDistanceFormat", DisplayFormat.Decimal2((double)km))
             : string.Empty;
         SummaryTitle = "Workout_Session_TimedSummaryTitle";
         SummaryStatusText = "Workout_Session_TimedSummaryStatus";
@@ -1774,9 +1792,42 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }));
     }
 
-    private static IReadOnlyList<WorkoutActivitySectionItem> GetActivities(WorkoutSessionDetailDto detail)
+    private IReadOnlyList<WorkoutActivitySectionItem> GetActivities(WorkoutSessionDetailDto detail)
     {
-        return WorkoutSessionPresentationMapper.MapActivities(detail);
+        var activities = WorkoutSessionPresentationMapper.MapActivities(detail);
+        foreach (var exercise in activities.SelectMany(activity => activity.Exercises))
+            exercise.SplitSupersetAction = SplitSupersetAsync;
+        return activities;
+    }
+
+    private async Task SplitSupersetAsync(WorkoutExerciseItem exercise)
+    {
+        if (_plannedSessionId is not { } sessionId || !_sessionCreated || !exercise.SupersetGroupId.HasValue)
+        {
+            ErrorText = "Workout_Session_SplitSupersetUnavailable";
+            return;
+        }
+
+        var groupId = exercise.SupersetGroupId.Value;
+        try
+        {
+            IsBusy = true;
+            await _session.SplitSupersetAsync(new SplitWorkoutSupersetRequest(
+                sessionId, exercise.WorkoutDayExerciseId, groupId));
+            foreach (var member in ActivityCards.SelectMany(activity => activity.Exercises)
+                         .Where(item => item.SupersetGroupId == groupId))
+                member.SupersetGroupId = null;
+            ErrorText = string.Empty;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[WorkoutSessionViewModel] Failed to split superset ({ex.GetType().Name}): {ex.Message}");
+            ErrorText = "Workout_Session_SplitSupersetFailed";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     private static string BuildPhaseNote(CyclePhase phase)
@@ -1804,7 +1855,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     private bool ValidateInputs(WorkoutExerciseItem exercise)
     {
-        if (exercise.UsesStrengthMetrics && (ParsePositiveInt(exercise.LoggedSetsText) == 0 ||
+        if (exercise.IsUnilateral && exercise.Sets.Any(set => !set.IsWarmup &&
+                (!set.LeftSideReps.HasValue || !set.RightSideReps.HasValue)))
+            ErrorText = "Workout_Session_SideRepsRequired";
+        else if (exercise.UsesStrengthMetrics && (ParsePositiveInt(exercise.LoggedSetsText) == 0 ||
                                              ParsePositiveInt(exercise.LoggedRepsText) == 0))
             ErrorText = "Ui_Workout_Error_SetsReps";
         else if (exercise.UsesStrengthMetrics && exercise.UsesWeight &&
@@ -1878,11 +1932,15 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             item.UsesStrengthMetrics && editedSets.Count > 0,
             editedSets.Select(set => new EditableObservedSet(
                 set.SetNumber,
-                set.RepsCompleted,
-                item.UsesWeight ? (decimal)set.WeightKg : 0m,
+                set.EffectiveReps,
+                item.UsesWeight
+                    ? (decimal)(ParseOptionalFloat(set.WeightInput) ?? ParseOptionalFloat(item.LoggedWeightText) ?? set.WeightKg)
+                    : 0m,
                 set.Rir is >= 0 and <= 10 ? (int)Math.Round(set.Rir.Value) : null,
                 set.TechniqueAcceptable,
-                set.IsWarmup)));
+                set.IsWarmup,
+                set.LeftSideReps,
+                set.RightSideReps)));
         var completedSets = observedSets is { Count: > 0 }
             ? observedSets.Count
             : item.UsesStrengthMetrics ? ParsePositiveInt(item.LoggedSetsText) : 0;

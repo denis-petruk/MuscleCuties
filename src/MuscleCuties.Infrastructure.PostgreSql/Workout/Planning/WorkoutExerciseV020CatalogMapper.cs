@@ -133,6 +133,8 @@ public static class WorkoutExerciseV020CatalogMapper
         MapFlag(EquipmentSet.PullUpBar, ExerciseEquipmentKind.PullUpBar);
         MapFlag(EquipmentSet.Kettlebell, ExerciseEquipmentKind.Kettlebell);
         MapFlag(EquipmentSet.ClimbingWall, ExerciseEquipmentKind.ClimbingWall);
+        MapFlag(EquipmentSet.Sliders, ExerciseEquipmentKind.Sliders);
+        MapFlag(EquipmentSet.BandAnchor, ExerciseEquipmentKind.BandAnchor);
 
         var knownFlags = Enum.GetValues<EquipmentSet>()
             .Where(flag => flag != EquipmentSet.None)

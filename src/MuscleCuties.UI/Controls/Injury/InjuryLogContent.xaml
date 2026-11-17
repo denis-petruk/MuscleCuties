@@ -7,6 +7,7 @@
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
     xmlns:ui="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
+    xmlns:shared="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="vm:InjuryLogViewModel">
     <ContentView.Resources>
         <DataTemplate x:Key="InjuryRow" x:DataType="ui:InjuryLogItem">
@@ -21,7 +22,7 @@
                 </SwipeView.RightItems>
                 <Border Style="{StaticResource CardSecondary}">
                     <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceControl}">
-                        <Grid Grid.ColumnSpan="2" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
+                        <Grid Grid.ColumnSpan="2" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                             <Label Grid.Row="0"
                                    Text="{Binding SiteName, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource CardTitle}"
@@ -41,6 +42,9 @@
                                    Text="{Binding SinceText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Injury_LogContent_SinceValue}"
                                    Style="{StaticResource CaptionLabel}"
                                    LineBreakMode="WordWrap" />
+                            <Label Grid.Row="3" Style="{StaticResource BodyLabel}" LineBreakMode="WordWrap"
+                                   IsVisible="{Binding IsPainReassessmentDue}"
+                                   Text="{loc:LocalizedText Injury_PainReassessmentDue}" />
                         </Grid>
                         <Button Grid.Row="1" Text="{loc:LocalizedText Injury_LogContent_Clear}"
                                 Style="{StaticResource ButtonSecondary}" VerticalOptions="Center"
@@ -172,9 +176,10 @@
                                     BindableLayout.ItemsSource="{Binding ClinicianAdviceOptions}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="ui:InjuryAdviceOption">
-                                    <Border Style="{StaticResource ChoiceCellCompact}"
+                                    <shared:SelectionCell Style="{StaticResource ChoiceCellCompact}"
                                             Margin="{StaticResource UiInsets2}"
                                             FlexLayout.Grow="1"
+                                            IsSelected="{Binding IsSelected}"
                                             SemanticProperties.Description="{Binding LabelKey, Converter={StaticResource LocalizedStringConverter}}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer
@@ -183,7 +188,7 @@
                                         </Border.GestureRecognizers>
                                         <Label Text="{Binding LabelKey, Converter={StaticResource LocalizedStringConverter}}"
                                                Style="{StaticResource ChoiceCellLabel}" />
-                                    </Border>
+                                    </shared:SelectionCell>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </FlexLayout>
