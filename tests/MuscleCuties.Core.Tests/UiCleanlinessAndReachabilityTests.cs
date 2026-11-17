@@ -340,6 +340,20 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
+    public void Auth_pages_anchor_the_account_switch_footer_and_use_the_shared_back_header()
+    {
+        var login = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Auth", "LoginPage.xaml"));
+        var register = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Auth", "RegisterPage.xaml"));
+
+        Assert.Contains("LoginCreateAccountRow", login);
+        Assert.Contains("Grid.Row=\"2\"", login);
+        Assert.DoesNotContain("UiInsets0_24_0_0", login);
+
+        Assert.Contains("<sharedControls:PageHeader", register);
+        Assert.Contains("BackCommand=\"{Binding GoBackCommand}\"", register);
+    }
+
+    [Fact]
     public void Shared_styles_enforce_2_button_styles_2_card_styles_and_shared_surfaces()
     {
         var stylesPath = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Resources", "Styles", "Styles.xaml");

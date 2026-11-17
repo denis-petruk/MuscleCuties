@@ -87,7 +87,7 @@ public static partial class UiTextCatalog
         English["Auth_CreateAccount"] = "Create account";
         English["Auth_Email"] = "Email";
         English["Auth_EmailAddress"] = "Email address";
-        English["Auth_EmailOrUsername"] = "Email or Username";
+        English["Auth_EmailOrUsername"] = "Email or username";
         English["Auth_EmailOrUsernamePlaceholder"] = "name@example.com or username";
         English["Auth_LogIn"] = "Log in";
         English["Auth_Login_CreateAnAccount"] = "Create an account";
@@ -111,7 +111,7 @@ public static partial class UiTextCatalog
         English["Auth_Otp_ResendCode"] = "Resend code";
         English["Auth_Otp_SendingCode"] = "Sending code...";
         English["Auth_Otp_SixDigitVerificationCodeDescription"] = "6-digit verification code";
-        English["Auth_Otp_SixDigitVerificationCodeLabel"] = "6-Digit Verification Code";
+        English["Auth_Otp_SixDigitVerificationCodeLabel"] = "6-digit verification code";
         English["Auth_Otp_VerifyConfirmationCode"] = "Verify confirmation code";
         English["Auth_Otp_VerifyYourEmail"] = "Verify your email";
         English["Auth_Otp_VerifyingCodePleaseWait"] = "Verifying code, please wait";
@@ -120,13 +120,13 @@ public static partial class UiTextCatalog
         English["Auth_PasswordRecovery_BackToLogIn"] = "Back to Log In";
         English["Auth_PasswordRecovery_ChangeAccount"] = "Change account";
         English["Auth_PasswordRecovery_ChooseAStrongNewPasswordWith"] = "Choose a strong new password with at least 8 characters, numbers, and symbols.";
-        English["Auth_PasswordRecovery_ConfirmNewPassword"] = "Confirm New Password";
+        English["Auth_PasswordRecovery_ConfirmNewPassword"] = "Confirm new password";
         English["Auth_PasswordRecovery_EmailOrUsernameForPasswordRecovery"] = "Email or username for password recovery";
         English["Auth_PasswordRecovery_EnterTheSixDigitRecoveryCode"] = "Enter the 6-digit recovery code sent to:";
         English["Auth_PasswordRecovery_EnterYourEmailOrUsernameAnd"] = "Enter your email or username and tap send code";
         English["Auth_PasswordRecovery_EnterYourRegisteredEmailAddressOr"] = "Enter your registered email address or username to receive a 6-digit recovery code.";
         English["Auth_PasswordRecovery_GoBackToChangeAccount"] = "Go back to change email or username";
-        English["Auth_PasswordRecovery_NewPassword"] = "New Password";
+        English["Auth_PasswordRecovery_NewPassword"] = "New password";
         English["Auth_PasswordRecovery_ProcessingRecoveryPleaseWait"] = "Processing recovery, please wait";
         English["Auth_PasswordRecovery_ResendRecoveryCode"] = "Resend recovery code";
         English["Auth_PasswordRecovery_ResendCode"] = "Resend code";

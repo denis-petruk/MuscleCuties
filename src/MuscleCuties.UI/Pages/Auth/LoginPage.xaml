@@ -11,7 +11,7 @@
     Shell.NavBarIsVisible="False"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
-    <Grid RowDefinitions="Auto,*">
+    <Grid RowDefinitions="Auto,*,Auto">
     <VerticalStackLayout Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
         <Label
 
@@ -136,29 +136,30 @@
                     IsVisible="{Binding IsAppleSignInAvailable}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
-                <Grid
-
-                    AutomationId="LoginCreateAccountRow"
-                    ColumnDefinitions="Auto,Auto"
-                    ColumnSpacing="{StaticResource UiSpaceMicro}"
-                    HorizontalOptions="Center"
-                    Margin="{StaticResource UiInsets0_24_0_0}"
-                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                    MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                    SemanticProperties.Description="{loc:LocalizedText Auth_Login_CreateAnAccount}"
-                    SemanticProperties.Hint="{loc:LocalizedText Auth_Login_DoubleTapToGoToThe}">
-                    <Grid.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding GoToRegisterCommand}" />
-                    </Grid.GestureRecognizers>
-                    <Label Text="{loc:LocalizedText Auth_Login_NewToMusclecuties}" Style="{StaticResource MutedLabel}"
-                           LineBreakMode="WordWrap"
-                           VerticalOptions="Center" />
-                    <Label Grid.Column="1" Text="{loc:LocalizedText Auth_CreateAccount}" Style="{StaticResource AccentLabel}"
-                           LineBreakMode="WordWrap"
-                           VerticalOptions="Center" />
-                </Grid>
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
+    <Grid
+        Grid.Row="2"
+        AutomationId="LoginCreateAccountRow"
+        ColumnDefinitions="Auto,Auto"
+        ColumnSpacing="{StaticResource UiSpaceMicro}"
+        Padding="{DynamicResource PresentationActionFooterPadding}"
+        MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
+        HorizontalOptions="Center"
+        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+        SemanticProperties.Description="{loc:LocalizedText Auth_Login_CreateAnAccount}"
+        SemanticProperties.Hint="{loc:LocalizedText Auth_Login_DoubleTapToGoToThe}">
+        <Grid.GestureRecognizers>
+            <TapGestureRecognizer Command="{Binding GoToRegisterCommand}" />
+        </Grid.GestureRecognizers>
+        <Label Text="{loc:LocalizedText Auth_Login_NewToMusclecuties}" Style="{StaticResource MutedLabel}"
+               LineBreakMode="WordWrap"
+               HorizontalOptions="Center"
+               VerticalOptions="Center" />
+        <Label Grid.Column="1" Text="{loc:LocalizedText Auth_CreateAccount}" Style="{StaticResource AccentLabel}"
+               LineBreakMode="WordWrap"
+               VerticalOptions="Center" />
+    </Grid>
 </Grid>
 </ContentPage>

@@ -13,21 +13,12 @@
 
 
     <Grid RowDefinitions="Auto,*">
-    <VerticalStackLayout Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
-        <Label
-           
-            Text="{loc:LocalizedText Auth_Register_CreateYourAccount}"
-            Style="{StaticResource PageTitle}"
-            LineBreakMode="WordWrap"
-           
-            SemanticProperties.HeadingLevel="Level1" />
-        <Label
-           
-            Text="{loc:LocalizedText Auth_Register_OneProfileShapedAroundYou}"
-            Style="{StaticResource MutedLabel}"
-            LineBreakMode="WordWrap"
-            />
-    </VerticalStackLayout>
+    <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <sharedControls:PageHeader
+            Title="{loc:LocalizedText Auth_Register_CreateYourAccount}"
+            Subtitle="{loc:LocalizedText Auth_Register_OneProfileShapedAroundYou}"
+            BackCommand="{Binding GoBackCommand}" />
+    </Grid>
     <ScrollView Grid.Row="1">
         <VerticalStackLayout Padding="{DynamicResource PresentationAuthPagePadding}" Spacing="{StaticResource PresentationFormSpacing}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
             <Grid
