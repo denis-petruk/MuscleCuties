@@ -44,7 +44,8 @@ appId: com.musclecuties.app
     id: QuizAnswerSessionDuration3
 - tapOn:
     id: QuizNextButton
-# Verify all 3 equipment options (including newly unlocked Bodyweight only!) are offered in onboarding quiz
+# Current canonical answer order: 1 = Full gym, 2 = Dumbbells and bands, 3 = Bodyweight only.
+# Equipment selectors 3/5 in older runbooks predate this three-option catalog.
 - assertVisible:
     id: QuizAnswerEquipment3
 - takeScreenshot: 05b_quiz_equipment
