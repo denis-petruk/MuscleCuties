@@ -364,6 +364,9 @@ internal static partial class RussianUiText
         Values["Workout_Page_BlockedActivitiesTitle"] = "Заблокированные виды деятельности";
         Values["Workout_Page_BlockedExercisesTitle"] = "Заблокированные упражнения";
         Values["Workout_Page_DetailsButton"] = "Детали";
+        Values["Workout_Page_EmptyFilterShowAll"] = "Показать все";
+        Values["Workout_Page_EmptyFilterSubtitle"] = "Попробуйте другой фильтр или покажите полную неделю.";
+        Values["Workout_Page_EmptyFilterTitle"] = "В этой категории нет тренировок";
         Values["Workout_Page_InjuryAdjustmentsActive"] = "Активные корректировки травм";
         Values["Workout_Page_LoadingWorkouts"] = "Загрузка тренировок";
         Values["Workout_Page_LogButton"] = "Запись";

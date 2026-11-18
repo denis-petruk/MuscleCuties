@@ -94,9 +94,10 @@
             </FlexLayout>
 
             <!-- Both session adjustments share one row so a card with either or both keeps a stable
-                 height. The row wraps rather than running past the card: at accessibility sizes the
-                 action label needs the card's whole width. -->
-            <FlexLayout Grid.Row="2" Grid.Column="1"
+                 height. The row spans both columns: measured against the title column alone it lost
+                 the day tile's width, and at accessibility sizes the longest word of the action
+                 label no longer fit and broke inside itself. Wrapping still keeps it inside the card. -->
+            <FlexLayout Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="2"
                         Direction="Row" Wrap="Wrap" AlignItems="Stretch">
                 <Button Text="{Binding OptionalStatusText, Converter={StaticResource LocalizedStringConverter}}"
                         Command="{Binding ToggleOptionalCommand, Source={x:Reference Root}, x:DataType=workoutControls:WorkoutActivityCard}"

@@ -364,6 +364,9 @@ public static partial class UiTextCatalog
         English["Workout_Page_BlockedActivitiesTitle"] = "Blocked activities";
         English["Workout_Page_BlockedExercisesTitle"] = "Blocked exercises";
         English["Workout_Page_DetailsButton"] = "Details";
+        English["Workout_Page_EmptyFilterShowAll"] = "Show all";
+        English["Workout_Page_EmptyFilterSubtitle"] = "Try another filter or show the full week.";
+        English["Workout_Page_EmptyFilterTitle"] = "No workouts in this category";
         English["Workout_Page_InjuryAdjustmentsActive"] = "Injury adjustments active";
         English["Workout_Page_LoadingWorkouts"] = "Loading workouts";
         English["Workout_Page_LogButton"] = "Log";

@@ -220,9 +220,19 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public bool HasInProgressWorkout => InProgressWorkout is { IsInProgress: true, WorkoutDayId: > MissingWorkoutDayId };
     public bool ShowNoPlanPrompt => _hasLoadedOverview && HasNoPlan && HasNoWorkouts;
     public bool HasScheduleDays => ScheduleDays.Count > 0;
+    /// <summary>
+    /// A plan always offers its weeks. The chip row must not follow the selected week's days: a
+    /// week without dated days would hide the only control that leads back to a week with sessions.
+    /// </summary>
+    public bool HasPlanWeeks => _hasLoadedOverview && !IsBusy && !HasNoPlan;
     public bool HasNoScheduleDays => _hasLoadedOverview && !IsBusy && !HasNoPlan && !HasScheduleDays;
     public bool HasWorkouts => !IsBusy && Workouts.Count > 0;
     public bool HasNoWorkouts => !IsBusy && !IsLoadError && Workouts.Count == 0;
+    /// <summary>
+    /// The empty card belongs to the page flow, not to the collection's EmptyView, which is not
+    /// drawn inside this header-bearing list and left a blank page under the chips.
+    /// </summary>
+    public bool ShowEmptyWorkouts => _hasLoadedOverview && HasNoWorkouts && !ShowNoPlanPrompt;
     public string ActivePlanTitle => ActivePlanName ?? "No active plan";
 
     public string PlanSummaryText => _lastOverview is null
@@ -275,19 +285,18 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     public string EmptyWorkoutsTitle => HasNoPlan
         ? "Workout_Generation_PromptNoPlanTitle"
-        : SelectedFilterLabel == "All"
-            ? "No workouts scheduled"
-            : $"No {SelectedFilterLabel.ToLowerInvariant()} workouts";
+        : "Workout_Page_EmptyFilterTitle";
 
     public string EmptyWorkoutsSubtitle => HasNoPlan
         ? "Workout_Generation_PromptNoPlanSubtitle"
-        : "Try another filter or show the full week.";
+        : "Workout_Page_EmptyFilterSubtitle";
 
-    public string EmptyWorkoutsButtonText => HasNoPlan ? "Workout_Generation_PromptGeneratePlanButton" : "Show All";
+    public string EmptyWorkoutsButtonText => HasNoPlan
+        ? "Workout_Generation_PromptGeneratePlanButton"
+        : "Workout_Page_EmptyFilterShowAll";
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Bound in workout page XAML.")]
     public bool EmptyWorkoutsButtonVisible => true;
 
-    private string SelectedFilterLabel => Filters.FirstOrDefault(f => f.IsSelected)?.Label ?? "All";
     public AsyncRelayCommand EmptyWorkoutsActionCommand { get; }
     public AsyncRelayCommand GeneratePlanCommand { get; }
     public AsyncRelayCommand OpenHistoryCommand { get; }
@@ -1096,6 +1105,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(HasNoScheduleDays));
         OnPropertyChanged(nameof(ActivePlanTitle));
         OnPropertyChanged(nameof(PlanSummaryText));
+        OnPropertyChanged(nameof(HasPlanWeeks));
+        OnPropertyChanged(nameof(ShowEmptyWorkouts));
         OnPropertyChanged(nameof(EmptyWorkoutsTitle));
         OnPropertyChanged(nameof(EmptyWorkoutsSubtitle));
         OnPropertyChanged(nameof(EmptyWorkoutsButtonText));

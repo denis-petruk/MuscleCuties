@@ -503,6 +503,65 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
+    public void Activity_card_actions_take_the_whole_card_at_large_text()
+    {
+        var card = XDocument.Load(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls",
+            "Workout", "WorkoutActivityCard.xaml"));
+        var requiredAction = card.Descendants().Single(element =>
+            element.Name.LocalName == "Button" &&
+            ((string?)element.Attribute("Text"))?.Contains(
+                "Binding OptionalStatusText", StringComparison.Ordinal) == true);
+        var actionRow = requiredAction.Ancestors().First(ancestor =>
+            ancestor.Name.LocalName is "FlexLayout" or "HorizontalStackLayout" or "VerticalStackLayout");
+
+        // A row placed only in the title column starts after the day tile and its spacing, so at
+        // accessibility sizes its longest word ("Обязательная") has less width than the word needs
+        // and breaks inside itself. The actions span both columns to keep the card's inner width.
+        Assert.Equal("FlexLayout", actionRow.Name.LocalName);
+        Assert.Equal("0", (string?)actionRow.Attribute("Grid.Column"));
+        Assert.Equal("2", (string?)actionRow.Attribute("Grid.ColumnSpan"));
+    }
+
+    [Fact]
+    public void Week_chips_stay_reachable_when_the_chosen_week_has_no_days()
+    {
+        var page = XDocument.Load(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages",
+            "Workout", "WorkoutPage.xaml"));
+        var weekCommand = page.Descendants().Single(element =>
+            element.Name.LocalName == "TapGestureRecognizer" &&
+            ((string?)element.Attribute("Command"))?.Contains(
+                "SelectWeekChipCommand", StringComparison.Ordinal) == true);
+        var weekRow = weekCommand.Ancestors().First(ancestor => ancestor.Name.LocalName == "ScrollView");
+
+        // Hiding the row with the selected week's days removed the only way back to a week that
+        // has sessions: tapping a week without sessions made the whole schedule block vanish and
+        // the reader was left with a blank page. A plan with weeks always keeps its chips.
+        Assert.Equal("{Binding HasPlanWeeks}", (string?)weekRow.Attribute("IsVisible"));
+    }
+
+    [Fact]
+    public void Empty_workouts_state_is_part_of_the_page_flow_with_catalog_copy()
+    {
+        var page = XDocument.Load(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages",
+            "Workout", "WorkoutPage.xaml"));
+
+        // The collection's EmptyView never drew inside this header-bearing list, so a filter that
+        // matched nothing left a blank page under the chips. The card sits in the reading flow,
+        // where the first workout would be.
+        Assert.DoesNotContain(page.Descendants(), element => element.Name.LocalName == "EmptyView");
+        var emptyCard = page.Descendants().Single(element =>
+            (string?)element.Attribute("IsVisible") == "{Binding ShowEmptyWorkouts}");
+        Assert.Equal("Border", emptyCard.Name.LocalName);
+
+        // The copy is catalog keys, not English built from the localized chip label: both
+        // languages read a sentence the catalog owns.
+        var viewModel = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "ViewModels",
+            "Workout", "WorkoutViewModel.cs"));
+        Assert.DoesNotContain("$\"No {", viewModel, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"Try another filter or show the full week.\"", viewModel, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Large_text_cards_constrain_labels_instead_of_squeezing_them()
     {
         var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");

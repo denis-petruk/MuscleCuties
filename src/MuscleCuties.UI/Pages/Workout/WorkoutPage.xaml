@@ -210,7 +210,7 @@
 
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}"
                                           Margin="{StaticResource UiInsets0_6_0_0}"
-                                          IsVisible="{Binding HasScheduleDays}">
+                                          IsVisible="{Binding HasPlanWeeks}">
                         <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Page_ActivityScheduleTitle}" Style="{StaticResource SectionTitle}" />
                         <Label LineBreakMode="WordWrap"
                             Text="{Binding PlanSummaryText, Converter={StaticResource LocalizedStringConverter}}"
@@ -221,7 +221,7 @@
                          "Неделя 1" inside the word once the reader asked for larger text. -->
                     <ScrollView Orientation="Horizontal"
                                 HorizontalScrollBarVisibility="Never"
-                                IsVisible="{Binding HasScheduleDays}">
+                                IsVisible="{Binding HasPlanWeeks}">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}"
                                                BindableLayout.ItemsSource="{Binding Weeks}">
                         <BindableLayout.ItemTemplate>
@@ -355,30 +355,30 @@
                         IsVisible="{Binding IsBusy}"
                        
                         SemanticProperties.Description="{loc:LocalizedText Workout_Page_LoadingWorkouts}" />
+
+                    <!-- A filter can legitimately match nothing: a week holds no cardio and no
+                         recovery session. The collection's EmptyView never drew inside this
+                         header-bearing list, so the state sits in the reading flow where the first
+                         workout would be, and the chips that undo the filter stay in reach. -->
+                    <Border Style="{StaticResource CardPrimary}"
+                            MaximumWidthRequest="{StaticResource UiDimension640}"
+                            Margin="{StaticResource UiInsets0_12_0_0}"
+                            IsVisible="{Binding ShowEmptyWorkouts}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{Binding EmptyWorkoutsTitle, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource StateEmptyTitle}" />
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{Binding EmptyWorkoutsSubtitle, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource StateEmptyBody}" />
+                            <Button Style="{StaticResource ButtonSecondary}"
+                                    Text="{Binding EmptyWorkoutsButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                                    Command="{Binding EmptyWorkoutsActionCommand}"
+                                    IsVisible="{Binding EmptyWorkoutsButtonVisible}" />
+                        </VerticalStackLayout>
+                    </Border>
                 </VerticalStackLayout>
             </CollectionView.Header>
-            <CollectionView.EmptyView>
-                <Border
-                    Style="{StaticResource CardPrimary}"
-                    Margin="{StaticResource UiInsets20_0_20_32}"
-                    MaximumWidthRequest="{StaticResource UiDimension640}"
-                    IsVisible="{Binding HasNoWorkouts}"
-                    VerticalOptions="Start">
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                        <Label LineBreakMode="WordWrap"
-                            Text="{Binding EmptyWorkoutsTitle, Converter={StaticResource LocalizedStringConverter}}"
-                            Style="{StaticResource StateEmptyTitle}" />
-                        <Label LineBreakMode="WordWrap"
-                            Text="{Binding EmptyWorkoutsSubtitle, Converter={StaticResource LocalizedStringConverter}}"
-                            Style="{StaticResource StateEmptyBody}" />
-
-                        <Button Style="{StaticResource ButtonSecondary}"
-                            Text="{Binding EmptyWorkoutsButtonText, Converter={StaticResource LocalizedStringConverter}}"
-                            Command="{Binding EmptyWorkoutsActionCommand}"
-                            IsVisible="{Binding EmptyWorkoutsButtonVisible}" />
-                    </VerticalStackLayout>
-                </Border>
-            </CollectionView.EmptyView>
             <CollectionView.ItemTemplate>
                 <DataTemplate x:DataType="workoutModels:WorkoutItem">
                     <VerticalStackLayout Margin="{StaticResource UiInsets20_0_20_12}"
