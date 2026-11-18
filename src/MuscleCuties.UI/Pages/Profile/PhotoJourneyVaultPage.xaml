@@ -49,13 +49,15 @@
                     <Border Style="{StaticResource CardPrimary}">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                             <mi:MauiIcon
+                                sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                 Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension24}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                 WidthRequest="{StaticResource UiDimension24}"
                                 HeightRequest="{StaticResource UiDimension24}"
                                 VerticalOptions="Center" />
                             <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
                                 <Label Text="{loc:LocalizedText Profile_PhotoJourney_PrivacyFirstPhotoVault}"
-                                       Style="{StaticResource BodyStrong}" />
+                                       Style="{StaticResource BodyStrong}"
+                                       sharedControls:CappedTextSize.IsCompactLabel="True" />
                                 <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd}"
                                        Style="{StaticResource CaptionSmall}"
                                        LineBreakMode="WordWrap" />

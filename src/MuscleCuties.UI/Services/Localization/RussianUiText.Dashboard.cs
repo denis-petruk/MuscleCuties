@@ -62,7 +62,7 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_PlanningSoreness"] = "Болезненность мышц";
         Values["Dashboard_CheckIn_PlanningStress"] = "Стресс";
         Values["Dashboard_CheckIn_PlanningSelectRating"] = "Выберите оценку";
-        Values["Dashboard_CheckIn_PageTitle"] = "Ежедневная проверка";
+        Values["Dashboard_CheckIn_PageTitle"] = "Ежедневная отметка";
         Values["Dashboard_CheckIn_PainMild"] = "Лёгкая";
         Values["Dashboard_CheckIn_PainMildA11y"] = "Боль: Небольшая";
         Values["Dashboard_CheckIn_PainMildHint"] = "Легкий дискомфорт";
@@ -81,7 +81,7 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_PrivateBadgeA11y"] = "Отметка сохранена в вашей личной учётной записи";
         Values["Dashboard_CheckIn_SavingA11y"] = "Сохранение отметки о посещении";
         Values["Dashboard_CheckIn_SkipButton"] = "Пока пропустить";
-        Values["Dashboard_CheckIn_SkipHint"] = "Пропустить сегодняшнюю проверку";
+        Values["Dashboard_CheckIn_SkipHint"] = "Пропустить сегодняшнюю отметку";
         Values["Dashboard_CheckIn_SleepA11yFormat"] = "Сон прошлой ночью: {0}";
         Values["Dashboard_CheckIn_SleepMaxLabel"] = "14ч";
         Values["Dashboard_CheckIn_SleepMinLabel"] = "0ч";
@@ -90,9 +90,9 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_SleepSectionTitle"] = "СОН ПРОШЛОЙ НОЧЬЮ";
         Values["Dashboard_CheckIn_StorageNotice"] = "Сохранено в вашей личной учётной записи";
         Values["Dashboard_CheckIn_AdditionalDetails"] = "Дополнительные сведения (необязательно)";
-        Values["Dashboard_CheckIn_SubmitButton"] = "Сохранить отметку";
+        Values["Dashboard_CheckIn_SubmitButton"] = "Сохранить";
         Values["Dashboard_CheckIn_SubmitHint"] = "Сохранить ежедневную отметку";
-        Values["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Ответьте на все обязательные вопросы, чтобы сохранить отметку.";
+        Values["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Заполните вопросы.";
         Values["Dashboard_CheckIn_Subtitle"] = "Как вы себя чувствуете сегодня?";
         Values["Dashboard_CheckIn_SuccessMessage"] = "Запись сохранена";
         Values["Dashboard_CheckIn_SuggestFromAppleHealth"] = "Предложить оценки из Apple Health";
@@ -157,7 +157,7 @@ internal static partial class RussianUiText
         Values["Dashboard_Startup_GettingReady"] = "Подготовка...";
         Values["Dashboard_Startup_LoadingApplicationA11y"] = "Загрузка приложения";
         Values["Dashboard_Startup_LoadingStatusA11y"] = "Статус загрузки";
-        Values["Dashboard_Startup_LogoA11y"] = "MuscleCuties logo";
+        Values["Dashboard_Startup_LogoA11y"] = "Логотип MuscleCuties";
         Values["Dashboard_Startup_RetryUnlockA11y"] = "Повторить разблокировку данных";
         Values["Dashboard_Startup_RetryUnlockHint"] = "Дважды коснитесь, чтобы повторить разблокировку данных";
         Values["Dashboard_Startup_UnlockFailedA11y"] = "Невозможно разблокировать данные";

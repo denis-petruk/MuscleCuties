@@ -1,4 +1,5 @@
 using MuscleCuties.UI.Controls.Profile;
+using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Profile;
@@ -8,11 +9,26 @@ namespace MuscleCuties.UI.Pages.Profile;
 public partial class ProfilePage : ContentPage
 {
     private readonly ProfileViewModel _viewModel;
+    private IDisposable? _profileNameCapSubscription;
 
     public ProfilePage(ProfileViewModel vm)
     {
         _viewModel = vm;
         this.InitializeAndBind(InitializeComponent, vm);
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        _profileNameCapSubscription ??= CappedTextSize.Attach(
+            ProfileNameLabel, "UiFontSize18", "PresentationAccessibilityProfileNameMaxFontSize");
+    }
+
+    protected override void OnDisappearing()
+    {
+        _profileNameCapSubscription?.Dispose();
+        _profileNameCapSubscription = null;
+        base.OnDisappearing();
     }
 
     private static string T(string text)

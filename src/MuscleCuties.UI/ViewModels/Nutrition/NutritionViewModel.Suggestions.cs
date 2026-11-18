@@ -85,10 +85,11 @@ public partial class NutritionViewModel
     public bool DetailHasSpiceBlends => SelectedMealDetail?.HasSpiceBlends ?? false;
 
     public float RemainingCalories => Math.Max(0, TargetCalories - ConsumedCalories);
-    public string RemainingCaloriesText => $"{(int)RemainingCalories} kcal remaining today";
+    public string RemainingCaloriesText =>
+        UiTextCatalog.Format("Nutrition_RemainingTodayFormat", (int)RemainingCalories);
 
     public string DailyProgressText =>
-        $"{(int)ConsumedCalories} / {(int)TargetCalories} kcal consumed";
+        UiTextCatalog.Format("Nutrition_DailyProgressFormat", (int)ConsumedCalories, (int)TargetCalories);
 
     public string DailyMacroRemainingText
     {
@@ -121,7 +122,7 @@ public partial class NutritionViewModel
             if (TargetCalories <= 0 || SelectedMealDetail is null)
                 return string.Empty;
             var pct = SelectedMealDetail.Macros.Calories / TargetCalories * 100f;
-            return $"This meal is {pct:N0}% of your daily target";
+            return UiTextCatalog.Format("Nutrition_MealDetail_DailyTargetShareFormat", pct);
         }
     }
 
@@ -206,7 +207,15 @@ public partial class NutritionViewModel
 
         try
         {
-            SuggestionTargetText = $"{SuggestionMealType} · {GetMealTypeCaloriesText(SuggestionMealType)}";
+            SuggestionTargetText = UiTextCatalog.Format(
+                SuggestionMealType switch
+                {
+                    MealType.Breakfast => "Nutrition_MealSuggestion_BreakfastValue",
+                    MealType.Lunch => "Nutrition_MealSuggestion_LunchValue",
+                    MealType.Dinner => "Nutrition_MealSuggestion_DinnerValue",
+                    _ => "Nutrition_MealSuggestion_SnackValue"
+                },
+                GetMealTypeCaloriesText(SuggestionMealType));
 
             var dtos = await _overviewUseCase.GetMealSuggestionsAsync(
                 SuggestionMealType.ToString(),
@@ -277,7 +286,7 @@ public partial class NutritionViewModel
                 Name = component.Name,
                 Grams = component.Grams,
                 Amount = component.Grams,
-                ServingLabel = "g",
+                ServingLabel = UiTextCatalog.Get("Nutrition_Unit_GramsShort"),
                 Calories = component.Calories,
                 Protein = component.Protein,
                 Carbs = component.Carbs,
@@ -453,7 +462,7 @@ public partial class NutritionViewModel
             _ => 0.25f
         };
         var calories = (int)(TargetCalories * targetFraction);
-        return $"{DisplayFormat.Calories(calories)} target";
+        return DisplayFormat.Calories(calories);
     }
 
     private static MealSuggestionItem MapSuggestionDtoToItem(NutritionMealSuggestion dto)
@@ -461,7 +470,7 @@ public partial class NutritionViewModel
         var components = dto.Components.Select(c => new MealSuggestionComponentItem
         {
             FoodItemId = c.FoodItemId,
-            Name = c.Name,
+            Name = UiTextCatalog.TranslateRuntimeText(c.Name),
             ComponentType = Enum.TryParse<ComponentType>(c.ComponentType, true, out var ct) ? ct : ComponentType.Mixed,
             Role = Enum.TryParse<ComponentRole>(c.Role, true, out var cr) ? cr : ComponentRole.CarbBase,
             Grams = c.Grams,
@@ -478,11 +487,11 @@ public partial class NutritionViewModel
 
         var groups = dto.ComponentGroups.Select(g => new MealSuggestionComponentGroup(
             g.ComponentType,
-            g.Title,
+            UiTextCatalog.TranslateRuntimeText(g.Title),
             g.Items.Select(ci => new MealSuggestionComponentItem
             {
                 FoodItemId = ci.FoodItemId,
-                Name = ci.Name,
+                Name = UiTextCatalog.TranslateRuntimeText(ci.Name),
                 ComponentType = Enum.TryParse<ComponentType>(ci.ComponentType, true, out var ct)
                     ? ct
                     : ComponentType.Mixed,

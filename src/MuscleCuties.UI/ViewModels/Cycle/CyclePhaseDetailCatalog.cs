@@ -7,6 +7,8 @@ namespace MuscleCuties.UI.ViewModels.Cycle;
 
 public static class CyclePhaseDetailCatalog
 {
+    private static string Signal(string key) =>
+        MuscleCuties.UI.Services.Localization.UiTextCatalog.Get($"Cycle_PhaseDetail_Signal_{key}");
     private static CyclePhaseDetailPoint Point(string title, string text, string iconGlyph)
     {
         return new CyclePhaseDetailPoint { Title = title, Text = text, IconGlyph = iconGlyph };
@@ -16,11 +18,11 @@ public static class CyclePhaseDetailCatalog
     {
         return phase switch
         {
-            CyclePhase.Menstrual => new PhaseSignals(0.35, 0.85, 0.95, "Gentle", "Repair", "High"),
-            CyclePhase.Follicular => new PhaseSignals(0.78, 0.72, 0.55, "Build", "Fuel", "Steady"),
-            CyclePhase.Ovulatory => new PhaseSignals(0.95, 0.82, 0.70, "Power", "Support", "Respect"),
-            CyclePhase.Luteal => new PhaseSignals(0.58, 0.90, 0.84, "Control", "Stabilize", "Protect"),
-            _ => new PhaseSignals(0.0, 0.0, 0.0, "Unknown", "Unknown", "Unknown")
+            CyclePhase.Menstrual => new PhaseSignals(0.35, 0.85, 0.95, Signal("Gentle"), Signal("Repair"), Signal("High")),
+            CyclePhase.Follicular => new PhaseSignals(0.78, 0.72, 0.55, Signal("Build"), Signal("Fuel"), Signal("Steady")),
+            CyclePhase.Ovulatory => new PhaseSignals(0.95, 0.82, 0.70, Signal("Power"), Signal("Support"), Signal("Respect")),
+            CyclePhase.Luteal => new PhaseSignals(0.58, 0.90, 0.84, Signal("Control"), Signal("Stabilize"), Signal("Protect")),
+            _ => new PhaseSignals(0.0, 0.0, 0.0, Signal("Unknown"), Signal("Unknown"), Signal("Unknown"))
         };
     }
 

@@ -54,13 +54,6 @@
                         Text="{Binding SelectedMealDetail.ConceptName, Converter={StaticResource LocalizedStringConverter}}"
                         Style="{StaticResource ModalTitle}"
                         LineBreakMode="WordWrap" />
-                    <Label
-                        Grid.Row="1"
-                        Grid.Column="1"
-                        Text="{Binding SelectedMealDetail.ConceptDescription, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource ModalSubtitle}"
-                        LineBreakMode="WordWrap" />
-
                     <Border
                         Grid.Column="2"
                         Grid.RowSpan="2"
@@ -79,6 +72,11 @@
                 <!-- Scrollable content -->
                 <ScrollView Grid.Row="2" Style="{StaticResource ModalSheetBody}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Padding="{DynamicResource PresentationModalPagePadding}">
+
+                        <Label
+                            Text="{Binding SelectedMealDetail.ConceptDescription, Converter={StaticResource LocalizedStringConverter}}"
+                            Style="{StaticResource ModalSubtitle}"
+                            LineBreakMode="WordWrap" />
 
                         <!-- Macro summary card: flattened from Grid+HorizontalStackLayouts into single Grid -->
                         <Border

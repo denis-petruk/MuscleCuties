@@ -25,6 +25,19 @@
             <sharedControls:PageHeader
                 Title="{Binding WeekTitle, Converter={StaticResource LocalizedStringConverter}}"
                 ShowBack="False">
+                <sharedControls:PageHeader.TitleIcon>
+                    <Border AutomationId="WorkoutHeaderVisual"
+                            WidthRequest="{StaticResource UiDimension40}"
+                            HeightRequest="{StaticResource UiDimension40}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}">
+                        <mi:MauiIcon Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension22}"
+                                     IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                     WidthRequest="{StaticResource UiDimension22}" HeightRequest="{StaticResource UiDimension22}"
+                                     HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                </sharedControls:PageHeader.TitleIcon>
                 <sharedControls:PageHeader.StatusContent>
                     <Border
                         Style="{StaticResource PillBadge}"
@@ -75,10 +88,16 @@
                     HorizontalOptions="Fill"
                     MaximumWidthRequest="{StaticResource UiDimension640}">
 
-                    <Button Text="{loc:LocalizedText Workout_History_ArchiveTitle}"
-                            Command="{Binding OpenHistoryCommand}"
-                            Style="{StaticResource ButtonSecondary}"
-                            SemanticProperties.Hint="{loc:LocalizedText Workout_History_CompletedSessionsTitle}" />
+                    <Border Style="{StaticResource CardPrimary}" IsVisible="{Binding IsLoadError}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{loc:LocalizedText Ui_Workout_Error_Load}"
+                                   Style="{StaticResource BodyLabel}" />
+                            <Button Text="{loc:LocalizedText Common_TryAgain}"
+                                    Command="{Binding RefreshCommand}"
+                                    Style="{StaticResource ButtonSecondary}" />
+                        </VerticalStackLayout>
+                    </Border>
 
                     <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding HasStrengthStyleOffer}">
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
@@ -91,7 +110,20 @@
                     </Border>
                     <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding HasInProgressWorkout}">
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Overview_InProgressTitle}" Style="{StaticResource BodyStrong}" />
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                <Border WidthRequest="{StaticResource UiDimension36}"
+                                        HeightRequest="{StaticResource UiDimension36}"
+                                        StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                        StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}">
+                                    <mi:MauiIcon Icon="{mi:Fluent Timer24}" IconSize="{StaticResource UiDimension18}"
+                                                 IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                                 WidthRequest="{StaticResource UiDimension18}" HeightRequest="{StaticResource UiDimension18}"
+                                                 HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <Label Grid.Column="1" LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Overview_InProgressTitle}"
+                                       Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
+                            </Grid>
                             <Label Text="{loc:LocalizedText Workout_Overview_InProgressExplanation}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                             <Label Text="{Binding InProgressWorkout.Title}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                             <Button Text="{loc:LocalizedText Workout_Overview_ResumeWorkout}" Command="{Binding ResumeInProgressWorkoutCommand}" Style="{StaticResource ButtonPrimary}" />
@@ -129,7 +161,8 @@
                                                          BindableLayout.ItemsSource="{Binding BlockedExerciseNames}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
-                                                <Label LineBreakMode="WordWrap" Text="{Binding .}"
+                                                <Label LineBreakMode="WordWrap"
+                                                       Text="{Binding ., Converter={StaticResource LocalizedStringConverter}}"
                                                        Style="{StaticResource MutedLabel}" Margin="{StaticResource UiInsets8_0_0_0}" />
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
@@ -144,7 +177,8 @@
                                                          BindableLayout.ItemsSource="{Binding RehabExerciseNames}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
-                                                <Label LineBreakMode="WordWrap" Text="{Binding .}"
+                                                <Label LineBreakMode="WordWrap"
+                                                       Text="{Binding ., Converter={StaticResource LocalizedStringConverter}}"
                                                        Style="{StaticResource AccentLabel}" Margin="{StaticResource UiInsets8_0_0_0}" />
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
@@ -159,7 +193,8 @@
                                                          BindableLayout.ItemsSource="{Binding BlockedCardioNames}">
                                         <BindableLayout.ItemTemplate>
                                             <DataTemplate x:DataType="x:String">
-                                                <Label LineBreakMode="WordWrap" Text="{Binding .}"
+                                                <Label LineBreakMode="WordWrap"
+                                                       Text="{Binding ., Converter={StaticResource LocalizedStringConverter}}"
                                                        Style="{StaticResource MutedLabel}" Margin="{StaticResource UiInsets8_0_0_0}" />
                                             </DataTemplate>
                                         </BindableLayout.ItemTemplate>
@@ -173,7 +208,9 @@
                         x:Name="FeaturedWorkoutLazy"
                         x:TypeArguments="workoutControls:WorkoutFeaturedSection" />
 
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" Margin="{StaticResource UiInsets0_6_0_0}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}"
+                                          Margin="{StaticResource UiInsets0_6_0_0}"
+                                          IsVisible="{Binding HasScheduleDays}">
                         <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Page_ActivityScheduleTitle}" Style="{StaticResource SectionTitle}" />
                         <Label LineBreakMode="WordWrap"
                             Text="{Binding PlanSummaryText, Converter={StaticResource LocalizedStringConverter}}"
@@ -182,7 +219,9 @@
 
                     <!-- A chip keeps its natural width and the row scrolls: four equal columns broke
                          "Неделя 1" inside the word once the reader asked for larger text. -->
-                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                    <ScrollView Orientation="Horizontal"
+                                HorizontalScrollBarVisibility="Never"
+                                IsVisible="{Binding HasScheduleDays}">
                         <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}"
                                                BindableLayout.ItemsSource="{Binding Weeks}">
                         <BindableLayout.ItemTemplate>
@@ -209,18 +248,24 @@
                     <!-- Seven days fit one row only without per-card chrome: a card inset leaves
                          too little width for the workout tag, so the type is carried by the dot and
                          by the session list below, and the day navigates on tap. -->
-                    <Border Style="{StaticResource CardPrimary}">
-                        <!-- Seven cells cannot share one line at accessibility sizes without breaking a
-                             date, so the strip keeps each day at its own width and scrolls sideways. -->
-                        <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
-                            <HorizontalStackLayout Spacing="{StaticResource UiSpacing2}"
-                                                   BindableLayout.ItemsSource="{Binding ScheduleDays}">
+                    <Border Style="{StaticResource CardPrimary}"
+                            IsVisible="{Binding HasScheduleDays}">
+                        <!-- A wrapping strip is measured by its children, so populated weeks always
+                             get real height; at accessibility sizes the days wrap onto further rows
+                             instead of breaking a date or disappearing into a zero-height scroller. -->
+                        <FlexLayout Direction="Row"
+                                    Wrap="Wrap"
+                                    AlignItems="Start"
+                                    AlignContent="Start"
+                                    JustifyContent="SpaceBetween"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    BindableLayout.ItemsSource="{Binding ScheduleDays}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="workoutModels:ScheduleDayItem">
                                     <sharedControls:SelectionCell Style="{StaticResource DayStripCell}"
                                         IsSelected="{Binding IsSelected}"
                                         MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
-                                        SemanticProperties.Description="{Binding WorkoutTitle, Converter={StaticResource LocalizedStringConverter}}">
+                                        SemanticProperties.Description="{Binding AccessibilityDescription}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer
                                                 Command="{Binding SelectScheduleDayCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
@@ -244,31 +289,40 @@
                                         <!-- Compact chips wrap instead of clipping: a day can carry
                                              several sessions, and the column must stay readable at narrow
                                              widths and large text sizes. -->
-                                        <FlexLayout BindableLayout.ItemsSource="{Binding Sessions}"
-                                                    Direction="Row"
-                                                    Wrap="Wrap"
-                                                    JustifyContent="Center"
-                                                    AlignItems="Center"
-                                                    HorizontalOptions="Fill"
-                                                    IsClippedToBounds="False">
+                                        <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Sessions}"
+                                                               Spacing="{StaticResource UiSpacing2}"
+                                                               HorizontalOptions="Center">
                                             <BindableLayout.ItemTemplate>
                                                 <DataTemplate x:DataType="workoutModels:ScheduleSessionChip">
                                                     <BoxView WidthRequest="{StaticResource UiDimension6}"
                                                              HeightRequest="{StaticResource UiDimension6}"
-                                                             Margin="{StaticResource UiInsets2}"
                                                              CornerRadius="{StaticResource UiCornerRadius3}"
-                                                             Color="{Binding AccentColor}"
+                                                             Color="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                                                              InputTransparent="True"
-                                                             VerticalOptions="Center" />
+                                                             VerticalOptions="Center">
+                                                        <BoxView.Triggers>
+                                                            <DataTrigger TargetType="BoxView"
+                                                                         Binding="{Binding IsSelected, Source={RelativeSource AncestorType={x:Type sharedControls:SelectionCell}}}"
+                                                                         Value="True">
+                                                                <Setter Property="Color" Value="{StaticResource ContrastInk}" />
+                                                            </DataTrigger>
+                                                        </BoxView.Triggers>
+                                                    </BoxView>
                                                 </DataTemplate>
                                             </BindableLayout.ItemTemplate>
-                                        </FlexLayout>
+                                        </HorizontalStackLayout>
                                         </VerticalStackLayout>
                                 </sharedControls:SelectionCell>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
-                            </HorizontalStackLayout>
-                        </ScrollView>
+                        </FlexLayout>
+                    </Border>
+
+                    <Border Style="{StaticResource CardSecondary}"
+                            IsVisible="{Binding HasNoScheduleDays}">
+                        <Label LineBreakMode="WordWrap"
+                               Text="{loc:LocalizedText Workout_Page_PlanSummaryNoSessions}"
+                               Style="{StaticResource MutedLabel}" />
                     </Border>
 
                     <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
@@ -346,6 +400,17 @@
                     </VerticalStackLayout>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
+            <CollectionView.Footer>
+                <VerticalStackLayout Padding="{DynamicResource PresentationPageContentPadding}"
+                                     MaximumWidthRequest="{StaticResource UiDimension640}"
+                                     HorizontalOptions="Fill">
+                    <Button Text="{loc:LocalizedText Workout_History_ArchiveTitle}"
+                            Command="{Binding OpenHistoryCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            IsVisible="{Binding HasWorkouts}"
+                            SemanticProperties.Hint="{loc:LocalizedText Workout_History_CompletedSessionsTitle}" />
+                </VerticalStackLayout>
+            </CollectionView.Footer>
         </CollectionView>
         </RefreshView>
 
@@ -353,25 +418,42 @@
         <Grid Grid.Row="1"
               IsVisible="{Binding ShowNoPlanPrompt}"
               BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
-              Padding="{DynamicResource PresentationPageContentPadding}"
               ZIndex="5">
+            <ScrollView Padding="{DynamicResource PresentationPageContentPadding}"
+                        VerticalScrollBarVisibility="Never">
             <Border Style="{StaticResource CardPrimary}"
-                    VerticalOptions="Center"
+                    VerticalOptions="Start"
                     HorizontalOptions="Center"
                     MaximumWidthRequest="{StaticResource UiDimension640}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
+                    <Border AutomationId="WorkoutNoPlanVisual"
+                            WidthRequest="{StaticResource UiDimension80}"
+                            HeightRequest="{StaticResource UiDimension80}"
+                            HorizontalOptions="Start"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius20}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}">
+                        <mi:MauiIcon Icon="{mi:Fluent Target24}" IconSize="{StaticResource UiDimension40}"
+                                     IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                     WidthRequest="{StaticResource UiDimension40}" HeightRequest="{StaticResource UiDimension40}"
+                                     HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
                     <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_PromptNoPlanTitle}"
-                           Style="{StaticResource CardTitle}"
-                           HorizontalTextAlignment="Center" />
+                           Style="{StaticResource CardTitle}" />
                     <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_PromptNoPlanSubtitle}"
-                           Style="{StaticResource MutedLabel}"
-                           HorizontalTextAlignment="Center" />
+                           Style="{StaticResource MutedLabel}" />
                     <Button Style="{StaticResource ButtonPrimary}"
                             Text="{loc:LocalizedText Workout_Generation_PromptGeneratePlanButton}"
                             AutomationId="WorkoutGeneratePlanButton" Command="{Binding GeneratePlanCommand}"
                             HorizontalOptions="Fill" />
+                    <Button Style="{StaticResource ButtonSecondary}"
+                            Text="{loc:LocalizedText Workout_History_ArchiveTitle}"
+                            Command="{Binding OpenHistoryCommand}"
+                            HorizontalOptions="Fill"
+                            SemanticProperties.Hint="{loc:LocalizedText Workout_History_CompletedSessionsTitle}" />
                 </VerticalStackLayout>
             </Border>
+            </ScrollView>
         </Grid>
 
         <sharedControls:PageLoadingOverlay

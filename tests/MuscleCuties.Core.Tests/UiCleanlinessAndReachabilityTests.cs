@@ -355,6 +355,300 @@ public class UiCleanlinessAndReachabilityTests
 
         foreach (var page in new[] { "LoginPage.xaml", "RegisterPage.xaml", "OtpVerificationPage.xaml", "PasswordRecoveryPage.xaml" })
             Assert.Contains("<sharedControls:PageHeader", File.ReadAllText(Path.Combine(authRoot, page)));
+
+        var recovery = File.ReadAllText(Path.Combine(authRoot, "PasswordRecoveryPage.xaml"));
+        var document = XDocument.Parse(recovery);
+        var rootGrid = document.Root!.Elements().Single(element => element.Name.LocalName == "Grid");
+        Assert.Equal("Auto,*,Auto", rootGrid.Attribute("RowDefinitions")?.Value);
+
+        var backToLogin = recovery.IndexOf("Auth_PasswordRecovery_BackToLogIn", StringComparison.Ordinal);
+        Assert.True(backToLogin >= 0, "Password recovery must keep its Back to Log In action.");
+        var footerStart = recovery.LastIndexOf("<Grid", backToLogin, StringComparison.Ordinal);
+        Assert.True(footerStart >= 0, "Back to Log In must live in an anchored footer.");
+        var footer = recovery[footerStart..backToLogin];
+        Assert.Contains("Grid.Row=\"2\"", footer, StringComparison.Ordinal);
+        Assert.Contains("PresentationActionFooterPadding", footer, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Auth_account_switch_footers_wrap_at_large_text()
+    {
+        var authRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Auth");
+        var login = XDocument.Load(Path.Combine(authRoot, "LoginPage.xaml"));
+        var loginFooter = login.Descendants().Single(element =>
+            (string?)element.Attribute("AutomationId") == "LoginCreateAccountRow");
+        Assert.Equal("FlexLayout", loginFooter.Name.LocalName);
+        Assert.Equal("Wrap", loginFooter.Attribute("Wrap")?.Value);
+        Assert.Equal("Center", loginFooter.Attribute("JustifyContent")?.Value);
+
+        var register = XDocument.Load(Path.Combine(authRoot, "RegisterPage.xaml"));
+        var registerPrompt = register.Descendants().Single(element =>
+            (string?)element.Attribute("Text") == "{loc:LocalizedText Auth_Register_AlreadyHaveAnAccount}");
+        var registerWrap = registerPrompt.Ancestors().FirstOrDefault(ancestor =>
+            ancestor.Name.LocalName == "FlexLayout");
+        Assert.NotNull(registerWrap);
+        Assert.Equal("Wrap", registerWrap!.Attribute("Wrap")?.Value);
+    }
+
+    [Fact]
+    public void Onboarding_progress_headers_use_the_shared_header_without_losing_progress()
+    {
+        var onboardingRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Onboarding");
+        var profileSetup = File.ReadAllText(Path.Combine(onboardingRoot, "ProfileSetupPage.xaml"));
+        var quiz = File.ReadAllText(Path.Combine(onboardingRoot, "QuizPage.xaml"));
+
+        Assert.Contains("<sharedControls:PageHeader", profileSetup, StringComparison.Ordinal);
+        Assert.Contains("PageHeader.EyebrowContent", profileSetup, StringComparison.Ordinal);
+        Assert.Contains("Onboarding_ProfileSetup_StepOneOfTwo", profileSetup, StringComparison.Ordinal);
+        Assert.Contains("Onboarding_ProfileSetup_ThisShapesYourFirstTrainingAnd", profileSetup, StringComparison.Ordinal);
+        Assert.DoesNotContain("Style=\"{StaticResource PageTitle}\"", profileSetup, StringComparison.Ordinal);
+
+        Assert.Contains("<sharedControls:PageHeader", quiz, StringComparison.Ordinal);
+        Assert.Contains("PageHeader.EyebrowContent", quiz, StringComparison.Ordinal);
+        Assert.Contains("PageHeader.TitleIcon", quiz, StringComparison.Ordinal);
+        Assert.Contains("Onboarding_Quiz_StepTwoOfTwo", quiz, StringComparison.Ordinal);
+        Assert.Contains("<ProgressBar", quiz, StringComparison.Ordinal);
+        Assert.Contains("ProgressText", quiz, StringComparison.Ordinal);
+        Assert.Contains("Onboarding_Quiz_GoBackToProfile", quiz, StringComparison.Ordinal);
+        Assert.DoesNotContain("Style=\"{StaticResource PageTitle}\"", quiz, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Onboarding_photo_heading_wraps_at_large_text()
+    {
+        var profileSetup = XDocument.Load(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages",
+            "Onboarding", "ProfileSetupPage.xaml"));
+        var optional = profileSetup.Descendants().Single(element =>
+            (string?)element.Attribute("Text") == "{loc:LocalizedText Onboarding_ProfileSetup_Optional}");
+        var photoHeading = optional.Ancestors().FirstOrDefault(ancestor =>
+            ancestor.Name.LocalName == "FlexLayout");
+        Assert.NotNull(photoHeading);
+        Assert.Equal("Wrap", photoHeading!.Attribute("Wrap")?.Value);
+    }
+
+    [Fact]
+    public void Activity_card_places_the_icon_under_the_day_beside_the_title()
+    {
+        var card = XDocument.Load(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls",
+            "Workout", "WorkoutActivityCard.xaml"));
+        var dayLabel = card.Descendants().Single(element =>
+            element.Name.LocalName == "Label" &&
+            (string?)element.Attribute("Text") ==
+            "{Binding DayLabel, Converter={StaticResource LocalizedStringConverter}}");
+        var dayTile = dayLabel.Ancestors().First(ancestor => ancestor.Name.LocalName == "Border");
+        var titleLabel = card.Descendants().Single(element =>
+            element.Name.LocalName == "Label" &&
+            (string?)element.Attribute("Text") ==
+            "{Binding Title, Converter={StaticResource LocalizedStringConverter}}");
+        var titleRow = titleLabel.Ancestors().First(ancestor => ancestor.Name.LocalName == "FlexLayout");
+        var icon = card.Descendants().Single(element =>
+            element.Name.LocalName == "Image" &&
+            ((string?)element.Attribute("Source"))?.Contains("Binding IconGlyph", StringComparison.Ordinal) == true);
+        var cardGrid = dayTile.Parent;
+
+        // Both are direct children of the card grid, so the icon can never sit inside the day badge.
+        Assert.Same(cardGrid, icon.Parent);
+        Assert.Same(cardGrid, titleRow.Parent);
+
+        // Under the badge: a later row, in the badge's own column.
+        var dayRow = EffectiveGridRow(dayTile);
+        var iconRow = EffectiveGridRow(icon);
+        Assert.True(iconRow > dayRow, "The activity icon must sit on a row below the day badge.");
+        Assert.Equal(EffectiveGridColumn(dayTile), EffectiveGridColumn(icon));
+
+        // Beside the title: the same row as the title, starting to the right of the icon.
+        Assert.Equal(iconRow, EffectiveGridRow(titleRow));
+        Assert.True(EffectiveGridColumn(titleRow) > EffectiveGridColumn(icon),
+            "The workout title must start to the right of the activity icon.");
+    }
+
+    [Fact]
+    public void Activity_card_badge_and_actions_grow_instead_of_clipping_at_large_text()
+    {
+        var card = XDocument.Load(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls",
+            "Workout", "WorkoutActivityCard.xaml"));
+        var dayLabel = card.Descendants().Single(element =>
+            element.Name.LocalName == "Label" &&
+            (string?)element.Attribute("Text") ==
+            "{Binding DayLabel, Converter={StaticResource LocalizedStringConverter}}");
+        var dayTile = dayLabel.Ancestors().First(ancestor => ancestor.Name.LocalName == "Border");
+
+        // A fixed 36pt tile cannot hold a two-letter day once the type scales: the abbreviation
+        // either breaks inside itself or loses its second letter under the tile's edge. The
+        // reviewed 36pt stays as the resting size, expressed as a minimum the tile may outgrow.
+        Assert.Null(dayTile.Attribute("WidthRequest"));
+        Assert.Null(dayTile.Attribute("HeightRequest"));
+        Assert.Equal("{StaticResource UiDimension36}", (string?)dayTile.Attribute("MinimumWidthRequest"));
+        Assert.Equal("{StaticResource UiDimension36}", (string?)dayTile.Attribute("MinimumHeightRequest"));
+        Assert.Equal("NoWrap", (string?)dayLabel.Attribute("LineBreakMode"));
+
+        // The session actions were measured against an unbounded row, so a long Russian label ran
+        // past the card edge instead of wrapping. A wrapping flex row measures against the card.
+        var requiredAction = card.Descendants().Single(element =>
+            element.Name.LocalName == "Button" &&
+            ((string?)element.Attribute("Text"))?.Contains(
+                "Binding OptionalStatusText", StringComparison.Ordinal) == true);
+        var actionRow = requiredAction.Ancestors().First(ancestor =>
+            ancestor.Name.LocalName is "FlexLayout" or "HorizontalStackLayout" or "VerticalStackLayout");
+        Assert.Equal("FlexLayout", actionRow.Name.LocalName);
+        Assert.Equal("Wrap", (string?)actionRow.Attribute("Wrap"));
+
+        var easierAction = card.Descendants().Single(element =>
+            element.Name.LocalName == "Button" &&
+            ((string?)element.Attribute("Text"))?.Contains(
+                "Binding EasierAlternativeStatusText", StringComparison.Ordinal) == true);
+        Assert.Equal(actionRow, easierAction.Parent);
+        Assert.Equal("{StaticResource ButtonSecondary}", (string?)requiredAction.Attribute("Style"));
+        Assert.Equal("{StaticResource ButtonSecondary}", (string?)easierAction.Attribute("Style"));
+    }
+
+    [Fact]
+    public void Large_text_cards_constrain_labels_instead_of_squeezing_them()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+
+        var cycleHero = XDocument.Load(Path.Combine(uiRoot, "Controls", "Cycle", "CycleHeroCard.xaml"));
+        var cycleLabel = cycleHero.Descendants().Single(element =>
+            (string?)element.Attribute("Text") == "{loc:LocalizedText Cycle_Hero_HeaderTitle}");
+        Assert.DoesNotContain(cycleLabel.Ancestors(), ancestor => ancestor.Name.LocalName == "HorizontalStackLayout");
+        var cycleHeader = cycleLabel.Ancestors().First(ancestor => ancestor.Name.LocalName == "Grid");
+        Assert.Equal("Auto,*", cycleHeader.Attribute("ColumnDefinitions")?.Value);
+
+        var activityCard = XDocument.Load(Path.Combine(uiRoot, "Controls", "Workout", "WorkoutActivityCard.xaml"));
+        var activityTitle = activityCard.Descendants().Single(element =>
+            element.Name.LocalName == "Label" &&
+            (string?)element.Attribute("Text") == "{Binding Title, Converter={StaticResource LocalizedStringConverter}}");
+        var activityRow = activityTitle.Ancestors()
+            .FirstOrDefault(ancestor => ancestor.Name.LocalName == "FlexLayout");
+        Assert.NotNull(activityRow);
+        Assert.Equal("Wrap", activityRow!.Attribute("Wrap")?.Value);
+
+        var profileDetails = XDocument.Load(Path.Combine(uiRoot, "Controls", "Profile", "ProfileDetailsContent.xaml"));
+        var privacyLabel = profileDetails.Descendants().Single(element =>
+            (string?)element.Attribute("Text") == "{loc:LocalizedText Profile_Details_PreviewHiddenForPrivacy}");
+        var privacyRow = privacyLabel.Ancestors()
+            .FirstOrDefault(ancestor => ancestor.Name.LocalName == "FlexLayout");
+        Assert.NotNull(privacyRow);
+        Assert.Equal("Wrap", privacyRow!.Attribute("Wrap")?.Value);
+
+        var vaultTitle = profileDetails.Descendants().Single(element =>
+            (string?)element.Attribute("Text") == "{loc:LocalizedText Profile_PhotoJourney_CardTitle}");
+        var vaultRow = vaultTitle.Ancestors()
+            .FirstOrDefault(ancestor => ancestor.Name.LocalName == "FlexLayout");
+        Assert.NotNull(vaultRow);
+        Assert.Equal("Wrap", vaultRow!.Attribute("Wrap")?.Value);
+        Assert.Contains(profileDetails.Descendants(), element =>
+            (string?)element.Attribute("Text") == "{loc:LocalizedText Profile_Details_StoredLocallyOnThisDevice}");
+    }
+
+    [Fact]
+    public void Apple_sign_in_stays_user_initiated_on_the_login_screen()
+    {
+        var loginCodeBehind = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Auth",
+            "LoginPage.xaml.cs"));
+
+        Assert.DoesNotContain("TryStartAutomaticAppleSignIn", loginCodeBehind, StringComparison.Ordinal);
+        Assert.DoesNotContain("SignInWithPlatformCommand", loginCodeBehind, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Populated_schedule_strip_has_a_measured_wrapping_container()
+    {
+        var workoutPage = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Workout",
+            "WorkoutPage.xaml"));
+        var scheduleStart = workoutPage.IndexOf("BindableLayout.ItemsSource=\"{Binding ScheduleDays}\"",
+            StringComparison.Ordinal);
+        Assert.True(scheduleStart >= 0, "The schedule strip must bind ScheduleDays.");
+
+        var scheduleContainerStart = workoutPage.LastIndexOf("<FlexLayout", scheduleStart, StringComparison.Ordinal);
+        Assert.True(scheduleContainerStart >= 0, "The schedule strip must use a measured FlexLayout.");
+        var scheduleEnd = workoutPage.IndexOf("</Border>", scheduleStart, StringComparison.Ordinal);
+        Assert.True(scheduleEnd > scheduleStart, "The schedule strip must live inside its card.");
+        var scheduleMarkup = workoutPage[scheduleContainerStart..scheduleEnd];
+
+        Assert.Contains("Wrap=\"Wrap\"", scheduleMarkup, StringComparison.Ordinal);
+        Assert.Contains("MinimumHeightRequest=\"{StaticResource PresentationMinimumTouchSize}\"",
+            scheduleMarkup, StringComparison.Ordinal);
+        Assert.DoesNotContain("<ScrollView", scheduleMarkup, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Schedule_day_cards_announce_day_date_workout_and_today()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var workoutPage = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Workout", "WorkoutPage.xaml"));
+        Assert.Contains(
+            "SemanticProperties.Description=\"{Binding AccessibilityDescription}\"",
+            workoutPage,
+            StringComparison.Ordinal);
+
+        var scheduleDay = File.ReadAllText(Path.Combine(uiRoot, "Models", "UI", "Workout", "ScheduleDayItem.cs"));
+        Assert.Contains("AccessibilityDescription", scheduleDay, StringComparison.Ordinal);
+
+        var viewModel = File.ReadAllText(Path.Combine(uiRoot, "ViewModels", "Workout", "WorkoutViewModel.cs"));
+        Assert.Contains("BuildScheduleDayAccessibility", viewModel, StringComparison.Ordinal);
+        Assert.Contains("Workout_Page_ScheduleDayTodayAccessibility", viewModel, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Weekday_preferences_use_compact_rows_not_a_card_per_day()
+    {
+        var preferencesPage = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Profile",
+            "ProfileWorkoutPreferencesPage.xaml"));
+
+        Assert.DoesNotContain("Style=\"{StaticResource CardSecondary}\"", preferencesPage, StringComparison.Ordinal);
+        Assert.Contains("Style=\"{StaticResource ProfileMenuRow}\"", preferencesPage, StringComparison.Ordinal);
+        Assert.DoesNotContain(
+            "SemanticProperties.Hint=\"{loc:LocalizedText Common_NotSelected}\"",
+            preferencesPage,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Selectable_chips_use_the_shared_selection_surface_with_native_role_and_state()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var injury = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Injury", "InjuryLogContent.xaml"));
+        Assert.Contains("<shared:SelectionCell", injury, StringComparison.Ordinal);
+        Assert.Contains("IsSelected=\"{Binding IsSelected}\"", injury, StringComparison.Ordinal);
+        Assert.Contains("MinimumHeightRequest=\"{StaticResource PresentationMinimumTouchSize}\"",
+            injury, StringComparison.Ordinal);
+
+        var selectionCell = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Shared", "SelectionCell.cs"));
+        Assert.Contains("UIAccessibilityTrait.Button", selectionCell, StringComparison.Ordinal);
+        Assert.Contains("UIAccessibilityTrait.Selected", selectionCell, StringComparison.Ordinal);
+
+        var cycleDatePhase = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Cycle", "CycleDatePhaseModal.xaml"));
+        Assert.Contains("sharedControls:SelectionCell", cycleDatePhase, StringComparison.Ordinal);
+
+        var swap = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Workout", "WorkoutSwapPanel.xaml"));
+        Assert.Contains("sharedControls:SelectionCell", swap, StringComparison.Ordinal);
+
+        var preferences = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Workout",
+            "WorkoutActivityPreferencePicker.xaml"));
+        Assert.Contains("shared:SelectionCell", preferences, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Every_selection_cell_has_an_accessible_label()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var missing = Directory.EnumerateFiles(uiRoot, "*.xaml", SearchOption.AllDirectories)
+            .Where(path => !path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") &&
+                           !path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+            .SelectMany(path =>
+            {
+                var document = XDocument.Load(path);
+                return document.Descendants()
+                    .Where(element => element.Name.LocalName == "SelectionCell" &&
+                                      element.Attribute("SemanticProperties.Description") is null)
+                    .Select(_ => path);
+            })
+            .Distinct(StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.True(missing.Length == 0,
+            "SelectionCell requires a direct SemanticProperties.Description: " + string.Join(", ", missing));
     }
 
     [Fact]
@@ -747,6 +1041,267 @@ public class UiCleanlinessAndReachabilityTests
         Assert.True(forwardRefIssues.Count == 0,
             $"Found {forwardRefIssues.Count} forward reference(s) in Styles.xaml:\n" + string.Join("\n", forwardRefIssues));
     }
+
+    [Fact]
+    public void Workout_pages_include_informative_visuals_not_only_text()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        string Read(params string[] parts) => File.ReadAllText(Path.Combine(uiRoot, Path.Combine(parts)));
+
+        var overview = Read("Pages", "Workout", "WorkoutPage.xaml");
+        Assert.Contains("PageHeader.TitleIcon", overview, StringComparison.Ordinal);
+        Assert.Contains("WorkoutHeaderVisual", overview, StringComparison.Ordinal);
+        Assert.Contains("WorkoutNoPlanVisual", overview, StringComparison.Ordinal);
+
+        var activityCard = Read("Controls", "Workout", "WorkoutActivityCard.xaml");
+        Assert.Contains("IconGlyph", activityCard, StringComparison.Ordinal);
+        Assert.Contains("StringToFluentIconImageSourceConverter", activityCard, StringComparison.Ordinal);
+
+        var session = Read("Pages", "Workout", "WorkoutSessionPage.xaml");
+        Assert.Contains("WorkoutSessionActivityVisual", session, StringComparison.Ordinal);
+        Assert.Contains("WorkoutSessionExerciseVisual", session, StringComparison.Ordinal);
+        Assert.Contains("SelectedActivity.IconGlyph", session, StringComparison.Ordinal);
+        Assert.Contains("CurrentExercise.IconGlyph", session, StringComparison.Ordinal);
+
+        var history = Read("Pages", "Workout", "WorkoutHistoryPage.xaml");
+        Assert.Contains("WorkoutHistoryHeaderVisual", history, StringComparison.Ordinal);
+        Assert.Contains("WorkoutHistoryEmptyVisual", history, StringComparison.Ordinal);
+        Assert.Contains("WorkoutHistoryDateTile", history, StringComparison.Ordinal);
+
+        var plan = Read("Pages", "Workout", "StrengthPlanGenerationPage.xaml");
+        Assert.Contains("WorkoutPlanHeaderVisual", plan, StringComparison.Ordinal);
+        Assert.Contains("BarHeight", plan, StringComparison.Ordinal);
+        Assert.Contains("DayIconGlyph", plan, StringComparison.Ordinal);
+
+        var planModels = Read("ViewModels", "Workout", "StrengthPlanGenerationDisplayModels.cs");
+        Assert.Contains("WeatherMoon24", planModels, StringComparison.Ordinal);
+        Assert.Contains("IsRestDay", planModels, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Every_form_input_exposes_an_accessible_name()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var inputNames = new HashSet<string>(StringComparer.Ordinal)
+        {
+            "Entry", "Editor", "Picker", "DatePicker", "TimePicker", "SearchBar",
+            "CheckBox", "Switch", "Stepper", "Slider"
+        };
+        var missing = new List<string>();
+
+        foreach (var path in Directory.EnumerateFiles(uiRoot, "*.xaml", SearchOption.AllDirectories))
+        {
+            if (path.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") ||
+                path.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}"))
+                continue;
+
+            var document = XDocument.Load(path);
+            foreach (var element in document.Descendants())
+            {
+                if (!inputNames.Contains(element.Name.LocalName)) continue;
+                if (!string.IsNullOrWhiteSpace((string?)element.Attribute("SemanticProperties.Description")))
+                    continue;
+
+                var binding = (string?)element.Attribute("Text") ??
+                              (string?)element.Attribute("SelectedItem") ??
+                              (string?)element.Attribute("Placeholder") ??
+                              string.Empty;
+                missing.Add($"{Path.GetRelativePath(RepoRoot, path)}: <{element.Name.LocalName} {binding}>".Trim());
+            }
+        }
+
+        Assert.True(missing.Count == 0,
+            "Every form input needs a VoiceOver name. Missing:\n" + string.Join("\n", missing));
+    }
+
+    [Fact]
+    public void Section_titles_are_headings_with_explicit_decorative_exceptions()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var styles = File.ReadAllText(Path.Combine(uiRoot, "Resources", "Styles", "Styles.xaml"));
+        Assert.Contains("Property=\"SemanticProperties.HeadingLevel\" Value=\"Level2\"", styles,
+            StringComparison.Ordinal);
+
+        var warning = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Cycle", "CycleWarningPopup.xaml"));
+        Assert.Contains("SemanticProperties.HeadingLevel=\"None\"", warning, StringComparison.Ordinal);
+
+        var phaseDetail = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Cycle", "CyclePhaseDetailPage.xaml"));
+        Assert.Contains("SemanticProperties.HeadingLevel=\"None\"", phaseDetail, StringComparison.Ordinal);
+
+        var calendar = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Cycle", "CycleCalendarCard.xaml"));
+        Assert.Contains("SemanticProperties.HeadingLevel=\"None\"", calendar, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Accessibility_display_titles_are_capped_and_wired_to_page_and_profile_headers()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var styles = File.ReadAllText(Path.Combine(uiRoot, "Resources", "Styles", "Styles.xaml"));
+        Assert.Contains("x:Key=\"PresentationAccessibilityTitleMaxFontSize\">40<", styles, StringComparison.Ordinal);
+        Assert.Contains("x:Key=\"PresentationAccessibilityProfileNameMaxFontSize\"", styles, StringComparison.Ordinal);
+        Assert.Contains("x:Key=\"PresentationAccessibilitySectionTitleMaxFontSize\">36<", styles, StringComparison.Ordinal);
+        Assert.Contains("sharedControls:CappedTextSize.IsSectionHeading", styles, StringComparison.Ordinal);
+
+        var cappedText = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Shared", "CappedTextSize.cs"));
+        Assert.Contains("AttachSectionTitle", cappedText, StringComparison.Ordinal);
+        Assert.Contains("IsSectionHeadingProperty", cappedText, StringComparison.Ordinal);
+
+        var pageHeader = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Shared", "PageHeader.cs"));
+        Assert.Contains("CappedTextSize.Attach", pageHeader, StringComparison.Ordinal);
+
+        var profilePage = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Profile", "ProfilePage.xaml"));
+        Assert.Contains("x:Name=\"ProfileNameLabel\"", profilePage, StringComparison.Ordinal);
+
+        var profileCodeBehind = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Profile", "ProfilePage.xaml.cs"));
+        Assert.Contains("CappedTextSize.Attach", profileCodeBehind, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Cycle_hero_card_does_not_collapse_its_quick_log_button_into_a_generic_container()
+    {
+        var hero = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Cycle", "CycleHeroCard.xaml"));
+        Assert.DoesNotContain("Cycle_Hero_CardAccessibility", hero, StringComparison.Ordinal);
+        Assert.Contains("Command=\"{Binding OpenQuickLogCommand}\"", hero, StringComparison.Ordinal);
+        Assert.Contains("SemanticProperties.HeadingLevel=\"Level2\"", hero, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Privacy_page_title_fits_one_russian_word_at_accessibility_sizes()
+    {
+        var russian = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Services", "Localization", "RussianUiText.NutritionProfileAuth.cs"));
+        Assert.Contains("Values[\"Profile_Privacy_Title\"] = \"Приватность\"", russian, StringComparison.Ordinal);
+        Assert.Contains("Values[\"Profile_Privacy_Policy\"] = \"Приватность\"", russian, StringComparison.Ordinal);
+        Assert.Contains("Values[\"Profile_Details_UnitsDisplay\"] = \"Единицы\"", russian, StringComparison.Ordinal);
+        Assert.Contains("Values[\"Profile_Details_WorkoutAvailability\"] = \"Дни тренировок\"", russian, StringComparison.Ordinal);
+        Assert.Contains("Values[\"Profile_Details_PersonalInfo\"] = \"Личные данные\"", russian, StringComparison.Ordinal);
+        Assert.Contains("Values[\"Nutrition_FoodLog_CaloriesRemaining\"] = \"Осталось {0}\"", russian, StringComparison.Ordinal);
+        var foodLogViewModel = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "ViewModels", "Nutrition", "FoodLogViewModel.cs"));
+        Assert.Contains("Nutrition_FoodLog_CaloriesOver", foodLogViewModel, StringComparison.Ordinal);
+
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var phaseExplorer = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Cycle", "CyclePhaseExplorerCarousel.xaml"));
+        Assert.DoesNotContain("SemanticProperties.Hint", phaseExplorer, StringComparison.Ordinal);
+        Assert.Contains("sharedControls:CardTapTarget Grid.ColumnSpan=\"2\"", phaseExplorer, StringComparison.Ordinal);
+        Assert.Contains("CappedTextSize.IsPhasePill", phaseExplorer, StringComparison.Ordinal);
+
+        var phaseSummary = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Cycle", "CyclePhaseSummarySheet.xaml"));
+        Assert.Contains("OpenSelectedPhaseDetailsCommand", phaseSummary, StringComparison.Ordinal);
+
+        var workoutPage = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Workout", "WorkoutPage.xaml"));
+        Assert.Contains("Command=\"{Binding OpenHistoryCommand}\"", workoutPage, StringComparison.Ordinal);
+
+        var dashboardNutrition = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Dashboard", "DashboardNutritionCard.xaml"));
+        Assert.Contains("<sharedControls:CardTapTarget Command=\"{Binding OpenNutritionCommand}\"", dashboardNutrition, StringComparison.Ordinal);
+        Assert.Contains("FlexLayout Direction=\"Row\" Wrap=\"Wrap\"", dashboardNutrition, StringComparison.Ordinal);
+        Assert.DoesNotContain("<Border.GestureRecognizers>", dashboardNutrition, StringComparison.Ordinal);
+        var workoutRussian = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Services", "Localization", "RussianUiText.CycleWorkout.cs"));
+        Assert.Contains("Values[\"Workout_Schedule_DayTuesday\"] = \"ВТ\"", workoutRussian, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Plan_preview_sheet_keeps_its_footer_on_screen_at_accessibility_sizes()
+    {
+        var code = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Workout", "StrengthPlanGenerationPage.xaml.cs"));
+        Assert.Contains("PreviewSheet.HeightRequest = sheetHeight", code, StringComparison.Ordinal);
+
+        var russian = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Services", "Localization", "RussianUiText.WorkoutGeneration.cs"));
+        Assert.Contains("Values[\"Workout_Generation_PreviewTitle\"] = \"Предпросмотр плана\"", russian, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Page_headers_drop_the_subtitle_at_accessibility_text_sizes()
+    {
+        var header = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Shared", "PageHeader.cs"));
+        Assert.Equal(2, Regex.Matches(header, "!IsAccessibilityTextSize\\(\\)").Count);
+    }
+
+    [Fact]
+    public void Card_choices_and_tappable_cards_expose_button_semantics()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var target = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Shared", "CardTapTarget.cs"));
+        Assert.Contains("class CardTapTarget : Button", target, StringComparison.Ordinal);
+
+        var units = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Profile", "ProfileUnitsDisplayPage.xaml"));
+        Assert.Equal(2, Regex.Matches(units, "<sharedControls:CardTapTarget\\s").Count);
+        Assert.Contains("<sharedControls:AdaptiveRow Grid.Row=\"2\" Columns=\"2\"", units, StringComparison.Ordinal);
+        Assert.DoesNotContain("<TapGestureRecognizer Command=\"{Binding SelectImperialUnitsCommand}\"", units, StringComparison.Ordinal);
+        Assert.DoesNotContain("<TapGestureRecognizer Command=\"{Binding SelectMetricUnitsCommand}\"", units, StringComparison.Ordinal);
+
+        var nutritionSettings = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Profile", "ProfileNutritionSettingsPage.xaml"));
+        Assert.Equal(4, Regex.Matches(nutritionSettings, "<sharedControls:CardTapTarget\\s").Count);
+        Assert.Equal(4, Regex.Matches(nutritionSettings, "<sharedControls:AdaptiveRow").Count);
+
+        var profileDetails = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Profile", "ProfileDetailsContent.xaml"));
+        Assert.Contains("sharedControls:CardTapTarget", profileDetails, StringComparison.Ordinal);
+        Assert.Contains("SemanticProperties.Description=\"{loc:LocalizedText Profile_PhotoJourney_Title}\"", profileDetails, StringComparison.Ordinal);
+        Assert.Contains("SemanticProperties.Hint=\"{loc:LocalizedText Profile_Details_TapToOpenFullPhotoJourney}\"", profileDetails, StringComparison.Ordinal);
+        Assert.DoesNotContain("<TapGestureRecognizer Command=\"{Binding OpenVaultCommand}\"", profileDetails, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Decorative_icons_yield_width_at_accessibility_text_sizes()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI");
+        var decoration = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Shared", "AccessibilityDecoration.cs"));
+        Assert.Contains("HideAtAccessibilitySizeProperty", decoration, StringComparison.Ordinal);
+        Assert.Contains("UIContentSizeCategoryDidChangeNotification", decoration, StringComparison.Ordinal);
+
+        var dashboard = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Dashboard", "DashboardWorkoutCard.xaml"));
+        Assert.Contains("AccessibilityDecoration.HideAtAccessibilitySize=\"True\"", dashboard, StringComparison.Ordinal);
+        Assert.Contains("x:Name=\"HeaderGrid\"", dashboard, StringComparison.Ordinal);
+
+        var dashboardCode = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Dashboard", "DashboardWorkoutCard.xaml.cs"));
+        Assert.Contains("HeaderGrid.ColumnDefinitions[0].Width", dashboardCode, StringComparison.Ordinal);
+
+        var profile = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Profile", "ProfilePage.xaml"));
+        Assert.Equal(3, Regex.Matches(profile, "AccessibilityDecoration.HideAtAccessibilitySize=\"True\"").Count);
+    }
+
+    [Fact]
+    public void Nutrition_phase_focus_gives_long_copy_the_full_card_width()
+    {
+        var path = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Nutrition",
+            "NutritionPhaseFocusCard.xaml");
+        var document = XDocument.Load(path);
+        var title = document.Descendants().Single(element =>
+            (string?)element.Attribute("Text") == "{Binding PhaseFocusTitle, Converter={StaticResource LocalizedStringConverter}}");
+        var copy = document.Descendants().Single(element =>
+            (string?)element.Attribute("Text") == "{Binding PhaseFocusCopy, Converter={StaticResource LocalizedStringConverter}}");
+
+        Assert.Equal("2", (string?)title.Attribute("Grid.ColumnSpan"));
+        Assert.Equal("2", (string?)copy.Attribute("Grid.ColumnSpan"));
+    }
+
+    [Fact]
+    public void Profile_menu_rows_expose_an_accessible_button_label_and_hint()
+    {
+        var path = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Profile",
+            "ProfileDetailsContent.xaml");
+        var document = XDocument.Load(path);
+        var rows = document.Descendants()
+            .Where(element => element.Name.LocalName == "Border" &&
+                              (string?)element.Attribute("Style") == "{StaticResource ProfileMenuRow}" &&
+                              element.Elements().Any(child => child.Name.LocalName == "Border.GestureRecognizers"))
+            .ToList();
+
+        Assert.Equal(6, rows.Count);
+        foreach (var row in rows)
+        {
+            Assert.False(string.IsNullOrWhiteSpace(row.Attribute("SemanticProperties.Description")?.Value),
+                "Every tappable profile row needs a VoiceOver label that includes its current value.");
+            Assert.False(string.IsNullOrWhiteSpace(row.Attribute("SemanticProperties.Hint")?.Value),
+                "Every tappable profile row needs a hint so iOS exposes it as a button to VoiceOver.");
+        }
+    }
+
+    // Effective grid placement: an omitted Grid.Row/Grid.Column means row 0 / column 0, so the
+    // guard keeps asserting behaviour when the XAML leaves a default value implicit.
+    private static int EffectiveGridRow(XElement element) =>
+        int.TryParse(element.Attribute("Grid.Row")?.Value, out var row) ? row : 0;
+
+    private static int EffectiveGridColumn(XElement element) =>
+        int.TryParse(element.Attribute("Grid.Column")?.Value, out var column) ? column : 0;
 
     private static string FindRepositoryRoot()
     {

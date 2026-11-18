@@ -86,17 +86,38 @@
                                            Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
                                     <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*"
                                           ColumnSpacing="{StaticResource UiSpaceCompact}">
-                                        <Label Text="{Binding MealDraftProteinText, StringFormat='P {0}'}"
-                                               Style="{StaticResource CaptionStrong}"
-                                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource ProteinDark}}" />
+                                        <Label Style="{StaticResource CaptionStrong}"
+                                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource ProteinDark}}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{loc:LocalizedText Nutrition_Macro_ProteinShort}" />
+                                                    <Span Text=" " />
+                                                    <Span Text="{Binding MealDraftProteinText}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
                                         <Label Grid.Column="1"
-                                               Text="{Binding MealDraftCarbsText, StringFormat='C {0}'}"
                                                Style="{StaticResource CaptionStrong}"
-                                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource CarbsDark}}" />
+                                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource CarbsDark}}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{loc:LocalizedText Nutrition_Macro_CarbsShort}" />
+                                                    <Span Text=" " />
+                                                    <Span Text="{Binding MealDraftCarbsText}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
                                         <Label Grid.Column="2"
-                                               Text="{Binding MealDraftFatsText, StringFormat='F {0}'}"
                                                Style="{StaticResource CaptionStrong}"
-                                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource FatsDark}}" />
+                                               TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource FatsDark}}">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{loc:LocalizedText Nutrition_Macro_FatsShort}" />
+                                                    <Span Text=" " />
+                                                    <Span Text="{Binding MealDraftFatsText}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
                                     </Grid>
                                 </Grid>
                             </Border>
@@ -105,9 +126,7 @@
                                  themselves as labelled text and only the explicit Change action is
                                  tappable (D49). -->
                             <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
-                                  IsVisible="{Binding IsMealContextSummaryVisible}"
-                                  SemanticProperties.Description="{Binding MealChoiceSummary}"
-                                  SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEditor_ChangeMealContext}">
+                                  IsVisible="{Binding IsMealContextSummaryVisible}">
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" VerticalOptions="Center">
                                     <Label Text="{loc:LocalizedText Nutrition_MealEditor_MealType}"
                                            Style="{StaticResource CaptionLabel}" LineBreakMode="WordWrap" />
@@ -145,7 +164,8 @@
                                     <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}">
                                     <shared:SelectionCell x:Name="EditorBreakfastCell"
                                             Style="{StaticResource ChoiceCellCompact}"
-                                            IsSelected="{Binding IsBreakfastSelected}">
+                                            IsSelected="{Binding IsBreakfastSelected}"
+                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_MealType_Breakfast}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding SelectMealTypeCommand}"
                                                                   CommandParameter="{x:Static nutritionEnums:MealType.Breakfast}" />
@@ -156,7 +176,8 @@
                                     </shared:SelectionCell>
                                     <shared:SelectionCell x:Name="EditorLunchCell"
                                             Style="{StaticResource ChoiceCellCompact}"
-                                            IsSelected="{Binding IsLunchSelected}">
+                                            IsSelected="{Binding IsLunchSelected}"
+                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_MealType_Lunch}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding SelectMealTypeCommand}"
                                                                   CommandParameter="{x:Static nutritionEnums:MealType.Lunch}" />
@@ -167,7 +188,8 @@
                                     </shared:SelectionCell>
                                     <shared:SelectionCell x:Name="EditorDinnerCell"
                                             Style="{StaticResource ChoiceCellCompact}"
-                                            IsSelected="{Binding IsDinnerSelected}">
+                                            IsSelected="{Binding IsDinnerSelected}"
+                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_MealType_Dinner}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding SelectMealTypeCommand}"
                                                                   CommandParameter="{x:Static nutritionEnums:MealType.Dinner}" />
@@ -178,7 +200,8 @@
                                     </shared:SelectionCell>
                                     <shared:SelectionCell x:Name="EditorSnackCell"
                                             Style="{StaticResource ChoiceCellCompact}"
-                                            IsSelected="{Binding IsSnackSelected}">
+                                            IsSelected="{Binding IsSnackSelected}"
+                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_MealType_Snack}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer Command="{Binding SelectMealTypeCommand}"
                                                                   CommandParameter="{x:Static nutritionEnums:MealType.Snack}" />
@@ -219,7 +242,7 @@
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}"
                                              Padding="{StaticResource UiInsets0_16}"
                                              x:DataType="vm:NutritionViewModel">
-                            <Label Text="{loc:LocalizedText Nutrition_MealEditor_AddAFoodToBuildThis}"
+                            <Label Text="{Binding LogMealHint}"
                                    Style="{StaticResource StateEmptyBody}"
                                    LineBreakMode="WordWrap" />
                         </VerticalStackLayout>
@@ -346,7 +369,8 @@
                             </Border>
                             <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource PickerContainer}">
                                 <Picker Title="{loc:LocalizedText Nutrition_MealEditor_ServingUnit}" ItemsSource="{Binding ServingOptions}"
-                                        SelectedItem="{Binding SelectedServingOption}" />
+                                        SelectedItem="{Binding SelectedServingOption}"
+                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_ServingUnit}" />
                             </Border>
                         </Grid>
                         <Label
@@ -395,24 +419,28 @@
                         <Label Text="{loc:LocalizedText Nutrition_CustomFood_General}" Style="{StaticResource SectionTitle}" />
                         <Label Text="{loc:LocalizedText Nutrition_MealEditor_FoodName}" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
-                            <Entry Text="{Binding CustomFoodName}" Placeholder="{loc:LocalizedText Nutrition_MealEditor_FoodName}" />
+                            <Entry Text="{Binding CustomFoodName}" Placeholder="{loc:LocalizedText Nutrition_MealEditor_FoodName}"
+                                   SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_FoodName}" />
                         </Border>
                         <Label Text="{loc:LocalizedText Nutrition_CustomFood_CompanySource}" Style="{StaticResource FormFieldLabel}" />
                         <Border Style="{StaticResource InputContainer}">
                             <Entry Text="{Binding CustomFoodCompanySource}"
-                                   Placeholder="{loc:LocalizedText Nutrition_CustomFood_Optional}" />
+                                   Placeholder="{loc:LocalizedText Nutrition_CustomFood_Optional}"
+                                   SemanticProperties.Description="{loc:LocalizedText Nutrition_CustomFood_CompanySource}" />
                         </Border>
                         <Grid ColumnDefinitions="*,*" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" RowSpacing="{StaticResource UiSpaceMicro}">
                             <Label Text="{loc:LocalizedText Nutrition_MealEditor_ServingSize}" Style="{StaticResource FormFieldLabel}" />
                             <Label Grid.Column="1" Text="{loc:LocalizedText Nutrition_MealEditor_Unit}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry Text="{Binding CustomFoodServingAmount}" Keyboard="Numeric" />
+                                <Entry Text="{Binding CustomFoodServingAmount}" Keyboard="Numeric"
+                                       SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_ServingSize}" />
                             </Border>
                             <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource PickerContainer}">
                                 <Picker Title="{loc:LocalizedText Nutrition_MealEditor_ServingUnit}"
                                         ItemsSource="{Binding CustomFoodServingUnits}"
                                         SelectedItem="{Binding SelectedCustomFoodServingUnit}"
+                                        SemanticProperties.Description="{loc:LocalizedText Nutrition_MealEditor_Unit}"
                                         ItemDisplayBinding="{Binding ., Converter={StaticResource LocalizedStringConverter}}" />
                             </Border>
                         </Grid>
@@ -423,20 +451,24 @@
                             <Label Grid.Column="1" Text="{loc:LocalizedText Nutrition_Label_ProteinGrams}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry Text="{Binding CustomFoodCalories}" Keyboard="Numeric" />
+                                <Entry Text="{Binding CustomFoodCalories}" Keyboard="Numeric"
+                                       SemanticProperties.Description="{loc:LocalizedText Nutrition_Label_CaloriesKcal}" />
                             </Border>
                             <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource InputContainer}">
-                                <Entry Text="{Binding CustomFoodProtein}" Keyboard="Numeric" />
+                                <Entry Text="{Binding CustomFoodProtein}" Keyboard="Numeric"
+                                       SemanticProperties.Description="{loc:LocalizedText Nutrition_Label_ProteinGrams}" />
                             </Border>
                             <Label Grid.Row="2" Text="{loc:LocalizedText Nutrition_Label_CarbsGrams}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Label Grid.Row="2" Grid.Column="1" Text="{loc:LocalizedText Nutrition_Label_FatGrams}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="3" Style="{StaticResource InputContainer}">
-                                <Entry Text="{Binding CustomFoodCarbs}" Keyboard="Numeric" />
+                                <Entry Text="{Binding CustomFoodCarbs}" Keyboard="Numeric"
+                                       SemanticProperties.Description="{loc:LocalizedText Nutrition_Label_CarbsGrams}" />
                             </Border>
                             <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource InputContainer}">
-                                <Entry Text="{Binding CustomFoodFats}" Keyboard="Numeric" />
+                                <Entry Text="{Binding CustomFoodFats}" Keyboard="Numeric"
+                                       SemanticProperties.Description="{loc:LocalizedText Nutrition_Label_FatGrams}" />
                             </Border>
                         </Grid>
                         <Label Text="{loc:LocalizedText Nutrition_CustomFood_Micronutrients}" Style="{StaticResource SectionTitle}" />
@@ -444,18 +476,22 @@
                             <Label Text="{loc:LocalizedText Nutrition_CustomFood_Iron}" Style="{StaticResource FormFieldLabel}" />
                             <Label Grid.Column="1" Text="{loc:LocalizedText Nutrition_CustomFood_VitaminB12}" Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry Text="{Binding CustomFoodIron}" Keyboard="Numeric" />
+                                <Entry Text="{Binding CustomFoodIron}" Keyboard="Numeric"
+                                       SemanticProperties.Description="{loc:LocalizedText Nutrition_CustomFood_Iron}" />
                             </Border>
                             <Border Grid.Row="1" Grid.Column="1" Style="{StaticResource InputContainer}">
-                                <Entry Text="{Binding CustomFoodVitaminB12}" Keyboard="Numeric" />
+                                <Entry Text="{Binding CustomFoodVitaminB12}" Keyboard="Numeric"
+                                       SemanticProperties.Description="{loc:LocalizedText Nutrition_CustomFood_VitaminB12}" />
                             </Border>
                             <Label Grid.Row="2" Text="{loc:LocalizedText Nutrition_CustomFood_VitaminD}" Style="{StaticResource FormFieldLabel}" />
                             <Label Grid.Row="2" Grid.Column="1" Text="{loc:LocalizedText Nutrition_CustomFood_Calcium}" Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="3" Style="{StaticResource InputContainer}">
-                                <Entry Text="{Binding CustomFoodVitaminD}" Keyboard="Numeric" />
+                                <Entry Text="{Binding CustomFoodVitaminD}" Keyboard="Numeric"
+                                       SemanticProperties.Description="{loc:LocalizedText Nutrition_CustomFood_VitaminD}" />
                             </Border>
                             <Border Grid.Row="3" Grid.Column="1" Style="{StaticResource InputContainer}">
-                                <Entry Text="{Binding CustomFoodCalcium}" Keyboard="Numeric" />
+                                <Entry Text="{Binding CustomFoodCalcium}" Keyboard="Numeric"
+                                       SemanticProperties.Description="{loc:LocalizedText Nutrition_CustomFood_Calcium}" />
                             </Border>
                         </Grid>
                     </VerticalStackLayout>
@@ -484,11 +520,6 @@
                                 SemanticProperties.Description="{Binding LogMealButtonText, Converter={StaticResource LocalizedStringConverter}}"
                                 SemanticProperties.Hint="{Binding LogMealHint}" />
                     </Grid>
-                    <Label Text="{Binding LogMealHint}"
-                           IsVisible="{Binding ShowLogMealHint}"
-                           Style="{StaticResource CaptionLabel}"
-                           LineBreakMode="WordWrap"
-                           HorizontalTextAlignment="Center" />
                     <Button Style="{StaticResource ButtonPrimary}"
                             Text="{Binding IngredientActionText, Converter={StaticResource LocalizedStringConverter}}"
                             Command="{Binding AddIngredientCommand}" IsVisible="{Binding IsSelectedFoodEditorVisible}" />

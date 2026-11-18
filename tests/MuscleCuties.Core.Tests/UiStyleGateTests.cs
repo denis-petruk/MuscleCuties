@@ -96,6 +96,41 @@ public sealed class UiStyleGateTests
     ];
 
     [Fact]
+    public void Reading_body_and_action_buttons_follow_the_approved_scale()
+    {
+        var styles = XDocument.Load(StylesPath).Descendants()
+            .Where(element => element.Name.LocalName == "Style")
+            .ToArray();
+
+        XElement Style(string key) => styles.Single(element =>
+            element.Attributes().Any(attribute => attribute.Name.LocalName == "Key" && attribute.Value == key));
+
+        static string? Setter(XElement style, string property) =>
+            style.Elements()
+                .Where(element => element.Name.LocalName == "Setter")
+                .SingleOrDefault(element => (string?)element.Attribute("Property") == property)
+                ?.Attribute("Value")?.Value;
+
+        Assert.Equal("{StaticResource UiFontSize17}", Setter(Style("BodyLabel"), "FontSize"));
+
+        var implicitLabel = styles.Single(element =>
+            (string?)element.Attribute("TargetType") == "Label" &&
+            !element.Attributes().Any(attribute => attribute.Name.LocalName == "Key"));
+        Assert.Equal("{StaticResource UiFontSize17}", Setter(implicitLabel, "FontSize"));
+
+        foreach (var button in new[] { "ButtonPrimary", "ButtonSecondary" })
+        {
+            Assert.Equal("{StaticResource PresentationActionButtonMinimumHeight}",
+                Setter(Style(button), "MinimumHeightRequest"));
+        }
+
+        var actionButtonMinimum = XDocument.Load(StylesPath).Descendants().Single(element =>
+            element.Attributes().Any(attribute => attribute.Name.LocalName == "Key" &&
+                                                  attribute.Value == "PresentationActionButtonMinimumHeight"));
+        Assert.Equal("52", actionButtonMinimum.Value.Trim());
+    }
+
+    [Fact]
     public void Consumer_style_values_resolve_through_shared_tokens()
     {
         var violations = new List<string>();
@@ -212,7 +247,8 @@ public sealed class UiStyleGateTests
             var key = StyleKey(style);
             var reference = Regex.IsMatch(uiSource,
                 "StaticResource\\s+" + Regex.Escape(key) +
-                "\\b|Resources\\s*\\[\\s*\"" + Regex.Escape(key) + "\"\\s*\\]");
+                "\\b|Resources\\s*\\[\\s*\"" + Regex.Escape(key) + "\"\\s*\\]" +
+                "|SetDynamicResource\\s*\\(\\s*StyleProperty\\s*,\\s*\"" + Regex.Escape(key) + "\"\\s*\\)");
             if (!reference)
                 violations.Add($"Shared style '{key}' has no consumer and is dead code.");
         }

@@ -56,10 +56,12 @@
                                 SelectionMode="None">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:ExerciseSwapOption">
-                            <Border Style="{StaticResource CardSecondary}"
+                            <sharedControls:SelectionCell Style="{StaticResource CardSecondary}"
                                     Margin="{StaticResource UiInsets0_0_0_8}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    IsSelected="{Binding IsSelected}"
                                     SemanticProperties.Description="{Binding Name}">
-                                <!-- Selected semantics come from the shared CardSecondary style. -->
+                                <!-- Role, selected trait and selected hint come from SelectionCell and CardSecondary. -->
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding SelectSwapCandidateCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutSessionViewModel}}, x:DataType=vm:WorkoutSessionViewModel}"
@@ -85,7 +87,7 @@
                                            IsVisible="{Binding IsSelected}" Style="{StaticResource AccentLabel}"
                                            VerticalOptions="Center" />
                                 </Grid>
-                            </Border>
+                            </sharedControls:SelectionCell>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>

@@ -762,7 +762,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     {
         _suggestedPhase = suggestedPhase;
         OnPropertyChanged(nameof(HasSuggestedPhase));
-        PhaseJumpWarningTitle = "Keep your rhythm clean";
+        PhaseJumpWarningTitle = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(
+            "Cycle_Warning_OrderTitle");
         PhaseJumpWarningText = FormatCycleOrderWarningMessage(message);
         HasPhaseJumpWarning = true;
     }
@@ -770,9 +771,12 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     private void ShowCycleOrderPopup(string message, CyclePhase suggestedPhase)
     {
         _cycleWarningSuggestedPhase = suggestedPhase;
-        CycleWarningSuggestedActionText = $"Use {suggestedPhase}";
+        CycleWarningSuggestedActionText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+            "Cycle_Warning_UsePhaseFormat", FormatPhaseName(suggestedPhase));
         OnPropertyChanged(nameof(HasCycleWarningSuggestedPhase));
-        ShowCycleWarningPopup("Quick cycle check", FormatCycleOrderWarningMessage(message));
+        ShowCycleWarningPopup(
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Warning_QuickCheckTitle"),
+            FormatCycleOrderWarningMessage(message));
     }
 
     private void ShowCycleWarningPopup(string title, string message)
@@ -835,7 +839,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     private static string FormatPhaseName(CyclePhase phase)
     {
-        return phase.ToString().ToLowerInvariant();
+        return MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(
+            $"Cycle_Phase_{phase}_Name");
     }
 
     partial void OnUseDarkThemeChanged(bool value)

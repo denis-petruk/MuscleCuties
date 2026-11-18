@@ -14,14 +14,14 @@ public static class WorkoutActivityOptionCatalog
         new(
             WorkoutActivityDto.HighVolumeStrength,
             "High volume strength",
-            "Strength training with activity-specific set, repetition, and rest targets.",
+            "More sets for steady strength progress.",
             ActivityGroup.Strength,
             true,
             "Dumbbell24"),
         new(
             WorkoutActivityDto.StrengthHighIntensity,
             "Strength high intensity",
-            "Strength training with heavier main movements and planned rest between sets.",
+            "Heavier main lifts with fewer reps.",
             ActivityGroup.Strength,
             false,
             "Flash24"),
@@ -66,19 +66,24 @@ public static class WorkoutActivityOptionCatalog
             "Choose gentle or demanding yoga content when planning a session.",
             ActivityGroup.Yoga,
             false,
-            "LeafThree24"),
+            "LeafThree24",
+            "activity_yoga.svg"),
         new(WorkoutActivityDto.GeneralStrength, "General strength training",
             "Strength sessions with targets matched to your activity history.", ActivityGroup.Strength, false, "Dumbbell24"),
         new(WorkoutActivityDto.Walking, "Walking",
             "Plan or log walking time.", ActivityGroup.Cardio, false, "Run24"),
         new(WorkoutActivityDto.Rowing, "Rowing",
-            "Plan or log rowing time.", ActivityGroup.Cardio, false, "PulseSquare24"),
+            "Plan or log rowing time.", ActivityGroup.Cardio, false, "PulseSquare24",
+            "activity_rowing.svg"),
         new(WorkoutActivityDto.Elliptical, "Elliptical",
-            "Plan or log elliptical time.", ActivityGroup.Cardio, false, "PulseSquare24"),
+            "Plan or log elliptical time.", ActivityGroup.Cardio, false, "PulseSquare24",
+            "activity_elliptical.svg"),
         new(WorkoutActivityDto.Mobility, "Mobility",
-            "Plan or log mobility work.", ActivityGroup.Recovery, false, "LeafThree24"),
+            "Plan or log mobility work.", ActivityGroup.Recovery, false, "LeafThree24",
+            "activity_mobility.svg"),
         new(WorkoutActivityDto.GentleRecovery, "Gentle recovery activities",
-            "Plan or log gentle recovery time.", ActivityGroup.Recovery, false, "LeafThree24"),
+            "Plan or log gentle recovery time.", ActivityGroup.Recovery, false, "LeafThree24",
+            "activity_gentle_recovery.svg"),
         new(WorkoutActivityDto.RestDay, "Rest day",
             "Keep a day free of planned exercise.", ActivityGroup.Rest, false, "WeatherMoon24")
     ];
@@ -159,6 +164,7 @@ public static class WorkoutActivityOptionCatalog
             GroupDescription = string.Empty,
             Tag = GetGroupTag(definition.Group),
             IconGlyph = definition.IconGlyph,
+            IconImage = definition.IconImage,
             IsRequired = definition.IsCoreDefault,
             IsSelected = selectedTypes.Contains(definition.ActivityType)
         };
@@ -212,7 +218,8 @@ public static class WorkoutActivityOptionCatalog
         string Subtitle,
         ActivityGroup Group,
         bool IsCoreDefault,
-        string IconGlyph);
+        string IconGlyph,
+        string IconImage = "");
 
     private enum ActivityGroup
     {

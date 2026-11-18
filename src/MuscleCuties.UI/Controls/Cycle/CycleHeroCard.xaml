@@ -7,33 +7,31 @@
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:cycleControls="clr-namespace:MuscleCuties.UI.Controls.Cycle"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Cycle"
-    x:DataType="vm:CycleViewModel"
-    SemanticProperties.Description="{loc:LocalizedText Cycle_Hero_CardAccessibility}">
+    x:DataType="vm:CycleViewModel">
 
 
     <Border Style="{StaticResource CardPrimary}">
         <Grid RowDefinitions="Auto, Auto, Auto, Auto" RowSpacing="{StaticResource UiSpaceCompact}">
 
-            <!-- Top Row: Section header -->
-            <Grid>
-                <HorizontalStackLayout Spacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
-                    <Path
-                        Data="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"
-                        Stroke="{StaticResource Primary}"
-                        StrokeThickness="{StaticResource UiStrokeWidth1_5}"
-                        Aspect="Uniform"
-                        WidthRequest="{StaticResource UiDimension14}"
-                        HeightRequest="{StaticResource UiDimension14}"
-                        VerticalOptions="Center" />
-                    <Label
-                        Text="{loc:LocalizedText Cycle_Hero_HeaderTitle}"
-                        Style="{StaticResource CaptionStrong}"
-                        TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                        VerticalOptions="Center"
-                        LineBreakMode="WordWrap"
-                        SemanticProperties.HeadingLevel="Level2" />
-                </HorizontalStackLayout>
-
+            <!-- Top Row: Section header. The grid gives the label the remaining width so it wraps
+                 instead of running past the card edge at accessibility text sizes. -->
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing6}" VerticalOptions="Center">
+                <Path
+                    Data="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm0 18a8 8 0 1 1 0-16 8 8 0 0 1 0 16z"
+                    Stroke="{StaticResource Primary}"
+                    StrokeThickness="{StaticResource UiStrokeWidth1_5}"
+                    Aspect="Uniform"
+                    WidthRequest="{StaticResource UiDimension14}"
+                    HeightRequest="{StaticResource UiDimension14}"
+                    VerticalOptions="Center" />
+                <Label
+                    Grid.Column="1"
+                    Text="{loc:LocalizedText Cycle_Hero_HeaderTitle}"
+                    Style="{StaticResource CaptionStrong}"
+                    TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                    VerticalOptions="Center"
+                    LineBreakMode="WordWrap"
+                    SemanticProperties.HeadingLevel="Level2" />
             </Grid>
 
             <!-- Middle Row: Phase title and artwork -->

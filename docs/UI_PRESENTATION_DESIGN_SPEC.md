@@ -95,13 +95,13 @@ Current role baseline from `Styles.xaml`:
 | --- | --- | --- |
 | `PageTitle` | 27, semibold | Screen identity; allow wrapping. |
 | `SectionTitle`, `CardTitle` | 17, bold | Group hierarchy; do not head every row. |
-| `BodyLabel` | 15 | Current body role; do not shrink essential content further. |
+| `BodyLabel` | 17 | Reading body role; do not shrink essential content further. |
 | `MutedLabel`, `CaptionLabel`, `FormFieldLabel` | 13 | Supporting text and field labels with sufficient contrast. |
 | `EyebrowLabel` | 11, bold | Short supplemental metadata only. |
 | `MetricValue` | 24, bold | Pair with readable unit, period and meaning. |
 | Primary/secondary button text | 15, bold | Short explicit action labels. |
 
-These default device-independent values do not justify disabling scaling. Prefer a 17-point reading body in the planned typography pass, retaining compact metadata only where readable. That change is **pending**, not applied globally by this document. Fixed-height cards, single-line labels and fixed columns must not defeat accessibility sizes. Never fit essential text by shrinking it.
+These default device-independent values do not justify disabling scaling. The 17-point reading body is applied globally through `BodyLabel` and the implicit label style, retaining compact metadata only where readable. Fixed-height cards, single-line labels and fixed columns must not defeat accessibility sizes. Never fit essential text by shrinking it.
 
 ### Layout and shapes
 
@@ -110,7 +110,7 @@ These default device-independent values do not justify disabling scaling. Prefer
 - Large text and translation are design inputs. Design for the largest supported text size, the longer of EN/RU and both appearances before calling a layout finished: no essential label in a fixed-width column, a single-line container that cannot grow, or beside a fixed-size element. Where a grid genuinely cannot adapt, its documented fallback is part of the design.
 - Base spacing: `UiSpaceMicro`, `UiSpaceTight`, `UiSpaceCompact`, `UiSpaceControl`, `UiSpaceContent`. Prefer these or a descriptive component role over another arbitrary value.
 - Current implementation baseline: `CardPrimary` has an 18-point inset and 16-point radius; `CardSecondary` has a 14-point inset/radius; legacy `SelectableCard` radius is 14; inputs use `PresentationInputCornerRadius` (12). Buttons use `UiRadiusControl` (14). Only the two permitted card styles may remain after consolidation; do not propagate legacy shape differences.
-- `PresentationMinimumTouchSize` is 44; `PresentationInputMinimumHeight` and the primary button minimum are 52. These are minimums, not caps for larger text. Small glyphs sit inside sufficiently large interactive targets.
+- `PresentationMinimumTouchSize` is 44; `PresentationInputMinimumHeight`, `PresentationActionButtonMinimumHeight` for primary/secondary actions, start at 52. These are minimums, not caps for larger text. Small glyphs sit inside sufficiently large interactive targets.
 - Use `CardPrimary` and `CardSecondary` only as the target card vocabulary. Preserve legacy bindings while migrating `CardAccent`/`SelectableCard` callers; then remove those definitions and update their existing four-card source assertion together. Use rows/separators within a meaningful group; no nested card shells or local surface-geometry overrides.
 - Existing `UiDimension*`, `UiInsets*`, `UiFontSize*` and numeric radius resources are compatibility primitives. Do not bulk delete/rename them. New shared decisions receive semantic names describing purpose. A numeric resource name alone does not make a choice coherent.
 - Prefer Auto/star sizing for content and descriptive component-owned geometry for tables. Document a large-text fallback for set-entry/history grids. Width caps improve measure; they do not establish iPad/landscape readiness.

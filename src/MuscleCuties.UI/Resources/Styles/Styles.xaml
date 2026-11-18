@@ -23,7 +23,19 @@
     <x:Double x:Key="PresentationDecorativeIconSize">40</x:Double>
     <x:Double x:Key="PresentationMinimumTouchSize">44</x:Double>
     <x:Double x:Key="PresentationInputMinimumHeight">52</x:Double>
+    <x:Double x:Key="PresentationActionButtonMinimumHeight">52</x:Double>
     <x:Double x:Key="PresentationInputCornerRadius">12</x:Double>
+    <!-- Display roles keep scaling up to these reviewed ceilings at accessibility sizes. Body and
+         supporting text remain uncapped; page identity, section titles, compact stat labels and the
+         profile name stop growing. At AX XXL uncapped display text split long Russian words in place. -->
+    <x:Double x:Key="PresentationAccessibilityTitleMaxFontSize">40</x:Double>
+    <x:Double x:Key="PresentationAccessibilitySectionTitleMaxFontSize">36</x:Double>
+    <x:Double x:Key="PresentationAccessibilityProfileNameMaxFontSize">30</x:Double>
+    <x:Double x:Key="PresentationAccessibilityPhasePillMaxFontSize">28</x:Double>
+    <x:Double x:Key="PresentationAccessibilityCompactLabelMaxFontSize">28</x:Double>
+    <x:Double x:Key="PresentationAccessibilityCompactControlMaxFontSize">24</x:Double>
+    <x:Double x:Key="PresentationAccessibilityModalTitleMaxFontSize">32</x:Double>
+    <x:Double x:Key="PresentationAccessibilityBodyLeadMaxFontSize">36</x:Double>
 
     <!-- One adaptive page frame: every page centers its header, body and footer within this width. -->
     <x:Double x:Key="PageContentMaxWidth">640</x:Double>
@@ -207,6 +219,7 @@
     <Thickness x:Key="UiInsets6">6</Thickness>
     <Thickness x:Key="UiInsets60_118_0_0">60,118,0,0</Thickness>
     <Thickness x:Key="UiInsets6_0">6,0</Thickness>
+    <Thickness x:Key="UiInsets6_0_0_0">6,0,0,0</Thickness>
     <Thickness x:Key="UiInsets6_2">6,2</Thickness>
     <Thickness x:Key="UiInsets6_3">6,3</Thickness>
     <Thickness x:Key="UiInsets6_9">6,9</Thickness>
@@ -394,7 +407,7 @@
                                         Dark={StaticResource TextPrimaryDark}}" />
         <Setter Property="BackgroundColor" Value="Transparent" />
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
-        <Setter Property="FontSize" Value="{StaticResource UiFontSize15}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize17}" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="VisualStateManager.VisualStateGroups">
             <VisualStateGroupList>
@@ -418,7 +431,7 @@
 
     <Style TargetType="RadioButton">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
-        <Setter Property="FontSize" Value="{StaticResource UiFontSize15}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize17}" />
     </Style>
 
     <Style TargetType="Border">
@@ -461,7 +474,7 @@
                                         Dark={StaticResource TextPrimaryDark}}" />
     </Style>
 
-    <!-- Approved scale: page 27 semibold, section 18, card 16, body 15, support 13, caption 12. -->
+    <!-- Approved scale: page 27 semibold, section 18, card 16, body 17, support 13, caption 12. -->
     <Style x:Key="PageTitle" TargetType="Label" BasedOn="{StaticResource SubHeadline}">
         <Setter Property="FontFamily" Value="{StaticResource AppFontSemibold}" />
         <Setter Property="FontSize" Value="{StaticResource UiFontSize27}" />
@@ -470,6 +483,8 @@
     </Style>
 
     <Style x:Key="SectionTitle" TargetType="Label">
+        <Setter Property="sharedControls:CappedTextSize.IsSectionHeading" Value="True" />
+        <Setter Property="SemanticProperties.HeadingLevel" Value="Level2" />
         <Setter Property="FontFamily" Value="{StaticResource AppFontSemibold}" />
         <Setter Property="FontSize" Value="{StaticResource UiFontSize18}" />
         <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesNone}" />
@@ -500,7 +515,7 @@
 
     <Style x:Key="BodyLabel" TargetType="Label">
         <Setter Property="FontFamily" Value="{StaticResource AppFontFamily}" />
-        <Setter Property="FontSize" Value="{StaticResource UiFontSize15}" />
+        <Setter Property="FontSize" Value="{StaticResource UiFontSize17}" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="TextColor"
                 Value="{AppThemeBinding Light={StaticResource TextPrimary},
@@ -607,6 +622,9 @@
                         Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
                 <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
                 <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            </DataTrigger>
+            <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_NotSelected}" />
             </DataTrigger>
         </Style.Triggers>
     </Style>
@@ -775,6 +793,7 @@
 
     <Style x:Key="ModalTitle" TargetType="Label" BasedOn="{StaticResource SubHeadline}">
         <Setter Property="FontSize" Value="{StaticResource UiFontSize20}" />
+        <Setter Property="sharedControls:CappedTextSize.IsModalTitle" Value="True" />
         <Setter Property="LineBreakMode" Value="WordWrap" />
         <Setter Property="SemanticProperties.HeadingLevel" Value="Level2" />
     </Style>
@@ -925,7 +944,7 @@
         <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesNone}" />
         <Setter Property="FontSize" Value="{StaticResource UiFontSize14}" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusButton}" />
-        <Setter Property="MinimumHeightRequest" Value="{StaticResource UiControlHeight}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationActionButtonMinimumHeight}" />
         <Setter Property="HorizontalOptions" Value="Fill" />
         <!-- Wrap instead of truncating: at accessibility text sizes a full-sentence action label
              used to be clipped at the button edge. -->
@@ -971,7 +990,7 @@
         <Setter Property="FontSize" Value="{StaticResource UiFontSize14}" />
         <Setter Property="FontAttributes" Value="{StaticResource UiFontAttributesNone}" />
         <Setter Property="CornerRadius" Value="{StaticResource UiRadiusButton}" />
-        <Setter Property="MinimumHeightRequest" Value="{StaticResource UiControlHeight}" />
+        <Setter Property="MinimumHeightRequest" Value="{StaticResource PresentationActionButtonMinimumHeight}" />
         <Setter Property="MinimumWidthRequest" Value="{StaticResource PresentationMinimumTouchSize}" />
         <Setter Property="HeightRequest" Value="{StaticResource UiDimensionMinus1}" />
         <Setter Property="Padding" Value="{StaticResource UiInsets12_0}" />
@@ -1505,7 +1524,7 @@
          detail caption, the exercise pill row and the metric values all reconcile to one size band.
          It is a presentation tier for this card's secondary lines, not a shared app role: it is
          distinct from CaptionLabel (12pt bold, a short metadata/caption label) and from BodyLabel
-         (15pt, the app's body role). Use it for per-card secondary text only; section titles,
+         (17pt, the app's body role). Use it for per-card secondary text only; section titles,
          card/modal titles, page titles and inline status labels remain their existing styles. -->
     <Style TargetType="CheckBox">
         <Setter Property="Color"

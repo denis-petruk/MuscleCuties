@@ -1,3 +1,4 @@
+using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace MuscleCuties.Core.Tests;
@@ -77,6 +78,55 @@ public class LocalizationCatalogTests
             missing.Count == 0,
             $"Found {missing.Count} UiTextCatalog.Get/Format key literal(s) missing from the catalog:\n" +
             string.Join("\n", missing));
+    }
+
+    [Fact]
+    public void English_catalog_contains_no_cyrillic_text()
+    {
+        var violations = ReadEnglishCatalog()
+            .Where(pair => Regex.IsMatch(pair.Value, @"[\u0400-\u04FF]"))
+            .Select(pair => pair.Key)
+            .OrderBy(key => key, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.True(
+            violations.Length == 0,
+            $"English catalog values contain Cyrillic text: {string.Join(", ", violations)}");
+    }
+
+    [Fact]
+    public void Russian_copy_contains_no_mixed_script_words()
+    {
+        var violations = ReadRussianCopy()
+            .Where(pair => Regex.IsMatch(pair.Value, @"(?:[А-Яа-яЁё][A-Za-z]|[A-Za-z][А-Яа-яЁё])"))
+            .Select(pair => $"{pair.Key}: {pair.Value}")
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.True(
+            violations.Length == 0,
+            $"Russian copy contains mixed-script words:\n{string.Join("\n", violations)}");
+    }
+
+    [Fact]
+    public void Russian_copy_does_not_leak_common_english_ui_words()
+    {
+        string[] forbidden =
+        [
+            "logo", "Activities", "baseline", "recovery", "Consistently", "feels", "brutal",
+            "lookup", "timed out", "Nutrition", "Session", "check-in", "Photo Journey",
+            "email", "example.com", "FoodData Central", "1RM", "RelayCommand", "ViewModel", "XAML"
+        ];
+        var violations = ReadRussianCopy()
+            .Where(pair => forbidden.Any(word => Regex.IsMatch(
+                pair.Value, $@"\b{Regex.Escape(word)}\b", RegexOptions.IgnoreCase)))
+            .Select(pair => $"{pair.Key}: {pair.Value}")
+            .OrderBy(value => value, StringComparer.Ordinal)
+            .ToArray();
+
+        Assert.True(
+            violations.Length == 0,
+            $"Russian copy contains English UI words:\n{string.Join("\n", violations)}");
     }
 
     [Fact]
@@ -162,6 +212,14 @@ public class LocalizationCatalogTests
     }
 
     [Fact]
+    public void Russian_nutrition_focus_heading_is_distinct_from_the_page_title()
+    {
+        var source = File.ReadAllText(Path.Combine(LocalizationDirectory, "UiTextCatalog.RuntimeText.cs"));
+        Assert.Contains("[\"Nutrition focus\"] = \"Фокус питания\",", source, StringComparison.Ordinal);
+        Assert.Contains("[\"Nutrition\"] = \"Питание\",", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Runtime_map_has_no_duplicate_english_values()
     {
         var runtimePath = Path.Combine(LocalizationDirectory, "UiTextCatalog.RuntimeText.cs");
@@ -183,6 +241,52 @@ public class LocalizationCatalogTests
             $"Runtime map contains duplicate English values: {string.Join(", ", duplicates)}");
     }
 
+    [Theory]
+    [InlineData("Workout_Generation_MissingUpperPullEquipment")]
+    [InlineData("Workout_Generation_MissingUpperPullBandAnchor")]
+    [InlineData("Workout_Generation_MissingDirectCalves")]
+    [InlineData("Workout_Generation_MissingDirectRearDelts")]
+    [InlineData("Workout_Generation_BelowTargetDynamicCore")]
+    [InlineData("Workout_Generation_MissingGluteFocusAbduction")]
+    [InlineData("Workout_Generation_MissingKneeExtension")]
+    [InlineData("Workout_Generation_MissingKneeFlexion")]
+    [InlineData("Workout_Generation_MissingHipExtension")]
+    [InlineData("Workout_Generation_MovementCoverageUnknown")]
+    [InlineData("Workout_Generation_ReducedVolumeNotice")]
+    [InlineData("Workout_Generation_OneDayCoverageNotice")]
+    [InlineData("Workout_Generation_CoverageGapNotice")]
+    [InlineData("Workout_Generation_CoveragePreferredNotice")]
+    public void Preview_coverage_notes_stay_concise(string key)
+    {
+        const int maximumLength = 60;
+        var russian = ReadRussianCopy();
+
+        Assert.True(russian.TryGetValue(key, out var text), $"Missing Russian copy for {key}");
+        Assert.True(text.Length <= maximumLength,
+            $"{key} is {text.Length} characters long: {text}");
+    }
+
+    [Fact]
+    public void Every_reviewed_exercise_name_has_russian_copy()
+    {
+        var catalogPath = Path.Combine(
+            RepoRoot, "src", "MuscleCuties.Infrastructure.PostgreSql", "Workout", "Planning",
+            "ReviewData", "ReviewedExerciseCatalogV020.json");
+        using var document = JsonDocument.Parse(File.ReadAllText(catalogPath));
+        var names = new HashSet<string>(StringComparer.Ordinal);
+        CollectExpectedExerciseNames(document.RootElement, names);
+
+        var seededPath = Path.Combine(LocalizationDirectory, "SeededCopyRussianText.cs");
+        var seeded = CatalogEntryRegex.Matches(File.ReadAllText(seededPath))
+            .ToDictionary(match => match.Groups["key"].Value, match => match.Groups["value"].Value,
+                StringComparer.Ordinal);
+
+        var missing = names.Where(name => !seeded.ContainsKey(name)).OrderBy(name => name, StringComparer.Ordinal).ToArray();
+        Assert.True(
+            missing.Length == 0,
+            $"Reviewed exercise names without Russian seeded copy:\n{string.Join("\n", missing)}");
+    }
+
     [Fact]
     public void Localization_service_owns_no_string_catalog()
     {
@@ -198,6 +302,25 @@ public class LocalizationCatalogTests
         }
     }
 
+    private static void CollectExpectedExerciseNames(JsonElement element, HashSet<string> names)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            foreach (var property in element.EnumerateObject())
+            {
+                if (property.NameEquals("expectedName") && property.Value.ValueKind == JsonValueKind.String)
+                    names.Add(property.Value.GetString()!);
+                else
+                    CollectExpectedExerciseNames(property.Value, names);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+        {
+            foreach (var item in element.EnumerateArray())
+                CollectExpectedExerciseNames(item, names);
+        }
+    }
+
     private static Dictionary<string, string> ReadEnglishCatalog()
     {
         return ReadCatalog("UiTextCatalog", excludedFileName: "UiTextCatalog.RuntimeText.cs");
@@ -206,6 +329,22 @@ public class LocalizationCatalogTests
     private static Dictionary<string, string> ReadRussianCatalog()
     {
         return ReadCatalog("RussianUiText", excludedFileName: null);
+    }
+
+    private static Dictionary<string, string> ReadRussianCopy()
+    {
+        var copy = ReadRussianCatalog();
+        var runtimePath = Path.Combine(LocalizationDirectory, "UiTextCatalog.RuntimeText.cs");
+        foreach (Match match in CatalogEntryRegex.Matches(File.ReadAllText(runtimePath)))
+            copy[match.Groups["key"].Value] = match.Groups["value"].Value;
+
+        foreach (var file in Directory.GetFiles(LocalizationDirectory, "SeededCopyRussianText.cs"))
+        {
+            foreach (Match match in CatalogEntryRegex.Matches(File.ReadAllText(file)))
+                copy[match.Groups["key"].Value] = match.Groups["value"].Value;
+        }
+
+        return copy;
     }
 
     private static Dictionary<string, string> ReadCatalog(string filePrefix, string? excludedFileName)

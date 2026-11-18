@@ -11,66 +11,92 @@
     x:DataType="vm:FoodLogViewModel">
 
     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
-        <!-- The card header follows MealCardView: one wrapping flex row, a value at the card's
-             number scale, and an action that matches the icon's height. The old Auto,*,Auto grid
-             kept the action pinned to the far edge while crushing the text column at large type. -->
-        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
-            <Border WidthRequest="{StaticResource UiControlHeight}"
-                    HeightRequest="{StaticResource UiControlHeight}"
-                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                    BackgroundColor="{AppThemeBinding Light={StaticResource WaterSurfaceLight}, Dark={StaticResource WaterSurfaceDark}}"
-                    StrokeThickness="{StaticResource UiStrokeWidth0}"
-                    VerticalOptions="Center">
-                <Path Data="M12 2.5s7 7.5 7 12a7 7 0 1 1-14 0c0-4.5 7-12 7-12z"
-                      Fill="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
-                      Stroke="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
-                      StrokeThickness="{StaticResource UiStrokeWidth0_5}"
-                      Aspect="Uniform"
-                      WidthRequest="{StaticResource UiDimension18}"
-                      HeightRequest="{StaticResource UiDimension18}"
-                      HorizontalOptions="Center"
-                      VerticalOptions="Center" />
-            </Border>
-            <FlexLayout Grid.Column="1" Direction="Row" Wrap="Wrap"
-                        AlignItems="Center" JustifyContent="SpaceBetween">
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}"
+        <!-- One compact row: the whole information area opens details, while the quick-add
+             control keeps its own touch target. The old second row of pill buttons left a large
+             empty shelf under the value and made two secondary actions compete. When Dynamic Type
+             makes the quick-add control too wide, flex wrapping moves it below the value instead
+             of squeezing the amount into one-character lines. -->
+        <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center" JustifyContent="End">
+            <Grid FlexLayout.Grow="1" FlexLayout.Basis="200" FlexLayout.Shrink="0"
+                  Margin="{StaticResource UiInsets0_0_8_0}"
+                  ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}"
+                  MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                <Border WidthRequest="{StaticResource UiControlHeight}"
+                        HeightRequest="{StaticResource UiControlHeight}"
+                        StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource WaterSurfaceLight}, Dark={StaticResource WaterSurfaceDark}}"
+                        StrokeThickness="{StaticResource UiStrokeWidth0}"
+                        VerticalOptions="Center"
+                        InputTransparent="True">
+                    <Path Data="M12 2.5s7 7.5 7 12a7 7 0 1 1-14 0c0-4.5 7-12 7-12z"
+                          Fill="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
+                          Stroke="{AppThemeBinding Light={StaticResource WaterLight}, Dark={StaticResource WaterDark}}"
+                          StrokeThickness="{StaticResource UiStrokeWidth0_5}"
+                          Aspect="Uniform"
+                          WidthRequest="{StaticResource UiDimension18}"
+                          HeightRequest="{StaticResource UiDimension18}"
+                          HorizontalOptions="Center"
+                          VerticalOptions="Center" />
+                </Border>
+
+                <VerticalStackLayout Grid.Column="1"
+                                     Spacing="{StaticResource UiSpaceMicro}"
                                      VerticalOptions="Center"
-                                     FlexLayout.Grow="1">
+                                     InputTransparent="True">
                     <Label Text="{loc:LocalizedText Nutrition_FoodLog_Water}"
                            Style="{StaticResource BodyStrong}"
-                           SemanticProperties.HeadingLevel="Level2" />
+                           AutomationProperties.IsInAccessibleTree="False" />
                     <Label Text="{Binding WaterIntakeMl, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueMl}"
                            Style="{StaticResource SectionTitle}"
-                           LineBreakMode="WordWrap" />
+                           LineBreakMode="WordWrap"
+                           AutomationProperties.IsInAccessibleTree="False" />
                 </VerticalStackLayout>
+
+                <Path Grid.Column="2"
+                      Data="M9 5l7 7-7 7"
+                      Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                      StrokeThickness="{StaticResource UiStrokeWidth1_8}"
+                      StrokeLineCap="Round"
+                      StrokeLineJoin="Round"
+                      Aspect="Uniform"
+                      WidthRequest="{StaticResource UiDimension16}"
+                      HeightRequest="{StaticResource UiDimension16}"
+                      HorizontalOptions="End"
+                      VerticalOptions="Center"
+                      InputTransparent="True"
+                      IsVisible="{Binding CanOpenHydrationDetails}">
+                    <Path.Triggers>
+                        <DataTrigger TargetType="Path" Binding="{Binding IsHydrationExpanded}" Value="True">
+                            <Setter Property="Rotation" Value="90" />
+                        </DataTrigger>
+                    </Path.Triggers>
+                </Path>
+
+                <sharedControls:CardTapTarget Grid.ColumnSpan="3"
+                                               Command="{Binding ToggleHydrationDetailsCommand}"
+                                               IsVisible="{Binding CanOpenHydrationDetails}"
+                                               SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_Water}"
+                                               SemanticProperties.Hint="{loc:LocalizedText Nutrition_Hydration_ShowDetails}">
+                    <sharedControls:CardTapTarget.Triggers>
+                        <DataTrigger TargetType="Button" Binding="{Binding IsHydrationExpanded}" Value="True">
+                            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Nutrition_Hydration_HideDetails}" />
+                        </DataTrigger>
+                    </sharedControls:CardTapTarget.Triggers>
+                </sharedControls:CardTapTarget>
+            </Grid>
+
+            <HorizontalStackLayout FlexLayout.Shrink="0" Spacing="{StaticResource UiSpaceTight}"
+                                   VerticalOptions="Center">
+                <Button Style="{StaticResource ButtonSecondary}"
+                        Text="{loc:LocalizedText Nutrition_FoodLog_SubtractWaterTwoFiftyMl}"
+                        Command="{Binding RemoveWaterCommand}" CommandParameter="{x:Int32 250}"
+                        IsVisible="{Binding IsLegacyHydration}"
+                        IsEnabled="{Binding CanChangeHydration}" />
                 <Button Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Nutrition_FoodLog_AddWaterTwoFiftyMl}"
                         Command="{Binding AddWaterCommand}" CommandParameter="{x:Int32 250}"
-                        FlexLayout.AlignSelf="End"
                         IsEnabled="{Binding CanChangeHydration}" />
-            </FlexLayout>
-        </Grid>
-        <!-- The legacy subtract and details actions disappear entirely when neither applies, so
-             their row cannot leave an empty 16 pt band at the bottom of the card. -->
-        <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center"
-                    IsVisible="{Binding HasHydrationSecondaryActions}">
-            <Button Style="{StaticResource ButtonSecondary}"
-                    Text="{loc:LocalizedText Nutrition_FoodLog_SubtractWaterTwoFiftyMl}"
-                    Command="{Binding RemoveWaterCommand}" CommandParameter="{x:Int32 250}"
-                    Margin="{StaticResource UiInsets0_0_8_8}"
-                    IsVisible="{Binding IsLegacyHydration}"
-                    IsEnabled="{Binding CanChangeHydration}" />
-            <Button Style="{StaticResource ButtonSecondary}"
-                    Command="{Binding ToggleHydrationDetailsCommand}"
-                    IsVisible="{Binding CanOpenHydrationDetails}"
-                    Margin="{StaticResource UiInsets0_0_8_8}"
-                    Text="{loc:LocalizedText Nutrition_Hydration_ShowDetails}">
-                <Button.Triggers>
-                    <DataTrigger TargetType="Button" Binding="{Binding IsHydrationExpanded}" Value="True">
-                        <Setter Property="Text" Value="{loc:LocalizedText Nutrition_Hydration_HideDetails}" />
-                    </DataTrigger>
-                </Button.Triggers>
-            </Button>
+            </HorizontalStackLayout>
         </FlexLayout>
         <ActivityIndicator Style="{StaticResource StateBusyInline}"
                            IsVisible="{Binding IsHydrationBusy}" IsRunning="{Binding IsHydrationBusy}" />
@@ -91,6 +117,7 @@
                 <Border Style="{StaticResource PickerContainer}" IsVisible="{Binding HasHydrationEntries}">
                     <Picker ItemsSource="{Binding HydrationEntries}" SelectedItem="{Binding SelectedHydrationEntry}"
                             Title="{loc:LocalizedText Nutrition_Hydration_ChooseEntry}"
+                            SemanticProperties.Description="{loc:LocalizedText Nutrition_Hydration_LoggedWater}"
                             ItemDisplayBinding="{Binding DisplayText, x:DataType=models:HydrationEntry}" />
                 </Border>
                 <VerticalStackLayout IsVisible="{Binding CanEditHydrationEntry}"
@@ -114,6 +141,7 @@
                 <Border Style="{StaticResource PickerContainer}">
                     <Picker ItemsSource="{Binding HydrationPresets}" SelectedItem="{Binding SelectedHydrationPreset}"
                             Title="{loc:LocalizedText Nutrition_Hydration_ChoosePreset}"
+                            SemanticProperties.Description="{loc:LocalizedText Nutrition_Hydration_Presets}"
                             ItemDisplayBinding="{Binding DisplayText, x:DataType=models:HydrationPreset}" />
                 </Border>
                 <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_Hydration_LogPreset}"

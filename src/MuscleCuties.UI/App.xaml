@@ -20,6 +20,7 @@
             <converters:StringToGeometryConverter x:Key="StringToGeometryConverter" />
             <converters:BoolToEditTitleConverter x:Key="BoolToEditTitleConverter" />
             <converters:BoolToWarmupTextConverter x:Key="BoolToWarmupTextConverter" />
+            <converters:SubmitHintVisibilityConverter x:Key="SubmitHintVisibilityConverter" />
             <converters:LocalizedStringConverter x:Key="LocalizedStringConverter" />
             <converters:LocalizedFormatConverter x:Key="LocalizedFormatConverter" />
             <converters:SessionDateConverter x:Key="SessionDateConverter" />

@@ -106,7 +106,13 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     public bool ShowHomeEquipmentCapabilities =>
         string.Equals(SelectedEquipmentOption?.Value, HomeDumbbellsBandsEquipmentValue, StringComparison.OrdinalIgnoreCase);
 
-    public bool ShowBandAnchorConfirmation => ShowHomeEquipmentCapabilities && HasBands;
+    public bool IsFullGymEquipment =>
+        string.Equals(SelectedEquipmentOption?.Value, FullGymEquipmentValue, StringComparison.OrdinalIgnoreCase);
+
+    // A full gym includes bands, but the anchor is never inferred: the user must confirm it here
+    // just as a home user does. Hiding this for FullGym made the planner's anchor requirement
+    // impossible to satisfy.
+    public bool ShowBandAnchorConfirmation => IsFullGymEquipment || (ShowHomeEquipmentCapabilities && HasBands);
 
     /// <summary>C1/OD-7: a saved strength style that is no longer offered for this profile.</summary>
     public bool HasIneligibleSavedStyle =>
@@ -209,7 +215,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
             var exclusionOptions = await _exerciseExclusionCatalog.ExecuteAsync();
             ExerciseExclusionOptions = new ObservableCollection<WorkoutExerciseExclusionOptionItem>(
                 exclusionOptions.Select(option => new WorkoutExerciseExclusionOptionItem(
-                    option.ExerciseId, option.Name)
+                    option.ExerciseId, UiTextCatalog.TranslateRuntimeText(option.Name))
                 {
                     IsSelected = excludedExerciseIds.Contains(option.ExerciseId)
                 }));
@@ -314,7 +320,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                     .Select(option => option.ExerciseId).ToHashSet(),
                 GluteFocus: GluteFocus,
                 HasSliders: HasSliders,
-                HasConfirmedBandAnchor: isHomeEquipment && HasBands && HasConfirmedBandAnchor,
+                HasConfirmedBandAnchor: HasConfirmedBandAnchor && (isHomeEquipment ? HasBands : IsFullGymEquipment),
                 HasDumbbells: isHomeEquipment ? HasDumbbells : null,
                 HasBands: isHomeEquipment ? HasBands : null);
             if (!await _useCase.SaveAsync(draftPreferences).ConfigureAwait(true))
@@ -511,6 +517,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     partial void OnSelectedEquipmentOptionChanged(SelectionOption<string>? value)
     {
         OnPropertyChanged(nameof(ShowHomeEquipmentCapabilities));
+        OnPropertyChanged(nameof(IsFullGymEquipment));
         OnPropertyChanged(nameof(ShowBandAnchorConfirmation));
         OnPropertyChanged(nameof(HasUnsavedChanges));
     }

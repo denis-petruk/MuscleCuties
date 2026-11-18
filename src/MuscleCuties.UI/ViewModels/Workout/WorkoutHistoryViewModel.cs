@@ -337,7 +337,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
 
             foreach (var grp in grouped)
             {
-                var groupUi = new ExerciseSetsUiGroup(grp.Key);
+                var groupUi = new ExerciseSetsUiGroup(UiTextCatalog.TranslateRuntimeText(grp.Key));
                 foreach (var set in grp.OrderBy(s => s.SetNumber))
                 {
                     groupUi.Sets.Add(set);

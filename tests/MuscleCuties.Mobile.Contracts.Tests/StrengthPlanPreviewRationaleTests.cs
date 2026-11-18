@@ -52,6 +52,25 @@ public sealed class StrengthPlanPreviewRationaleTests
     }
 
     [Fact]
+    public void Preview_day_header_keeps_a_visible_icon_for_training_and_rest_days()
+    {
+        var training = new MixedActivityDayDisplay("Понедельник", [], false);
+        var rest = new MixedActivityDayDisplay("Среда", [], true);
+
+        Assert.Equal("Dumbbell24", training.DayIconGlyph);
+        Assert.Equal("WeatherMoon24", rest.DayIconGlyph);
+    }
+
+    [Fact]
+    public void Session_WithSeededExerciseName_RendersTheRussianDisplayName()
+    {
+        var display = StrengthPlanSessionDisplay.From(Session(null, "Hack Squat"));
+
+        var slot = Assert.Single(display.Slots);
+        Assert.Equal("Гакк-присед", slot.Name);
+    }
+
+    [Fact]
     public void Session_WithRealSelectionReason_PreservesExactRationaleText()
     {
         const string selectionReason = "Chosen to balance weekly push volume against your three-day plan.";
@@ -99,16 +118,16 @@ public sealed class StrengthPlanPreviewRationaleTests
         Assert.Equal($"Workout_Generation_SelectionReason_{reasonCode}", slot.Rationale);
     }
 
-    private static StrengthPlanPreviewSessionV020 Session(string? selectionReason) =>
+    private static StrengthPlanPreviewSessionV020 Session(string? selectionReason, string exerciseName = "Back squat") =>
         new("template-strength-three-day", "v1", 0, 45m,
-            new[] { Slot(selectionReason) },
+            new[] { Slot(selectionReason, exerciseName) },
             Array.Empty<string>(),
             new Dictionary<string, string>(),
             DayOfWeek.Monday);
 
-    private static StrengthPlanSlotOutputV020 Slot(string? selectionReason) =>
+    private static StrengthPlanSlotOutputV020 Slot(string? selectionReason, string exerciseName = "Back squat") =>
         new("slot-knee-dominant", (int)StrengthMovementSlotDto.KneeDominant, true, 1, true,
-            ExerciseId: 42, ExerciseName: "Back squat", selectionReason,
+            ExerciseId: 42, ExerciseName: exerciseName, selectionReason,
             AppliedPrescriptionRule: null, Sets: 4, MinimumRepetitions: 6, MaximumRepetitions: 8,
             RepetitionsInReserve: 2, RestSeconds: 180, LimitationCodes: Array.Empty<string>());
 }

@@ -114,75 +114,74 @@
             <Grid
                 Grid.Row="0"
                 Padding="{DynamicResource PresentationPageHeaderPadding}"
-                RowDefinitions="Auto,Auto"
-                RowSpacing="{StaticResource UiSpaceControl}"
                 MaximumWidthRequest="{StaticResource UiDimension640}"
                 HorizontalOptions="Fill">
-
-                <!-- Step indicator + progress bar -->
-                <Grid Grid.Row="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
-                    <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                        <Border Style="{StaticResource PillBadge}" VerticalOptions="Center">
-                            <Label
-                                Text="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwo}"
-                                Style="{StaticResource EyebrowLabel}"
-                                LineBreakMode="WordWrap"
-                                VerticalOptions="Center"
-                                SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwoPersonalizedQuestions}" />
+                <sharedControls:PageHeader
+                    Title="{Binding CurrentQuestionText, Converter={StaticResource LocalizedStringConverter}}"
+                    ShowBack="False">
+                    <sharedControls:PageHeader.EyebrowContent>
+                        <VerticalStackLayout
+                            Spacing="{StaticResource UiSpaceTight}"
+                            Margin="{StaticResource UiInsets0_0_0_12}">
+                            <!-- Step indicator + progress bar -->
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
+                                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                    <Border Style="{StaticResource PillBadge}" VerticalOptions="Center">
+                                        <Label
+                                            Text="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwo}"
+                                            Style="{StaticResource EyebrowLabel}"
+                                            LineBreakMode="WordWrap"
+                                            VerticalOptions="Center"
+                                            SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_StepTwoOfTwoPersonalizedQuestions}" />
+                                    </Border>
+                                    <Button Grid.Column="1"
+                                            Text="{loc:LocalizedText Onboarding_Quiz_GoBackToProfile}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            HorizontalOptions="End"
+                                            Clicked="OnEditProfileClicked"
+                                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                            IsVisible="{Binding AccountCreatedNeedsLogin, Converter={StaticResource InvertedBoolConverter}}"
+                                            SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_GoBackToProfile}" />
+                                </Grid>
+                                <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                    <ProgressBar
+                                        Grid.Column="0"
+                                        Progress="{Binding ProgressValue}"
+                                        ProgressColor="{StaticResource Primary}"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
+                                        HeightRequest="{StaticResource UiDimension6}"
+                                        VerticalOptions="Center"
+                                        SemanticProperties.Description="{Binding ProgressText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_QuizProgressValue}" />
+                                    <Border Grid.Column="1" Style="{StaticResource PillBadge}" VerticalOptions="Center">
+                                        <Label
+                                            Text="{Binding ProgressText, Converter={StaticResource LocalizedStringConverter}}"
+                                            Style="{StaticResource AccentLabel}"
+                                            LineBreakMode="WordWrap"
+                                            VerticalOptions="Center"
+                                            SemanticProperties.Description="{Binding ProgressText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_QuestionValue}" />
+                                    </Border>
+                                </Grid>
+                            </Grid>
+                        </VerticalStackLayout>
+                    </sharedControls:PageHeader.EyebrowContent>
+                    <sharedControls:PageHeader.TitleIcon>
+                        <Border
+                            WidthRequest="{StaticResource PresentationDecorativeIconSize}"
+                            HeightRequest="{StaticResource PresentationDecorativeIconSize}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource CardSurfaceDark}}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                            VerticalOptions="Start">
+                            <Image
+                                Source="{Binding CurrentQuestionIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                WidthRequest="{StaticResource UiDimension20}"
+                                HeightRequest="{StaticResource UiDimension20}"
+                                Aspect="AspectFit"
+                                HorizontalOptions="Center"
+                                VerticalOptions="Center" />
                         </Border>
-                        <Button Grid.Column="1"
-                                Text="{loc:LocalizedText Onboarding_Quiz_GoBackToProfile}"
-                                Style="{StaticResource ButtonSecondary}"
-                                HorizontalOptions="End"
-                                Clicked="OnEditProfileClicked"
-                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-                                IsVisible="{Binding AccountCreatedNeedsLogin, Converter={StaticResource InvertedBoolConverter}}"
-                                SemanticProperties.Description="{loc:LocalizedText Onboarding_Quiz_GoBackToProfile}" />
-                    </Grid>
-                    <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                        <ProgressBar
-                            Grid.Column="0"
-                            Progress="{Binding ProgressValue}"
-                            ProgressColor="{StaticResource Primary}"
-                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}"
-                            HeightRequest="{StaticResource UiDimension6}"
-                            VerticalOptions="Center"
-                            SemanticProperties.Description="{Binding ProgressText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_QuizProgressValue}" />
-                        <Border Grid.Column="1" Style="{StaticResource PillBadge}" VerticalOptions="Center">
-                            <Label
-                                Text="{Binding ProgressText, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource AccentLabel}"
-                                LineBreakMode="WordWrap"
-                                VerticalOptions="Center"
-                                SemanticProperties.Description="{Binding ProgressText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Onboarding_Quiz_QuestionValue}" />
-                        </Border>
-                    </Grid>
-                </Grid>
-
-                <Grid Grid.Row="1" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                    <Border
-                        WidthRequest="{StaticResource PresentationDecorativeIconSize}"
-                        HeightRequest="{StaticResource PresentationDecorativeIconSize}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource Secondary}, Dark={StaticResource CardSurfaceDark}}"
-                        StrokeThickness="{StaticResource UiStrokeWidth0}"
-                        StrokeShape="{StaticResource UiRoundRectangleRadius12}"
-                        VerticalOptions="Start">
-                        <Image
-                            Source="{Binding CurrentQuestionIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                            WidthRequest="{StaticResource UiDimension20}"
-                            HeightRequest="{StaticResource UiDimension20}"
-                            Aspect="AspectFit"
-                            HorizontalOptions="Center"
-                            VerticalOptions="Center" />
-                    </Border>
-                    <Label
-                        Grid.Column="1"
-                        Text="{Binding CurrentQuestionText, Converter={StaticResource LocalizedStringConverter}}"
-                        Style="{StaticResource PageTitle}"
-                        LineBreakMode="WordWrap"
-                        VerticalOptions="Center"
-                        SemanticProperties.HeadingLevel="Level1" />
-                </Grid>
+                    </sharedControls:PageHeader.TitleIcon>
+                </sharedControls:PageHeader>
             </Grid>
 
             <!-- Standard answer list -->
@@ -211,9 +210,11 @@
                         BindableLayout.ItemsSource="{Binding CurrentAnswers}">
                     <BindableLayout.ItemTemplate>
                         <DataTemplate x:DataType="quizModels:SelectableQuizAnswer">
-                            <Border
+                            <sharedControls:SelectionCell
     Style="{StaticResource CardSecondary}"
     AutomationId="{Binding AutomationId}"
+    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+    IsSelected="{Binding IsSelected}"
     SemanticProperties.Description="{Binding Answer.Text, Converter={StaticResource LocalizedStringConverter}}"
     SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
     
@@ -258,7 +259,7 @@
                 IsVisible="{Binding IsSelected}" />
         </Border>
     </Grid>
-</Border>
+</sharedControls:SelectionCell>
                         </DataTemplate>
                     </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>

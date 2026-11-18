@@ -22,6 +22,7 @@
                     ItemsSource="{Binding EquipmentOptions}"
                     ItemDisplayBinding="{Binding Label, Converter={StaticResource LocalizedStringConverter}, x:DataType=commonModels:ILabeledOption}"
                     SelectedItem="{Binding SelectedEquipmentOption, Mode=TwoWay}"
+                    SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_AvailableEquipment}"
                     AutomationId="WorkoutPrefsEquipmentPicker" />
             </Border>
             <Label Text="{loc:LocalizedText Workout_Generation_EquipmentBetaNotice}"
@@ -52,20 +53,21 @@
                            VerticalOptions="Center"
                            LineBreakMode="WordWrap" />
                 </Grid>
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}"
-                      MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                      IsVisible="{Binding ShowBandAnchorConfirmation}">
-                    <CheckBox IsChecked="{Binding HasConfirmedBandAnchor, Mode=TwoWay}"
-                              VerticalOptions="Center"
-                              AutomationId="WorkoutPrefsBandAnchorCheckBox"
-                              SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasConfirmedBandAnchor}" />
-                    <Label Grid.Column="1"
-                           Text="{loc:LocalizedText Profile_WorkoutPrefs_HasConfirmedBandAnchor}"
-                           Style="{StaticResource BodyLabel}"
-                           VerticalOptions="Center"
-                           LineBreakMode="WordWrap" />
-                </Grid>
             </VerticalStackLayout>
+
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}"
+                  MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                  IsVisible="{Binding ShowBandAnchorConfirmation}">
+                <CheckBox IsChecked="{Binding HasConfirmedBandAnchor, Mode=TwoWay}"
+                          VerticalOptions="Center"
+                          AutomationId="WorkoutPrefsBandAnchorCheckBox"
+                          SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasConfirmedBandAnchor}" />
+                <Label Grid.Column="1"
+                       Text="{loc:LocalizedText Profile_WorkoutPrefs_HasConfirmedBandAnchor}"
+                       Style="{StaticResource BodyLabel}"
+                       VerticalOptions="Center"
+                       LineBreakMode="WordWrap" />
+            </Grid>
 
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
                 <CheckBox IsChecked="{Binding HasSliders, Mode=TwoWay}"
@@ -115,6 +117,7 @@
             <Border Style="{StaticResource PickerContainer}">
                 <Entry Placeholder="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
                        Text="{Binding ExerciseExclusionSearchText, Mode=TwoWay}"
+                       SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
                        ReturnType="Search" VerticalOptions="Center" />
             </Border>
             <FlexLayout BindableLayout.ItemsSource="{Binding SelectedExerciseExclusions}"

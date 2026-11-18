@@ -20,7 +20,7 @@
         <Border
             x:Name="SheetSurface"
             Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
-            <Grid RowDefinitions="Auto, Auto, Auto">
+            <Grid RowDefinitions="Auto, *, Auto">
 
                 <!-- Header: shared sheet anatomy — header padding, one divider, then body. -->
                 <Grid RowDefinitions="Auto, Auto">
@@ -199,15 +199,20 @@
                     </Grid>
                 </ScrollView>
 
-                <!-- Footer Action -->
-                <Grid
+                <!-- Footer Actions: details and close stack at accessibility sizes. -->
+                <sharedControls:AdaptiveRow
                     Grid.Row="2"
+                    Columns="2"
                     Padding="{DynamicResource PresentationActionFooterPadding}">
+                    <Button
+                        Style="{StaticResource ButtonPrimary}"
+                        Text="{loc:LocalizedText Cycle_PhaseSummary_DetailButton}"
+                        Command="{Binding OpenSelectedPhaseDetailsCommand}" />
                     <Button
                         Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Cycle_PhaseSummary_CloseButton}"
                         Command="{Binding ClosePhaseSummarySheetCommand}" />
-                </Grid>
+                </sharedControls:AdaptiveRow>
 
             </Grid>
         </Border>

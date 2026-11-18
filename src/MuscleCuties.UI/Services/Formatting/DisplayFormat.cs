@@ -103,8 +103,11 @@ public static class DisplayFormat
 
     public static string MonthYear(DateTime value) => value.ToString(MonthYearPattern, CultureInfo.CurrentCulture);
 
-    public static string MonthYearFull(DateTime value) =>
-        value.ToString(MonthYearFullPattern, CultureInfo.CurrentCulture);
+    public static string MonthYearFull(DateTime value)
+    {
+        var text = value.ToString(MonthYearFullPattern, CultureInfo.CurrentCulture);
+        return text.Length == 0 ? text : char.ToUpper(text[0], CultureInfo.CurrentCulture) + text[1..];
+    }
 
     public static string FullDate(DateTime value) => value.ToString("D", CultureInfo.CurrentCulture);
 

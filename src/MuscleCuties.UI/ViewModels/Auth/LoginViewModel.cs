@@ -58,21 +58,6 @@ public partial class LoginViewModel : ObservableObject
     public AsyncRelayCommand SignInWithPlatformCommand { get; }
     public AsyncRelayCommand SignInWithAppleCommand => SignInWithPlatformCommand;
 
-    private bool _automaticAppleSignInAttempted;
-
-    /// <summary>
-    /// The login page is the signed-out entry point: start the Apple sheet once so a returning
-    /// member does not have to tap the button after launch or after logging out. A cancellation
-    /// is terminal for this page instance and never loops.
-    /// </summary>
-    public void TryStartAutomaticAppleSignIn()
-    {
-        if (_automaticAppleSignInAttempted || IsBusy || !IsPlatformSignInAvailable)
-            return;
-        _automaticAppleSignInAttempted = true;
-        SignInWithPlatformCommand.Execute(null);
-    }
-
     partial void OnEmailChanged(string value)
     {
         InfoMessage = string.Empty;

@@ -111,3 +111,24 @@ test-results/
 .claude/qa-evidence/healthsync_keys.txt
 .claude/qa-evidence/deleted-checkin-row-backup.txt
 .claude/qa-evidence/deadbug-reopen-backup.txt
+
+# Local design-tooling installs (generated; not part of the app)
+.agents/
+.claude/skills/
+.augment/
+.codebuddy/
+.codewhale/
+.continue/
+.cursor/
+.factory/
+.gemini/
+.kilocode/
+.kiro/
+.opencode/
+.qoder/
+.roo/
+.trae/
+.warp/
+.windsurf/
+.github/prompts/
+skills-lock.json

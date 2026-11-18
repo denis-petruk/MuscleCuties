@@ -593,7 +593,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         if (SelectedActivity is null) return;
         ExercisePreviewNames =
             new ObservableCollection<string>(
-                SelectedActivity.Exercises.Select((exercise, index) => $"{index + 1}. {exercise.Name}"));
+                SelectedActivity.Exercises.Select((exercise, index) =>
+                    $"{index + 1}. {UiTextCatalog.TranslateRuntimeText(exercise.Name)}"));
         var targets = string.Join(" ",
             SelectedActivity.Exercises.Select(exercise => exercise.TargetText + " " + exercise.RecommendationText));
         var rpe = Regex.Match(targets, @"RPE\s*(\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?)",
@@ -938,7 +939,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     {
         ExerciseProgress = new ObservableCollection<SessionExerciseProgress>(
             SelectedActivity!.Exercises.Select((exercise, index) =>
-                new SessionExerciseProgress(index, exercise.Name, exercise.IsLogged, index == CurrentExerciseIndex,
+                new SessionExerciseProgress(index, UiTextCatalog.TranslateRuntimeText(exercise.Name),
+                    exercise.IsLogged, index == CurrentExerciseIndex,
                     _skippedIds.Contains(exercise.WorkoutDayExerciseId))));
     }
 

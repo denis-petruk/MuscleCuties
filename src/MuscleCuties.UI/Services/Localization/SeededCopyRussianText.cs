@@ -104,6 +104,7 @@ public static partial class UiTextCatalog
         // Seeded exercise names
         ["45 Degree Back Extension"] = "Разгибание спины под углом 45°",
         ["Ab Wheel Rollout"] = "Раскатка колесом для пресса",
+        ["Active Recovery"] = "Активное восстановление",
         ["Active Recovery Flow"] = "Комплекс активного восстановления",
         ["Assisted Pull-Up"] = "Подтягивание с поддержкой",
         ["B-Stance Hip Thrust"] = "Ягодичный мост в стойке B",
@@ -128,6 +129,7 @@ public static partial class UiTextCatalog
         ["Cable Woodchop"] = "Дровосек на блоке",
         ["Calf Raise"] = "Подъём на носки",
         ["Chest Supported Row"] = "Тяга с упором в грудь",
+        ["Chest-Supported Row"] = "Тяга с упором в грудь",
         ["Copenhagen Plank"] = "Планка «Копенгаген»",
         ["Copenhagen Side Plank"] = "Боковая планка «Копенгаген»",
         ["Cycling Intervals"] = "Велоинтервалы",
@@ -213,6 +215,114 @@ public static partial class UiTextCatalog
         ["Walking Lunge"] = "Выпады с ходьбой",
         ["Yin Yoga"] = "Инь-йога",
         ["Yoga Flow"] = "Йога-флоу",
-        ["Zone 2 Ride"] = "Велосипед в зоне 2"
+        ["Zone 2 Ride"] = "Велосипед в зоне 2",
+
+        // Seeded meal-suggestion concepts and their ingredient catalogue names
+        ["Scrambled Eggs with Toast"] = "Яичница с тостом",
+        ["Two scrambled eggs with whole-grain toast and spinach."] =
+            "Два яйца-скрэмбл с цельнозерновым тостом и шпинатом.",
+        ["Tofu Scramble with Vegetables"] = "Тофу-скрэмбл с овощами",
+        ["Seasoned tofu scramble with bell peppers, onions, and avocado."] =
+            "Тофу-скрэмбл со специями, болгарским перцем, луком и авокадо.",
+        ["Berry Protein Oatmeal"] = "Овсянка с ягодами и протеином",
+        ["Rolled oats with vanilla protein powder, chia seeds, and mixed berries."] =
+            "Овсяные хлопья с ванильным протеином, семенами чиа и ягодной смесью.",
+        ["Greek Yogurt Parfait"] = "Парфе из греческого йогурта",
+        ["Greek yogurt layered with honey, walnuts, and blueberries."] =
+            "Греческий йогурт слоями с мёдом, грецкими орехами и голубикой.",
+        ["Mediterranean Chicken Rice Bowl"] = "Средиземноморский боул с курицей и рисом",
+        ["Grilled chicken breast with brown rice, cucumber, and tzatziki."] =
+            "Куриная грудка на гриле с бурым рисом, огурцом и дзадзики.",
+        ["Tuna Quinoa Salad"] = "Салат с тунцом и киноа",
+        ["Flaked tuna with quinoa, mixed greens, cherry tomatoes, and olive oil."] =
+            "Тунец кусочками с киноа, микс-салатом, черри и оливковым маслом.",
+        ["Chickpea Veggie Power Bowl"] = "Боул с нутом и овощами",
+        ["Roasted chickpeas with roasted sweet potato, kale, and tahini drizzle."] =
+            "Запечённый нут с бататом, кейлом и соусом тахини.",
+        ["Baked Salmon with Sweet Potato"] = "Запечённый лосось с бататом",
+        ["Wild salmon fillet with baked sweet potato and steamed asparagus."] =
+            "Филе дикого лосося с запечённым бататом и спаржей на пару.",
+        ["Lean Turkey Chili"] = "Чили из индейки",
+        ["Ground turkey simmered with black beans, diced tomatoes, and brown rice."] =
+            "Фарш индейки, тушённый с чёрной фасолью, томатами и бурым рисом.",
+        ["Tofu Stir-Fry with Edamame"] = "Тофу-стир-фрай с эдамаме",
+        ["Crispy tofu with edamame, broccoli, bell peppers, and jasmine rice."] =
+            "Хрустящий тофу с эдамаме, брокколи, болгарским перцем и жасминовым рисом.",
+        ["Apple Slices with Peanut Butter"] = "Яблоки с арахисовой пастой",
+        ["Crisp apple slices paired with natural creamy peanut butter."] =
+            "Хрустящие ломтики яблока с натуральной арахисовой пастой.",
+        ["Cottage Cheese with Berries"] = "Творог с ягодами",
+        ["Low-fat cottage cheese topped with fresh raspberries and blueberries."] =
+            "Нежирный творог со свежей малиной и голубикой.",
+        ["Rice Cakes with Avocado"] = "Рисовые хлебцы с авокадо",
+        ["Brown rice cakes topped with mashed ripe avocado and sea salt."] =
+            "Рисовые хлебцы из бурого риса с пюре из спелого авокадо и морской солью.",
+
+        // Seeded ingredient catalogue names
+        ["Eggs"] = "Яйца",
+        ["Whole-Grain Bread"] = "Цельнозерновой хлеб",
+        ["Spinach"] = "Шпинат",
+        ["Olive Oil"] = "Оливковое масло",
+        ["Tofu"] = "Тофу",
+        ["Bell Peppers"] = "Болгарский перец",
+        ["Onions"] = "Лук",
+        ["Avocado"] = "Авокадо",
+        ["Rolled Oats"] = "Овсяные хлопья",
+        ["Protein Powder"] = "Протеин",
+        ["Mixed Berries"] = "Ягодная смесь",
+        ["Chia Seeds"] = "Семена чиа",
+        ["Greek Yogurt"] = "Греческий йогурт",
+        ["Blueberries"] = "Голубика",
+        ["Walnuts"] = "Грецкие орехи",
+        ["Honey"] = "Мёд",
+        ["Chicken Breast"] = "Куриная грудка",
+        ["Brown Rice"] = "Бурый рис",
+        ["Cucumber"] = "Огурец",
+        ["Tzatziki"] = "Дзадзики",
+        ["Tuna"] = "Тунец",
+        ["Quinoa"] = "Киноа",
+        ["Mixed Greens"] = "Микс-салат",
+        ["Cherry Tomatoes"] = "Помидоры черри",
+        ["Chickpeas"] = "Нут",
+        ["Sweet Potato"] = "Батат",
+        ["Kale"] = "Кейл",
+        ["Tahini"] = "Тахини",
+        ["Salmon Fillet"] = "Филе лосося",
+        ["Asparagus"] = "Спаржа",
+        ["Ground Turkey"] = "Фарш индейки",
+        ["Black Beans"] = "Чёрная фасоль",
+        ["Tomatoes"] = "Томаты",
+        ["Edamame"] = "Эдамаме",
+        ["Broccoli"] = "Брокколи",
+        ["Jasmine Rice"] = "Жасминовый рис",
+        ["Sesame Oil"] = "Кунжутное масло",
+        ["Apple"] = "Яблоко",
+        ["Peanut Butter"] = "Арахисовая паста",
+        ["Cottage Cheese"] = "Творог",
+        ["Raspberries"] = "Малина",
+        ["Rice Cakes"] = "Рисовые хлебцы",
+        ["Sea Salt"] = "Морская соль",
+        ["Protein"] = "Белки",
+        ["Carbs"] = "Углеводы",
+        ["Vegetables"] = "Овощи",
+        ["Fats"] = "Жиры",
+        ["Sauce"] = "Соус",
+        ["Spices"] = "Специи",
+
+        // Seed micronutrient groups and names
+        ["Fiber"] = "Клетчатка",
+        ["Vitamins"] = "Витамины",
+        ["Minerals"] = "Минералы",
+        ["Vitamin A"] = "Витамин A",
+        ["Vitamin C"] = "Витамин C",
+        ["Vitamin D"] = "Витамин D",
+        ["Vitamin B6"] = "Витамин B6",
+        ["Vitamin B12"] = "Витамин B12",
+        ["Folate"] = "Фолат",
+        ["Calcium"] = "Кальций",
+        ["Iron"] = "Железо",
+        ["Magnesium"] = "Магний",
+        ["Zinc"] = "Цинк",
+        ["Potassium"] = "Калий"
     };
 }

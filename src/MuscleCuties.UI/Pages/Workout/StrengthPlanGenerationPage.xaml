@@ -6,6 +6,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
     xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
@@ -28,7 +29,21 @@
 
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Workout_Generation_Title}"
-                BackCommand="{Binding BackCommand}" />
+                BackCommand="{Binding BackCommand}">
+                <sharedControls:PageHeader.TitleIcon>
+                    <Border AutomationId="WorkoutPlanHeaderVisual"
+                            WidthRequest="{StaticResource UiDimension40}"
+                            HeightRequest="{StaticResource UiDimension40}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}">
+                        <mi:MauiIcon Icon="{mi:Fluent Target24}" IconSize="{StaticResource UiDimension22}"
+                                     IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                     WidthRequest="{StaticResource UiDimension22}" HeightRequest="{StaticResource UiDimension22}"
+                                     HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                </sharedControls:PageHeader.TitleIcon>
+            </sharedControls:PageHeader>
 
             <!-- CARD 1: Plan Setup & Availability -->
             <Border Style="{StaticResource CardPrimary}">
@@ -46,13 +61,21 @@
                     <Grid
                             IsVisible="{Binding HasSavedAvailability}">
                         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
-                            <Path
-                                Data="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"
-                                Fill="{StaticResource Primary}"
-                                Aspect="Uniform"
-                                WidthRequest="{StaticResource UiDimension16}"
-                                HeightRequest="{StaticResource UiDimension16}"
-                                VerticalOptions="Center" />
+                            <Border WidthRequest="{StaticResource UiDimension40}"
+                                    HeightRequest="{StaticResource UiDimension40}"
+                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                    StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
+                                    VerticalOptions="Center">
+                                <Path
+                                    Data="M9 11H7v2h2v-2zm4 0h-2v2h2v-2zm4 0h-2v2h2v-2zm2-7h-1V2h-2v2H8V2H6v2H5c-1.11 0-1.99.9-1.99 2L3 20a2 2 0 0 0 2 2h14c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 16H5V9h14v11z"
+                                    Fill="{StaticResource Primary}"
+                                    Aspect="Uniform"
+                                    WidthRequest="{StaticResource UiDimension18}"
+                                    HeightRequest="{StaticResource UiDimension18}"
+                                    HorizontalOptions="Center"
+                                    VerticalOptions="Center" />
+                            </Border>
                             <Label Grid.Column="1"
                                    Text="{Binding SavedAvailabilitySummary}"
                                    Style="{StaticResource MutedLabel}"
@@ -201,7 +224,8 @@
 
                     <!-- Clearance Confirmation -->
                     <HorizontalStackLayout>
-                        <CheckBox IsChecked="{Binding HiitEvidenceCapture.ConfirmCurrentWeeks}" IsEnabled="{Binding CanEditInputs}" />
+                        <CheckBox IsChecked="{Binding HiitEvidenceCapture.ConfirmCurrentWeeks}" IsEnabled="{Binding CanEditInputs}"
+                                  SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitConfirmCurrentWeeks}" />
                         <Label Text="{loc:LocalizedText Workout_Generation_HiitConfirmCurrentWeeks}" LineBreakMode="WordWrap" />
                     </HorizontalStackLayout>
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
@@ -377,8 +401,15 @@
                                     Style="{StaticResource PlanHistoryWeekCell}"
                                     WidthRequest="{StaticResource UiDimension52}"
                                     SemanticProperties.Description="{Binding AccessibilityDescription}">
-                                    <Label LineBreakMode="WordWrap" Text="{Binding Label}" Style="{StaticResource CaptionCentered}" />
+                                    <BoxView WidthRequest="{StaticResource UiDimension18}"
+                                             HeightRequest="{Binding BarHeight}"
+                                             CornerRadius="{StaticResource UiCornerRadius4}"
+                                             Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                             HorizontalOptions="Center"
+                                             VerticalOptions="End"
+                                             InputTransparent="True" />
                                     <Label LineBreakMode="WordWrap" Text="{Binding SessionCount}" Style="{StaticResource PlanHistoryWeekCount}" />
+                                    <Label LineBreakMode="WordWrap" Text="{Binding Label}" Style="{StaticResource CaptionCentered}" />
                                 </VerticalStackLayout>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
@@ -497,6 +528,7 @@
             <Border Style="{StaticResource PickerContainer}" IsVisible="{Binding HasFittingStrengthStyleChoices}">
                 <Picker ItemsSource="{Binding FittingStrengthStyleChoices}"
                         SelectedItem="{Binding SelectedFittingStrengthStyle}"
+                        SemanticProperties.Description="{loc:LocalizedText Workout_Generation_ChooseFittingStrengthStyle}"
                         ItemDisplayBinding="{Binding Label}"
                         IsEnabled="{Binding CanEditInputs}"
                         VerticalOptions="Center" />
@@ -601,16 +633,31 @@
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="vm:MixedActivityDayDisplay">
 
-                                            <Grid ColumnDefinitions="Auto,*"
-                                                  ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
 
-                                                <Label
-                                                    Text="{Binding Day}"
-                                                    Style="{StaticResource CaptionLabel}"
-                                                    VerticalOptions="Start" />
+                                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+                                                      VerticalOptions="Start">
+                                                    <Border WidthRequest="{StaticResource UiDimension32}"
+                                                            HeightRequest="{StaticResource UiDimension32}"
+                                                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                                            StrokeShape="{StaticResource UiRoundRectangleRadius10}"
+                                                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}">
+                                                        <Image Source="{Binding DayIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}, ConverterParameter=Accent}"
+                                                               WidthRequest="{StaticResource UiDimension16}"
+                                                               HeightRequest="{StaticResource UiDimension16}"
+                                                               Aspect="AspectFit"
+                                                               HorizontalOptions="Center"
+                                                               VerticalOptions="Center"
+                                                               InputTransparent="True" />
+                                                    </Border>
+                                                    <Label
+                                                        Grid.Column="1"
+                                                        Text="{Binding Day}"
+                                                        Style="{StaticResource CaptionLabel}"
+                                                        VerticalOptions="Center" />
+                                                </Grid>
 
                                                 <VerticalStackLayout
-                                                    Grid.Column="1"
                                                     BindableLayout.ItemsSource="{Binding Sessions}"
                                                     Spacing="{StaticResource UiSpaceMicro}">
 
@@ -618,17 +665,23 @@
                                                         <DataTemplate x:DataType="vm:MixedActivitySessionDisplay">
 
                                                             <Grid
-                                                                ColumnDefinitions="*,Auto"
+                                                                ColumnDefinitions="Auto,*,Auto"
                                                                 RowDefinitions="Auto,Auto"
                                                                 ColumnSpacing="{StaticResource UiSpaceTight}"
                                                                 RowSpacing="{StaticResource UiSpaceMicro}">
 
+                                                                <mi:MauiIcon Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension14}"
+                                                                             IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                                                             WidthRequest="{StaticResource UiDimension14}" HeightRequest="{StaticResource UiDimension14}"
+                                                                             VerticalOptions="Center" />
+
                                                                 <Label
+                                                                    Grid.Column="1"
                                                                     Text="{Binding Activity}"
                                                                     Style="{StaticResource BodyLabel}" />
 
                                                                 <Label
-                                                                    Grid.Column="1"
+                                                                    Grid.Column="2"
                                                                     Text="{Binding Duration}"
                                                                     Style="{StaticResource MutedLabel}"
                                                                     HorizontalTextAlignment="End"
@@ -636,6 +689,7 @@
 
                                                                 <Label
                                                                     Grid.Row="1"
+                                                                    Grid.Column="1"
                                                                     Grid.ColumnSpan="2"
                                                                     LineBreakMode="WordWrap"
                                                                     Text="{Binding PhaseDetail}"
@@ -649,7 +703,7 @@
 
                                                 </VerticalStackLayout>
 
-                                            </Grid>
+                                            </VerticalStackLayout>
 
                                         </DataTemplate>
                                     </BindableLayout.ItemTemplate>
@@ -759,22 +813,26 @@
                                                 <VerticalStackLayout BindableLayout.ItemsSource="{Binding Slots}" Spacing="{StaticResource UiSpaceTight}">
                                                     <BindableLayout.ItemTemplate>
                                                         <DataTemplate x:DataType="vm:StrengthPlanSlotDisplay">
-                                                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_4}">
-                                                                <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
+                                                            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" Padding="{StaticResource UiInsets0_4}">
+                                                                <!-- The required marker belongs to the exercise name, not to the
+                                                                     prescription: keeping it beside the sets/reps squeezed the details
+                                                                     into a narrow column and left the marker floating mid-row. -->
+                                                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                                                     <Label LineBreakMode="WordWrap" Text="{Binding Name}" />
-                                                                    <Label LineBreakMode="WordWrap" Text="{Binding Details}"
-                                                                           Style="{StaticResource MutedLabel}" />
-                                                                    <Label LineBreakMode="WordWrap" Text="{Binding Rationale}"
-                                                                           IsVisible="{Binding HasRationale}"
-                                                                           Style="{StaticResource CaptionLabel}" />
-                                                                </VerticalStackLayout>
-                                                                <Label LineBreakMode="WordWrap" Grid.Column="1"
-                                                                       Text="{loc:LocalizedText Workout_Generation_Required}"
-                                                                       IsVisible="{Binding IsRequired}"
-                                                                       Style="{StaticResource CaptionStrong}"
-                                                                       TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                                                       VerticalOptions="Center" />
-                                                            </Grid>
+                                                                    <Label LineBreakMode="WordWrap" Grid.Column="1"
+                                                                           Text="{loc:LocalizedText Workout_Generation_Required}"
+                                                                           IsVisible="{Binding IsRequired}"
+                                                                           HorizontalTextAlignment="End"
+                                                                           Style="{StaticResource CaptionStrong}"
+                                                                           TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                                                                           VerticalOptions="Start" />
+                                                                </Grid>
+                                                                <Label LineBreakMode="WordWrap" Text="{Binding Details}"
+                                                                       Style="{StaticResource MutedLabel}" />
+                                                                <Label LineBreakMode="WordWrap" Text="{Binding Rationale}"
+                                                                       IsVisible="{Binding HasRationale}"
+                                                                       Style="{StaticResource CaptionLabel}" />
+                                                            </VerticalStackLayout>
                                                         </DataTemplate>
                                                     </BindableLayout.ItemTemplate>
                                                 </VerticalStackLayout>

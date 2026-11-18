@@ -130,27 +130,29 @@
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
-    <Grid
+    <FlexLayout
         Grid.Row="2"
         AutomationId="LoginCreateAccountRow"
-        ColumnDefinitions="Auto,Auto"
-        ColumnSpacing="{StaticResource UiSpaceMicro}"
+        Direction="Row"
+        Wrap="Wrap"
+        JustifyContent="Center"
+        AlignItems="Center"
         Padding="{DynamicResource PresentationActionFooterPadding}"
         MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
-        HorizontalOptions="Center"
+        HorizontalOptions="Fill"
         MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
         SemanticProperties.Description="{loc:LocalizedText Auth_Login_CreateAnAccount}"
         SemanticProperties.Hint="{loc:LocalizedText Auth_Login_DoubleTapToGoToThe}">
-        <Grid.GestureRecognizers>
+        <FlexLayout.GestureRecognizers>
             <TapGestureRecognizer Command="{Binding GoToRegisterCommand}" />
-        </Grid.GestureRecognizers>
+        </FlexLayout.GestureRecognizers>
         <Label Text="{loc:LocalizedText Auth_Login_NewToMusclecuties}" Style="{StaticResource MutedLabel}"
                LineBreakMode="WordWrap"
-               HorizontalOptions="Center"
                VerticalOptions="Center" />
-        <Label Grid.Column="1" Text="{loc:LocalizedText Auth_CreateAccount}" Style="{StaticResource AccentLabel}"
+        <Label Text="{loc:LocalizedText Auth_CreateAccount}" Style="{StaticResource AccentLabel}"
                LineBreakMode="WordWrap"
-               VerticalOptions="Center" />
-    </Grid>
+               VerticalOptions="Center"
+               Margin="{StaticResource UiInsets6_0_0_0}" />
+    </FlexLayout>
 </Grid>
 </ContentPage>

@@ -419,8 +419,10 @@ public static class WorkoutGenerationEngineV2
                     preferMachine: true);
             }
 
-            // Gate 52: Dynamic Core (target 2 occasions weekly)
-            if (i < 2 || sessionCount == 1)
+            // Gate 52: Dynamic Core (target 2 occasions weekly). Every lower day gets its
+            // own trunk slot; without it a split lower session drops to three exercises while
+            // the paired upper day carries six.
+            if (!isUpperDay && (alternatingSplit || i < 2 || sessionCount == 1))
             {
                 AddBestCandidate(slots, eligibleCatalog, usedCounts, existingIds, priorWeekIds,
                     c => (c.VarietyTag == ExerciseVarietyTag.DynamicCore ||
@@ -773,6 +775,46 @@ public static class WorkoutGenerationEngineV2
             totalMinutes = CalculateSessionMinutes(working);
             limitations.Add(PartialCoverageTimeLimitedCode);
             trace.Add($"TrimmedAccessory:{removable.ex.ExerciseId}");
+        }
+
+        // A short session must not collapse to two exercises and lose an entire movement region.
+        // Before trimming priority work, reduce working sets (never below two) so a four-exercise
+        // full-body floor can fit the user's budget.
+        if (totalMinutes > budgetMinutes && working.Count >= 4)
+        {
+            var reducedSets = false;
+            var candidates = working
+                .Select((exercise, index) => new { exercise, index })
+                .Where(candidate => candidate.exercise.WorkingSets > 2)
+                .Reverse()
+                .ToArray();
+            foreach (var candidate in candidates)
+            {
+                var sets = candidate.exercise.WorkingSets;
+                while (sets > 2 && totalMinutes > budgetMinutes)
+                {
+                    sets--;
+                    var catalogItem = catalogById[candidate.exercise.ExerciseId];
+                    var minutes = EstimateSingleExerciseMinutes(catalogItem,
+                        candidate.exercise.WarmUpSets, sets, candidate.exercise.MaxRepetitions,
+                        candidate.exercise.RestSeconds,
+                        candidate.exercise.SupersetGroupId is null ? 1m : SupersetRestSavingFactor);
+                    working[candidate.index] = candidate.exercise with
+                    {
+                        WorkingSets = sets,
+                        EstimatedMinutes = minutes
+                    };
+                    totalMinutes = CalculateSessionMinutes(working);
+                    trace.Add($"TrimmedSets:{candidate.exercise.ExerciseId}:{sets}");
+                    reducedSets = true;
+                }
+                if (totalMinutes <= budgetMinutes)
+                    break;
+            }
+            if (reducedSets)
+                limitations.Add(PartialCoverageTimeLimitedCode);
+            if (totalMinutes <= budgetMinutes)
+                return working;
         }
 
         // Step 6-7: If still over budget, trim lowest-priority remaining exercise while preserving >= 1 safe core exercise

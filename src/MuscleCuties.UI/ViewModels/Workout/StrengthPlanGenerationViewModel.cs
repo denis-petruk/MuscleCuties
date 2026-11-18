@@ -899,7 +899,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 StrengthPlanGenerationDisplayMapper.FormatLocalized(
                     RecentWeekAccessibilityFormatKey,
                     periodLabel,
-                    count.ToString(CultureInfo.CurrentCulture))));
+                    count.ToString(CultureInfo.CurrentCulture)),
+                count));
         }
 
         return result;
@@ -1152,7 +1153,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                         .Select(StrengthPlanGenerationDisplayMapper.ToMixedActivitySessionDisplay)
                         .ToArray();
                     return new MixedActivityDayDisplay(
-                        StrengthPlanGenerationDisplayMapper.ShortWeekdayLabel(day), sessions,
+                        StrengthPlanGenerationDisplayMapper.FullWeekdayLabel(day), sessions,
                         sessions.Length == NoPolicyReasons);
                 }).ToArray()
             : Array.Empty<MixedActivityDayDisplay>();

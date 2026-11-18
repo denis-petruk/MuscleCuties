@@ -36,16 +36,11 @@
                             Style="{StaticResource CaptionLabel}"
                             LineBreakMode="WordWrap" />
                     </Grid>
-                    <Grid Grid.Row="2" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                    <sharedControls:AdaptiveRow Grid.Row="2" Columns="2" ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Border
-    Style="{StaticResource CardSecondary}"
-    SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectImperialUnits}" SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-    <Border.GestureRecognizers>
-        <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
-    </Border.GestureRecognizers>
+    Style="{StaticResource CardSecondary}">
     <Border.Triggers>
         <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
-            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
             <Setter Property="BackgroundColor"
                     Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
             <Setter Property="Stroke"
@@ -53,7 +48,10 @@
             <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
         </DataTrigger>
     </Border.Triggers>
+    <Grid>
     <Label
+        AutomationProperties.IsInAccessibleTree="False"
+        InputTransparent="True"
         Text="{loc:LocalizedText Common_Unit_Imperial}"
         Style="{StaticResource BodyStrong}"
         HorizontalTextAlignment="Center">
@@ -65,18 +63,23 @@
             </DataTrigger>
         </Label.Triggers>
     </Label>
+    <sharedControls:CardTapTarget
+        Command="{Binding SelectImperialUnitsCommand}"
+        SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectImperialUnits}"
+        SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+        <sharedControls:CardTapTarget.Triggers>
+            <DataTrigger TargetType="Button" Binding="{Binding UseImperialSystem}" Value="True">
+                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            </DataTrigger>
+        </sharedControls:CardTapTarget.Triggers>
+    </sharedControls:CardTapTarget>
+    </Grid>
 </Border>
             
                         <Border
-    Grid.Column="1"
-    Style="{StaticResource CardSecondary}"
-    SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectMetricUnits}" SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-    <Border.GestureRecognizers>
-        <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
-    </Border.GestureRecognizers>
+    Style="{StaticResource CardSecondary}">
     <Border.Triggers>
         <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
-            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
             <Setter Property="BackgroundColor"
                     Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
             <Setter Property="Stroke"
@@ -84,7 +87,10 @@
             <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
         </DataTrigger>
     </Border.Triggers>
+    <Grid>
     <Label
+        AutomationProperties.IsInAccessibleTree="False"
+        InputTransparent="True"
         Text="{loc:LocalizedText Common_Unit_Metric}"
         Style="{StaticResource BodyStrong}"
         HorizontalTextAlignment="Center">
@@ -96,8 +102,19 @@
             </DataTrigger>
         </Label.Triggers>
     </Label>
+    <sharedControls:CardTapTarget
+        Command="{Binding SelectMetricUnitsCommand}"
+        SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectMetricUnits}"
+        SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+        <sharedControls:CardTapTarget.Triggers>
+            <DataTrigger TargetType="Button" Binding="{Binding UseMetricSystem}" Value="True">
+                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+            </DataTrigger>
+        </sharedControls:CardTapTarget.Triggers>
+    </sharedControls:CardTapTarget>
+    </Grid>
 </Border>
-                    </Grid>
+                    </sharedControls:AdaptiveRow>
                 </Grid>
             </Border>
         </VerticalStackLayout>

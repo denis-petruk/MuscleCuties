@@ -7,9 +7,12 @@
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:commonModels="clr-namespace:MuscleCuties.UI.Models.UI.Common"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileFeedbackViewModel"
     Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
+    SafeAreaEdges="All"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid RowDefinitions="Auto,*,Auto">
@@ -29,122 +32,140 @@
                         <Border Style="{StaticResource EditorContainer}">
                             <Editor Placeholder="{loc:LocalizedText Profile_Feedback_WhatHappenedOrWhatShouldChange}"
                                     Text="{Binding FeedbackText}"
-                                    AutoSize="TextChanges"
+                                    AutoSize="Disabled"
                                     SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_YourFeedback}" />
                         </Border>
 
-                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                            <Label Text="{loc:LocalizedText Profile_Feedback_SuggestedFixOptional}"
-                                   Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource EditorContainer}">
+                        <toolkit:Expander>
+                            <toolkit:Expander.Header>
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                    <Label Text="{loc:LocalizedText Profile_Feedback_SuggestedFixOptional}"
+                                           Style="{StaticResource FormFieldLabel}"
+                                           VerticalOptions="Center" />
+                                    <Label Grid.Column="1"
+                                           Text="▾"
+                                           Style="{StaticResource BodyLabel}"
+                                           HorizontalTextAlignment="End"
+                                           VerticalOptions="Center"
+                                           AutomationProperties.IsInAccessibleTree="False" />
+                                </Grid>
+                            </toolkit:Expander.Header>
+                            <Border Style="{StaticResource EditorContainer}" Margin="{StaticResource UiInsets0_8}">
                                 <Editor Placeholder="{loc:LocalizedText Profile_Feedback_WhatWouldWorkBetter}"
                                         Text="{Binding AdjustmentText}"
-                                        AutoSize="TextChanges"
+                                        AutoSize="Disabled"
                                         SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_SuggestedChange}" />
                             </Border>
-                        </VerticalStackLayout>
+                        </toolkit:Expander>
                     </VerticalStackLayout>
                 </Border>
 
                 <Border Style="{StaticResource CardSecondary}">
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
-                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Feedback_Details}"
-                                                          IconGlyph="ChatSettings24" />
+                    <toolkit:Expander>
+                        <toolkit:Expander.Header>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Feedback_Details}"
+                                                                  IconGlyph="ChatSettings24" />
+                                <Label Grid.Column="1"
+                                       Text="▾"
+                                       Style="{StaticResource BodyLabel}"
+                                       HorizontalTextAlignment="End"
+                                       VerticalOptions="Center"
+                                       AutomationProperties.IsInAccessibleTree="False" />
+                            </Grid>
+                        </toolkit:Expander.Header>
 
-                        <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
-                            <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
-                                <Label Text="{loc:LocalizedText Profile_Feedback_Topic}"
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Margin="{StaticResource UiInsets0_8}">
+                            <sharedControls:AdaptiveRow Columns="2" ColumnSpacing="{StaticResource UiSpaceCompact}" RowSpacing="{StaticResource UiSpaceCompact}">
+                                <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
+                                    <Label Text="{loc:LocalizedText Profile_Feedback_Topic}"
+                                           Style="{StaticResource FormFieldLabel}" />
+                                    <Border Style="{StaticResource PickerContainer}">
+                                        <Picker Title="{loc:LocalizedText Profile_Feedback_Topic}"
+                                                ItemsSource="{Binding TopicOptions}"
+                                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
+                                                SelectedItem="{Binding SelectedTopicOption}"
+                                                SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_Topic}" />
+                                    </Border>
+                                </VerticalStackLayout>
+                                <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
+                                    <Label Text="{loc:LocalizedText Profile_Feedback_Priority}"
+                                           Style="{StaticResource FormFieldLabel}" />
+                                    <Border Style="{StaticResource PickerContainer}">
+                                        <Picker Title="{loc:LocalizedText Profile_Feedback_Priority}"
+                                                ItemsSource="{Binding PriorityOptions}"
+                                                ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
+                                                SelectedItem="{Binding SelectedPriorityOption}"
+                                                SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_Priority}" />
+                                    </Border>
+                                </VerticalStackLayout>
+                            </sharedControls:AdaptiveRow>
+
+                            <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
+                                <Label Text="{loc:LocalizedText Profile_Feedback_ScreenOptional}"
                                        Style="{StaticResource FormFieldLabel}" />
-                                <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
-                                    <Picker Title="{loc:LocalizedText Profile_Feedback_Topic}"
-                                            ItemsSource="{Binding TopicOptions}"
-                                            ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
-                                            SelectedItem="{Binding SelectedTopicOption}"
-                                            SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_Topic}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Profile_Feedback_EGNutrition}"
+                                           Text="{Binding ScreenName}"
+                                           SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_ScreenOptional}" />
                                 </Border>
+                            </VerticalStackLayout>
+
+                            <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                     Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
+
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}"
+                                  MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                <Label Text="{loc:LocalizedText Profile_Feedback_IncludeReplyEmail}"
+                                       Style="{StaticResource BodyLabel}"
+                                       VerticalOptions="Center" />
+                                <Switch Grid.Column="1"
+                                        IsToggled="{Binding IncludeContactEmail}"
+                                        OnColor="{StaticResource Primary}"
+                                        ThumbColor="{AppThemeBinding Light={StaticResource ControlThumbLight}, Dark={StaticResource ControlThumbDark}}"
+                                        VerticalOptions="Center"
+                                        SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_IncludeContactEmailForAReply}" />
                             </Grid>
 
-                            <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
-                                <Label Text="{loc:LocalizedText Profile_Feedback_Priority}"
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" IsVisible="{Binding IncludeContactEmail}">
+                                <Label Text="{loc:LocalizedText Profile_Feedback_ReplyEmail}"
                                        Style="{StaticResource FormFieldLabel}" />
-                                <Border Grid.Row="1" Style="{StaticResource PickerContainer}">
-                                    <Picker Title="{loc:LocalizedText Profile_Feedback_Priority}"
-                                            ItemsSource="{Binding PriorityOptions}"
-                                            ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
-                                            SelectedItem="{Binding SelectedPriorityOption}"
-                                            SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_Priority}" />
+                                <Border Style="{StaticResource InputContainer}">
+                                    <Entry Placeholder="{loc:LocalizedText Profile_Feedback_ReplyEmail}"
+                                           Text="{Binding ContactEmail}"
+                                           Keyboard="Email"
+                                           SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_ReplyEmail}" />
                                 </Border>
-                            </Grid>
+                            </VerticalStackLayout>
+
+                            <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                     Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
+
+                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                <Label Text="{loc:LocalizedText Profile_Feedback_Attachment}"
+                                       Style="{StaticResource FormFieldLabel}" />
+                                <Button Text="{loc:LocalizedText Profile_Feedback_AddFile}"
+                                        Style="{StaticResource ButtonSecondary}"
+                                        HorizontalOptions="Start"
+                                        Clicked="OnAttachFileClicked" />
+                                <Grid IsVisible="{Binding HasAttachment}" ColumnDefinitions="*,Auto"
+                                      ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                    <Label Text="{Binding AttachmentName}"
+                                           Style="{StaticResource MutedLabel}"
+                                           LineBreakMode="MiddleTruncation"
+                                           VerticalOptions="Center" />
+                                    <Button Grid.Column="1"
+                                            Text="{loc:LocalizedText Profile_Feedback_Remove}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            Command="{Binding RemoveAttachmentCommand}" />
+                                </Grid>
+                                <Label Text="{Binding AttachmentStatus, Converter={StaticResource LocalizedStringConverter}}"
+                                       Style="{StaticResource CaptionLabel}"
+                                       LineBreakMode="WordWrap"
+                                       IsVisible="{Binding AttachmentStatus, Converter={StaticResource StringToBoolConverter}}" />
+                            </VerticalStackLayout>
                         </VerticalStackLayout>
-
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
-                            <Label Text="{loc:LocalizedText Profile_Feedback_ScreenOptional}"
-                                   Style="{StaticResource FormFieldLabel}" />
-                            <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="{loc:LocalizedText Profile_Feedback_EGNutrition}"
-                                       Text="{Binding ScreenName}"
-                                       SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_ScreenOptional}" />
-                            </Border>
-                        </Grid>
-
-                        <BoxView HeightRequest="{StaticResource UiDimension1}"
-                                 Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
-
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}"
-                              MinimumHeightRequest="{StaticResource UiDimension48}">
-                            <Label Text="{loc:LocalizedText Profile_Feedback_IncludeReplyEmail}"
-                                   Style="{StaticResource CardTitle}"
-                                   VerticalOptions="Center" />
-                            <Switch Grid.Column="1"
-                                    IsToggled="{Binding IncludeContactEmail}"
-                                    OnColor="{StaticResource Primary}"
-                                    ThumbColor="{AppThemeBinding Light={StaticResource ControlThumbLight}, Dark={StaticResource ControlThumbDark}}"
-                                    VerticalOptions="Center"
-                                    SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_IncludeContactEmailForAReply}" />
-                        </Grid>
-
-                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" IsVisible="{Binding IncludeContactEmail}">
-                            <Label Text="{loc:LocalizedText Profile_Feedback_ReplyEmail}"
-                                   Style="{StaticResource FormFieldLabel}" />
-                            <Border Style="{StaticResource InputContainer}">
-                                <Entry Placeholder="{loc:LocalizedText Profile_Feedback_ReplyEmail}"
-                                       Text="{Binding ContactEmail}"
-                                       Keyboard="Email"
-                                       SemanticProperties.Description="{loc:LocalizedText Profile_Feedback_ReplyEmail}" />
-                            </Border>
-                        </VerticalStackLayout>
-
-                        <BoxView HeightRequest="{StaticResource UiDimension1}"
-                                 Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
-
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}"
-                              MinimumHeightRequest="{StaticResource UiDimension48}">
-                            <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Feedback_Attachment}"
-                                                              IconGlyph="LinkSquare24"
-                                                              VerticalOptions="Center" />
-                            <Button Grid.Column="1"
-                                    Text="{loc:LocalizedText Profile_Feedback_AddFile}"
-                                    Style="{StaticResource ButtonSecondary}"
-                                    Clicked="OnAttachFileClicked" />
-                        </Grid>
-
-                        <Grid IsVisible="{Binding HasAttachment}" ColumnDefinitions="*,Auto"
-                              ColumnSpacing="{StaticResource UiSpaceCompact}">
-                            <Label Text="{Binding AttachmentName}"
-                                   Style="{StaticResource MutedLabel}"
-                                   LineBreakMode="MiddleTruncation"
-                                   VerticalOptions="Center" />
-                            <Button Grid.Column="1"
-                                    Text="{loc:LocalizedText Profile_Feedback_Remove}"
-                                    Style="{StaticResource ButtonSecondary}"
-                                    Command="{Binding RemoveAttachmentCommand}" />
-                        </Grid>
-
-                        <Label Text="{Binding AttachmentStatus, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource CaptionLabel}"
-                               LineBreakMode="WordWrap"
-                               IsVisible="{Binding AttachmentStatus, Converter={StaticResource StringToBoolConverter}}" />
-                    </VerticalStackLayout>
+                    </toolkit:Expander>
                 </Border>
             </VerticalStackLayout>
         </ScrollView>

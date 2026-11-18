@@ -7,6 +7,7 @@
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:cycleControls="clr-namespace:MuscleCuties.UI.Controls.Cycle"
     xmlns:cycleModels="clr-namespace:MuscleCuties.UI.Models.UI.Cycle"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Cycle"
     x:DataType="vm:CycleViewModel">
 
@@ -112,7 +113,7 @@
                     <DataTemplate x:DataType="cycleModels:CycleDayItem">
                         <!-- A minimum, not a fixed width: at the largest text sizes "13" is wider than
                              the cell and broke into two lines. The strip scrolls, so the cell grows. -->
-                        <Border
+                        <sharedControls:SelectionCell
                             MinimumWidthRequest="{StaticResource UiDimension56}"
                             MinimumHeightRequest="{StaticResource UiDimension60}"
                             StrokeShape="{StaticResource UiRoundRectangleRadius12}"
@@ -120,7 +121,20 @@
                             Stroke="{Binding StrokeColor}"
                             StrokeThickness="{Binding StrokeThickness}"
                             Padding="{StaticResource UiInsets8_6}"
+                            IsSelected="{Binding IsSelected}"
                             SemanticProperties.Description="{Binding AccessibilityDescription, Converter={StaticResource LocalizedStringConverter}}">
+                            <sharedControls:SelectionCell.Triggers>
+                                <DataTrigger TargetType="sharedControls:SelectionCell"
+                                             Binding="{Binding IsSelected}" Value="True">
+                                    <Setter Property="SemanticProperties.Hint"
+                                            Value="{loc:LocalizedText Common_Selected}" />
+                                </DataTrigger>
+                                <DataTrigger TargetType="sharedControls:SelectionCell"
+                                             Binding="{Binding IsSelected}" Value="False">
+                                    <Setter Property="SemanticProperties.Hint"
+                                            Value="{loc:LocalizedText Common_NotSelected}" />
+                                </DataTrigger>
+                            </sharedControls:SelectionCell.Triggers>
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer
                                     Command="{Binding SelectCalendarDayCommand, Source={RelativeSource AncestorType={x:Type vm:CycleViewModel}}, x:DataType=vm:CycleViewModel}"
@@ -147,7 +161,7 @@
                                     HorizontalOptions="Center"
                                     Margin="{StaticResource UiInsets0_2_0_0}" />
                             </Grid>
-                        </Border>
+                        </sharedControls:SelectionCell>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
                 </HorizontalStackLayout>
@@ -181,6 +195,7 @@
                     HorizontalTextAlignment="Center"
                     VerticalOptions="Center"
                     Style="{StaticResource SectionTitle}"
+                    SemanticProperties.HeadingLevel="None"
                     LineBreakMode="WordWrap" />
 
                 <Border

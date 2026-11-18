@@ -205,24 +205,27 @@
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     LineBreakMode="WordWrap"
                     SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
-                <Grid
-                    ColumnDefinitions="Auto,Auto"
-                    ColumnSpacing="{StaticResource UiSpaceMicro}"
-                    HorizontalOptions="Center"
+                <FlexLayout
+                    Direction="Row"
+                    Wrap="Wrap"
+                    JustifyContent="Center"
+                    AlignItems="Center"
+                    HorizontalOptions="Fill"
                     MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                     MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
                     SemanticProperties.Description="{loc:LocalizedText Auth_Register_ReturnToLogin}"
                     SemanticProperties.Hint="{loc:LocalizedText Auth_Register_DoubleTapToGoBackTo}">
-                    <Grid.GestureRecognizers>
+                    <FlexLayout.GestureRecognizers>
                         <TapGestureRecognizer Command="{Binding GoBackCommand}" />
-                    </Grid.GestureRecognizers>
+                    </FlexLayout.GestureRecognizers>
                     <Label Text="{loc:LocalizedText Auth_Register_AlreadyHaveAnAccount}" Style="{StaticResource MutedLabel}"
                            LineBreakMode="WordWrap"
                            VerticalOptions="Center" />
-                    <Label Grid.Column="1" Text="{loc:LocalizedText Auth_LogIn}" Style="{StaticResource AccentLabel}"
+                    <Label Text="{loc:LocalizedText Auth_LogIn}" Style="{StaticResource AccentLabel}"
                            LineBreakMode="WordWrap"
-                           VerticalOptions="Center" />
-                </Grid>
+                           VerticalOptions="Center"
+                           Margin="{StaticResource UiInsets6_0_0_0}" />
+                </FlexLayout>
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

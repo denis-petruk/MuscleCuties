@@ -27,6 +27,9 @@ public partial class WorkoutActivityOptionItem : ObservableObject
     public string GroupDescription { get; init; } = string.Empty;
     public string Tag { get; init; } = string.Empty;
     public string IconGlyph { get; init; } = string.Empty;
+    public string IconImage { get; init; } = string.Empty;
+    public bool HasIconImage => !string.IsNullOrEmpty(IconImage);
+    public bool HasGlyphIcon => !HasIconImage;
     public bool IsRequired { get; init; }
     public bool IsExtra => !IsRequired;
     public bool IsOffered => string.IsNullOrEmpty(UnavailableReason);

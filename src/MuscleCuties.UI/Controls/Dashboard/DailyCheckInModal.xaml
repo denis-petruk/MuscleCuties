@@ -55,7 +55,7 @@
                     </sharedControls:AdaptiveRow>
                     <Label Grid.Row="3"
                            Text="{Binding SubmitHint}"
-                           IsVisible="{Binding CanSubmit, Converter={StaticResource InvertedBoolConverter}}"
+                           IsVisible="{Binding CanSubmit, Converter={StaticResource SubmitHintVisibilityConverter}}"
                            Style="{StaticResource CaptionLabel}"
                            HorizontalTextAlignment="Center"
                            LineBreakMode="WordWrap" />

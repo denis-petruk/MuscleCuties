@@ -227,9 +227,10 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         get
         {
             var diff = TargetCalories - TotalCalories;
+            var amount = DisplayFormat.Calories(Math.Abs(Math.Round(diff, 0)));
             return diff >= 0
-                ? $"{DisplayFormat.Calories(Math.Round(diff, 0))} remaining"
-                : $"{DisplayFormat.Calories(Math.Abs(Math.Round(diff, 0)))} over";
+                ? UiTextCatalog.Format("Nutrition_FoodLog_CaloriesRemaining", amount)
+                : UiTextCatalog.Format("Nutrition_FoodLog_CaloriesOver", amount);
         }
     }
 

@@ -60,7 +60,11 @@
                 </Border>
             
                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing3}" VerticalOptions="Center">
-                    <Label Text="{Binding UserName}" Style="{StaticResource SectionTitle}" />
+                    <Label x:Name="ProfileNameLabel"
+                           Text="{Binding UserName}" Style="{StaticResource SectionTitle}"
+                           sharedControls:CappedTextSize.IsSectionHeading="False"
+                           MaxLines="2" LineBreakMode="TailTruncation"
+                           SemanticProperties.Description="{Binding UserName}" />
                     <Label Grid.Row="1"
                            Text="{Binding MemberSince, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource CaptionLabel}" />
@@ -72,7 +76,8 @@
                         Margin="{StaticResource UiInsets0_2_0_0}">
                         <Label
                             Text="{Binding CurrentPhaseLabel, Converter={StaticResource LocalizedStringConverter}}"
-                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" Style="{StaticResource CaptionLabel}" />
+                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" Style="{StaticResource CaptionLabel}"
+                            sharedControls:CappedTextSize.IsPhasePill="True" />
                     </Border>
                 </Grid>
             </Grid>
@@ -81,6 +86,7 @@
             <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}" SemanticProperties.Description="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_Page_WorkoutSessionStreakValueDays}">
                     <Image
+                        sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                         Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
                         Aspect="AspectFit"
                         WidthRequest="{StaticResource UiDimension20}"
@@ -90,6 +96,7 @@
                        
                         Text="{loc:LocalizedText Profile_Page_SessionStreak}"
                         Style="{StaticResource BodyLabel}"
+                        sharedControls:CappedTextSize.IsCompactLabel="True"
                         HorizontalTextAlignment="Start" VerticalOptions="Center" Grid.Column="1" />
                     <Label
                         Grid.Column="2"
@@ -101,6 +108,7 @@
                          Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}" SemanticProperties.Description="{Binding NutritionStreakDays, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_Page_NutritionLogStreakValueDays}">
                     <Image
+                        sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                         Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
                         Aspect="AspectFit"
                         WidthRequest="{StaticResource UiDimension20}"
@@ -110,6 +118,7 @@
                        
                         Text="{loc:LocalizedText Profile_Page_LogStreak}"
                         Style="{StaticResource BodyLabel}"
+                        sharedControls:CappedTextSize.IsCompactLabel="True"
                         HorizontalTextAlignment="Start" VerticalOptions="Center" Grid.Column="1" />
                     <Label
                         Grid.Column="2"
@@ -121,6 +130,7 @@
                          Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
                 <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}" SemanticProperties.Description="{Binding CyclesTracked, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_Page_CyclesLoggedValue}">
                     <Image
+                        sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                         Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
                         Aspect="AspectFit"
                         WidthRequest="{StaticResource UiDimension20}"
@@ -130,6 +140,7 @@
                        
                         Text="{loc:LocalizedText Profile_Page_CyclesLogged}"
                         Style="{StaticResource BodyLabel}"
+                        sharedControls:CappedTextSize.IsCompactLabel="True"
                         HorizontalTextAlignment="Start" VerticalOptions="Center" Grid.Column="1" />
                     <Label
                         Grid.Column="2"

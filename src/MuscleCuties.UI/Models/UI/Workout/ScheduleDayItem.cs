@@ -45,6 +45,9 @@ public sealed partial class ScheduleDayItem : ObservableObject
     /// <summary>Workout name for the tooltip / accessibility (e.g. "Upper body push").</summary>
     public string WorkoutTitle { get; init; } = string.Empty;
 
+    /// <summary>Full VoiceOver label: weekday, date, workout and today's marker.</summary>
+    public string AccessibilityDescription { get; init; } = string.Empty;
+
     /// <summary>WorkoutDayId for navigation. 0 for rest/unassigned days.</summary>
     public int WorkoutDayId { get; init; }
 

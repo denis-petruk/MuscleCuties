@@ -52,9 +52,11 @@ public partial class DailyCheckInModal : AnimatedModalView
         if (!_hasContent)
             return;
 
-        BottomSheetSizing.Apply(
-            SheetSurface,
-            Height,
-            AppThemeResources.GetDouble("ModalSheetMaximumHeight"));
+        // At accessibility sizes the form needs the full reviewed sheet height: the footer
+        // stacks its actions and would otherwise leave only a sliver of the questions visible.
+        var preferredHeight = AccessibilityDecoration.IsAccessibilityTextSize()
+            ? BottomSheetSizing.MaximumSheetHeight
+            : AppThemeResources.GetDouble("ModalSheetMaximumHeight");
+        BottomSheetSizing.Apply(SheetSurface, Height, preferredHeight);
     }
 }

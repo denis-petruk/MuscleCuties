@@ -7,6 +7,7 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
     xmlns:uiModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
     xmlns:archive="clr-namespace:MuscleCuties.UseCases.Features.Workout.Archive;assembly=MuscleCuties.UseCases"
@@ -21,6 +22,19 @@
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Workout_History_ArchiveTitle}"
                 BackCommand="{Binding NavigateBackCommand}">
+                <sharedControls:PageHeader.TitleIcon>
+                    <Border AutomationId="WorkoutHistoryHeaderVisual"
+                            WidthRequest="{StaticResource UiDimension40}"
+                            HeightRequest="{StaticResource UiDimension40}"
+                            StrokeThickness="{StaticResource UiStrokeWidth0}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}">
+                        <mi:MauiIcon Icon="{mi:Fluent Trophy24}" IconSize="{StaticResource UiDimension22}"
+                                     IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                     WidthRequest="{StaticResource UiDimension22}" HeightRequest="{StaticResource UiDimension22}"
+                                     HorizontalOptions="Center" VerticalOptions="Center" />
+                    </Border>
+                </sharedControls:PageHeader.TitleIcon>
                 <sharedControls:PageHeader.ActionContent>
                     <Border Style="{StaticResource HeaderIconButton}"
                             SemanticProperties.Description="{loc:LocalizedText Workout_History_RefreshArchiveAccessibility}">
@@ -70,15 +84,27 @@
                              sizes each one takes the full card instead of breaking "Завершенные". -->
                         <sharedControls:AdaptiveRow Columns="2">
                             <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                <Label LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
-                                       Text="{loc:LocalizedText Workout_History_CompletedSessionsTitle}" />
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                    <mi:MauiIcon Icon="{mi:Fluent Trophy24}" IconSize="{StaticResource UiDimension14}"
+                                                 IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                                 WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
+                                                 VerticalOptions="Center" />
+                                    <Label Grid.Column="1" LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
+                                           Text="{loc:LocalizedText Workout_History_CompletedSessionsTitle}" />
+                                </Grid>
                                 <Label LineBreakMode="WordWrap" Style="{StaticResource WorkoutNumber}"
                                        HorizontalTextAlignment="Start"
                                        Text="{Binding TotalSessionsCount, Converter={StaticResource LocalizedStringConverter}}" />
                             </VerticalStackLayout>
                             <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                <Label LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
-                                       Text="{loc:LocalizedText Workout_History_RecordedSetVolumeHeader}" />
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                    <mi:MauiIcon Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension14}"
+                                                 IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                                 WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
+                                                 VerticalOptions="Center" />
+                                    <Label Grid.Column="1" LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
+                                           Text="{loc:LocalizedText Workout_History_RecordedSetVolumeHeader}" />
+                                </Grid>
                                 <Label LineBreakMode="WordWrap" Style="{StaticResource WorkoutNumber}"
                                        HorizontalTextAlignment="Start"
                                        Text="{Binding LifetimeVolumeFormatted, Converter={StaticResource LocalizedStringConverter}}"
@@ -118,10 +144,23 @@
                         IsVisible="{Binding HasNoSessions}"
                         MaximumWidthRequest="{StaticResource UiDimension640}"
                         Style="{StaticResource CardPrimary}">
-                        <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
-                            <Label LineBreakMode="WordWrap" Grid.Row="0" Text="{loc:LocalizedText Workout_History_EmptyStateTitle}"
+                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
+                            <Border AutomationId="WorkoutHistoryEmptyVisual"
+                                    Grid.Row="0"
+                                    WidthRequest="{StaticResource UiDimension56}"
+                                    HeightRequest="{StaticResource UiDimension56}"
+                                    HorizontalOptions="Center"
+                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                    StrokeShape="{StaticResource UiRoundRectangleRadius20}"
+                                    BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}">
+                                <mi:MauiIcon Icon="{mi:Fluent Trophy24}" IconSize="{StaticResource UiDimension28}"
+                                             IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                             WidthRequest="{StaticResource UiDimension28}" HeightRequest="{StaticResource UiDimension28}"
+                                             HorizontalOptions="Center" VerticalOptions="Center" />
+                            </Border>
+                            <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{loc:LocalizedText Workout_History_EmptyStateTitle}"
                                    Style="{StaticResource StateEmptyTitle}" HorizontalTextAlignment="Center" />
-                            <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{loc:LocalizedText Workout_History_EmptyStateDescription}"
+                            <Label LineBreakMode="WordWrap" Grid.Row="2" Text="{loc:LocalizedText Workout_History_EmptyStateDescription}"
                                    Style="{StaticResource StateEmptyBody}" />
                         </Grid>
                     </Border>
@@ -149,12 +188,24 @@
 
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
                             <!-- Top: Date and RPE Badge -->
-                            <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                <Label LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                <Border AutomationId="WorkoutHistoryDateTile"
+                                        WidthRequest="{StaticResource UiDimension44}"
+                                        HeightRequest="{StaticResource UiDimension44}"
+                                        StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                        StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}">
+                                    <Label Text="{Binding StartedAt, StringFormat='{0:dd}'}"
+                                           Style="{StaticResource CaptionSmallStrong}"
+                                           HorizontalOptions="Center"
+                                           VerticalOptions="Center"
+                                           InputTransparent="True" />
+                                </Border>
+                                <Label Grid.Column="1" LineBreakMode="WordWrap" Style="{StaticResource MutedLabel}"
                                     Text="{Binding StartedAt, Converter={StaticResource SessionDateConverter}}"
  />
                                 <Border
-                                    Grid.Column="1"
+                                    Grid.Column="2"
                                     IsVisible="{Binding RpeRating, Converter={StaticResource StringToBoolConverter}}"
                                     StrokeShape="{StaticResource UiRoundRectangleRadius999}"
                                     StrokeThickness="{StaticResource UiStrokeWidth0}"
@@ -350,7 +401,8 @@
                                         Style="{StaticResource CardSecondary}">
                                         <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                                             <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                                <Label LineBreakMode="WordWrap" Style="{StaticResource BodyLabel}" Text="{Binding ExerciseName}" />
+                                                <Label LineBreakMode="WordWrap" Style="{StaticResource BodyLabel}"
+                                                       Text="{Binding ExerciseName, Converter={StaticResource LocalizedStringConverter}}" />
                                                 <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Grid.Column="1"
                                                        Text="{Binding VolumeSummary, Converter={StaticResource LocalizedStringConverter}}"
  />
@@ -424,7 +476,8 @@
                             <Border Grid.Row="2" Style="{StaticResource EditorContainer}">
                                 <Editor
                                     Text="{Binding EditingNotes}"
-                                    Placeholder="{loc:LocalizedText Workout_History_NotesPlaceholder}" />
+                                    Placeholder="{loc:LocalizedText Workout_History_NotesPlaceholder}"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_History_NotesPlaceholder}" />
                             </Border>
                         </Grid>
                         </Grid>

@@ -1,53 +1,99 @@
-# Status — auth polish and app-wide consistency pass
+# Status — workout activity card, accessibility text sizes
 
-## Changed files
+## 1. Changed files
 
-- `src/MuscleCuties.UI/Pages/Auth/LoginPage.xaml` — shared `PageHeader` with no back action; form scroll area; account-switch footer anchored to the bottom safe area; standard Apple button; Show/Hide password control.
-- `src/MuscleCuties.UI/Pages/Auth/RegisterPage.xaml` — shared `PageHeader` with the visible back arrow bound to `GoBackCommand`; visible password rules; Show/Hide controls; quiet Privacy Policy link.
-- `src/MuscleCuties.UI/Pages/Auth/OtpVerificationPage.xaml`, `PasswordRecoveryPage.xaml` — shared `PageHeader` composition.
-- `src/MuscleCuties.UI/Pages/Auth/{LoginPage.xaml.cs,RegisterPage.xaml.cs}` — password reveal handlers.
-- `src/MuscleCuties.UI/ViewModels/Auth/{LoginViewModel.cs,RegisterViewModel.cs}` — VoiceOver announcement of auth errors.
-- `src/MuscleCuties.UI/Services/Localization/{UiTextCatalog.NutritionProfileAuth.cs,RussianUiText.NutritionProfileAuth.cs,UiTextCatalog.RuntimeText.cs}` — EN/RU password, consent and Apple copy; sentence-case labels.
-- `src/MuscleCuties.UI/Resources/Styles/{Colors.xaml,Styles.xaml}`, `Resources/Images/icon_apple.svg` — platform-owned `ButtonApple` treatment.
-- `src/MuscleCuties.UI/Services/Auth/PlatformAccountSignInAdapter.cs` — actionable Apple failure copy.
-- `tests/MuscleCuties.Core.Tests/UiCleanlinessAndReachabilityTests.cs` — auth layout/header contract and the Apple button exception.
-- `ROADMAP.md`, `docs/workout-engine-v2/IMPLEMENTATION_PLAN.md` — current status reconciled; historical gate rows marked superseded where V2 replaced the legacy path.
-- `docs/design/{AUDIT_2026-11-02.md,SOFT_MINIMAL_PROPOSAL.md,SOFT_MINIMAL_IMPLEMENTATION_EVIDENCE.md,REFERENCES.md}` and `docs/design/references/*` — restored from Git, marked as historical records; all presentation-spec links resolve.
-- `src/MuscleCuties.UI/MuscleCuties.UI.csproj` — TestFlight build 6.
-- Commits: `e411958f`, `0204bd2f`, `143bc38c`, `23b73055`, `b5078cdd`, `4f5343cb`.
+- `src/MuscleCuties.UI/Controls/Workout/WorkoutActivityCard.xaml`
+  - The day badge keeps the reviewed 36pt as a **minimum** instead of a fixed size, so a two-letter
+    day ("СР", "ПН") outgrows the tile instead of losing its second letter under the edge; the day
+    label no longer breaks inside itself (`LineBreakMode="NoWrap"`).
+  - The two session-adjustment actions sit in a wrapping `FlexLayout` instead of a
+    `HorizontalStackLayout`. The stack measured its children against an unbounded width, so a long
+    Russian label ("Обязательная тренировка") was laid out wider than the card and clipped at the
+    screen edge; the wrapping row measures against the card and the label wraps inside it.
+  - Unchanged: the grid simplification already in the tree (`Auto,*` columns, icon under the day,
+    title beside it), every binding, command wiring, style role, colour, localization key and
+    accessibility semantic.
+- `tests/MuscleCuties.Core.Tests/UiCleanlinessAndReachabilityTests.cs`
+  - New guard `Activity_card_badge_and_actions_grow_instead_of_clipping_at_large_text`: the day tile
+    sets `MinimumWidthRequest`/`MinimumHeightRequest` to `UiDimension36` and no fixed
+    `WidthRequest`/`HeightRequest`, its label is `NoWrap`, and both actions are children of a
+    `FlexLayout` with `Wrap="Wrap"` that still uses `ButtonSecondary`.
+- `src/MuscleCuties.UI/ViewModels/Workout/WorkoutViewModel.cs` — temporary `[DIAG]` console writes
+  were added to `SelectFilter`/`SelectWeekChip` to diagnose the simulator input, and removed again;
+  the file carries only the earlier stable-tag filter fix.
 
-## Test commands and output
+## 2. Test commands and output
+
+Guard written first, red for the intended reason:
 
 ```
-dotnet test tests/MuscleCuties.Core.Tests --nologo -v:q
-Passed! - Failed: 0, Passed: 1637, Skipped: 0, Total: 1637
+$ dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj \
+    --filter "FullyQualifiedName~Activity_card_badge_and_actions_grow"
+  Failed MuscleCuties.Core.Tests.UiCleanlinessAndReachabilityTests.Activity_card_badge_and_actions_grow_instead_of_clipping_at_large_text [10 ms]
+  Error Message:
+   Assert.Null() Failure: Value is not null
+Expected: null
+Actual:   WidthRequest="{StaticResource UiDimension36}"
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1
+```
 
-dotnet build src/MuscleCuties.UI -c Debug -f net10.0-ios -p:RuntimeIdentifier=iossimulator-arm64
-Build succeeded. 0 Warning(s) 0 Error(s)
+After the fix:
 
-MC_IOS_VERSION=1.0 MC_IOS_BUILD=6 scripts/archive-ios-testflight.sh
+```
+$ dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj \
+    --filter "FullyQualifiedName~Activity_card_badge_and_actions_grow"
+Passed!  - Failed:     0, Passed:     1, Skipped:     0, Total:     1
+```
+
+Full suite:
+
+```
+$ dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj
+Passed!  - Failed:     0, Passed:  1696, Skipped:     0, Total:  1696
+```
+
+Simulator build:
+
+```
+$ dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj \
+    -f net10.0-ios -r iossimulator-arm64 -c Debug
 Build succeeded.
-bundle_id=com.musclecuties.app version=1.0 build=6
-content_audit=PASS
-healthkit_profile=True healthkit_app=True signin_profile=True signin_app=True
-beta_reports_profile=True get_task_allow_profile=False get_task_allow_app=False
-IPA cleanliness: PASS
+    0 Warning(s)
+    0 Error(s)
 ```
 
-Presentation-spec design links: `broken_design_links= []`.
+Simulator (MC Generation QA Clone, iOS 26.3, Russian, `com.musclecuties.app`):
 
-Earlier in this branch: Registration.Tests 70/70; Server.Tests 125/125; Apple integration 2/2.
+- `accessibility-extra-extra-large` and `accessibility-extra-extra-extra-large`: the day badge shows
+  "СР"/"ПН" in full and the action button wraps its label inside the card instead of running past it.
+  A relaunch is required after `simctl ui … content_size`; without one the CollectionView keeps the
+  previous metrics and the capture is stale.
+- Filter chips, selected with accessibility presses on the Simulator:
+  - Сила → four strength cards in the week (three on ПН 16, one on СР 18); no other type appears.
+  - Кардио → the list is empty; no strength card leaks through.
+  - Восстановление → the list is empty; no strength card leaks through.
+  - Все → the same four strength cards.
 
-## Not verified
+## 3. Not verified, and why
 
-- The full QA journey could not run: registration reached the local API and returned `500` because the local email-challenge HMAC keys are not configured. This is a local environment issue, not a UI regression. The design journey therefore did not reach Today, Cycle, Train, Nutrition or You.
-- Login, Register and Password Recovery were visually checked on the simulator. OTP was not visually reached; its header change is covered by the build and source test.
-- Dark appearance, VoiceOver announcements, and the largest accessibility text sizes were not exercised on a device.
-- App-wide copy-size and button-height proposals below were not applied; they require a separate visual pass across every tab.
-- Build 6 was not uploaded: no `MuscleCutiesTestFlight` Keychain item exists on this machine.
+- A **cardio or recovery card** could not be observed. The clone's current week holds strength
+  sessions only (ПН 16, СР 18; ВТ–ВС are rest days) and the today's-workout sheet lists a single
+  "Сила и форма" activity, so those two chips have nothing of their own to show. No app or
+  simulator data was changed to manufacture one; the tag isolation itself is covered by
+  `WorkoutListFilterRule` tests.
+- **Weeks 2–4** were not inspected: the week chips did not respond to synthetic taps or to
+  accessibility presses in this session, so any cardio/recovery sessions scheduled there stayed out
+  of reach.
+- **Filter with no matches renders a blank list area**: with Кардио selected nothing appears — no
+  empty-state title or hint. Not changed by this task.
+- Simulator input caveat: Maestro point taps reach native buttons but not MAUI tap gestures
+  (card and chip taps did nothing); the chip matrix was driven by accessibility presses on the
+  Simulator window, confirmed by temporary console output (`SelectFilter tag=CARDIO`).
+- No automated UI test exercises the rendered card; the guard reads the XAML, and the rendering was
+  checked by screenshot only.
 
-## Next step / blocker
+## 4. Next step
 
-1. Store the app-specific password with `xcrun altool --store-password-in-keychain-item MuscleCutiesTestFlight -u deniska.petruk@icloud.com -p '<app-specific-password>'`, then upload `src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/MuscleCuties.UI.ipa` (1.0 build 6).
-2. Configure the local API email-challenge HMAC keys to complete the full design journey and verify every tab.
-3. Package L / Gate 95 remains owner-gated; HIIT, fasting UI, exercise media and Android remain deliberately deferred.
+Commit the tree and push it to `fix/qa-audit-followups` (fast-forward from the branch's tip). Open
+follow-ups for the two items found on the way: the missing empty-filter state, and the week chips
+that did not respond to input during this session.

@@ -7,6 +7,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="vm:DailyCheckInViewModel">
 
@@ -25,17 +26,6 @@
                     Style="{StaticResource ErrorLabel}"
                     IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
             </VerticalStackLayout>
-
-            <Border Style="{StaticResource CardPrimary}" IsVisible="{Binding ShowHealthRationale}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpacing10}">
-                    <Label Text="{loc:LocalizedText Dashboard_CheckIn_HealthRationaleTitle}" Style="{StaticResource SectionTitle}" />
-                    <Label Text="{loc:LocalizedText Dashboard_CheckIn_HealthRationaleBody}" Style="{StaticResource MutedLabel}" />
-                    <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Dashboard_CheckIn_HealthConnect}"
-                            Command="{Binding ConnectHealthCommand}" HorizontalOptions="Fill" />
-                    <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Dashboard_CheckIn_HealthNotNow}"
-                            Command="{Binding NotNowHealthCommand}" HorizontalOptions="Fill" />
-                </VerticalStackLayout>
-            </Border>
 
             <Button
                 Style="{StaticResource ButtonSecondary}"
@@ -84,9 +74,11 @@
                         </Grid>
                         <Grid Grid.Row="2" ColumnDefinitions="*,*">
                             <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryLowLabel}"
-                                   Style="{StaticResource CaptionLabel}" />
+                                   Style="{StaticResource CaptionLabel}"
+                                   sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True" />
                             <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryHighLabel}"
                                    Style="{StaticResource CaptionLabel}"
+                                   sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                    HorizontalTextAlignment="End" />
                         </Grid>
                     </Grid>
@@ -130,9 +122,11 @@
                         </Grid>
                         <Grid Grid.Row="2" ColumnDefinitions="*,*">
                             <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryLowLabel}"
-                                   Style="{StaticResource CaptionLabel}" />
+                                   Style="{StaticResource CaptionLabel}"
+                                   sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True" />
                             <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryHighLabel}"
                                    Style="{StaticResource CaptionLabel}"
+                                   sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                    HorizontalTextAlignment="End" />
                         </Grid>
                     </Grid>
@@ -164,12 +158,28 @@
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Fatigue5A11y}" />
                         </Grid>
                         <Grid Grid.Row="2" ColumnDefinitions="*,*">
-                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_FatigueLowLabel}" Style="{StaticResource CaptionLabel}" />
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_FatigueLowLabel}"
+                                   Style="{StaticResource CaptionLabel}"
+                                   sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True" />
                             <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_FatigueHighLabel}"
-                                   Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" />
+                                   Style="{StaticResource CaptionLabel}"
+                                   sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
+                                   HorizontalTextAlignment="End" />
                         </Grid>
                     </Grid>
 
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Optional integration prompt sits after the primary check-in questions. -->
+            <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding ShowHealthRationale}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpacing10}">
+                    <Label Text="{loc:LocalizedText Dashboard_CheckIn_HealthRationaleTitle}" Style="{StaticResource SectionTitle}" />
+                    <Label Text="{loc:LocalizedText Dashboard_CheckIn_HealthRationaleBody}" Style="{StaticResource MutedLabel}" />
+                    <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Dashboard_CheckIn_HealthConnect}"
+                            Command="{Binding ConnectHealthCommand}" HorizontalOptions="Fill" />
+                    <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Dashboard_CheckIn_HealthNotNow}"
+                            Command="{Binding NotNowHealthCommand}" HorizontalOptions="Fill" />
                 </VerticalStackLayout>
             </Border>
 
@@ -258,11 +268,13 @@
                                 Grid.Column="0"
                                 Text="{loc:LocalizedText Dashboard_CheckIn_PainNone}"
                                 Style="{StaticResource CaptionLabel}"
+                                sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                 HorizontalOptions="Start" />
                             <Label
                                 Grid.Column="1"
                                 Text="{loc:LocalizedText Dashboard_CheckIn_PainSevere}"
                                 Style="{StaticResource CaptionLabel}"
+                                sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                 HorizontalOptions="End" />
                         </Grid>
                     </Grid>

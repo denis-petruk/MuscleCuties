@@ -32,40 +32,51 @@
                     <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
                            Style="{StaticResource MutedLabel}"
                            LineBreakMode="WordWrap" />
-                    <!-- Seven fixed options read better as one checklist than as a four-plus-three
-                         card grid, whose final row left an unused cell and whose cards could not
-                         hold a full word at large text. -->
+                    <!-- Seven fixed options read as one grouped checklist. Compact rows keep all
+                         choices in a single scan and leave the commit action visible. -->
                     <VerticalStackLayout
-                        Spacing="{StaticResource UiSpacing10}"
+                        Spacing="0"
                         BindableLayout.ItemsSource="{Binding AvailableWeekdays}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:WorkoutWeekdayOptionItem">
-                                <!-- Onboarding option anatomy: canonical card, option label, radio ring. -->
-                                <Border Style="{StaticResource CardSecondary}"
-                                        SemanticProperties.Description="{Binding Label}"
-                                        SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-                                    
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer
-                                            Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileWorkoutPreferencesViewModel}}, Path=ToggleWeekdayCommand}"
-                                            CommandParameter="{Binding .}" />
-                                    </Border.GestureRecognizers>
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                                        <Label Text="{Binding Label}"
-                                               Style="{StaticResource AccentLabel}"
-                                               VerticalOptions="Center"
-                                               LineBreakMode="WordWrap" />
-                                        <Border Grid.Column="1" Style="{StaticResource SelectionRadioRing}" VerticalOptions="Center">
-                                            <BoxView WidthRequest="{StaticResource UiDimension8}"
-                                                     HeightRequest="{StaticResource UiDimension8}"
-                                                     CornerRadius="{StaticResource UiCornerRadius4}"
-                                                     Color="{StaticResource ContrastInk}"
-                                                     HorizontalOptions="Center"
-                                                     VerticalOptions="Center"
-                                                     IsVisible="{Binding IsSelected}" />
-                                        </Border>
-                                    </Grid>
-                                </Border>
+                                <VerticalStackLayout Spacing="0">
+                                    <sharedControls:SelectionCell Style="{StaticResource ProfileMenuRow}"
+                                            MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                            IsSelected="{Binding IsSelected}"
+                                            SemanticProperties.Description="{Binding Label}">
+                                        <Border.Triggers>
+                                            <DataTrigger TargetType="sharedControls:SelectionCell" Binding="{Binding IsSelected}" Value="True">
+                                                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+                                            </DataTrigger>
+                                            <DataTrigger TargetType="sharedControls:SelectionCell" Binding="{Binding IsSelected}" Value="False">
+                                                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_NotSelected}" />
+                                            </DataTrigger>
+                                        </Border.Triggers>
+                                        <Border.GestureRecognizers>
+                                            <TapGestureRecognizer
+                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileWorkoutPreferencesViewModel}}, Path=ToggleWeekdayCommand}"
+                                                CommandParameter="{Binding .}" />
+                                        </Border.GestureRecognizers>
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                            <Label Text="{Binding Label}"
+                                                   Style="{StaticResource BodyLabel}"
+                                                   sharedControls:CappedTextSize.IsCompactLabel="True"
+                                                   VerticalOptions="Center"
+                                                   LineBreakMode="WordWrap" />
+                                            <Border Grid.Column="1" Style="{StaticResource SelectionRadioRing}" VerticalOptions="Center">
+                                                <BoxView WidthRequest="{StaticResource UiDimension8}"
+                                                         HeightRequest="{StaticResource UiDimension8}"
+                                                         CornerRadius="{StaticResource UiCornerRadius4}"
+                                                         Color="{StaticResource ContrastInk}"
+                                                         HorizontalOptions="Center"
+                                                         VerticalOptions="Center"
+                                                         IsVisible="{Binding IsSelected}" />
+                                            </Border>
+                                        </Grid>
+                                    </sharedControls:SelectionCell>
+                                    <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                             Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
+                                </VerticalStackLayout>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </VerticalStackLayout>

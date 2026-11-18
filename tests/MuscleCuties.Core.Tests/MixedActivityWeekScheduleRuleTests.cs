@@ -434,7 +434,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
             hiitUnderlyingCardioActivity: underlyingActivity);
 
         Assert.Equal(0, Decision(result, WorkoutActivityType.Hiit).ScheduledSessionsPerWeek);
-        Assert.Empty(result.Sessions.Where(session => session.Activity == WorkoutActivityType.Hiit));
+        Assert.DoesNotContain(result.Sessions, session => session.Activity == WorkoutActivityType.Hiit);
         var continuous = Decision(result, underlyingActivity);
         Assert.Equal(continuous.TargetSessionsPerWeek, continuous.ScheduledSessionsPerWeek);
         Assert.DoesNotContain(MixedActivityWeekScheduleRule.OneContinuousSessionReplacedByHiit,
@@ -512,7 +512,7 @@ public sealed class MixedActivityWeekScheduleRuleTests
 
         Assert.Equal(MixedActivityScheduleDisposition.Blocked,
             Decision(result, WorkoutActivityType.Hiit).Disposition);
-        Assert.Empty(result.Sessions.Where(session => session.Activity == WorkoutActivityType.Hiit));
+        Assert.DoesNotContain(result.Sessions, session => session.Activity == WorkoutActivityType.Hiit);
         var running = Decision(result, WorkoutActivityType.Running);
         Assert.Equal(running.TargetSessionsPerWeek, running.ScheduledSessionsPerWeek);
         Assert.DoesNotContain(MixedActivityWeekScheduleRule.OneContinuousSessionReplacedByHiit,

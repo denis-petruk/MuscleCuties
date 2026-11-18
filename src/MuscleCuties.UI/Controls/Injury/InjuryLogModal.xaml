@@ -18,17 +18,20 @@
             </BoxView.GestureRecognizers>
         </BoxView>
         <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End"
+                MinimumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
                 MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}">
             <Grid RowDefinitions="Auto,Auto,*,Auto">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{DynamicResource PresentationModalHeaderPadding}">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}"
+                      ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{DynamicResource PresentationModalHeaderPadding}">
                     <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Injury_LogTitle}" Style="{StaticResource ModalTitle}"
                            VerticalOptions="Center" />
-                    <Button Grid.Column="1" Text="{loc:LocalizedText Common_Add}"
+                    <Button Grid.Row="1" Grid.ColumnSpan="2" Text="{loc:LocalizedText Common_Add}"
                             Command="{Binding ToggleAddFormCommand}"
                             IsVisible="{Binding ShowAddForm, Converter={StaticResource InvertedBoolConverter}}"
                             Style="{StaticResource ButtonSecondary}"
+                            HorizontalOptions="Fill"
                             SemanticProperties.Description="{loc:LocalizedText Injury_AddAnInjury}" />
-                    <Border Grid.Column="2" Style="{StaticResource ModalIconButton}"
+                    <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
                             SemanticProperties.Description="{loc:LocalizedText Injury_Modal_CloseInjuryLog}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer

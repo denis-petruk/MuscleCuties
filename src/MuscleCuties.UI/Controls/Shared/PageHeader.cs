@@ -19,6 +19,10 @@ public class PageHeader : ContentView
         BindableProperty.Create(nameof(Title), typeof(string), typeof(PageHeader), string.Empty,
             propertyChanged: (b, _, _) => ((PageHeader)b).ApplyText());
 
+    public static readonly BindableProperty TitleMaxFontSizeProperty =
+        BindableProperty.Create(nameof(TitleMaxFontSize), typeof(double), typeof(PageHeader), 0d,
+            propertyChanged: (b, _, _) => ((PageHeader)b).ApplyTitleCap());
+
     public static readonly BindableProperty SubtitleProperty =
         BindableProperty.Create(nameof(Subtitle), typeof(string), typeof(PageHeader), string.Empty,
             propertyChanged: (b, _, _) => ((PageHeader)b).ApplyText());
@@ -47,12 +51,23 @@ public class PageHeader : ContentView
         BindableProperty.Create(nameof(StatusContent), typeof(View), typeof(PageHeader),
             propertyChanged: (b, _, _) => ((PageHeader)b).ApplyStatus());
 
+    public static readonly BindableProperty EyebrowContentProperty =
+        BindableProperty.Create(nameof(EyebrowContent), typeof(View), typeof(PageHeader),
+            propertyChanged: (b, _, _) => ((PageHeader)b).Build());
+
+    public static readonly BindableProperty TitleIconProperty =
+        BindableProperty.Create(nameof(TitleIcon), typeof(View), typeof(PageHeader),
+            propertyChanged: (b, _, _) => ((PageHeader)b).Build());
+
     private readonly Command _backProxy;
+    private IDisposable? _titleCapSubscription;
     private Label? _titleLabel;
     private Label? _subtitleLabel;
     private ImageButton? _backButton;
     private ContentView? _actionHost;
     private ContentView? _statusHost;
+    private ContentView? _eyebrowHost;
+    private ContentView? _titleIconHost;
     private bool _builtWithBack;
 
     public PageHeader()
@@ -61,10 +76,35 @@ public class PageHeader : ContentView
         Build();
     }
 
+    protected override void OnHandlerChanged()
+    {
+        base.OnHandlerChanged();
+
+        if (Handler is null)
+        {
+            _titleCapSubscription?.Dispose();
+            _titleCapSubscription = null;
+            return;
+        }
+
+        if (_titleCapSubscription is null && _titleLabel is not null)
+            AttachTitleCap(_titleLabel);
+    }
+
     public string Title
     {
         get => (string)GetValue(TitleProperty);
         set => SetValue(TitleProperty, value);
+    }
+
+    /// <summary>
+    ///     Optional tighter ceiling for a page whose title is one long unbreakable word. Zero keeps
+    ///     the shared page-title ceiling.
+    /// </summary>
+    public double TitleMaxFontSize
+    {
+        get => (double)GetValue(TitleMaxFontSizeProperty);
+        set => SetValue(TitleMaxFontSizeProperty, value);
     }
 
     public string Subtitle
@@ -120,18 +160,50 @@ public class PageHeader : ContentView
         set => SetValue(StatusContentProperty, value);
     }
 
+    /// <summary>
+    ///     A full-width line above the title — an onboarding step badge or progress block. It is
+    ///     separate from <see cref="StatusContent"/>, so a page can keep its subtitle as well.
+    /// </summary>
+    public View? EyebrowContent
+    {
+        get => (View?)GetValue(EyebrowContentProperty);
+        set => SetValue(EyebrowContentProperty, value);
+    }
+
+    /// <summary>
+    ///     An optional leading view for the title row, such as a question-category glyph. It sits
+    ///     before the title and follows its wrapping at accessibility text sizes.
+    /// </summary>
+    public View? TitleIcon
+    {
+        get => (View?)GetValue(TitleIconProperty);
+        set => SetValue(TitleIconProperty, value);
+    }
+
     private void Build()
     {
+        _titleCapSubscription?.Dispose();
+        _titleCapSubscription = null;
+
         // Detach hosted views before replacing the tree so nothing is parented twice.
         if (_actionHost is not null)
             _actionHost.Content = null;
         if (_statusHost is not null)
             _statusHost.Content = null;
+        if (_eyebrowHost is not null)
+            _eyebrowHost.Content = null;
+        if (_titleIconHost is not null)
+            _titleIconHost.Content = null;
 
         _actionHost = null;
         _statusHost = null;
+        _eyebrowHost = null;
+        _titleIconHost = null;
         _backButton = null;
         _builtWithBack = ShowBack;
+
+        var hasEyebrow = EyebrowContent is not null;
+        var hasTitleIcon = TitleIcon is not null;
 
         var grid = new Grid
         {
@@ -141,6 +213,12 @@ public class PageHeader : ContentView
         // At an accessibility text size the contextual action takes a row of its own: sharing the
         // title's line leaves a column too narrow for one long Russian word ("тренировок").
         var actionOnOwnRow = IsAccessibilityTextSize();
+        var titleRow = hasEyebrow ? 1 : 0;
+        var subtitleRow = titleRow + 1;
+        var actionRow = subtitleRow + 1;
+
+        if (hasEyebrow)
+            grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         grid.RowDefinitions.Add(new RowDefinition { Height = GridLength.Auto });
         if (actionOnOwnRow)
@@ -156,6 +234,7 @@ public class PageHeader : ContentView
             _backButton = CreateBackButton();
             grid.Children.Add(_backButton);
             Grid.SetColumn(_backButton, 0);
+            Grid.SetRow(_backButton, titleRow);
             Grid.SetRowSpan(_backButton, 2);
             titleColumn = 1;
         }
@@ -163,6 +242,15 @@ public class PageHeader : ContentView
         grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
         if (!actionOnOwnRow)
             grid.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+
+        if (hasEyebrow)
+        {
+            _eyebrowHost = new ContentView { VerticalOptions = LayoutOptions.Start };
+            _eyebrowHost.Content = EyebrowContent;
+            grid.Children.Add(_eyebrowHost);
+            Grid.SetColumn(_eyebrowHost, 0);
+            Grid.SetColumnSpan(_eyebrowHost, grid.ColumnDefinitions.Count);
+        }
 
         var title = new Label
         {
@@ -172,25 +260,51 @@ public class PageHeader : ContentView
         title.SetDynamicResource(StyleProperty, "PageTitle");
         SemanticProperties.SetHeadingLevel(title, SemanticHeadingLevel.Level1);
         _titleLabel = title;
-        grid.Children.Add(title);
-        Grid.SetColumn(title, titleColumn);
+        AttachTitleCap(title);
+
+        View titleView = title;
+        if (hasTitleIcon)
+        {
+            var titleWithIcon = new Grid
+            {
+                ColumnSpacing = AppThemeResources.GetDouble("UiSpaceCompact")
+            };
+            titleWithIcon.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Auto });
+            titleWithIcon.ColumnDefinitions.Add(new ColumnDefinition { Width = GridLength.Star });
+
+            _titleIconHost = new ContentView
+            {
+                Content = TitleIcon,
+                VerticalOptions = LayoutOptions.Start
+            };
+            titleWithIcon.Children.Add(_titleIconHost);
+            Grid.SetColumn(_titleIconHost, 0);
+
+            titleWithIcon.Children.Add(title);
+            Grid.SetColumn(title, 1);
+            titleView = titleWithIcon;
+        }
+
+        grid.Children.Add(titleView);
+        Grid.SetColumn(titleView, titleColumn);
+        Grid.SetRow(titleView, titleRow);
 
         _subtitleLabel = new Label { LineBreakMode = LineBreakMode.WordWrap };
         _subtitleLabel.SetDynamicResource(StyleProperty, "MutedLabel");
         grid.Children.Add(_subtitleLabel);
         Grid.SetColumn(_subtitleLabel, titleColumn);
-        Grid.SetRow(_subtitleLabel, 1);
+        Grid.SetRow(_subtitleLabel, subtitleRow);
 
         _statusHost = new ContentView { VerticalOptions = LayoutOptions.Start, IsVisible = false };
         grid.Children.Add(_statusHost);
         Grid.SetColumn(_statusHost, titleColumn);
-        Grid.SetRow(_statusHost, 1);
+        Grid.SetRow(_statusHost, subtitleRow);
 
         _actionHost = new ContentView { VerticalOptions = LayoutOptions.Start };
         grid.Children.Add(_actionHost);
         if (actionOnOwnRow)
         {
-            Grid.SetRow(_actionHost, 2);
+            Grid.SetRow(_actionHost, actionRow);
             Grid.SetColumn(_actionHost, 0);
             Grid.SetColumnSpan(_actionHost, titleColumn + 1);
             // The action keeps the page's right edge on its own row.
@@ -199,6 +313,7 @@ public class PageHeader : ContentView
         else
         {
             Grid.SetColumn(_actionHost, titleColumn + 1);
+            Grid.SetRow(_actionHost, titleRow);
             Grid.SetRowSpan(_actionHost, 2);
         }
 
@@ -230,6 +345,21 @@ public class PageHeader : ContentView
         return back;
     }
 
+    private void ApplyTitleCap()
+    {
+        _titleCapSubscription?.Dispose();
+        _titleCapSubscription = null;
+        if (_titleLabel is not null)
+            AttachTitleCap(_titleLabel);
+    }
+
+    private void AttachTitleCap(Label title)
+    {
+        _titleCapSubscription = TitleMaxFontSize > 0
+            ? CappedTextSize.Attach(title, "UiFontSize27", TitleMaxFontSize)
+            : CappedTextSize.Attach(title, "UiFontSize27", "PresentationAccessibilityTitleMaxFontSize");
+    }
+
     private static bool IsAccessibilityTextSize()
     {
 #if IOS
@@ -250,7 +380,11 @@ public class PageHeader : ContentView
             return;
 
         _subtitleLabel.Text = Subtitle;
-        _subtitleLabel.IsVisible = StatusContent is null && !string.IsNullOrWhiteSpace(Subtitle);
+        // At accessibility sizes the subtitle can take most of the viewport above a form. The page
+        // title and the form's own labels carry the context; the subtitle is the expendable line.
+        _subtitleLabel.IsVisible = !IsAccessibilityTextSize()
+            && StatusContent is null
+            && !string.IsNullOrWhiteSpace(Subtitle);
     }
 
     private void ApplyStatus()
@@ -272,7 +406,9 @@ public class PageHeader : ContentView
 
         // The status view and the text subtitle share one line; the status wins when present.
         if (_subtitleLabel is not null)
-            _subtitleLabel.IsVisible = StatusContent is null && !string.IsNullOrWhiteSpace(Subtitle);
+            _subtitleLabel.IsVisible = !IsAccessibilityTextSize()
+                && StatusContent is null
+                && !string.IsNullOrWhiteSpace(Subtitle);
     }
 
     private void ApplyBackCommand()

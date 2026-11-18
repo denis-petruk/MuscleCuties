@@ -16,12 +16,13 @@
 
             <!-- Header: the icon owns a fixed column; the status line and title stay in the text
                  column so the support line below aligns with the title, not with the icon. -->
-            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto"
+            <Grid x:Name="HeaderGrid" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto"
                   ColumnSpacing="{StaticResource UiSpaceCompact}"
                   RowSpacing="{StaticResource UiSpaceTight}">
                 <!-- At accessibility sizes the status pill is as wide as the title, so the header wraps
                      instead of squeezing the workout name into one letter per line. -->
                 <Border
+                    sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                     WidthRequest="{StaticResource UiDimension42}"
                     HeightRequest="{StaticResource UiDimension42}"
                     StrokeThickness="{StaticResource UiStrokeWidth0}"

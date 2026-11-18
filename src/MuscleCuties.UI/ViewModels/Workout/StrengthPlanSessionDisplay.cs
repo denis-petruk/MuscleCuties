@@ -26,7 +26,7 @@ public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
                 ? UiTextCatalog.Get(OmittedMovementKey((StrengthMovementSlotDto)slot.MovementSlot))
                 : string.IsNullOrWhiteSpace(slot.ExerciseName)
                 ? UiTextCatalog.Get("Workout_Generation_ExercisePending")
-                : slot.ExerciseName;
+                : UiTextCatalog.TranslateRuntimeText(slot.ExerciseName);
             var details = omitted
                 ? UiTextCatalog.Get("Workout_Generation_MovementOmittedReason")
                 : slot.Sets is { } sets && slot.MinimumRepetitions is { } minimum &&

@@ -5,33 +5,43 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileViewModel">
     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                 <!-- Private Photo Journey Vault Entry -->
                 <Label Text="{loc:LocalizedText Profile_Details_PrivateVault}" Style="{StaticResource SectionTitle}"  />
                 <Border
-                    Style="{StaticResource CardPrimary}"
-                    >
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Command="{Binding OpenVaultCommand}" />
-                    </Border.GestureRecognizers>
+                    Style="{StaticResource CardPrimary}">
                     <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
+                        <sharedControls:CardTapTarget
+                            Grid.RowSpan="2"
+                            ZIndex="0"
+                            Command="{Binding OpenVaultCommand}"
+                            SemanticProperties.Description="{loc:LocalizedText Profile_PhotoJourney_Title}"
+                            SemanticProperties.Hint="{loc:LocalizedText Profile_Details_TapToOpenFullPhotoJourney}" />
                         <!-- Top Row: Icon + Title + Count Pill -->
-                        <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                        <FlexLayout ZIndex="1" InputTransparent="True" Direction="Row" Wrap="Wrap" AlignItems="Center">
                             <mi:MauiIcon
                                 Icon="{mi:Fluent CameraAdd24}" IconSize="{StaticResource UiDimension22}"
                                 IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                 WidthRequest="{StaticResource UiDimension22}"
                                 HeightRequest="{StaticResource UiDimension22}"
                                 VerticalOptions="Center" />
-                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
-                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_Title}" Style="{StaticResource BodyStrong}" />
-                                <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_StoredLocallyOnThisDevice}"
-                                       Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
-                            </Grid>
+                            <VerticalStackLayout FlexLayout.Grow="1"
+                                                 Margin="{StaticResource UiInsets12_0_0_0}"
+                                                 Spacing="{StaticResource UiSpacing2}"
+                                                 VerticalOptions="Center">
+                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_CardTitle}"
+                                       Style="{StaticResource BodyStrong}"
+                                       LineBreakMode="WordWrap"
+                                       sharedControls:CappedTextSize.IsCompactLabel="True" />
+                                <Label Text="{loc:LocalizedText Profile_Details_StoredLocallyOnThisDevice}"
+                                       Style="{StaticResource CaptionSmall}"
+                                       LineBreakMode="WordWrap" />
+                            </VerticalStackLayout>
                             <Border
-                                Grid.Column="2"
+                                Margin="{StaticResource UiInsets12_0_0_0}"
                                 Style="{StaticResource PillBadge}"
                                 VerticalOptions="Center">
                                 <Label
@@ -39,21 +49,22 @@
                                     VerticalOptions="Center"
                                     Style="{StaticResource CaptionLabel}" />
                             </Border>
-                        </Grid>
+                        </FlexLayout>
 
                         <!-- Tap-to-Reveal Privacy Blur Preview Box -->
                         <Border
                             Grid.Row="1"
+                            ZIndex="1"
                             MinimumHeightRequest="{StaticResource UiDimension72}"
                             StrokeShape="{StaticResource UiRoundRectangleRadius14}"
                             StrokeThickness="{StaticResource UiStrokeWidth0}"
                             Stroke="{StaticResource Transparent}"
                             BackgroundColor="{AppThemeBinding Light={StaticResource InputSurface}, Dark={StaticResource InputSurfaceDark}}">
                             <Grid>
-                                <!-- Revealed State -->
-                                <Grid IsVisible="{Binding IsVaultRevealed}">
-                                    <!-- When photos exist -->
-                                    <Grid IsVisible="{Binding HasVaultPhotos}" ColumnDefinitions="Auto,*"
+                                <!-- Photo preview and empty state share one container. -->
+                                <Grid>
+                                    <!-- When photos exist and the preview is revealed -->
+                                    <Grid IsVisible="{Binding ShowVaultPhotoPreview}" ColumnDefinitions="Auto,*"
                                           ColumnSpacing="{StaticResource UiSpaceCompact}">
                                         <Image
                                             Source="{Binding LatestVaultPhotoPath}"
@@ -77,10 +88,11 @@
 
                                     <!-- When no photos exist yet -->
                                     <Grid
-                                        IsVisible="{Binding HasVaultPhotos, Converter={StaticResource InvertedBoolConverter}}"
+                                        IsVisible="{Binding ShowVaultEmptyState}"
                                         Padding="{StaticResource UiInsets14}" VerticalOptions="Center" HorizontalOptions="Center"
                                         RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
-                                        <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Details_NoPhotosStoredYet}" HorizontalTextAlignment="Center" Style="{StaticResource BodyStrong}" />
+                                        <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Details_NoPhotosStoredYet}" HorizontalTextAlignment="Center" Style="{StaticResource BodyStrong}"
+                                               sharedControls:CappedTextSize.IsCompactLabel="True" />
                                         <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToOpenVaultAndAdd}"
                                                Style="{StaticResource CaptionSmallCentered}" LineBreakMode="WordWrap" />
                                     </Grid>
@@ -88,28 +100,29 @@
 
                                 <!-- Privacy Blur / Hidden State -->
                                 <Grid
-                                    IsVisible="{Binding IsVaultRevealed, Converter={StaticResource InvertedBoolConverter}}"
+                                    IsVisible="{Binding ShowVaultPrivacyOverlay}"
                                     BackgroundColor="{AppThemeBinding Light={StaticResource TranslucentPageSurfaceLight}, Dark={StaticResource TranslucentPageSurfaceDark}}"
                                     Padding="{StaticResource UiInsets12}">
                                     <Grid.GestureRecognizers>
                                         <TapGestureRecognizer Command="{Binding ToggleVaultPrivacyCommand}" />
                                     </Grid.GestureRecognizers>
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                                    <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center">
                                         <mi:MauiIcon
                                             Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension26}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                             WidthRequest="{StaticResource UiDimension26}"
                                             HeightRequest="{StaticResource UiDimension26}"
                                             VerticalOptions="Center" />
-                                        <Label Grid.Column="1"
+                                        <Label FlexLayout.Grow="1"
+                                               Margin="{StaticResource UiInsets12_0_0_0}"
                                                Text="{loc:LocalizedText Profile_Details_PreviewHiddenForPrivacy}"
                                                Style="{StaticResource MutedLabel}"
                                                VerticalOptions="Center" />
                                         <Button
-                                            Grid.Column="2"
+                                            Margin="{StaticResource UiInsets12_0_0_0}"
                                             Text="{loc:LocalizedText Profile_Details_Reveal}"
                                             Command="{Binding ToggleVaultPrivacyCommand}"
                                             Style="{StaticResource ButtonSecondary}" />
-                                    </Grid>
+                                    </FlexLayout>
                                 </Grid>
                             </Grid>
                         </Border>
@@ -123,19 +136,23 @@
                     >
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                         <!-- Workout Availability Row -->
-                        <Border Style="{StaticResource ProfileMenuRow}">
+                        <Border Style="{StaticResource ProfileMenuRow}"
+                                SemanticProperties.Description="{Binding WorkoutAvailabilityRowAccessibilityText}"
+                                SemanticProperties.Hint="{loc:LocalizedText Profile_Details_OpenRowHint}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileWorkoutPreferencesPage" />
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
+                                    sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                     Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                     WidthRequest="{StaticResource UiDimension20}"
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_WorkoutAvailability}" Style="{StaticResource BodyStrong}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_WorkoutAvailability}" Style="{StaticResource BodyStrong}"
+                                           sharedControls:CappedTextSize.IsCompactLabel="True" />
                                     <Label Grid.Row="1"
                                            Text="{Binding AvailableWeekdaysText, Converter={StaticResource LocalizedStringConverter}}"
                                            Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
@@ -153,19 +170,23 @@
                                  BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}" />
 
                         <!-- Nutrition Row -->
-                        <Border Style="{StaticResource ProfileMenuRow}">
+                        <Border Style="{StaticResource ProfileMenuRow}"
+                                SemanticProperties.Description="{Binding NutritionRowAccessibilityText}"
+                                SemanticProperties.Hint="{loc:LocalizedText Profile_Details_OpenRowHint}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileNutritionSettingsPage" />
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
+                                    sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                     Icon="{mi:Fluent Food24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                     WidthRequest="{StaticResource UiDimension20}"
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_Nutrition}" Style="{StaticResource BodyStrong}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_Nutrition}" Style="{StaticResource BodyStrong}"
+                                           sharedControls:CappedTextSize.IsCompactLabel="True" />
                                     <Label Grid.Row="1"
                                            Text="{Binding NutritionPacingText, Converter={StaticResource LocalizedStringConverter}}"
                                            Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
@@ -189,19 +210,23 @@
                     >
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                         <!-- Personal Info Row -->
-                        <Border Style="{StaticResource ProfileMenuRow}">
+                        <Border Style="{StaticResource ProfileMenuRow}"
+                                SemanticProperties.Description="{x:Static vm:ProfileViewModel.PersonalInfoRowAccessibilityText}"
+                                SemanticProperties.Hint="{loc:LocalizedText Profile_Details_OpenRowHint}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfilePersonalInfoPage" />
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
+                                    sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                     Icon="{mi:Fluent PersonPill24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                     WidthRequest="{StaticResource UiDimension20}"
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_PersonalInfo}" Style="{StaticResource BodyStrong}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_PersonalInfo}" Style="{StaticResource BodyStrong}"
+                                           sharedControls:CappedTextSize.IsCompactLabel="True" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_NameEmailPasswordCycleBaselines}"
                                            Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
@@ -218,19 +243,23 @@
                                  BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}" />
 
                         <!-- Units & Display Row -->
-                        <Border Style="{StaticResource ProfileMenuRow}">
+                        <Border Style="{StaticResource ProfileMenuRow}"
+                                SemanticProperties.Description="{Binding UnitsDisplayRowAccessibilityText}"
+                                SemanticProperties.Hint="{loc:LocalizedText Profile_Details_OpenRowHint}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileUnitsDisplayPage" />
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
+                                    sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                     Icon="{mi:Fluent ChatSettings24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                     WidthRequest="{StaticResource UiDimension20}"
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_UnitsDisplay}" Style="{StaticResource BodyStrong}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_UnitsDisplay}" Style="{StaticResource BodyStrong}"
+                                           sharedControls:CappedTextSize.IsCompactLabel="True" />
                                     <Label Grid.Row="1"
                                            Text="{Binding UnitsDisplayText, Converter={StaticResource LocalizedStringConverter}}"
                                            Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
@@ -248,19 +277,23 @@
                                  BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}" />
 
                         <!-- Privacy Policy Row -->
-                        <Border Style="{StaticResource ProfileMenuRow}">
+                        <Border Style="{StaticResource ProfileMenuRow}"
+                                SemanticProperties.Description="{x:Static vm:ProfileViewModel.PrivacyRowAccessibilityText}"
+                                SemanticProperties.Hint="{loc:LocalizedText Profile_Details_OpenRowHint}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfilePrivacyPage" />
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
+                                    sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                     Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                     WidthRequest="{StaticResource UiDimension20}"
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Privacy_Policy}" Style="{StaticResource BodyStrong}" />
+                                    <Label Text="{loc:LocalizedText Profile_Privacy_Policy}" Style="{StaticResource BodyStrong}"
+                                           sharedControls:CappedTextSize.IsCompactLabel="True" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_HealthRecordsStayOnThisDevice}"
                                            Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
@@ -277,19 +310,23 @@
                                  BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceSubtleLight}, Dark={StaticResource SurfaceSubtleDark}}" />
 
                         <!-- Send Feedback Row -->
-                        <Border Style="{StaticResource ProfileMenuRow}">
+                        <Border Style="{StaticResource ProfileMenuRow}"
+                                SemanticProperties.Description="{x:Static vm:ProfileViewModel.SendFeedbackRowAccessibilityText}"
+                                SemanticProperties.Hint="{loc:LocalizedText Profile_Details_OpenRowHint}">
                             <Border.GestureRecognizers>
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileFeedbackPage" />
                             </Border.GestureRecognizers>
                             <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
+                                    sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                     Icon="{mi:Fluent ChatBubblesQuestion24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                     WidthRequest="{StaticResource UiDimension20}"
                                     HeightRequest="{StaticResource UiDimension20}"
                                     VerticalOptions="Center" />
                                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                    <Label Text="{loc:LocalizedText Profile_Details_SendFeedback}" Style="{StaticResource BodyStrong}" />
+                                    <Label Text="{loc:LocalizedText Profile_Details_SendFeedback}" Style="{StaticResource BodyStrong}"
+                                           sharedControls:CappedTextSize.IsCompactLabel="True" />
                                     <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_ReportAnIssueOrSuggestA}"
                                            Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>

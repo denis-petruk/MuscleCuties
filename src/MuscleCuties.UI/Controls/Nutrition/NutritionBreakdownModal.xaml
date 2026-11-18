@@ -189,9 +189,10 @@
                                 Margin="{StaticResource UiInsets0_0_0_8}">
 
                                 <Grid
-                                    RowDefinitions="Auto, Auto, 10, Auto"
+                                    RowDefinitions="Auto, Auto, Auto, Auto"
                                     ColumnDefinitions="34, *, Auto"
-                                    ColumnSpacing="{StaticResource UiSpacing10}">
+                                    ColumnSpacing="{StaticResource UiSpacing10}"
+                                    RowSpacing="{StaticResource UiSpaceMicro}">
                                     <Border
                                         Grid.RowSpan="4"
                                         WidthRequest="{StaticResource UiDimension34}"
@@ -224,21 +225,19 @@
                                         Style="{StaticResource CardTitle}"
                                         LineBreakMode="WordWrap" />
 
-                                    <HorizontalStackLayout
-                                        Grid.RowSpan="2"
-                                        Grid.Column="2"
-                                        Spacing="{StaticResource UiSpacing3}"
-                                        VerticalOptions="Center">
+                                    <VerticalStackLayout
+                                        Grid.Row="2"
+                                        Grid.Column="1"
+                                        Spacing="{StaticResource UiSpacing1}">
                                         <Label
                                             Text="{Binding AmountText, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource AccentLabel}"
-                                            />
+                                            LineBreakMode="WordWrap" />
                                         <Label
                                             Text="{Binding GoalText, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}"
-                                            LineBreakMode="WordWrap"
-                                            VerticalOptions="Center" />
-                                    </HorizontalStackLayout>
+                                            LineBreakMode="WordWrap" />
+                                    </VerticalStackLayout>
 
                                     <ProgressBar
                                         Grid.Row="3"

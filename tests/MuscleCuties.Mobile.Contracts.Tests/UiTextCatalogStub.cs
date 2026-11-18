@@ -14,4 +14,11 @@ internal static class UiTextCatalog
     public static bool HasKey(string key) => key.StartsWith("Workout_", StringComparison.Ordinal);
 
     public static string Format(string key, params object[] args) => $"{key}:{string.Join(',', args)}";
+
+    public static string TranslateRuntimeText(string text) => text switch
+    {
+        "Hack Squat" => "Гакк-присед",
+        "Machine Hip Thrust" => "Ягодичный мост в тренажёре",
+        _ => text
+    };
 }

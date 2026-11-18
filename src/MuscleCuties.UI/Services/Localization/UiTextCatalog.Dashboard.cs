@@ -90,9 +90,9 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_SleepSectionTitle"] = "SLEEP LAST NIGHT";
         English["Dashboard_CheckIn_StorageNotice"] = "Saved to your private account";
         English["Dashboard_CheckIn_AdditionalDetails"] = "Additional details (optional)";
-        English["Dashboard_CheckIn_SubmitButton"] = "Save check-in";
+        English["Dashboard_CheckIn_SubmitButton"] = "Save";
         English["Dashboard_CheckIn_SubmitHint"] = "Save your daily check-in";
-        English["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Answer every required question to save your check-in.";
+        English["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Answer all questions.";
         English["Dashboard_CheckIn_Subtitle"] = "How are you feeling today?";
         English["Dashboard_CheckIn_SuccessMessage"] = "Check-in saved";
         English["Dashboard_CheckIn_SuggestFromAppleHealth"] = "Suggest ratings from Apple Health";

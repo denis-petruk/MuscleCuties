@@ -32,11 +32,7 @@ public partial class LoginPage : ContentPage
         {
             _viewModel.PrepareForExistingAccount(email);
             Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(75), () => LoginPassword.Focus());
-            return;
         }
-
-        // Launch and post-logout both land here. Present Apple once the Shell transition settles.
-        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(350), _viewModel.TryStartAutomaticAppleSignIn);
     }
 
     private void OnEmailCompleted(object? sender, EventArgs e)

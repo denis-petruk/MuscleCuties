@@ -357,6 +357,80 @@ public sealed class UiContractGuardTests
     }
 
     /// <summary>
+    /// The water card has one quick-add action and an inline disclosure affordance. A second
+    /// full-width "details" pill made the card read as an empty shelf and competed with logging.
+    /// </summary>
+    [Fact]
+    public void Hydration_card_uses_one_quick_add_action_and_an_inline_details_chevron()
+    {
+        var path = Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition", "HydrationLogView.xaml");
+        var document = XDocument.Load(path);
+        var card = document.Descendants()
+            .First(element => element.Name.LocalName == "ContentView");
+
+        var buttons = card.Descendants()
+            .Where(element => element.Name.LocalName == "Button")
+            .Select(element => (string?)element.Attribute("Text"))
+            .Where(text => text is not null)
+            .ToArray();
+        Assert.Contains(buttons, text => text!.Contains("Nutrition_FoodLog_AddWaterTwoFiftyMl", StringComparison.Ordinal));
+        Assert.DoesNotContain(buttons, text => text!.Contains("Nutrition_Hydration_ShowDetails", StringComparison.Ordinal));
+
+        var disclosure = card.Descendants()
+            .Single(element => element.Name.LocalName == "Path" &&
+                               (string?)element.Attribute("Data") == "M9 5l7 7-7 7");
+        Assert.Equal("{Binding CanOpenHydrationDetails}", (string?)disclosure.Attribute("IsVisible"));
+        Assert.Contains(disclosure.Descendants(), element => element.Name.LocalName == "DataTrigger" &&
+            ((string?)element.Attribute("Binding"))?.Contains("IsHydrationExpanded", StringComparison.Ordinal) == true);
+        Assert.Contains(card.Descendants(), element => element.Name.LocalName == "CardTapTarget" &&
+            ((string?)element.Attribute("Command"))?.Contains("ToggleHydrationDetailsCommand", StringComparison.Ordinal) == true);
+    }
+
+    [Fact]
+    public void Strength_preview_day_rows_use_full_names_and_a_visible_icon()
+    {
+        var root = RepositoryRoot();
+        var viewModel = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Workout", "StrengthPlanGenerationViewModel.cs"));
+        Assert.Contains("FullWeekdayLabel(day)", viewModel, StringComparison.Ordinal);
+        Assert.DoesNotContain("ShortWeekdayLabel(day)", viewModel, StringComparison.Ordinal);
+
+        var models = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "ViewModels", "Workout", "StrengthPlanGenerationDisplayModels.cs"));
+        Assert.Contains("DayIconGlyph", models, StringComparison.Ordinal);
+
+        var page = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Pages", "Workout", "StrengthPlanGenerationPage.xaml"));
+        Assert.Contains("Binding DayIconGlyph", page, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Rowing_and_elliptical_cards_use_their_own_artwork()
+    {
+        var root = RepositoryRoot();
+        var catalog = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Services", "Workout", "WorkoutActivityOptionCatalog.cs"));
+        Assert.Contains("activity_rowing.svg", catalog, StringComparison.Ordinal);
+        Assert.Contains("activity_elliptical.svg", catalog, StringComparison.Ordinal);
+
+        var picker = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Controls", "Workout", "WorkoutActivityPreferencePicker.xaml"));
+        Assert.Contains("IconImage", picker, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Yoga_mobility_and_recovery_cards_use_their_own_artwork()
+    {
+        var root = RepositoryRoot();
+        var catalog = File.ReadAllText(Path.Combine(
+            root, "src", "MuscleCuties.UI", "Services", "Workout", "WorkoutActivityOptionCatalog.cs"));
+        Assert.Contains("activity_yoga.svg", catalog, StringComparison.Ordinal);
+        Assert.Contains("activity_mobility.svg", catalog, StringComparison.Ordinal);
+        Assert.Contains("activity_gentle_recovery.svg", catalog, StringComparison.Ordinal);
+    }
+
+    /// <summary>
     /// D11/D36/D49: a selected option is one filled treatment everywhere, with no second outline
     /// recipe in a page or a sheet. Selection state is projected through the one shared attached
     /// property so the shared style owns every colour and semantic change.
@@ -723,6 +797,21 @@ public sealed class UiContractGuardTests
     {
         Assert.Equal("09:07", DisplayFormat.Time(new DateTime(2026, 1, 2, 9, 7, 0)));
         Assert.Equal("21:07", DisplayFormat.Time(new TimeSpan(21, 7, 0)));
+    }
+
+    [Fact]
+    public void Cycle_month_heading_starts_with_a_capital_letter()
+    {
+        var previous = System.Globalization.CultureInfo.CurrentCulture;
+        try
+        {
+            System.Globalization.CultureInfo.CurrentCulture = System.Globalization.CultureInfo.GetCultureInfo("ru-RU");
+            Assert.Equal("Ноябрь 2026", DisplayFormat.MonthYearFull(new DateTime(2026, 11, 1)));
+        }
+        finally
+        {
+            System.Globalization.CultureInfo.CurrentCulture = previous;
+        }
     }
 
     [Fact]
@@ -1553,6 +1642,17 @@ public sealed class UiContractGuardTests
         return style.Contains("ModalBackdrop", StringComparison.Ordinal) ||
                style.Contains("ModalSurface", StringComparison.Ordinal) ||
                background.Contains("ModalScrim", StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Decorative_completion_motion_has_a_reduce_motion_static_path()
+    {
+        var uiRoot = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var salute = File.ReadAllText(Path.Combine(uiRoot, "Controls", "Shared", "PhaseSaluteOverlay.xaml.cs"));
+        Assert.Contains("MotionSettings.ReduceMotion", salute, StringComparison.Ordinal);
+
+        var session = File.ReadAllText(Path.Combine(uiRoot, "Pages", "Workout", "WorkoutSessionPage.xaml.cs"));
+        Assert.Contains("MotionSettings.ReduceMotion", session, StringComparison.Ordinal);
     }
 
     /// <summary>

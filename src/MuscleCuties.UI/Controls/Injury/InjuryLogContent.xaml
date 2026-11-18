@@ -95,22 +95,25 @@
                                 BindableLayout.ItemsSource="{Binding AvailableSites}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="ui:InjuryFlagOption">
-                                <Border Style="{StaticResource CardSecondary}" FlexLayout.Basis="Auto" FlexLayout.Shrink="0"
+                                <shared:SelectionCell Style="{StaticResource CardSecondary}"
+                                        FlexLayout.Basis="Auto" FlexLayout.Shrink="0"
                                         Margin="{StaticResource UiInsets2}"
+                                        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                        IsSelected="{Binding IsSelected}"
                                         SemanticProperties.Description="{Binding Label, Converter={StaticResource LocalizedStringConverter}}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=SelectSiteCommand, x:DataType=vm:InjuryLogViewModel}"
                                             CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
-                                    <!-- Selected semantics come from the shared CardSecondary style. -->
+                                    <!-- Role, selected trait and localized selected hint come from SelectionCell and CardSecondary. -->
                                     <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
   <Label LineBreakMode="WordWrap" Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
   <Border Grid.Column="1" Style="{StaticResource PlanSelectedIndicator}" IsVisible="{Binding IsSelected}">
     <Path Data="M5 12L10 17L19 7" Style="{StaticResource PlanChoiceCheckmark}" />
   </Border>
 </Grid>
-                                </Border>
+                                </shared:SelectionCell>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </FlexLayout>
@@ -121,22 +124,25 @@
                                 BindableLayout.ItemsSource="{Binding AvailableStatuses}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="ui:InjuryStatusOption">
-                                <Border Style="{StaticResource CardSecondary}" FlexLayout.Basis="Auto" FlexLayout.Shrink="0"
+                                <shared:SelectionCell Style="{StaticResource CardSecondary}"
+                                        FlexLayout.Basis="Auto" FlexLayout.Shrink="0"
                                         Margin="{StaticResource UiInsets2}"
+                                        MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                        IsSelected="{Binding IsSelected}"
                                         SemanticProperties.Description="{Binding Label, Converter={StaticResource LocalizedStringConverter}}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
                                             Command="{Binding Source={RelativeSource AncestorType={x:Type vm:InjuryLogViewModel}}, Path=SelectStatusCommand, x:DataType=vm:InjuryLogViewModel}"
                                             CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
-                                    <!-- Selected semantics come from the shared CardSecondary style. -->
+                                    <!-- Role, selected trait and localized selected hint come from SelectionCell and CardSecondary. -->
                                     <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
   <Label LineBreakMode="WordWrap" Text="{Binding Label, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
   <Border Grid.Column="1" Style="{StaticResource PlanSelectedIndicator}" IsVisible="{Binding IsSelected}">
     <Path Data="M5 12L10 17L19 7" Style="{StaticResource PlanChoiceCheckmark}" />
   </Border>
 </Grid>
-                                </Border>
+                                </shared:SelectionCell>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>
                     </FlexLayout>
@@ -171,7 +177,7 @@
                         </Border>
                         <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Injury_Log_ClinicianAdvisedAvoid_Label}"
                                Style="{StaticResource CaptionLabel}" />
-                        <FlexLayout Wrap="NoWrap" Direction="Row" AlignItems="Stretch"
+                        <FlexLayout Wrap="Wrap" Direction="Row" AlignItems="Stretch"
                                     Margin="{StaticResource UiInsets0}"
                                     BindableLayout.ItemsSource="{Binding ClinicianAdviceOptions}">
                             <BindableLayout.ItemTemplate>

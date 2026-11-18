@@ -34,6 +34,7 @@
                             Text="!"
                             TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
                             Style="{StaticResource SectionTitle}"
+                            SemanticProperties.HeadingLevel="None"
                             HorizontalOptions="Center"
                             VerticalOptions="Center" />
                     </Border>

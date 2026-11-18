@@ -55,6 +55,7 @@ public partial class WorkoutExerciseItem : ObservableObject
     public bool CanMarkOptional => !IsLogged;
     public int ExerciseId { get; set; }
     public string ActivityTag { get; set; } = string.Empty;
+    public string IconGlyph => WorkoutActivityIcons.ForTag(ActivityTag);
     public string ActivityTitle { get; set; } = string.Empty;
     public Color ActivityBackground { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
     public Color ActivityTextColor { get; set; } = AppThemeResources.GetRequired<Color>("TextPrimary");
