@@ -241,7 +241,8 @@
                     <CollectionView.EmptyView>
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}"
                                              Padding="{StaticResource UiInsets0_16}"
-                                             x:DataType="vm:NutritionViewModel">
+                                             x:DataType="vm:NutritionViewModel"
+                                             IsVisible="{Binding ShowLogMealHint, Converter={StaticResource InvertedBoolConverter}}">
                             <Label Text="{Binding LogMealHint}"
                                    Style="{StaticResource StateEmptyBody}"
                                    LineBreakMode="WordWrap" />
@@ -280,7 +281,7 @@
 
                 <!-- Opaque: the search shares its grid row with the ingredient list, and a transparent
                      background let that list show through the result rows once real hits arrived. -->
-                <Grid Grid.Row="3" RowDefinitions="Auto,Auto,*" Margin="{StaticResource UiInsets20_16_20_0}" RowSpacing="{StaticResource UiSpaceTight}"
+                <Grid x:Name="IngredientSearchGrid" Grid.Row="3" RowDefinitions="Auto,Auto,*" Margin="{StaticResource UiInsets20_16_20_0}" RowSpacing="{StaticResource UiSpaceTight}"
                       BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                       IsVisible="{Binding IsIngredientSearchVisible}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
@@ -497,7 +498,7 @@
                     </VerticalStackLayout>
                 </ScrollView>
 
-                <VerticalStackLayout Grid.Row="4" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}">
+                <VerticalStackLayout Grid.Row="4" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
                     <Label Text="{Binding AddFoodMessage, Converter={StaticResource LocalizedStringConverter}}"
                            IsVisible="{Binding HasAddFoodMessage}" Style="{StaticResource BodyMedium}" LineBreakMode="WordWrap" />
                     <ActivityIndicator

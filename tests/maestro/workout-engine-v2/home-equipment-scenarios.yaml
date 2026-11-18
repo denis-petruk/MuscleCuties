@@ -43,7 +43,7 @@ appId: com.musclecuties.app
           duration: 500
 - assertVisible:
     id: StrengthPlanMissingGapsActionButton
-- assertNotVisible: "Slider Leg Curl"
+- assertNotVisible: "Slider Leg Curl|Сгибание ног со слайдерами"
 - takeScreenshot: 10b_plan_bw_gap
 
 # 3. Tap MissingGaps action -> confirm Sliders -> regenerate -> verify Slider Leg Curl unlocked
@@ -60,7 +60,7 @@ appId: com.musclecuties.app
       id: StrengthPlanApplyButton
     timeout: 40000
 - scrollUntilVisible:
-    element: ".*Slider Leg Curl.*"
+    element: ".*(Slider Leg Curl|Сгибание ног со слайдерами).*"
     direction: DOWN
     speed: 15
     timeout: 15000
@@ -68,7 +68,7 @@ appId: com.musclecuties.app
     start: "50%,62%"
     end: "50%,45%"
     duration: 450
-- assertVisible: ".*Slider Leg Curl.*"
+- assertVisible: ".*(Slider Leg Curl|Сгибание ног со слайдерами).*"
 - takeScreenshot: 10c_plan_bw_sliders
 
 # 4. Bands WITHOUT anchor: switch to HomeDumbbellsBands, uncheck Dumbbells, uncheck Sliders, keep Bands checked & BandAnchor unchecked
@@ -118,8 +118,8 @@ appId: com.musclecuties.app
           duration: 500
 - assertVisible:
     id: StrengthPlanMissingGapsActionButton
-- assertNotVisible: "^Resistance Band Row$"
-- assertNotVisible: "^Resistance Band Chest Press$"
+- assertNotVisible: "^(Resistance Band Row|Тяга эспандера)$"
+- assertNotVisible: "^(Resistance Band Chest Press|Жим эспандера от груди)$"
 - takeScreenshot: 10d_plan_bands_no_anchor
 
 # 5. Confirm Band Anchor -> regenerate -> verify Band Row/Chest Press unlocked & Apply replaces active plan
@@ -144,7 +144,7 @@ appId: com.musclecuties.app
           duration: 500
 - tapOn: "Plan details|Детали плана"
 - scrollUntilVisible:
-    element: "^Resistance Band Row$|^Resistance Band Chest Press$"
+    element: "^(Resistance Band Row|Resistance Band Chest Press|Тяга эспандера|Жим эспандера от груди)$"
     direction: DOWN
     speed: 15
     timeout: 15000
@@ -152,7 +152,7 @@ appId: com.musclecuties.app
     start: "50%,62%"
     end: "50%,45%"
     duration: 450
-- assertVisible: "^Resistance Band Row$|^Resistance Band Chest Press$"
+- assertVisible: "^(Resistance Band Row|Resistance Band Chest Press|Тяга эспандера|Жим эспандера от груди)$"
 - takeScreenshot: 10e_plan_bands_with_anchor
 - tapOn:
     id: StrengthPlanApplyButton

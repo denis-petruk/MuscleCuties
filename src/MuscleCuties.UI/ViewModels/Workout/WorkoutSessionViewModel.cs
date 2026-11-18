@@ -550,6 +550,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
                             _ = ResumeTimingAsync(_plannedSessionId.Value);
                         }
                     }
+                    else if (_sessionCreated && SelectedActivity.Exercises.Count > 0)
+                    {
+                        ShowSummary();
+                    }
                 }
             }
         }
@@ -1858,8 +1862,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     private bool ValidateInputs(WorkoutExerciseItem exercise)
     {
-        if (exercise.IsUnilateral && exercise.Sets.Any(set => !set.IsWarmup &&
-                (!set.LeftSideReps.HasValue || !set.RightSideReps.HasValue)))
+        var capturedSets = exercise.Sets.Where(set => set.IsCapturedWorkingSet).ToArray();
+        if (exercise.IsUnilateral && (capturedSets.Length == 0 || capturedSets.Any(set => !set.HasEnteredReps)))
             ErrorText = "Workout_Session_SideRepsRequired";
         else if (exercise.UsesStrengthMetrics && (ParsePositiveInt(exercise.LoggedSetsText) == 0 ||
                                              ParsePositiveInt(exercise.LoggedRepsText) == 0))

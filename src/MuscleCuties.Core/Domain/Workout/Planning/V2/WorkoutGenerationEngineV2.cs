@@ -307,6 +307,10 @@ public static class WorkoutGenerationEngineV2
         var priorWeekIds = input.PriorWeekExerciseIds?.ToHashSet() ?? [];
         var isGluteFocus = input.Focus == TrainingFocus.GluteSpecialization;
         var sessionCount = strengthWeekdays.Length;
+        var directGluteIds = eligibleCatalog.Where(item => item.MuscleContributions.Any(contribution =>
+            contribution.Muscle == MuscleGroupV2.GluteusMaximus && contribution.Kind == MuscleContributionKind.Direct))
+            .Select(item => item.ExerciseId).ToHashSet();
+        var meaningfulGluteDays = 0;
 
         var sessions = new List<PlannedSessionV2>(sessionCount);
         var usedCounts = new Dictionary<int, int>();
@@ -358,8 +362,13 @@ public static class WorkoutGenerationEngineV2
                 // Hip extension (if not already covered by HipThrust/HipHinge above)
                 if (!preferHipThrustFirst || !slots.Any(s => s.Pattern is MovementPattern.HipHinge or MovementPattern.HipThrust))
                 {
+                    var prioritizeDirect = meaningfulGluteDays < WorkoutPolicyV2.TargetDirectGluteDays &&
+                        !slots.Any(item => directGluteIds.Contains(item.ExerciseId)) &&
+                        eligibleCatalog.Any(item => item.Pattern is (MovementPattern.HipHinge or MovementPattern.HipThrust) &&
+                            directGluteIds.Contains(item.ExerciseId));
                     AddBestCandidate(slots, eligibleCatalog, usedCounts, existingIds, priorWeekIds,
-                        c => c.Pattern is MovementPattern.HipHinge or MovementPattern.HipThrust,
+                        c => c.Pattern is (MovementPattern.HipHinge or MovementPattern.HipThrust) &&
+                            (!prioritizeDirect || directGluteIds.Contains(c.ExerciseId)),
                         preferMachine: true);
                 }
 
@@ -447,6 +456,10 @@ public static class WorkoutGenerationEngineV2
             // Apply 7-step duration optimization ladder (Gate 63, 76, §11)
             var optimized = OptimizeSessionToFitBudget(
                 prescribed, eligibleCatalog, styleSpec, budgetMinutes, input.Focus, limitations, advisories, trace, out var totalMinutes);
+
+            if (optimized.Where(exercise => directGluteIds.Contains(exercise.ExerciseId)).Sum(exercise => exercise.WorkingSets)
+                >= WorkoutPolicyV2.MeaningfulExposureMinimumDirectSets)
+                meaningfulGluteDays++;
 
             sessions.Add(new PlannedSessionV2(
                 SessionIndex: i,
@@ -1080,6 +1093,9 @@ public static class WorkoutGenerationEngineV2
                 ? "WeeklyCoverageMissing_UpperPull_BandAnchorRequired"
                 : "WeeklyCoverageMissing_UpperPull_Equipment");
         }
+        if (summary.Muscles.Any(muscle => muscle.Muscle == MuscleGroupV2.GluteusMaximus &&
+                muscle.MeaningfulDirectDays < WorkoutPolicyV2.TargetDirectGluteDays))
+            advisories.Add("WeeklyCoverageBelowTarget_DirectGluteDays");
         if (!summary.CoversDirectCalves) advisories.Add("WeeklyCoverageMissing_DirectCalves");
         if (!summary.CoversDirectRearDelts) advisories.Add("WeeklyCoverageMissing_DirectRearDelts");
         if (summary.DynamicCoreOccasions < 2) advisories.Add("WeeklyCoverageBelowTarget_DynamicCore");

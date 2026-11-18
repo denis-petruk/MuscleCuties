@@ -96,7 +96,7 @@
                                                  BindableLayout.ItemsSource="{Binding ExercisePreviewNames}">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="x:String">
-                                        <Label LineBreakMode="WordWrap" Text="{Binding .}" Style="{StaticResource BodyLabel}" />
+                                        <Label LineBreakMode="WordWrap" Text="{Binding ., Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyLabel}" />
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>
                             </VerticalStackLayout>

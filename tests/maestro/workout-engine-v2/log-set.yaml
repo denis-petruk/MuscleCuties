@@ -19,7 +19,7 @@ appId: com.musclecuties.app
     commands:
       - tapOn:
           id: "${QA_SET_PREFIX}Weight"
-      - eraseText
+      - eraseText: 5
       - inputText: "20"
       - takeScreenshot: 11b_numeric_keyboard
       - runFlow:
@@ -34,7 +34,7 @@ appId: com.musclecuties.app
     commands:
       - tapOn:
           id: "${QA_SET_PREFIX}Reps"
-      - eraseText
+      - eraseText: 5
       - inputText: "10"
       - runFlow:
           when:
@@ -48,7 +48,7 @@ appId: com.musclecuties.app
     commands:
       - tapOn:
           id: "${QA_SET_PREFIX}LeftReps"
-      - eraseText
+      - eraseText: 5
       - inputText: "10"
       - runFlow:
           when:
@@ -62,7 +62,7 @@ appId: com.musclecuties.app
     commands:
       - tapOn:
           id: "${QA_SET_PREFIX}RightReps"
-      - eraseText
+      - eraseText: 5
       - inputText: "10"
       - runFlow:
           when:

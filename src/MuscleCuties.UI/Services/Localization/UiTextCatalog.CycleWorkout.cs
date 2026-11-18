@@ -408,7 +408,7 @@ public static partial class UiTextCatalog
         English["Workout_Session_KgUnit"] = "kg";
         English["Workout_Session_LoadingOverlayAccessibility"] = "Loading overlay";
         English["Workout_Session_NavigateBackAccessibility"] = "Navigate back";
-        English["Workout_Session_NextExerciseButton"] = "Next";
+        English["Workout_Session_NextExerciseButton"] = "Save and continue";
         English["Workout_Session_NoActivitiesPlanned"] = "No activities are planned for this day. Enjoy your recovery time.";
         English["Workout_Session_OkButton"] = "OK";
         English["Workout_Session_PauseButton"] = "Pause";
@@ -585,6 +585,7 @@ public static partial class UiTextCatalog
         English["Workout_Session_WorkingSetFormat"] = "Set {0}";
         English["Workout_Session_SplitSuperset"] = "Do separately";
         English["Workout_Session_LeftSideReps"] = "Left reps";
+        English["Workout_Session_SideRepsRequired"] = "Enter the repetitions for each side in every working set.";
         English["Workout_Session_RightSideReps"] = "Right reps";
         English["Workout_Session_GeneralWarmupFormat"] = "General warm-up: {0} min";
         English["Workout_Session_FinisherFormat"] = "After strength: {0} min of {1} · RPE {2}–{3}.";

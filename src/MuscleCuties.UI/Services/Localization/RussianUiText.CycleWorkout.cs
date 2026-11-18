@@ -428,6 +428,7 @@ internal static partial class RussianUiText
         Values["Workout_Session_SetsCompletedAccessibility"] = "Количество выполненных подходов";
         Values["Workout_Session_SetsHeader"] = "Подходы";
         Values["Workout_Session_SetRowsHeader"] = "Записанные подходы";
+        Values["Workout_Session_SideRepsRequired"] = "Укажите повторы для левой и правой стороны.";
         Values["Workout_Session_RirHeader"] = "RIR";
         Values["Workout_Session_RirAccessibility"] = "Повторений в запасе для этого подхода";
         Values["Workout_Session_TechniqueAccessibility"] = "Отметьте, была ли техника приемлемой для этого подхода";

@@ -99,6 +99,22 @@
         <MauiImage Update="Resources\Images\tab_you.svg" Resize="True" BaseSize="24,24"/>
         <MauiImage Update="Resources\Images\tab_you_dark.svg" Resize="True" BaseSize="24,24"/>
         <MauiImage Update="Resources\Images\nav_back.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_climbing.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_cycling.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_elliptical.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_gentle_recovery.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_hiit.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_mobility.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_other.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_rest_day.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_rowing.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_running.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_strength_general.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_strength_intensity.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_strength_volume.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_swimming.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_walking.svg" Resize="True" BaseSize="24,24"/>
+        <MauiImage Update="Resources\Images\activity_yoga.svg" Resize="True" BaseSize="24,24"/>
         <MauiImage Update="Resources\Images\feedback_note.svg" Resize="True" BaseSize="64,64"/>
         <MauiImage Update="Resources\Images\privacy_device.svg" Resize="True" BaseSize="64,64"/>
         <MauiFont Include="Resources\Fonts\*.ttf"/>

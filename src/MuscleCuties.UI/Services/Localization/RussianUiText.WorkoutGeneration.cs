@@ -347,6 +347,7 @@ internal static partial class RussianUiText
         Values["Workout_Generation_MissingDirectCalves"] = "Икры: нет подходящего оборудования.";
         Values["Workout_Generation_MissingDirectRearDelts"] = "Задняя дельта: нет подходящего оборудования.";
         Values["Workout_Generation_BelowTargetDynamicCore"] = "Кор: работа распределена по тренировкам.";
+        Values["Workout_Generation_BelowTargetDirectGluteDays"] = "В этом плане меньше двух дней с двумя или более рабочими подходами на ягодичные мышцы.";
         Values["Workout_Generation_MissingGluteFocusAbduction"] = "Отведение бедра ограничено оборудованием.";
         Values["Workout_Generation_ReadinessAdaptation"] = "Количество одного дополнительного подхода уменьшено с учётом сегодняшнего восстановления.";
         Values["Workout_Generation_FinisherFormat"] = "После силовой тренировки: {0} мин — {1}, RPE {2}–{3}.";

@@ -76,6 +76,31 @@ public class WorkoutSessionLifecycleAndModalTests
     }
 
     [Fact]
+    public void Unilateral_validation_requires_observations_without_requiring_unedited_placeholder_rows()
+    {
+        var path = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "ViewModels", "Workout", "WorkoutSessionViewModel.cs");
+        var source = File.ReadAllText(path);
+        Assert.Matches(
+            @"exercise\.IsUnilateral && \(capturedSets\.Length == 0 \|\| capturedSets\.Any\(set => !set\.HasEnteredReps\)\)",
+            source);
+    }
+
+    [Fact]
+    public void Fully_logged_active_workout_reopens_at_the_summary()
+    {
+        var path = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "ViewModels", "Workout", "WorkoutSessionViewModel.cs");
+        var source = File.ReadAllText(path);
+        var loadSession = Regex.Match(source,
+            @"public async Task LoadSession\s*\([^)]*\)\s*\{(.*?)
+    \}", RegexOptions.Singleline);
+
+        Assert.True(loadSession.Success);
+        Assert.Matches(
+            @"else if \(_sessionCreated && SelectedActivity\.Exercises\.Count > 0\)\s*\{\s*ShowSummary\(\);",
+            loadSession.Groups[1].Value);
+    }
+
+    [Fact]
     public void WorkoutSessionViewModel_abandon_session_confirmation_lifecycle_is_reliable()
     {
         var path = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "ViewModels", "Workout", "WorkoutSessionViewModel.cs");

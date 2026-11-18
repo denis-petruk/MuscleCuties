@@ -131,7 +131,7 @@
                                         <!-- Selection surface, stroke, touch target and spoken state all
                                              come from the one shared choice style. -->
                                         <Label Style="{StaticResource ChoiceCellLabel}"
-                                               Text="{Binding DisplayName}" />
+                                               Text="{Binding DisplayName, Converter={StaticResource LocalizedStringConverter}}" />
                                     </sharedControls:SelectionCell>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
@@ -236,8 +236,7 @@
                                             Style="{StaticResource PillBadge}"
                                             Padding="{StaticResource UiInsets6_3}"
                                             Margin="{StaticResource UiInsets0_0_6_6}">
-                                            <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Text="{Binding .}"
- />
+                                            <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}" Text="{Binding ., Converter={StaticResource LocalizedStringConverter}}" />
                                         </Border>
                                     </DataTemplate>
                                 </BindableLayout.ItemTemplate>

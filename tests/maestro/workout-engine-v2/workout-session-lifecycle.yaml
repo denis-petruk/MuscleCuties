@@ -14,7 +14,7 @@ appId: com.musclecuties.app
       visible: "Session activities|Активности тренировки"
     commands:
       - takeScreenshot: 10_session_activities
-      - tapOn: "Strength & Sculpt|Cardio & Conditioning|Mobility & Recovery|Rest & Recovery|.*exercises|.*упражнен.*"
+      - tapOn: "Strength & Sculpt|Силовая тренировка|Cardio & Conditioning|Кардио и выносливость|Mobility & Recovery|Подвижность и восстановление|Rest & Recovery|\\d+\\s+(exercises|упражнен.*)"
       - extendedWaitUntil:
           visible: "Back|Назад"
           timeout: 15000
@@ -57,7 +57,7 @@ appId: com.musclecuties.app
     when:
       visible: "Session activities|Активности тренировки"
     commands:
-      - tapOn: "Strength & Sculpt|Cardio & Conditioning|Mobility & Recovery|Rest & Recovery|.*exercises|.*упражнен.*"
+      - tapOn: "Strength & Sculpt|Силовая тренировка|Cardio & Conditioning|Кардио и выносливость|Mobility & Recovery|Подвижность и восстановление|Rest & Recovery|\\d+\\s+(exercises|упражнен.*)"
       - extendedWaitUntil:
           visible: "Back|Назад"
           timeout: 15000

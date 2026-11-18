@@ -321,6 +321,102 @@ public class LocalizationCatalogTests
         }
     }
 
+    [Fact]
+    public void Canonical_quiz_and_reviewed_exercise_names_have_russian_runtime_copy()
+    {
+        using var seed = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(RepoRoot,
+            "src", "MuscleCuties.Infrastructure.PostgreSql", "Persistence", "Seed", "CanonicalCatalogManifest.json")));
+        using var review = System.Text.Json.JsonDocument.Parse(File.ReadAllText(Path.Combine(RepoRoot,
+            "src", "MuscleCuties.Infrastructure.PostgreSql", "Workout", "Planning", "ReviewData", "ReviewedExerciseCatalogV020.json")));
+        var required = seed.RootElement.GetProperty("entityTypes").EnumerateArray()
+            .Where(entity => entity.GetProperty("entityType").GetString() is "QuizQuestion" or "QuizAnswer")
+            .SelectMany(entity => entity.GetProperty("rows").EnumerateArray())
+            .Select(row => row.TryGetProperty("sourceQuestion", out var question) ? question.GetString()! : row.GetProperty("sourceText").GetString()!)
+            .Concat(review.RootElement.GetProperty("exercises").EnumerateArray().Select(row => row.GetProperty("expectedName").GetString()!))
+            .Concat(["Strength Focus", "Rest Focus", "Cardio Focus", "Recovery Focus", "Mobility Focus", "Strength & Sculpt", "MON", "TUE", "WED", "THU", "FRI", "SAT", "SUN"]).Distinct(StringComparer.Ordinal);
+        var english = ReadEnglishCatalog();
+        var russian = ReadRussianCatalog();
+        var runtime = ReadCatalog("UiTextCatalog.RuntimeText", excludedFileName: null);
+        var missing = required.Where(text =>
+        {
+            if (runtime.TryGetValue(text, out var translated) && Regex.IsMatch(translated, @"[А-Яа-яЁё]")) return false;
+            return !english.Any(pair => System.Text.Json.JsonSerializer.Deserialize<string>(pair.Value) == text &&
+                russian.TryGetValue(pair.Key, out var value) && Regex.IsMatch(value, @"[А-Яа-яЁё]"));
+        }).ToArray();
+        Assert.True(missing.Length == 0, "Missing Russian runtime copy: " + string.Join("; ", missing));
+    }
+
+    [Theory]
+    [InlineData("Pages/Workout/WorkoutSessionPage.xaml", "CurrentExercise.Name")]
+    [InlineData("Pages/Workout/WorkoutSessionPage.xaml", ".")]
+    [InlineData("Pages/Workout/StrengthPlanGenerationPage.xaml", "Name")]
+    [InlineData("Pages/Workout/WorkoutHistoryPage.xaml", "ExerciseName")]
+    [InlineData("Pages/Workout/WorkoutHistoryPage.xaml", "DisplayName")]
+    [InlineData("Pages/Workout/WorkoutHistoryPage.xaml", ".")]
+    [InlineData("Controls/Workout/FeaturedWorkoutCard.xaml", "Name")]
+    [InlineData("Controls/Workout/WorkoutSwapPanel.xaml", "Name")]
+    public void Workout_exercise_names_use_runtime_localization(string relativePath, string binding)
+    {
+        var source = File.ReadAllText(Path.Combine(UiRoot, relativePath));
+        Assert.DoesNotContain("Text=\"{Binding " + binding + "}\"", source, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Every_workout_activity_option_maps_to_a_unique_svg_asset_and_russian_copy()
+    {
+        var catalogSource = File.ReadAllText(Path.Combine(UiRoot, "Services", "Workout", "WorkoutActivityOptionCatalog.cs"));
+        var pickerXaml = File.ReadAllText(Path.Combine(UiRoot, "Controls", "Workout", "WorkoutActivityPreferencePicker.xaml"));
+        var csproj = File.ReadAllText(Path.Combine(UiRoot, "MuscleCuties.UI.csproj"));
+        var runtime = ReadCatalog("UiTextCatalog.RuntimeText", excludedFileName: null);
+        var english = ReadEnglishCatalog();
+        var russian = ReadRussianCatalog();
+
+        var matches = Regex.Matches(
+            catalogSource,
+            @"new\(\s*WorkoutActivityDto\.(?<activity>[A-Za-z0-9_]+),\s*""(?<title>[^""]+)"",\s*""(?<subtitle>[^""]+)"",\s*ActivityGroup\.[A-Za-z0-9_]+,\s*(?:true|false),\s*""[^""]+"",\s*""(?<icon>activity_[a-z_]+\.(?:svg|png))""\)",
+            RegexOptions.Singleline);
+
+        Assert.Equal(15, matches.Count);
+        var seenIcons = new HashSet<string>(StringComparer.Ordinal);
+        foreach (Match match in matches)
+        {
+            var iconPng = match.Groups["icon"].Value;
+            Assert.True(seenIcons.Add(iconPng), $"Duplicate activity icon asset: {iconPng}");
+
+            var svgFileName = Path.ChangeExtension(iconPng, ".svg");
+            var svgPath = Path.Combine(UiRoot, "Resources", "Images", svgFileName);
+            Assert.True(File.Exists(svgPath), $"Missing SVG asset on disk: {svgFileName}");
+            Assert.Contains($"Resources\\Images\\{svgFileName}", csproj, StringComparison.Ordinal);
+
+            foreach (var text in new[] { match.Groups["title"].Value, match.Groups["subtitle"].Value })
+            {
+                if (string.Equals(text, "HIIT", StringComparison.Ordinal))
+                    continue;
+                var hasRuntime = runtime.TryGetValue(text, out var translated) && Regex.IsMatch(translated, @"[А-Яа-яЁё]");
+                var hasCatalog = english.Any(pair =>
+                    System.Text.Json.JsonSerializer.Deserialize<string>(pair.Value) == text &&
+                    russian.TryGetValue(pair.Key, out var value) &&
+                    Regex.IsMatch(value, @"[А-Яа-яЁё]"));
+                Assert.True(hasRuntime || hasCatalog, $"Missing Russian copy for workout activity text: {text}");
+            }
+        }
+
+        Assert.Contains("Source=\"{Binding IconImage}\"", pickerXaml, StringComparison.Ordinal);
+        Assert.Contains("IconTintColorBehavior", pickerXaml, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Meal_editor_modal_localizes_portion_title_and_macro_draft_prefixes()
+    {
+        var modalXaml = File.ReadAllText(Path.Combine(UiRoot, "Controls", "Nutrition", "MealEditorModal.xaml"));
+        Assert.DoesNotContain("StringFormat='P {0}'", modalXaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("StringFormat='C {0}'", modalXaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("StringFormat='F {0}'", modalXaml, StringComparison.Ordinal);
+
+        var runtime = ReadCatalog("UiTextCatalog.RuntimeText", excludedFileName: null);
+        Assert.True(runtime.TryGetValue("Portion", out var portionRu) && Regex.IsMatch(portionRu, @"[А-Яа-яЁё]"));
+    }
+
     private static Dictionary<string, string> ReadEnglishCatalog()
     {
         return ReadCatalog("UiTextCatalog", excludedFileName: "UiTextCatalog.RuntimeText.cs");

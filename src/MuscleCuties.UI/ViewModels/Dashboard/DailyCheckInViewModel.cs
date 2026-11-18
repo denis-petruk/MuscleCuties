@@ -25,6 +25,10 @@ public partial class DailyCheckInViewModel : ObservableObject
     private readonly bool _isReadinessScoreDisplayEnabled;
     private readonly IHealthSyncService? _healthSync;
     private readonly ICurrentProfileUserIdProvider? _userIdProvider;
+    private readonly TimeProvider _clock;
+    private DailyCheckInStatusRequest? _draftDay;
+    private int _statusLoadVersion;
+    private CancellationTokenSource? _submissionCancellation;
     [ObservableProperty] private double? _bodyWeight;
     [ObservableProperty] private int? _energyLevel;
     [ObservableProperty] private int? _planningFatigue;
@@ -56,7 +60,8 @@ public partial class DailyCheckInViewModel : ObservableObject
         Action invalidateDashboard,
         Func<Task> onCompletedAsync,
         IHealthSyncService? healthSync = null,
-        ICurrentProfileUserIdProvider? userIdProvider = null)
+        ICurrentProfileUserIdProvider? userIdProvider = null,
+        TimeProvider? clock = null)
     {
         _checkIn = checkIn;
         _isReadinessScoreDisplayEnabled = checkIn.PresentationSettings.IsReadinessScoreDisplayEnabled;
@@ -64,6 +69,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         _onCompletedAsync = onCompletedAsync;
         _healthSync = healthSync;
         _userIdProvider = userIdProvider;
+        _clock = clock ?? TimeProvider.System;
         SubmitCommand = new AsyncRelayCommand(SubmitAsync, () => !IsBusy && !IsCompleted && Answers.IsReadyForPlanning);
         SkipCommand = new AsyncRelayCommand(SkipAsync);
         ConnectHealthCommand = new AsyncRelayCommand(ConnectHealthAsync);
@@ -78,10 +84,13 @@ public partial class DailyCheckInViewModel : ObservableObject
     private async Task ConnectHealthAsync()
     {
         ShowHealthRationale = false;
-        if (_healthSync is null || _userIdProvider is null) return;
+        if (_healthSync is null || _userIdProvider is null || _draftDay is not { } day)
+            return;
         try
         {
             var userId = await _userIdProvider.GetCurrentUserIdAsync();
+            if (userId <= 0 || !ReferenceEquals(_draftDay, day))
+                return;
             // The only action that opens the Apple Health sheet on this screen.
             await _healthSync.SyncAsync(userId, _healthSync.DeviceHealthSource);
         }
@@ -89,17 +98,20 @@ public partial class DailyCheckInViewModel : ObservableObject
         {
             Trace.WriteLine($"[DailyCheckInViewModel] Connect failed ({ex.GetType().Name}).");
         }
-        await CheckIfAlreadyCompletedAsync();
+        if (ReferenceEquals(_draftDay, day))
+            await CheckIfAlreadyCompletedAsync();
     }
 
     private async Task NotNowHealthAsync()
     {
         ShowHealthRationale = false;
-        if (_healthSync is null || _userIdProvider is null) return;
+        if (_healthSync is null || _userIdProvider is null || _draftDay is not { } day)
+            return;
         try
         {
             var userId = await _userIdProvider.GetCurrentUserIdAsync();
-            await _healthSync.DismissPromptAsync(userId);
+            if (userId > 0 && ReferenceEquals(_draftDay, day))
+                await _healthSync.DismissPromptAsync(userId);
         }
         catch (Exception ex)
         {
@@ -150,19 +162,42 @@ public partial class DailyCheckInViewModel : ObservableObject
 
     public async Task CheckIfAlreadyCompletedAsync()
     {
+        if (IsBusy)
+            return;
+
+        var loadVersion = ++_statusLoadVersion;
+        var day = GetCurrentDay();
+        if (_draftDay != day)
+        {
+            ResetDraft();
+            _draftDay = day;
+        }
+
         ErrorMessage = string.Empty;
         try
         {
-            var status = await _checkIn.GetStatusAsync(
-                new DailyCheckInStatusRequest(DateOnly.FromDateTime(DateTime.Today), TimeZoneInfo.Local.Id));
+            var status = await _checkIn.GetStatusAsync(day);
+            if (loadVersion != _statusLoadVersion)
+                return;
+
             var readiness = status.TodayReadiness;
-            EnergyLevel = readiness?.Energy;
-            PlanningFatigue = readiness?.Fatigue;
-            PlanningSleepQuality = readiness?.SleepQuality;
-            PlanningSoreness = readiness?.Soreness;
+            IsCompleted = readiness is { Status: "Available" };
+            if (IsCompleted)
+            {
+                EnergyLevel = readiness?.Energy;
+                PlanningFatigue = readiness?.Fatigue;
+                PlanningSleepQuality = readiness?.SleepQuality;
+                PlanningSoreness = readiness?.Soreness;
+            }
+            else
+            {
+                EnergyLevel ??= readiness?.Energy;
+                PlanningFatigue ??= readiness?.Fatigue;
+                PlanningSleepQuality ??= readiness?.SleepQuality;
+                PlanningSoreness ??= readiness?.Soreness;
+            }
             // Display only what was stored; stress is never derived from energy here.
             PlanningStress = readiness?.Stress;
-            IsCompleted = readiness is { Status: "Available" };
             ReadinessScoreText = IsReadinessScoreDisplayEnabled && readiness is { Status: "Available", RawScore: { } }
                 ? DisplayFormat.Decimal2(readiness!.RawScore!.Value)
                 : string.Empty;
@@ -176,12 +211,15 @@ public partial class DailyCheckInViewModel : ObservableObject
             if (!IsCompleted && _healthSync is not null && _userIdProvider is not null)
             {
                 var userId = await _userIdProvider.GetCurrentUserIdAsync();
-                if (userId > 0)
+                if (userId > 0 && loadVersion == _statusLoadVersion)
                 {
                     var summary = await _healthSync.GetCachedWeeklySummaryAsync(userId);
                     if (summary is null && _healthSync.IsAvailable)
                     {
                         var healthStatus = await _healthSync.GetStatusAsync(userId);
+                        if (loadVersion != _statusLoadVersion)
+                            return;
+
                         if (healthStatus.IsConnected)
                         {
                             // Already authorized earlier: refresh silently. This never shows the system sheet.
@@ -201,6 +239,9 @@ public partial class DailyCheckInViewModel : ObservableObject
                             ShowHealthRationale = true;
                         }
                     }
+
+                    if (loadVersion != _statusLoadVersion)
+                        return;
 
                     // Never replace a value the user already entered (modal reopen).
                     if (summary?.LastNightSleepHours is > 0 && !_isSleepHoursAnswered)
@@ -257,7 +298,8 @@ public partial class DailyCheckInViewModel : ObservableObject
         catch (Exception ex)
         {
             Trace.WriteLine($"[DailyCheckInViewModel] Load failed ({ex.GetType().Name}).");
-            ErrorMessage = "Ui_Dashboard_Error_CheckInLoad";
+            if (loadVersion == _statusLoadVersion)
+                ErrorMessage = "Ui_Dashboard_Error_CheckInLoad";
         }
     }
 
@@ -281,7 +323,14 @@ public partial class DailyCheckInViewModel : ObservableObject
         if (IsBusy || IsCompleted)
             return;
 
-        var request = Answers.ToRequest(DateOnly.FromDateTime(DateTime.Today), TimeZoneInfo.Local.Id,
+        var day = GetCurrentDay();
+        if (_draftDay != day)
+        {
+            await CheckIfAlreadyCompletedAsync();
+            return;
+        }
+
+        var request = Answers.ToRequest(day.Date, day.TimeZoneId!,
             requireSupplementaryAnswers: false);
         if (request is null)
         {
@@ -290,10 +339,16 @@ public partial class DailyCheckInViewModel : ObservableObject
         }
 
         IsBusy = true;
+        ++_statusLoadVersion;
+        using var cancellation = new CancellationTokenSource();
+        _submissionCancellation = cancellation;
         ErrorMessage = string.Empty;
         try
         {
-            var result = await _checkIn.SubmitAsync(request);
+            var result = await _checkIn.SubmitAsync(request, cancellation.Token);
+            if (!ReferenceEquals(_submissionCancellation, cancellation))
+                return;
+
             ReadinessScoreText = IsReadinessScoreDisplayEnabled && result.TodayReadiness?.RawScore is { } rawScore
                 ? DisplayFormat.Decimal2(rawScore)
                 : string.Empty;
@@ -302,14 +357,22 @@ public partial class DailyCheckInViewModel : ObservableObject
             IsCompleted = true;
             await _onCompletedAsync();
         }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+        }
         catch (Exception ex)
         {
             Trace.WriteLine($"[DailyCheckInViewModel] Save failed ({ex.GetType().Name}).");
-            ErrorMessage = "Ui_Dashboard_Error_CheckInSave";
+            if (ReferenceEquals(_submissionCancellation, cancellation))
+                ErrorMessage = "Ui_Dashboard_Error_CheckInSave";
         }
         finally
         {
-            IsBusy = false;
+            if (ReferenceEquals(_submissionCancellation, cancellation))
+            {
+                _submissionCancellation = null;
+                IsBusy = false;
+            }
         }
     }
 
@@ -317,6 +380,53 @@ public partial class DailyCheckInViewModel : ObservableObject
     {
         _invalidateDashboard();
         await _onCompletedAsync();
+    }
+
+    private DailyCheckInStatusRequest GetCurrentDay()
+    {
+        var timeZone = _clock.LocalTimeZone;
+        var localNow = TimeZoneInfo.ConvertTime(_clock.GetUtcNow(), timeZone);
+        return new DailyCheckInStatusRequest(DateOnly.FromDateTime(localNow.DateTime), timeZone.Id);
+    }
+
+    private void ResetDraft()
+    {
+        IsCompleted = false;
+        EnergyLevel = null;
+        PlanningFatigue = null;
+        PlanningSleepQuality = null;
+        PlanningSorenessSlider = MinimumPlanningScaleValue;
+        PlanningSoreness = null;
+        PlanningStress = null;
+        SleepHours = 0;
+        _isSleepHoursAnswered = false;
+        PainLevel = null;
+        HasBloating = null;
+        BodyWeight = null;
+        ShowAdditionalDetails = false;
+        IsSleepAutoFilled = false;
+        SleepAutoFilledBadgeText = string.Empty;
+        ShowHealthRationale = false;
+        HasHealthKitSuggestions = false;
+        SuggestedEnergyLevel = 0;
+        SuggestedSleepQuality = 0;
+        ReadinessScoreText = string.Empty;
+        ReadinessTierText = string.Empty;
+        SessionSummaryText = string.Empty;
+        OnPropertyChanged(nameof(SleepDisplay));
+        OnAnswerChanged();
+    }
+
+    internal void ResetForAccountChange()
+    {
+        ++_statusLoadVersion;
+        _draftDay = null;
+        var submission = _submissionCancellation;
+        _submissionCancellation = null;
+        submission?.Cancel();
+        ResetDraft();
+        ErrorMessage = string.Empty;
+        IsBusy = false;
     }
 
     partial void OnSleepHoursChanged(double value)

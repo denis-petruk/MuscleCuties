@@ -347,6 +347,7 @@ public static partial class UiTextCatalog
         English["Workout_Generation_MissingDirectCalves"] = "Calves: equipment does not allow direct work.";
         English["Workout_Generation_MissingDirectRearDelts"] = "Rear delts: equipment does not allow direct work.";
         English["Workout_Generation_BelowTargetDynamicCore"] = "Core work is spread across your sessions.";
+        English["Workout_Generation_BelowTargetDirectGluteDays"] = "This plan includes fewer than two days with two or more working glute sets.";
         English["Workout_Generation_MissingGluteFocusAbduction"] = "Hip abduction is limited by your equipment.";
         English["Workout_Generation_ReadinessAdaptation"] = "One optional set was reduced to match today’s recovery.";
         English["Workout_Generation_FinisherFormat"] = "After strength: {0} min of {1} · RPE {2}–{3}.";

@@ -22,6 +22,8 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Formatting\DisplayFormat.cs" Link="DisplayFormat.cs" />
+    <Compile Include="..\..\src\MuscleCuties.UI\Models\UI\Workout\ExerciseSetInputItem.cs" Link="ExerciseSetInputItem.cs" />
+    <Using Include="System.Globalization" />
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Workout\WorkoutAccountCalendarClient.cs" Link="WorkoutAccountCalendarClient.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Dashboard\DailyCheckInViewModel.cs" Link="DailyCheckInViewModel.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Workout\WorkoutListFilterRule.cs" Link="WorkoutListFilterRule.cs" />

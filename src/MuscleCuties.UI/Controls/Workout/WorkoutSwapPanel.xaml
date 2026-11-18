@@ -69,7 +69,7 @@
                                 </Border.GestureRecognizers>
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                        <Label Text="{Binding Name}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
                                         <Label
                                             Text="{Binding MuscleMatch, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}"

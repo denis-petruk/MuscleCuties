@@ -124,10 +124,6 @@ public partial class WorkoutHistoryViewModel : ObservableObject
                 var distinctMonths = (await _workoutArchiveUseCase.GetAvailableHistoryMonthsAsync()).ToList();
                 if (requestId != _filterRequestId) return;
 
-                var now = DateTime.UtcNow;
-                if (!distinctMonths.Any(p => p.Year == now.Year && p.Month == now.Month))
-                    distinctMonths.Insert(0, new HistoryMonthOptionDto(now.Year, now.Month));
-
                 foreach (var option in distinctMonths)
                 {
                     var dt = new DateTime(option.Year, option.Month, 1);
@@ -313,9 +309,10 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             DetailDistanceFormatted = detail.DistanceKm is { } distanceKm
                 ? UiTextCatalog.Format("Workout_History_DistanceFormat", distanceKm)
                 : string.Empty;
-            var startedText = detail.StartedAt.TimeOfDay == TimeSpan.Zero
-                ? DisplayFormat.DateWithWeekday(detail.StartedAt)
-                : DisplayFormat.DateWithWeekdayStamp(detail.StartedAt);
+            var startedAt = detail.AccountLocalStartedAt ?? detail.StartedAt;
+            var startedText = detail.AccountLocalStartedAt is null && startedAt.TimeOfDay == TimeSpan.Zero
+                ? DisplayFormat.DateWithWeekday(startedAt)
+                : DisplayFormat.DateWithWeekdayStamp(startedAt);
             DetailStartedFormatted = detail.TimePrecision == "legacyUnknown"
                 ? UiTextCatalog.Format("Workout_History_TimeZoneUnknownFormat", startedText)
                 : startedText;

@@ -166,6 +166,28 @@ public sealed class DailyCheckInAnswersTests
     }
 
     [Fact]
+    public void DashboardPairsTheCheckInScoreWithItsOwnBandAndGatesGuidanceSeparately()
+    {
+        var ui = Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI");
+        var viewModel = File.ReadAllText(Path.Combine(ui, "ViewModels", "Dashboard", "DashboardViewModel.cs"));
+        var card = File.ReadAllText(Path.Combine(ui, "Controls", "Dashboard", "ReadinessRecoveryCard.xaml"));
+
+        Assert.DoesNotContain("ReadinessLabel = summary.ReadinessLabel", viewModel, StringComparison.Ordinal);
+        Assert.DoesNotContain("{Binding ReadinessLabel,", card, StringComparison.Ordinal);
+        Assert.Contains("{Binding TodayReadinessBandText,", card, StringComparison.Ordinal);
+        Assert.Contains("{Binding HasTodayReadinessGuidance}", card, StringComparison.Ordinal);
+        Assert.Contains("_readinessPresentationSettings.AreReadinessSuggestionsEnabled", viewModel, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void ReturningToSignInClearsTheSingletonDashboardCheckInDraft()
+    {
+        var app = File.ReadAllText(Path.Combine(RepositoryRoot(), "src", "MuscleCuties.UI", "App.xaml.cs"));
+
+        Assert.Contains("ResetCheckInForAccountChange()", app, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void View_model_wires_healthkit_prepopulation_and_suggestions()
     {
         var source = ViewModelSource();

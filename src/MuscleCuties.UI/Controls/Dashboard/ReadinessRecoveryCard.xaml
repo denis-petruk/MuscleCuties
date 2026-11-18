@@ -40,7 +40,7 @@
                  sizes, so the shared row gives each ring its own row there. -->
             <sharedControls:AdaptiveRow Columns="2"
                   IsVisible="{Binding HasTodayReadinessRecord}">
-                <Border Style="{StaticResource CardSecondary}">
+                <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding HasTodayReadinessScore}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
                         <Grid WidthRequest="{StaticResource UiDimension88}" HeightRequest="{StaticResource UiDimension88}" HorizontalOptions="Center">
                             <dashboard:DashboardProgressRing WidthRequest="{StaticResource UiDimension88}"
@@ -61,7 +61,7 @@
                                Style="{StaticResource CaptionStrong}"
                                HorizontalOptions="Center"
                                HorizontalTextAlignment="Center" />
-                        <Label Text="{Binding ReadinessLabel, Converter={StaticResource LocalizedStringConverter}}"
+                        <Label Text="{Binding TodayReadinessBandText, Converter={StaticResource LocalizedStringConverter}}"
                                Style="{StaticResource CaptionSmallCentered}"
                                HorizontalOptions="Center"
                                LineBreakMode="WordWrap" />
@@ -97,13 +97,10 @@
                 </Border>
             </sharedControls:AdaptiveRow>
 
-            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" IsVisible="{Binding HasTodayReadinessScore}">
-                <Label Text="{Binding TodayReadinessBandText, Converter={StaticResource LocalizedStringConverter}}"
-                       Style="{StaticResource BodyStrong}" />
-                <Label Text="{Binding TodayReadinessGuidanceText, Converter={StaticResource LocalizedStringConverter}}"
-                       Style="{StaticResource BodyCompact}"
-                       LineBreakMode="WordWrap" />
-            </VerticalStackLayout>
+            <Label Text="{Binding TodayReadinessGuidanceText, Converter={StaticResource LocalizedStringConverter}}"
+                   IsVisible="{Binding HasTodayReadinessGuidance}"
+                   Style="{StaticResource BodyCompact}"
+                   LineBreakMode="WordWrap" />
 
             <sharedControls:AdaptiveRow Columns="3"
                   IsVisible="{Binding HasTodayReadinessRecord}">

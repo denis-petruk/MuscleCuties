@@ -2,6 +2,11 @@ appId: com.musclecuties.app
 ---
 - runFlow:
     when:
+      visible: "Not Now|Не сейчас"
+    commands:
+      - tapOn: "Not Now|Не сейчас"
+- runFlow:
+    when:
       visible: "Allow|Разрешить"
     commands:
       - tapOn: "Allow|Разрешить"

@@ -180,30 +180,40 @@
             </Border>
 
             <!-- Labeled training details share the enclosing card. -->
-            <Grid ColumnDefinitions="Auto,*,Auto" RowDefinitions="Auto,Auto,Auto"
-                  ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}"
-                  IsVisible="{Binding IsRestDay, Source={x:Reference Root}, Converter={StaticResource InvertedBoolConverter}}">
-                <mi:MauiIcon Icon="{mi:Fluent Timer24}" IconSize="{StaticResource UiDimension14}"
-                             IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
-                             WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
-                             VerticalOptions="Center" />
-                <Label Grid.Column="1" Text="{loc:LocalizedText Workout_Featured_Duration}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
-                <Label Grid.Column="2" Text="{Binding DurationText, Source={x:Reference Root}, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
-                <mi:MauiIcon Grid.Row="1" Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension14}"
-                             IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
-                             WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
-                             VerticalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="1" Text="{loc:LocalizedText Workout_Featured_Exercises}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
-                <Label Grid.Row="1" Grid.Column="2"
-                       Text="{Binding ExercisesCount, Source={x:Reference Root}, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Featured_ExercisesCountFormat}"
-                       Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
-                <mi:MauiIcon Grid.Row="2" Icon="{mi:Fluent ArrowTrending24}" IconSize="{StaticResource UiDimension14}"
-                             IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
-                             WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
-                             VerticalOptions="Center" />
-                <Label Grid.Row="2" Grid.Column="1" Text="{loc:LocalizedText Workout_Featured_Intensity}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
-                <Label Grid.Row="2" Grid.Column="2" Text="{Binding Intensity, Source={x:Reference Root}, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
-            </Grid>
+            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                 IsVisible="{Binding IsRestDay, Source={x:Reference Root}, Converter={StaticResource InvertedBoolConverter}}">
+                <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="SpaceBetween" AlignItems="Center">
+                    <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}" VerticalOptions="Center" Margin="{StaticResource UiInsets0_0_8_0}" FlexLayout.Shrink="0">
+                        <mi:MauiIcon Icon="{mi:Fluent Timer24}" IconSize="{StaticResource UiDimension14}"
+                                     IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                     WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
+                                     VerticalOptions="Center" />
+                        <Label Text="{loc:LocalizedText Workout_Featured_Duration}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <Label Text="{Binding DurationText, Source={x:Reference Root}, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" FlexLayout.Shrink="0" />
+                </FlexLayout>
+                <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="SpaceBetween" AlignItems="Center">
+                    <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}" VerticalOptions="Center" Margin="{StaticResource UiInsets0_0_8_0}" FlexLayout.Shrink="0">
+                        <mi:MauiIcon Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension14}"
+                                     IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                     WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
+                                     VerticalOptions="Center" />
+                        <Label Text="{loc:LocalizedText Workout_Featured_Exercises}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <Label Text="{Binding ExercisesCount, Source={x:Reference Root}, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Featured_ExercisesCountFormat}"
+                           Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" FlexLayout.Shrink="0" />
+                </FlexLayout>
+                <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="SpaceBetween" AlignItems="Center">
+                    <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}" VerticalOptions="Center" Margin="{StaticResource UiInsets0_0_8_0}" FlexLayout.Shrink="0">
+                        <mi:MauiIcon Icon="{mi:Fluent ArrowTrending24}" IconSize="{StaticResource UiDimension14}"
+                                     IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                     WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
+                                     VerticalOptions="Center" />
+                        <Label Text="{loc:LocalizedText Workout_Featured_Intensity}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
+                    </HorizontalStackLayout>
+                    <Label Text="{Binding Intensity, Source={x:Reference Root}, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" FlexLayout.Shrink="0" />
+                </FlexLayout>
+            </VerticalStackLayout>
 
             <!-- Expandable Exercise Preview Toggle -->
             <Border Style="{StaticResource CardSecondary}"
@@ -244,7 +254,7 @@
                             <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                                 <!-- Exercise Name + Sets/Reps Badge -->
                                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
-                                    <Label Style="{StaticResource BodyLabel}" Text="{Binding Name}"
+                                    <Label Style="{StaticResource BodyLabel}" Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
                                            TextColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                            LineBreakMode="WordWrap"
                                            VerticalOptions="Center" />

@@ -1,4 +1,6 @@
+using System.ComponentModel;
 using MuscleCuties.UI.Controls.Shared;
+using MuscleCuties.UI.ViewModels.Nutrition;
 
 namespace MuscleCuties.UI.Controls.Nutrition;
 
@@ -9,6 +11,7 @@ public partial class MealEditorModal : AnimatedModalView
         InitializeComponent();
         SearchEntry.Focused += OnSearchEntryFocused;
         SearchEntry.Unfocused += OnSearchEntryUnfocused;
+        IngredientSearchGrid.PropertyChanged += OnIngredientSearchGridPropertyChanged;
     }
 
     protected override void OnSizeAllocated(double width, double height)
@@ -25,7 +28,7 @@ public partial class MealEditorModal : AnimatedModalView
         SetSearchMode(true);
         Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(250), () =>
         {
-            if (IsOpen)
+            if (IsOpen && IngredientSearchGrid.IsVisible)
                 SearchEntry.Focus();
         });
     }
@@ -40,10 +43,25 @@ public partial class MealEditorModal : AnimatedModalView
 
     private void OnSearchEntryUnfocused(object? sender, FocusEventArgs e) => SetSearchMode(false);
 
+    private void OnIngredientSearchGridPropertyChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(IsVisible) && !IngredientSearchGrid.IsVisible)
+        {
+            SearchEntry.IsEnabled = false;
+            SearchEntry.IsEnabled = true;
+            SetSearchMode(false);
+        }
+    }
+
     private void SetSearchMode(bool active)
     {
         EditorHeaderRow.IsVisible = !active;
         SourceTabsRow.IsVisible = !active;
         IngredientListRow.IsVisible = !active;
+        if (!active)
+        {
+            SourceTabsRow.SetBinding(IsVisibleProperty, nameof(NutritionViewModel.IsFoodSourceTabsVisible));
+            IngredientListRow.SetBinding(IsVisibleProperty, nameof(NutritionViewModel.IsFoodFinderCollapsed));
+        }
     }
 }

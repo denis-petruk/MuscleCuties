@@ -20,58 +20,67 @@ appId: com.musclecuties.app
       visible:
         id: WorkoutSessionNextExerciseButton
     commands:
-      # Return to the top of the set list before looking for the first rows.
+      - repeat:
+          times: 3
+          commands:
+            - swipe:
+                start: "50%,50%"
+                end: "50%,82%"
+                duration: 300
+      - scrollUntilVisible:
+          element:
+            id: "(WarmupSet1|WorkingSet1)(Reps|LeftReps)"
+          direction: DOWN
+          centerElement: false
+          timeout: 15000
       - swipe:
-          start: "50%,40%"
-          end: "50%,78%"
-          duration: 400
-      - swipe:
-          start: "50%,40%"
-          end: "50%,78%"
-          duration: 400
+          start: "50%,66%"
+          end: "50%,50%"
+          duration: 300
+      - runFlow:
+          file: log-set.yaml
+          env:
+            QA_SET_PREFIX: WarmupSet1
+      - scrollUntilVisible:
+          element:
+            id: "(WorkingSet1|WorkingSet2)(Reps|LeftReps)"
+          direction: DOWN
+          centerElement: false
+          timeout: 15000
       - runFlow:
           when:
             visible:
-              id: WarmupSet1Weight
+              id: "WarmupSet1(Reps|LeftReps)"
           commands:
-            - runFlow:
-                file: log-set.yaml
-                env:
-                  QA_SET_PREFIX: WarmupSet1
-      - swipe:
-          start: "50%,62%"
-          end: "50%,40%"
-          duration: 400
+            - swipe:
+                start: "50%,66%"
+                end: "50%,48%"
+                duration: 300
+      - runFlow:
+          file: log-set.yaml
+          env:
+            QA_SET_PREFIX: WorkingSet1
       - runFlow:
           when:
             visible:
-              id: WorkingSet1Weight
+              id: "WorkingSet2(Reps|LeftReps)"
           commands:
-            - runFlow:
-                file: log-set.yaml
-                env:
-                  QA_SET_PREFIX: WorkingSet1
-      - swipe:
-          start: "50%,62%"
-          end: "50%,40%"
-          duration: 400
-      - runFlow:
-          when:
-            visible:
-              id: WorkingSet2Weight
-          commands:
+            - swipe:
+                start: "50%,66%"
+                end: "50%,48%"
+                duration: 300
             - runFlow:
                 file: log-set.yaml
                 env:
                   QA_SET_PREFIX: WorkingSet2
       - swipe:
-          start: "50%,62%"
-          end: "50%,40%"
-          duration: 400
+          start: "50%,66%"
+          end: "50%,48%"
+          duration: 300
       - runFlow:
           when:
             visible:
-              id: WorkingSet3Weight
+              id: "WorkingSet3(Reps|LeftReps)"
           commands:
             - runFlow:
                 file: log-set.yaml

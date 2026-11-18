@@ -42,10 +42,10 @@ public partial class LoginViewModel : ObservableObject
         _navigateToProfileSetupAsync = navigateToProfileSetupAsync;
         _navigateToRecoveryAsync = navigateToRecoveryAsync;
         _photoCacheAccountLifecycle = photoCacheAccountLifecycle;
-        LoginCommand = new AsyncRelayCommand(LoginAsync);
+        LoginCommand = new AsyncRelayCommand(LoginAsync, () => !IsBusy);
         GoToRegisterCommand = new AsyncRelayCommand(navigateToRegisterAsync);
         GoToRecoveryCommand = new AsyncRelayCommand(HandleRecoveryNavigationAsync);
-        SignInWithPlatformCommand = new AsyncRelayCommand(SignInWithPlatformAsync);
+        SignInWithPlatformCommand = new AsyncRelayCommand(SignInWithPlatformAsync, () => !IsBusy);
     }
 
     public bool IsPlatformSignInAvailable => _platformSignIn.IsAvailable;
@@ -69,6 +69,12 @@ public partial class LoginViewModel : ObservableObject
             SemanticScreenReader.Default.Announce(UiTextCatalog.Get(value));
     }
 
+    partial void OnIsBusyChanged(bool value)
+    {
+        LoginCommand.NotifyCanExecuteChanged();
+        SignInWithPlatformCommand.NotifyCanExecuteChanged();
+    }
+
     public void PrepareForExistingAccount(string email)
     {
         Email = email;
@@ -87,6 +93,9 @@ public partial class LoginViewModel : ObservableObject
 
     private async Task LoginAsync()
     {
+        if (IsBusy)
+            return;
+
         IsBusy = true;
         ErrorMessage = string.Empty;
         try

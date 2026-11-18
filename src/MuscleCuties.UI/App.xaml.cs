@@ -16,6 +16,7 @@ using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Security;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Navigation;
+using MuscleCuties.UI.ViewModels.Dashboard;
 using MuscleCuties.UI.ViewModels.Profile;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 
@@ -280,6 +281,11 @@ public partial class App : Application, IDisposable
         {
             var shell = Shell.Current as AppShell
                 ?? throw new InvalidOperationException("The active app shell is unavailable.");
+            if (route == "LoginPage" && _lastDashboardRefreshDate != DateTime.MinValue)
+            {
+                _services.GetRequiredService<DashboardViewModel>().ResetCheckInForAccountChange();
+                _lastDashboardRefreshDate = DateTime.MinValue;
+            }
             if (route != "LoginPage")
                 shell.MarkAuthenticationVerified();
             await shell.GoToAsync($"//{route}", false);

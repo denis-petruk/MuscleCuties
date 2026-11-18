@@ -51,6 +51,10 @@ appId: com.musclecuties.app
     direction: DOWN
     centerElement: false
     timeout: 30000
+- swipe:
+    start: "50%,68%"
+    end: "50%,35%"
+    duration: 350
 - waitForAnimationToEnd
 - tapOn:
     id: WellnessAcknowledgmentCheckBox

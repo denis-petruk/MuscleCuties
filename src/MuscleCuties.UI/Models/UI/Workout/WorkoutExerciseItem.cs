@@ -176,6 +176,10 @@ public partial class WorkoutExerciseItem : ObservableObject
     public void AddSet()
     {
         var nextSetNumber = Sets.Count + 1;
+        var nextWorkingSetNumber = Sets.Where(set => !set.IsWarmup)
+            .Select(set => set.InitialGroupSetNumber ?? set.SetNumber)
+            .DefaultIfEmpty()
+            .Max() + 1;
         var previousSet = Sets.LastOrDefault();
         var weight = previousSet?.WeightKg ?? (TryParseWeight(LoggedWeightText, out var w) ? w : 0.0);
         var reps = previousSet?.RepsCompleted ??
@@ -200,8 +204,11 @@ public partial class WorkoutExerciseItem : ObservableObject
             RemoveCommand = RemoveSetCommand,
             ShowWeight = UsesWeight,
             ShowPerSideReps = IsUnilateral,
+            InitialGroupSetNumber = nextWorkingSetNumber,
             WasEdited = true
         };
+        if (UsesWeight && RequiresInitialCalibration && previousSet?.EnteredWeightKg is null)
+            set.ClearUnobservedCalibrationWeightInput();
         Sets.Add(set);
         RenumberSets();
         UpdateAggregatesFromSets(fromUser: true);
@@ -286,8 +293,9 @@ public partial class WorkoutExerciseItem : ObservableObject
 
     private static bool TryParseWeight(string? value, out double weight)
     {
-        return double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out weight) ||
-               double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out weight);
+        var parsed = ExerciseSetInputItem.ParseWeight(value);
+        weight = (double)parsed.GetValueOrDefault();
+        return parsed.HasValue;
     }
 
     public void CommitEffortSliderValue(double value)

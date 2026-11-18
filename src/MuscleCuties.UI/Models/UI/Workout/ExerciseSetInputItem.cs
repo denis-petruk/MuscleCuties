@@ -126,14 +126,22 @@ public partial class ExerciseSetInputItem : ObservableObject
         var weightKg = currentWeightKg;
         var repsCompleted = currentRepsCompleted;
 
-        if (double.TryParse(weightInput, NumberStyles.Float, CultureInfo.InvariantCulture, out var parsedWeight) ||
-            double.TryParse(weightInput, NumberStyles.Float, CultureInfo.CurrentCulture, out parsedWeight))
-            weightKg = Math.Max(0, Math.Round(parsedWeight, 1));
+        if (ParseWeight(weightInput) is { } parsedWeight)
+            weightKg = (double)parsedWeight;
 
         if (int.TryParse(repsInput, NumberStyles.Integer, CultureInfo.InvariantCulture, out var parsedReps))
             repsCompleted = Math.Max(0, parsedReps);
 
         return (weightKg, repsCompleted);
+    }
+
+    internal static decimal? ParseWeight(string? value)
+    {
+        if (value is null) return null;
+        var normalized = value.Trim().Replace(',', '.');
+        return decimal.TryParse(normalized, NumberStyles.AllowDecimalPoint, CultureInfo.InvariantCulture, out var kg)
+            ? kg
+            : null;
     }
 
     public void SyncFromInputs()

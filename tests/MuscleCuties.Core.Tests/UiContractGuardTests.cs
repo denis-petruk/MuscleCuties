@@ -1971,6 +1971,18 @@ public sealed class UiContractGuardTests
         Assert.Contains("NutritionNavigation.TryReadAddFoodIntent(query", foodLogSource);
     }
 
+    [Fact]
+    public void Meal_editor_modal_has_opaque_action_footer_so_scrolling_list_does_not_bleed_through_at_large_text()
+    {
+        var xaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Nutrition", "MealEditorModal.xaml"));
+        Assert.Contains("Grid.Row=\"4\" Padding=\"{DynamicResource PresentationActionFooterPadding}\" Spacing=\"{StaticResource UiSpaceTight}\" BackgroundColor=", xaml, StringComparison.Ordinal);
+
+        var workoutXaml = File.ReadAllText(Path.Combine(
+            RepositoryRoot(), "src", "MuscleCuties.UI", "Pages", "Workout", "WorkoutPage.xaml"));
+        Assert.Contains("Grid.Row=\"3\" Text=\"{loc:LocalizedText Workout_Session_ChooseActivityToStart}\"\n                           Style=\"{StaticResource MutedLabel}\"\n                           Padding=\"{DynamicResource PresentationActionFooterPadding}\"\n                           BackgroundColor=", workoutXaml.Replace("\r\n", "\n"), StringComparison.Ordinal);
+    }
+
     private static string? AppliedStyleName(XElement element)
     {
         var reference = element.Attribute("Style")?.Value;

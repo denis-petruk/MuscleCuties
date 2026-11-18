@@ -45,6 +45,7 @@ public sealed record WorkoutArchiveSummaryDto(
         : $"{TotalSetsCount} sets";
 
     public decimal? DistanceKm { get; init; }
+    public DateTime? AccountLocalStartedAt { get; init; }
 }
 
 public sealed record WorkoutArchiveDetailDto(
@@ -61,6 +62,7 @@ public sealed record WorkoutArchiveDetailDto(
     string TimePrecision = "unknown")
 {
     public decimal? DistanceKm { get; init; }
+    public DateTime? AccountLocalStartedAt { get; init; }
 }
 
 public sealed record HistoryMonthOptionDto(int Year, int Month);

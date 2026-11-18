@@ -7,6 +7,128 @@ public static partial class UiTextCatalog
 {
     private static readonly Dictionary<string, string> RuntimeRussian = new(StringComparer.Ordinal)
     {
+        ["Current cycle phase?"] = "Текущая фаза цикла?",
+        ["Main fitness goal?"] = "Основная цель тренировок?",
+        ["How fast do you want to progress?"] = "Как быстро вы хотите двигаться к цели?",
+        ["Training experience?"] = "Опыт тренировок?",
+        ["Which days of the week are you available to train?"] = "В какие дни недели вы можете тренироваться?",
+        ["Dietary preference?"] = "Предпочтения в питании?",
+        ["Session length?"] = "Продолжительность тренировки?",
+        ["Available equipment?"] = "Доступное оборудование?",
+        ["Period discomfort?"] = "Дискомфорт во время менструации?",
+        ["Period training energy?"] = "Энергия для тренировок во время менструации?",
+        ["Follicular discomfort?"] = "Дискомфорт в фолликулярной фазе?",
+        ["Follicular energy?"] = "Энергия в фолликулярной фазе?",
+        ["Ovulation discomfort?"] = "Дискомфорт во время овуляции?",
+        ["Ovulation power?"] = "Энергия во время овуляции?",
+        ["Luteal symptoms?"] = "Самочувствие в лютеиновой фазе?",
+        ["Luteal training energy?"] = "Энергия для тренировок в лютеиновой фазе?",
+        ["Lose fat"] = "Снизить жировую массу",
+        ["Build muscle tone"] = "Укрепить мышцы",
+        ["Get stronger"] = "Стать сильнее",
+        ["Maintain health"] = "Поддерживать здоровье",
+        ["Aggressive"] = "Быстро",
+        ["Beginner"] = "Начальный",
+        ["Intermediate"] = "Средний",
+        ["Advanced"] = "Продвинутый",
+        ["No preference"] = "Без предпочтений",
+        ["Barely there"] = "Почти нет",
+        ["Manageable"] = "Терпимый",
+        ["Noticeable"] = "Заметный",
+        ["Rough"] = "Выраженный",
+        ["Stops my day"] = "Мешает обычным делам",
+        ["Couch-level"] = "Сил почти нет",
+        ["Slow but moving"] = "Сил мало, но могу двигаться",
+        ["Ready to push"] = "Готова к нагрузке",
+        ["Strength Focus"] = "Акцент на силе",
+        ["Rest Focus"] = "День восстановления",
+        ["Cardio Focus"] = "Акцент на кардио",
+        ["Recovery Focus"] = "Акцент на восстановлении",
+        ["Mobility Focus"] = "Акцент на мобильности",
+        ["MON"] = "ПН",
+        ["TUE"] = "ВТ",
+        ["WED"] = "СР",
+        ["THU"] = "ЧТ",
+        ["FRI"] = "ПТ",
+        ["SAT"] = "СБ",
+        ["SUN"] = "ВС",
+        ["45-60 min"] = "45–60 мин",
+        ["Strength & Sculpt"] = "Силовая тренировка",
+        ["Cardio & Conditioning"] = "Кардио и выносливость",
+        ["Mobility & Recovery"] = "Подвижность и восстановление",
+        ["Barbell Hip Thrust"] = "Ягодичный мост со штангой",
+        ["Machine Hip Thrust"] = "Ягодичный мост в тренажёре",
+        ["B-Stance Hip Thrust"] = "Ягодичный мост с опорой на одну ногу",
+        ["Single-Leg Glute Bridge"] = "Ягодичный мост на одной ноге",
+        ["Cable Pull-Through"] = "Тяга нижнего блока между ног",
+        ["45 Degree Back Extension"] = "Гиперэкстензия под углом 45°",
+        ["Kneeling Cable Kickback"] = "Отведение ноги назад на блоке с колена",
+        ["Floor Glute Bridge"] = "Ягодичный мост на полу",
+        ["Romanian Deadlift"] = "Румынская тяга",
+        ["Deficit RDL"] = "Румынская тяга с возвышения",
+        ["Dumbbell RDL"] = "Румынская тяга с гантелями",
+        ["Single-Leg RDL"] = "Румынская тяга на одной ноге",
+        ["Seated Leg Curl"] = "Сгибание ног сидя",
+        ["Lying Leg Curl"] = "Сгибание ног лёжа",
+        ["Nordic Curl"] = "Северное сгибание ног",
+        ["Good Morning"] = "Наклоны со штангой на плечах",
+        ["Slider Leg Curl"] = "Сгибание ног со слайдерами",
+        ["Back Squat"] = "Приседания со штангой на спине",
+        ["Hack Squat"] = "Гакк-приседания",
+        ["Leg Press"] = "Жим ногами",
+        ["Goblet Squat"] = "Приседания с гантелью у груди",
+        ["Bulgarian Split Squat"] = "Болгарские сплит-приседания",
+        ["Walking Lunge"] = "Выпады в ходьбе",
+        ["Step-Up"] = "Зашагивания на платформу",
+        ["Reverse Lunge"] = "Выпады назад",
+        ["Bodyweight Squat"] = "Приседания с весом тела",
+        ["Bodyweight Reverse Lunge"] = "Выпады назад с весом тела",
+        ["Seated Hip Abduction Lean"] = "Разведение ног сидя с наклоном",
+        ["Seated Hip Abduction Upright"] = "Разведение ног сидя с прямым корпусом",
+        ["Standing Cable Abduction"] = "Отведение ноги в сторону на блоке стоя",
+        ["Banded Lateral Walk"] = "Приставные шаги с эспандером",
+        ["Side-Lying Abduction"] = "Отведение ноги лёжа на боку",
+        ["Copenhagen Plank"] = "Копенгагенская планка",
+        ["Seated Adduction Machine"] = "Сведение ног в тренажёре сидя",
+        ["Bodyweight Split Squat"] = "Сплит-приседания с весом тела",
+        ["Pull-Up"] = "Подтягивания",
+        ["Lat Pulldown"] = "Тяга верхнего блока",
+        ["Chest-Supported Row"] = "Тяга с упором грудью",
+        ["Seated Cable Row"] = "Горизонтальная тяга блока сидя",
+        ["Single-Arm DB Row"] = "Тяга гантели одной рукой",
+        ["Straight-Arm Pulldown"] = "Тяга верхнего блока прямыми руками",
+        ["Face Pull"] = "Тяга каната к лицу",
+        ["Resistance Band Row"] = "Тяга эспандера",
+        ["DB Shoulder Press"] = "Жим гантелей над головой",
+        ["Machine Shoulder Press"] = "Жим над головой в тренажёре",
+        ["Incline DB Press"] = "Жим гантелей на наклонной скамье",
+        ["Machine Chest Press"] = "Жим от груди в тренажёре",
+        ["Push-Up"] = "Отжимания",
+        ["Cable Lateral Raise"] = "Подъём руки в сторону на блоке",
+        ["DB Lateral Raise"] = "Подъём гантелей в стороны",
+        ["Reverse Pec Deck"] = "Обратная бабочка",
+        ["Resistance Band Chest Press"] = "Жим эспандера от груди",
+        ["Incline DB Curl"] = "Сгибание рук с гантелями на наклонной скамье",
+        ["Cable Curl"] = "Сгибание рук на блоке",
+        ["Overhead Cable Extension"] = "Разгибание рук на блоке из-за головы",
+        ["Rope Pushdown"] = "Разгибание рук с канатом на блоке",
+        ["Resistance Band Biceps Curl"] = "Сгибание рук с эспандером",
+        ["Dead Bug"] = "Мёртвый жук",
+        ["Ab Wheel Rollout"] = "Выкаты с роликом для пресса",
+        ["Hollow Hold"] = "Удержание полой позиции",
+        ["Cable Crunch"] = "Скручивания на блоке",
+        ["Pallof Press"] = "Жим Палофа",
+        ["Bird Dog"] = "Вытягивание противоположных руки и ноги",
+        ["Side Plank"] = "Боковая планка",
+        ["Suitcase Carry"] = "Переноска гантели в одной руке",
+        ["Standing Calf Raise"] = "Подъём на носки стоя",
+        ["Seated Calf Raise"] = "Подъём на носки сидя",
+        ["30 min"] = "30 мин",
+        ["45 min"] = "45 мин",
+        ["60 min"] = "60 мин",
+        ["75 min"] = "75 мин",
+        ["90 min"] = "90 мин",
+
         ["Plan or log mobility work."] = "Планируйте или записывайте работу над мобильностью.",
         ["Plan or log gentle recovery time."] = "Планируйте или записывайте лёгкое восстановление.",
         ["Keep a day free of planned exercise."] = "Оставьте день без запланированных тренировок.",
@@ -14,6 +136,11 @@ public static partial class UiTextCatalog
         ["Plan or log walking time."] = "Планируйте или записывайте ходьбу.",
         ["Plan or log rowing time."] = "Планируйте или записывайте греблю.",
         ["Plan or log elliptical time."] = "Планируйте или записывайте занятия на эллипсе.",
+        ["Steady low-impact walking for daily movement and aerobic base."] = "Спокойная ходьба с низкой ударной нагрузкой для ежедневной активности и аэробной базы.",
+        ["Full-body rowing for aerobic conditioning and back endurance."] = "Гребля для всего тела, аэробной выносливости и укрепления спины.",
+        ["Low-impact cardio that protects joints during steady sessions."] = "Кардио с низкой ударной нагрузкой, бережное для суставов при ровном темпе.",
+        ["Guided joint range-of-motion and movement-quality work."] = "Работа над подвижностью суставов и качеством движений.",
+        ["Easy restorative movement to support recovery between harder days."] = "Лёгкое восстановительное движение между более интенсивными днями.",
         ["Strength sessions with targets matched to your activity history."] = "Силовые сессии с целями по вашей истории активности.",
         ["More sets for steady strength progress."] = "Больше подходов для роста силы.",
         ["Heavier main lifts with fewer reps."] = "Тяжёлые базовые движения, меньше повторов.",
@@ -905,6 +1032,7 @@ public static partial class UiTextCatalog
         ["Please enter your name."] = "Пожалуйста, введите ваше имя.",
         ["Please leave out cycle, weight, symptom, and injury details."] = "Пожалуйста, не указывайте детали цикла, веса, симптомов и травм.",
         ["Please try again."] = "Пожалуйста, повторите попытку.",
+        ["Portion"] = "Порция",
         ["Portion Size"] = "Размер порции",
         ["Portion size"] = "Размер порции",
         ["Potassium"] = "Калий",
@@ -1437,6 +1565,7 @@ public static partial class UiTextCatalog
 
     private static readonly RuntimePattern[] RuntimeFormats =
     [
+        NewRuntimePattern("{0} and {1}", "{0} и {1}"),
         NewRuntimePattern("Resend in {0}s", "Повторная отправка через {0} с"),
         NewRuntimePattern("Today, {0}", "Сегодня, {0}"),
         NewRuntimePattern("Yesterday, {0}", "Вчера, {0}"),
@@ -1505,6 +1634,10 @@ public static partial class UiTextCatalog
         NewNumericRuntimePattern("{0} kg", "{0} кг"),
         NewNumericRuntimePattern("{0} g", "{0} г"),
         NewNumericRuntimePattern("{0}g", "{0} г"),
+        NewNumericRuntimePattern("{0} serving", "{0} порция"),
+        NewRuntimePattern("P {0}", "Б {0}"),
+        NewRuntimePattern("C {0}", "У {0}"),
+        NewRuntimePattern("F {0}", "Ж {0}"),
         NewRuntimePattern("<1 min", "<1 мин"),
         NewRuntimePattern("Last {0} with {1} x {2}", "В прошлый раз: {0}, {1} × {2}"),
         NewRuntimePattern("{0} training days", "Тренировочных дней: {0}"),
@@ -1519,8 +1652,7 @@ public static partial class UiTextCatalog
         NewRuntimePattern("{0} keeps the cycle in order. Tap Save phase to log it.",
             "Фаза {0} сохраняет порядок цикла. Нажмите «Сохранить фазу», чтобы записать её."),
         NewRuntimePattern("This phase would skip a step. Log {0} first.", "Эта фаза пропустит этап. Сначала запишите {0}."),
-        NewRuntimePattern("{0} · time zone unknown", "{0} · часовой пояс неизвестен"),
-        NewRuntimePattern("{0} · {1}", "{0} · {1}")
+        NewRuntimePattern("{0} · time zone unknown", "{0} · часовой пояс неизвестен")
     ];
 
     public static string TranslateRuntimeText(string english)
@@ -1544,6 +1676,22 @@ public static partial class UiTextCatalog
                 .Select(group => TryResolveRuntimeValue(group.Value, out var resolved) ? resolved : group.Value)
                 .ToArray();
             return string.Format(CultureInfo.CurrentCulture, pattern.Russian, values);
+        }
+
+        var separatorIndex = english.IndexOf(" · ", StringComparison.Ordinal);
+        if (separatorIndex > 0)
+        {
+            var head = english[..separatorIndex];
+            var tail = english[(separatorIndex + 3)..];
+            return $"{TranslateRuntimeText(head)} · {TranslateRuntimeText(tail)}";
+        }
+
+        var colonIndex = english.IndexOf(": ", StringComparison.Ordinal);
+        if (colonIndex > 0)
+        {
+            var head = english[..colonIndex];
+            var tail = english[(colonIndex + 2)..];
+            return $"{TranslateRuntimeText(head)}: {TranslateRuntimeText(tail)}";
         }
 
         return english;
@@ -1574,7 +1722,7 @@ public static partial class UiTextCatalog
     private static RuntimePattern NewNumericRuntimePattern(string english, string russian)
     {
         var pieces = Regex.Split(english, @"\{\d+\}");
-        var regex = "^" + string.Join(@"(\d+(?:[.,]\d+)?)", pieces.Select(Regex.Escape)) + "$";
+        var regex = "^" + string.Join(@"(\d+(?:[\s\u00A0.,]\d+)*)", pieces.Select(Regex.Escape)) + "$";
         return new RuntimePattern(new Regex(regex, RegexOptions.CultureInvariant), russian);
     }
 

@@ -33,7 +33,7 @@ appId: com.musclecuties.app
 - tapOn:
     id: QuizAnswerAvailableWeekdays1
 - tapOn:
-    id: QuizAnswerAvailableWeekdays4
+    id: QuizAnswerAvailableWeekdays3
 - tapOn:
     id: QuizNextButton
 - tapOn:

@@ -180,6 +180,27 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             new() { Column = 2, Index = FirstWeekIndex + 2, Label = UiTextCatalog.Get("Workout_Page_Week3") },
             new() { Column = 3, Index = FirstWeekIndex + 3, Label = UiTextCatalog.Get("Workout_Page_Week4") }
         };
+        var initialWeekStart = DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7));
+        _datedSchedule = Enumerable.Range(0, 7).Select(offset =>
+        {
+            var date = initialWeekStart.AddDays(offset);
+            var isToday = date.Date == DateTime.Today.Date;
+            return new ScheduleDayItem
+            {
+                Date = date,
+                WeekIndex = FirstWeekIndex,
+                DayLabel = FormatDayLabel(date.DayOfWeek),
+                WorkoutTag = "REST",
+                WorkoutTitle = string.Empty,
+                Sessions = [new ScheduleSessionChip(0, "REST", WorkoutPresentationPalette.Background("REST"), false, 1, string.Empty, false)],
+                IsToday = isToday,
+                IsRestDay = true,
+                IsSelected = isToday,
+                AccentColor = WorkoutPresentationPalette.Background("REST"),
+                AccentTextColor = WorkoutPresentationPalette.Text("REST")
+            };
+        }).ToArray();
+        ScheduleDays = new ObservableCollection<ScheduleDayItem>(_datedSchedule);
     }
 
     private void SyncWeekChips(int weekIndex)

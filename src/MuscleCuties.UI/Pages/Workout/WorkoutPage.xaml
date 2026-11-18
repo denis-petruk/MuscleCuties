@@ -546,6 +546,7 @@
                     <Label LineBreakMode="WordWrap" Grid.Row="3" Text="{loc:LocalizedText Workout_Session_ChooseActivityToStart}"
                            Style="{StaticResource MutedLabel}"
                            Padding="{DynamicResource PresentationActionFooterPadding}"
+                           BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                            IsVisible="{Binding HasActivityChoices}" />
                 </Grid>
             </Border>

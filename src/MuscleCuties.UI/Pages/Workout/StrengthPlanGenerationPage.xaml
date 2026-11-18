@@ -818,7 +818,7 @@
                                                                      prescription: keeping it beside the sets/reps squeezed the details
                                                                      into a narrow column and left the marker floating mid-row. -->
                                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                                                                    <Label LineBreakMode="WordWrap" Text="{Binding Name}" />
+                                                                    <Label LineBreakMode="WordWrap" Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}" />
                                                                     <Label LineBreakMode="WordWrap" Grid.Column="1"
                                                                            Text="{loc:LocalizedText Workout_Generation_Required}"
                                                                            IsVisible="{Binding IsRequired}"
