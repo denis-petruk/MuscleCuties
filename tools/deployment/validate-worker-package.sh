@@ -2,8 +2,8 @@
 set -euo pipefail
 [ "$#" -eq 2 ] || { echo 'Usage: validate-worker-package.sh ZIP MANIFEST' >&2; exit 2; }
 
-export SOURCE_COMMIT_SHA="${SOURCE_COMMIT_SHA:-${GITHUB_SHA:-${CI_COMMIT_SHA:-}}}"
-export SOURCE_TREE_SHA="${SOURCE_TREE_SHA:-${CI_COMMIT_TREE_SHA:-}}"
+export SOURCE_COMMIT_SHA="${SOURCE_COMMIT_SHA:-${GITHUB_SHA:-}}"
+export SOURCE_TREE_SHA="${SOURCE_TREE_SHA:-}"
 [ -n "$SOURCE_COMMIT_SHA" ] || { echo 'validate-worker-package.sh: missing commit SHA' >&2; exit 1; }
 
 python3 - "$1" "$2" <<'PY'

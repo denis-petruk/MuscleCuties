@@ -172,5 +172,19 @@ class DeployTests(unittest.TestCase):
         self.assertFalse(report['mutation_attempted'])
 
 
+    def test_unconfigured_worker_is_skipped_not_fatal(self):
+        # Only one Lambda exists today. An unset worker must be recorded as skipped and must not
+        # block a release of the function that does exist, nor leave a half-deployed state.
+        for key in ['WORKER_FUNCTION', 'WORKER_ALIAS', 'WORKER_ZIP', 'WORKER_MANIFEST', 'WORKER_OBJECT']:
+            self.env.pop(key, None)
+        result = self.run_deploy()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = self.report()
+        self.assertEqual(report['status'], 'verified')
+        self.assertEqual(report['components']['server']['post_code_sha256'], self.server['b64'])
+        self.assertEqual(report['components']['worker']['status'], 'skipped')
+        self.assertEqual(report['components']['worker']['reason'], 'WORKER_FUNCTION is not configured')
+
+
 if __name__ == '__main__':
     unittest.main()

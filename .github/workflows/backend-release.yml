@@ -127,8 +127,10 @@ jobs:
           role-session-name: github-actions-beta-deploy-${{ github.run_id }}
 
       # Required repository/environment variables:
-      #   BETA_SERVER_FUNCTION, BETA_WORKER_FUNCTION
-      #   BETA_SERVER_ALIAS, BETA_WORKER_ALIAS (aliases are required so rollback has a target)
+      #   BETA_SERVER_FUNCTION, BETA_SERVER_ALIAS (an alias is required so rollback has a target)
+      # Optional, and only when a reconciliation worker actually exists:
+      #   BETA_WORKER_FUNCTION, BETA_WORKER_ALIAS. When BETA_WORKER_FUNCTION is unset the worker
+      #   is reported as skipped instead of failing the release.
       #   BETA_API_ENDPOINT (required; /health/live and /health/ready must return 200)
       #   AWS_ACCOUNT_ID (optional; when set, STS identity must match)
       # The report is written only after each serving CodeSha256 matches the candidate digests.

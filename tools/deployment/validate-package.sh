@@ -5,8 +5,8 @@ set -euo pipefail
 # Allow platform-neutral or GitHub Actions variables.
 export SOURCE_COMMIT_SHA="${SOURCE_COMMIT_SHA:-${GITHUB_SHA:-}}"
 export SOURCE_TREE_SHA="${SOURCE_TREE_SHA:-}"
-export BUILD_RUN_ID="${BUILD_RUN_ID:-${GITHUB_RUN_ID:-${CI_PIPELINE_ID:-local}}}"
-export BUILD_JOB_ID="${BUILD_JOB_ID:-${GITHUB_JOB:-${CI_JOB_ID:-local}}}"
+export BUILD_RUN_ID="${BUILD_RUN_ID:-${GITHUB_RUN_ID:-local}}"
+export BUILD_JOB_ID="${BUILD_JOB_ID:-${GITHUB_JOB:-local}}"
 
 [ -n "$SOURCE_COMMIT_SHA" ] || { echo 'validate-package.sh: missing commit SHA' >&2; exit 1; }
 

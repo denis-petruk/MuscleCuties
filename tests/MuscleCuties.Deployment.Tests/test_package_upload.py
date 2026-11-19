@@ -64,7 +64,7 @@ class ValidationTests(unittest.TestCase):
         self.root = Path(self.tmp.name)
         (self.root / '.tools').mkdir()
         git = self.root / 'git'
-        git.write_text("#!/bin/sh\ncase \"$*\" in *status*) exit 0;; *tree*) printf '%s\\n' \"$CI_COMMIT_TREE_SHA\";; *) printf '%s\\n' \"$CI_COMMIT_SHA\";; esac\n")
+        git.write_text("#!/bin/sh\ncase \"$*\" in *status*) exit 0;; *tree*) printf '%s\\n' \"$SOURCE_TREE_SHA\";; *) printf '%s\\n' \"$SOURCE_COMMIT_SHA\";; esac\n")
         git.chmod(0o755)
         dotnet = self.root / 'dotnet'
         dotnet.write_text("#!/bin/sh\necho 10.0.403\n")
@@ -82,7 +82,7 @@ fi
 exit 2
 ''')
         tool.chmod(0o755)
-        self.env = dict(os.environ, PATH=str(self.root)+os.pathsep+os.environ['PATH'], CI_COMMIT_SHA='a'*40, CI_COMMIT_TREE_SHA='b'*40, CI_PIPELINE_ID='1', CI_JOB_ID='2')
+        self.env = dict(os.environ, PATH=str(self.root)+os.pathsep+os.environ['PATH'], SOURCE_COMMIT_SHA='a'*40, SOURCE_TREE_SHA='b'*40, BUILD_RUN_ID='1', BUILD_JOB_ID='2')
     def run_validate(self, package):
         return subprocess.run([str(ROOT/'tools/deployment/validate-package.sh'), str(package), str(self.root/'manifest.json')], cwd=self.root, env=self.env, capture_output=True, text=True)
     def test_traversal_fails(self):

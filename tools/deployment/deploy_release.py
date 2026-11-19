@@ -10,6 +10,8 @@ Environment:
   TARGET_ENV, AWS_REGION, AWS_ACCOUNT_ID (optional), HEALTH_URL (optional)
   SERVER_FUNCTION, SERVER_ALIAS, SERVER_ZIP, SERVER_MANIFEST, SERVER_OBJECT
   WORKER_FUNCTION, WORKER_ALIAS, WORKER_ZIP, WORKER_MANIFEST, WORKER_OBJECT
+                 (all optional as a set: when WORKER_FUNCTION is unset the worker is
+                  reported as skipped instead of blocking the release)
   REPORT_PATH, SOURCE_SHA (optional), SOURCE_TREE_SHA (optional)
   MC_TEST_AWS_EXECUTABLE (offline tests only)
 
@@ -318,9 +320,21 @@ def deploy():
         specs = [
             ("server", component("Server", "SERVER_FUNCTION", "SERVER_ALIAS",
                                  "SERVER_ZIP", "SERVER_MANIFEST", "SERVER_OBJECT")),
-            ("worker", component("WorkoutReconciliation", "WORKER_FUNCTION", "WORKER_ALIAS",
-                                 "WORKER_ZIP", "WORKER_MANIFEST", "WORKER_OBJECT")),
         ]
+        # The reconciliation worker is a separate function that may legitimately not exist in an
+        # environment. An unset WORKER_FUNCTION therefore means "not deployed here": it is
+        # recorded explicitly as skipped rather than silently ignored, so releasing the API is
+        # never blocked by the absence of a function, and never claims to have deployed one.
+        if os.environ.get("WORKER_FUNCTION", "").strip():
+            specs.append(("worker", component("WorkoutReconciliation", "WORKER_FUNCTION",
+                                              "WORKER_ALIAS", "WORKER_ZIP", "WORKER_MANIFEST",
+                                              "WORKER_OBJECT")))
+        else:
+            report["components"]["worker"] = {
+                "status": "skipped",
+                "reason": "WORKER_FUNCTION is not configured",
+            }
+            print("worker=skipped reason=WORKER_FUNCTION is not configured")
 
         report["phase"] = "artifact"
         proofs = [(name, spec, validate_component(spec, source_sha, tree_sha))
@@ -363,6 +377,10 @@ def rollback():
     rollback_results = {}
     try:
         for name, component_report in components.items():
+            if component_report.get("status") == "skipped":
+                rollback_results[name] = {"status": "skipped",
+                                          "reason": component_report.get("reason", "")}
+                continue
             function = component_report["function"]
             alias_name = component_report["alias"]
             previous = component_report.get("previous_alias_version")
