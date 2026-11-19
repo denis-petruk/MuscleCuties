@@ -2,86 +2,75 @@
 
 ## Changed files
 
-- Startup, Auth & Onboarding (Wave 1):
-  - `src/MuscleCuties.UI/Pages/Startup/AppStartupPage.xaml`, `src/MuscleCuties.UI/Pages/Startup/AppStartupPage.xaml.cs`
-  - `src/MuscleCuties.UI/Pages/Auth/LoginPage.xaml`, `src/MuscleCuties.UI/Pages/Auth/LoginPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Auth/LoginViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Auth/RegisterPage.xaml`, `src/MuscleCuties.UI/Pages/Auth/RegisterPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Auth/RegisterViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Auth/OtpVerificationPage.xaml`, `src/MuscleCuties.UI/Pages/Auth/OtpVerificationPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Auth/OtpVerificationViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Auth/PasswordRecoveryPage.xaml`, `src/MuscleCuties.UI/Pages/Auth/PasswordRecoveryPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Auth/PasswordRecoveryViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Onboarding/ProfileSetupPage.xaml`, `src/MuscleCuties.UI/Pages/Onboarding/ProfileSetupPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Profile/ProfileSetupViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Onboarding/QuizPage.xaml`, `src/MuscleCuties.UI/Pages/Onboarding/QuizPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Quiz/QuizViewModel.cs`
-- Today, Cycle & Modals (Wave 2):
-  - `src/MuscleCuties.UI/Controls/Shared/PageLoadingOverlay.xaml.cs`
-  - `src/MuscleCuties.UI/Pages/Dashboard/DashboardPage.xaml`, `src/MuscleCuties.UI/Pages/Dashboard/DashboardPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Dashboard/DashboardViewModel.cs`, `src/MuscleCuties.UI/ViewModels/Dashboard/DashboardViewModel.Trends.cs`
-  - `src/MuscleCuties.UI/Controls/Dashboard/DashboardNutritionCard.xaml`, `src/MuscleCuties.UI/Controls/Dashboard/ReadinessRecoveryCard.xaml`, `src/MuscleCuties.UI/Controls/Dashboard/DailyCheckInModal.xaml`, `src/MuscleCuties.UI/Controls/Dashboard/DailyCheckInContent.xaml`, `src/MuscleCuties.UI/Controls/Dashboard/DailyCheckInContent.xaml.cs`
-  - `src/MuscleCuties.UI/Controls/Injury/InjuryLogModal.xaml`, `src/MuscleCuties.UI/Controls/Injury/InjuryLogModal.xaml.cs`, `src/MuscleCuties.UI/Controls/Injury/InjuryLogContent.xaml`, `src/MuscleCuties.UI/ViewModels/Workout/InjuryLogViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Cycle/CyclePage.xaml`, `src/MuscleCuties.UI/ViewModels/Cycle/CycleViewModel.cs`, `src/MuscleCuties.UI/Controls/Cycle/CycleMonthGrid.cs`, `src/MuscleCuties.UI/Controls/Cycle/CyclePhaseSummarySheet.xaml`, `src/MuscleCuties.UI/Controls/Cycle/CycleQuickLogBottomSheet.xaml`, `src/MuscleCuties.UI/Controls/Cycle/CycleWarningPopup.xaml`
-  - `src/MuscleCuties.UI/Pages/Cycle/CyclePhaseDetailPage.xaml`, `src/MuscleCuties.UI/ViewModels/CyclePhaseDetailViewModel.cs`
-- Train & Nutrition (Wave 3):
-  - `src/MuscleCuties.UI/Pages/Workout/WorkoutPage.xaml`, `src/MuscleCuties.UI/Pages/Workout/WorkoutPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Workout/WorkoutViewModel.cs`, `src/MuscleCuties.UI/Controls/Workout/FeaturedWorkoutCard.xaml`
-  - `src/MuscleCuties.UI/Pages/Workout/WorkoutSessionPage.xaml`, `src/MuscleCuties.UI/ViewModels/Workout/WorkoutSessionViewModel.cs`, `src/MuscleCuties.UI/Controls/Workout/WorkoutSwapPanel.xaml`
-  - `src/MuscleCuties.UI/Pages/Workout/WorkoutHistoryPage.xaml`, `src/MuscleCuties.UI/Pages/Workout/WorkoutHistoryPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Workout/WorkoutHistoryViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Workout/StrengthPlanGenerationPage.xaml`, `src/MuscleCuties.UI/ViewModels/Workout/StrengthPlanGenerationViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Nutrition/NutritionPage.xaml`, `src/MuscleCuties.UI/Pages/Nutrition/NutritionPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Nutrition/NutritionViewModel.cs`, `src/MuscleCuties.UI/ViewModels/Nutrition/NutritionViewModel.Notifications.cs`, `src/MuscleCuties.UI/Controls/Nutrition/NutritionBalanceCard.xaml`, `src/MuscleCuties.UI/Controls/Nutrition/MealEditorModal.xaml`, `src/MuscleCuties.UI/Controls/Nutrition/MealSuggestionModal.xaml`, `src/MuscleCuties.UI/Controls/Nutrition/NutritionBreakdownModal.xaml`
-  - `src/MuscleCuties.UI/Pages/Nutrition/FoodLogPage.xaml`, `src/MuscleCuties.UI/Pages/Nutrition/FoodLogPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Nutrition/FoodLogViewModel.cs`, `src/MuscleCuties.UI/ViewModels/Nutrition/FoodLogViewModel.FastLogging.cs`, `src/MuscleCuties.UI/ViewModels/Nutrition/FoodLogViewModel.Hydration.cs`, `src/MuscleCuties.UI/Controls/Nutrition/HydrationLogView.xaml`, `src/MuscleCuties.UI/Controls/Nutrition/QuickFoodItemRow.xaml`
-- Profile & Vault (Wave 4):
-  - `src/MuscleCuties.UI/Pages/Profile/ProfilePage.xaml`, `src/MuscleCuties.UI/Pages/Profile/ProfilePage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Profile/ProfileViewModel.cs`, `src/MuscleCuties.UI/Controls/Profile/ProfileDetailsContent.xaml`, `src/MuscleCuties.UI/Controls/Profile/ProfileImageCropModal.xaml`, `src/MuscleCuties.UI/Controls/Profile/ProfileImageCropModal.xaml.cs`
-  - `src/MuscleCuties.UI/Pages/Profile/ProfilePersonalInfoPage.xaml`, `src/MuscleCuties.UI/Pages/Profile/ProfilePersonalInfoPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Profile/ProfilePersonalInfoViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Profile/ProfileWorkoutPreferencesPage.xaml`, `src/MuscleCuties.UI/Controls/Profile/ProfileWorkoutPreferencesChoices.xaml`, `src/MuscleCuties.UI/ViewModels/Profile/ProfileWorkoutPreferencesViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Profile/ProfileNutritionSettingsPage.xaml`, `src/MuscleCuties.UI/Pages/Profile/ProfileNutritionSettingsPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Profile/ProfileNutritionSettingsViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Profile/ProfileUnitsDisplayPage.xaml`, `src/MuscleCuties.UI/Pages/Profile/ProfileUnitsDisplayPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Profile/ProfileUnitsDisplayViewModel.cs`, `src/MuscleCuties.UI/MauiProgram.cs`
-  - `src/MuscleCuties.UI/Pages/Profile/ProfilePrivacyPage.xaml`, `src/MuscleCuties.UI/Pages/Profile/ProfilePrivacyPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Profile/ProfileHealthSyncViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Profile/ProfileFeedbackPage.xaml`, `src/MuscleCuties.UI/Pages/Profile/ProfileFeedbackPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Profile/ProfileFeedbackViewModel.cs`
-  - `src/MuscleCuties.UI/Pages/Profile/PhotoJourneyVaultPage.xaml`, `src/MuscleCuties.UI/Pages/Profile/PhotoJourneyVaultPage.xaml.cs`, `src/MuscleCuties.UI/ViewModels/Profile/PhotoJourneyVaultViewModel.cs`, `src/MuscleCuties.UI/Models/UI/Profile/PhotoVaultItem.cs`, `src/MuscleCuties.UI/Controls/Profile/PhotoComparisonModal.xaml`, `src/MuscleCuties.UI/Controls/Profile/PhotoComparisonModal.xaml.cs`
-- Localization & Tests:
-  - `src/MuscleCuties.UI/Services/Localization/UiTextCatalog.Dashboard.cs`, `src/MuscleCuties.UI/Services/Localization/RussianUiText.Dashboard.cs`, `src/MuscleCuties.UI/Services/Localization/UiTextCatalog.NutritionProfileAuth.cs`, `src/MuscleCuties.UI/Services/Localization/RussianUiText.NutritionProfileAuth.cs`, `src/MuscleCuties.UI/Services/Localization/RussianUiText.CycleWorkout.cs`
-  - `tests/MuscleCuties.Core.Tests/UiThirtyNinePlusWave1Tests.cs`, `tests/MuscleCuties.Core.Tests/UiThirtyNinePlusWave2Tests.cs`, `tests/MuscleCuties.Core.Tests/UiThirtyNinePlusWave3Tests.cs`, `tests/MuscleCuties.Core.Tests/UiThirtyNinePlusWave4Tests.cs`
-  - `STATUS.md`
+- `src/MuscleCuties.Infrastructure.PostgreSql/Account/Authentication/PostgresAccountAuthenticationUseCase.cs` — bounded Apple authorization-code exchange during sign-in with `AppleTokenExchangeTimeout` (3s) and fallback to storing `apple-code:<authorizationCode>` when outbound calls to IPv4-only `appleid.apple.com` fail or time out from the Lambda VPC, logging only the exception type.
+- `src/MuscleCuties.Infrastructure/Account/SignIn/CloudAccountSignInStore.cs` — distinguished credential rejection (`BackendApiStatus.Unauthorized` -> `null`) from backend/network failures (`OfflineRejected`, `Timeout`, `ServerError`, `RateLimited` -> `HttpRequestException`) for password sign-in, and reported connection/service errors distinctly for Apple sign-in.
+- `tests/MuscleCuties.Registration.Integration.Tests/AppleSignInPostgresTests.cs` — added PostgreSQL integration regression tests covering network error and timeout fallback during Apple sign-in authorization-code exchange.
+- `tests/MuscleCuties.Registration.Tests/CloudAccountSignInStoreTests.cs` — added contract tests verifying password and Apple sign-in error classification across `Unauthorized`, `OfflineRejected`, `Timeout`, `ServerError`, and `RateLimited`.
+- `STATUS.md` — updated task verification and Beta Lambda deployment record.
 
-## Verification
+## Test commands and pasted output
 
-### Core test suite
+### Test-first RED verification (before fixes)
+
+```text
+$ dotnet test tests/MuscleCuties.Registration.Tests/MuscleCuties.Registration.Tests.csproj --filter "FullyQualifiedName~CloudAccountSignInStoreTests" -v minimal
+Failed!  - Failed:     8, Passed:     1, Skipped:     0, Total:     9, Duration: 29 ms - MuscleCuties.Registration.Tests.dll (net10.0)
+
+$ MC_INTEGRATION_POSTGRES=1 MC_SCHEMA_COMPATIBILITY_POSTGRES="Host=127.0.0.1;Port=55461;Database=postgres;Username=postgres" dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj --no-build --filter "FullyQualifiedName~AppleSignInSucceedsAndStoresAuthorizationCodeWhenTokenExchangeThrowsNetworkError" -v minimal
+Failed MuscleCuties.Registration.Integration.Tests.AppleSignInPostgresTests.AppleSignInSucceedsAndStoresAuthorizationCodeWhenTokenExchangeThrowsNetworkError [510 ms]
+Error Message:
+ System.Net.Http.HttpRequestException : Network is unreachable
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 510 ms - MuscleCuties.Registration.Integration.Tests.dll (net10.0)
+```
+
+### Full Release test suites and iOS build (after fixes, commit `7ff40519d05d299e5b247413039c2d1865c23863`)
+
 ```text
 $ dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj -c Release -v minimal
-Passed!  - Failed:     0, Passed:  1757, Skipped:     0, Total:  1757, Duration: 907 ms - MuscleCuties.Core.Tests.dll (net10.0)
-```
+Passed!  - Failed:     0, Passed:  1757, Skipped:     0, Total:  1757, Duration: 1 s - MuscleCuties.Core.Tests.dll (net10.0)
 
-### Mobile contracts test suite
-```text
 $ dotnet test tests/MuscleCuties.Mobile.Contracts.Tests/MuscleCuties.Mobile.Contracts.Tests.csproj -c Release -v minimal
-Passed!  - Failed:     0, Passed:   248, Skipped:     0, Total:   248, Duration: 188 ms - MuscleCuties.Mobile.Contracts.Tests.dll (net10.0)
-```
+Passed!  - Failed:     0, Passed:   248, Skipped:     0, Total:   248, Duration: 231 ms - MuscleCuties.Mobile.Contracts.Tests.dll (net10.0)
 
-### Registration test suite
-```text
 $ dotnet test tests/MuscleCuties.Registration.Tests/MuscleCuties.Registration.Tests.csproj -c Release -v minimal
-Passed!  - Failed:     0, Passed:    70, Skipped:     0, Total:    70, Duration: 422 ms - MuscleCuties.Registration.Tests.dll (net10.0)
-```
+Passed!  - Failed:     0, Passed:    79, Skipped:     0, Total:    79, Duration: 745 ms - MuscleCuties.Registration.Tests.dll (net10.0)
 
-### Server test suite
-```text
 $ MC_LATENCY_POSTGRES="Host=127.0.0.1;Port=55461;Database=mc_test_glute;Username=postgres" dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj -c Release -v minimal
-Passed!  - Failed:     0, Passed:   125, Skipped:     0, Total:   125, Duration: 55 s - MuscleCuties.Server.Tests.dll (net10.0)
-```
+Passed!  - Failed:     0, Passed:   125, Skipped:     0, Total:   125, Duration: 59 s - MuscleCuties.Server.Tests.dll (net10.0)
 
-### iOS Simulator build
-```text
+$ MC_INTEGRATION_POSTGRES=1 MC_SCHEMA_COMPATIBILITY_POSTGRES="Host=127.0.0.1;Port=55461;Database=postgres;Username=postgres" dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj -c Release --filter "FullyQualifiedName~AppleSignInPostgresTests" -v minimal
+Passed!  - Failed:     0, Passed:     4, Skipped:     0, Total:     4, Duration: 4 s - MuscleCuties.Registration.Integration.Tests.dll (net10.0)
+
 $ dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj -f net10.0-ios -r iossimulator-arm64 -c Debug -v minimal
 Build succeeded.
     0 Warning(s)
     0 Error(s)
-Time Elapsed 00:00:13.61
 ```
 
-### Live iOS Simulator visual checks (iPhone 17 Pro, iOS 26.3)
-- Verified Light Mode / Default (`large`) screenshots of `DashboardPage`, `InjuryLogModal` (content-fitting empty state), `CyclePage`, `NutritionPage` (including `"1480 kcal remaining today"` after fixing `RemainingCaloriesText` notification), `FoodLogPage` (including `"Add food"` button and Hydration card), `ProfilePage`, and `ProfileUnitsDisplayPage` (hidden tab bar + visible `Save units` footer + radio rings + unit previews).
-- Verified Dark Mode + `accessibility-large` rendering on `ProfileUnitsDisplayPage` (zero clipping, clean contrast, pinned footer visible above home indicator).
+### AWS Lambda Beta deployment and live endpoint verification
 
-## Not verified
+Deployed commit `7ff40519d05d299e5b247413039c2d1865c23863` (zero database migrations in diff; RDS automated snapshot present) via `tools/deployment/validate-package.sh`, `tools/deployment/validate-worker-package.sh`, `tools/deployment/upload-artifact.sh`, and `tools/deployment/deploy_release.py deploy`:
 
-- Full interactive walkthrough on a physical iOS device (Apple HealthKit hardware permissions, physical camera barcode scan, Mail composer handoff, and Russian locale live screenshots across all 24 pages) was not executed in this simulator session.
-- `MuscleCuties.Server.Tests` was run prior to the final UI-only `NutritionViewModel.Notifications.cs` notification fix and was not re-run afterwards because no server code changed.
+```text
+release_status=verified code=none
+- musclecuties-backend-api:beta -> version 17 (from 16), CodeSha256 gq/QylegX3erWD+9WE9xUpF8Cz7b8nJR73a806IaUYI=
+- musclecuties-workout-reconciliation:beta -> version 4 (from 3), CodeSha256 qLpDSX9uDf61G3g1kJM6IHMeYji+tAdcLfY7xc+6K+E=
+- /health/live -> HTTP 200 ({"status":"live","apiVersion":"v1"})
+- /health/ready -> HTTP 200 (Healthy)
+- POST /api/v1/auth/apple/nonce -> HTTP 200
+- POST /api/v1/auth/apple (synthetic malformed token) -> HTTP 401 (CloudWatch v17: "Apple sign-in rejected before session lookup: InvalidFormat")
+- POST /api/v1/auth/password (synthetic nonexistent account) -> HTTP 401
+- API Gateway HTTP API y2ejsgrc6l integration -> arn:aws:lambda:us-east-2:028417007003:function:musclecuties-backend-api:beta
+```
 
-## Next step
+## What was not verified and why
 
-Review the open PR on `fix/qa-audit-followups` and merge into `main` once CI checks pass.
+- End-to-end live Sign in with Apple on a physical iOS device with a real Apple ID token was not executed from this workstation (requires an interactive iOS device signed into iCloud with a Release Beta / TestFlight build pointing to `https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com`).
+- Server-side Apple token revocation on account deletion (`POST https://appleid.apple.com/auth/revoke`) from inside the Lambda VPC was not verified end-to-end because `appleid.apple.com` publishes IPv4-only A records while Lambda route table `rtb-048f0c0463cf0a996` currently has only IPv6 egress (`::/0` via `eigw-09924dc9d1f54d31e`) and no IPv4 NAT route. No paid NAT infrastructure was provisioned without owner approval.
+- The non-Apple tests in `MuscleCuties.Registration.Integration.Tests` were not run in this pass (only `AppleSignInPostgresTests` ran against local Postgres).
+
+## Next step or blocker
+
+- Retest Sign in with Apple and password login from a Beta iOS build (`-p:AppTargetEnvironment=Beta`, or TestFlight) against `https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com` (note: Debug builds intentionally target `http://127.0.0.1:5080` and require `scripts/run-local-api.sh`).
+- Decide whether to add IPv4 outbound egress (NAT Gateway / NAT instance) to VPC `vpc-02c2c07f0bf07f145` (`rtb-048f0c0463cf0a996`) so Apple account-deletion revocation can also reach `appleid.apple.com` from Lambda.
+- Open and merge the PR for `fix/qa-audit-followups` into `main`.
