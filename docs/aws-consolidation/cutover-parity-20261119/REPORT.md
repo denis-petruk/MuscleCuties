@@ -81,10 +81,12 @@ The restore ran as a second `db.t4g.micro` alongside the source. Two instances a
 exceeds the 20 GB storage allowance. It was therefore deleted immediately after the proof
 (`--skip-final-snapshot --delete-automated-backups`); one instance remains.
 
-Still outside the free allowance: the 20 GB manual snapshot plus the source's automated backups
-exceed the 20 GB backup allowance by roughly 20 GB, on the order of $2/month, until the snapshot
-is retired after the cutover. The snapshot is what makes a rollback possible, so this is a
-deliberate cost rather than an oversight.
+**Correction.** This section originally estimated the manual snapshot at "roughly 20 GB, on the
+order of $2/month". That was wrong in both directions and has been replaced by measurement — see
+`docs/aws-consolidation/free-tier-audit-20261119.md`. The database holds 15 MB of real data, not
+20 GB; there were seven manual snapshots, not one; and Cost Explorer shows no RDS backup usage
+type at all, so measured RDS cost is $0.00. All seven snapshots have since been deleted and the
+rollback now lives as a verified logical dump outside AWS.
 
 ## Open questions
 
