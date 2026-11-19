@@ -28,6 +28,7 @@
                 <Label Grid.Column="1"
                        Text="{loc:LocalizedText Nutrition_Balance_TodaySBalance}"
                        Style="{StaticResource SectionTitle}"
+                       SemanticProperties.HeadingLevel="Level2"
                        LineBreakMode="WordWrap"
                        VerticalOptions="Center" />
             </Grid>
@@ -67,6 +68,9 @@
                                VerticalOptions="Center"
                                LineBreakMode="WordWrap" />
                     </FlexLayout>
+                    <Label Text="{Binding RemainingCaloriesText}"
+                           Style="{StaticResource CaptionLabel}"
+                           LineBreakMode="WordWrap" />
                     <Label Text="{Binding ActivityAdjustmentText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_Balance_ActivityFormat}"
                            IsVisible="{Binding HasActivityAdjustment}"
                            Style="{StaticResource CaptionLabel}"
@@ -96,7 +100,8 @@
                            HorizontalTextAlignment="Center"
                            LineBreakMode="WordWrap" />
                     <Label Text="{Binding ProteinText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionTinyCentered}"
+                           Style="{StaticResource CaptionLabel}"
+                           HorizontalTextAlignment="Center"
                            LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
 
@@ -121,7 +126,8 @@
                            HorizontalTextAlignment="Center"
                            LineBreakMode="WordWrap" />
                     <Label Text="{Binding CarbsText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionTinyCentered}"
+                           Style="{StaticResource CaptionLabel}"
+                           HorizontalTextAlignment="Center"
                            LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
 
@@ -146,7 +152,8 @@
                            HorizontalTextAlignment="Center"
                            LineBreakMode="WordWrap" />
                     <Label Text="{Binding FatsText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource CaptionTinyCentered}"
+                           Style="{StaticResource CaptionLabel}"
+                           HorizontalTextAlignment="Center"
                            LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
             </sharedControls:AdaptiveRow>

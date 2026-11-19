@@ -57,11 +57,11 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
             ResendButtonText = text;
         }, timeProvider);
 
-        StartRecoveryCommand = new AsyncRelayCommand(StartRecoveryAsync);
-        VerifyCodeCommand = new AsyncRelayCommand(VerifyCodeAsync);
+        StartRecoveryCommand = new AsyncRelayCommand(StartRecoveryAsync, () => !IsBusy);
+        VerifyCodeCommand = new AsyncRelayCommand(VerifyCodeAsync, () => !IsBusy);
         ResendCodeCommand = new AsyncRelayCommand(ResendCodeAsync, () => CanResend && !IsBusy);
-        ResetPasswordCommand = new AsyncRelayCommand(ResetPasswordAsync);
-        GoBackCommand = new AsyncRelayCommand(GoBackAsync);
+        ResetPasswordCommand = new AsyncRelayCommand(ResetPasswordAsync, () => !IsBusy);
+        GoBackCommand = new AsyncRelayCommand(GoBackAsync, () => !IsBusy);
     }
 
     public AsyncRelayCommand StartRecoveryCommand { get; }
@@ -75,6 +75,15 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
     public bool IsStep3 => Step == PasswordRecoveryStep.SetNewPassword;
     public bool IsStep4 => Step == PasswordRecoveryStep.Completed;
 
+    public string StepProgressText => MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+        "Auth_PasswordRecovery_StepFormat",
+        Step switch
+        {
+            PasswordRecoveryStep.EnterCode => 2,
+            PasswordRecoveryStep.SetNewPassword or PasswordRecoveryStep.Completed => 3,
+            _ => 1
+        });
+
     public void Dispose()
     {
         _countdownCoordinator.Dispose();
@@ -87,9 +96,31 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(IsStep2));
         OnPropertyChanged(nameof(IsStep3));
         OnPropertyChanged(nameof(IsStep4));
+        OnPropertyChanged(nameof(StepProgressText));
+    }
+
+    partial void OnEmailOrUsernameChanged(string value)
+    {
+        ErrorMessage = string.Empty;
     }
 
     partial void OnOtpCodeChanged(string value)
+    {
+        ErrorMessage = string.Empty;
+        if (string.IsNullOrEmpty(value))
+            return;
+
+        var digitsOnly = new string(value.Where(char.IsDigit).Take(6).ToArray());
+        if (!string.Equals(digitsOnly, value, StringComparison.Ordinal))
+            OtpCode = digitsOnly;
+    }
+
+    partial void OnNewPasswordChanged(string value)
+    {
+        ErrorMessage = string.Empty;
+    }
+
+    partial void OnConfirmPasswordChanged(string value)
     {
         ErrorMessage = string.Empty;
     }
@@ -101,7 +132,11 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
 
     partial void OnIsBusyChanged(bool value)
     {
+        StartRecoveryCommand.NotifyCanExecuteChanged();
+        VerifyCodeCommand.NotifyCanExecuteChanged();
         ResendCodeCommand.NotifyCanExecuteChanged();
+        ResetPasswordCommand.NotifyCanExecuteChanged();
+        GoBackCommand.NotifyCanExecuteChanged();
     }
 
     private async Task StartRecoveryAsync()
@@ -124,7 +159,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
             var result = await _recoveryService.StartAsync(new StartAccountRecoveryRequest(input));
             if (!result.Succeeded)
             {
-                ErrorMessage = result.ErrorMessage ?? "Could not begin recovery. Please try again.";
+                ErrorMessage = result.ErrorMessage ?? "Ui_Auth_Error_StartRecovery";
                 return;
             }
 
@@ -169,7 +204,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
 
             if (!result.Succeeded || string.IsNullOrWhiteSpace(result.VerificationToken))
             {
-                ErrorMessage = result.ErrorMessage ?? "Invalid or expired code. Please try again.";
+                ErrorMessage = result.ErrorMessage ?? "Ui_Auth_Error_InvalidOrExpiredCode";
                 return;
             }
 
@@ -201,7 +236,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
             var result = await _recoveryService.ResendAsync(new ResendAccountRecoveryRequest(ChallengeId, Email));
             if (!result.Succeeded)
             {
-                ErrorMessage = result.ErrorMessage ?? "Could not resend code. Please try again.";
+                ErrorMessage = result.ErrorMessage ?? "Ui_Auth_Error_ResendCode";
                 return;
             }
 
@@ -244,7 +279,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
 
             if (!result.Succeeded)
             {
-                ErrorMessage = result.ErrorMessage ?? "Could not reset password. Please try again.";
+                ErrorMessage = result.ErrorMessage ?? "Ui_Auth_Error_PasswordUpdate";
                 return;
             }
 

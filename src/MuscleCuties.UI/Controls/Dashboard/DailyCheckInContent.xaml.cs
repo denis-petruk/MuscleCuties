@@ -174,11 +174,15 @@ public partial class DailyCheckInContent : ContentView
 
     private static void UpdateChipGroup(Button[] chips, int selectedIndex)
     {
+        var selectedHint = Services.Localization.UiTextCatalog.Get("Common_Selected");
+        var unselectedHint = Services.Localization.UiTextCatalog.Get("Common_NotSelected");
         for (var i = 0; i < chips.Length; i++)
         {
+            var isSelected = i == selectedIndex;
             VisualStateManager.GoToState(
                 chips[i],
-                i == selectedIndex ? SelectedVisualState : UnselectedVisualState);
+                isSelected ? SelectedVisualState : UnselectedVisualState);
+            SemanticProperties.SetHint(chips[i], isSelected ? selectedHint : unselectedHint);
         }
     }
 }

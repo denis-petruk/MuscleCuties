@@ -132,7 +132,21 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(ProteinProgressRatio))]
     private double _totalProtein;
 
-    [ObservableProperty] private int _waterIntakeMl;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(WaterSummaryAccessibility))]
+    private int _waterIntakeMl;
+
+    public string WaterSummaryAccessibility =>
+        UiTextCatalog.Format("Nutrition_Hydration_SummaryAccessibilityFormat", WaterIntakeMl);
+
+    public MealType SuggestedAddMealType => IsSelectedDateToday
+        ? DateTime.Now.Hour switch
+        {
+            < 11 => MealType.Breakfast,
+            < 15 => MealType.Lunch,
+            < 20 => MealType.Dinner,
+            _ => MealType.Snack
+        }
+        : MealType.Breakfast;
 
     [ObservableProperty] private bool _isSavingWater;
 
@@ -841,6 +855,12 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     public async Task DeleteFoodItemAsync()
     {
         if (IsWriting || !CanDeleteEditingFood || !IsEditModalVisible) return;
+        var confirmed = await ConfirmAsync(
+            UiTextCatalog.Get("Nutrition_FoodLog_DeleteItemTitle"),
+            UiTextCatalog.Get("Nutrition_FoodLog_DeleteItemMessage"),
+            UiTextCatalog.Get("Common_Delete"),
+            UiTextCatalog.Get("Common_Cancel"));
+        if (!confirmed) return;
         var id = EditingItemId;
         await CommitFoodAsync(_draftDate, () => _dailyLogUseCase.DeleteFoodItemAsync(id), "Item deleted.");
     }

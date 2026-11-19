@@ -22,42 +22,44 @@
         <VerticalStackLayout Padding="{DynamicResource PresentationPageContentPadding}" Spacing="{StaticResource UiSpaceContent}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceControl}" VerticalOptions="Center">
                 <!-- Avatar with Active Phase Color Halo -->
-                <Border
-                    WidthRequest="{StaticResource UiDimension72}"
-                    HeightRequest="{StaticResource UiDimension72}"
-                    StrokeShape="{StaticResource UiRoundRectangleRadius36}"
-                    StrokeThickness="{StaticResource UiStrokeWidth3}"
-                    Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
-                    BackgroundColor="{StaticResource Transparent}"
-                    Padding="{StaticResource UiInsets2}"
-                    SemanticProperties.Description="{loc:LocalizedText Profile_Page_CyclePhaseIndicatorAndProfilePhoto}">
-                    <Border.GestureRecognizers>
-                        <TapGestureRecognizer Tapped="OnProfileImageTapped" />
-                    </Border.GestureRecognizers>
+                <Grid WidthRequest="{StaticResource UiDimension72}" HeightRequest="{StaticResource UiDimension72}">
                     <Border
-                        WidthRequest="{StaticResource UiDimension64}"
-                        HeightRequest="{StaticResource UiDimension64}"
-                        StrokeShape="{StaticResource UiRoundRectangleRadius32}"
-                        BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceContrastLight}, Dark={StaticResource SurfaceContrastDark}}"
-                        Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
-                        StrokeThickness="{StaticResource UiStrokeWidth1}">
-                        <Grid>
-                            <Image
-                                Source="{Binding ProfileImageSource}"
-                                IsVisible="{Binding HasProfileImage}"
-                                Aspect="AspectFill"
-                                WidthRequest="{StaticResource UiDimension64}"
-                                HeightRequest="{StaticResource UiDimension64}" />
-                            <Image
-                                IsVisible="{Binding HasNoProfileImage}"
-                                Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
-                                Aspect="AspectFit"
-                                Margin="{StaticResource UiInsets6}"
-                                WidthRequest="{StaticResource UiDimension64}"
-                                HeightRequest="{StaticResource UiDimension64}" />
-                        </Grid>
+                        WidthRequest="{StaticResource UiDimension72}"
+                        HeightRequest="{StaticResource UiDimension72}"
+                        StrokeShape="{StaticResource UiRoundRectangleRadius36}"
+                        StrokeThickness="{StaticResource UiStrokeWidth3}"
+                        Stroke="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToBrushConverter}}"
+                        BackgroundColor="{StaticResource Transparent}"
+                        Padding="{StaticResource UiInsets2}"
+                        InputTransparent="True">
+                        <Border
+                            WidthRequest="{StaticResource UiDimension64}"
+                            HeightRequest="{StaticResource UiDimension64}"
+                            StrokeShape="{StaticResource UiRoundRectangleRadius32}"
+                            BackgroundColor="{AppThemeBinding Light={StaticResource SurfaceContrastLight}, Dark={StaticResource SurfaceContrastDark}}"
+                            Stroke="{AppThemeBinding Light={StaticResource InputStroke}, Dark={StaticResource InputStrokeDark}}"
+                            StrokeThickness="{StaticResource UiStrokeWidth1}">
+                            <Grid>
+                                <Image
+                                    Source="{Binding ProfileImageSource}"
+                                    IsVisible="{Binding HasProfileImage}"
+                                    Aspect="AspectFill"
+                                    WidthRequest="{StaticResource UiDimension64}"
+                                    HeightRequest="{StaticResource UiDimension64}" />
+                                <Image
+                                    IsVisible="{Binding HasNoProfileImage}"
+                                    Source="{AppThemeBinding Light=musclecuties_logo_light_transparent.png, Dark=musclecuties_logo_dark_transparent.png}"
+                                    Aspect="AspectFit"
+                                    Margin="{StaticResource UiInsets6}"
+                                    WidthRequest="{StaticResource UiDimension64}"
+                                    HeightRequest="{StaticResource UiDimension64}" />
+                            </Grid>
+                        </Border>
                     </Border>
-                </Border>
+                    <sharedControls:CardTapTarget
+                        Clicked="OnProfileImageTapped"
+                        SemanticProperties.Description="{loc:LocalizedText Profile_Page_CyclePhaseIndicatorAndProfilePhoto}" />
+                </Grid>
             
                 <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing3}" VerticalOptions="Center">
                     <Label x:Name="ProfileNameLabel"
@@ -156,23 +158,26 @@
                 x:TypeArguments="profileControls:ProfileDetailsContent" />
 
             <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0}">
-                <Label
+                <ActivityIndicator
                     Grid.Row="0"
-                    Text="{loc:LocalizedText Profile_Page_AllHealthAndFitnessDataIs}"
-                    Style="{StaticResource CaptionCentered}" />
-            
+                    Style="{StaticResource StateBusyInline}"
+                    IsRunning="{Binding IsAccountActionBusy}"
+                    IsVisible="{Binding IsAccountActionBusy}" />
+
                 <!-- Clean Log Out Action -->
                 <Button
                     Grid.Row="1"
                     Text="{loc:LocalizedText Profile_Page_LogOut}"
                     Clicked="OnLogoutClicked"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     Style="{StaticResource ButtonSecondary}" />
-            
+
                 <!-- In-App Delete Account & Data Action -->
                 <Button
                     Grid.Row="2"
                     Text="{loc:LocalizedText Profile_Page_DeleteAccountAndLocalData}"
                     Clicked="OnDeleteAccountClicked"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     Style="{StaticResource ButtonSecondary}"
                     SemanticProperties.Description="{loc:LocalizedText Profile_Page_DeleteAccountAndLocalData}" />
                 <Label
@@ -180,7 +185,12 @@
                     Text="{Binding AccountActionError, Converter={StaticResource LocalizedStringConverter}}"
                     IsVisible="{Binding HasAccountActionError}"
                     Style="{StaticResource ErrorLabel}"
-                    SemanticProperties.Description="{loc:LocalizedText Profile_Page_AccountDeletionStatus}" />
+                    LineBreakMode="WordWrap"
+                    SemanticProperties.Description="{loc:LocalizedText Profile_Page_AccountDeletionStatus}">
+                    <Label.Behaviors>
+                        <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                    </Label.Behaviors>
+                </Label>
             </Grid>
         </VerticalStackLayout>
     </ScrollView>

@@ -1,4 +1,5 @@
 using System.Windows.Input;
+using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Profile;
 
@@ -14,10 +15,15 @@ public partial class ProfilePrivacyPage : ContentPage
     public ProfilePrivacyPage(ProfileHealthSyncViewModel healthSync)
     {
         HealthSync = healthSync;
-        BackCommand = new Command(async () => await NavigateBackAsync());
-        Appearing += async (_, _) => { await HealthSync.RefreshAsync(); };
+        BackCommand = new AsyncRelayCommand(NavigateBackAsync);
         BindingContext = this;
         this.InitializeWithTiming(InitializeComponent);
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        _ = HealthSync.RefreshAsync();
     }
 
     private static async Task NavigateBackAsync()

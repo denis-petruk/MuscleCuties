@@ -46,7 +46,15 @@
                                    />
                 <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}">
                     <Label LineBreakMode="WordWrap" Text="{Binding SwapErrorText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource ErrorLabel}" IsVisible="{Binding HasSwapError}" />
+                           Style="{StaticResource ErrorLabel}" IsVisible="{Binding HasSwapError}">
+                        <Label.Behaviors>
+                            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
+                    <Button Style="{StaticResource ButtonSecondary}"
+                            Text="{loc:LocalizedText Common_TryAgain}"
+                            Command="{Binding OpenSwapPanelCommand}"
+                            IsVisible="{Binding HasSwapError}" />
                     <Label LineBreakMode="WordWrap" Text="{Binding SwapEmptyTextKey, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource BodyLabel}" IsVisible="{Binding ShowNoSwapCandidates}" />
                 </VerticalStackLayout>
@@ -93,9 +101,17 @@
                 </CollectionView>
                 </Grid>
                 <VerticalStackLayout Grid.Row="3" Spacing="{StaticResource UiSpaceMicro}"
-                                     Padding="{DynamicResource PresentationActionFooterPadding}">
+                                     Padding="{DynamicResource PresentationActionFooterPadding}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
+                    <Label Text="{Binding SwapConfirmHint}"
+                           Style="{StaticResource CaptionCentered}"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding ShowSwapConfirmHint}" />
                     <Button Style="{StaticResource ButtonPrimary}" Text="{Binding SwapConfirmText, Converter={StaticResource LocalizedStringConverter}}"
-                            Command="{Binding ConfirmSwapCommand}" IsVisible="{Binding HasSwapCandidates}" />
+                            Command="{Binding ConfirmSwapCommand}"
+                            IsEnabled="{Binding CanConfirmSwap}"
+                            SemanticProperties.Hint="{Binding SwapConfirmHint}"
+                            IsVisible="{Binding HasSwapCandidates}" />
                     <Button Text="{loc:LocalizedText Workout_Swap_LeaveSessionButton}" Command="{Binding FinishSessionCommand}"
                             IsVisible="{Binding SwapNeedsReload}"
                             Style="{StaticResource ButtonSecondary}" />

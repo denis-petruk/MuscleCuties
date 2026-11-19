@@ -20,7 +20,7 @@
                        Style="{StaticResource MutedLabel}" VerticalOptions="Center"
                        LineBreakMode="WordWrap" Margin="{StaticResource UiInsets8_0_0_0}" />
             </FlexLayout>
-            <Grid ColumnDefinitions="76,*" ColumnSpacing="{StaticResource UiSpaceControl}">
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceControl}">
                 <Grid WidthRequest="{StaticResource UiDimension76}" HeightRequest="{StaticResource UiDimension76}">
                     <dashboard:DashboardProgressRing Progress="{Binding CaloriesProgress}"
                                                      RingColor="{StaticResource Primary}"
@@ -102,7 +102,7 @@
             </sharedControls:AdaptiveRow>
         </VerticalStackLayout>
         <sharedControls:CardTapTarget Command="{Binding OpenNutritionCommand}"
-                                      SemanticProperties.Description="{loc:LocalizedText Dashboard_Nutrition_ProgressA11y}" />
+                                      SemanticProperties.Description="{Binding NutritionCardAccessibilityText}" />
         </Grid>
     </Border>
 </ContentView>

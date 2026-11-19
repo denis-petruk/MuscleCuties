@@ -400,29 +400,31 @@
                            Style="{StaticResource MutedLabel}" />
                     <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_RecentHistoryPeriodsTitle}"
                            Style="{StaticResource FormFieldLabel}" />
-                    <HorizontalStackLayout
-                        BindableLayout.ItemsSource="{Binding RecentTrainingWeeks}"
-                        Spacing="{StaticResource UiSpaceTight}"
-                        HorizontalOptions="Start">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="vm:StrengthPlanRecentWeekDisplay">
-                                <VerticalStackLayout
-                                    Style="{StaticResource PlanHistoryWeekCell}"
-                                    WidthRequest="{StaticResource UiDimension52}"
-                                    SemanticProperties.Description="{Binding AccessibilityDescription}">
-                                    <BoxView WidthRequest="{StaticResource UiDimension18}"
-                                             HeightRequest="{Binding BarHeight}"
-                                             CornerRadius="{StaticResource UiCornerRadius4}"
-                                             Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
-                                             HorizontalOptions="Center"
-                                             VerticalOptions="End"
-                                             InputTransparent="True" />
-                                    <Label LineBreakMode="WordWrap" Text="{Binding SessionCount}" Style="{StaticResource PlanHistoryWeekCount}" />
-                                    <Label LineBreakMode="WordWrap" Text="{Binding Label}" Style="{StaticResource CaptionCentered}" />
-                                </VerticalStackLayout>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </HorizontalStackLayout>
+                    <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
+                        <HorizontalStackLayout
+                            BindableLayout.ItemsSource="{Binding RecentTrainingWeeks}"
+                            Spacing="{StaticResource UiSpaceTight}"
+                            HorizontalOptions="Start">
+                            <BindableLayout.ItemTemplate>
+                                <DataTemplate x:DataType="vm:StrengthPlanRecentWeekDisplay">
+                                    <VerticalStackLayout
+                                        Style="{StaticResource PlanHistoryWeekCell}"
+                                        MinimumWidthRequest="{StaticResource UiDimension52}"
+                                        SemanticProperties.Description="{Binding AccessibilityDescription}">
+                                        <BoxView WidthRequest="{StaticResource UiDimension18}"
+                                                 HeightRequest="{Binding BarHeight}"
+                                                 CornerRadius="{StaticResource UiCornerRadius4}"
+                                                 Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
+                                                 HorizontalOptions="Center"
+                                                 VerticalOptions="End"
+                                                 InputTransparent="True" />
+                                        <Label LineBreakMode="WordWrap" Text="{Binding SessionCount}" Style="{StaticResource PlanHistoryWeekCount}" />
+                                        <Label LineBreakMode="WordWrap" Text="{Binding Label}" Style="{StaticResource CaptionCentered}" />
+                                    </VerticalStackLayout>
+                                </DataTemplate>
+                            </BindableLayout.ItemTemplate>
+                        </HorizontalStackLayout>
+                    </ScrollView>
 
                     <Button Text="{Binding TrainingDetailsToggleText}"
                             Command="{Binding ToggleTrainingDetailsCommand}"
@@ -584,18 +586,10 @@
         <Border x:Name="PreviewSheet"
                 Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}" VerticalOptions="End">
             <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
-                <Grid Padding="{DynamicResource PresentationModalHeaderPadding}" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Workout_Generation_PreviewTitle}" IconGlyph="Target24" />
-                    </VerticalStackLayout>
-                    <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
-                            SemanticProperties.Description="{loc:LocalizedText Common_Close}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding ClosePreviewCommand}" />
-                        </Border.GestureRecognizers>
-                        <Path Style="{StaticResource ModalCloseIcon}" />
-                    </Border>
-                </Grid>
+                <sharedControls:ModalSheetHeader
+                    Title="{loc:LocalizedText Workout_Generation_PreviewTitle}"
+                    CloseCommand="{Binding ClosePreviewCommand}"
+                    CloseDescription="{loc:LocalizedText Common_Close}" />
                 <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
                 <ScrollView Grid.Row="2">
                     <VerticalStackLayout Padding="{DynamicResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpaceControl}">
@@ -859,7 +853,10 @@
 
                         </VerticalStackLayout>
                 </ScrollView>
-                <VerticalStackLayout Grid.Row="3" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}">
+                <VerticalStackLayout Grid.Row="3"
+                                     Padding="{DynamicResource PresentationActionFooterPadding}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                                     Spacing="{StaticResource UiSpaceTight}">
                     <BoxView Style="{StaticResource PlanStickyActionDivider}" />
                     <ActivityIndicator
                         Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsBusy}"
@@ -881,17 +878,16 @@
                            LineBreakMode="WordWrap"
                            AutomationId="StrengthPlanApplyUnavailableReason" />
                     <!-- G-01: a replacement is only activated by Apply plan. -->
-                    <Label Text="{Binding ReplacementApplyNoticeText}"
-                           IsVisible="{Binding ShowsReplacementApplyNotice}"
-                           Style="{StaticResource MutedLabel}"
-                           LineBreakMode="WordWrap" />
-                    <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"
-                            Command="{Binding EditDetailsCommand}"
-                            IsVisible="{Binding CanEditDetailsFromPrerequisites}"
-                            Style="{StaticResource ButtonSecondary}" />
+                    <Border Style="{StaticResource CardSecondary}"
+                            IsVisible="{Binding ShowsReplacementApplyNotice}">
+                        <Label Text="{Binding ReplacementApplyNoticeText}"
+                               Style="{StaticResource BodyStrong}"
+                               LineBreakMode="WordWrap" />
+                    </Border>
                     <Button Text="{loc:LocalizedText Workout_Generation_ApplyPlan}"
                             Command="{Binding AcceptProposalCommand}"
                             IsVisible="{Binding CanReviewPreview}"
+                            SemanticProperties.Hint="{Binding UnavailableApplyReason}"
                             Style="{StaticResource ButtonPrimary}"
                             AutomationId="StrengthPlanApplyButton" />
                     <Button Text="{loc:LocalizedText Workout_Generation_EditDetails}"

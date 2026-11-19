@@ -55,9 +55,13 @@
                             <Label
                                 Text="{Binding ErrorText}"
                                 IsVisible="{Binding HasError}"
-                                Style="{StaticResource CaptionLabel}"
+                                Style="{StaticResource ErrorLabel}"
                                 LineBreakMode="WordWrap"
-                                Padding="{StaticResource UiInsets0_0_0_12}" />
+                                Padding="{StaticResource UiInsets0_0_0_12}">
+                                <Label.Behaviors>
+                                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                                </Label.Behaviors>
+                            </Label>
                             <Label
                                 Text="{Binding CoverageText}"
                                 IsVisible="{Binding HasCoverageText}"

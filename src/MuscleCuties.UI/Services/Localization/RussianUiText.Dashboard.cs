@@ -77,9 +77,9 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_PainSevereHint"] = "Сильная боль, рекомендуется отдых";
         Values["Dashboard_CheckIn_PainTitle"] = "Боль";
         Values["Dashboard_CheckIn_PainSectionTitle"] = "БОЛЬ";
-        Values["Dashboard_CheckIn_PrivateBadge"] = "Частное";
-        Values["Dashboard_CheckIn_PrivateBadgeA11y"] = "Отметка сохранена в вашей личной учётной записи";
-        Values["Dashboard_CheckIn_SavingA11y"] = "Сохранение отметки о посещении";
+        Values["Dashboard_CheckIn_PrivateBadge"] = "Личное";
+        Values["Dashboard_CheckIn_PrivateBadgeA11y"] = "Отметка сохранена в вашем личном аккаунте";
+        Values["Dashboard_CheckIn_SavingA11y"] = "Сохранение ежедневной отметки";
         Values["Dashboard_CheckIn_SkipButton"] = "Пока пропустить";
         Values["Dashboard_CheckIn_SkipHint"] = "Пропустить сегодняшнюю отметку";
         Values["Dashboard_CheckIn_SleepA11yFormat"] = "Сон прошлой ночью: {0}";
@@ -96,7 +96,7 @@ internal static partial class RussianUiText
         Values["Dashboard_CheckIn_Subtitle"] = "Как вы себя чувствуете сегодня?";
         Values["Dashboard_CheckIn_SuccessMessage"] = "Запись сохранена";
         Values["Dashboard_CheckIn_SuggestFromAppleHealth"] = "Предложить оценки из Apple Health";
-        Values["Dashboard_CheckIn_WeightA11y"] = "Дополнительный вес тела в килограммах";
+        Values["Dashboard_CheckIn_WeightA11y"] = "Необязательный вес тела в килограммах";
         Values["Dashboard_CheckIn_WeightHint"] = "Оставить пустым, чтобы пропустить ввод веса";
         Values["Dashboard_CheckIn_WeightPlaceholderKg"] = "кг";
         Values["Dashboard_Nutrition_Calories"] = "Калории";
@@ -142,6 +142,11 @@ internal static partial class RussianUiText
         Values["Dashboard_Readiness_NoCurrentCheckIn"] = "Заполните сегодняшнюю отметку, чтобы получить подсказки с учётом вашего самочувствия.";
         Values["Dashboard_Readiness_ReviewPending"] = "Отметка сохранена. Рекомендации по тренировке на её основе пока недоступны.";
         Values["Dashboard_Readiness_CompleteCheckIn"] = "Заполнить отметку";
+        Values["Dashboard_Readiness_ViewCheckIn"] = "Открыть сегодняшнюю отметку";
+        Values["Dashboard_Page_OpenInjuryLogActiveA11y"] = "Журнал травм, есть активные записи";
+        Values["Dashboard_Nutrition_SummaryA11yFormat"] = "Питание: {0} {1}. Белки {2}, углеводы {3}, жиры {4}. Дважды коснитесь, чтобы открыть дневник питания.";
+        Values["Dashboard_CheckIn_SleepPoorLabel"] = "Плохой";
+        Values["Dashboard_CheckIn_SleepRestfulLabel"] = "Крепкий";
         Values["Dashboard_CheckIn_IncompleteRequiredRatings"] = "Ответьте на все обязательные вопросы отметки, чтобы увидеть её результат.";
         Values["Dashboard_Readiness_ReadinessLabel"] = "Готовность";
         Values["Dashboard_Readiness_ReadinessScoreFormat"] = "Оценка готовности: {0}";

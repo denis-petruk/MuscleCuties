@@ -22,6 +22,8 @@ public partial class NutritionViewModel
     private void NotifyDisplayProperties()
     {
         MacroProgressFormatter.NotifyAll(OnPropertyChanged);
+        OnPropertyChanged(nameof(RemainingCalories));
+        OnPropertyChanged(nameof(RemainingCaloriesText));
         NotifyMealTargetProperties();
         NotifySuggestionProperties();
     }
@@ -30,12 +32,16 @@ public partial class NutritionViewModel
     {
         if (_isBulkLoading) return;
         MacroProgressFormatter.NotifyCaloriesConsumed(OnPropertyChanged);
+        OnPropertyChanged(nameof(RemainingCalories));
+        OnPropertyChanged(nameof(RemainingCaloriesText));
     }
 
     partial void OnTargetCaloriesChanged(float value)
     {
         if (_isBulkLoading) return;
         MacroProgressFormatter.NotifyCaloriesGoal(OnPropertyChanged);
+        OnPropertyChanged(nameof(RemainingCalories));
+        OnPropertyChanged(nameof(RemainingCaloriesText));
         NotifyMealTargetProperties();
         NotifySuggestionProperties();
         RefreshMealTargetShares();

@@ -62,6 +62,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     [ObservableProperty] private bool _isCycleWarningPopupVisible;
     [ObservableProperty] private bool _isDatePhaseModalVisible;
     [ObservableProperty] private bool _isLoadError;
+    [ObservableProperty] private bool _isRefreshing;
+    private Services.Api.ApiFailureNotice? _lastLoadFailure;
     [ObservableProperty] private string _lastPhaseLogText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_NoShiftLogged");
     [ObservableProperty] private ObservableCollection<CyclePhaseOptionItem> _phaseEditOptions = new();
@@ -101,6 +103,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         _openCycleSettingsAsync = openCycleSettingsAsync;
         OpenCycleSettingsCommand = new AsyncRelayCommand(OpenCycleSettingsAsync);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
+        RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         AdvancePhaseCommand = new AsyncRelayCommand(AdvancePhaseAsync, CanAdvancePhase);
         CloseDatePhaseModalCommand = new RelayCommand(CloseDatePhaseModal);
         SelectPhaseOptionCommand = new RelayCommand<CyclePhaseOptionItem>(SelectPhaseOption);
@@ -221,12 +224,47 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         UseDarkTheme = useDarkTheme;
     }
 
+    public AsyncRelayCommand RefreshCommand { get; }
+    public string LoadErrorMessage => _lastLoadFailure?.MessageText ?? UiTextCatalog.Get("Dashboard_Shared_CouldNotLoadData");
+    public System.Windows.Input.ICommand? RetryLoadCommand => _lastLoadFailure?.IsRetryable == false ? null : LoadDataCommand;
+
+    private async Task RefreshAsync()
+    {
+        if (IsBusy)
+        {
+            IsRefreshing = false;
+            return;
+        }
+
+        IsRefreshing = true;
+        try
+        {
+            _loadGate.MarkStale();
+            await _loadGate.RunAsync(LoadDataCoreAsync, this);
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
+    }
+
     private async Task LoadDataCoreAsync()
     {
         IsBusy = true;
+        _lastLoadFailure = null;
+        OnPropertyChanged(nameof(LoadErrorMessage));
+        OnPropertyChanged(nameof(RetryLoadCommand));
         try
         {
             await RefreshCycleDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[CycleViewModel] Load failed ({ex.GetType().Name}).");
+            _lastLoadFailure = Services.Api.ApiFailurePresenter.FromException(ex, "Dashboard_Shared_CouldNotLoadData");
+            IsLoadError = true;
+            OnPropertyChanged(nameof(LoadErrorMessage));
+            OnPropertyChanged(nameof(RetryLoadCommand));
         }
         finally
         {

@@ -4,16 +4,31 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UI.Models.UI.Common;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
+using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
-public partial class ProfileNutritionSettingsViewModel : ObservableObject
+public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPageLoadAware
 {
+    private const float MinCaloriesKcal = 800f;
+    private const float MaxCaloriesKcal = 8000f;
+    private const float MinProteinGrams = 20f;
+    private const float MaxProteinGrams = 500f;
+    private const float MinCarbsGrams = 0f;
+    private const float MaxCarbsGrams = 1000f;
+    private const float MinFatsGrams = 15f;
+    private const float MaxFatsGrams = 300f;
+
+    private readonly Func<Task> _navigateBackAsync;
     private readonly Func<Task> _navigateAfterSaveAsync;
     private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly IProfileNutritionSettingsUseCase _useCase;
+    private bool _hasLoadedOnce;
+    private string _initialSnapshot = string.Empty;
+
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(AdvancedSettingsButtonText))]
     private bool _areAdvancedSettingsVisible;
@@ -27,7 +42,10 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     [ObservableProperty] private UserGoal _goal;
     private bool _hasSavedCustomGoals;
     [ObservableProperty] private string _ironGoal = string.Empty;
-    [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    private bool _isBusy;
+    [ObservableProperty] private bool _isLoadError;
+    [ObservableProperty] private bool _isStatusError;
     [ObservableProperty] private bool _isGlutenFree;
     [ObservableProperty] private bool _isLactoseFree;
     private bool _isSyncingTargets;
@@ -57,10 +75,12 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     {
         _useCase = useCase;
         _refreshNotifier = refreshNotifier;
+        _navigateBackAsync = navigateBackAsync;
         _navigateAfterSaveAsync = navigateAfterSaveAsync;
-        BackCommand = new AsyncRelayCommand(navigateBackAsync);
+        BackCommand = new AsyncRelayCommand(BackAsync);
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
+        ResetToCalculatedCommand = new RelayCommand(ResetToCalculated);
         ToggleVegetarianCommand = new RelayCommand(ToggleVegetarian);
         ToggleVeganCommand = new RelayCommand(ToggleVegan);
         ToggleGlutenFreeCommand = new RelayCommand(ToggleGlutenFree);
@@ -68,6 +88,50 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
         ToggleAdvancedSettingsCommand = new RelayCommand(ToggleAdvancedSettings);
         SelectedGoalOption = GoalOptions.First(option => option.Value == Goal);
         SelectedWeightGoalPaceOption = WeightGoalPaceOptions.First(option => option.Value == WeightGoalPace);
+    }
+
+    public bool IsPageLoading => IsBusy && !_hasLoadedOnce;
+    public bool HasUnsavedChanges =>
+        _hasLoadedOnce && !string.Equals(BuildSnapshot(), _initialSnapshot, StringComparison.Ordinal);
+
+    private string BuildSnapshot() =>
+        $"{Goal}|{WeightGoalPace}|{BuildDietaryTags()}|{CaloriesGoal}|{ProteinGoal}|{CarbsGoal}|{FatsGoal}|{FiberGoal}|{WaterGoal}|{IronGoal}|{VitaminB12Goal}|{VitaminCGoal}|{VitaminDGoal}|{VitaminAGoal}|{VitaminB6Goal}|{FolateGoal}|{CalciumGoal}|{MagnesiumGoal}|{ZincGoal}|{PotassiumGoal}";
+
+    private async Task BackAsync()
+    {
+        if (HasUnsavedChanges && Shell.Current is { } shell)
+        {
+            var discard = await shell.DisplayAlertAsync(
+                UiTextCatalog.Get("Profile_UnsavedChanges_Title"),
+                UiTextCatalog.Get("Profile_UnsavedChanges_Message"),
+                UiTextCatalog.Get("Profile_UnsavedChanges_Discard"),
+                UiTextCatalog.Get("Profile_UnsavedChanges_KeepEditing"));
+            if (!discard)
+                return;
+        }
+
+        await _navigateBackAsync();
+    }
+
+    public void CommitCaloriesEdit()
+    {
+        if (!_isSyncingTargets && ParseOptionalGoal(CaloriesGoal) is { } calories &&
+            calories is >= MinCaloriesKcal and <= MaxCaloriesKcal)
+            RebalanceMacrosFromCalories(calories);
+    }
+
+    public void CommitMacroEdit()
+    {
+        RecalculateCaloriesFromMacros();
+    }
+
+    private void ResetToCalculated()
+    {
+        if (_loadedProfile is null)
+            return;
+        ApplyGoals(CreateCalculatedGoals());
+        StatusMessage = string.Empty;
+        IsStatusError = false;
     }
 
     public IReadOnlyList<SelectionOption<UserGoal>> GoalOptions { get; } =
@@ -87,12 +151,13 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     public bool IsGoalPaceVisible => Goal is UserGoal.FatLoss or UserGoal.Strength;
 
     public string AdvancedSettingsButtonText => AreAdvancedSettingsVisible
-        ? "Profile_NutritionSettings_HideAdvancedSettings"
-        : "Profile_NutritionSettings_AdvancedSettings";
+        ? "Profile_Nutrition_HideMicronutrients"
+        : "Profile_Nutrition_ShowMicronutrients";
 
     public AsyncRelayCommand BackCommand { get; }
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand SaveCommand { get; }
+    public RelayCommand ResetToCalculatedCommand { get; }
     public RelayCommand ToggleAdvancedSettingsCommand { get; }
     public RelayCommand ToggleVegetarianCommand { get; }
     public RelayCommand ToggleVeganCommand { get; }
@@ -102,12 +167,18 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     private async Task LoadDataAsync()
     {
         IsBusy = true;
+        IsLoadError = false;
         StatusMessage = string.Empty;
+        IsStatusError = false;
         try
         {
             var profile = await _useCase.LoadAsync();
             if (profile is null)
+            {
+                _hasLoadedOnce = true;
+                _initialSnapshot = BuildSnapshot();
                 return;
+            }
 
             _loadedProfile = profile;
 
@@ -133,6 +204,13 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
             ApplyGoals(_hasSavedCustomGoals
                 ? _useCase.MergeGoals(savedGoals, calculatedGoals)
                 : calculatedGoals);
+            _hasLoadedOnce = true;
+            _initialSnapshot = BuildSnapshot();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[ProfileNutritionSettingsViewModel] Load failed ({ex.GetType().Name}).");
+            IsLoadError = true;
         }
         finally
         {
@@ -142,37 +220,52 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
 
     private async Task SaveAsync()
     {
+        if (IsBusy)
+            return;
+
         IsBusy = true;
         StatusMessage = string.Empty;
+        IsStatusError = false;
         var settingsSaved = false;
         try
         {
             if (_loadedProfile is null)
             {
+                IsStatusError = true;
                 StatusMessage = "Ui_Profile_Status_CompletePersonalInfo";
                 return;
             }
 
-            NutritionGoalsDto? editedGoals = BuildGoals();
+            NutritionGoalsDto editedGoals = BuildGoals();
+            var validationErrors = CollectValidationErrors(editedGoals);
+            if (validationErrors.Count > 0)
+            {
+                IsStatusError = true;
+                StatusMessage = string.Join(" ", validationErrors);
+                return;
+            }
 
             var saved = await _useCase.SaveAsync(new NutritionSettingsSaveDto(
                 _loadedProfile, CurrentSelection(), editedGoals));
             if (!saved)
             {
+                IsStatusError = true;
                 StatusMessage = "Ui_Profile_Status_CompletePersonalInfo";
                 return;
             }
 
             settingsSaved = true;
-            if (editedGoals is not null)
-                _hasSavedCustomGoals = _useCase.HasOverrides(editedGoals, CreateCalculatedGoals());
+            _hasSavedCustomGoals = _useCase.HasOverrides(editedGoals, CreateCalculatedGoals());
+            _initialSnapshot = BuildSnapshot();
             _refreshNotifier.InvalidateAll();
+            IsStatusError = false;
             StatusMessage = "Ui_Profile_Status_NutritionSaved";
             await _navigateAfterSaveAsync();
         }
         catch (Exception ex)
         {
             Trace.WriteLine($"[ProfileNutritionSettingsViewModel] Save failed ({ex.GetType().Name}).");
+            IsStatusError = true;
             StatusMessage = settingsSaved
                 ? "Settings saved, but Nutrition could not open. Use the Nutrition tab to continue."
                 : "Nutrition settings could not be saved. Please try again.";
@@ -181,6 +274,28 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
         {
             IsBusy = false;
         }
+    }
+
+    private List<string> CollectValidationErrors(NutritionGoalsDto goals)
+    {
+        var errors = new List<string>();
+        if (!string.IsNullOrWhiteSpace(CaloriesGoal) &&
+            (goals.Calories is null || goals.Calories < MinCaloriesKcal || goals.Calories > MaxCaloriesKcal))
+            errors.Add(UiTextCatalog.Get("Profile_Nutrition_InvalidCalories"));
+
+        if (!string.IsNullOrWhiteSpace(ProteinGoal) &&
+            (goals.Protein is null || goals.Protein < MinProteinGrams || goals.Protein > MaxProteinGrams))
+            errors.Add(UiTextCatalog.Get("Profile_Nutrition_InvalidProtein"));
+
+        if (!string.IsNullOrWhiteSpace(CarbsGoal) &&
+            (goals.Carbs is null || goals.Carbs < MinCarbsGrams || goals.Carbs > MaxCarbsGrams))
+            errors.Add(UiTextCatalog.Get("Profile_Nutrition_InvalidCarbs"));
+
+        if (!string.IsNullOrWhiteSpace(FatsGoal) &&
+            (goals.Fats is null || goals.Fats < MinFatsGrams || goals.Fats > MaxFatsGrams))
+            errors.Add(UiTextCatalog.Get("Profile_Nutrition_InvalidFats"));
+
+        return errors;
     }
 
     private void ApplyDietaryTags(string tags)
@@ -385,26 +500,5 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject
     {
         if (value is not null && WeightGoalPace != value.Value)
             WeightGoalPace = value.Value;
-    }
-
-    partial void OnCaloriesGoalChanged(string value)
-    {
-        if (!_isSyncingTargets && ParseOptionalGoal(value) is { } calories)
-            RebalanceMacrosFromCalories(calories);
-    }
-
-    partial void OnProteinGoalChanged(string value)
-    {
-        RecalculateCaloriesFromMacros();
-    }
-
-    partial void OnCarbsGoalChanged(string value)
-    {
-        RecalculateCaloriesFromMacros();
-    }
-
-    partial void OnFatsGoalChanged(string value)
-    {
-        RecalculateCaloriesFromMacros();
     }
 }

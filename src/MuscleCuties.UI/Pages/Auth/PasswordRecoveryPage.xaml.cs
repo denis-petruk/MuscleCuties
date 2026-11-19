@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.ComponentModel;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Auth;
 
 namespace MuscleCuties.UI.Pages.Auth;
@@ -7,6 +8,7 @@ namespace MuscleCuties.UI.Pages.Auth;
 public partial class PasswordRecoveryPage : ContentPage
 {
     private readonly PasswordRecoveryViewModel _viewModel;
+    private bool _isSubscribed;
 
     public PasswordRecoveryPage(PasswordRecoveryViewModel viewModel)
     {
@@ -14,13 +16,24 @@ public partial class PasswordRecoveryPage : ContentPage
         this.InitializeWithTiming(InitializeComponent);
         _viewModel = viewModel;
         this.BindWithTiming(viewModel, started);
-        _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        if (!_isSubscribed)
+        {
+            _viewModel.PropertyChanged += OnViewModelPropertyChanged;
+            _isSubscribed = true;
+        }
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(PasswordRecoveryViewModel.Step))
             return;
+
+        ResetPasswordMasks();
 
         if (_viewModel.Step == PasswordRecoveryStep.EnterCode)
             RecoveryIdentifierEntry.Unfocus();
@@ -54,10 +67,49 @@ public partial class PasswordRecoveryPage : ContentPage
         ConfirmPasswordEntry.Focus();
     }
 
+    private void OnToggleNewPassword(object? sender, TappedEventArgs e)
+    {
+        if (_viewModel.IsBusy)
+            return;
+
+        NewPasswordEntry.IsPassword = !NewPasswordEntry.IsPassword;
+        NewPasswordReveal.Text = UiTextCatalog.Get(
+            NewPasswordEntry.IsPassword ? "Auth_ShowPassword" : "Auth_HidePassword");
+        SemanticProperties.SetDescription(NewPasswordReveal, NewPasswordReveal.Text);
+    }
+
+    private void OnToggleConfirmPassword(object? sender, TappedEventArgs e)
+    {
+        if (_viewModel.IsBusy)
+            return;
+
+        ConfirmPasswordEntry.IsPassword = !ConfirmPasswordEntry.IsPassword;
+        ConfirmPasswordReveal.Text = UiTextCatalog.Get(
+            ConfirmPasswordEntry.IsPassword ? "Auth_ShowPassword" : "Auth_HidePassword");
+        SemanticProperties.SetDescription(ConfirmPasswordReveal, ConfirmPasswordReveal.Text);
+    }
+
+    private void ResetPasswordMasks()
+    {
+        NewPasswordEntry.IsPassword = true;
+        ConfirmPasswordEntry.IsPassword = true;
+        var show = UiTextCatalog.Get("Auth_ShowPassword");
+        NewPasswordReveal.Text = show;
+        ConfirmPasswordReveal.Text = show;
+        SemanticProperties.SetDescription(NewPasswordReveal, show);
+        SemanticProperties.SetDescription(ConfirmPasswordReveal, show);
+    }
+
     protected override void OnDisappearing()
     {
-        base.OnDisappearing();
-        _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+        ResetPasswordMasks();
+        if (_isSubscribed)
+        {
+            _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
+            _isSubscribed = false;
+        }
+
         _viewModel.Dispose();
+        base.OnDisappearing();
     }
 }

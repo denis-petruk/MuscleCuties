@@ -63,13 +63,13 @@ public partial class DashboardPage : ContentPage
     private async Task LoadDeferredCardsCoreAsync()
     {
         // Keep the deferred creation order aligned with the visual reading order.
-        await PhaseCardLazy.LoadIfNeededAsync(true);
-        await Task.Yield();
         await WorkoutCardLazy.LoadIfNeededAsync(true);
         await Task.Yield();
         await ReadinessLazy.LoadIfNeededAsync(true);
         await Task.Yield();
         await NutritionLazy.LoadIfNeededAsync(true);
+        await Task.Yield();
+        await PhaseCardLazy.LoadIfNeededAsync(true);
         await Task.Yield();
         await TargetsLazy.LoadIfNeededAsync(true);
         await Task.Yield();

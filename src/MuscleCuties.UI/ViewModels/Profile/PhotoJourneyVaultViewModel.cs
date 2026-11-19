@@ -1,10 +1,12 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Profile;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
@@ -33,6 +35,13 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
     [ObservableProperty] private bool _isComparisonOpen;
     [ObservableProperty] private string? _comparisonFirstImagePath;
     [ObservableProperty] private string? _comparisonSecondImagePath;
+    [ObservableProperty] private string _comparisonFirstDateText = string.Empty;
+    [ObservableProperty] private string _comparisonSecondDateText = string.Empty;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasStatusMessage))]
+    private string _statusMessage = string.Empty;
+    [ObservableProperty] private bool _isStatusError;
+    [ObservableProperty] private string _comparisonSelectionBannerText = string.Empty;
+    [ObservableProperty] private bool _hasPendingComparisonSelection;
 
     public PhotoJourneyVaultViewModel(
         IPhotoVaultUseCase useCase,
@@ -52,6 +61,8 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
     }
 
     public string PrivacyBlurButtonText => IsPrivacyBlurEnabled ? "Reveal All" : "Blur All";
+    public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
+    public bool CanComparePhotos => Photos.Count(p => p.IsImageAvailable) >= 2;
     public AsyncRelayCommand LoadPhotosCommand => LoadDataCommand;
     public RelayCommand TogglePrivacyBlurCommand { get; }
     public RelayCommand<PhotoVaultItem> ToggleItemRevealCommand { get; }
@@ -74,6 +85,8 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
     {
         ResetPrivacy();
         ResetComparison();
+        StatusMessage = string.Empty;
+        IsStatusError = false;
         Photos = new ObservableCollection<PhotoVaultItem>();
         TotalPhotosCount = 0;
         var revision = _privacyRevision;
@@ -99,6 +112,7 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
             Photos = new ObservableCollection<PhotoVaultItem>(items);
             TotalPhotosCount = Photos.Count;
             IsEmpty = Photos.Count == 0;
+            OnPropertyChanged(nameof(CanComparePhotos));
         }
         finally
         {
@@ -121,6 +135,7 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
     {
         if (item is null || !item.IsImageAvailable || !Photos.Contains(item)) return;
         item.IsRevealed = !item.IsRevealed;
+        IsPrivacyBlurEnabled = Photos.All(photo => !photo.IsRevealed);
     }
 
     public void ResetPrivacy()
@@ -134,19 +149,74 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
     private async Task SelectComparisonPhotoAsync(PhotoVaultItem? item, bool isFirst)
     {
         if (item is null || !item.IsImageAvailable || !Photos.Contains(item)) return;
+        StatusMessage = string.Empty;
+        IsStatusError = false;
         _privacyRevision++;
         if (isFirst) _firstComparisonId = item.Id;
         else _secondComparisonId = item.Id;
+
+        if (_firstComparisonId is { } sameFirst && _secondComparisonId is { } sameSecond && sameFirst == sameSecond)
+        {
+            if (isFirst) _secondComparisonId = null;
+            else _firstComparisonId = null;
+            IsStatusError = true;
+            StatusMessage = UiTextCatalog.Get("Profile_PhotoVault_ComparePickDifferent");
+        }
+
+        SyncComparisonSelectionState();
         ResetComparisonImages();
         if (_firstComparisonId is not { } firstId || _secondComparisonId is not { } secondId)
             return;
 
         var revision = _privacyRevision;
-        var comparison = await _useCase.CompareAsync(firstId, secondId);
-        if (revision != _privacyRevision || comparison is null) return;
-        ComparisonFirstImagePath = comparison.First.ImagePath;
-        ComparisonSecondImagePath = comparison.Second.ImagePath;
-        IsComparisonOpen = true;
+        try
+        {
+            var comparison = await _useCase.CompareAsync(firstId, secondId);
+            if (revision != _privacyRevision) return;
+            if (comparison is null)
+            {
+                IsStatusError = true;
+                StatusMessage = UiTextCatalog.Get("Profile_PhotoVault_CompareFailed");
+                return;
+            }
+
+            ComparisonFirstImagePath = comparison.First.ImagePath;
+            ComparisonSecondImagePath = comparison.Second.ImagePath;
+            var firstItem = Photos.FirstOrDefault(p => p.Id == firstId);
+            var secondItem = Photos.FirstOrDefault(p => p.Id == secondId);
+            ComparisonFirstDateText = firstItem?.DateFormatted ?? UiTextCatalog.Get("Profile_PhotoJourney_FirstComparisonLabel");
+            ComparisonSecondDateText = secondItem?.DateFormatted ?? UiTextCatalog.Get("Profile_PhotoJourney_SecondComparisonLabel");
+            HasPendingComparisonSelection = false;
+            IsComparisonOpen = true;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[PhotoJourneyVaultViewModel] Compare failed ({ex.GetType().Name}).");
+            IsStatusError = true;
+            StatusMessage = UiTextCatalog.Get("Profile_PhotoVault_CompareFailed");
+        }
+    }
+
+    private void SyncComparisonSelectionState()
+    {
+        foreach (var photo in Photos)
+        {
+            photo.IsSelectedFirst = _firstComparisonId == photo.Id;
+            photo.IsSelectedSecond = _secondComparisonId == photo.Id;
+        }
+
+        var selectedId = _firstComparisonId ?? _secondComparisonId;
+        var hasOneSelected = (_firstComparisonId.HasValue ^ _secondComparisonId.HasValue) && selectedId.HasValue;
+        HasPendingComparisonSelection = hasOneSelected;
+        if (hasOneSelected && Photos.FirstOrDefault(p => p.Id == selectedId!.Value) is { } chosen)
+        {
+            ComparisonSelectionBannerText = UiTextCatalog.Format(
+                "Profile_PhotoVault_CompareSelectionFormat", chosen.DateFormatted);
+        }
+        else
+        {
+            ComparisonSelectionBannerText = string.Empty;
+        }
     }
 
     private void ResetComparison()
@@ -154,6 +224,7 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         _privacyRevision++;
         _firstComparisonId = null;
         _secondComparisonId = null;
+        SyncComparisonSelectionState();
         ResetComparisonImages();
     }
 
@@ -175,7 +246,11 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         try
         {
             await LoadDataCommand.ExecuteAsync(null);
-            Photos.FirstOrDefault()?.IsRevealed = true;
+            if (Photos.FirstOrDefault() is { IsImageAvailable: true } newest)
+            {
+                newest.IsRevealed = true;
+                IsPrivacyBlurEnabled = false;
+            }
             IsLoadError = false;
         }
         catch
@@ -187,15 +262,49 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
 
     private async Task DeletePhotoAsync(PhotoVaultItem? item)
     {
-        if (item is null) return;
+        if (item is null || IsBusy) return;
 
-        var deleted = await _useCase.DeleteAsync(item.Id);
-        if (deleted)
+        if (Shell.Current is { } shell)
         {
-            ResetComparison();
-            Photos.Remove(item);
-            TotalPhotosCount = Photos.Count;
-            IsEmpty = Photos.Count == 0;
+            var confirmed = await shell.DisplayAlertAsync(
+                UiTextCatalog.Get("Profile_PhotoVault_DeleteConfirmTitle"),
+                UiTextCatalog.Format("Profile_PhotoVault_DeleteConfirmMessage", item.DateFormatted),
+                UiTextCatalog.Get("Common_Delete"),
+                UiTextCatalog.Get("Common_Cancel"));
+            if (!confirmed)
+                return;
+        }
+
+        IsBusy = true;
+        StatusMessage = string.Empty;
+        IsStatusError = false;
+        try
+        {
+            var deleted = await _useCase.DeleteAsync(item.Id);
+            if (deleted)
+            {
+                ResetComparison();
+                Photos.Remove(item);
+                TotalPhotosCount = Photos.Count;
+                IsEmpty = Photos.Count == 0;
+                OnPropertyChanged(nameof(CanComparePhotos));
+                StatusMessage = UiTextCatalog.Get("Profile_PhotoVault_DeletedStatus");
+            }
+            else
+            {
+                IsStatusError = true;
+                StatusMessage = UiTextCatalog.Get("Profile_PhotoVault_DeleteFailed");
+            }
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[PhotoJourneyVaultViewModel] Delete failed ({ex.GetType().Name}).");
+            IsStatusError = true;
+            StatusMessage = UiTextCatalog.Get("Profile_PhotoVault_DeleteFailed");
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 

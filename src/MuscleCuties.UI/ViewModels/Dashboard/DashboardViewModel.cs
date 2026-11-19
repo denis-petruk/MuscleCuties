@@ -360,6 +360,17 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
                 ? UiTextCatalog.Get("Workout_Overview_ResumeWorkout")
                 : UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
 
+    public string InjuryButtonAccessibilityText => UiTextCatalog.Get(
+        HasActiveInjuries ? "Dashboard_Page_OpenInjuryLogActiveA11y" : "Dashboard_Page_OpenInjuryLogA11y");
+
+    public string NutritionCardAccessibilityText => UiTextCatalog.Format(
+        "Dashboard_Nutrition_SummaryA11yFormat",
+        CaloriesConsumed,
+        CaloriesGoal,
+        ProteinText,
+        CarbsText,
+        FatsText);
+
     public string WorkoutStreakText => WorkoutStreakDays == 1
         ? "1 day session streak"
         : $"{WorkoutStreakDays} day session streak";
@@ -807,6 +818,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private void NotifyMacroProperties()
     {
         MacroProgressFormatter.NotifyAll(OnPropertyChanged);
+        OnPropertyChanged(nameof(NutritionCardAccessibilityText));
+    }
+
+    partial void OnHasActiveInjuriesChanged(bool value)
+    {
+        OnPropertyChanged(nameof(InjuryButtonAccessibilityText));
     }
 
     private void NotifyUserLinkedProperties()

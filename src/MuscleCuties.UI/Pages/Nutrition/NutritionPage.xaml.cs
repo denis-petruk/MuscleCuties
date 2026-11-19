@@ -168,6 +168,24 @@ public partial class NutritionPage : ContentPage
 
     protected override bool OnBackButtonPressed()
     {
+        if (_viewModel.IsMealDetailVisible)
+        {
+            _viewModel.CloseMealDetailCommand.Execute(null);
+            return true;
+        }
+
+        if (_viewModel.IsSuggestionModalVisible)
+        {
+            _viewModel.CloseSuggestionModalCommand.Execute(null);
+            return true;
+        }
+
+        if (_viewModel.IsBreakdownModalVisible)
+        {
+            _viewModel.CloseMicronutrientsModalCommand.Execute(null);
+            return true;
+        }
+
         if (_viewModel.IsMealEntryModalVisible)
         {
             _viewModel.CloseMealEntryCommand.Execute(null);

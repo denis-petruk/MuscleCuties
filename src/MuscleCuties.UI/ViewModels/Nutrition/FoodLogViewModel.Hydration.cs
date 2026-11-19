@@ -277,13 +277,21 @@ public partial class FoodLogViewModel
     }
 
     [RelayCommand]
-    private Task DeleteHydrationPresetAsync()
+    private async Task DeleteHydrationPresetAsync()
     {
         if (SelectedHydrationPreset is not { } preset)
-            return Task.CompletedTask;
+            return;
+
+        var confirmed = await ConfirmAsync(
+            UiTextCatalog.Get("Nutrition_Hydration_DeletePreset"),
+            UiTextCatalog.Get("Nutrition_FoodLog_DeleteItemMessage"),
+            UiTextCatalog.Get("Common_Delete"),
+            UiTextCatalog.Get("Common_Cancel"));
+        if (!confirmed)
+            return;
 
         var operationId = Guid.NewGuid();
-        return ChangePresetsAsync((version, ct) =>
+        await ChangePresetsAsync((version, ct) =>
             _hydrationClient!.DeletePresetAsync(version, preset.Id, operationId, ct));
     }
 

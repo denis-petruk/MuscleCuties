@@ -68,8 +68,20 @@
             <CollectionView.Header>
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Padding="{DynamicResource PresentationCollectionHeaderPadding}">
 
-                    <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_FoodLog_RetryLoadingThisDay}" Command="{Binding RetryLoadCommand}"
-                            IsVisible="{Binding IsLoadError}" />
+                    <Border Style="{StaticResource CardPrimary}" IsVisible="{Binding IsLoadError}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label Text="{loc:LocalizedText Nutrition_FoodLog_LoadError}"
+                                   Style="{StaticResource ErrorLabel}"
+                                   LineBreakMode="WordWrap">
+                                <Label.Behaviors>
+                                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                                </Label.Behaviors>
+                            </Label>
+                            <Button Style="{StaticResource ButtonSecondary}"
+                                    Text="{loc:LocalizedText Nutrition_FoodLog_RetryLoadingThisDay}"
+                                    Command="{Binding RetryLoadCommand}" />
+                        </VerticalStackLayout>
+                    </Border>
                     <!-- Horizontal Rolling Date Strip Header -->
                     <Grid RowDefinitions="Auto,Auto" ColumnDefinitions="Auto,*,Auto"
                           ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
@@ -304,6 +316,12 @@
 
                     <Border Style="{StaticResource CardPrimary}">
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Button Style="{StaticResource ButtonPrimary}"
+                                    HorizontalOptions="Fill"
+                                    Text="{loc:LocalizedText Nutrition_AddFood}"
+                                    Command="{Binding OpenAddFoodCommand}"
+                                    CommandParameter="{Binding SuggestedAddMealType}"
+                                    SemanticProperties.Description="{loc:LocalizedText Nutrition_AddFood}" />
                             <Button Style="{StaticResource ButtonSecondary}"
                                     HorizontalOptions="Fill"
                                     Text="{loc:LocalizedText Nutrition_FoodLog_CopyYesterday}"
@@ -534,7 +552,8 @@
                                 <Border Style="{StaticResource PickerContainer}">
                                     <Entry Text="{Binding FoodSearchQuery}" Placeholder="{loc:LocalizedText Nutrition_FoodLog_SearchFoodsYouHaveLogged}"
                                            SemanticProperties.Description="{loc:LocalizedText Nutrition_SearchFoods}"
-                                           ReturnType="Search" VerticalOptions="Center" />
+                                           ReturnType="Search" ReturnCommand="{Binding SearchFoodCommand}"
+                                           VerticalOptions="Center" />
                                 </Border>
                                 <Button Text="{loc:LocalizedText Nutrition_Barcode_ScanWithCamera}"
                                         Style="{StaticResource ButtonSecondary}"
@@ -804,12 +823,33 @@
                                            Style="{StaticResource SubHeadline}" VerticalOptions="Center" />
                                     <Grid Grid.Row="1" Grid.ColumnSpan="2" ColumnDefinitions="*,*,*"
                                           ColumnSpacing="{StaticResource UiSpaceCompact}">
-                                        <Label Text="{Binding EditDraftProteinText}" Style="{StaticResource CaptionStrong}"
-                                               LineBreakMode="WordWrap" />
-                                        <Label Grid.Column="1" Text="{Binding EditDraftCarbsText}"
-                                               Style="{StaticResource CaptionStrong}" LineBreakMode="WordWrap" />
-                                        <Label Grid.Column="2" Text="{Binding EditDraftFatsText}"
-                                               Style="{StaticResource CaptionStrong}" LineBreakMode="WordWrap" />
+                                        <Label Style="{StaticResource CaptionStrong}" LineBreakMode="WordWrap">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{loc:LocalizedText Nutrition_Macro_ProteinShort}" />
+                                                    <Span Text=" " />
+                                                    <Span Text="{Binding EditDraftProteinText}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                        <Label Grid.Column="1" Style="{StaticResource CaptionStrong}" LineBreakMode="WordWrap">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{loc:LocalizedText Nutrition_Macro_CarbsShort}" />
+                                                    <Span Text=" " />
+                                                    <Span Text="{Binding EditDraftCarbsText}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
+                                        <Label Grid.Column="2" Style="{StaticResource CaptionStrong}" LineBreakMode="WordWrap">
+                                            <Label.FormattedText>
+                                                <FormattedString>
+                                                    <Span Text="{loc:LocalizedText Nutrition_Macro_FatsShort}" />
+                                                    <Span Text=" " />
+                                                    <Span Text="{Binding EditDraftFatsText}" />
+                                                </FormattedString>
+                                            </Label.FormattedText>
+                                        </Label>
                                     </Grid>
                                 </Grid>
                             </Border>
@@ -933,10 +973,12 @@
                     <Grid Grid.Row="3"
                         IsVisible="{Binding IsManualEditorVisible}"
                         ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}"
-                          Padding="{DynamicResource PresentationActionFooterPadding}">
+                        BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                        Padding="{DynamicResource PresentationActionFooterPadding}">
                         <Button Style="{StaticResource ButtonPrimary}"
                             Text="{loc:LocalizedText Common_Save}"
-                            Command="{Binding SaveFoodItemCommand}" />
+                            Command="{Binding SaveFoodItemCommand}"
+                            IsEnabled="{Binding IsWriting, Converter={StaticResource InvertedBoolConverter}}" />
 
                         <Button
                             Grid.Column="1"
@@ -944,6 +986,7 @@
                             Text="{loc:LocalizedText Common_Delete}"
                             Command="{Binding DeleteFoodItemCommand}"
                             IsVisible="{Binding CanDeleteEditingFood}"
+                            IsEnabled="{Binding IsWriting, Converter={StaticResource InvertedBoolConverter}}"
                             SemanticProperties.Description="{loc:LocalizedText Common_Delete}" />
 
                         <Button
@@ -978,7 +1021,11 @@
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource CaptionLabel}"
                 LineBreakMode="WordWrap"
-                TextColor="{AppThemeBinding Light={StaticResource TextOnAccentLight}, Dark={StaticResource TextOnAccentDark}}" />
+                TextColor="{AppThemeBinding Light={StaticResource TextOnAccentLight}, Dark={StaticResource TextOnAccentDark}}">
+                <Label.Behaviors>
+                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                </Label.Behaviors>
+            </Label>
         </Border>
 
     </Grid>

@@ -298,18 +298,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(HasErrorReference))]
     private string _errorReference = string.Empty;
 
+    private bool _isInitialLoadError;
+
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
-    public bool CanRetryLoad => HasError && ErrorText is not (
-        "Workout_Session_SideRepsRequired"
-        or "Ui_Workout_Error_SetsReps"
-        or "Ui_Workout_Error_Weight"
-        or "Ui_Workout_Error_Duration"
-        or "Workout_Session_OptionalMetricsError"
-        or "Workout_Session_DistanceInvalid"
-        or "Ui_Workout_Error_MinimumDuration"
-        or "Workout_Session_ActivityNoLongerSafe"
-        or "Workout_Session_HiitConfirmationRequired"
-        or "Workout_Session_SplitSupersetUnavailable");
+    public bool CanRetryLoad => HasError && _isInitialLoadError;
     public bool HasErrorReference => HasError && !string.IsNullOrEmpty(ErrorReference);
     // The page is pushed before the session is fetched. Without this gate the empty state
     // renders for one frame and then disappears once the activities arrive.
@@ -318,6 +310,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     public bool HasSwapCandidates => SwapCandidates.Count > 0;
     public bool HasSwapError => !string.IsNullOrEmpty(SwapErrorText);
     public bool CanDismissSwap => !SwapNeedsReload;
+    public bool CanConfirmSwap => !IsBusy && !IsSwapLoading && (SwapNeedsReload || SwapCandidates.Any(c => c.IsSelected));
+    public bool ShowSwapConfirmHint => HasSwapCandidates && !CanConfirmSwap && !IsSwapLoading;
+    public string SwapConfirmHint => ShowSwapConfirmHint ? UiTextCatalog.Get("Workout_Swap_SelectCandidateHint") : string.Empty;
     public string SwapConfirmText => SwapNeedsReload
         ? UiTextCatalog.Get("Workout_Swap_ReloadExercise")
         : UiTextCatalog.Get("Workout_Swap_ConfirmSwap");
@@ -571,12 +566,21 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         catch (Exception exception)
         {
             if (version == _loadVersion)
+            {
+                _isInitialLoadError = true;
                 ApplyFailure(ApiFailurePresenter.FromException(exception, "Ui_Workout_Error_Load"));
+                OnPropertyChanged(nameof(CanRetryLoad));
+            }
         }
         finally
         {
             if (version == _loadVersion)
             {
+                if (!HasError)
+                {
+                    _isInitialLoadError = false;
+                    OnPropertyChanged(nameof(CanRetryLoad));
+                }
                 _hasLoadedSession = true;
                 IsBusy = false;
                 OnPropertyChanged(nameof(HasNoActivities));
@@ -1417,6 +1421,24 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             return;
         }
 
+        if (IsMovementNoteOpen)
+        {
+            IsMovementNoteOpen = false;
+            return;
+        }
+
+        if (IsAbandonConfirmationVisible)
+        {
+            IsAbandonConfirmationVisible = false;
+            return;
+        }
+
+        if (IsPainReportVisible)
+        {
+            IsPainReportVisible = false;
+            return;
+        }
+
         if (IsSwapPanelVisible)
         {
             CloseSwapPanel();
@@ -1641,6 +1663,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     {
         if (IsBusy || SwapNeedsReload || option is null || !SwapCandidates.Contains(option)) return;
         foreach (var candidate in SwapCandidates) candidate.IsSelected = candidate == option;
+        OnPropertyChanged(nameof(CanConfirmSwap));
+        OnPropertyChanged(nameof(ShowSwapConfirmHint));
+        OnPropertyChanged(nameof(SwapConfirmHint));
     }
 
     [RelayCommand]

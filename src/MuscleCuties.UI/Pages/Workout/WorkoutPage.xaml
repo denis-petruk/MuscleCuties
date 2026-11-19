@@ -92,12 +92,25 @@
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                             <Label LineBreakMode="WordWrap"
                                    Text="{loc:LocalizedText Ui_Workout_Error_Load}"
-                                   Style="{StaticResource BodyLabel}" />
+                                   Style="{StaticResource ErrorLabel}">
+                                <Label.Behaviors>
+                                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                                </Label.Behaviors>
+                            </Label>
                             <Button Text="{loc:LocalizedText Common_TryAgain}"
                                     Command="{Binding RefreshCommand}"
                                     Style="{StaticResource ButtonSecondary}" />
                         </VerticalStackLayout>
                     </Border>
+
+                    <Label Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+                           Style="{StaticResource ErrorLabel}"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}">
+                        <Label.Behaviors>
+                            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
 
                     <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding HasStrengthStyleOffer}">
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
@@ -131,26 +144,28 @@
                     </Border>
 
                     <Border Style="{StaticResource CardSecondary}"
-                            IsVisible="{Binding HasActiveInjuries}"
-                            SemanticProperties.Description="{loc:LocalizedText Workout_Page_InjuryAdjustmentsActive}"
-                            SemanticProperties.Hint="{Binding InjuryBannerSummary, Converter={StaticResource LocalizedStringConverter}}">
+                            IsVisible="{Binding HasActiveInjuries}">
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                            <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                                <Label
-                                    Text="{Binding InjuryBannerSummary, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource BodyCompact}" LineBreakMode="WordWrap"
-                                    VerticalOptions="Center" />
-                                <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Page_DetailsButton}"
+                            <Label
+                                Text="{Binding InjuryBannerSummary, Converter={StaticResource LocalizedStringConverter}}"
+                                Style="{StaticResource BodyCompact}" LineBreakMode="WordWrap"
+                                SemanticProperties.HeadingLevel="Level2" />
+                            <sharedControls:AdaptiveRow Columns="2" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
+                                <Button Text="{loc:LocalizedText Workout_Page_DetailsButton}"
                                         Style="{StaticResource ButtonSecondary}"
                                         Command="{Binding ToggleInjuryBannerCommand}"
-                                        VerticalOptions="Center" HorizontalOptions="End"
-                                        SemanticProperties.Hint="{loc:LocalizedText Workout_Page_ToggleInjuryAdjustmentsAccessibility}" />
-                                <Button Grid.Column="2" Text="{loc:LocalizedText Workout_Page_LogButton}"
+                                        SemanticProperties.Hint="{loc:LocalizedText Workout_Page_ToggleInjuryAdjustmentsAccessibility}">
+                                    <Button.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding IsInjuryBannerExpanded}" Value="True">
+                                            <Setter Property="Text" Value="{loc:LocalizedText Injury_LogContent_Hide}" />
+                                        </DataTrigger>
+                                    </Button.Triggers>
+                                </Button>
+                                <Button Text="{loc:LocalizedText Workout_Page_LogButton}"
                                         Style="{StaticResource ButtonSecondary}"
                                         Command="{Binding NavigateToInjuryLogCommand}"
-                                        VerticalOptions="Center" HorizontalOptions="End"
                                         SemanticProperties.Hint="{loc:LocalizedText Workout_Page_OpenInjuryLogAccessibility}" />
-                            </Grid>
+                            </sharedControls:AdaptiveRow>
 
                             <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" IsVisible="{Binding IsInjuryBannerExpanded}">
                                 <!-- Blocked exercises -->
@@ -572,19 +587,10 @@
                         MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
                         VerticalOptions="End">
                     <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
-                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
-                              Padding="{DynamicResource PresentationModalHeaderPadding}">
-                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Reschedule_Title}"
-                                   Style="{StaticResource ModalTitle}"
-                                   SemanticProperties.HeadingLevel="Level1" />
-                            <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
-                                    SemanticProperties.Description="{loc:LocalizedText Common_Close}">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer Command="{Binding CloseRescheduleModalCommand}" />
-                                </Border.GestureRecognizers>
-                                <Path Style="{StaticResource ModalCloseIcon}" />
-                            </Border>
-                        </Grid>
+                        <sharedControls:ModalSheetHeader
+                            Title="{loc:LocalizedText Workout_Reschedule_Title}"
+                            CloseCommand="{Binding CloseRescheduleModalCommand}"
+                            CloseDescription="{loc:LocalizedText Common_Close}" />
 
                         <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
 
@@ -592,10 +598,18 @@
                                              Padding="{DynamicResource PresentationModalPagePadding}">
                             <Label LineBreakMode="WordWrap" Text="{Binding ReschedulingWorkoutTitle, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource BodyStrong}" />
+                            <ActivityIndicator Style="{StaticResource StateBusyInline}"
+                                               HorizontalOptions="Center"
+                                               IsRunning="{Binding IsRescheduleBusy}"
+                                               IsVisible="{Binding IsRescheduleBusy}" />
                             <Label LineBreakMode="WordWrap"
                                    Text="{Binding RescheduleStatusMessage, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource ErrorLabel}"
-                                   IsVisible="{Binding HasRescheduleStatusMessage}" />
+                                   IsVisible="{Binding HasRescheduleStatusMessage}">
+                                <Label.Behaviors>
+                                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                                </Label.Behaviors>
+                            </Label>
 
                             <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Reschedule_ChooseDatePrompt}"
                                    Style="{StaticResource MutedLabel}"
@@ -607,8 +621,10 @@
                                                      BindableLayout.ItemsSource="{Binding AvailableRescheduleDates}">
                                     <BindableLayout.ItemTemplate>
                                         <DataTemplate x:DataType="workoutModels:RescheduleDateOption">
-                                            <Border Style="{StaticResource CardPrimary}"
-                                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                            <sharedControls:SelectionCell Style="{StaticResource CardSecondary}"
+                                                    IsSelected="{Binding IsSelected}"
+                                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                                    SemanticProperties.Description="{Binding DisplayText, Converter={StaticResource LocalizedStringConverter}}">
                                                 <Border.GestureRecognizers>
                                                     <TapGestureRecognizer
                                                         Command="{Binding SelectRescheduleDateCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
@@ -617,15 +633,11 @@
                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                                     <Label LineBreakMode="WordWrap" Text="{Binding DisplayText, Converter={StaticResource LocalizedStringConverter}}"
                                                            Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
-                                                    <BoxView Grid.Column="1"
-                                                             WidthRequest="{StaticResource UiDimension12}"
-                                                             HeightRequest="{StaticResource UiDimension12}"
-                                                             CornerRadius="{StaticResource UiCornerRadius6}"
-                                                             Color="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                                             IsVisible="{Binding IsSelected}"
-                                                             VerticalOptions="Center" />
+                                                    <Border Grid.Column="1" Style="{StaticResource PlanSelectedIndicator}" IsVisible="{Binding IsSelected}">
+                                                        <Path Data="M5 12L10 17L19 7" Style="{StaticResource PlanChoiceCheckmark}" />
+                                                    </Border>
                                                 </Grid>
-                                            </Border>
+                                            </sharedControls:SelectionCell>
                                         </DataTemplate>
                                     </BindableLayout.ItemTemplate>
                                 </VerticalStackLayout>

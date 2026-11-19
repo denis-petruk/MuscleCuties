@@ -15,6 +15,8 @@ public partial class PhotoVaultItem : ObservableObject
     [NotifyPropertyChangedFor(nameof(IsImageHidden))]
     [NotifyPropertyChangedFor(nameof(AccessibilityDescription))]
     private bool _isRevealed;
+    [ObservableProperty] private bool _isSelectedFirst;
+    [ObservableProperty] private bool _isSelectedSecond;
     public int Id { get; init; }
     public string ImagePath { get; init; } = string.Empty;
     public bool IsImageAvailable { get; init; }
@@ -31,6 +33,9 @@ public partial class PhotoVaultItem : ObservableObject
         LocalizationService.ActiveLanguage == LocalizationService.RussianLanguageCode ? "ru-RU" : "en-US");
 
     public string DateFormatted => Date.ToString(UiTextCatalog.Get("Profile_PhotoJourney_DateFormat"), DisplayCulture);
+
+    public string DeleteAccessibilityDescription =>
+        UiTextCatalog.Format("Profile_PhotoVault_DeleteA11yFormat", DateFormatted);
 
     public string WeightFormatted => WeightKg.HasValue
         ? string.Format(DisplayCulture, "{0:0.#} {1}", WeightKg.Value, UiTextCatalog.Get("Common_Unit_Kg"))

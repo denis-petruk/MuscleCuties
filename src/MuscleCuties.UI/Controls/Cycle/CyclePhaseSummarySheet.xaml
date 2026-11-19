@@ -94,7 +94,7 @@
 
                         <!-- Hormonal Profile -->
                         <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing6}">
                                 <Path Grid.Column="0" Data="M8 3h8 M10 3v7l-5 9a2 2 0 0 0 2 3h10a2 2 0 0 0 2-3l-5-9V3 M7 16h10"
                                       Stroke="{StaticResource Primary}" StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
                                       Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}" VerticalOptions="Center" />
@@ -116,7 +116,7 @@
 
                         <!-- Training Strategy -->
                         <Grid Grid.Row="2" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing6}">
                                 <Path Grid.Column="0" Data="M2 9v6 M5 7v10 M8 11h8 M16 11h-8 M19 7v10 M22 9v6"
                                       Stroke="{StaticResource Primary}" StrokeThickness="{StaticResource UiStrokeWidth2}" StrokeLineCap="Round" StrokeLineJoin="Round"
                                       Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}" VerticalOptions="Center" />
@@ -138,7 +138,7 @@
 
                         <!-- Nutrition Strategy -->
                         <Grid Grid.Row="3" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing6}">
                                 <Path Grid.Column="0" Data="M12 3c4 0 7 5 7 10s-3 8-7 8-7-3-7-8 3-10 7-10z M12 12a3 3 0 1 0 0 6a3 3 0 0 0 0-6z"
                                       Stroke="{StaticResource Primary}" StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
                                       Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}" VerticalOptions="Center" />
@@ -160,7 +160,7 @@
 
                         <!-- Recovery & Self-Care -->
                         <Grid Grid.Row="4" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                            <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}">
+                            <Grid Grid.Row="0" ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing6}">
                                 <Path Grid.Column="0" Data="M20 15a8 8 0 0 1-11-11A8 8 0 1 0 20 15z"
                                       Stroke="{StaticResource Primary}" StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
                                       Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}" VerticalOptions="Center" />

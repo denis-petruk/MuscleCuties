@@ -56,29 +56,50 @@ public partial class ProfileSetupPage : ContentPage
             return;
 
         await viewModel.ContinueCommand.ExecuteAsync(null);
+
+        Element? firstErrorTarget = !string.IsNullOrWhiteSpace(viewModel.BirthDateError)
+            ? ProfileSetupBirthDateErrorLabel
+            : !string.IsNullOrWhiteSpace(viewModel.HeightError)
+                ? ProfileSetupHeightErrorLabel
+                : !string.IsNullOrWhiteSpace(viewModel.WeightError)
+                    ? ProfileSetupWeightErrorLabel
+                    : !string.IsNullOrWhiteSpace(viewModel.StrengthActivityError)
+                        ? ProfileSetupStrengthActivityErrorLabel
+                        : null;
+
+        if (firstErrorTarget is not null)
+            await ProfileSetupScroll.ScrollToAsync(firstErrorTarget, ScrollToPosition.Center, true);
+    }
+
+    private void OnWellnessLabelTapped(object? sender, TappedEventArgs e)
+    {
+        if (BindingContext is ProfileSetupViewModel { IsBusy: true })
+            return;
+
+        WellnessAcknowledgment.IsChecked = !WellnessAcknowledgment.IsChecked;
     }
 
     private async Task ShowProfileImageActionsAsync()
     {
-        var choosePhoto = UiTextCatalog.TranslateRuntimeText("Choose photo");
-        var useIcon = UiTextCatalog.TranslateRuntimeText("Use MuscleCuties icon");
-        var action = await DisplayActionSheetAsync(
-            UiTextCatalog.TranslateRuntimeText("Profile photo"),
-            UiTextCatalog.TranslateRuntimeText("Cancel"),
-            null,
-            choosePhoto,
-            useIcon);
+        if (BindingContext is not ProfileSetupViewModel viewModel || viewModel.IsBusy)
+            return;
 
-        var viewModel = (ProfileSetupViewModel)BindingContext;
-        switch (action)
-        {
-            case var selection when selection == choosePhoto:
-                await PickProfileImageAsync(viewModel);
-                break;
-            case var iconSelection when iconSelection == useIcon:
-                viewModel.SetProfileImage(null);
-                break;
-        }
+        var choosePhoto = UiTextCatalog.Get("Onboarding_ProfileSetup_ChooseFromPhotos");
+        var useIcon = UiTextCatalog.TranslateRuntimeText("Use MuscleCuties icon");
+        var options = viewModel.HasProfileImage
+            ? new[] { choosePhoto, useIcon }
+            : new[] { choosePhoto };
+
+        var action = await DisplayActionSheetAsync(
+            UiTextCatalog.Get("Onboarding_ProfileSetup_ProfilePhoto"),
+            UiTextCatalog.Get("Common_Cancel"),
+            null,
+            options);
+
+        if (action == choosePhoto)
+            await PickProfileImageAsync(viewModel);
+        else if (action == useIcon)
+            viewModel.SetProfileImage(null);
     }
 
     private async Task PickProfileImageAsync(ProfileSetupViewModel viewModel)
@@ -91,8 +112,10 @@ public partial class ProfileSetupPage : ContentPage
         }
         catch
         {
-            await DisplayAlertAsync(UiTextCatalog.TranslateRuntimeText("Profile photo"),
-                UiTextCatalog.TranslateRuntimeText("Could not change the image on this device right now."), "OK");
+            await DisplayAlertAsync(
+                UiTextCatalog.Get("Onboarding_ProfileSetup_ProfilePhoto"),
+                UiTextCatalog.TranslateRuntimeText("Could not change the image on this device right now."),
+                UiTextCatalog.Get("Common_Close"));
         }
     }
 }

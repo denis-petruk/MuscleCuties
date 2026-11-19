@@ -261,7 +261,7 @@ internal static partial class RussianUiText
         Values["Cycle_PhaseSummary_RecoveryTitle"] = "ВОССТАНОВЛЕНИЕ И ЗАБОТА О СЕБЕ";
         Values["Cycle_PhaseSummary_TrainingStrategyTitle"] = "СТРАТЕГИЯ ТРЕНИРОВКИ";
         Values["Cycle_QuickLog_CloseAccessibility"] = "Закрыть быструю запись";
-        Values["Cycle_QuickLog_FlowIntensityFormat"] = "Интенсивность потока: {0}";
+        Values["Cycle_QuickLog_FlowIntensityFormat"] = "Интенсивность выделений: {0}";
         Values["Cycle_QuickLog_FlowIntensitySectionTitle"] = "ИНТЕНСИВНОСТЬ ВЫДЕЛЕНИЙ";
         Values["Cycle_QuickLog_HeaderTitle"] = "Быстрая запись";
         Values["Cycle_QuickLog_LoadingSavedEntry"] = "Загрузка сохранённой записи…";
@@ -275,8 +275,8 @@ internal static partial class RussianUiText
         Values["Cycle_QuickLog_TogglePeriodEndedAccessibility"] = "Изменить отметку об окончании менструации";
         Values["Cycle_QuickLog_TogglePeriodStartedAccessibility"] = "Изменить отметку о начале менструации";
         Values["Cycle_WarningPopup_DismissAccessibility"] = "Отклонить предупреждение";
-        Values["Cycle_WarningPopup_ForgotShiftTitle"] = "Забыл зафиксировать смену";
-        Values["Cycle_WarningPopup_GotItButton"] = "Понял";
+        Values["Cycle_WarningPopup_ForgotShiftTitle"] = "Пропущена смена фазы";
+        Values["Cycle_WarningPopup_GotItButton"] = "Понятно";
         Values["Cycle_PhaseEdit_UnavailableTitle"] = "Пока не удалось изменить фазу";
         Values["Cycle_PhaseEdit_UnavailableBody"] = "Не удалось получить записи цикла, поэтому ничего не изменено. Проверьте подключение и повторите попытку.";
         Values["Cycle_PhaseEdit_InvalidTitle"] = "Эту дату использовать нельзя";

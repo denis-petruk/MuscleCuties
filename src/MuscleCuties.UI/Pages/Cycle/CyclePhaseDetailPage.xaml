@@ -90,27 +90,34 @@
                         Style="{StaticResource BodyLabel}"
                         sharedControls:CappedTextSize.IsBodyLead="True"
                         LineBreakMode="WordWrap" />
-                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpacing6}" BindableLayout.ItemsSource="{Binding WorkoutPoints}">
+                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}" BindableLayout.ItemsSource="{Binding WorkoutPoints}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
-                                    Style="{StaticResource PillBadge}"
+                                    Style="{StaticResource CardSecondary}"
                                     HorizontalOptions="Fill"
-                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
-                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing6}">
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpacing3}">
                                         <Image
+                                            Grid.Row="0"
                                             Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                                             WidthRequest="{StaticResource UiDimension16}"
                                             HeightRequest="{StaticResource UiDimension16}"
                                             Aspect="AspectFit"
-                                            VerticalOptions="Center" />
+                                            VerticalOptions="Center"
+                                            AutomationProperties.IsInAccessibleTree="False" />
                                         <Label
+                                            Grid.Row="0"
                                             Grid.Column="1"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
-                                            sharedControls:CappedTextSize.IsPhasePill="True"
                                             VerticalOptions="Center"
+                                            LineBreakMode="WordWrap" />
+                                        <Label
+                                            Grid.Row="1"
+                                            Grid.Column="1"
+                                            Text="{Binding Text, Converter={StaticResource LocalizedStringConverter}}"
+                                            Style="{StaticResource MutedLabel}"
                                             LineBreakMode="WordWrap" />
                                     </Grid>
                                 </Border>
@@ -202,19 +209,27 @@
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
                                     Style="{StaticResource CardSecondary}"
-                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
-                                    <Grid ColumnDefinitions="22,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpacing3}">
                                         <Image
+                                            Grid.Row="0"
                                             Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                                             WidthRequest="{StaticResource UiDimension16}"
                                             HeightRequest="{StaticResource UiDimension16}"
                                             Aspect="AspectFit"
-                                            VerticalOptions="Center" />
+                                            VerticalOptions="Center"
+                                            AutomationProperties.IsInAccessibleTree="False" />
                                         <Label
+                                            Grid.Row="0"
                                             Grid.Column="1"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
+                                            LineBreakMode="WordWrap" />
+                                        <Label
+                                            Grid.Row="1"
+                                            Grid.Column="1"
+                                            Text="{Binding Text, Converter={StaticResource LocalizedStringConverter}}"
+                                            Style="{StaticResource MutedLabel}"
                                             LineBreakMode="WordWrap" />
                                     </Grid>
                                 </Border>
@@ -317,27 +332,34 @@
                         Style="{StaticResource BodyLabel}"
                         sharedControls:CappedTextSize.IsBodyLead="True"
                         LineBreakMode="WordWrap" />
-                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpacing6}" BindableLayout.ItemsSource="{Binding NutritionPoints}">
+                    <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}" BindableLayout.ItemsSource="{Binding NutritionPoints}">
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="cycleModels:CyclePhaseDetailPoint">
                                 <Border
-                                    Style="{StaticResource PillBadge}"
+                                    Style="{StaticResource CardSecondary}"
                                     HorizontalOptions="Fill"
-                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                    SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
-                                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing6}">
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                    <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpacing3}">
                                         <Image
+                                            Grid.Row="0"
                                             Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
                                             WidthRequest="{StaticResource UiDimension16}"
                                             HeightRequest="{StaticResource UiDimension16}"
                                             Aspect="AspectFit"
-                                            VerticalOptions="Center" />
+                                            VerticalOptions="Center"
+                                            AutomationProperties.IsInAccessibleTree="False" />
                                         <Label
+                                            Grid.Row="0"
                                             Grid.Column="1"
                                             Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CardTitle}"
-                                            sharedControls:CappedTextSize.IsPhasePill="True"
                                             VerticalOptions="Center"
+                                            LineBreakMode="WordWrap" />
+                                        <Label
+                                            Grid.Row="1"
+                                            Grid.Column="1"
+                                            Text="{Binding Text, Converter={StaticResource LocalizedStringConverter}}"
+                                            Style="{StaticResource MutedLabel}"
                                             LineBreakMode="WordWrap" />
                                     </Grid>
                                 </Border>
@@ -346,6 +368,12 @@
                     </VerticalStackLayout>
                 </Grid>
             </Border>
+
+            <Label
+                Text="{loc:LocalizedText Cycle_Page_MedicalDisclaimer}"
+                Style="{StaticResource CaptionTinyCentered}"
+                LineBreakMode="WordWrap"
+                Margin="{StaticResource UiInsets0_8_0_0}" />
         </VerticalStackLayout>
         </ScrollView>
     </Grid>

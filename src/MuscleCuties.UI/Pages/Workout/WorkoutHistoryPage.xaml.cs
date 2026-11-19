@@ -23,4 +23,15 @@ public partial class WorkoutHistoryPage : ContentPage
         base.OnSizeAllocated(width, height);
         BottomSheetSizing.Apply(SheetSurface, height);
     }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (_viewModel.IsDetailSheetVisible)
+        {
+            _viewModel.CloseSessionDetailCommand.Execute(null);
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
+    }
 }

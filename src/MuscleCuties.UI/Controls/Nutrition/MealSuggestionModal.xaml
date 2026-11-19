@@ -97,34 +97,38 @@
                     ColumnSpacing="{StaticResource UiSpacing10}"
                     Padding="{StaticResource UiInsets16_8}"
                     IsVisible="{Binding ShowBreakfastPreferenceToggle}">
-                    <Button
+                    <sharedControls:SelectionCell
+                        x:Name="SavouryBreakfastCell"
                         Grid.Column="0"
-                        Style="{StaticResource ButtonSecondary}"
-                        Text="{loc:LocalizedText Nutrition_Breakfast_Savoury}"
-                        Command="{Binding SetBreakfastPreferenceCommand}"
-                        CommandParameter="Savoury"
+                        Style="{StaticResource ChoiceCellCompact}"
+                        IsSelected="{Binding IsSavouryBreakfast}"
                         SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakfast_Savoury}">
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button" Binding="{Binding IsSavouryBreakfast}" Value="True">
-                                <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}" />
-                                <Setter Property="TextColor" Value="{StaticResource ContrastInk}" />
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
-                    <Button
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding SetBreakfastPreferenceCommand}"
+                                CommandParameter="Savoury" />
+                        </Border.GestureRecognizers>
+                        <Label
+                            Text="{loc:LocalizedText Nutrition_Breakfast_Savoury}"
+                            BindingContext="{Binding Source={x:Reference SavouryBreakfastCell}}"
+                            Style="{StaticResource ChoiceCellLabel}" />
+                    </sharedControls:SelectionCell>
+                    <sharedControls:SelectionCell
+                        x:Name="SweetBreakfastCell"
                         Grid.Column="1"
-                        Style="{StaticResource ButtonSecondary}"
-                        Text="{loc:LocalizedText Nutrition_Breakfast_Sweet}"
-                        Command="{Binding SetBreakfastPreferenceCommand}"
-                        CommandParameter="Sweet"
+                        Style="{StaticResource ChoiceCellCompact}"
+                        IsSelected="{Binding IsSweetBreakfast}"
                         SemanticProperties.Description="{loc:LocalizedText Nutrition_Breakfast_Sweet}">
-                        <Button.Triggers>
-                            <DataTrigger TargetType="Button" Binding="{Binding IsSweetBreakfast}" Value="True">
-                                <Setter Property="BackgroundColor" Value="{StaticResource PrimaryDark}" />
-                                <Setter Property="TextColor" Value="{StaticResource ContrastInk}" />
-                            </DataTrigger>
-                        </Button.Triggers>
-                    </Button>
+                        <Border.GestureRecognizers>
+                            <TapGestureRecognizer
+                                Command="{Binding SetBreakfastPreferenceCommand}"
+                                CommandParameter="Sweet" />
+                        </Border.GestureRecognizers>
+                        <Label
+                            Text="{loc:LocalizedText Nutrition_Breakfast_Sweet}"
+                            BindingContext="{Binding Source={x:Reference SweetBreakfastCell}}"
+                            Style="{StaticResource ChoiceCellLabel}" />
+                    </sharedControls:SelectionCell>
                 </Grid>
 
                 <Grid
@@ -181,7 +185,7 @@
                 <ScrollView
                     Grid.Row="3"
                     IsVisible="{Binding HasNoMealSuggestions}">
-                    <Grid RowDefinitions="Auto,Auto,Auto"
+                    <Grid RowDefinitions="Auto,Auto,Auto,Auto"
                           RowSpacing="{StaticResource UiSpacing10}"
                           Padding="{DynamicResource PresentationModalPagePadding}">
                         <Path
@@ -205,6 +209,12 @@
                             Style="{StaticResource ModalSubtitle}"
                             LineBreakMode="WordWrap"
                             HorizontalTextAlignment="Center"
+                            HorizontalOptions="Center" />
+                        <Button
+                            Grid.Row="3"
+                            Text="{loc:LocalizedText Common_TryAgain}"
+                            Command="{Binding RefreshSuggestionsCommand}"
+                            Style="{StaticResource ButtonSecondary}"
                             HorizontalOptions="Center" />
                     </Grid>
                 </ScrollView>

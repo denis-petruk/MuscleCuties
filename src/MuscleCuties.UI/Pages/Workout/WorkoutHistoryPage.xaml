@@ -75,7 +75,7 @@
             </CollectionView.ItemsLayout>
 
             <CollectionView.Header>
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}"                                      Padding="{DynamicResource PresentationCollectionHeaderPadding}"
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}" Padding="{DynamicResource PresentationCollectionHeaderPadding}"
                       HorizontalOptions="Fill">
                     <!-- Lifetime summary: both values start on the same edge and wrap rather than clip. -->
                     <Border
@@ -146,7 +146,7 @@
                         IsVisible="{Binding HasNoSessions}"
                         MaximumWidthRequest="{StaticResource UiDimension640}"
                         Style="{StaticResource CardPrimary}">
-                        <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
+                        <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
                             <Border AutomationId="WorkoutHistoryEmptyVisual"
                                     Grid.Row="0"
                                     WidthRequest="{StaticResource UiDimension56}"
@@ -164,11 +164,36 @@
                                    Style="{StaticResource StateEmptyTitle}" HorizontalTextAlignment="Center" />
                             <Label LineBreakMode="WordWrap" Grid.Row="2" Text="{loc:LocalizedText Workout_History_EmptyStateDescription}"
                                    Style="{StaticResource StateEmptyBody}" />
+                            <Button Grid.Row="3"
+                                    Style="{StaticResource ButtonSecondary}"
+                                    Text="{loc:LocalizedText Workout_History_ShowAllMonths}"
+                                    Command="{Binding ShowAllMonthsCommand}"
+                                    IsVisible="{Binding IsFilteredByMonth}" />
                         </Grid>
                     </Border>
 
-                    <Label LineBreakMode="WordWrap" Style="{StaticResource SectionTitle}"
+                    <Border
                         Grid.Row="3"
+                        IsVisible="{Binding ShowInitialLoadError}"
+                        MaximumWidthRequest="{StaticResource UiDimension640}"
+                        Style="{StaticResource CardPrimary}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource ErrorLabel}">
+                                <Label.Behaviors>
+                                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                                </Label.Behaviors>
+                            </Label>
+                            <Button Style="{StaticResource ButtonSecondary}"
+                                    Text="{loc:LocalizedText Workout_History_RetryLoadingButton}"
+                                    Command="{Binding RetryCommand}" />
+                        </VerticalStackLayout>
+                    </Border>
+
+                    <Label LineBreakMode="WordWrap" Style="{StaticResource SectionTitle}"
+                        Grid.Row="4"
+                        IsVisible="{Binding HasSessions}"
                         Text="{loc:LocalizedText Workout_History_PastSessionsTitle}"
                         Margin="{StaticResource UiInsets4_4_0_0}" />
                 </Grid>
@@ -288,8 +313,8 @@
                            Style="{StaticResource MutedCentered}" IsVisible="{Binding IsLoadingMore}" />
                     <Label LineBreakMode="WordWrap" Grid.Row="2" Text="{loc:LocalizedText Workout_History_AllWorkoutsLoaded}"
                            Style="{StaticResource MutedCentered}" IsVisible="{Binding IsEndReached}" />
-                    <Button Grid.Row="3" Text="{loc:LocalizedText Workout_History_RetryLoadingButton}" Command="{Binding LoadNextPageCommand}"
-                            IsVisible="{Binding IsError}" Style="{StaticResource ButtonSecondary}" />
+                    <Button Grid.Row="3" Text="{loc:LocalizedText Workout_History_RetryLoadingButton}" Command="{Binding RetryCommand}"
+                            IsVisible="{Binding ShowFooterLoadError}" Style="{StaticResource ButtonSecondary}" />
                     <Grid Grid.Row="4" HeightRequest="{StaticResource UiDimension96}" />
                 </Grid>
             </CollectionView.Footer>
@@ -467,11 +492,20 @@
                                        Text="{loc:LocalizedText Workout_History_PerceivedExertionTitle}" />
                                 <Border Style="{StaticResource InputContainer}">
                                     <Entry
-                                        Text="{Binding EditingRpe}"
+                                        Text="{Binding EditingRpeText}"
                                         Keyboard="Numeric"
+                                        ReturnType="Next"
                                         Placeholder="{loc:LocalizedText Workout_History_RpeHeader}"
                                         SemanticProperties.Description="{loc:LocalizedText Workout_History_RpeSliderAccessibility}" />
                                 </Border>
+                                <Label LineBreakMode="WordWrap"
+                                       Text="{Binding RpeValidationError, Converter={StaticResource LocalizedStringConverter}}"
+                                       Style="{StaticResource ErrorLabel}"
+                                       IsVisible="{Binding RpeValidationError, Converter={StaticResource StringToBoolConverter}}">
+                                    <Label.Behaviors>
+                                        <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                                    </Label.Behaviors>
+                                </Label>
                             </VerticalStackLayout>
 
                             <Border Grid.Row="2" Style="{StaticResource EditorContainer}">
@@ -484,11 +518,19 @@
                         </Grid>
                     </ScrollView>
 
-                    <Grid Grid.Row="3" Padding="{DynamicResource PresentationActionFooterPadding}">
-                        <Button Style="{StaticResource ButtonSecondary}"
+                    <VerticalStackLayout Grid.Row="3"
+                                         Spacing="{StaticResource UiSpaceTight}"
+                                         Padding="{DynamicResource PresentationActionFooterPadding}"
+                                         BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
+                        <ActivityIndicator Style="{StaticResource StateBusyInline}"
+                                           HorizontalOptions="Center"
+                                           IsRunning="{Binding IsSavingNotes}"
+                                           IsVisible="{Binding IsSavingNotes}" />
+                        <Button Style="{StaticResource ButtonPrimary}"
                                 Text="{loc:LocalizedText Workout_History_SaveNotesAndRpeButton}"
+                                IsEnabled="{Binding IsSavingNotes, Converter={StaticResource InvertedBoolConverter}}"
                                 Command="{Binding SaveSessionNotesCommand}" />
-                    </Grid>
+                    </VerticalStackLayout>
                 </Grid>
             </Border>
             </Grid>
@@ -517,7 +559,11 @@
             InputTransparent="True">
             <Label LineBreakMode="WordWrap" Style="{StaticResource CaptionLabel}"
                 Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
-                TextColor="{AppThemeBinding Light={StaticResource TextOnAccentLight}, Dark={StaticResource TextOnAccentDark}}" />
+                TextColor="{AppThemeBinding Light={StaticResource TextOnAccentLight}, Dark={StaticResource TextOnAccentDark}}">
+                <Label.Behaviors>
+                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                </Label.Behaviors>
+            </Label>
         </Border>
 
     </Grid>

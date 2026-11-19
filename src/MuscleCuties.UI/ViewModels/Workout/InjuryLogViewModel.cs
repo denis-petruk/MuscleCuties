@@ -184,6 +184,16 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     public bool CanSaveInjury => !IsBusy && SelectedSiteFlag != WorkoutInjurySite.None && SelectedStatus is not null &&
                                  SinceDateValue.Date <= DateTime.Today;
 
+    public bool ShowSaveInjuryPrerequisiteHint => !CanSaveInjury && !IsBusy;
+
+    public string SaveInjuryPrerequisiteHint => (SelectedSiteFlag == WorkoutInjurySite.None, SelectedStatus is null) switch
+    {
+        (true, true) => UiTextCatalog.Get("Injury_Log_SavePrerequisiteBoth"),
+        (true, false) => UiTextCatalog.Get("Injury_Log_SavePrerequisiteSite"),
+        (false, true) => UiTextCatalog.Get("Injury_Log_SavePrerequisiteStatus"),
+        _ => string.Empty
+    };
+
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in Injury XAML / view model contract.")]
     public DateTime Today => DateTime.Today;
@@ -259,6 +269,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     private void RefreshSaveState()
     {
         OnPropertyChanged(nameof(CanSaveInjury));
+        OnPropertyChanged(nameof(ShowSaveInjuryPrerequisiteHint));
+        OnPropertyChanged(nameof(SaveInjuryPrerequisiteHint));
         SaveInjuryCommand.NotifyCanExecuteChanged();
     }
 

@@ -54,7 +54,9 @@ public partial class PageLoadingOverlay : ContentView
 
     /// <summary>The retry the page allows, or null when no retry can succeed.</summary>
     public ICommand? EffectiveRetryCommand =>
-        RetryCommand ?? (BindingContext as IPageLoadAware)?.LoadDataCommand;
+        IsSet(RetryCommandProperty)
+            ? RetryCommand
+            : (BindingContext as IPageLoadAware)?.LoadDataCommand;
 
     public bool HasRetryCommand => EffectiveRetryCommand is not null;
 

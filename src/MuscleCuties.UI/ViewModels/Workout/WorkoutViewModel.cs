@@ -240,7 +240,9 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public bool HasNoPlan => string.IsNullOrEmpty(ActivePlanName);
     public bool HasInProgressWorkout => InProgressWorkout is { IsInProgress: true, WorkoutDayId: > MissingWorkoutDayId };
     public bool ShowNoPlanPrompt => _hasLoadedOverview && HasNoPlan && HasNoWorkouts;
-    public bool HasScheduleDays => ScheduleDays.Count > 0;
+    [ObservableProperty] private string _statusMessage = string.Empty;
+
+    public bool HasScheduleDays => _hasLoadedOverview && !IsLoadError && ScheduleDays.Count > 0;
     /// <summary>
     /// A plan always offers its weeks. The chip row must not follow the selected week's days: a
     /// week without dated days would hide the only control that leads back to a week with sessions.
@@ -907,6 +909,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private async Task ToggleSessionOptionalAsync(WorkoutItem? workout)
     {
         if (workout is null || workout.WorkoutDayId <= 0 || workout.IsCompleted || workout.IsRestDay) return;
+        StatusMessage = string.Empty;
         var wasOptional = workout.IsOptional;
         var wasEasierAlternative = workout.IsEasierAlternative;
         workout.IsOptional = !wasOptional;
@@ -917,18 +920,20 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             await _overview.SetSessionOptionalAsync(new SetWorkoutSessionOptionalRequest(
                 workout.WorkoutDayId, workout.IsOptional, workout.IsEasierAlternative));
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.WriteLine($"[WorkoutViewModel] Toggle optional failed ({ex.GetType().Name}).");
             workout.IsOptional = wasOptional;
             workout.IsEasierAlternative = wasEasierAlternative;
             OnPropertyChanged(nameof(Workouts));
-            throw;
+            StatusMessage = Services.Api.ApiFailurePresenter.FromException(ex, "Workout_Overview_UpdateFailed").MessageText;
         }
     }
 
     private async Task ToggleEasierAlternativeAsync(WorkoutItem? workout)
     {
         if (workout is null || !workout.CanMarkEasierAlternative) return;
+        StatusMessage = string.Empty;
         var previous = workout.IsEasierAlternative;
         workout.IsEasierAlternative = !previous;
         try
@@ -936,10 +941,11 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             await _overview.SetSessionOptionalAsync(new SetWorkoutSessionOptionalRequest(
                 workout.WorkoutDayId, IsOptional: true, IsEasierAlternative: workout.IsEasierAlternative));
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.WriteLine($"[WorkoutViewModel] Toggle easier alternative failed ({ex.GetType().Name}).");
             workout.IsEasierAlternative = previous;
-            throw;
+            StatusMessage = Services.Api.ApiFailurePresenter.FromException(ex, "Workout_Overview_UpdateFailed").MessageText;
         }
     }
 

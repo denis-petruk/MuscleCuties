@@ -26,9 +26,12 @@ public partial class QuizPage : ContentPage
             _viewModel.SelectAnswerCommand.Execute(answer);
     }
 
-    private void OnBackTapped(object? sender, TappedEventArgs e)
+    private void OnGluteFocusLabelTapped(object? sender, TappedEventArgs e)
     {
-        _viewModel.BackCommand.Execute(null);
+        if (_viewModel.IsBusy)
+            return;
+
+        OnboardingGluteFocusCheckBox.IsChecked = !OnboardingGluteFocusCheckBox.IsChecked;
     }
 
     private async void OnNextClicked(object? sender, EventArgs e)

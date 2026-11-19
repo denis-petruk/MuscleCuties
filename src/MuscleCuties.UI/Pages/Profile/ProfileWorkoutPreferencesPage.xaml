@@ -13,6 +13,8 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileWorkoutPreferencesViewModel"
     Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
+    SafeAreaEdges="All"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 
@@ -20,6 +22,7 @@
     <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
         <sharedControls:PageHeader
             Title="{loc:LocalizedText Profile_WorkoutPrefs_ActivityPreferences}"
+            Subtitle="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
             BackCommand="{Binding BackCommand, Source={x:Reference Root}}" />
     </Grid>
     <ScrollView IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" Grid.Row="1">
@@ -89,12 +92,17 @@
                 x:TypeArguments="profileControls:ProfileWorkoutPreferencesChoices" />
         </VerticalStackLayout>
     </ScrollView>
-    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill"
+                         BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
         <Label
             Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
-            Style="{StaticResource AccentLabel}"
+            Style="{StaticResource ErrorLabel}"
             LineBreakMode="WordWrap"
-            IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
+            IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}">
+            <Label.Behaviors>
+                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+            </Label.Behaviors>
+        </Label>
         <Button Style="{StaticResource ButtonPrimary}"
             Text="{Binding SaveActionText}"
             Command="{Binding SaveCommand}"

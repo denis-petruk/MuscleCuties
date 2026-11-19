@@ -842,7 +842,9 @@ public partial class FoodLogViewModel
     }
 
     private static Task<bool> ConfirmAsync(string title, string message, string accept, string cancel) =>
-        Shell.Current.DisplayAlertAsync(title, message, accept, cancel);
+        Shell.Current is { } shell
+            ? shell.DisplayAlertAsync(title, message, accept, cancel)
+            : Task.FromResult(true);
 
     private void NotifyShelfVisibility()
     {

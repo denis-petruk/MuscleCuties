@@ -36,7 +36,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private bool _hasActiveInjuries;
     [ObservableProperty] private bool _hasVaultPhotos;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading), nameof(IsAccountActionBusy))]
     private bool _isBusy;
 
     [ObservableProperty] private bool _isLoadError;
@@ -139,6 +139,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
+    public bool IsAccountActionBusy => IsBusy && _loadGate.HasLoaded;
 
     public void Dispose()
     {
@@ -231,7 +232,9 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
 
     private async Task LogoutAsync()
     {
+        if (IsBusy) return;
         IsBusy = true;
+        AccountActionError = string.Empty;
         try
         {
             _refreshNotifier.InvalidateAll();
@@ -239,6 +242,11 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
                 await _photoCache.ClearAsync();
             await _useCase.LogoutAsync();
             await _navigateToLoginAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[ProfileViewModel] Logout failed ({ex.GetType().Name}).");
+            AccountActionError = UiTextCatalog.Get("Profile_Logout_Failed");
         }
         finally
         {

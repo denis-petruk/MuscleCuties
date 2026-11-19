@@ -1,3 +1,5 @@
+using System.Windows.Input;
+using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Profile;
@@ -8,6 +10,7 @@ public partial class ProfileImageCropModal : AnimatedModalView
 {
     private double _currentScale;
     private bool _hasContent;
+    private bool _isSaving;
     private double _panX;
     private double _panY;
     private double _startScale;
@@ -17,7 +20,11 @@ public partial class ProfileImageCropModal : AnimatedModalView
     {
         _currentScale = AppThemeResources.GetDouble("UiScaleCropMinimum");
         _startScale = _currentScale;
+        CancelCommand = new RelayCommand(() => OnCancelTapped(this, EventArgs.Empty));
+        BindingContext = this;
     }
+
+    public ICommand CancelCommand { get; }
 
     protected override void OnSizeAllocated(double width, double height)
     {
@@ -78,13 +85,17 @@ public partial class ProfileImageCropModal : AnimatedModalView
 
     private async void OnUsePhotoTapped(object? sender, EventArgs e)
     {
+        if (_isSaving)
+            return;
+
+        _isSaving = true;
+        UsePhotoButton.IsEnabled = false;
         try
         {
             var result = await CropViewport.CaptureAsync();
             if (result is null)
             {
                 _tcs?.TrySetResult(null);
-                Hide();
                 return;
             }
 
@@ -93,12 +104,14 @@ public partial class ProfileImageCropModal : AnimatedModalView
 
             _tcs?.TrySetResult(path);
         }
-        catch
+        catch (Exception ex)
         {
-            _tcs?.TrySetResult(null);
+            _tcs?.TrySetException(ex);
         }
         finally
         {
+            _isSaving = false;
+            UsePhotoButton.IsEnabled = true;
             Hide();
         }
     }

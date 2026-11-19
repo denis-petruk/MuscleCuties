@@ -303,9 +303,9 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         : IsEditingMeal ? "Edit meal" : "Log meal";
 
     public string MealDraftCaloriesText => DisplayFormat.Calories(MealIngredients.Sum(i => i.CaloriesForAmount));
-    public string MealDraftProteinText => $"P {DisplayFormat.Grams(MealIngredients.Sum(i => i.ProteinForAmount))}";
-    public string MealDraftCarbsText => $"C {DisplayFormat.Grams(MealIngredients.Sum(i => i.CarbsForAmount))}";
-    public string MealDraftFatsText => $"F {DisplayFormat.Grams(MealIngredients.Sum(i => i.FatsForAmount))}";
+    public string MealDraftProteinText => DisplayFormat.Grams(MealIngredients.Sum(i => i.ProteinForAmount));
+    public string MealDraftCarbsText => DisplayFormat.Grams(MealIngredients.Sum(i => i.CarbsForAmount));
+    public string MealDraftFatsText => DisplayFormat.Grams(MealIngredients.Sum(i => i.FatsForAmount));
 
     public string CustomFoodToggleText => IsCustomFoodPanelVisible ? "Hide custom food" : "Create custom food";
     public string BrowseMoreFoodsButtonText => IsBrowsingMoreFoods ? "Browsing..." : "Browse more";

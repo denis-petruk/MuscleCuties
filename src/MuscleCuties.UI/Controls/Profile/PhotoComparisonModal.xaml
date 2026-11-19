@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<sharedControls:AnimatedModalView
+    x:Class="MuscleCuties.UI.Controls.Profile.PhotoComparisonModal"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
+    x:DataType="vm:PhotoJourneyVaultViewModel"
+    IsOpen="{Binding IsComparisonOpen}">
+
+    <Grid>
+        <BoxView Style="{StaticResource ModalBackdrop}">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Command="{Binding CloseComparisonCommand}" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
+        <Border
+            x:Name="SheetSurface"
+            Style="{StaticResource ModalSurface}"
+            MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
+            HorizontalOptions="Fill"
+            VerticalOptions="End">
+            <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
+                <sharedControls:ModalSheetHeader
+                    Grid.Row="0"
+                    Title="{loc:LocalizedText Profile_PhotoJourney_ComparePhotos}"
+                    CloseCommand="{Binding CloseComparisonCommand}"
+                    CloseDescription="{loc:LocalizedText Profile_PhotoVault_CloseComparison}" />
+
+                <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
+
+                <ScrollView Grid.Row="2" Style="{StaticResource ModalSheetBody}">
+                    <VerticalStackLayout Padding="{DynamicResource PresentationModalPagePadding}"
+                                         Spacing="{StaticResource UiSpaceCompact}">
+                        <Label Text="{loc:LocalizedText Profile_PhotoJourney_ComparisonInstructions}"
+                               Style="{StaticResource CaptionLabel}"
+                               LineBreakMode="WordWrap" />
+
+                        <Grid HeightRequest="{StaticResource UiDimension280}"
+                              ColumnSpacing="{StaticResource UiSpacing2}">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition x:Name="ComparisonFirstColumn" Width="*" />
+                                <ColumnDefinition x:Name="ComparisonSecondColumn" Width="*" />
+                            </Grid.ColumnDefinitions>
+                            <Grid IsClippedToBounds="True">
+                                <Image Source="{Binding ComparisonFirstImagePath}"
+                                       Aspect="AspectFill"
+                                       SemanticProperties.Description="{Binding ComparisonFirstDateText}" />
+                            </Grid>
+                            <Grid Grid.Column="1" IsClippedToBounds="True">
+                                <Image Source="{Binding ComparisonSecondImagePath}"
+                                       Aspect="AspectFill"
+                                       SemanticProperties.Description="{Binding ComparisonSecondDateText}" />
+                            </Grid>
+                        </Grid>
+
+                        <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <Label Text="{Binding ComparisonFirstDateText}"
+                                   Style="{StaticResource CaptionStrong}"
+                                   LineBreakMode="WordWrap" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding ComparisonSecondDateText}"
+                                   Style="{StaticResource CaptionStrong}"
+                                   HorizontalTextAlignment="End"
+                                   LineBreakMode="WordWrap" />
+                        </Grid>
+
+                        <Slider x:Name="ComparisonSlider"
+                                Minimum="0.1"
+                                Maximum="0.9"
+                                Value="0.5"
+                                ValueChanged="OnComparisonSliderChanged"
+                                SemanticProperties.Description="{loc:LocalizedText Profile_PhotoJourney_ComparisonSliderDescription}" />
+                    </VerticalStackLayout>
+                </ScrollView>
+
+                <VerticalStackLayout Grid.Row="3"
+                                     Padding="{DynamicResource PresentationActionFooterPadding}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
+                    <Button Text="{loc:LocalizedText Profile_PhotoJourney_CloseComparison}"
+                            Command="{Binding CloseComparisonCommand}"
+                            LineBreakMode="WordWrap"
+                            Style="{StaticResource ButtonSecondary}" />
+                </VerticalStackLayout>
+            </Grid>
+        </Border>
+    </Grid>
+</sharedControls:AnimatedModalView>

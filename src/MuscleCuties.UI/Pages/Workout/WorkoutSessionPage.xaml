@@ -30,11 +30,14 @@
             </Grid>
 
             <!-- Validation and load feedback -->
-            <Border Grid.Row="2" Style="{StaticResource CardSecondary}" IsVisible="{Binding HasError}"
-                    SemanticProperties.Description="{loc:LocalizedText Workout_Session_ErrorMessageAccessibility}">
+            <Border Grid.Row="2" Style="{StaticResource CardSecondary}" IsVisible="{Binding HasError}">
                 <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                     <Label LineBreakMode="WordWrap" Text="{Binding ErrorText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource BodyLabel}" />
+                           Style="{StaticResource ErrorLabel}">
+                        <Label.Behaviors>
+                            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
                     <Label LineBreakMode="WordWrap" Grid.Row="1" Text="{Binding ErrorReference}"
                            Style="{StaticResource CaptionLabel}"
                            IsVisible="{Binding HasErrorReference}"
@@ -46,11 +49,14 @@
             </Border>
 
             <!-- Milestone feedback -->
-            <Border Grid.Row="1" Style="{StaticResource CardSecondary}" IsVisible="{Binding HasCelebration}"
-                    SemanticProperties.Description="{loc:LocalizedText Workout_Session_CelebrationTitle}">
+            <Border Grid.Row="1" Style="{StaticResource CardSecondary}" IsVisible="{Binding HasCelebration}">
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <Label LineBreakMode="WordWrap" Text="{Binding CelebrationText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
+                           Style="{StaticResource BodyLabel}" VerticalOptions="Center">
+                        <Label.Behaviors>
+                            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
                     <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_OkButton}"
                             Command="{Binding DismissCelebrationCommand}"
                             Style="{StaticResource ButtonSecondary}"
@@ -477,6 +483,9 @@
                                             </BindableLayout.ItemTemplate>
                                         </VerticalStackLayout>
                                     </Border>
+                                    <Label Text="{loc:LocalizedText Workout_Session_RirHelpHint}"
+                                           Style="{StaticResource CaptionLabel}"
+                                           LineBreakMode="WordWrap" />
                                     <Button Text="{loc:LocalizedText Workout_Session_AddSet}"
                                             AutomationId="WorkoutSessionAddSetButton" Command="{Binding AddSetCommand}"
                                             Style="{StaticResource ButtonSecondary}"
@@ -837,7 +846,7 @@
                             </VerticalStackLayout>
                             <!-- Strength metrics: volume, PRs and time. Timed activities use the row below
                                  instead, so the two sets never share a column. -->
-                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+                            <sharedControls:AdaptiveRow Columns="3" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}"
                                   IsVisible="{Binding ShowStrengthSummaryMetrics}">
                                 <Border Style="{StaticResource CardSecondary}"
                                         SemanticProperties.Description="{Binding SummaryTotalVolume, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TotalVolumeFormat}">
@@ -849,7 +858,7 @@
                                                Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                                <Border Grid.Column="1" Style="{StaticResource CardSecondary}"
+                                <Border Style="{StaticResource CardSecondary}"
                                         SemanticProperties.Description="{Binding SummaryPrCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_WeightPrsFormat}">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                                         <Label LineBreakMode="WordWrap"
@@ -859,7 +868,7 @@
                                                Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                                <Border Grid.Column="2" Style="{StaticResource CardSecondary}"
+                                <Border Style="{StaticResource CardSecondary}"
                                         SemanticProperties.Description="{Binding SummaryDuration, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TimeFormat}">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                                         <Label LineBreakMode="WordWrap"
@@ -869,10 +878,10 @@
                                                Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                            </Grid>
+                            </sharedControls:AdaptiveRow>
 
                             <!-- Timed metrics: time, optional effort and distance only when it was recorded. -->
-                            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+                            <sharedControls:AdaptiveRow Columns="3" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}"
                                   IsVisible="{Binding IsTimedActivitySummary}">
                                 <Border Style="{StaticResource CardSecondary}"
                                         SemanticProperties.Description="{Binding SummaryDuration, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_TimeFormat}">
@@ -884,7 +893,7 @@
                                                Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                                <Border Grid.Column="1" Style="{StaticResource CardSecondary}"
+                                <Border Style="{StaticResource CardSecondary}"
                                         SemanticProperties.Description="{Binding SummaryEffortText}">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
                                         <Label LineBreakMode="WordWrap"
@@ -894,7 +903,7 @@
                                                Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                                <Border Grid.Column="2" Style="{StaticResource CardSecondary}"
+                                <Border Style="{StaticResource CardSecondary}"
                                         IsVisible="{Binding HasSummaryDistance}"
                                         SemanticProperties.Description="{Binding SummaryDistanceText}">
                                     <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}">
@@ -905,7 +914,7 @@
                                                Style="{StaticResource WorkoutMetricLabel}" />
                                     </Grid>
                                 </Border>
-                            </Grid>
+                            </sharedControls:AdaptiveRow>
                         </VerticalStackLayout>
                     </ScrollView>
                     <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">

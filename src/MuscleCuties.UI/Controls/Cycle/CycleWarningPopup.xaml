@@ -27,12 +27,12 @@
                         WidthRequest="{StaticResource UiDimension34}"
                         HeightRequest="{StaticResource UiDimension34}"
                         StrokeShape="{StaticResource UiRoundRectangleRadius17}"
-                        BackgroundColor="{StaticResource Secondary}"
+                        BackgroundColor="{AppThemeBinding Light={StaticResource WarningSurfaceLight}, Dark={StaticResource WarningSurfaceDark}}"
                         StrokeThickness="{StaticResource UiStrokeWidth0}"
                         VerticalOptions="Start">
                         <Label
                             Text="!"
-                            TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                            TextColor="{AppThemeBinding Light={StaticResource WarningAccentLight}, Dark={StaticResource WarningAccentDark}}"
                             Style="{StaticResource SectionTitle}"
                             SemanticProperties.HeadingLevel="None"
                             HorizontalOptions="Center"

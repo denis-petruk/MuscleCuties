@@ -54,7 +54,9 @@ public partial class DashboardViewModel
         : string.Format(CultureInfo.CurrentCulture,
             CompositeFormat.Parse(UiTextCatalog.Get("Dashboard_Trend_LoggedWeeksFormat")),
             WeeklyWeightPoints.Count,
-            WeeklyWeightPoints[^1].WeightKg?.ToString("N1", CultureInfo.CurrentCulture),
+            WeeklyWeightPoints[^1].WeightKg is { } latestKg
+                ? UnitsFormatter.ToDisplayWeight(latestKg, _useMetricUnits).ToString("N1", CultureInfo.CurrentCulture)
+                : "—",
             WeightUnitLabel);
     public string WeeklyWeightValuesText => string.Join("  ·  ", WeeklyWeightPoints.Select(point =>
         $"{point.Date.ToString("MMM d", CultureInfo.CurrentCulture)}: {FormatWeight(point.WeightKg)}"));
@@ -70,7 +72,7 @@ public partial class DashboardViewModel
     public bool HasHeaviestLiftExerciseName => !string.IsNullOrWhiteSpace(HeaviestLiftExerciseName);
     public string HighestVolumeText => FormatWeight(_workoutProgress?.HighestSessionVolumeKg);
     public string LongestSessionText => _workoutProgress?.LongestSessionMinutes is { } minutes
-        ? $"{minutes} min"
+        ? DisplayFormat.Minutes(minutes)
         : "—";
     public string LongestDistanceText => FormatDistance(_workoutProgress?.LongestDistanceKm);
     public string FastestPaceText => FormatPace(_workoutProgress?.FastestPaceSecondsPerKm);

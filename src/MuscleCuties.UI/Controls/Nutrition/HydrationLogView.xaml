@@ -45,6 +45,7 @@
                                      InputTransparent="True">
                     <Label Text="{loc:LocalizedText Nutrition_FoodLog_Water}"
                            Style="{StaticResource BodyStrong}"
+                           LineBreakMode="WordWrap"
                            AutomationProperties.IsInAccessibleTree="False" />
                     <Label Text="{Binding WaterIntakeMl, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Nutrition_FoodLog_ValueMl}"
                            Style="{StaticResource SectionTitle}"
@@ -75,7 +76,7 @@
                 <sharedControls:CardTapTarget Grid.ColumnSpan="3"
                                                Command="{Binding ToggleHydrationDetailsCommand}"
                                                IsVisible="{Binding CanOpenHydrationDetails}"
-                                               SemanticProperties.Description="{loc:LocalizedText Nutrition_FoodLog_Water}"
+                                               SemanticProperties.Description="{Binding WaterSummaryAccessibility}"
                                                SemanticProperties.Hint="{loc:LocalizedText Nutrition_Hydration_ShowDetails}">
                     <sharedControls:CardTapTarget.Triggers>
                         <DataTrigger TargetType="Button" Binding="{Binding IsHydrationExpanded}" Value="True">
@@ -101,7 +102,12 @@
         <ActivityIndicator Style="{StaticResource StateBusyInline}"
                            IsVisible="{Binding IsHydrationBusy}" IsRunning="{Binding IsHydrationBusy}" />
         <Label Style="{StaticResource ErrorLabel}" Text="{Binding HydrationError}"
-               IsVisible="{Binding HasHydrationError}" />
+               IsVisible="{Binding HasHydrationError}"
+               LineBreakMode="WordWrap">
+            <Label.Behaviors>
+                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+            </Label.Behaviors>
+        </Label>
         <Button Style="{StaticResource ButtonSecondary}"
                 Text="{loc:LocalizedText Common_TryAgain}"
                 IsVisible="{Binding HasHydrationRetry}" Command="{Binding RetryHydrationCommand}" />
@@ -111,8 +117,9 @@
                              Spacing="{StaticResource UiSpaceControl}">
             <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                 <Label Text="{loc:LocalizedText Nutrition_Hydration_LoggedWater}"
-                       Style="{StaticResource FormFieldLabel}" />
+                       Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                 <Label Text="{loc:LocalizedText Nutrition_Hydration_NoEntries}" Style="{StaticResource MutedLabel}"
+                       LineBreakMode="WordWrap"
                        IsVisible="{Binding HasHydrationEntries, Converter={StaticResource InvertedBoolConverter}}" />
                 <Border Style="{StaticResource PickerContainer}" IsVisible="{Binding HasHydrationEntries}">
                     <Picker ItemsSource="{Binding HydrationEntries}" SelectedItem="{Binding SelectedHydrationEntry}"
@@ -127,7 +134,7 @@
                         <Entry Text="{Binding HydrationEntryAmount}" Keyboard="Numeric"
                                SemanticProperties.Description="{loc:LocalizedText Nutrition_Hydration_Amount}" />
                     </Border>
-                    <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Nutrition_Hydration_CorrectEntry}"
+                    <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_Hydration_CorrectEntry}"
                             Command="{Binding CorrectHydrationEntryCommand}" />
                     <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_Hydration_UndoEntry}"
                             Command="{Binding UndoHydrationEntryCommand}" />
@@ -137,7 +144,7 @@
             <VerticalStackLayout IsVisible="{Binding CanConfigureHydrationPresets}"
                                  Spacing="{StaticResource UiSpaceTight}">
                 <Label Text="{loc:LocalizedText Nutrition_Hydration_Presets}"
-                       Style="{StaticResource FormFieldLabel}" />
+                       Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                 <Border Style="{StaticResource PickerContainer}">
                     <Picker ItemsSource="{Binding HydrationPresets}" SelectedItem="{Binding SelectedHydrationPreset}"
                             Title="{loc:LocalizedText Nutrition_Hydration_ChoosePreset}"
@@ -160,7 +167,7 @@
                     <Entry Text="{Binding HydrationPresetAmount}" Keyboard="Numeric"
                            SemanticProperties.Description="{loc:LocalizedText Nutrition_Hydration_Amount}" />
                 </Border>
-                <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Nutrition_Hydration_SavePreset}"
+                <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_Hydration_SavePreset}"
                         Command="{Binding SaveHydrationPresetCommand}" />
                 <FlexLayout IsVisible="{Binding CanEditHydrationPreset}" Wrap="Wrap">
                     <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_Hydration_MovePresetUp}"
@@ -177,12 +184,12 @@
             <VerticalStackLayout IsVisible="{Binding CanConfigureHydrationReminders}"
                                  Spacing="{StaticResource UiSpaceTight}">
                 <Label Text="{loc:LocalizedText Nutrition_Hydration_ReminderPreferences}"
-                       Style="{StaticResource FormFieldLabel}" />
+                       Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                 <Label Text="{loc:LocalizedText Nutrition_Hydration_ReminderDelivery}"
-                       Style="{StaticResource MutedLabel}" />
+                       Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                     <Label Text="{loc:LocalizedText Nutrition_Hydration_UseReminderPreferences}"
-                           Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
+                           Style="{StaticResource BodyLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
                     <Switch Grid.Column="1" IsToggled="{Binding HydrationRemindersOptedIn}"
                             SemanticProperties.Description="{loc:LocalizedText Nutrition_Hydration_UseReminderPreferences}" />
                 </Grid>
@@ -190,7 +197,7 @@
                 <VerticalStackLayout IsVisible="{Binding HydrationRemindersOptedIn}"
                                      Spacing="{StaticResource UiSpaceTight}">
                     <Label Text="{loc:LocalizedText Nutrition_Hydration_ReminderTimes}"
-                           Style="{StaticResource FormFieldLabel}" />
+                           Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                     <VerticalStackLayout BindableLayout.ItemsSource="{Binding HydrationReminderTimes}"
                                          Spacing="{StaticResource UiSpaceTight}">
                         <BindableLayout.ItemTemplate>
@@ -215,7 +222,7 @@
                     <sharedControls:TimeField Time="{Binding HydrationQuietEnd}"
                                               Description="{loc:LocalizedText Nutrition_Hydration_QuietEnd}" />
                 </VerticalStackLayout>
-                <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Nutrition_Hydration_SaveReminderPreferences}"
+                <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Nutrition_Hydration_SaveReminderPreferences}"
                         Command="{Binding SaveHydrationReminderCommand}" />
             </VerticalStackLayout>
         </VerticalStackLayout>

@@ -9,6 +9,8 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfileUnitsDisplayViewModel"
     Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
+    SafeAreaEdges="All"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
 
@@ -28,7 +30,7 @@
                                                       IconGlyph="ChatSettings24" />
                     <Grid Grid.Row="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing3}">
                         <Label Grid.Row="0"
-                               Text="{Binding UnitSystemText, Converter={StaticResource LocalizedStringConverter}}"
+                               Text="{Binding UnitSystemText}"
                                Style="{StaticResource CardTitle}" />
                         <Label
                             Grid.Row="1"
@@ -38,96 +40,127 @@
                     </Grid>
                     <sharedControls:AdaptiveRow Grid.Row="2" Columns="2" ColumnSpacing="{StaticResource UiSpaceTight}">
                         <Border
-    Style="{StaticResource CardSecondary}">
-    <Border.Triggers>
-        <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-            <Setter Property="Stroke"
-                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-        </DataTrigger>
-    </Border.Triggers>
-    <Grid>
-    <Label
-        AutomationProperties.IsInAccessibleTree="False"
-        InputTransparent="True"
-        Text="{loc:LocalizedText Common_Unit_Imperial}"
-        Style="{StaticResource BodyStrong}"
-        HorizontalTextAlignment="Center">
-        <Label.Triggers>
-            <DataTrigger TargetType="Label" Binding="{Binding UseImperialSystem}"
-                         Value="True">
-                <Setter Property="TextColor"
-                        Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-            </DataTrigger>
-        </Label.Triggers>
-    </Label>
-    <sharedControls:CardTapTarget
-        Command="{Binding SelectImperialUnitsCommand}"
-        SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectImperialUnits}"
-        SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-        <sharedControls:CardTapTarget.Triggers>
-            <DataTrigger TargetType="Button" Binding="{Binding UseImperialSystem}" Value="True">
-                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
-            </DataTrigger>
-        </sharedControls:CardTapTarget.Triggers>
-    </sharedControls:CardTapTarget>
-    </Grid>
-</Border>
-            
+                            Style="{StaticResource CardSecondary}"
+                            MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
+                                    <Setter Property="BackgroundColor"
+                                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                    <Setter Property="Stroke"
+                                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center" InputTransparent="True" AutomationProperties.IsInAccessibleTree="False">
+                                    <Label Text="{loc:LocalizedText Common_Unit_Imperial}"
+                                           Style="{StaticResource BodyStrong}"
+                                           LineBreakMode="WordWrap" />
+                                    <Label Text="{loc:LocalizedText Profile_Units_ImperialPreview}"
+                                           Style="{StaticResource CaptionSmall}"
+                                           LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                                <Border Grid.Column="1" Style="{StaticResource SelectionRadioRing}" VerticalOptions="Center" InputTransparent="True">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding UseImperialSystem}" Value="False">
+                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource BorderNeutralLight}, Dark={StaticResource BorderNeutralDark}}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Path Data="M5 11L9 15L17 6" Stroke="{StaticResource ContrastInk}" StrokeThickness="{StaticResource UiStrokeWidth2}" StrokeLineCap="Round" StrokeLineJoin="Round" HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding UseImperialSystem}" />
+                                </Border>
+                                <sharedControls:CardTapTarget
+                                    Grid.ColumnSpan="2"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    Command="{Binding SelectImperialUnitsCommand}"
+                                    SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectImperialUnits}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+                                    <sharedControls:CardTapTarget.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding UseImperialSystem}" Value="True">
+                                            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+                                        </DataTrigger>
+                                    </sharedControls:CardTapTarget.Triggers>
+                                </sharedControls:CardTapTarget>
+                            </Grid>
+                        </Border>
+
                         <Border
-    Style="{StaticResource CardSecondary}">
-    <Border.Triggers>
-        <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-            <Setter Property="Stroke"
-                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-        </DataTrigger>
-    </Border.Triggers>
-    <Grid>
-    <Label
-        AutomationProperties.IsInAccessibleTree="False"
-        InputTransparent="True"
-        Text="{loc:LocalizedText Common_Unit_Metric}"
-        Style="{StaticResource BodyStrong}"
-        HorizontalTextAlignment="Center">
-        <Label.Triggers>
-            <DataTrigger TargetType="Label" Binding="{Binding UseMetricSystem}"
-                         Value="True">
-                <Setter Property="TextColor"
-                        Value="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
-            </DataTrigger>
-        </Label.Triggers>
-    </Label>
-    <sharedControls:CardTapTarget
-        Command="{Binding SelectMetricUnitsCommand}"
-        SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectMetricUnits}"
-        SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-        <sharedControls:CardTapTarget.Triggers>
-            <DataTrigger TargetType="Button" Binding="{Binding UseMetricSystem}" Value="True">
-                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
-            </DataTrigger>
-        </sharedControls:CardTapTarget.Triggers>
-    </sharedControls:CardTapTarget>
-    </Grid>
-</Border>
+                            Style="{StaticResource CardSecondary}"
+                            MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                            <Border.Triggers>
+                                <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
+                                    <Setter Property="BackgroundColor"
+                                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
+                                    <Setter Property="Stroke"
+                                            Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                    <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
+                                </DataTrigger>
+                            </Border.Triggers>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" VerticalOptions="Center">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center" InputTransparent="True" AutomationProperties.IsInAccessibleTree="False">
+                                    <Label Text="{loc:LocalizedText Common_Unit_Metric}"
+                                           Style="{StaticResource BodyStrong}"
+                                           LineBreakMode="WordWrap" />
+                                    <Label Text="{loc:LocalizedText Profile_Units_MetricPreview}"
+                                           Style="{StaticResource CaptionSmall}"
+                                           LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                                <Border Grid.Column="1" Style="{StaticResource SelectionRadioRing}" VerticalOptions="Center" InputTransparent="True">
+                                    <Border.Triggers>
+                                        <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="True">
+                                            <Setter Property="BackgroundColor" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
+                                        </DataTrigger>
+                                        <DataTrigger TargetType="Border" Binding="{Binding UseMetricSystem}" Value="False">
+                                            <Setter Property="Stroke" Value="{AppThemeBinding Light={StaticResource BorderNeutralLight}, Dark={StaticResource BorderNeutralDark}}" />
+                                        </DataTrigger>
+                                    </Border.Triggers>
+                                    <Path Data="M5 11L9 15L17 6" Stroke="{StaticResource ContrastInk}" StrokeThickness="{StaticResource UiStrokeWidth2}" StrokeLineCap="Round" StrokeLineJoin="Round" HorizontalOptions="Center" VerticalOptions="Center" IsVisible="{Binding UseMetricSystem}" />
+                                </Border>
+                                <sharedControls:CardTapTarget
+                                    Grid.ColumnSpan="2"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    Command="{Binding SelectMetricUnitsCommand}"
+                                    SemanticProperties.Description="{loc:LocalizedText Profile_Units_SelectMetricUnits}"
+                                    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
+                                    <sharedControls:CardTapTarget.Triggers>
+                                        <DataTrigger TargetType="Button" Binding="{Binding UseMetricSystem}" Value="True">
+                                            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
+                                        </DataTrigger>
+                                    </sharedControls:CardTapTarget.Triggers>
+                                </sharedControls:CardTapTarget>
+                            </Grid>
+                        </Border>
                     </sharedControls:AdaptiveRow>
                 </Grid>
             </Border>
         </VerticalStackLayout>
     </ScrollView>
-    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+    <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill"
+                         BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+        <ActivityIndicator Style="{StaticResource StateBusyInline}"
+                           IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}" />
         <Label
-           
             Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
-            Style="{StaticResource CaptionLabel}"
+            Style="{StaticResource ErrorLabel}"
             LineBreakMode="WordWrap"
-            IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}" />
-        <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Profile_Units_SaveUnits}" Command="{Binding SaveCommand}" />
+            IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}">
+            <Label.Behaviors>
+                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+            </Label.Behaviors>
+            <Label.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding IsStatusError}" Value="False">
+                    <Setter Property="Style" Value="{StaticResource AccentLabel}" />
+                </DataTrigger>
+            </Label.Triggers>
+        </Label>
+        <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Profile_Units_SaveUnits}" IsEnabled="{Binding CanSave}" Command="{Binding SaveCommand}" />
     </VerticalStackLayout>
 
+    <sharedControls:PageLoadingOverlay Grid.RowSpan="3" BackCommand="{Binding BackCommand}" />
 </Grid>
 </ContentPage>

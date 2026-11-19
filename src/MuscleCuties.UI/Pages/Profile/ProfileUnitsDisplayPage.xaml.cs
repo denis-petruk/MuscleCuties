@@ -15,4 +15,15 @@ public partial class ProfileUnitsDisplayPage : ContentPage
         this.BeginPageLoad(() =>
             ((ProfileUnitsDisplayViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
     }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (BindingContext is ProfileUnitsDisplayViewModel vm && vm.HasUnsavedChanges)
+        {
+            vm.BackCommand.Execute(null);
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
+    }
 }

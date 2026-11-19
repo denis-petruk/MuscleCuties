@@ -237,9 +237,9 @@
                 </Grid>
             </Border>
 
-            <!-- Expandable Exercise Preview Items List (Flattened Grid) -->
-            <Grid
-                RowSpacing="{StaticResource UiSpaceTight}"
+            <!-- Expandable Exercise Preview Items List -->
+            <VerticalStackLayout
+                Spacing="{StaticResource UiSpaceTight}"
                 Margin="{StaticResource UiInsets0_2_0_4}"
                 IsVisible="{Binding IsPreviewExpanded, Source={x:Reference Root}}"
                 BindableLayout.ItemsSource="{Binding ExercisePreviews, Source={x:Reference Root}}">
@@ -321,7 +321,7 @@
                         </Border>
                     </DataTemplate>
                 </BindableLayout.ItemTemplate>
-            </Grid>
+            </VerticalStackLayout>
 
             <Button Style="{StaticResource ButtonPrimary}"
                     Text="{Binding ActionText, Source={x:Reference Root}}"

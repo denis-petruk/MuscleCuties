@@ -241,9 +241,8 @@
                     <CollectionView.EmptyView>
                         <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}"
                                              Padding="{StaticResource UiInsets0_16}"
-                                             x:DataType="vm:NutritionViewModel"
-                                             IsVisible="{Binding ShowLogMealHint, Converter={StaticResource InvertedBoolConverter}}">
-                            <Label Text="{Binding LogMealHint}"
+                                             x:DataType="vm:NutritionViewModel">
+                            <Label Text="{Binding MealIngredientsTotalText, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource StateEmptyBody}"
                                    LineBreakMode="WordWrap" />
                         </VerticalStackLayout>
@@ -500,7 +499,15 @@
 
                 <VerticalStackLayout Grid.Row="4" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
                     <Label Text="{Binding AddFoodMessage, Converter={StaticResource LocalizedStringConverter}}"
-                           IsVisible="{Binding HasAddFoodMessage}" Style="{StaticResource BodyMedium}" LineBreakMode="WordWrap" />
+                           IsVisible="{Binding HasAddFoodMessage}" Style="{StaticResource BodyMedium}" LineBreakMode="WordWrap">
+                        <Label.Behaviors>
+                            <shared:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
+                    <Label Text="{Binding LogMealHint}"
+                           IsVisible="{Binding ShowLogMealHint}"
+                           Style="{StaticResource CaptionLabel}"
+                           LineBreakMode="WordWrap" />
                     <ActivityIndicator
                         Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                       

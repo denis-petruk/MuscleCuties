@@ -66,15 +66,23 @@
                                     <!-- When photos exist and the preview is revealed -->
                                     <Grid IsVisible="{Binding ShowVaultPhotoPreview}" ColumnDefinitions="Auto,*"
                                           ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                        <sharedControls:CardTapTarget
+                                            Grid.ColumnSpan="2"
+                                            ZIndex="0"
+                                            Command="{Binding OpenVaultCommand}"
+                                            SemanticProperties.Description="{loc:LocalizedText Profile_PhotoJourney_Title}"
+                                            SemanticProperties.Hint="{loc:LocalizedText Profile_Details_TapToOpenFullPhotoJourney}" />
                                         <Image
+                                            ZIndex="1"
+                                            InputTransparent="True"
                                             Source="{Binding LatestVaultPhotoPath}"
                                             Aspect="AspectFill"
                                             HeightRequest="{StaticResource UiDimension110}"
                                             WidthRequest="{StaticResource UiDimension110}" />
-                                        <Grid Grid.Column="1" RowDefinitions="Auto,Auto,*" Padding="{StaticResource UiInsets0_10_12_10}"
+                                        <Grid Grid.Column="1" ZIndex="1" RowDefinitions="Auto,Auto,*" Padding="{StaticResource UiInsets0_10_12_10}"
                                               RowSpacing="{StaticResource UiSpacing2}">
-                                            <Label Grid.Row="0" Text="{loc:LocalizedText Profile_Details_LatestProgressPhoto}" Style="{StaticResource MutedLabel}" />
-                                            <Label Grid.Row="1" Text="{loc:LocalizedText Profile_Details_TapToOpenFullPhotoJourney}"
+                                            <Label Grid.Row="0" InputTransparent="True" Text="{loc:LocalizedText Profile_Details_LatestProgressPhoto}" Style="{StaticResource MutedLabel}" />
+                                            <Label Grid.Row="1" InputTransparent="True" Text="{loc:LocalizedText Profile_Details_TapToOpenFullPhotoJourney}"
                                                    Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                             <Button
                                                 Grid.Row="2"
@@ -250,7 +258,7 @@
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileUnitsDisplayPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
                                     sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                     Icon="{mi:Fluent ChatSettings24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
@@ -265,7 +273,7 @@
                                            Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
                                 <mi:MauiIcon
-                                    Grid.Column="3"
+                                    Grid.Column="2"
                                     Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                     WidthRequest="{StaticResource UiDimension16}"
                                     HeightRequest="{StaticResource UiDimension16}"

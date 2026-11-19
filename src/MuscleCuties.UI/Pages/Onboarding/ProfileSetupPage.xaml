@@ -31,15 +31,16 @@
             </sharedControls:PageHeader.EyebrowContent>
         </sharedControls:PageHeader>
     </Grid>
-    <ScrollView Grid.Row="1">
-        <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceContent}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+    <ScrollView x:Name="ProfileSetupScroll" Grid.Row="1">
+        <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceContent}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill"
+                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}">
             <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                 <Label
                     Text="{loc:LocalizedText Onboarding_ProfileSetup_PersonalDetails}"
                     Style="{StaticResource SectionTitle}"
                     LineBreakMode="WordWrap"
                     SemanticProperties.HeadingLevel="Level2" />
-                <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFormSpacing}">
+                <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFormSpacing}">
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceControl}">
                         <Border
                             WidthRequest="{StaticResource UiDimension80}"
@@ -109,6 +110,10 @@
                                 SemanticProperties.Hint="{loc:LocalizedText Onboarding_ProfileSetup_SelectYourDateOfBirth}" />
                         </Border>
                         <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceMicro}">
+                            <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_BirthdayHint}"
+                                   Style="{StaticResource CaptionLabel}"
+                                   LineBreakMode="WordWrap"
+                                   IsVisible="{Binding BirthDateConfirmed, Converter={StaticResource InvertedBoolConverter}}" />
                             <Button Text="{loc:LocalizedText Onboarding_ProfileSetup_ConfirmBirthday}"
                                     AutomationId="ProfileSetupConfirmBirthDateButton"
                                     Command="{Binding ConfirmBirthDateCommand}"
@@ -120,12 +125,17 @@
                                    LineBreakMode="WordWrap"
                                    IsVisible="{Binding BirthDateConfirmed}" />
                             <Label
+                                x:Name="ProfileSetupBirthDateErrorLabel"
                                 AutomationId="ProfileSetupBirthDateError"
                                 Text="{Binding BirthDateError, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource ErrorLabel}"
                                 LineBreakMode="WordWrap"
                                 IsVisible="{Binding BirthDateError, Converter={StaticResource StringToBoolConverter}}"
-                                SemanticProperties.Description="{Binding BirthDateError, Converter={StaticResource LocalizedStringConverter}}" />
+                                SemanticProperties.Description="{Binding BirthDateError, Converter={StaticResource LocalizedStringConverter}}">
+                                <Label.Behaviors>
+                                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                                </Label.Behaviors>
+                            </Label>
                         </VerticalStackLayout>
                     </Grid>
             
@@ -142,57 +152,32 @@
             
                     <Grid Grid.Row="4" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                         <Label Text="{loc:LocalizedText Onboarding_ProfileSetup_Units}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
-                        <Grid Grid.Row="1" ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
+                        <sharedControls:AdaptiveRow Grid.Row="1" Columns="2" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
                             <sharedControls:SelectionCell
-    Style="{StaticResource CardSecondary}"
-    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-    IsSelected="{Binding UseImperialSystem}"
-    SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ImperialUnits}"
-    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-    <Border.GestureRecognizers>
-        <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
-    </Border.GestureRecognizers>
-    <Border.Triggers>
-        <DataTrigger TargetType="sharedControls:SelectionCell" Binding="{Binding UseImperialSystem}" Value="True">
-            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-            <Setter Property="Stroke"
-                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-        </DataTrigger>
-    </Border.Triggers>
-    <Label Text="{loc:LocalizedText Common_Unit_Imperial}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
-</sharedControls:SelectionCell>
-            
+                                Style="{StaticResource ChoiceCellCompact}"
+                                IsSelected="{Binding UseImperialSystem}"
+                                SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ImperialUnits}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectImperialUnitsCommand}" />
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:LocalizedText Common_Unit_Imperial}" Style="{StaticResource ChoiceCellLabel}" />
+                            </sharedControls:SelectionCell>
+
                             <sharedControls:SelectionCell
-    Grid.Column="1"
-    Style="{StaticResource CardSecondary}"
-    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-    IsSelected="{Binding UseMetricSystem}"
-    SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_MetricUnits}"
-    SemanticProperties.Hint="{loc:LocalizedText Common_NotSelected}">
-    <Border.GestureRecognizers>
-        <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
-    </Border.GestureRecognizers>
-    <Border.Triggers>
-        <DataTrigger TargetType="sharedControls:SelectionCell" Binding="{Binding UseMetricSystem}" Value="True">
-            <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
-            <Setter Property="BackgroundColor"
-                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedSurfaceLight}, Dark={StaticResource ChoiceSelectedSurfaceDark}}" />
-            <Setter Property="Stroke"
-                    Value="{AppThemeBinding Light={StaticResource ChoiceSelectedStrokeLight}, Dark={StaticResource ChoiceSelectedStrokeDark}}" />
-            <Setter Property="StrokeThickness" Value="{StaticResource UiStrokeWidth1_5}" />
-        </DataTrigger>
-    </Border.Triggers>
-    <Label Text="{loc:LocalizedText Common_Unit_Metric}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" HorizontalTextAlignment="Center" />
-</sharedControls:SelectionCell>
-                        </Grid>
+                                Style="{StaticResource ChoiceCellCompact}"
+                                IsSelected="{Binding UseMetricSystem}"
+                                SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_MetricUnits}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding SelectMetricUnitsCommand}" />
+                                </Border.GestureRecognizers>
+                                <Label Text="{loc:LocalizedText Common_Unit_Metric}" Style="{StaticResource ChoiceCellLabel}" />
+                            </sharedControls:SelectionCell>
+                        </sharedControls:AdaptiveRow>
                     </Grid>
             
-                    <Grid Grid.Row="5" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}" IsVisible="{Binding UseMetricSystem}">
+                    <Grid Grid.Row="5" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                         <Label Text="{loc:LocalizedText Common_Height}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
-                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}">
+                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}" IsVisible="{Binding UseMetricSystem}">
                             <Border Style="{StaticResource PickerContainer}">
                                 <Picker
                                     AutomationId="ProfileSetupMetricHeightPicker"
@@ -204,43 +189,48 @@
                             <Label Grid.Column="1" Text="{loc:LocalizedText Common_Unit_Cm}"
                                    Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
                         </Grid>
+                        <sharedControls:AdaptiveRow Grid.Row="1" Columns="2" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}"
+                              IsVisible="{Binding UseMetricSystem, Converter={StaticResource InvertedBoolConverter}}">
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceMicro}">
+                                <Border Style="{StaticResource PickerContainer}">
+                                    <Picker
+                                        AutomationId="ProfileSetupFeetPicker"
+                                        Title="{loc:LocalizedText Onboarding_ProfileSetup_Feet}"
+                                        ItemsSource="{Binding FeetOptions}"
+                                        SelectedItem="{Binding SelectedFeet}"
+                                        SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_HeightInFeet}" />
+                                </Border>
+                                <Label Grid.Column="1" Text="{loc:LocalizedText Common_Unit_Ft}"
+                                       Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
+                            </Grid>
+                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceMicro}">
+                                <Border Style="{StaticResource PickerContainer}">
+                                    <Picker
+                                        AutomationId="ProfileSetupInchesPicker"
+                                        Title="{loc:LocalizedText Onboarding_ProfileSetup_Inches}"
+                                        ItemsSource="{Binding InchesOptions}"
+                                        SelectedItem="{Binding SelectedInches}"
+                                        SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_HeightInInches}" />
+                                </Border>
+                                <Label Grid.Column="1" Text="{loc:LocalizedText Common_Unit_In}"
+                                       Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
+                            </Grid>
+                        </sharedControls:AdaptiveRow>
                         <Label Grid.Row="2"
+                               x:Name="ProfileSetupHeightErrorLabel"
                                AutomationId="ProfileSetupHeightError"
                                Text="{Binding HeightError, Converter={StaticResource LocalizedStringConverter}}"
                                Style="{StaticResource ErrorLabel}"
                                LineBreakMode="WordWrap"
                                IsVisible="{Binding HeightError, Converter={StaticResource StringToBoolConverter}}"
-                               SemanticProperties.Description="{Binding HeightError, Converter={StaticResource LocalizedStringConverter}}" />
+                               SemanticProperties.Description="{Binding HeightError, Converter={StaticResource LocalizedStringConverter}}">
+                            <Label.Behaviors>
+                                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                            </Label.Behaviors>
+                        </Label>
                     </Grid>
             
-                    <Grid Grid.Row="6" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}"
-                          IsVisible="{Binding UseMetricSystem, Converter={StaticResource InvertedBoolConverter}}">
-                        <Label Text="{loc:LocalizedText Common_Height}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
-                        <Grid Grid.Row="1" ColumnDefinitions="*,Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                            <Border Style="{StaticResource PickerContainer}">
-                                <Picker
-                                    AutomationId="ProfileSetupFeetPicker"
-                                    Title="{loc:LocalizedText Onboarding_ProfileSetup_Feet}"
-                                    ItemsSource="{Binding FeetOptions}"
-                                    SelectedItem="{Binding SelectedFeet}"
-                                    SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_HeightInFeet}" />
-                            </Border>
-                            <Label Grid.Column="1" Text="{loc:LocalizedText Common_Unit_Ft}"
-                                   Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
-                            <Border Grid.Column="2" Style="{StaticResource PickerContainer}">
-                                <Picker
-                                    AutomationId="ProfileSetupInchesPicker"
-                                    Title="{loc:LocalizedText Onboarding_ProfileSetup_Inches}"
-                                    ItemsSource="{Binding InchesOptions}"
-                                    SelectedItem="{Binding SelectedInches}"
-                                    SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_HeightInInches}" />
-                            </Border>
-                            <Label Grid.Column="3" Text="{loc:LocalizedText Common_Unit_In}"
-                                   Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
-                        </Grid>
-                    </Grid>
-            
-                    <Grid Grid.Row="7" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                    <Grid Grid.Row="6" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                         <Label Text="{loc:LocalizedText Common_Weight}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                         <Grid Grid.Row="1" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpacing10}">
                             <Border Style="{StaticResource PickerContainer}" IsVisible="{Binding UseMetricSystem}">
@@ -265,12 +255,17 @@
                                    Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" VerticalOptions="Center" />
                         </Grid>
                         <Label Grid.Row="2"
+                               x:Name="ProfileSetupWeightErrorLabel"
                                AutomationId="ProfileSetupWeightError"
                                Text="{Binding WeightError, Converter={StaticResource LocalizedStringConverter}}"
                                Style="{StaticResource ErrorLabel}"
                                LineBreakMode="WordWrap"
                                IsVisible="{Binding WeightError, Converter={StaticResource StringToBoolConverter}}"
-                               SemanticProperties.Description="{Binding WeightError, Converter={StaticResource LocalizedStringConverter}}" />
+                               SemanticProperties.Description="{Binding WeightError, Converter={StaticResource LocalizedStringConverter}}">
+                            <Label.Behaviors>
+                                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                            </Label.Behaviors>
+                        </Label>
                     </Grid>
             
                 </Grid>
@@ -294,19 +289,23 @@
                     ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
                     ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
                 <Label
+                    x:Name="ProfileSetupStrengthActivityErrorLabel"
                     AutomationId="ProfileSetupStrengthActivityError"
                     Text="{Binding StrengthActivityError, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource ErrorLabel}"
                     LineBreakMode="WordWrap"
                     IsVisible="{Binding StrengthActivityError, Converter={StaticResource StringToBoolConverter}}"
-                    SemanticProperties.Description="{Binding StrengthActivityError, Converter={StaticResource LocalizedStringConverter}}" />
+                    SemanticProperties.Description="{Binding StrengthActivityError, Converter={StaticResource LocalizedStringConverter}}">
+                    <Label.Behaviors>
+                        <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                    </Label.Behaviors>
+                </Label>
             </VerticalStackLayout>
 
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpacing10}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
                 <CheckBox
                     x:Name="WellnessAcknowledgment"
                     AutomationId="WellnessAcknowledgmentCheckBox"
-                    Color="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource ActionSurfaceDark}}"
                     IsChecked="{Binding WellnessAcknowledged, Mode=TwoWay}"
                     MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                     MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
@@ -317,7 +316,12 @@
                     Text="{loc:LocalizedText Onboarding_ProfileSetup_IUnderstandThisAppOffersWellness}"
                     Style="{StaticResource CaptionLabel}"
                     LineBreakMode="WordWrap"
-                    VerticalOptions="Center" />
+                    VerticalOptions="Center"
+                    AutomationProperties.IsInAccessibleTree="False">
+                    <Label.GestureRecognizers>
+                        <TapGestureRecognizer Tapped="OnWellnessLabelTapped" />
+                    </Label.GestureRecognizers>
+                </Label>
             </Grid>
 
             <Label

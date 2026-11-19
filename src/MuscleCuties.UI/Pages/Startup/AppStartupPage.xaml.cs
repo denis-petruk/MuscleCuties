@@ -6,6 +6,7 @@ namespace MuscleCuties.UI.Pages.Startup;
 
 public partial class AppStartupPage : ContentPage
 {
+    private bool _isActionInProgress;
     private bool _isThemeHandlerAttached;
 
     public AppStartupPage()
@@ -25,12 +26,22 @@ public partial class AppStartupPage : ContentPage
         StartupStatusLabel.IsVisible = false;
         StartupErrorLabel.IsVisible = true;
         StartupRecoveryLabel.IsVisible = true;
+        StartupErrorFooter.IsVisible = true;
         RetryButton.IsVisible = true;
-        ResetButton.IsVisible = unableToUnlockData;
+        RetryButton.IsEnabled = true;
+        ResetButton.IsVisible = true;
+        ResetButton.IsEnabled = true;
     }
 
     private async void OnRetryClicked(object? sender, EventArgs e)
     {
+        if (_isActionInProgress)
+            return;
+
+        _isActionInProgress = true;
+        RetryButton.IsEnabled = false;
+        ResetButton.IsEnabled = false;
+        StartupErrorFooter.IsVisible = false;
         StartupErrorLabel.IsVisible = false;
         StartupRecoveryLabel.IsVisible = false;
         RetryButton.IsVisible = false;
@@ -39,46 +50,65 @@ public partial class AppStartupPage : ContentPage
         StartupStatusLabel.IsVisible = true;
         StartupActivityIndicator.IsVisible = true;
         StartupActivityIndicator.IsRunning = true;
-        if (Application.Current is App app)
-            try
-            {
+        try
+        {
+            if (Application.Current is App app)
                 await app.RetryStartupAsync();
-            }
-            catch
-            {
-                ShowStartupError(false);
-            }
+        }
+        catch
+        {
+            ShowStartupError(false);
+        }
+        finally
+        {
+            _isActionInProgress = false;
+        }
     }
 
     private async void OnResetClicked(object? sender, EventArgs e)
     {
-        var confirmed = await DisplayAlertAsync(
-            UiTextCatalog.Get("Startup_ResetConfirmationTitle"),
-            UiTextCatalog.Get("Startup_ResetConfirmationBody"),
-            UiTextCatalog.Get("Startup_ResetAndRepopulate"),
-            UiTextCatalog.Get("Common_Cancel"));
-
-        if (!confirmed)
+        if (_isActionInProgress)
             return;
 
-        StartupErrorLabel.IsVisible = false;
-        StartupRecoveryLabel.IsVisible = false;
-        RetryButton.IsVisible = false;
-        ResetButton.IsVisible = false;
-        StartupStatusLabel.Text = UiTextCatalog.Get("Startup_Reinitializing");
-        StartupStatusLabel.IsVisible = true;
-        StartupActivityIndicator.IsVisible = true;
-        StartupActivityIndicator.IsRunning = true;
+        _isActionInProgress = true;
+        RetryButton.IsEnabled = false;
+        ResetButton.IsEnabled = false;
+        try
+        {
+            var confirmed = await DisplayAlertAsync(
+                UiTextCatalog.Get("Startup_ResetConfirmationTitle"),
+                UiTextCatalog.Get("Startup_ResetConfirmationBody"),
+                UiTextCatalog.Get("Startup_ResetAndRepopulate"),
+                UiTextCatalog.Get("Common_Cancel"));
 
-        if (Application.Current is App app)
-            try
+            if (!confirmed)
             {
+                RetryButton.IsEnabled = true;
+                ResetButton.IsEnabled = true;
+                return;
+            }
+
+            StartupErrorFooter.IsVisible = false;
+            StartupErrorLabel.IsVisible = false;
+            StartupRecoveryLabel.IsVisible = false;
+            RetryButton.IsVisible = false;
+            ResetButton.IsVisible = false;
+            StartupStatusLabel.Text = UiTextCatalog.Get("Startup_Reinitializing");
+            StartupStatusLabel.IsVisible = true;
+            StartupActivityIndicator.IsVisible = true;
+            StartupActivityIndicator.IsRunning = true;
+
+            if (Application.Current is App app)
                 await app.ResetAndRestartAsync();
-            }
-            catch
-            {
-                ShowStartupError(false);
-            }
+        }
+        catch
+        {
+            ShowStartupError(false);
+        }
+        finally
+        {
+            _isActionInProgress = false;
+        }
     }
 
     protected override void OnAppearing()

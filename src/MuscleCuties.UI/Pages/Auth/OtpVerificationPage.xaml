@@ -15,20 +15,24 @@
     <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
         <sharedControls:PageHeader
             Title="{loc:LocalizedText Auth_Otp_VerifyYourEmail}"
-            Subtitle="{loc:LocalizedText Auth_Otp_WeSentASixDigitConfirmation}"
-            ShowBack="False" />
+            ShowBack="True"
+            BackCommand="{Binding GoBackCommand}" />
     </Grid>
     <ScrollView Grid.Row="1">
         <VerticalStackLayout Padding="{DynamicResource PresentationAuthPagePadding}" Spacing="{StaticResource PresentationFormSpacing}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
-            <Label
-               
-                Text="{Binding Email}"
-                Style="{StaticResource AccentLabel}"
-                LineBreakMode="WordWrap"
-                Margin="{StaticResource UiInsets0_0_0_24}" />
+            <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" Margin="{StaticResource UiInsets0_0_0_16}">
+                <Label
+                    Text="{loc:LocalizedText Auth_Otp_WeSentASixDigitConfirmation}"
+                    Style="{StaticResource MutedLabel}"
+                    LineBreakMode="WordWrap" />
+                <Label
+                    Text="{Binding Email}"
+                    Style="{StaticResource AccentLabel}"
+                    LineBreakMode="WordWrap" />
+            </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="{StaticResource PresentationFormSpacing}">
-                <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                     <Label Text="{loc:LocalizedText Auth_Otp_SixDigitVerificationCodeLabel}" Style="{StaticResource FormFieldLabel}" LineBreakMode="WordWrap" />
                     <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                         <Entry
@@ -37,74 +41,75 @@
                             Placeholder="{loc:LocalizedText Common_Placeholder_SixDigitCode}"
                             Text="{Binding OtpCode}"
                             Keyboard="Numeric"
-                            MaxLength="{StaticResource AuthCodeLength}"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                             ReturnType="Done"
                             ReturnCommand="{Binding VerifyCommand}"
                             SemanticProperties.Description="{loc:LocalizedText Auth_Otp_SixDigitVerificationCodeDescription}"
                             SemanticProperties.Hint="{loc:LocalizedText Auth_Otp_EnterTheSixDigitVerificationCode}" />
                     </Border>
+                    <Label
+                        Grid.Row="2"
+                        Text="{loc:LocalizedText Auth_Otp_CheckSpamHint}"
+                        Style="{StaticResource CaptionLabel}"
+                        LineBreakMode="WordWrap" />
                 </Grid>
                 <Label
-                   
                     Text="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource AccentLabel}"
                     LineBreakMode="WordWrap"
                     IsVisible="{Binding InfoMessage, Converter={StaticResource StringToBoolConverter}}"
-                    SemanticProperties.Description="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}" />
+                    SemanticProperties.Description="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}">
+                    <Label.Behaviors>
+                        <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                    </Label.Behaviors>
+                </Label>
                 <Label
-                   
                     Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource ErrorLabel}"
                     LineBreakMode="WordWrap"
                     IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
-                    SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
-                    SemanticProperties.HeadingLevel="Level3" />
+                    SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}">
+                    <Label.Behaviors>
+                        <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                    </Label.Behaviors>
+                </Label>
             </VerticalStackLayout>
 
             <!-- Verify sits in the same scrolling surface as the code field: the numeric keyboard
                  must never be able to cover the only way forward. -->
             <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" Margin="{StaticResource UiInsets0_16_0_0}">
-        <Button Style="{StaticResource ButtonPrimary}"
-           
-            Text="{loc:LocalizedText Auth_VerifyCode}"
-            AutomationId="OtpVerifyButton" Command="{Binding VerifyCommand}"
-            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
-            SemanticProperties.Description="{loc:LocalizedText Auth_Otp_VerifyConfirmationCode}" />
-        <ActivityIndicator
-                        Style="{StaticResource StateBusyInline}"
-           
-            HorizontalOptions="Center"
-            IsRunning="{Binding IsVerifying}"
-            IsVisible="{Binding IsVerifying}"
-            SemanticProperties.Description="{loc:LocalizedText Auth_Otp_VerifyingCodePleaseWait}" />
-        <Grid
-           
-            ColumnDefinitions="*,*"
-            RowDefinitions="Auto,Auto"
-            ColumnSpacing="{StaticResource UiSpaceCompact}"
-            Margin="{StaticResource UiInsets0_12_0_0}">
-            <Button
-                Text="{loc:LocalizedText Auth_Otp_ResendCode}"
-                AutomationId="OtpResendButton" Command="{Binding ResendCodeCommand}"
-                IsEnabled="{Binding CanResend}"
-                Style="{StaticResource ButtonSecondary}"
-                SemanticProperties.Description="{loc:LocalizedText Auth_Otp_ResendVerificationCode}" />
-            <Button
-                Grid.Column="1"
-                Text="{loc:LocalizedText Auth_Otp_ChangeEmail}"
-                Command="{Binding GoBackCommand}"
-                Style="{StaticResource ButtonSecondary}"
-                SemanticProperties.Description="{loc:LocalizedText Auth_Otp_GoBackToChangeEmailAddress}" />
-            <Label
-                Grid.Row="1"
-                Grid.ColumnSpan="2"
-                Margin="{StaticResource UiInsets0_16_0_0}"
-                Text="{Binding ResendButtonText, Converter={StaticResource LocalizedStringConverter}}"
-                IsVisible="{Binding CanResend, Converter={StaticResource InvertedBoolConverter}}"
-                Style="{StaticResource MutedLabel}"
-                LineBreakMode="WordWrap"
-                SemanticProperties.Description="{Binding ResendButtonText, Converter={StaticResource LocalizedStringConverter}}" />
-        </Grid>
+                <Button Style="{StaticResource ButtonPrimary}"
+                    Text="{loc:LocalizedText Auth_VerifyCode}"
+                    AutomationId="OtpVerifyButton" Command="{Binding VerifyCommand}"
+                    IsEnabled="{Binding CanVerify}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Otp_VerifyConfirmationCode}" />
+                <ActivityIndicator
+                    Style="{StaticResource StateBusyInline}"
+                    HorizontalOptions="Center"
+                    IsRunning="{Binding IsBusy}"
+                    IsVisible="{Binding IsBusy}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Otp_VerifyingCodePleaseWait}" />
+                <Button
+                    Text="{loc:LocalizedText Auth_Otp_ResendCode}"
+                    AutomationId="OtpResendButton" Command="{Binding ResendCodeCommand}"
+                    IsEnabled="{Binding CanResendNow}"
+                    Style="{StaticResource ButtonSecondary}"
+                    Margin="{StaticResource UiInsets0_8_0_0}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Otp_ResendVerificationCode}" />
+                <Label
+                    Margin="{StaticResource UiInsets0_4_0_0}"
+                    Text="{Binding ResendButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                    IsVisible="{Binding ShowCountdownText}"
+                    Style="{StaticResource MutedLabel}"
+                    HorizontalTextAlignment="Center"
+                    LineBreakMode="WordWrap"
+                    SemanticProperties.Description="{Binding ResendButtonText, Converter={StaticResource LocalizedStringConverter}}" />
+                <Button
+                    Text="{loc:LocalizedText Auth_Otp_ChangeEmail}"
+                    Command="{Binding GoBackCommand}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                    Style="{StaticResource ButtonSecondary}"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Otp_GoBackToChangeEmailAddress}" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>

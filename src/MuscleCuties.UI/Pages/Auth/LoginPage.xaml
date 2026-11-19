@@ -18,18 +18,21 @@
             Subtitle="{loc:LocalizedText Auth_Login_YourPlanIsReadyWhenYou}"
             ShowBack="False" />
     </Grid>
-    <!-- The form and its actions share one scrolling surface: with the keyboard up, Sign in and
-         Create account stay reachable instead of sitting behind the keyboard. -->
+    <!-- The form and primary actions scroll together so keyboard focus keeps inputs reachable;
+         the account-switch link stays anchored in Row 2. -->
     <ScrollView Grid.Row="1">
         <VerticalStackLayout Padding="{DynamicResource PresentationAuthPagePadding}" Spacing="{StaticResource PresentationFormSpacing}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
             <Label
-
                 Text="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource AccentLabel}"
                 LineBreakMode="WordWrap"
                 IsVisible="{Binding InfoMessage, Converter={StaticResource StringToBoolConverter}}"
                 Margin="{StaticResource UiInsets0_0_0_16}"
-                SemanticProperties.Description="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}" />
+                SemanticProperties.Description="{Binding InfoMessage, Converter={StaticResource LocalizedStringConverter}}">
+                <Label.Behaviors>
+                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                </Label.Behaviors>
+            </Label>
 
             <VerticalStackLayout Spacing="{StaticResource PresentationFormSpacing}">
                 <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
@@ -38,9 +41,12 @@
                         <Entry
                             x:Name="LoginEmail"
                             AutomationId="LoginEmail"
-                            Placeholder="{loc:LocalizedText Auth_Register_NameExampleCom}"
+                            Placeholder="{loc:LocalizedText Auth_EmailOrUsernamePlaceholder}"
                             Text="{Binding Email}"
                             Keyboard="Email"
+                            IsSpellCheckEnabled="False"
+                            ClearButtonVisibility="WhileEditing"
+                            IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                             ReturnType="Next"
                             Completed="OnEmailCompleted"
                             SemanticProperties.Description="{loc:LocalizedText Auth_Login_EmailAddressOrUsername}"
@@ -57,6 +63,7 @@
                                 Placeholder="{loc:LocalizedText Auth_Password}"
                                 Text="{Binding Password}"
                                 IsPassword="True"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                                 ReturnType="Done"
                                 ReturnCommand="{Binding LoginCommand}"
                                 SemanticProperties.Description="{loc:LocalizedText Auth_Password}"
@@ -64,12 +71,14 @@
                             <Label
                                 x:Name="LoginPasswordReveal"
                                 Grid.Column="1"
+                                sharedControls:CappedTextSize.IsCompactControl="True"
                                 Text="{loc:LocalizedText Auth_ShowPassword}"
                                 Style="{StaticResource AccentLabel}"
                                 HorizontalTextAlignment="End"
                                 VerticalTextAlignment="Center"
                                 MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
                                 MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                                 SemanticProperties.Description="{loc:LocalizedText Auth_ShowPassword}"
                                 SemanticProperties.Hint="{loc:LocalizedText Auth_TogglePasswordVisibilityHint}">
                                 <Label.GestureRecognizers>
@@ -83,8 +92,11 @@
                         Text="{loc:LocalizedText Auth_Login_ForgotPasswordLink}"
                         Style="{StaticResource AccentLabel}"
                         HorizontalOptions="End"
+                        HorizontalTextAlignment="End"
                         VerticalTextAlignment="Center"
+                        MinimumWidthRequest="{StaticResource PresentationMinimumTouchSize}"
                         MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                         LineBreakMode="WordWrap"
                         Margin="{StaticResource UiInsets0_4_0_0}"
                         SemanticProperties.Description="{loc:LocalizedText Auth_Login_ForgotPasswordDescription}"
@@ -95,29 +107,23 @@
                     </Label>
                 </Grid>
                 <Label
-
                     Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource ErrorLabel}"
                     LineBreakMode="WordWrap"
                     IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}"
-                    SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
-                    SemanticProperties.HeadingLevel="Level3" />
+                    SemanticProperties.Description="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}">
+                    <Label.Behaviors>
+                        <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                    </Label.Behaviors>
+                </Label>
             </VerticalStackLayout>
 
             <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" Margin="{StaticResource UiInsets0_16_0_0}">
                 <Button Style="{StaticResource ButtonPrimary}"
-
                     Text="{loc:LocalizedText Auth_LogIn}"
                     AutomationId="LoginButton" Command="{Binding LoginCommand}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     SemanticProperties.Description="{loc:LocalizedText Auth_Login_LogInToYourAccount}" />
-                <ActivityIndicator
-                                Style="{StaticResource StateBusyInline}"
-
-                    IsRunning="{Binding IsBusy}"
-                    IsVisible="{Binding IsBusy}"
-                    HorizontalOptions="Center"
-                    SemanticProperties.Description="{loc:LocalizedText Auth_Login_SigningInPleaseWait}" />
                 <Button
                     AutomationId="LoginAppleButton"
                     Style="{StaticResource ButtonApple}"
@@ -127,6 +133,12 @@
                     IsVisible="{Binding IsAppleSignInAvailable}"
                     IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     SemanticProperties.Description="{loc:LocalizedText Auth_SignInWithApple}" />
+                <ActivityIndicator
+                    Style="{StaticResource StateBusyInline}"
+                    IsRunning="{Binding IsBusy}"
+                    IsVisible="{Binding IsBusy}"
+                    HorizontalOptions="Center"
+                    SemanticProperties.Description="{loc:LocalizedText Auth_Login_SigningInPleaseWait}" />
             </VerticalStackLayout>
         </VerticalStackLayout>
     </ScrollView>
@@ -141,6 +153,7 @@
         MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
         HorizontalOptions="Fill"
         MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+        IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
         SemanticProperties.Description="{loc:LocalizedText Auth_Login_CreateAnAccount}"
         SemanticProperties.Hint="{loc:LocalizedText Auth_Login_DoubleTapToGoToThe}">
         <FlexLayout.GestureRecognizers>
@@ -148,11 +161,13 @@
         </FlexLayout.GestureRecognizers>
         <Label Text="{loc:LocalizedText Auth_Login_NewToMusclecuties}" Style="{StaticResource MutedLabel}"
                LineBreakMode="WordWrap"
-               VerticalOptions="Center" />
+               VerticalOptions="Center"
+               AutomationProperties.IsInAccessibleTree="False" />
         <Label Text="{loc:LocalizedText Auth_CreateAccount}" Style="{StaticResource AccentLabel}"
                LineBreakMode="WordWrap"
                VerticalOptions="Center"
-               Margin="{StaticResource UiInsets6_0_0_0}" />
+               Margin="{StaticResource UiInsets6_0_0_0}"
+               AutomationProperties.IsInAccessibleTree="False" />
     </FlexLayout>
 </Grid>
 </ContentPage>

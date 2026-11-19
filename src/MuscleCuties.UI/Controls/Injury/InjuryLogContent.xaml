@@ -63,20 +63,25 @@
         </DataTemplate>
     </ContentView.Resources>
 
-    <CollectionView x:Name="InjuryList" ItemsSource="{Binding ActiveInjuries}" SelectionMode="None"
-                    ItemSizingStrategy="MeasureAllItems"
-                    ItemTemplate="{StaticResource InjuryRow}">
-        <CollectionView.Header>
-            <Grid Padding="{DynamicResource PresentationModalPagePadding}" RowSpacing="{StaticResource UiSpacing0}" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
+    <ScrollView x:Name="InjuryList" Style="{StaticResource ModalSheetBody}">
+        <VerticalStackLayout Padding="{DynamicResource PresentationModalPagePadding}" Spacing="{StaticResource UiSpaceCompact}">
+            <Grid RowSpacing="{StaticResource UiSpacing0}" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto">
                 <ActivityIndicator
                         Style="{StaticResource StateBusyInline}" Grid.Row="0" IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                                    SemanticProperties.Description="{loc:LocalizedText Injury_LogContent_UpdatingYourInjuryLog}" />
                 <Grid Grid.Row="1" RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" IsVisible="{Binding HasError}">
                     <Label LineBreakMode="WordWrap" Grid.Row="0" Text="{Binding ErrorText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource ErrorLabel}" />
+                           Style="{StaticResource ErrorLabel}">
+                        <Label.Behaviors>
+                            <shared:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
                     <Button Grid.Row="1" Text="{loc:LocalizedText Common_TryAgain}"
                             Style="{StaticResource ButtonSecondary}"
                             Command="{Binding LoadCommand}" IsVisible="{Binding IsLoadError}" />
+                    <Button Grid.Row="2" Text="{loc:LocalizedText Injury_LogContent_RefreshPlan}"
+                            Style="{StaticResource ButtonSecondary}"
+                            Command="{Binding LoadCommand}" IsVisible="{Binding IsPlanRefreshError}" />
                     <Button Grid.Row="3" Text="{loc:LocalizedText Injury_LogContent_RefreshPage}"
                             Style="{StaticResource ButtonSecondary}"
                             Command="{Binding RetryPageRefreshCommand}" IsVisible="{Binding IsPageRefreshError}" />
@@ -226,8 +231,12 @@
                 <Label LineBreakMode="WordWrap" Grid.Row="5" Text="{loc:LocalizedText Injury_LogContent_ActiveInjuries}" Style="{StaticResource SectionTitle}"
                        Margin="{StaticResource UiInsets0_8_0_12}" IsVisible="{Binding HasActiveInjuries}" />
             </Grid>
-        </CollectionView.Header>
-        <CollectionView.Footer>
+
+            <VerticalStackLayout IsVisible="{Binding HasActiveInjuries}"
+                                 Spacing="{StaticResource UiSpaceCompact}"
+                                 BindableLayout.ItemsSource="{Binding ActiveInjuries}"
+                                 BindableLayout.ItemTemplate="{StaticResource InjuryRow}" />
+
             <Grid Padding="{StaticResource UiInsets0_0_0_24}" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" IsVisible="{Binding HasClearedInjuries}">
                 <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{StaticResource UiInsets16_8}">
                     <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Injury_LogContent_History}" Style="{StaticResource SectionTitle}"
@@ -246,6 +255,6 @@
                                      BindableLayout.ItemsSource="{Binding ClearedInjuries}"
                                      BindableLayout.ItemTemplate="{StaticResource InjuryRow}" />
             </Grid>
-        </CollectionView.Footer>
-    </CollectionView>
+        </VerticalStackLayout>
+    </ScrollView>
 </ContentView>

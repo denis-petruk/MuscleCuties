@@ -33,9 +33,9 @@
                       Padding="{DynamicResource PresentationActionFooterPadding}"
                       IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}"
                       BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
-                    <BoxView Grid.ColumnSpan="2" Style="{StaticResource ModalDivider}" />
+                    <BoxView Style="{StaticResource ModalDivider}" />
                     <ActivityIndicator
-                        Style="{StaticResource StateBusyInline}" Grid.Row="1" Grid.ColumnSpan="2"
+                        Style="{StaticResource StateBusyInline}" Grid.Row="1"
                         IsRunning="{Binding IsBusy}" IsVisible="{Binding IsBusy}"
                         SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_SavingA11y}" />
                     <!-- Shared footer row: the two actions stack at accessibility sizes instead of

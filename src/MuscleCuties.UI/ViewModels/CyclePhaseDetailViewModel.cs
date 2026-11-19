@@ -87,7 +87,7 @@ public partial class CyclePhaseDetailViewModel : ObservableObject
         PhaseImageSource = CyclePhaseDetailCatalog.GetPhaseVisualSource(phase);
         PhaseImageUsesAnimation = phase is CyclePhase.Menstrual or CyclePhase.Follicular or
             CyclePhase.Ovulatory or CyclePhase.Luteal;
-        IsWatchExpanded = false;
+        IsWatchExpanded = detail.WatchPoints.Count > 0;
         ApplySignalModel(phase);
         WhyPoints = BuildPointCollection(detail.WhyPoints);
         NutritionPoints = BuildPointCollection(detail.NutritionPoints);

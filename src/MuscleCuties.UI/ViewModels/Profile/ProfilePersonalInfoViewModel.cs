@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -5,14 +6,16 @@ using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UI.Services.Formatting;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Units;
+using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
-public partial class ProfilePersonalInfoViewModel : ObservableObject
+public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadAware
 {
     private readonly IProfilePersonalInfoUseCase _useCase;
     private readonly IProfileUnitsUseCase _units;
@@ -22,8 +25,16 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
     // F06: height and weight are entered in the saved system and stored in cm/kg.
     private bool _useMetricSystem = true;
     private readonly Func<Task> _navigateBackAsync;
-    [ObservableProperty] private bool _isBusy;
+    private bool _hasLoadedOnce;
+    private string _initialSnapshot = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    private bool _isBusy;
+
+    [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private string _statusMessage = string.Empty;
+    [ObservableProperty] private bool _isStatusError;
     private bool _hasStoredBirthDate;
     private bool _birthDateWasExplicitlyChanged;
     [ObservableProperty] private DateTime _birthDate;
@@ -44,6 +55,19 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
     [ObservableProperty] private string _newPassword = string.Empty;
     [ObservableProperty] private string _confirmNewPassword = string.Empty;
     [ObservableProperty] private string _passwordStatusMessage = string.Empty;
+    [ObservableProperty] private bool _isPasswordStatusError;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CurrentPasswordToggleText))]
+    private bool _isCurrentPasswordHidden = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NewPasswordToggleText))]
+    private bool _isNewPasswordHidden = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ConfirmPasswordToggleText))]
+    private bool _isConfirmPasswordHidden = true;
 
     [ObservableProperty] private SelectionOption<int>? _selectedPregnancyOption;
     [ObservableProperty] private SelectionOption<int>? _selectedContraceptionOption;
@@ -62,12 +86,62 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         _refreshNotifier = refreshNotifier;
         _navigateBackAsync = navigateBackAsync;
         _measurementClient = measurementClient;
-        BackCommand = new AsyncRelayCommand(navigateBackAsync);
+        BackCommand = new AsyncRelayCommand(BackAsync);
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SaveCommand = new AsyncRelayCommand(SaveAsync);
         ChangePasswordCommand = new AsyncRelayCommand(ChangePasswordAsync);
+        ToggleCurrentPasswordVisibilityCommand = new RelayCommand(() => IsCurrentPasswordHidden = !IsCurrentPasswordHidden);
+        ToggleNewPasswordVisibilityCommand = new RelayCommand(() => IsNewPasswordHidden = !IsNewPasswordHidden);
+        ToggleConfirmPasswordVisibilityCommand = new RelayCommand(() => IsConfirmPasswordHidden = !IsConfirmPasswordHidden);
         SelectedPregnancyOption = PregnancyOptions[0];
         SelectedContraceptionOption = ContraceptionOptions[0];
+    }
+
+    public bool IsPageLoading => IsBusy && !_hasLoadedOnce;
+    public bool HasUnsavedChanges =>
+        _hasLoadedOnce &&
+        (!string.Equals(BuildSnapshot(), _initialSnapshot, StringComparison.Ordinal) ||
+         !string.IsNullOrWhiteSpace(CurrentPassword) ||
+         !string.IsNullOrWhiteSpace(NewPassword) ||
+         !string.IsNullOrWhiteSpace(ConfirmNewPassword));
+
+    public string CurrentPasswordToggleText =>
+        UiTextCatalog.Get(IsCurrentPasswordHidden ? "Auth_Show" : "Auth_Hide");
+
+    public string NewPasswordToggleText =>
+        UiTextCatalog.Get(IsNewPasswordHidden ? "Auth_Show" : "Auth_Hide");
+
+    public string ConfirmPasswordToggleText =>
+        UiTextCatalog.Get(IsConfirmPasswordHidden ? "Auth_Show" : "Auth_Hide");
+
+    public RelayCommand ToggleCurrentPasswordVisibilityCommand { get; }
+    public RelayCommand ToggleNewPasswordVisibilityCommand { get; }
+    public RelayCommand ToggleConfirmPasswordVisibilityCommand { get; }
+
+    public void MaskSensitiveInputs()
+    {
+        IsCurrentPasswordHidden = true;
+        IsNewPasswordHidden = true;
+        IsConfirmPasswordHidden = true;
+    }
+
+    private string BuildSnapshot() =>
+        $"{Name}|{Email}|{BirthDate:O}|{HeightCm}|{WeightKg}|{CycleLength}|{SelectedPregnancyOption?.Value}|{SelectedContraceptionOption?.Value}";
+
+    private async Task BackAsync()
+    {
+        if (HasUnsavedChanges && Shell.Current is { } shell)
+        {
+            var discard = await shell.DisplayAlertAsync(
+                UiTextCatalog.Get("Profile_UnsavedChanges_Title"),
+                UiTextCatalog.Get("Profile_UnsavedChanges_Message"),
+                UiTextCatalog.Get("Profile_UnsavedChanges_Discard"),
+                UiTextCatalog.Get("Profile_UnsavedChanges_KeepEditing"));
+            if (!discard)
+                return;
+        }
+
+        await _navigateBackAsync();
     }
 
     public bool IsGoalPaceVisible => UsesWeightGoalPace(Goal);
@@ -106,11 +180,15 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
     private async Task LoadDataAsync()
     {
         IsBusy = true;
+        IsLoadError = false;
         StatusMessage = string.Empty;
+        IsStatusError = false;
         PasswordStatusMessage = string.Empty;
+        IsPasswordStatusError = false;
         CurrentPassword = string.Empty;
         NewPassword = string.Empty;
         ConfirmNewPassword = string.Empty;
+        MaskSensitiveInputs();
         _hasStoredBirthDate = false;
         _birthDateWasExplicitlyChanged = false;
         try
@@ -120,7 +198,11 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             var profile = result.Profile;
 
             if (profile is null)
+            {
+                _hasLoadedOnce = true;
+                _initialSnapshot = BuildSnapshot();
                 return;
+            }
 
             var units = await _units.LoadAsync();
             _useMetricSystem = units.Settings?.UseMetricSystem ?? _useMetricSystem;
@@ -151,6 +233,13 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             SelectedContraceptionOption =
                 ContraceptionOptions.FirstOrDefault(o => o.Value == profile.ContraceptionStatus) ??
                 ContraceptionOptions[0];
+            _hasLoadedOnce = true;
+            _initialSnapshot = BuildSnapshot();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[ProfilePersonalInfoViewModel] Load failed ({ex.GetType().Name}).");
+            IsLoadError = true;
         }
         finally
         {
@@ -167,6 +256,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             return;
 
         IsBusy = true;
+        IsStatusError = false;
         try
         {
             var result = await _useCase.SaveAsync(new SavePersonalInfoRequest(
@@ -177,6 +267,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
                 SelectedContraceptionOption?.Value ?? 0));
             if (!result.Succeeded)
             {
+                IsStatusError = true;
                 StatusMessage = result.Error switch
                 {
                     PersonalInfoSaveError.AccountMissing => "Active account not found.",
@@ -189,8 +280,16 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
             }
 
             _refreshNotifier.InvalidateAll();
+            _initialSnapshot = BuildSnapshot();
+            IsStatusError = false;
             StatusMessage = "Ui_Profile_Status_PersonalInfoSaved";
             await _navigateBackAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[ProfilePersonalInfoViewModel] Save failed ({ex.GetType().Name}).");
+            IsStatusError = true;
+            StatusMessage = UiTextCatalog.Get("Profile_PersonalInfo_SaveFailed");
         }
         finally
         {
@@ -205,17 +304,20 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
 
         if (string.IsNullOrWhiteSpace(CurrentPassword))
         {
+            IsPasswordStatusError = true;
             PasswordStatusMessage = "Ui_Profile_Status_CurrentPasswordRequired";
             return;
         }
 
         if (!_passwordValidator.TryValidateConfirmation(NewPassword, ConfirmNewPassword, out var passwordError))
         {
+            IsPasswordStatusError = true;
             PasswordStatusMessage = passwordError;
             return;
         }
 
         IsBusy = true;
+        IsPasswordStatusError = false;
         try
         {
             var result = await _useCase.ChangePasswordAsync(
@@ -225,9 +327,17 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
                 CurrentPassword = string.Empty;
                 NewPassword = string.Empty;
                 ConfirmNewPassword = string.Empty;
+                MaskSensitiveInputs();
             }
 
+            IsPasswordStatusError = !result.Succeeded;
             PasswordStatusMessage = result.Message;
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[ProfilePersonalInfoViewModel] ChangePassword failed ({ex.GetType().Name}).");
+            IsPasswordStatusError = true;
+            PasswordStatusMessage = UiTextCatalog.Get("Profile_PersonalInfo_PasswordChangeFailed");
         }
         finally
         {
@@ -241,37 +351,40 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject
         weight = (float)UnitsFormatter.FromDisplayWeight(ParseFloat(WeightKg), _useMetricSystem);
         cycleLength = ParseInt(CycleLength);
 
+        var errors = new List<string>();
         if (string.IsNullOrWhiteSpace(Name))
-        {
-            StatusMessage = "Ui_Profile_Error_NameRequired";
-            return false;
-        }
+            errors.Add(UiTextCatalog.Get("Ui_Profile_Error_NameRequired"));
 
         if (!_passwordValidator.IsValidEmail(Email))
-        {
-            StatusMessage = "Ui_Profile_Error_EmailInvalid";
-            return false;
-        }
+            errors.Add(UiTextCatalog.Get("Ui_Profile_Error_EmailInvalid"));
 
         if (!_hasStoredBirthDate && !_birthDateWasExplicitlyChanged)
-        {
-            StatusMessage = "Ui_Profile_Error_BirthDateRequired";
-            return false;
-        }
+            errors.Add(UiTextCatalog.Get("Ui_Profile_Error_BirthDateRequired"));
 
         if (height <= 0f || weight <= 0f)
         {
-            StatusMessage = "Ui_Profile_Error_HeightWeightInvalid";
-            return false;
+            errors.Add(UiTextCatalog.Get("Ui_Profile_Error_HeightWeightInvalid"));
+        }
+        else
+        {
+            if (height is < 100f or > 250f)
+                errors.Add(UiTextCatalog.Get("Profile_PersonalInfo_HeightBoundsError"));
+            if (weight is < 30f or > 300f)
+                errors.Add(UiTextCatalog.Get("Profile_PersonalInfo_WeightBoundsError"));
         }
 
         if (cycleLength is < 0 or > 60 ||
             (!string.IsNullOrWhiteSpace(CycleLength) && cycleLength == 0))
+            errors.Add(UiTextCatalog.Get("Ui_Profile_Error_CycleLength"));
+
+        if (errors.Count > 0)
         {
-            StatusMessage = "Ui_Profile_Error_CycleLength";
+            IsStatusError = true;
+            StatusMessage = string.Join(" ", errors);
             return false;
         }
 
+        IsStatusError = false;
         StatusMessage = string.Empty;
         return true;
     }

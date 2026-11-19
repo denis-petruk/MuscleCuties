@@ -31,8 +31,7 @@
                         VerticalOptions="Center"
                         BackgroundColor="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}">
                     <Label Text="{loc:LocalizedText Dashboard_Readiness_CheckInNeeded}"
-                           Style="{StaticResource CaptionLabel}"
-                           TextColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}" />
+                           Style="{StaticResource AccentLabel}" />
                 </Border>
             </FlexLayout>
 
@@ -40,7 +39,8 @@
                  sizes, so the shared row gives each ring its own row there. -->
             <sharedControls:AdaptiveRow Columns="2"
                   IsVisible="{Binding HasTodayReadinessRecord}">
-                <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding HasTodayReadinessScore}">
+                <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding HasTodayReadinessScore}"
+                        SemanticProperties.Description="{Binding ReadinessScore, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Readiness_ReadinessScoreFormat}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
                         <Grid WidthRequest="{StaticResource UiDimension88}" HeightRequest="{StaticResource UiDimension88}" HorizontalOptions="Center">
                             <dashboard:DashboardProgressRing WidthRequest="{StaticResource UiDimension88}"
@@ -50,6 +50,7 @@
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="{StaticResource UiSpacing0}">
                                 <Label Text="{Binding ReadinessScore}"
                                        Style="{StaticResource MetricValue}"
+                                       sharedControls:CappedTextSize.IsCompactLabel="True"
                                        HorizontalOptions="Center"
                                        HorizontalTextAlignment="Center" />
                                 <Label Text="{loc:LocalizedText Dashboard_ReadinessScoreSuffix}"
@@ -68,7 +69,8 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Border Style="{StaticResource CardSecondary}">
+                <Border Style="{StaticResource CardSecondary}"
+                        SemanticProperties.Description="{Binding RecoveryScore, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Dashboard_Readiness_RecoveryScoreFormat}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" HorizontalOptions="Center">
                         <Grid WidthRequest="{StaticResource UiDimension88}" HeightRequest="{StaticResource UiDimension88}" HorizontalOptions="Center">
                             <dashboard:DashboardProgressRing WidthRequest="{StaticResource UiDimension88}"
@@ -78,6 +80,7 @@
                             <VerticalStackLayout VerticalOptions="Center" HorizontalOptions="Center" Spacing="{StaticResource UiSpacing0}">
                                 <Label Text="{Binding RecoveryScore}"
                                        Style="{StaticResource MetricValue}"
+                                       sharedControls:CappedTextSize.IsCompactLabel="True"
                                        HorizontalOptions="Center"
                                        HorizontalTextAlignment="Center" />
                                 <Label Text="{loc:LocalizedText Dashboard_ReadinessScoreSuffix}"
@@ -154,6 +157,9 @@
             <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Dashboard_Readiness_CompleteCheckIn}"
                     Command="{Binding OpenDailyCheckInCommand}"
                     IsVisible="{Binding NeedsDailyCheckIn}" />
+            <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Dashboard_Readiness_ViewCheckIn}"
+                    Command="{Binding OpenDailyCheckInCommand}"
+                    IsVisible="{Binding HasTodayReadinessRecord}" />
 
         </VerticalStackLayout>
     </Border>
