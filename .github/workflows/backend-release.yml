@@ -143,7 +143,7 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy and verify both Lambda functions
+      - name: Deploy and verify the configured Lambda functions
         env:
           TARGET_ENV: beta
           AWS_REGION: us-east-2
