@@ -11,8 +11,6 @@
 /tools/ @denis-petruk
 
 # Governance & Canonical Architecture
-/STATUS.md @denis-petruk
-/ROADMAP.md @denis-petruk
 /docs/ @denis-petruk
 
 # Infrastructure, IAM & CloudFormation

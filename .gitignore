@@ -1,5 +1,5 @@
 # ---------------------------------------------------------------------------
-# MuscleCuties — repository ignore rules
+# MuscleCuties — public repository ignore rules
 # ---------------------------------------------------------------------------
 
 # Build output
@@ -8,17 +8,16 @@ obj/
 /packages/
 *.binlog
 
-# Local database-reset marker (development helper source stays versioned)
+# Local database-reset marker
 .temp-db-reset
 
-# Local secrets, signing material and machine-specific settings
+# Local secrets, signing material, certificates, and machine-specific settings
 .env
 .env.*
 !.env.example
 !.env.*.example
 !.env.template
 !.env.*.template
-# Keep signing/private certificates local, but version the public RDS trust bundle.
 /certs/*
 !/certs/global-bundle.pem
 /lambda-environment.json
@@ -26,14 +25,27 @@ obj/
 **/docker-compose.override.yml
 appsettings.local.json
 appsettings.*.local.json
+**/secrets.json
 *.p8
 *.p12
 *.pfx
 *.key
+*.pem
+!/certs/global-bundle.pem
+*.jks
+*.keystore
 *.mobileprovision
 *.user
+*.DotSettings.user
 
-# Test results and coverage
+# Private / internal working docs (stored outside the public repository)
+/STATUS.md
+/ROADMAP.md
+/PRODUCT.md
+/DESIGN.md
+/CONTEXT.md
+
+# Test results, coverage, and local release artifacts
 [Tt]est[Rr]esults/
 *.trx
 *.log

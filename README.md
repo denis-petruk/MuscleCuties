@@ -52,16 +52,3 @@ The backend reads PostgreSQL connection and JWT signing settings from configurat
 ## CI/CD
 
 GitHub Actions, in `.github/workflows/`: `ci.yml` (build, unit tests), `db-verify.yml` (migration rehearsal on disposable databases), `backend-build.yml` (immutable Lambda packages), `backend-release.yml` (deploy), `db-release.yml` (schema migrations), `mobile-release.yml` (iOS build and packaging).
-
-## Documentation
-
-| File | Read it when |
-| --- | --- |
-| [STATUS.md](STATUS.md) | Starting a session: what the last task changed and verified |
-| [ROADMAP.md](ROADMAP.md) | Choosing the next task |
-| [DESIGN.md](DESIGN.md) | Any UI change |
-| [docs/UI_PRESENTATION_DESIGN_SPEC.md](docs/UI_PRESENTATION_DESIGN_SPEC.md) | A UI change that needs screen recipes or component details; read the relevant section only |
-| [docs/PRODUCT_WORKFLOWS.md](docs/PRODUCT_WORKFLOWS.md) | Workout planning, logging, progression or health-data behaviour |
-| [CONTEXT.md](CONTEXT.md) | Localization terms |
-
-History lives in Git, not in dated documents.

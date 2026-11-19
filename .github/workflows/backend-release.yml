@@ -60,7 +60,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::028417007003:role/MuscleCuties-GitHubActions-ArtifactUpload
+          role-to-assume: ${{ secrets.AWS_ARTIFACT_UPLOAD_ROLE_ARN }}
           aws-region: us-east-2
           role-session-name: github-actions-artifact-upload-${{ github.run_id }}
 
@@ -122,7 +122,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::028417007003:role/MuscleCuties-GitHubActions-BetaDeploy
+          role-to-assume: ${{ secrets.AWS_BETA_DEPLOY_ROLE_ARN }}
           aws-region: us-east-2
           role-session-name: github-actions-beta-deploy-${{ github.run_id }}
 
@@ -203,7 +203,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::028417007003:role/MuscleCuties-GitHubActions-BetaDeploy
+          role-to-assume: ${{ secrets.AWS_BETA_DEPLOY_ROLE_ARN }}
           aws-region: us-east-2
           role-session-name: github-actions-beta-rollback-${{ github.run_id }}
 
