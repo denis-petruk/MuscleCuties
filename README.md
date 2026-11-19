@@ -59,6 +59,8 @@ GitHub Actions, in `.github/workflows/`: `ci.yml` (build, unit tests), `db-verif
 | File | Read it when |
 | --- | --- |
 | [AGENTS.md](AGENTS.md) | Always; the only file every agent session loads |
+| [docs/ai/PROJECT_INDEX.md](docs/ai/PROJECT_INDEX.md) | Locating unfamiliar components and entry points |
+| [docs/ai/CURRENT_STATE.md](docs/ai/CURRENT_STATE.md) | Verified repository baseline and high-level solution state |
 | [STATUS.md](STATUS.md) | Starting a session: what the last task changed and verified |
 | [ROADMAP.md](ROADMAP.md) | Choosing the next task |
 | [DESIGN.md](DESIGN.md) | Any UI change |

@@ -1,45 +1,22 @@
-# MuscleCuties — agent operating contract
+# MuscleCuties — Agent Instructions
 
-Read this file and the task card. Open other docs only when the card names them: `DESIGN.md` for UI work, `docs/PRODUCT_WORKFLOWS.md` for workout or nutrition behaviour, `CONTEXT.md` for localization terms, `README.md` for build and test commands. Scope `rg`/`find` searches to `src/`, `tests/`, and `services/` by default. Do not read `bin/`, `obj/`, `artifacts/`, `UiTextCatalog.RuntimeText.cs`, logs, or images unless the task explicitly requires it. Keep git worktrees outside the repository (e.g., `../MuscleCuties-worktrees/`).
+## Source of truth
+Use the current working tree for implementation facts and GitHub `denis-petruk/MuscleCuties` for published state. Do not treat historical chats, old checkpoints, or superseded plans as current requirements. Work on a branch and integrate via PR into protected `main`; never push directly to `main`, force-push, or rewrite remote history. Keep commits and PRs free of AI tool or co-author mentions.
 
-## 1. Source of truth
+## Default execution & scope
+Use one agent. Do not spawn subagents or run full-repository audits unless explicitly requested. Complete only the requested change and direct dependencies; do not refactor unrelated code or reopen completed product work. Before editing, run `./scripts/ai-status.sh` (or `git status --short --branch`) and preserve unrelated local changes without resetting, stashing, or committing them. Keep git worktrees outside the repo (e.g., `../MuscleCuties-worktrees/`).
 
-- GitHub `denis-petruk/MuscleCuties` is the only repository. Work on a branch and integrate through a PR into protected `main`; never push directly to `main`, force-push or rewrite remote history.
-- Before editing: run `git status --short --branch`, record HEAD and the files the task owns. Preserve unrelated changes; never reset, stash or commit them.
-- Keep the repository, commits and PRs free of any mention of AI tools or AI co-authors.
+## Context & efficiency
+Use `docs/ai/PROJECT_INDEX.md` to locate components and `docs/ai/CURRENT_STATE.md` / `STATUS.md` for current state. Open `DESIGN.md`, `docs/PRODUCT_WORKFLOWS.md`, `CONTEXT.md`, or `README.md` only when relevant. Scope searches to `src/`, `tests/`, and `services/`. Skip `bin/`, `obj/`, `artifacts/`, `UiTextCatalog.RuntimeText.cs`, logs, and images unless explicitly required. Prefer targeted searches, bounded output, and the least expensive capable model; avoid unnecessary web research or specialist MCP tools.
 
-## 2. Boundaries
+## Architecture & product safety
+- Dependencies point inward: `Core` has no outer dependencies; `UseCases` depends only on `Core`; `Infrastructure`/`Server` implement ports; UI ViewModels never touch `DbContext` or persistence models.
+- iOS-only .NET MAUI client; C#/.NET is the sole production runtime. Preserve HTTP/JSON DTOs, routes, XAML bindings (search all XAML before renaming/deleting), EN/RU localization, shared UI styles (`ButtonPrimary`/`CardPrimary`), and encrypted SecureStorage offline storage (no SQLite/Preferences for sensitive data).
+- Platform files (`.github/workflows/**`, `infra/**`, `tools/deployment/**`, `src/MuscleCuties.Infrastructure.PostgreSql/Persistence/**`, `src/MuscleCuties.DbMaintenance/**`) are edited only when the task explicitly owns them.
+- Workout safety: require all workout-influencing inputs before generation (report all gaps together with an editable setup action); missing/stale values never relax restrictions or increase load; keep the single plan-acceptance path (`Apply plan` for active plan replacement); withhold unsafe strength sessions with a review reason; keep safety thresholds in named constants.
+- Privacy & secrets: keep Apple Health sync within approved scope (steps, sleep stages, active kcal, resting HR, HRV); never send health/cycle/injury/personal data or secrets to external services, logs, fixtures, or docs; never read, print, or rotate secrets; never run `dbinit` or `EnsureCreated` against shared databases.
 
-- Dependencies point inward: `MuscleCuties.Core` has no ORM, ASP.NET, MAUI or transport dependencies; `UseCases` depends only on Core; Infrastructure and Server implement ports; UI ViewModels never touch DbContext, repositories or persistence models.
-- iOS only, no Android target. C#/.NET is the only production runtime.
-- Preserve HTTP/JSON DTOs, routes, XAML bindings, navigation, EN/RU localization and persistence semantics. Search all XAML bindings before renaming or deleting a bound member.
-- Sensitive offline data lives in encrypted JSON with keys in SecureStorage; no SQLite, no Preferences for sensitive records.
-- UI uses the shared page system, `ButtonPrimary`/`ButtonSecondary`, `CardPrimary`/`CardSecondary` and role-based colours. No competing style systems.
-- Platform files (`.github/workflows/**`, `infra/**`, `tools/deployment/**`, `src/MuscleCuties.Infrastructure.PostgreSql/Persistence/**`, `src/MuscleCuties.DbMaintenance/**`) are edited only by a task that explicitly owns them.
-
-## 3. Product safety
-
-- Every field that influences a workout must be filled before generation runs. If anything is missing, the page shows what is missing together with an action that opens the editable workout setup; a status message alone is not acceptable. All gaps are reported together, not one per retry.
-- A missing or stale value never relaxes a restriction and never increases load or intensity.
-- One plan-acceptance path: a feasible first plan generated in the foreground applies automatically; an active plan is replaced only through **Apply plan** after the Generate/Regenerate control has stated the replacement consequence. No local generator, cached preview or failed API call substitutes for this path.
-- A session with no permitted strength block is withheld with a review reason, never replaced by unsafe work.
-- Apple Health sync stays within the owner-approved scope (steps, sleep stages, active kcal, resting HR, HRV); never widen it. No health records, cycle data, injuries, measurements, photos, identifiers or secrets go to external AI or third-party services, logs, fixtures or docs. Tests use synthetic fixtures.
-- Safety thresholds and multipliers live in named constants, not scattered literals.
-
-## 4. Automation and owner actions
-
-- Automated, no approval needed: builds, tests, analyzers, MAUI simulator build/run/screenshots, branch pushes, PRs, merging a PR whose checks are green.
-- Deploy to AWS Lambda runs from the owner's local credentials without a separate request, on two conditions enforced by the script: all tests are green, and a database snapshot is taken before any migration. Deploy the exact built package digest to a published version behind an alias; never serve `$LATEST`.
-- Owner only: TestFlight upload and App Store Connect actions.
-- Agents never read, print, log or rotate secret values. Never run `dbinit` or `EnsureCreated` against a shared database.
-
-## 5. Verification: test first
-
-1. Write the test before the feature. Run it: it must fail, and fail for the reason the feature is missing, not because of a typo or a broken build.
-2. Implement until the test is green. Run the affected suite, not only the new test.
-3. Never weaken, delete, skip or `[Ignore]` an existing test, and never change an assertion to make a candidate pass. A test fixed to accept new behaviour must be justified in the PR.
-4. Evidence is pasted command output. A dated report, a previous run or a confident description is not evidence. A check that could not run is reported as not run, never as passed.
-
-## 6. Report
-
-At the end of every task, overwrite `STATUS.md` with four parts: changed files; test commands with their pasted output; what was not verified and why; next step or blocker. No new dated handoff files. Never restate an old result as current.
+## Verification, deploy & completion
+- Automated: builds, targeted tests, analyzers, iOS simulator runs, branch pushes, PRs, and green PR merges. Local AWS Lambda deploy requires green tests, a pre-migration DB snapshot, and an immutable digest behind an alias (never `$LATEST`). TestFlight and App Store Connect remain owner-only.
+- Write/run failing tests first for new behavior, run affected suites without weakening or skipping tests, and cite pasted command output as evidence.
+- Stop once verified. Report changed files, checks performed, unverified areas, and blockers concisely (updating `STATUS.md` when completing a development task; no dated handoff files).
