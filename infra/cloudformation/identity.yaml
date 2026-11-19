@@ -75,10 +75,15 @@ Resources:
               Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
+              # The upload_artifacts job in backend-release.yml declares `environment: beta`,
+              # so GitHub presents sub=...:environment:beta, never ...:ref:refs/heads/main.
+              # Scoping to the ref claim alone would deny the one legitimate caller; the ref
+              # claim is pinned separately so a beta-environment job from another branch is
+              # still refused.
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-              StringLike:
-                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}/${RepositoryName}:ref:refs/heads/main"
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}/${RepositoryName}:environment:beta"
+                token.actions.githubusercontent.com:ref: refs/heads/main
       Policies:
         - PolicyName: S3ArtifactPutOnly
           PolicyDocument:
