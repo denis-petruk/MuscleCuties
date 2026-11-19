@@ -173,9 +173,9 @@ Resources:
 #     Resource: ...:function:musclecuties-staging-backend-api
 #               ...:function:musclecuties-staging-backend-api:*
 #
-# Also deferred, and not modelled here because it is a separate ownership question: the
-# GitLab OIDC provider (gitlab.com) is still present in the account and belongs to no
-# stack. It is unmanaged and must be either adopted or deleted.
+# The GitLab OIDC provider (gitlab.com) that used to sit here unmanaged was deleted on
+# 2026-11-19. No role ever trusted it, so removing it changed nothing at runtime; GitHub
+# Actions is now the only CI identity with access to this account.
 # ---------------------------------------------------------------------------------------
 
 Outputs:

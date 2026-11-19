@@ -2,9 +2,9 @@
 set -euo pipefail
 [ "$#" -eq 2 ] || { echo 'Usage: validate-package.sh ZIP MANIFEST' >&2; exit 2; }
 
-# Allow platform-neutral, GitHub Actions, or GitLab CI variables
-export SOURCE_COMMIT_SHA="${SOURCE_COMMIT_SHA:-${GITHUB_SHA:-${CI_COMMIT_SHA:-}}}"
-export SOURCE_TREE_SHA="${SOURCE_TREE_SHA:-${CI_COMMIT_TREE_SHA:-}}"
+# Allow platform-neutral or GitHub Actions variables.
+export SOURCE_COMMIT_SHA="${SOURCE_COMMIT_SHA:-${GITHUB_SHA:-}}"
+export SOURCE_TREE_SHA="${SOURCE_TREE_SHA:-}"
 export BUILD_RUN_ID="${BUILD_RUN_ID:-${GITHUB_RUN_ID:-${CI_PIPELINE_ID:-local}}}"
 export BUILD_JOB_ID="${BUILD_JOB_ID:-${GITHUB_JOB:-${CI_JOB_ID:-local}}}"
 
