@@ -2,68 +2,61 @@
 
 ## Changed files
 
-- `services/MuscleCuties.Server/Nutrition/FdcExternalFoodSource.cs` — switched USDA FoodData Central search from `GET /fdc/v1/foods/search` with comma/parenthesis-encoded `dataType` query parameters (which USDA's nginx proxy rejected over IPv6 with `HTTP 400 Bad Request`) to `POST /fdc/v1/foods/search` with a JSON body (`query`, `dataType` array, `pageSize`, `pageNumber`) and `X-Api-Key` header.
-- `services/MuscleCuties.Server/ApiApplication.cs` — raised `FdcExternalFoodSource` HTTP client timeout to named constant `fdcSearchTimeoutSeconds = 8` (up from `4`).
-- `tests/MuscleCuties.Server.Tests/FdcExternalFoodSourceTests.cs` — added regression tests verifying `POST /fdc/v1/foods/search` JSON payload, `X-Api-Key` header (never in URL), and graceful empty fallback on HTTP 400.
-- `STATUS.md` — updated verification and Beta deployment record.
+- `src/MuscleCuties.Infrastructure.PostgreSql/Account/Authentication/AppleIdentityTokenValidator.cs` — raised `MaximumIdentityLifetimeSeconds` from `3_600` (1 hour) to `86_400` (24 hours) after CloudWatch v18 showed Apple's live iOS `identityToken` passed signature, issuer, audience, subject, and nonce checks and was rejected solely with `LifetimeTooLong`. Server-side single-use nonce expiry remains 5 minutes.
+- `tests/MuscleCuties.Registration.Tests/AppleIdentityTokenValidatorTests.cs` — added `TwentyFourHourAppleIdentityTokenIsAccepted` and updated the upper-bound rejection test to `TokenLifetimeBeyondTwentyFourHoursIsRejected` (25h rejected as `LifetimeTooLong`).
+- `src/MuscleCuties.UseCases/Features/Nutrition/Overview/OpenSourceMealGenerator.cs` — added `OpenSourceMealGenerator` and bounded `OpenSourceIngredientCache` to generate portion-balanced meals (4 blueprints per slot for savoury breakfast, sweet breakfast, lunch, dinner, and snack) using live USDA FoodData Central open-source per-100g macros via `IExternalFoodSource`, enforcing `GeneratedMealPortionRule` calorie targets and oil caps.
+- `src/MuscleCuties.Infrastructure.PostgreSql/Nutrition/Overview/PostgresNutritionOverviewStore.cs` — wired optional `IExternalFoodSource` + `OpenSourceIngredientCache` into `GetDayMealPlanAsync`, `RefreshDayMealAsync`, and `GetMealSuggestionsAsync` (with deterministic daily variety, cycling across all concepts on refresh, and built-in fallback when external source is unconfigured or unreachable).
+- `services/MuscleCuties.Server/ApiApplication.cs` — registered singleton `OpenSourceIngredientCache` for per-container USDA ingredient reuse across requests.
+- `tests/MuscleCuties.Core.Tests/OpenSourceMealGeneratorTests.cs` — added tests verifying USDA macro usage, calorie/oil portion accuracy, distinct concept cycling, caching, and unconfigured fallback.
+- `STATUS.md` — updated verification and Beta v19 deploy record.
 
 ## Test commands and pasted output
 
 ### Test-first RED verification (before implementation)
 
 ```text
-$ dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj --filter "FullyQualifiedName~FdcExternalFoodSourceTests" -v minimal
-Failed MuscleCuties.Server.Tests.FdcExternalFoodSourceTests.FdcExternalFoodSource_SearchAsync_UsesPostWithJsonDataTypeArrayAndHeaderApiKey [2 ms]
+$ dotnet test tests/MuscleCuties.Registration.Tests/MuscleCuties.Registration.Tests.csproj --filter "FullyQualifiedName~AppleIdentityTokenValidatorTests" -v minimal
+Failed MuscleCuties.Registration.Tests.AppleIdentityTokenValidatorTests.TwentyFourHourAppleIdentityTokenIsAccepted [45 ms]
 Error Message:
  Assert.Equal() Failure: Values differ
-Expected: POST
-Actual:   GET
-Failed!  - Failed:     1, Passed:     3, Skipped:     0, Total:     4, Duration: 22 ms - MuscleCuties.Server.Tests.dll (net10.0)
+Expected: Valid
+Actual:   LifetimeTooLong
+Failed!  - Failed:     1, Passed:     7, Skipped:     0, Total:     8, Duration: 375 ms - MuscleCuties.Registration.Tests.dll (net10.0)
 ```
 
-### IPv6 diagnostic against live `api.nal.usda.gov` (with `X-Api-Key` from local `.env`, value not printed)
-
-```text
-GET comma try 1: HTTP 400 time=0.401357s
-GET comma try 2: HTTP 400 time=0.357430s
-GET comma try 3: HTTP 400 time=0.401750s
-POST json try 1: HTTP 200 time=0.623875s
-POST json try 2: HTTP 200 time=0.743078s
-POST json try 3: HTTP 200 time=0.595538s
-```
-
-### Full Release test suites (commit `2ed77904a74224c21938e81359dc88a4a9713f8f`)
+### Full Release test suites and PostgreSQL integration tests (commit `33e9ff05c1e2881a823fe5d1e96480df98188c67`)
 
 ```text
 $ dotnet test tests/MuscleCuties.Core.Tests/MuscleCuties.Core.Tests.csproj -c Release -v minimal
-Passed!  - Failed:     0, Passed:  1757, Skipped:     0, Total:  1757, Duration: 1 s - MuscleCuties.Core.Tests.dll (net10.0)
+Passed!  - Failed:     0, Passed:  1760, Skipped:     0, Total:  1760, Duration: 1 s - MuscleCuties.Core.Tests.dll (net10.0)
 
 $ dotnet test tests/MuscleCuties.Mobile.Contracts.Tests/MuscleCuties.Mobile.Contracts.Tests.csproj -c Release -v minimal
-Passed!  - Failed:     0, Passed:   248, Skipped:     0, Total:   248, Duration: 252 ms - MuscleCuties.Mobile.Contracts.Tests.dll (net10.0)
+Passed!  - Failed:     0, Passed:   248, Skipped:     0, Total:   248, Duration: 296 ms - MuscleCuties.Mobile.Contracts.Tests.dll (net10.0)
 
 $ dotnet test tests/MuscleCuties.Registration.Tests/MuscleCuties.Registration.Tests.csproj -c Release -v minimal
-Passed!  - Failed:     0, Passed:    79, Skipped:     0, Total:    79, Duration: 545 ms - MuscleCuties.Registration.Tests.dll (net10.0)
+Passed!  - Failed:     0, Passed:    80, Skipped:     0, Total:    80, Duration: 586 ms - MuscleCuties.Registration.Tests.dll (net10.0)
 
 $ MC_LATENCY_POSTGRES="Host=127.0.0.1;Port=55461;Database=mc_test_glute;Username=postgres" dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj -c Release -v minimal
-Passed!  - Failed:     0, Passed:   127, Skipped:     0, Total:   127, Duration: 1 m 3 s - MuscleCuties.Server.Tests.dll (net10.0)
+Passed!  - Failed:     0, Passed:   127, Skipped:     0, Total:   127, Duration: 1 m - MuscleCuties.Server.Tests.dll (net10.0)
+
+$ MC_INTEGRATION_POSTGRES=1 MC_SCHEMA_COMPATIBILITY_POSTGRES="Host=127.0.0.1;Port=55461;Database=postgres;Username=postgres" dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj -c Release --filter "FullyQualifiedName~AppleSignInPostgresTests|FullyQualifiedName~NutritionSuggestionPortionTests" -v minimal
+Passed!  - Failed:     0, Passed:    26, Skipped:     0, Total:    26, Duration: 9 s - MuscleCuties.Registration.Integration.Tests.dll (net10.0)
 ```
 
-### AWS Lambda Beta deployment (commit `2ed77904a74224c21938e81359dc88a4a9713f8f`, zero DB migrations)
+### AWS Lambda Beta deployment (commit `33e9ff05c1e2881a823fe5d1e96480df98188c67`, zero DB migrations)
 
 ```text
 release_status=verified code=none
-- musclecuties-backend-api:beta -> version 18 (from 17), CodeSha256 iLqZGAY1HvZqXYoPhdFLBXwj4E7DPKcnlQRpqS5m7zs=
-- musclecuties-workout-reconciliation:beta -> version 5 (from 4), CodeSha256 kdiFsSH3SOpdrNg3D3j/CZHr8p5wzdLIU2x6pEQlxWA=
+- musclecuties-backend-api:beta -> version 19 (from 18), CodeSha256 CkX7NEkd0PzMDH+0MGgoITxIe3FUXw2eP/FqJejFhm8=
+- musclecuties-workout-reconciliation:beta -> version 6 (from 5), CodeSha256 x+ro1ljArKkZ+bsMxUXyVoCTdPIZbLcYNCTmDAt/uNY=
 - /health/live -> 200
 - /health/ready -> 200
 ```
 
 ## What was not verified and why
 
-- An authenticated `GET /api/v1/nutrition/catalog/search?query=tempeh` call directly against Beta `https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com` was not executed from this shell because creating a throwaway user in the shared Beta RDS database was avoided; ready to verify immediately after signing in from the app.
-- The `MuscleCuties.UI` iOS build was not re-run for this server-only commit (previously verified with 0 warnings / 0 errors on `5884418d`).
+- Live interactive Sign in with Apple and "Plan my day" meal generation from the iOS Simulator / device against Beta `v19` require interactive iOS Sign in with Apple authentication; ready to retest immediately without rebuilding the iOS app (server-only update on `v19`).
 
 ## Next step or blocker
 
-- Stop and relaunch Debug in Rider (now targeting `https://y2ejsgrc6l.execute-api.us-east-2.amazonaws.com` with stale loopback overrides ignored), sign in, and search a sparse generic food (for example `tempeh` or `seitan`) in Nutrition to verify live USDA FoodData Central fallback results from Lambda version 18.
-- Note on FDC search scope: `ExternalFoodFallbackSearchStore` only queries USDA when local catalog hits are `< 5` AND the query matches `GenericFoodQueryRule` (English generic foods/descriptors); let the owner decide if non-English or broader generic food terms should also be supported.
+- Tap **Sign in with Apple** in the already-running Beta Debug app (no iOS rebuild needed for `v19`), then open **Nutrition -> Plan my day** and tap Refresh on meal cards to verify live USDA FoodData Central generated meals and food search.
