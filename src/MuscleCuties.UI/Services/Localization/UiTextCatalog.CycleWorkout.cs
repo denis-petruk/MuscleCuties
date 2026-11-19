@@ -585,8 +585,10 @@ public static partial class UiTextCatalog
         English["Workout_Session_WorkingSetFormat"] = "Set {0}";
         English["Workout_Session_SplitSuperset"] = "Do separately";
         English["Workout_Session_LeftSideReps"] = "Left reps";
+        English["Workout_Session_LeftSideShort"] = "L";
         English["Workout_Session_SideRepsRequired"] = "Enter the repetitions for each side in every working set.";
         English["Workout_Session_RightSideReps"] = "Right reps";
+        English["Workout_Session_RightSideShort"] = "R";
         English["Workout_Session_GeneralWarmupFormat"] = "General warm-up: {0} min";
         English["Workout_Session_FinisherFormat"] = "After strength: {0} min of {1} · RPE {2}–{3}.";
         English["Workout_Session_FinisherActivity"] = "conditioning";

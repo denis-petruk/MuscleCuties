@@ -22,7 +22,7 @@ appId: com.musclecuties.app
     timeout: 20000
 - takeScreenshot: 15_profile
 - scrollUntilVisible:
-    element: "Workout Availability|Доступность для тренировок"
+    element: ".*(Workout Availability|Доступность для тренировок).*"
     direction: DOWN
     timeout: 20000
 - takeScreenshot: 15b_profile_settings

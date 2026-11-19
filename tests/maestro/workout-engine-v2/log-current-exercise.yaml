@@ -21,22 +21,18 @@ appId: com.musclecuties.app
         id: WorkoutSessionNextExerciseButton
     commands:
       - repeat:
-          times: 3
+          times: 4
           commands:
             - swipe:
-                start: "50%,50%"
-                end: "50%,82%"
+                start: "50%,58%"
+                end: "50%,88%"
                 duration: 300
       - scrollUntilVisible:
           element:
             id: "(WarmupSet1|WorkingSet1)(Reps|LeftReps)"
           direction: DOWN
-          centerElement: false
+          centerElement: true
           timeout: 15000
-      - swipe:
-          start: "50%,66%"
-          end: "50%,50%"
-          duration: 300
       - runFlow:
           file: log-set.yaml
           env:
@@ -45,37 +41,28 @@ appId: com.musclecuties.app
           element:
             id: "(WorkingSet1|WorkingSet2)(Reps|LeftReps)"
           direction: DOWN
-          centerElement: false
+          centerElement: true
           timeout: 15000
-      - runFlow:
-          when:
-            visible:
-              id: "WarmupSet1(Reps|LeftReps)"
-          commands:
-            - swipe:
-                start: "50%,66%"
-                end: "50%,48%"
-                duration: 300
       - runFlow:
           file: log-set.yaml
           env:
             QA_SET_PREFIX: WorkingSet1
+      - swipe:
+          start: "50%,75%"
+          end: "50%,55%"
+          duration: 300
       - runFlow:
           when:
             visible:
               id: "WorkingSet2(Reps|LeftReps)"
           commands:
-            - swipe:
-                start: "50%,66%"
-                end: "50%,48%"
-                duration: 300
             - runFlow:
                 file: log-set.yaml
                 env:
                   QA_SET_PREFIX: WorkingSet2
       - swipe:
-          start: "50%,66%"
-          end: "50%,48%"
+          start: "50%,75%"
+          end: "50%,55%"
           duration: 300
       - runFlow:
           when:
@@ -86,6 +73,17 @@ appId: com.musclecuties.app
                 file: log-set.yaml
                 env:
                   QA_SET_PREFIX: WorkingSet3
+      - runFlow:
+          when:
+            visible: "^Done$|^Готово$"
+          commands:
+            - tapOn: "^Done$|^Готово$"
+      - runFlow:
+          when:
+            notVisible:
+              id: WorkoutSessionNextExerciseButton
+          commands:
+            - hideKeyboard
       # The guard is evaluated before the last Next navigates to the summary; the tap then finds
       # no button and must not fail the run, because the completion button below proves the state.
       - tapOn:

@@ -28,6 +28,8 @@ public partial class ExerciseSetInputItem : ObservableObject
     [ObservableProperty] private string _weightInput = string.Empty;
     [ObservableProperty] private double _weightKg;
     [ObservableProperty] private bool _wasEdited;
+    [ObservableProperty] private bool _showDivider;
+    [ObservableProperty] private bool _canRemove;
 
     public ExerciseSetInputItem()
     {
@@ -76,6 +78,12 @@ public partial class ExerciseSetInputItem : ObservableObject
     public string ExerciseName { get; set; } = string.Empty;
     public bool ShowWeight { get; set; } = true;
     public bool ShowPerSideReps { get; set; }
+    public bool IsObserved { get; init; }
+    public double? EnteredWeightKg => ParseWeight(WeightInput) is { } parsed ? (double)parsed : null;
+    public bool HasEnteredReps => ShowPerSideReps
+        ? (LeftSideReps is > 0 && RightSideReps is > 0)
+        : int.TryParse(RepsInput, NumberStyles.Integer, CultureInfo.InvariantCulture, out var reps) && reps > 0;
+    public bool IsCapturedWorkingSet => !IsWarmup && (WasEdited || IsObserved || HasEnteredReps || EnteredWeightKg.HasValue);
     private int LabelSetNumber => DisplaySetNumber > 0 ? DisplaySetNumber : SetNumber;
     public string SetDisplayText => IsWarmup
         ? UiTextCatalog.Format("Workout_Session_WarmupSetFormat", LabelSetNumber)

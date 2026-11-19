@@ -3,11 +3,11 @@ appId: com.musclecuties.app
 # 1. Open Workout Preferences from You tab
 - tapOn: "You|Профиль"
 - scrollUntilVisible:
-    element: "Workout Availability|Доступность для тренировок"
+    element: ".*(Workout Availability|Доступность для тренировок).*"
     direction: DOWN
     centerElement: true
     timeout: 15000
-- tapOn: "Workout Availability|Доступность для тренировок"
+- tapOn: ".*(Workout Availability|Доступность для тренировок).*"
 - extendedWaitUntil:
     visible: "Available weekdays|Доступные дни недели"
     timeout: 20000
@@ -28,7 +28,7 @@ appId: com.musclecuties.app
           end: "50%,78%"
           duration: 300
 - tapOn: "Done|Готово"
-- tapOn: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+- tapOn: "Set up plan|Continue to plan setup|Open plan setup|Настроить план|Перейти к настройке плана|Открыть настройку плана"
 - extendedWaitUntil:
     visible:
       id: StrengthPlanApplyButton
@@ -50,11 +50,11 @@ appId: com.musclecuties.app
 - tapOn:
     id: StrengthPlanMissingGapsActionButton
 - extendedWaitUntil:
-    visible: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+    visible: "Set up plan|Continue to plan setup|Open plan setup|Настроить план|Перейти к настройке плана|Открыть настройку плана"
     timeout: 20000
 - tapOn:
     id: WorkoutPrefsSlidersCheckBox
-- tapOn: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+- tapOn: "Set up plan|Continue to plan setup|Open plan setup|Настроить план|Перейти к настройке плана|Открыть настройку плана"
 - extendedWaitUntil:
     visible:
       id: StrengthPlanApplyButton
@@ -89,7 +89,7 @@ appId: com.musclecuties.app
 - tapOn:
     id: StrengthPlanMissingGapsActionButton
 - extendedWaitUntil:
-    visible: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+    visible: "Set up plan|Continue to plan setup|Open plan setup|Настроить план|Перейти к настройке плана|Открыть настройку плана"
     timeout: 20000
 - tapOn:
     id: WorkoutPrefsSlidersCheckBox
@@ -104,7 +104,7 @@ appId: com.musclecuties.app
 - tapOn: "Done|Готово"
 - tapOn:
     id: WorkoutPrefsDumbbellsCheckBox
-- tapOn: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+- tapOn: "Set up plan|Continue to plan setup|Open plan setup|Настроить план|Перейти к настройке плана|Открыть настройку плана"
 - extendedWaitUntil:
     visible:
       id: StrengthPlanApplyButton
@@ -126,11 +126,11 @@ appId: com.musclecuties.app
 - tapOn:
     id: StrengthPlanMissingGapsActionButton
 - extendedWaitUntil:
-    visible: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+    visible: "Set up plan|Continue to plan setup|Open plan setup|Настроить план|Перейти к настройке плана|Открыть настройку плана"
     timeout: 20000
 - tapOn:
     id: WorkoutPrefsBandAnchorCheckBox
-- tapOn: "Continue to plan setup|Open plan setup|Перейти к настройке плана|Открыть настройку плана"
+- tapOn: "Set up plan|Continue to plan setup|Open plan setup|Настроить план|Перейти к настройке плана|Открыть настройку плана"
 - extendedWaitUntil:
     visible:
       id: StrengthPlanApplyButton

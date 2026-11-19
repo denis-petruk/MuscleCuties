@@ -90,7 +90,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     public bool HasDoseAdjustmentNote => !string.IsNullOrWhiteSpace(DoseAdjustmentNote);
     [ObservableProperty] private string _dayTitle = "Workout";
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(HasNoActivities),
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(CanRetryLoad), nameof(HasNoActivities),
         nameof(HasActivityChoices))]
     private string _errorText = string.Empty;
 
@@ -299,6 +299,12 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private string _errorReference = string.Empty;
 
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
+    public bool CanRetryLoad => HasError && ErrorText is not (
+        "Workout_Session_SideRepsRequired"
+        or "Ui_Workout_Error_SetsReps"
+        or "Ui_Workout_Error_Weight"
+        or "Ui_Workout_Error_Duration"
+        or "Workout_Session_OptionalMetricsError");
     public bool HasErrorReference => HasError && !string.IsNullOrEmpty(ErrorReference);
     // The page is pushed before the session is fetched. Without this gate the empty state
     // renders for one frame and then disappears once the activities arrive.

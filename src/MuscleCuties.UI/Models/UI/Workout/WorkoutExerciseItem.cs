@@ -13,7 +13,7 @@ namespace MuscleCuties.UI.Models.UI.Workout;
 public partial class WorkoutExerciseItem : ObservableObject
 {
     [ObservableProperty] private bool _isExpanded;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanMarkOptional))] private bool _isLogged;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanMarkOptional), nameof(CalibrationPromptText), nameof(HasRecommendationText))] private bool _isLogged;
     [ObservableProperty] private bool _isOptional;
     [ObservableProperty] private int _optionalSets;
     private bool _lastSavedIsOptional;
@@ -67,7 +67,11 @@ public partial class WorkoutExerciseItem : ObservableObject
     public string QuickTipsText { get; set; } = string.Empty;
     public string TargetText { get; set; } = string.Empty;
     public string PreviousText { get; set; } = string.Empty;
+    public bool HasPreviousLog => !string.IsNullOrWhiteSpace(PreviousText) &&
+        !PreviousText.Equals("No previous log", StringComparison.OrdinalIgnoreCase);
     public string RecommendationText { get; set; } = string.Empty;
+    public bool HasRecommendationText => !string.IsNullOrWhiteSpace(RecommendationText) &&
+        string.IsNullOrWhiteSpace(CalibrationPromptText);
     public bool UsesEnduranceMetrics { get; set; }
     public bool UsesStrengthMetrics => !UsesEnduranceMetrics;
     public bool UsesDurationMetric { get; set; }
@@ -154,7 +158,7 @@ public partial class WorkoutExerciseItem : ObservableObject
         : string.Empty;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(UnilateralModeLabel))] private bool _isUnilateral;
     public string UnilateralModeLabel => IsUnilateral ? UiTextCatalog.Get("Workout_Session_UnilateralPerSide") : string.Empty;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CalibrationPromptText))] private bool _requiresInitialCalibration;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CalibrationPromptText), nameof(HasRecommendationText))] private bool _requiresInitialCalibration;
     public string CalibrationPromptText => RequiresInitialCalibration && !IsLogged
         ? UiTextCatalog.Get("Workout_Session_CalibrationPrompt")
         : string.Empty;
@@ -177,7 +181,7 @@ public partial class WorkoutExerciseItem : ObservableObject
     {
         var nextSetNumber = Sets.Count + 1;
         var nextWorkingSetNumber = Sets.Where(set => !set.IsWarmup)
-            .Select(set => set.InitialGroupSetNumber ?? set.SetNumber)
+            .Select(set => set.DisplaySetNumber > 0 ? set.DisplaySetNumber : set.SetNumber)
             .DefaultIfEmpty()
             .Max() + 1;
         var previousSet = Sets.LastOrDefault();
@@ -204,7 +208,7 @@ public partial class WorkoutExerciseItem : ObservableObject
             RemoveCommand = RemoveSetCommand,
             ShowWeight = UsesWeight,
             ShowPerSideReps = IsUnilateral,
-            InitialGroupSetNumber = nextWorkingSetNumber,
+            DisplaySetNumber = nextWorkingSetNumber,
             WasEdited = true
         };
         if (UsesWeight && RequiresInitialCalibration && previousSet?.EnteredWeightKg is null)
@@ -268,6 +272,8 @@ public partial class WorkoutExerciseItem : ObservableObject
         {
             Sets[index].SetNumber = numbers[index].AbsoluteNumber;
             Sets[index].DisplaySetNumber = numbers[index].DisplayNumber;
+            Sets[index].ShowDivider = index > 0;
+            Sets[index].CanRemove = Sets.Count > 1;
         }
     }
 

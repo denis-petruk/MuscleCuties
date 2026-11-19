@@ -125,7 +125,7 @@
                                        Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
                             </Grid>
                             <Label Text="{loc:LocalizedText Workout_Overview_InProgressExplanation}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
-                            <Label Text="{Binding InProgressWorkout.Title}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
+                            <Label Text="{Binding InProgressWorkout.Title, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource MutedLabel}" LineBreakMode="WordWrap" />
                             <Button Text="{loc:LocalizedText Workout_Overview_ResumeWorkout}" Command="{Binding ResumeInProgressWorkoutCommand}" Style="{StaticResource ButtonPrimary}" />
                         </VerticalStackLayout>
                     </Border>

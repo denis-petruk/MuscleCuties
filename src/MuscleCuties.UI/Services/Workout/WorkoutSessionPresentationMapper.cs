@@ -118,7 +118,7 @@ internal static class WorkoutSessionPresentationMapper
                 OnChanged = () => item.UpdateAggregatesFromSets(fromUser: true),
                 RemoveCommand = item.RemoveSetCommand,
                 ShowWeight = item.UsesWeight,
-                InitialGroupSetNumber = set.IsWarmup ? ++warmupSetNumber : ++workingSetNumber,
+                DisplaySetNumber = set.IsWarmup ? ++warmupSetNumber : ++workingSetNumber,
                 IsObserved = set.IsObserved,
                 TechniqueAcceptable = set.TechniqueAcceptable,
                 WasEdited = false,

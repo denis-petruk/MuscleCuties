@@ -586,7 +586,9 @@ internal static partial class RussianUiText
         Values["Workout_Session_WorkingSetFormat"] = "Подход {0}";
         Values["Workout_Session_SplitSuperset"] = "Выполнять отдельно";
         Values["Workout_Session_LeftSideReps"] = "Повторы слева";
+        Values["Workout_Session_LeftSideShort"] = "Л";
         Values["Workout_Session_RightSideReps"] = "Повторы справа";
+        Values["Workout_Session_RightSideShort"] = "П";
         Values["Workout_Session_GeneralWarmupFormat"] = "Общая разминка: {0} мин";
         Values["Workout_Session_FinisherFormat"] = "После силовой: {0} мин — {1} · RPE {2}–{3}.";
         Values["Workout_Session_FinisherActivity"] = "кардио";

@@ -15,7 +15,7 @@
              SafeAreaEdges="All"
              BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
     <Grid>
-        <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="{DynamicResource PresentationPageContentPadding}" RowSpacing="{StaticResource UiSpaceCompact}"
+        <Grid RowDefinitions="Auto,Auto,Auto,*" Padding="{DynamicResource PresentationFormPagePadding}" RowSpacing="{StaticResource UiSpaceCompact}"
               IsEnabled="{Binding CanInteract}">
             <!-- Header row: back + day title -->
             <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
@@ -40,6 +40,7 @@
                            IsVisible="{Binding HasErrorReference}"
                            SemanticProperties.Description="{loc:LocalizedText Workout_Session_ErrorReferenceAccessibility}" />
                     <Button Style="{StaticResource ButtonSecondary}" Grid.Row="2" Text="{loc:LocalizedText Workout_Session_TryAgainButton}" Command="{Binding RetryLoadCommand}"
+                            IsVisible="{Binding CanRetryLoad}"
                             SemanticProperties.Hint="{loc:LocalizedText Workout_Session_RetryLoadingAccessibility}" />
                 </Grid>
             </Border>
@@ -253,10 +254,10 @@
                 </Grid>
 
                 <!-- ========== One exercise at a time ========== -->
-                <Grid RowDefinitions="Auto,*,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}" IsVisible="{Binding IsExerciseFlow}">
-                    <!-- Progress bar and navigation dots -->
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                        <Grid ColumnDefinitions="*,Auto">
+                <Grid RowDefinitions="Auto,*,Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}" IsVisible="{Binding IsExerciseFlow}">
+                    <!-- Progress indicator and exercise position -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpacing2}">
+                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                             <Label LineBreakMode="WordWrap"
                                 Text="{Binding ExercisePositionText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource CaptionLabel}" VerticalOptions="Center"
@@ -274,11 +275,10 @@
                             </Button>
                         </Grid>
                         <ScrollView Orientation="Horizontal" HorizontalScrollBarVisibility="Never">
-                            <HorizontalStackLayout BindableLayout.ItemsSource="{Binding ExerciseProgress}">
+                            <HorizontalStackLayout BindableLayout.ItemsSource="{Binding ExerciseProgress}" HorizontalOptions="Center">
                                 <BindableLayout.ItemTemplate>
                                     <DataTemplate x:DataType="vm:SessionExerciseProgress">
-                                        <!-- Small dots sit inside full-size touch targets. -->
-                                        <Grid WidthRequest="{StaticResource UiDimension48}" HeightRequest="{StaticResource UiDimension48}"
+                                        <Grid WidthRequest="{StaticResource UiDimension40}" HeightRequest="{StaticResource UiDimension36}"
                                               SemanticProperties.Description="{Binding AccessibilityText, Converter={StaticResource LocalizedStringConverter}}">
                                             <Grid.GestureRecognizers>
                                                 <TapGestureRecognizer
@@ -320,38 +320,35 @@
 
                     <!-- Exercise detail + logging inputs -->
                     <ScrollView x:Name="ExerciseScrollView" Grid.Row="1">
-                        <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_8_0_16}">
-                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}" Padding="{StaticResource UiInsets0_4}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                 <Border AutomationId="WorkoutSessionExerciseVisual"
-                                        WidthRequest="{StaticResource UiDimension48}"
-                                        HeightRequest="{StaticResource UiDimension48}"
+                                        WidthRequest="{StaticResource UiDimension40}"
+                                        HeightRequest="{StaticResource UiDimension40}"
                                         StrokeThickness="{StaticResource UiStrokeWidth0}"
                                         StrokeShape="{StaticResource UiRoundRectangleRadius12}"
                                         BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDark}}"
                                         VerticalOptions="Start">
                                     <Image Source="{Binding CurrentExercise.IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}, ConverterParameter=Accent}"
-                                           WidthRequest="{StaticResource UiDimension24}"
-                                           HeightRequest="{StaticResource UiDimension24}"
+                                           WidthRequest="{StaticResource UiDimension20}"
+                                           HeightRequest="{StaticResource UiDimension20}"
                                            Aspect="AspectFit"
                                            HorizontalOptions="Center"
                                            VerticalOptions="Center"
                                            InputTransparent="True" />
                                 </Border>
-                                <Label LineBreakMode="WordWrap" Grid.Column="1"
-                                       Text="{Binding CurrentExercise.Name, Converter={StaticResource LocalizedStringConverter}}"
-                                       Style="{StaticResource SectionTitle}"
-                                       SemanticProperties.HeadingLevel="Level3"
-                                       SemanticProperties.Description="{Binding CurrentExercise.Name, Converter={StaticResource LocalizedStringConverter}}" />
-                                <Button Grid.Column="2" Text="{loc:LocalizedText Workout_Session_NoteButton}"
-                                        Command="{Binding OpenMovementNoteCommand}"
-                                        Style="{StaticResource ButtonSecondary}"
-                                        VerticalOptions="Center"
-                                        SemanticProperties.Hint="{loc:LocalizedText Workout_Session_NoteEditorTitle}" />
+                                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
+                                    <Label LineBreakMode="WordWrap"
+                                           Text="{Binding CurrentExercise.Name, Converter={StaticResource LocalizedStringConverter}}"
+                                           Style="{StaticResource SectionTitle}"
+                                           SemanticProperties.HeadingLevel="Level3"
+                                           SemanticProperties.Description="{Binding CurrentExercise.Name, Converter={StaticResource LocalizedStringConverter}}" />
+                                    <Label LineBreakMode="WordWrap"
+                                           Text="{Binding CurrentExercise.TargetText, Converter={StaticResource LocalizedStringConverter}}"
+                                           Style="{StaticResource MutedLabel}"
+                                           SemanticProperties.Description="{Binding CurrentExercise.TargetText, Converter={StaticResource LocalizedStringConverter}}" />
+                                </VerticalStackLayout>
                             </Grid>
-                            <Label LineBreakMode="WordWrap"
-                                Text="{Binding CurrentExercise.TargetText, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource BodyLabel}"
-                                SemanticProperties.Description="{Binding CurrentExercise.TargetText, Converter={StaticResource LocalizedStringConverter}}" />
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
                                   IsVisible="{Binding CurrentExercise.IsInSuperset}">
                                 <Label Text="{Binding CurrentExercise.SupersetLabel}" Style="{StaticResource CaptionLabel}"
@@ -363,31 +360,35 @@
                             </Grid>
                             <Label Text="{Binding CurrentExercise.UnilateralModeLabel}" Style="{StaticResource CaptionLabel}"
                                    IsVisible="{Binding CurrentExercise.IsUnilateral}" LineBreakMode="WordWrap" />
-                            <Label Text="{Binding CurrentExercise.CalibrationPromptText}" Style="{StaticResource BodyLabel}"
+                            <Label LineBreakMode="WordWrap"
+                                   Text="{Binding CurrentExercise.PreviousText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_PreviousWeightFormat}"
+                                   IsVisible="{Binding CurrentExercise.HasPreviousLog}"
+                                   Style="{StaticResource CaptionLabel}"
+                                   SemanticProperties.Description="{Binding CurrentExercise.PreviousText, Converter={StaticResource LocalizedStringConverter}}" />
+                            <Label Text="{Binding CurrentExercise.CalibrationPromptText}" Style="{StaticResource CaptionLabel}"
                                    IsVisible="{Binding CurrentExercise.CalibrationPromptText, Converter={StaticResource StringToBoolConverter}}"
                                    LineBreakMode="WordWrap" />
                             <Label LineBreakMode="WordWrap"
-                                Text="{Binding CurrentExercise.PreviousText, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Workout_Session_PreviousWeightFormat}"
-                                Style="{StaticResource BodyLabel}"
-                                SemanticProperties.Description="{Binding CurrentExercise.PreviousText, Converter={StaticResource LocalizedStringConverter}}" />
-                            <Label LineBreakMode="WordWrap"
-                                Text="{Binding CurrentExercise.RecommendationText, Converter={StaticResource LocalizedStringConverter}}"
-                                Style="{StaticResource MutedLabel}"
-                                SemanticProperties.Description="{Binding CurrentExercise.RecommendationText, Converter={StaticResource LocalizedStringConverter}}" />
+                                   Text="{Binding CurrentExercise.RecommendationText, Converter={StaticResource LocalizedStringConverter}}"
+                                   IsVisible="{Binding CurrentExercise.HasRecommendationText}"
+                                   Style="{StaticResource CaptionLabel}"
+                                   SemanticProperties.Description="{Binding CurrentExercise.RecommendationText, Converter={StaticResource LocalizedStringConverter}}" />
                             <VerticalStackLayout BindingContext="{Binding CurrentExercise}"
                                                  x:DataType="models:WorkoutExerciseItem" Spacing="{StaticResource UiSpaceCompact}">
-                                <!-- Per-set capture: load, reps, RIR and technique for every working set -->
+                                <!-- Per-set capture grouped in one card with hairline dividers for scannable logging -->
                                 <VerticalStackLayout IsVisible="{Binding UsesStrengthMetrics}"
                                                      Spacing="{StaticResource UiSpaceTight}">
-                                    <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_SetRowsHeader}"
-                                           Style="{StaticResource FormFieldLabel}" />
-                                    <VerticalStackLayout BindableLayout.ItemsSource="{Binding Sets}"
-                                                         Spacing="{StaticResource UiSpaceTight}">
-                                        <BindableLayout.ItemTemplate>
-                                            <DataTemplate x:DataType="models:ExerciseSetInputItem">
-                                                <Border Style="{StaticResource CardSecondary}">
-                                                    <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
-                                                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                    <Border Style="{StaticResource CardSecondary}">
+                                        <VerticalStackLayout BindableLayout.ItemsSource="{Binding Sets}"
+                                                             Spacing="{StaticResource UiSpaceCompact}">
+                                            <BindableLayout.ItemTemplate>
+                                                <DataTemplate x:DataType="models:ExerciseSetInputItem">
+                                                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                                        <BoxView IsVisible="{Binding ShowDivider}"
+                                                                 HeightRequest="{StaticResource UiDimension1}"
+                                                                 Color="{AppThemeBinding Light={StaticResource BorderMutedLight}, Dark={StaticResource BorderMutedDark}}"
+                                                                 BackgroundColor="{AppThemeBinding Light={StaticResource BorderMutedLight}, Dark={StaticResource BorderMutedDark}}" />
+                                                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                                             <Label Grid.Column="0" VerticalOptions="Center"
                                                                    Text="{Binding SetDisplayText}"
                                                                    LineBreakMode="WordWrap"
@@ -395,14 +396,29 @@
                                                             <CheckBox Grid.Column="1" VerticalOptions="Center"
                                                                       IsChecked="{Binding TechniqueAcceptable, Mode=TwoWay}"
                                                                       SemanticProperties.Description="{loc:LocalizedText Workout_Session_TechniqueAccessibility}" />
-                                                            <Button Grid.Column="2" Text="−"
-                                                                    Command="{Binding RemoveCommand}"
-                                                                    CommandParameter="{Binding .}"
-                                                                    Style="{StaticResource ButtonSecondary}"
-                                                                    SemanticProperties.Description="{loc:LocalizedText Workout_Session_RemoveSetAccessibility}" />
+                                                            <Border Grid.Column="2"
+                                                                    IsVisible="{Binding CanRemove}"
+                                                                    WidthRequest="{StaticResource PresentationMinimumTouchSize}"
+                                                                    HeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                                                    StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                                                    BackgroundColor="{StaticResource Transparent}"
+                                                                    VerticalOptions="Center"
+                                                                    SemanticProperties.Description="{loc:LocalizedText Workout_Session_RemoveSetAccessibility}">
+                                                                <Border.GestureRecognizers>
+                                                                    <TapGestureRecognizer Command="{Binding RemoveCommand}" CommandParameter="{Binding .}" />
+                                                                </Border.GestureRecognizers>
+                                                                <Path Data="M3 8 L13 8"
+                                                                      Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                                                      StrokeThickness="{StaticResource UiStrokeWidth2}"
+                                                                      StrokeLineCap="Round"
+                                                                      WidthRequest="{StaticResource UiDimension16}"
+                                                                      HeightRequest="{StaticResource UiDimension16}"
+                                                                      HorizontalOptions="Center"
+                                                                      VerticalOptions="Center" />
+                                                            </Border>
                                                         </Grid>
 
-                                                        <Grid Grid.Row="1" ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                                        <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
                                                             <VerticalStackLayout Grid.Column="0" Spacing="{StaticResource UiSpaceMicro}"
                                                                                  IsVisible="{Binding ShowWeight}">
                                                                 <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_KgUnit}"
@@ -429,17 +445,17 @@
                                                                 </Border>
                                                                 <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceMicro}"
                                                                       IsVisible="{Binding ShowPerSideReps}">
-                                                                    <Border Style="{StaticResource InputContainer}">
+                                                                    <Border Style="{StaticResource InputContainer}" Padding="{StaticResource UiInsets4_0}">
                                                                         <Entry Style="{StaticResource WorkoutNumberEntry}"
                                                                                SemanticProperties.Description="{loc:LocalizedText Workout_Session_LeftSideReps}"
                                                                                AutomationId="{Binding LeftRepsAutomationId}" Text="{Binding LeftSideRepsInput, Mode=TwoWay}" Keyboard="Numeric"
-                                                                               Placeholder="{loc:LocalizedText Workout_Session_LeftSideReps}" />
+                                                                               Placeholder="{loc:LocalizedText Workout_Session_LeftSideShort}" />
                                                                     </Border>
-                                                                    <Border Grid.Column="1" Style="{StaticResource InputContainer}">
+                                                                    <Border Grid.Column="1" Style="{StaticResource InputContainer}" Padding="{StaticResource UiInsets4_0}">
                                                                         <Entry Style="{StaticResource WorkoutNumberEntry}"
                                                                                SemanticProperties.Description="{loc:LocalizedText Workout_Session_RightSideReps}"
                                                                                AutomationId="{Binding RightRepsAutomationId}" Text="{Binding RightSideRepsInput, Mode=TwoWay}" Keyboard="Numeric"
-                                                                               Placeholder="{loc:LocalizedText Workout_Session_RightSideReps}" />
+                                                                               Placeholder="{loc:LocalizedText Workout_Session_RightSideShort}" />
                                                                     </Border>
                                                                 </Grid>
                                                             </VerticalStackLayout>
@@ -456,11 +472,11 @@
                                                                 </Border>
                                                             </VerticalStackLayout>
                                                         </Grid>
-                                                    </Grid>
-                                                </Border>
-                                            </DataTemplate>
-                                        </BindableLayout.ItemTemplate>
-                                    </VerticalStackLayout>
+                                                    </VerticalStackLayout>
+                                                </DataTemplate>
+                                            </BindableLayout.ItemTemplate>
+                                        </VerticalStackLayout>
+                                    </Border>
                                     <Button Text="{loc:LocalizedText Workout_Session_AddSet}"
                                             AutomationId="WorkoutSessionAddSetButton" Command="{Binding AddSetCommand}"
                                             Style="{StaticResource ButtonSecondary}"
@@ -593,9 +609,88 @@
                                         </Grid>
                                     </VerticalStackLayout>
                                 </Grid>
+                            </VerticalStackLayout>
 
-                                <Border Style="{StaticResource CardSecondary}">
+                            <!-- Secondary exercise tools stay grouped in one card below the sets so logging owns the viewport. -->
+                            <Border Style="{StaticResource CardSecondary}"
+                                    IsVisible="{Binding IsRestTimerVisible, Converter={StaticResource InvertedBoolConverter}}">
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer Command="{Binding StartRestTimerCommand}">
+                                        <TapGestureRecognizer.CommandParameter>
+                                            <x:Int32>60</x:Int32>
+                                        </TapGestureRecognizer.CommandParameter>
+                                    </TapGestureRecognizer>
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                    <mi:MauiIcon Icon="{mi:Fluent Timer24}" IconSize="{StaticResource UiDimension20}"
+                                                 IconColor="{StaticResource Primary}" WidthRequest="{StaticResource UiDimension24}" HeightRequest="{StaticResource UiDimension24}"
+                                                 VerticalOptions="Center" />
+                                    <Label Grid.Column="1" LineBreakMode="WordWrap"
+                                           Text="{loc:LocalizedText Workout_Session_Start60SecRestAccessibility}"
+                                           Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
+                                    <Path Grid.Column="2" Data="M5 2 L11 8 L5 14" Stroke="{StaticResource Primary}"
+                                          StrokeThickness="{StaticResource UiStrokeWidth2}" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
+                                          VerticalOptions="Center" />
+                                </Grid>
+                            </Border>
+
+                            <Border Style="{StaticResource CardSecondary}">
+                                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                                    <!-- Tips & technique -->
                                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                                              MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                            <Grid.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding ToggleTipsCommand}" />
+                                            </Grid.GestureRecognizers>
+                                            <Label LineBreakMode="WordWrap"
+                                                   Text="{Binding TipsButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                                                   Style="{StaticResource BodyStrong}"
+                                                   VerticalOptions="Center"
+                                                   SemanticProperties.Hint="{loc:LocalizedText Workout_Session_ToggleTipsAccessibility}" />
+                                            <Path Grid.Column="1" Data="M2 4 L8 10 L14 4" Stroke="{StaticResource Primary}"
+                                                  StrokeThickness="{StaticResource UiStrokeWidth2}" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
+                                                  VerticalOptions="Center" />
+                                        </Grid>
+                                        <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}" IsVisible="{Binding IsTipsExpanded}">
+                                            <Label LineBreakMode="WordWrap"
+                                                   Text="{Binding CurrentExercise.WhyText, Converter={StaticResource LocalizedStringConverter}}"
+                                                   Style="{StaticResource BodyLabel}" />
+                                            <Label LineBreakMode="WordWrap" Text="{Binding CurrentExercise.CuesText}" Style="{StaticResource BodyLabel}" />
+                                            <Label LineBreakMode="WordWrap" Text="{Binding CurrentExercise.QuickTipsText}"
+                                                   IsVisible="{Binding CurrentExercise.HasQuickTips}"
+                                                   Style="{StaticResource BodyLabel}" />
+                                        </VerticalStackLayout>
+                                    </VerticalStackLayout>
+
+                                    <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                             Color="{AppThemeBinding Light={StaticResource BorderMutedLight}, Dark={StaticResource BorderMutedDark}}"
+                                             BackgroundColor="{AppThemeBinding Light={StaticResource BorderMutedLight}, Dark={StaticResource BorderMutedDark}}" />
+
+                                    <!-- Movement notes -->
+                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
+                                          MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                          SemanticProperties.Hint="{loc:LocalizedText Workout_Session_NoteEditorTitle}">
+                                        <Grid.GestureRecognizers>
+                                            <TapGestureRecognizer Command="{Binding OpenMovementNoteCommand}" />
+                                        </Grid.GestureRecognizers>
+                                        <Label LineBreakMode="WordWrap"
+                                               Text="{loc:LocalizedText Workout_Session_NoteButton}"
+                                               Style="{StaticResource BodyStrong}"
+                                               VerticalOptions="Center" />
+                                        <Path Grid.Column="1" Data="M5 2 L11 8 L5 14" Stroke="{StaticResource Primary}"
+                                              StrokeThickness="{StaticResource UiStrokeWidth2}" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
+                                              VerticalOptions="Center" />
+                                    </Grid>
+
+                                    <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                             Color="{AppThemeBinding Light={StaticResource BorderMutedLight}, Dark={StaticResource BorderMutedDark}}"
+                                             BackgroundColor="{AppThemeBinding Light={StaticResource BorderMutedLight}, Dark={StaticResource BorderMutedDark}}" />
+
+                                    <!-- Optional exercise marker -->
+                                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                                         BindingContext="{Binding CurrentExercise}"
+                                                         x:DataType="models:WorkoutExerciseItem">
                                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                                             <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Readiness_OptionalExercise}"
                                                    Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
@@ -606,106 +701,72 @@
                                                     ThumbColor="{StaticResource ControlThumbLight}"
                                                     Toggled="OnOptionalExerciseToggled" />
                                         </Grid>
-                                        <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}"
-                                              IsVisible="{Binding IsOptional}">
+                                        <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="SpaceBetween" AlignItems="Center"
+                                                    IsVisible="{Binding IsOptional}">
                                             <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Readiness_OptionalSets}"
-                                                   Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
-                                            <Stepper Grid.Column="1" Minimum="0" Maximum="{Binding MaxOptionalSets}"
-                                                     Increment="1" Value="{Binding OptionalSets, Mode=TwoWay}"
-                                                     IsEnabled="{Binding CanMarkOptional}"
-                                                     SemanticProperties.Description="{loc:LocalizedText Workout_Readiness_OptionalSets}"
-                                                     ValueChanged="OnOptionalSetsChanged" />
-                                            <Label Grid.Column="2" Text="{Binding OptionalSets}" Style="{StaticResource BodyLabel}"
-                                                   VerticalOptions="Center" />
-                                        </Grid>
+                                                   Style="{StaticResource BodyLabel}" VerticalOptions="Center"
+                                                   Margin="{StaticResource UiInsets0_0_8_0}" FlexLayout.Shrink="0" />
+                                            <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}" VerticalOptions="Center" FlexLayout.Shrink="0">
+                                                <Stepper Minimum="0" Maximum="{Binding MaxOptionalSets}"
+                                                         Increment="1" Value="{Binding OptionalSets, Mode=TwoWay}"
+                                                         IsEnabled="{Binding CanMarkOptional}"
+                                                         SemanticProperties.Description="{loc:LocalizedText Workout_Readiness_OptionalSets}"
+                                                         ValueChanged="OnOptionalSetsChanged" />
+                                                <Label Text="{Binding OptionalSets}" Style="{StaticResource BodyLabel}"
+                                                       VerticalOptions="Center" />
+                                            </HorizontalStackLayout>
+                                        </FlexLayout>
                                         <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Readiness_OneRequiredSetHint}"
                                                Style="{StaticResource CaptionLabel}" IsVisible="{Binding IsOptional}" />
                                     </VerticalStackLayout>
-                                </Border>
-                            </VerticalStackLayout>
 
-                            <Border Style="{StaticResource CardSecondary}">
-                                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                                    <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                                        <Grid.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding ToggleTipsCommand}" />
-                                        </Grid.GestureRecognizers>
-                                        <Label LineBreakMode="WordWrap"
-                                               Text="{Binding TipsButtonText, Converter={StaticResource LocalizedStringConverter}}"
-                                               Style="{StaticResource BodyStrong}"
-                                               VerticalOptions="Center"
-                                               SemanticProperties.Hint="{loc:LocalizedText Workout_Session_ToggleTipsAccessibility}" />
-                                        <Path Grid.Column="1" Data="M2 4 L8 10 L14 4" Stroke="{StaticResource Primary}"
-                                              StrokeThickness="{StaticResource UiStrokeWidth2}" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
-                                              VerticalOptions="Center" />
-                                    </Grid>
-                                    <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}" IsVisible="{Binding IsTipsExpanded}">
-                                        <Label LineBreakMode="WordWrap"
-                                               Text="{Binding CurrentExercise.WhyText, Converter={StaticResource LocalizedStringConverter}}"
-                                               Style="{StaticResource BodyLabel}" />
-                                        <Label LineBreakMode="WordWrap" Text="{Binding CurrentExercise.CuesText}" Style="{StaticResource BodyLabel}" />
-                                        <Label LineBreakMode="WordWrap" Text="{Binding CurrentExercise.QuickTipsText}"
-                                               IsVisible="{Binding CurrentExercise.HasQuickTips}"
-                                               Style="{StaticResource BodyLabel}" />
-                                    </VerticalStackLayout>
+                                    <BoxView HeightRequest="{StaticResource UiDimension1}"
+                                             Color="{AppThemeBinding Light={StaticResource BorderMutedLight}, Dark={StaticResource BorderMutedDark}}"
+                                             BackgroundColor="{AppThemeBinding Light={StaticResource BorderMutedLight}, Dark={StaticResource BorderMutedDark}}" />
+
+                                    <!-- Swap / Skip / Pain action strip -->
+                                    <FlexLayout Direction="Row" Wrap="Wrap" JustifyContent="SpaceBetween" AlignItems="Center">
+                                        <Border IsVisible="{Binding CurrentExercise.UsesStrengthMetrics}"
+                                                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                                Padding="{StaticResource UiInsets8_4}"
+                                                StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                                BackgroundColor="{StaticResource Transparent}"
+                                                FlexLayout.Shrink="0"
+                                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SwapExerciseAccessibility}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding OpenSwapPanelCommand}" />
+                                            </Border.GestureRecognizers>
+                                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_SwapButton}"
+                                                   Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
+                                        </Border>
+                                        <Border MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                                Padding="{StaticResource UiInsets8_4}"
+                                                StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                                BackgroundColor="{StaticResource Transparent}"
+                                                FlexLayout.Shrink="0"
+                                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SkipExerciseAccessibility}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding SkipExerciseCommand}" />
+                                            </Border.GestureRecognizers>
+                                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_SkipButton}"
+                                                   Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
+                                        </Border>
+                                        <Border MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                                Padding="{StaticResource UiInsets8_4}"
+                                                StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                                BackgroundColor="{StaticResource Transparent}"
+                                                FlexLayout.Shrink="0"
+                                                AutomationId="WorkoutSessionReportPainButton"
+                                                SemanticProperties.Hint="{loc:LocalizedText Workout_Session_PainAccessibility}">
+                                            <Border.GestureRecognizers>
+                                                <TapGestureRecognizer Command="{Binding ReportPainCommand}" />
+                                            </Border.GestureRecognizers>
+                                            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_PainButton}"
+                                                   Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
+                                        </Border>
+                                    </FlexLayout>
                                 </VerticalStackLayout>
                             </Border>
-
-                            <!-- Secondary session controls stay compact inside the ScrollView so keyboard focus keeps sets visible. -->
-                            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" Margin="{StaticResource UiInsets0_8_0_0}">
-                                <Border Style="{StaticResource CardSecondary}"
-                                        IsVisible="{Binding IsRestTimerVisible, Converter={StaticResource InvertedBoolConverter}}">
-                                    <Border.GestureRecognizers>
-                                        <TapGestureRecognizer Command="{Binding StartRestTimerCommand}">
-                                            <TapGestureRecognizer.CommandParameter>
-                                                <x:Int32>60</x:Int32>
-                                            </TapGestureRecognizer.CommandParameter>
-                                        </TapGestureRecognizer>
-                                    </Border.GestureRecognizers>
-                                    <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                                        <mi:MauiIcon Icon="{mi:Fluent Timer24}" IconSize="{StaticResource UiDimension20}"
-                                                     IconColor="{StaticResource Primary}" WidthRequest="{StaticResource UiDimension24}" HeightRequest="{StaticResource UiDimension24}"
-                                                     VerticalOptions="Center" />
-                                        <Label Grid.Column="1" LineBreakMode="WordWrap"
-                                               Text="{loc:LocalizedText Workout_Session_Start60SecRestAccessibility}"
-                                               Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
-                                        <Path Grid.Column="2" Data="M5 2 L11 8 L5 14" Stroke="{StaticResource Primary}"
-                                              StrokeThickness="{StaticResource UiStrokeWidth2}" WidthRequest="{StaticResource UiDimension16}" HeightRequest="{StaticResource UiDimension16}"
-                                              VerticalOptions="Center" />
-                                    </Grid>
-                                </Border>
-                                <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
-                                    <Border Style="{StaticResource CardSecondary}"
-                                            IsVisible="{Binding CurrentExercise.UsesStrengthMetrics}"
-                                            SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SwapExerciseAccessibility}">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding OpenSwapPanelCommand}" />
-                                        </Border.GestureRecognizers>
-                                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_SwapButton}"
-                                               Style="{StaticResource CaptionStrong}" HorizontalTextAlignment="Center"
-                                               VerticalOptions="Center" />
-                                    </Border>
-                                    <Border Grid.Column="1" Style="{StaticResource CardSecondary}"
-                                            SemanticProperties.Hint="{loc:LocalizedText Workout_Session_SkipExerciseAccessibility}">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding SkipExerciseCommand}" />
-                                        </Border.GestureRecognizers>
-                                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_SkipButton}"
-                                               Style="{StaticResource CaptionStrong}" HorizontalTextAlignment="Center"
-                                               VerticalOptions="Center" />
-                                    </Border>
-                                    <Border Grid.Column="2" Style="{StaticResource CardSecondary}"
-                                            AutomationId="WorkoutSessionReportPainButton"
-                                            SemanticProperties.Hint="{loc:LocalizedText Workout_Session_PainAccessibility}">
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer Command="{Binding ReportPainCommand}" />
-                                        </Border.GestureRecognizers>
-                                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Session_PainButton}"
-                                               Style="{StaticResource CaptionStrong}" HorizontalTextAlignment="Center"
-                                               VerticalOptions="Center" />
-                                    </Border>
-                                </Grid>
-                            </VerticalStackLayout>
                         </VerticalStackLayout>
                     </ScrollView>
 

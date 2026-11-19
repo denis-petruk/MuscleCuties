@@ -353,6 +353,7 @@ public class LocalizationCatalogTests
     [InlineData("Pages/Workout/WorkoutHistoryPage.xaml", "ExerciseName")]
     [InlineData("Pages/Workout/WorkoutHistoryPage.xaml", "DisplayName")]
     [InlineData("Pages/Workout/WorkoutHistoryPage.xaml", ".")]
+    [InlineData("Pages/Workout/WorkoutPage.xaml", "InProgressWorkout.Title")]
     [InlineData("Controls/Workout/FeaturedWorkoutCard.xaml", "Name")]
     [InlineData("Controls/Workout/WorkoutSwapPanel.xaml", "Name")]
     public void Workout_exercise_names_use_runtime_localization(string relativePath, string binding)

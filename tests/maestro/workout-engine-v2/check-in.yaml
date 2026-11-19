@@ -1,15 +1,15 @@
 appId: com.musclecuties.app
 ---
 - tapOn: "Complete check-in|Заполнить отметку|Пройти отметку"
+- extendedWaitUntil:
+    visible:
+      id: SleepQualityChip3
+    timeout: 15000
 - runFlow:
     when:
       visible: "Not now|Не сейчас"
     commands:
       - tapOn: "Not now|Не сейчас"
-- extendedWaitUntil:
-    visible:
-      id: SleepQualityChip3
-    timeout: 15000
 - scrollUntilVisible:
     element:
       id: SleepQualityChip3
@@ -31,7 +31,13 @@ appId: com.musclecuties.app
       id: FatigueChip1
     direction: DOWN
     centerElement: true
+    waitToSettleTimeoutMs: 500
     timeout: 20000
+- runFlow:
+    when:
+      visible: "Not now|Не сейчас"
+    commands:
+      - tapOn: "Not now|Не сейчас"
 - tapOn:
     id: FatigueChip1
 - assertNotVisible:
