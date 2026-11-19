@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -211,6 +212,18 @@ class WorkflowContractTests(unittest.TestCase):
         for name in required:
             self.assertIn('\n          ' + name + ':', self.workflow,
                           name + ' is read by the deployer but never supplied by the workflow')
+
+    def test_artifact_paths_named_by_the_deployer_are_produced_upstream(self):
+        # Every file the deploy step names must actually be written by the packaging job or by the
+        # upload step; a rename in either place would otherwise only surface during a real release.
+        build = (ROOT / '.github' / 'workflows' / 'backend-build.yml').read_text()
+        produced = build + self.workflow
+        for name in ('SERVER_ZIP', 'SERVER_MANIFEST', 'SERVER_OBJECT',
+                     'WORKER_ZIP', 'WORKER_MANIFEST', 'WORKER_OBJECT'):
+            match = re.search(r'\n          ' + name + r': (\S+)', self.workflow)
+            self.assertIsNotNone(match, name + ' is never supplied')
+            base = match.group(1).rsplit('/', 1)[-1]
+            self.assertIn(base, produced, base + ' is named but never produced')
 
     def test_oidc_jobs_request_id_token(self):
         for job in ('upload_artifacts', 'deploy_beta', 'rollback_beta'):
