@@ -11,7 +11,7 @@ on:
         options:
           - beta
       target_runtime:
-        description: 'Target runtime (device for TestFlight or simulator for verification)'
+        description: 'Target runtime (device produces the .ipa for Transporter; simulator is verification only)'
         required: true
         default: 'device'
         type: choice
@@ -60,20 +60,58 @@ jobs:
         run: |
           if [ "${{ inputs.target_runtime }}" = "device" ]; then
             echo "rid=ios-arm64" >> "$GITHUB_OUTPUT"
-            echo "archive_param=-p:ArchiveOnBuild=true" >> "$GITHUB_OUTPUT"
           else
             echo "rid=iossimulator-arm64" >> "$GITHUB_OUTPUT"
-            echo "archive_param=" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Build MAUI iOS Client
+      # A device build publishes a signed .ipa, which is the only artefact Transporter accepts.
+      # BuildIpa is disabled only for Debug in the project file, so Release publishes an .ipa.
+      - name: Build MAUI iOS client and produce the .ipa
+        if: inputs.target_runtime == 'device'
+        run: |
+          dotnet publish src/MuscleCuties.UI/MuscleCuties.UI.csproj \
+            -f net10.0-ios \
+            -c ${{ inputs.build_configuration }} \
+            -p:AppTargetEnvironment=${{ inputs.target_environment }} \
+            -p:RuntimeIdentifier=ios-arm64 \
+            -p:BuildIpa=true
+
+      - name: Build MAUI iOS client (simulator, verification only)
+        if: inputs.target_runtime == 'simulator'
         run: |
           dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj \
             -f net10.0-ios \
             -c ${{ inputs.build_configuration }} \
             -p:AppTargetEnvironment=${{ inputs.target_environment }} \
-            -p:RuntimeIdentifier=${{ steps.runtime.outputs.rid }} \
-            ${{ steps.runtime.outputs.archive_param }}
+            -p:RuntimeIdentifier=iossimulator-arm64
+
+      - name: Collect the .ipa for Transporter
+        id: ipa
+        if: inputs.target_runtime == 'device'
+        run: |
+          ipa="$(find src/MuscleCuties.UI/bin -name '*.ipa' -type f -print -quit)"
+          if [ -z "$ipa" ]; then
+            echo "The device build produced no .ipa."
+            echo "An .ipa for Transporter needs an Apple Distribution signing identity and"
+            echo "provisioning profile available on this runner; an unsigned build cannot be"
+            echo "uploaded. Install them on the xcode-27 runner, or build and export the .ipa"
+            echo "locally and upload it yourself."
+            exit 1
+          fi
+          out="MuscleCuties-${{ inputs.target_environment }}-${{ github.sha }}.ipa"
+          cp "$ipa" "$out"
+          shasum -a 256 "$out" | tee "$out.sha256"
+          echo "path=$out" >> "$GITHUB_OUTPUT"
+
+      - name: Upload the .ipa for Transporter
+        if: inputs.target_runtime == 'device'
+        uses: actions/upload-artifact@v4
+        with:
+          name: musclecuties-ios-ipa-${{ inputs.target_environment }}-${{ github.sha }}
+          path: |
+            ${{ steps.ipa.outputs.path }}
+            ${{ steps.ipa.outputs.path }}.sha256
+          retention-days: 30
 
       - name: Archive build output
         uses: actions/upload-artifact@v4
