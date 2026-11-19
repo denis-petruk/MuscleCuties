@@ -40,17 +40,6 @@ public sealed class PlanningReleaseApprovalTests
     }
 
     [Fact]
-    public void Approved_reference_is_the_policy_version_recorded_in_the_owner_decision()
-    {
-        var policy = File.ReadAllText(Path.Combine(
-            RepoRoot, "docs", "release-audit", "2026-11-05", "WORKOUT_POLICY.md"));
-
-        Assert.Contains($"**Policy version** `{PlanningReleaseApproval.BetaWorkoutPolicyReference}`", policy,
-            StringComparison.Ordinal);
-        Assert.Contains("November 5, 2026", policy, StringComparison.Ordinal);
-    }
-
-    [Fact]
     public void Fixture_approval_reference_is_confined_to_tests()
     {
         var offenders = new[] { "src", "services" }

@@ -58,7 +58,7 @@
                         </Label.Behaviors>
                     </Label>
                     <Button Grid.Column="1" Text="{loc:LocalizedText Workout_Session_OkButton}"
-                            Command="{Binding DismissCelebrationCommand}"
+                            AutomationId="WorkoutSessionDismissCelebrationButton" Command="{Binding DismissCelebrationCommand}"
                             Style="{StaticResource ButtonSecondary}"
                             SemanticProperties.Hint="{loc:LocalizedText Workout_Session_DismissCelebrationAccessibility}" />
                 </Grid>
@@ -265,7 +265,7 @@
                     <VerticalStackLayout Spacing="{StaticResource UiSpacing2}">
                         <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                             <Label LineBreakMode="WordWrap"
-                                Text="{Binding ExercisePositionText, Converter={StaticResource LocalizedStringConverter}}"
+                                AutomationId="WorkoutSessionExercisePosition" Text="{Binding ExercisePositionText, Converter={StaticResource LocalizedStringConverter}}"
                                 Style="{StaticResource CaptionLabel}" VerticalOptions="Center"
                                 SemanticProperties.HeadingLevel="Level2"
                                 SemanticProperties.Description="{Binding ExercisePositionText, Converter={StaticResource LocalizedStringConverter}}" />

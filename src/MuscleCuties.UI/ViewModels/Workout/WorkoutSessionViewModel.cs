@@ -32,7 +32,7 @@ public sealed record SessionExerciseProgress(int Index, string Name, bool IsLogg
     public string AccessibilityText => UiTextCatalog.Format(
         "Workout_Session_ExerciseProgressAccessibilityFormat",
         Index + 1,
-        Name,
+        UiTextCatalog.TranslateRuntimeText(Name),
         UiTextCatalog.Get(IsCurrent ? "Workout_Session_ExerciseStateCurrent"
             : IsLogged ? "Workout_Session_ExerciseStateLogged"
             : IsSkipped ? "Workout_Session_ExerciseStateSkipped"
@@ -830,10 +830,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             CelebrationText = celebration switch
             {
                 CelebrationType.BigPR => UiTextCatalog.Format(
-                    "Workout_Session_CelebrationPrFormat", exercise.Name),
+                    "Workout_Session_CelebrationPrFormat", UiTextCatalog.TranslateRuntimeText(exercise.Name)),
                 CelebrationType.MediumFirstTime => UiTextCatalog.Format(
-                    "Workout_Session_CelebrationFirstFormat", exercise.Name),
-                _ => UiTextCatalog.Format("Workout_Session_CelebrationLoggedFormat", exercise.Name)
+                    "Workout_Session_CelebrationFirstFormat", UiTextCatalog.TranslateRuntimeText(exercise.Name)),
+                _ => UiTextCatalog.Format("Workout_Session_CelebrationLoggedFormat", UiTextCatalog.TranslateRuntimeText(exercise.Name))
             };
         }
         catch (Exception)

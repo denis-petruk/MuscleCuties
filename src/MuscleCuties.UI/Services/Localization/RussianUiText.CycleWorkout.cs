@@ -94,7 +94,7 @@ internal static partial class RussianUiText
         Values["Workout_Session_TimedSummaryStatus"] = "Время сохранено. Проверьте итоги тренировки ниже.";
         Values["Workout_Session_TimedStateRunning"] = "Активность идёт";
         Values["Workout_Session_TimedStatePaused"] = "Пауза";
-        Values["Workout_Session_TimedRpeLabel"] = "Усилие (RPE)";
+        Values["Workout_Session_TimedRpeLabel"] = "Усилие";
         Values["Workout_Session_TimedRpeUnrated"] = "Без оценки";
         Values["Workout_Session_TimedRpeValueFormat"] = "{0}/10";
         Values["Workout_Session_TimedRpeHint"] = "Необязательно. Оцените, насколько тяжёлой была активность.";
@@ -116,14 +116,14 @@ internal static partial class RussianUiText
         Values["Workout_Session_SummarySkippedFormat"] = " · пропущено: {0}";
         Values["Workout_Session_SummaryDurationMinutesFormat"] = "{0} мин";
         Values["Workout_Session_SummaryDurationUnderMinute"] = "<1 мин";
-        Values["Workout_Session_SummaryEffortFormat"] = "RPE {0}";
+        Values["Workout_Session_SummaryEffortFormat"] = "Усилие {0}";
         Values["Workout_Session_SummaryEffortHeader"] = "Усилие";
         Values["Workout_Session_SummaryEffortNotRated"] = "Без оценки";
         Values["Workout_Session_RestDayGuidance"] = "День отдыха: держите движение лёгким, а сон и вода сделают основную работу.";
         Values["Workout_Session_ExercisePositionFormat"] = "Упражнение {0} из {1}";
         Values["Workout_Session_TipsShow"] = "Подсказки и техника";
         Values["Workout_Session_TipsHide"] = "Скрыть подсказки и технику";
-        Values["Workout_Session_TargetRpeFormat"] = "Целевой RPE {0}";
+        Values["Workout_Session_TargetRpeFormat"] = "Целевое усилие {0}";
         Values["Workout_Session_SteadyEffort"] = "Ровное усилие";
         Values["Workout_Session_ComfortableEffort"] = "Работайте по целям в комфортном усилии";
         Values["Workout_Session_OptionalMetricsError"] = "Проверьте необязательные показатели. Используйте положительные числа, темп в формате минуты:секунды и усилие от 1 до 10.";
@@ -346,7 +346,7 @@ internal static partial class RussianUiText
         Values["Workout_History_RepsUnit"] = "повторений";
         Values["Workout_History_RetryLoadingButton"] = "Повторить загрузку";
         Values["Workout_History_RpeFormat"] = "Уровень РПП: {0}";
-        Values["Workout_History_RpeHeader"] = "RPE";
+        Values["Workout_History_RpeHeader"] = "Усилие";
         Values["Workout_History_RpeSliderAccessibility"] = "Ощущаемая нагрузка от 1 до 10";
         Values["Workout_History_SaveButton"] = "СОХРАНИТЬ";
         Values["Workout_History_SaveNotesAndRpeButton"] = "Сохранить заметки и РПП";
@@ -429,7 +429,7 @@ internal static partial class RussianUiText
         Values["Workout_Session_SetsHeader"] = "Подходы";
         Values["Workout_Session_SetRowsHeader"] = "Записанные подходы";
         Values["Workout_Session_SideRepsRequired"] = "Укажите повторы для левой и правой стороны.";
-        Values["Workout_Session_RirHeader"] = "RIR";
+        Values["Workout_Session_RirHeader"] = "Запас";
         Values["Workout_Session_RirAccessibility"] = "Повторений в запасе для этого подхода";
         Values["Workout_Session_TechniqueAccessibility"] = "Отметьте, была ли техника приемлемой для этого подхода";
         Values["Workout_Session_AddSet"] = "Добавить подход";
@@ -578,7 +578,7 @@ internal static partial class RussianUiText
         Values["Workout_Recommendation_EarnedFormat"] = "Вы заработали шаг вперёд: сегодня попробуйте {0} кг.";
         Values["Workout_Recommendation_MaintainFormat"] = "Сегодня оставайтесь на {0} кг.";
         Values["Workout_Recommendation_ReduceFormat"] = "Сегодня снизьте вес до {0} кг.";
-        Values["Workout_Session_TargetRangeFormat"] = "{0} рабочих подходов · {1}–{2} повторений · RIR {3}";
+        Values["Workout_Session_TargetRangeFormat"] = "{0} рабочих подходов · {1}–{2} повторений · в запасе {3}";
         Values["Workout_Session_SupersetLabelFormat"] = "Суперсет {0}";
         Values["Workout_Session_UnilateralPerSide"] = "Повторения на каждую сторону";
         Values["Workout_Session_CalibrationPrompt"] = "Выберите посильный начальный вес и запишите его сегодня.";
@@ -590,7 +590,7 @@ internal static partial class RussianUiText
         Values["Workout_Session_RightSideReps"] = "Повторы справа";
         Values["Workout_Session_RightSideShort"] = "П";
         Values["Workout_Session_GeneralWarmupFormat"] = "Общая разминка: {0} мин";
-        Values["Workout_Session_FinisherFormat"] = "После силовой: {0} мин — {1} · RPE {2}–{3}.";
+        Values["Workout_Session_FinisherFormat"] = "После силовой: {0} мин — {1} · усилие {2}–{3}.";
         Values["Workout_Session_FinisherActivity"] = "кардио";
         Values["Workout_Session_SplitSupersetUnavailable"] = "Начните тренировку, чтобы изменить формат суперсета.";
         Values["Workout_Session_SplitSupersetFailed"] = "Не удалось изменить суперсет. Проверьте подключение и попробуйте снова.";

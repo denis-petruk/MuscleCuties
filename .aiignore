@@ -1,7 +1,3 @@
-# AI Agent & IDE Indexing Ignore Rules (MuscleCuties)
-# Reduces token usage by excluding build outputs, worktrees, large assets, and historical logs.
-
-# Build & IDE artifacts
 bin/
 obj/
 packages/
