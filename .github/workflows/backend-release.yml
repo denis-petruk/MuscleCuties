@@ -68,7 +68,9 @@ jobs:
         env:
           AWS_RELEASE_BUCKET: musclecuties-release-artifacts-028417007003
           AWS_REGION: us-east-2
-          ARTIFACT_COMPONENT: MuscleCuties.Server
+          ARTIFACT_COMPONENT: Server
+          # Must equal the component name deploy_release.py expects in the S3 key
+          # prefix lambda/<component>/<source_sha>/<zip_sha256>/.
         run: |
           bash tools/deployment/upload-artifact.sh \
             artifacts/MuscleCuties.Server.zip \
@@ -79,7 +81,7 @@ jobs:
         env:
           AWS_RELEASE_BUCKET: musclecuties-release-artifacts-028417007003
           AWS_REGION: us-east-2
-          ARTIFACT_COMPONENT: MuscleCuties.WorkoutReconciliation
+          ARTIFACT_COMPONENT: WorkoutReconciliation
         run: |
           bash tools/deployment/upload-artifact.sh \
             artifacts/MuscleCuties.WorkoutReconciliation.zip \

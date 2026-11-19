@@ -186,5 +186,37 @@ class DeployTests(unittest.TestCase):
         self.assertEqual(report['components']['worker']['reason'], 'WORKER_FUNCTION is not configured')
 
 
+class WorkflowContractTests(unittest.TestCase):
+    """The workflow YAML and the deployer must agree; they are one system."""
+
+    WORKFLOW = ROOT / '.github' / 'workflows' / 'backend-release.yml'
+    SCRIPT = ROOT / 'tools' / 'deployment' / 'deploy_release.py'
+
+    def setUp(self):
+        self.workflow = self.WORKFLOW.read_text()
+        self.script = self.SCRIPT.read_text()
+
+    def test_artifact_component_matches_the_key_prefix_the_deployer_requires(self):
+        # validate_component expects lambda/<spec name>/<sha>/<digest>/, so the upload step has to
+        # file the object under exactly that name. It once filed under MuscleCuties.Server, which
+        # failed the release after the upload had already succeeded.
+        for name in ('Server', 'WorkoutReconciliation'):
+            self.assertIn('component("%s"' % name, self.script)
+            self.assertIn('ARTIFACT_COMPONENT: %s\n' % name, self.workflow)
+            self.assertNotIn('ARTIFACT_COMPONENT: MuscleCuties.%s' % name, self.workflow)
+
+    def test_deploy_step_supplies_every_required_variable(self):
+        required = ['TARGET_ENV', 'AWS_REGION', 'SERVER_FUNCTION', 'SERVER_ALIAS',
+                    'SERVER_ZIP', 'SERVER_MANIFEST', 'SERVER_OBJECT', 'REPORT_PATH', 'HEALTH_URL']
+        for name in required:
+            self.assertIn('\n          ' + name + ':', self.workflow,
+                          name + ' is read by the deployer but never supplied by the workflow')
+
+    def test_oidc_jobs_request_id_token(self):
+        for job in ('upload_artifacts', 'deploy_beta', 'rollback_beta'):
+            start = self.workflow.index(job + ':')
+            self.assertIn('id-token: write', self.workflow[start:start + 900], job)
+
+
 if __name__ == '__main__':
     unittest.main()
