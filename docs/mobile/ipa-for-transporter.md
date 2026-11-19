@@ -72,16 +72,23 @@ drag the `.ipa` in and press **Deliver**.
 
 ## Verified vs unverified
 
-Verified on 2026-11-19 (macOS, Xcode 26.3, .NET SDK 10.0.203):
+Verified on 2026-11-19 (macOS, Xcode 26.3, .NET SDK 10.0.203, Microsoft.iOS.Sdk 26.2):
 
-- `dotnet publish … -p:BuildIpa=true` wrote
-  `bin/Debug/net10.0-ios/ios-arm64/publish/MuscleCuties.UI.ipa` (56,011,776 bytes) containing
-  `Payload/MuscleCuties.UI.app/`. Release uses the same layout with `Release` in place of `Debug`.
-- MSBuild resolves `BuildIpa=true` for Release when it is passed, and no Release path sets it false
+- The command in section 2 was executed in **Release**, with `-p:CodesignKey=-` in place of
+  `-p:CodesignProvision` because no Apple identity was available (ad-hoc signing). It exited 0 and
+  wrote `src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/publish/MuscleCuties.UI.ipa`,
+  **39,763,902 bytes**, containing `Payload/MuscleCuties.UI.app/`. The file name follows
+  `<AssemblyName>MuscleCuties.UI</AssemblyName>`.
+- `dotnet publish` writes the `.ipa` into a `publish/` subdirectory. `dotnet build` does not — it
+  writes to `.../ios-arm64/MuscleCuties.UI.ipa`, one level up.
+- Release publishes the AOT build and is slow: it took about fifteen minutes here. That is expected,
+  not a hang.
+- MSBuild resolves `BuildIpa=true` in Release when it is passed, and no Release path sets it false
   (`dotnet msbuild … -getProperty:BuildIpa` → `true` for Release, `false` for Debug).
+  `EnableCodeSigning` remains `true` in Release, so signing is never silently dropped.
 - No `Directory.Build.props`/`Directory.Build.targets` in this repository touches `BuildIpa`,
   `CodesignKey`, `CodesignProvision` or `EnableCodeSigning`.
 
-Not verified, because it needs the Apple identity: the Release/AOT publish itself, distribution
-signing, and the Transporter upload. The run above used `-p:CodesignKey=-` (ad-hoc) so it could
-complete without a distribution certificate.
+Not verified, because it needs the Apple identity: distribution signing (the run above is ad-hoc, so
+`codesign` reports an ad-hoc signature rather than your Apple Distribution identity) and the
+Transporter upload itself.
