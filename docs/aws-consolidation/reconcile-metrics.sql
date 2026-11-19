@@ -33,4 +33,4 @@ SELECT r.rolname||'|'||n.nspname||'|usage='||has_schema_privilege(r.rolname,n.oi
 FROM pg_roles r CROSS JOIN pg_namespace n
 WHERE r.rolname ~ '^(mc_|musclecuties_)'
   AND n.nspname IN ('app','catalog','ops','public')
-ORDER BY 1,2;
+ORDER BY 1;
