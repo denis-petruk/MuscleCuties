@@ -207,10 +207,11 @@ public static class ApiApplication
         // Optional USDA FoodData Central fallback for sparse catalog searches. Enabled only when
         // FDC_API_KEY (or Fdc:ApiKey) is configured; see docs/FDC_API_SETUP.md.
         var fdcApiKey = builder.Configuration["FDC_API_KEY"] ?? builder.Configuration["Fdc:ApiKey"];
+        const int fdcSearchTimeoutSeconds = 8;
         builder.Services.AddHttpClient(nameof(FdcExternalFoodSource), client =>
         {
             client.BaseAddress = FdcExternalFoodSource.BaseUri;
-            client.Timeout = TimeSpan.FromSeconds(4);
+            client.Timeout = TimeSpan.FromSeconds(fdcSearchTimeoutSeconds);
         });
         builder.Services.AddScoped<IExternalFoodSource>(serviceProvider => new FdcExternalFoodSource(
             serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(FdcExternalFoodSource)),

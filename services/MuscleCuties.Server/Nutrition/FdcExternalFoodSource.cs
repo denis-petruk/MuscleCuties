@@ -1,4 +1,4 @@
-using System.Globalization;
+using System.Net.Http.Json;
 using System.Text.Json;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 
@@ -13,9 +13,11 @@ public sealed class FdcExternalFoodSource : IExternalFoodSource
 {
     public static readonly Uri BaseUri = new("https://api.nal.usda.gov/fdc/v1/");
 
+    private const string SearchEndpoint = "foods/search";
     private const string ApiKeyHeader = "X-Api-Key";
-    private const string GenericDataTypes = "Foundation,SR Legacy,Survey (FNDDS)";
+    private static readonly string[] GenericDataTypes = ["Foundation", "SR Legacy", "Survey (FNDDS)"];
     private const int PageSize = 15;
+    private const int FirstPageNumber = 1;
     private const int EnergyKcal = 1008;
     private const int EnergyAtwaterGeneral = 2047;
     private const int EnergyAtwaterSpecific = 2048;
@@ -45,9 +47,18 @@ public sealed class FdcExternalFoodSource : IExternalFoodSource
         if (_apiKey is null || string.IsNullOrWhiteSpace(genericQuery))
             return [];
 
-        var path = string.Create(CultureInfo.InvariantCulture,
-            $"foods/search?query={Uri.EscapeDataString(genericQuery)}&dataType={Uri.EscapeDataString(GenericDataTypes)}&pageSize={PageSize}&pageNumber=1");
-        using var request = new HttpRequestMessage(HttpMethod.Get, path);
+        // Use USDA's official POST /fdc/v1/foods/search with JSON array dataType so IPv6 edge proxies
+        // never reject URL-encoded comma/parenthesis query parameters with nginx 400 Bad Request.
+        using var request = new HttpRequestMessage(HttpMethod.Post, SearchEndpoint)
+        {
+            Content = JsonContent.Create(new
+            {
+                query = genericQuery,
+                dataType = GenericDataTypes,
+                pageSize = PageSize,
+                pageNumber = FirstPageNumber
+            })
+        };
         request.Headers.TryAddWithoutValidation(ApiKeyHeader, _apiKey);
         try
         {
