@@ -1,0 +1,245 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  MuscleCuties staging application plane: API function, published version, beta alias,
+  invoke permission, HTTP API (v2) and the function log group.
+
+  This stack CREATES the function rather than importing it (ADR-0006). Importing would
+  freeze the current name and, worse, an import template that omits Environment would be
+  invisible to drift while quietly losing all secret variables on the next update.
+
+  Secrets are never written into this file. The eight secret variables resolve from
+  Secrets Manager at deploy time via dynamic references; the secret itself is created
+  out of band (see RUNBOOK-lambda-cutover.md).
+
+  Code is pinned to a specific object key so the deployed package is reproducible and
+  hash-verifiable: CodeSha256 must equal
+  sb0M464m1fWi0OFx/qYCBf/bRd4HtE76gdc1E6tkj40=
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging]
+
+  FunctionName:
+    Type: String
+    Default: musclecuties-staging-backend-api
+
+  CodeS3Key:
+    Type: String
+    Default: migrations/lambda/musclecuties-backend-api-sb0M464m.zip
+    Description: >-
+      Hash-pinned package. The stack cannot enforce the hash, so the cutover runbook
+      asserts CodeSha256 after creation before any traffic is pointed at the alias.
+
+  ExecutionRoleArn:
+    Type: String
+    Default: arn:aws:iam::028417007003:role/service-role/musclecuties-backend-api-role-oot9kwhk
+    Description: Existing execution role; candidate for adoption into Identity later.
+
+  EnvSecretName:
+    Type: String
+    Default: musclecuties/staging/backend-api/env
+
+  VpcSecurityGroup:
+    Type: String
+    Default: sg-03fbb100b48b6e76b
+
+  SubnetA:
+    Type: String
+    Default: subnet-0ce86904005e7726f
+
+  SubnetB:
+    Type: String
+    Default: subnet-0b5ce78ce2660d88b
+
+  AliasName:
+    Type: String
+    Default: beta
+
+  LogRetentionInDays:
+    Type: Number
+    Default: 14
+
+# ---------------------------------------------------------------------------------------
+# FAITHFULNESS RECORD — function configuration compared to
+# `aws lambda get-function-configuration` on 2026-11-19. Matched: runtime dotnet10,
+# handler MuscleCuties.Server, memory 3008, timeout 27, architectures [arm64],
+# ephemeral storage 512, package type Zip, VPC subnets subnet-0ce86904005e7726f /
+# subnet-0b5ce78ce2660d88b with SG sg-03fbb100b48b6e76b, execution role
+# musclecuties-backend-api-role-oot9kwhk, TracingConfig PassThrough, and all 25
+# environment variable names (verified by set comparison, 25 template == 25 live).
+#
+# Environment.Variables is the one property where omission is destructive: CloudFormation
+# replaces the whole map, so a variable missing from this file is deleted on the next
+# update. The key-set comparison above is the guard for that.
+#
+# BY DESIGN, not an adoption:
+#   - The function is CREATED, not imported (ADR-0006), because import cannot rename and
+#     an import template that omits Environment would be invisible to drift.
+#   - The HTTP API is CREATED too. Importing AWS::ApiGatewayV2::Api requires an OpenAPI
+#     Body, and CloudFormation then refuses Route/Integration resources for the same API,
+#     so the API cannot be adopted as four managed resources. Consequence: a new API id,
+#     hence a new URL. vars.BETA_API_ENDPOINT must change in the same release.
+#   - The integration targets the ALIAS ARN (!GetAtt FunctionAlias.AliasArn), matching the
+#     live integration's ...:function:<name>:beta shape so alias deploys are picked up.
+#
+# NOT MODELLED: Layers (none), DeadLetterConfig (none), ReservedConcurrentExecutions
+# (unreserved), RuntimeManagementConfig (auto). All are absent live, so there is nothing
+# to describe.
+# ---------------------------------------------------------------------------------------
+
+Resources:
+  Function:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Ref FunctionName
+      Description: MuscleCuties staging API (ASP.NET Core)
+      Runtime: dotnet10
+      Handler: MuscleCuties.Server
+      Role: !Ref ExecutionRoleArn
+      MemorySize: 3008
+      Timeout: 27
+      Architectures: [arm64]
+      PackageType: Zip
+      TracingConfig:
+        Mode: PassThrough
+      EphemeralStorage:
+        Size: 512
+      Code:
+        S3Bucket: !Sub "musclecuties-${Environment}-release-artifacts-${AWS::AccountId}"
+        S3Key: !Ref CodeS3Key
+      VpcConfig:
+        SubnetIds:
+          - !Ref SubnetA
+          - !Ref SubnetB
+        SecurityGroupIds:
+          - !Ref VpcSecurityGroup
+      Environment:
+        Variables:
+          # --- non-secret configuration, values as live on 2026-11-19 ---
+          ASPNETCORE_ENVIRONMENT: Staging
+          DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: "1"
+          Authentication__Issuer: MuscleCutiesServer
+          Authentication__Audience: MuscleCutiesApp
+          AppleSignIn__TeamId: N23Z94V7G6
+          AppleSignIn__KeyId: HN4A2D448R
+          EmailReceipts__Issuer: MuscleCutiesServer
+          EmailReceipts__Audience: MuscleCutiesEmailReceipt
+          EmailReceipts__ActiveKeyId: v20261020a
+          EmailChallenges__ActiveHmacKeyId: v20261020a
+          Resend__FromEmail: "MuscleCuties <noreply@musclecuties.app>"
+          Storage__S3__Region: us-east-2
+          Storage__S3__BucketName: musclecuties-media-staging-028417007003
+          Lambda__DatabasePool__MinPoolSize: "0"
+          Lambda__DatabasePool__MaxPoolSize: "5"
+          Lambda__DatabasePool__RequireSslMode: "true"
+          Lambda__DatabasePool__RunMigrationsOnColdStart: "false"
+          # --- secret configuration, resolved from Secrets Manager at deploy time ---
+          ConnectionStrings__PostgreSql: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:ConnectionStrings__PostgreSql}}"
+          Resend__ApiKey: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:Resend__ApiKey}}"
+          Authentication__SigningKey: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:Authentication__SigningKey}}"
+          EmailReceipts__PrivateKeyPem: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:EmailReceipts__PrivateKeyPem}}"
+          EmailReceipts__PublicKeys__v20261020a: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:EmailReceipts__PublicKeys__v20261020a}}"
+          EmailChallenges__HmacKeys__v20261020a: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:EmailChallenges__HmacKeys__v20261020a}}"
+          AppleSignIn__PrivateKeyPem: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:AppleSignIn__PrivateKeyPem}}"
+          FDC_API_KEY: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:FDC_API_KEY}}"
+      Tags:
+        - { Key: Project, Value: MuscleCuties }
+        - { Key: Environment, Value: !Ref Environment }
+
+  # A published version is what the alias serves. Environment or code changes reach
+  # $LATEST only; without a new version the alias keeps serving the frozen snapshot.
+  FunctionVersion:
+    Type: AWS::Lambda::Version
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      FunctionName: !Ref Function
+      Description: !Sub "pinned ${CodeS3Key}"
+
+  FunctionAlias:
+    Type: AWS::Lambda::Alias
+    Properties:
+      FunctionName: !Ref Function
+      Name: !Ref AliasName
+      FunctionVersion: !GetAtt FunctionVersion.Version
+      Description: Staging serving alias
+
+  ApiInvokePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      Action: lambda:InvokeFunction
+      FunctionName: !Ref FunctionAlias
+      Principal: apigateway.amazonaws.com
+      SourceArn: !Sub "arn:aws:execute-api:${AWS::Region}:${AWS::AccountId}:${HttpApi}/*/$default"
+
+  HttpApi:
+    Type: AWS::ApiGatewayV2::Api
+    Properties:
+      Name: !Sub "musclecuties-${Environment}-http-api"
+      ProtocolType: HTTP
+      Description: Single $default route to the beta alias.
+
+  HttpApiIntegration:
+    Type: AWS::ApiGatewayV2::Integration
+    Properties:
+      ApiId: !Ref HttpApi
+      Description: AWS_PROXY to the beta alias
+      IntegrationType: AWS_PROXY
+      IntegrationMethod: POST
+      # Alias ARN, not function ARN: deploys move the alias, and the integration follows.
+      IntegrationUri: !GetAtt FunctionAlias.AliasArn
+      PayloadFormatVersion: "2.0"
+      TimeoutInMillis: 30000
+
+  HttpApiDefaultRoute:
+    Type: AWS::ApiGatewayV2::Route
+    Properties:
+      ApiId: !Ref HttpApi
+      RouteKey: $default
+      AuthorizationType: NONE
+      Target: !Sub "integrations/${HttpApiIntegration}"
+
+  HttpApiStage:
+    Type: AWS::ApiGatewayV2::Stage
+    Properties:
+      ApiId: !Ref HttpApi
+      StageName: $default
+      AutoDeploy: true
+      DefaultRouteSettings:
+        DetailedMetricsEnabled: true
+
+  ApiLogGroup:
+    Type: AWS::Logs::LogGroup
+    DeletionPolicy: Retain
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${FunctionName}"
+      RetentionInDays: !Ref LogRetentionInDays
+
+Outputs:
+  FunctionArn:
+    Value: !GetAtt Function.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-FunctionArn"
+
+  FunctionName:
+    Value: !Ref Function
+    Export:
+      Name: !Sub "${AWS::StackName}-FunctionName"
+
+  AliasArn:
+    Value: !Ref FunctionAlias
+    Export:
+      Name: !Sub "${AWS::StackName}-AliasArn"
+
+  ApiId:
+    Value: !Ref HttpApi
+    Export:
+      Name: !Sub "${AWS::StackName}-HttpApiId"
+
+  ApiEndpoint:
+    Description: New base URL. Replaces the old y2ejsgrc6l endpoint in CI and clients.
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com"
+    Export:
+      Name: !Sub "${AWS::StackName}-HttpApiEndpoint"

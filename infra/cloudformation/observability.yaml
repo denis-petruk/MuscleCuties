@@ -1,156 +1,218 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  MuscleCuties Observability Alarms for Lambda, SQS, EventBridge DLQ, and Latency/Error Supervision.
+  MuscleCuties staging observability: one SNS topic that reaches a human, metric alarms
+  for the API and the database, CloudFormation drift notification, and the native RDS
+  event subscription for backup / failure / low storage.
+
+  The topic is account-unique by name, so it cannot be imported while the legacy
+  Observability stack still owns it. The legacy stack is deleted first, then this one
+  creates the topic. Its only current alarm has no subscribers, so the gap is inert.
+
+  RDS backup and storage conditions are covered by the native event subscription rather
+  than a hand-made metric alarm: there is no useful CloudWatch metric for "a backup
+  failed", and inventing one would be a false sense of coverage.
 
 Parameters:
-  EnvironmentName:
+  Environment:
     Type: String
     Default: staging
-    AllowedValues: [staging, beta]
+    AllowedValues: [staging]
+
+  ApiFunctionName:
+    Type: String
+    Default: musclecuties-staging-backend-api
+
+  DbInstanceIdentifier:
+    Type: String
+    Default: musclecuties-staging-postgres
+
   NotificationEmail:
     Type: String
-    Default: dev@musclecuties.app
-    Description: Email endpoint for operational alarms.
+    Default: deniska.petruk@icloud.com
+
+  ApiErrorThreshold:
+    Type: Number
+    Default: 5
+
+  ApiLatencyP99ThresholdMs:
+    Type: Number
+    Default: 5000
+    Description: Agreed p99 budget for a warm request. Must stay well below the 27 s
+      function timeout, so that a latency alarm fires before the timeout does.
+
+  RdsCpuThresholdPercent:
+    Type: Number
+    Default: 80
+
+  RdsConnectionsThreshold:
+    Type: Number
+    Default: 80
+    Description: The instance allows ~87 connections at db.t4g.micro; 80 leaves headroom.
+
+# ---------------------------------------------------------------------------------------
+# FAITHFULNESS RECORD — checked 2026-11-19 against `sns get-topic-attributes`,
+# `cloudwatch describe-alarms`, `events list-rules` and `rds describe-event-subscriptions`.
+#
+# The topic is CREATED, not imported: its name is account-unique, so it cannot exist in two
+# stacks, and the legacy Observability stack still owns it. TopicName matches the live value
+# exactly; live DisplayName is empty, so this file does not set one.
+#
+# ALARM SEMANTICS vs the one live alarm (`MuscleCuties-backend-api-Errors`): identical —
+# AWS/Lambda Errors, Sum, 300 s, 1 evaluation, threshold 5, GreaterThanOrEqualToThreshold,
+# notBreaching, same SNS action. Only the name differs, because these are new resources
+# under the musclecuties-staging-* convention.
+#
+# ACCEPT-AND-RECONCILE: the live alarm is unmanaged and will still exist after this stack
+# deploys, so the same condition would page twice. Delete it once these alarms are live:
+#   aws cloudwatch delete-alarms --alarm-names MuscleCuties-backend-api-Errors
+#
+# NEW, with nothing to compare against (confirmed absent before this stack exists): the
+# drift EventBridge rule and the RDS event subscription.
+# ---------------------------------------------------------------------------------------
 
 Resources:
   AlarmTopic:
     Type: AWS::SNS::Topic
     Properties:
-      TopicName: !Sub 'musclecuties-${EnvironmentName}-operational-alarms'
+      TopicName: !Sub "musclecuties-${Environment}-operational-alarms"
+      Tags:
+        - { Key: Project, Value: MuscleCuties }
+        - { Key: Environment, Value: !Ref Environment }
 
-  # Without a subscription the alarms publish to a topic nobody reads (audit A11).
-  AlarmEmailSubscription:
+  # Subscribing an address only makes alarms real once someone confirms the email.
+  OperatorEmailSubscription:
     Type: AWS::SNS::Subscription
     Properties:
       TopicArn: !Ref AlarmTopic
       Protocol: email
       Endpoint: !Ref NotificationEmail
 
-  # CloudWatch Alarm: Lambda 5xx error rate (> 0.5% over 5 minutes)
-  Lambda5xxErrorRateAlarm:
-    Type: AWS::CloudWatch::Alarm
+  # EventBridge needs explicit publish rights on the topic.
+  AlarmTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
     Properties:
-      AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-API-5xx-ErrorRate'
-      AlarmDescription: Alarms when Server Lambda 5xx error rate exceeds 0.5% over 5 minutes.
-      ComparisonOperator: GreaterThanThreshold
-      EvaluationPeriods: 1
-      Threshold: 0.5
-      TreatMissingData: notBreaching
-      Metrics:
-        - Id: e1
-          Expression: "100 * (errors / MAX([invocations, 1]))"
-          Label: "ErrorRatePercent"
-          ReturnData: true
-        - Id: errors
-          MetricStat:
-            Metric:
-              Namespace: AWS/Lambda
-              MetricName: Errors
-              Dimensions:
-                - Name: FunctionName
-                  Value: !Sub 'MuscleCuties-Server-${EnvironmentName}'
-            Period: 300
-            Stat: Sum
-          ReturnData: false
-        - Id: invocations
-          MetricStat:
-            Metric:
-              Namespace: AWS/Lambda
-              MetricName: Invocations
-              Dimensions:
-                - Name: FunctionName
-                  Value: !Sub 'MuscleCuties-Server-${EnvironmentName}'
-            Period: 300
-            Stat: Sum
-          ReturnData: false
-      AlarmActions:
+      Topics:
         - !Ref AlarmTopic
-
-  # CloudWatch Alarm: Lambda p95 latency spikes (> 1200ms over 5 minutes)
-  LambdaP95LatencyAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-API-p95-Latency'
-      AlarmDescription: Alarms when Server Lambda p95 latency exceeds 1200ms over 5 minutes.
-      Namespace: AWS/Lambda
-      MetricName: Duration
-      ExtendedStatistic: p95
-      Dimensions:
-        - Name: FunctionName
-          Value: !Sub 'MuscleCuties-Server-${EnvironmentName}'
-      Period: 300
-      EvaluationPeriods: 1
-      Threshold: 1200
-      ComparisonOperator: GreaterThanThreshold
-      TreatMissingData: notBreaching
-      AlarmActions:
-        - !Ref AlarmTopic
-
-  # CloudWatch Alarm: SQS Worker DLQ Depth
-  DLQDepthAlarm:
-    Type: AWS::CloudWatch::Alarm
-    Properties:
-      AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-Worker-DLQ-Depth'
-      AlarmDescription: Alarms when worker dead-letter queue contains unprocessed failed messages.
-      Namespace: AWS/SQS
-      MetricName: ApproximateNumberOfMessagesVisible
-      Dimensions:
-        - Name: QueueName
-          Value: !Sub 'musclecuties-${EnvironmentName}-reconciliation-dlq'
-      Statistic: Maximum
-      Period: 300
-      EvaluationPeriods: 1
-      Threshold: 1
-      ComparisonOperator: GreaterThanOrEqualToThreshold
-      AlarmActions:
-        - !Ref AlarmTopic
-
-  # Dead Letter Queue for asynchronous EventBridge dispatch failures
-  EventBridgeDLQ:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub 'musclecuties-${EnvironmentName}-eventbridge-dlq'
-      MessageRetentionPeriod: 1209600 # 14 days
-      SqsManagedSseEnabled: true
-
-  EventBridgeDLQPolicy:
-    Type: AWS::SQS::QueuePolicy
-    Properties:
-      Queues:
-        - !Ref EventBridgeDLQ
       PolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
-          - Sid: AllowEventBridgeDeliveryFailures
+          - Sid: AllowDriftRuleToPublish
             Effect: Allow
             Principal:
               Service: events.amazonaws.com
-            Action: sqs:SendMessage
-            Resource: !GetAtt EventBridgeDLQ.Arn
+            Action: sns:Publish
+            Resource: !Ref AlarmTopic
+            Condition:
+              ArnLike:
+                AWS:SourceArn: !GetAtt DriftRule.Arn
 
-  # CloudWatch Alarm: EventBridge DLQ Depth
-  EventBridgeDLQDepthAlarm:
+  ApiErrorsAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: !Sub 'MuscleCuties-${EnvironmentName}-EventBridge-DLQ-Depth'
-      AlarmDescription: Alarms when EventBridge dead-letter queue contains failed dispatch messages.
-      Namespace: AWS/SQS
-      MetricName: ApproximateNumberOfMessagesVisible
+      AlarmName: !Sub "musclecuties-${Environment}-backend-api-errors"
+      AlarmDescription: Five or more Lambda invocation errors in five minutes.
+      Namespace: AWS/Lambda
+      MetricName: Errors
       Dimensions:
-        - Name: QueueName
-          Value: !GetAtt EventBridgeDLQ.QueueName
-      Statistic: Maximum
+        - { Name: FunctionName, Value: !Ref ApiFunctionName }
+      Statistic: Sum
       Period: 300
       EvaluationPeriods: 1
-      Threshold: 1
+      Threshold: !Ref ApiErrorThreshold
       ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
       AlarmActions:
         - !Ref AlarmTopic
+
+  ApiLatencyP99Alarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "musclecuties-${Environment}-backend-api-latency-p99"
+      AlarmDescription: Lambda p99 duration above the budget for 15 minutes.
+      Namespace: AWS/Lambda
+      MetricName: Duration
+      Dimensions:
+        - { Name: FunctionName, Value: !Ref ApiFunctionName }
+      ExtendedStatistic: p99
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: !Ref ApiLatencyP99ThresholdMs
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlarmTopic
+
+  RdsCpuAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "musclecuties-${Environment}-rds-cpu"
+      AlarmDescription: Sustained database CPU above the threshold.
+      Namespace: AWS/RDS
+      MetricName: CPUUtilization
+      Dimensions:
+        - { Name: DBInstanceIdentifier, Value: !Ref DbInstanceIdentifier }
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: !Ref RdsCpuThresholdPercent
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlarmTopic
+
+  RdsConnectionsAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: !Sub "musclecuties-${Environment}-rds-connections"
+      AlarmDescription: Connection count approaching the instance limit.
+      Namespace: AWS/RDS
+      MetricName: DatabaseConnections
+      Dimensions:
+        - { Name: DBInstanceIdentifier, Value: !Ref DbInstanceIdentifier }
+      Statistic: Average
+      Period: 300
+      EvaluationPeriods: 3
+      Threshold: !Ref RdsConnectionsThreshold
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+      AlarmActions:
+        - !Ref AlarmTopic
+
+  # Drift is the control that keeps "every resource is declared" true over time.
+  DriftRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "musclecuties-${Environment}-stack-drift"
+      Description: Publishes CloudFormation drift detections that report DRIFTED.
+      State: ENABLED
+      EventPattern:
+        source:
+          - aws.cloudformation
+        detail-type:
+          - "CloudFormation Drift Detection Status"
+        detail:
+          stackDriftStatus:
+            - DRIFTED
+      Targets:
+        - Id: drift-to-alarm-topic
+          Arn: !Ref AlarmTopic
+
+  DbEventSubscription:
+    Type: AWS::RDS::EventSubscription
+    Properties:
+      SubscriptionName: !Sub "musclecuties-${Environment}-rds-events"
+      SnsTopicArn: !Ref AlarmTopic
+      SourceType: db-instance
+      SourceIds:
+        - !Ref DbInstanceIdentifier
+      EventCategories:
+        - backup
+        - failure
+        - low storage
+      Enabled: true
 
 Outputs:
   AlarmTopicArn:
     Value: !Ref AlarmTopic
-  EventBridgeDLQArn:
-    Value: !GetAtt EventBridgeDLQ.Arn
-  EventBridgeDLQUrl:
-    Value: !Ref EventBridgeDLQ
+    Export:
+      Name: !Sub "${AWS::StackName}-AlarmTopicArn"

@@ -1,0 +1,203 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  MuscleCuties staging data plane: PostgreSQL instance, release artifacts bucket and
+  database backup bucket.
+
+  Every resource carries DeletionPolicy Retain and UpdateReplacePolicy Retain. A bucket
+  name and a DB identifier are both immutable identities, so any "rename" is a
+  replacement: without these policies CloudFormation would delete the original and
+  create an empty resource in its place.
+
+  Values below are the live configuration as of 2026-11-19, not a desired-state guess.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging]
+
+  DbInstanceClass:
+    Type: String
+    Default: db.t4g.micro
+
+  AllocatedStorage:
+    Type: Number
+    Default: 20
+    MinValue: 20
+
+  BackupRetentionPeriod:
+    Type: Number
+    Default: 1
+    MinValue: 1
+    Description: >-
+      One day is the maximum this account plan permits. The account returns
+      FreeTierRestrictionError for any value above 1, including 2 and 3, so raising this
+      to the 7 days originally intended requires an AWS plan upgrade first (ADR-0005).
+      The template must describe what can actually deploy, not the aspiration.
+
+  MultiAZ:
+    Type: String
+    Default: "false"
+    AllowedValues: ["true", "false"]
+
+  DbSecurityGroup:
+    Type: String
+    Default: sg-0921332c15883d1d9
+    Description: Security group allowing 5432 from the Lambda SG and the operator IP.
+
+  DbSubnetGroup:
+    Type: String
+    Default: default-vpc-02c2c07f0bf07f145
+
+  DbAvailabilityZone:
+    Type: String
+    Default: us-east-2a
+
+# ---------------------------------------------------------------------------------------
+# FAITHFULNESS RECORD — compared field by field against `aws rds describe-db-instances`
+# and `describe-db-subnet-groups` / `describe-db-parameter-groups` on 2026-11-19.
+#
+# MATCHED: db.t4g.micro · postgres · 17.5 · 20 GiB · gp2 · StorageEncrypted true ·
+# BackupRetentionPeriod 1 · DeletionProtection true · PubliclyAccessible true ·
+# MultiAZ false · SG sg-0921332c15883d1d9 · subnet group default-vpc-02c2c07f0bf07f145
+# (exists, VPC vpc-02c2c07f0bf07f145) · AZ us-east-2a · AutoMinorVersionUpgrade true ·
+# CopyTagsToSnapshot true · PerformanceInsights enabled with 7-day retention ·
+# CA rds-ca-rsa2048-g1 · parameter group default.postgres17 (exists, family postgres17).
+#
+# ACCEPT-AND-RECONCILE — three bounded gaps, none of which can be closed by editing this
+# file:
+#   1. DBInstanceIdentifier is musclecuties-staging-postgres; live is still
+#      musclecuties-staging-db. That rename is Phase 1c (snapshot restore -> cutover).
+#      Import this stack only after the rename, otherwise the identifier does not match.
+#   2. Tags: this file declares the five baseline tags, but the live instance currently has
+#      an empty TagList. Import does not apply properties, so the stack would import
+#      DRIFTED. Reconcile first with:
+#        aws rds add-tags-to-resource \
+#          --resource-name arn:aws:rds:us-east-2:028417007003:db:musclecuties-staging-postgres \
+#          --tags Key=Project,Value=MuscleCuties Key=Environment,Value=staging \
+#                 Key=Owner,Value=deniska.petruk@icloud.com  # (see stack tags for the full set)
+#      CopyTagsToSnapshot is already true, so the Phase 1c restore carries tags from the
+#      snapshot in practice.
+#   3. AvailabilityZone is pinned to us-east-2a deliberately. A restore that lands in a
+#      different AZ must update this parameter in the same change, or the stack imports
+#      DRIFTED.
+#
+# NOT MODELLED — live properties with no counterpart here. CloudFormation does not reset
+# undeclared properties, so these are intentional non-ownership, not gaps:
+#   OptionGroupMemberships (default:postgres-17), PreferredBackupWindow (03:37-04:07),
+#   PreferredMaintenanceWindow (mon:05:50-mon:06:20), MonitoringInterval (0),
+#   IAMDatabaseAuthenticationEnabled (false), EnabledCloudwatchLogsExports (none),
+#   NetworkType, BackupTarget, StorageThroughput, EngineLifecycleSupport, DBName.
+# ---------------------------------------------------------------------------------------
+
+Resources:
+  Postgres:
+    Type: AWS::RDS::DBInstance
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      DBInstanceIdentifier: !Sub "musclecuties-${Environment}-postgres"
+      DBInstanceClass: !Ref DbInstanceClass
+      Engine: postgres
+      EngineVersion: "17.5"
+      AllocatedStorage: !Ref AllocatedStorage
+      StorageType: gp2
+      StorageEncrypted: true
+      BackupRetentionPeriod: !Ref BackupRetentionPeriod
+      DeletionProtection: true
+      # Deliberately still reachable from the internet: GitHub-hosted runners have no
+      # network path into the VPC yet. Recorded as an open decision in ADR-0005.
+      PubliclyAccessible: true
+      MultiAZ: !Ref MultiAZ
+      VPCSecurityGroups:
+        - !Ref DbSecurityGroup
+      DBSubnetGroupName: !Ref DbSubnetGroup
+      AvailabilityZone: !Ref DbAvailabilityZone
+      AutoMinorVersionUpgrade: true
+      CopyTagsToSnapshot: true
+      PerformanceInsightsEnabled: true
+      PerformanceInsightsRetentionPeriod: 7
+      CACertificateIdentifier: rds-ca-rsa2048-g1
+      DBParameterGroupName: default.postgres17
+      Tags:
+        - { Key: Project, Value: MuscleCuties }
+        - { Key: Environment, Value: !Ref Environment }
+        - { Key: Owner, Value: deniska.petruk@icloud.com }
+        - { Key: ManagedBy, Value: CloudFormation }
+        - { Key: CostCenter, Value: personal }
+
+  ReleaseArtifacts:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "musclecuties-${Environment}-release-artifacts-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-artifacts
+            Status: Enabled
+            ExpirationInDays: 90
+      Tags:
+        - { Key: Project, Value: MuscleCuties }
+        - { Key: Environment, Value: !Ref Environment }
+        - { Key: Owner, Value: deniska.petruk@icloud.com }
+        - { Key: ManagedBy, Value: CloudFormation }
+        - { Key: CostCenter, Value: personal }
+
+  DbBackup:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "musclecuties-${Environment}-db-backup-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-db-exports
+            Status: Enabled
+            ExpirationInDays: 180
+      Tags:
+        - { Key: Project, Value: MuscleCuties }
+        - { Key: Environment, Value: !Ref Environment }
+        - { Key: Owner, Value: deniska.petruk@icloud.com }
+        - { Key: ManagedBy, Value: CloudFormation }
+        - { Key: CostCenter, Value: personal }
+
+Outputs:
+  DbEndpoint:
+    Description: Writer endpoint of the staging database.
+    Value: !GetAtt Postgres.Endpoint.Address
+    Export:
+      Name: !Sub "${AWS::StackName}-DbEndpoint"
+
+  DbInstanceIdentifier:
+    Value: !Ref Postgres
+    Export:
+      Name: !Sub "${AWS::StackName}-DbInstanceIdentifier"
+
+  ReleaseArtifactsBucket:
+    Value: !Ref ReleaseArtifacts
+    Export:
+      Name: !Sub "${AWS::StackName}-ReleaseArtifactsBucket"
+
+  DbBackupBucket:
+    Value: !Ref DbBackup
+    Export:
+      Name: !Sub "${AWS::StackName}-DbBackupBucket"

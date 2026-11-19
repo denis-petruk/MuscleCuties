@@ -1,85 +1,118 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
-  MuscleCuties GitHub Actions OIDC Identity and Least-Privilege Role Architecture.
-  Enforces zero-standing-credential access and environment isolation.
+  MuscleCuties staging identity plane: GitHub Actions OIDC federation and the three
+  least-privilege deploy roles. Faithful to live state as of 2026-11-19; two known defects
+  are documented immediately below and are deliberately not fixed here.
+
+# ---------------------------------------------------------------------------------------
+# FAITHFULNESS RECORD — every property compared against `aws iam get-role`,
+# `get-role-policy` and `get-open-id-connect-provider` on 2026-11-19.
+#
+# CloudFormation import does not compare template to live ("CloudFormation doesn't check
+# that the template configuration matches the actual configuration"), so any deliberate
+# divergence simply appears afterwards as stack drift. This file therefore describes
+# exactly what exists, including two things that are wrong.
+#
+# ACCEPT-AND-RECONCILE — two known defects, deliberately NOT fixed here:
+#   1. S3ArtifactPutOnly grants PutObject on musclecuties-release-artifacts-028417007003.
+#      That bucket is renamed and retires in Phase 4, after which CI uploads get
+#      AccessDenied.
+#   2. Both deploy roles are scoped to MuscleCuties-Server-Staging / -Reconciliation-Staging
+#      and the -Beta equivalents. None of those four functions exists; the deployed function
+#      is musclecuties-backend-api, so the deploy path matches nothing.
+# Both are corrected by ONE update-stack immediately after adoption — see the
+# "Post-adoption corrections" block at the end of this file. Fixing them here instead would
+# make the import report NOT IN_SYNC, which is the single outcome this file avoids.
+# ---------------------------------------------------------------------------------------
 
 Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging]
+
   GitHubOrg:
     Type: String
     Default: denis-petruk
-    Description: GitHub organization or username owning the repository.
+
   RepositoryName:
     Type: String
     Default: MuscleCuties
-    Description: GitHub repository name.
-  ReleaseBucketName:
-    Type: String
-    Default: musclecuties-release-artifacts
-    Description: S3 bucket name used for immutable release ZIP artifacts.
 
-Conditions:
-  # Check if OIDC Provider already exists in account or needs creation
-  CreateOidcProvider: !Equals ['true', 'true']
+  # Live value. Renaming this bucket is what makes item 1 above a defect.
+  ReleaseArtifactsBucket:
+    Type: String
+    Default: musclecuties-release-artifacts-028417007003
+
+  OidcThumbprints:
+    Type: CommaDelimitedList
+    Default: "6938fd4d98bab03faadb97b34396831e3780aea1,1c5876104010567b1a7d8ee0e69f6940cc73b73f"
 
 Resources:
   GitHubOidcProvider:
     Type: AWS::IAM::OIDCProvider
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       Url: https://token.actions.githubusercontent.com
       ClientIdList:
         - sts.amazonaws.com
-      ThumbprintList:
-        - 6938fd4d98bab03faadb97b34396831e3780aea1
-        - 1c5876104010567b1a7d8ee0e69f6940cc73b73f
+      ThumbprintList: !Ref OidcThumbprints
 
-  # Role 1: Artifact Upload Role (can only write immutable objects to the release bucket)
-  GitHubActionsArtifactUploadRole:
+  ArtifactUploadRole:
     Type: AWS::IAM::Role
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       RoleName: MuscleCuties-GitHubActions-ArtifactUpload
+      Path: /
+      MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              Federated: !Ref GitHubOidcProvider
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
               StringLike:
-                token.actions.githubusercontent.com:sub: !Sub 'repo:${GitHubOrg}/${RepositoryName}:ref:refs/heads/main'
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}/${RepositoryName}:ref:refs/heads/main"
       Policies:
         - PolicyName: S3ArtifactPutOnly
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
                   - s3:PutObject
                   - s3:PutObjectLegalHold
-                Resource: !Sub 'arn:aws:s3:::${ReleaseBucketName}/*'
+                Resource: !Sub "arn:aws:s3:::${ReleaseArtifactsBucket}/*"
 
-  # Role 2: Staging Deployment Role (scoped strictly to Staging Lambda functions and aliases)
-  GitHubActionsStagingDeployRole:
+  StagingDeployRole:
     Type: AWS::IAM::Role
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       RoleName: MuscleCuties-GitHubActions-StagingDeploy
+      Path: /
+      MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              Federated: !Ref GitHubOidcProvider
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: !Sub 'repo:${GitHubOrg}/${RepositoryName}:environment:staging'
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}/${RepositoryName}:environment:staging"
       Policies:
         - PolicyName: LambdaStagingDeploy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
@@ -88,31 +121,34 @@ Resources:
                   - lambda:UpdateAlias
                   - lambda:GetFunctionConfiguration
                 Resource:
-                  - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Server-Staging'
-                  - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Server-Staging:*'
-                  - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Staging'
-                  - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Staging:*'
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Server-Staging"
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Server-Staging:*"
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Staging"
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Staging:*"
 
-  # Role 3: Beta Deployment Role (Strictly gated by protected Beta environment)
-  GitHubActionsBetaDeployRole:
+  BetaDeployRole:
     Type: AWS::IAM::Role
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
     Properties:
       RoleName: MuscleCuties-GitHubActions-BetaDeploy
+      Path: /
+      MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
-        Version: '2012-10-17'
+        Version: "2012-10-17"
         Statement:
           - Effect: Allow
             Principal:
-              Federated: !Ref GitHubOidcProvider
+              Federated: !Sub "arn:aws:iam::${AWS::AccountId}:oidc-provider/token.actions.githubusercontent.com"
             Action: sts:AssumeRoleWithWebIdentity
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: !Sub 'repo:${GitHubOrg}/${RepositoryName}:environment:beta'
+                token.actions.githubusercontent.com:sub: !Sub "repo:${GitHubOrg}/${RepositoryName}:environment:beta"
       Policies:
         - PolicyName: LambdaBetaDeploy
           PolicyDocument:
-            Version: '2012-10-17'
+            Version: "2012-10-17"
             Statement:
               - Effect: Allow
                 Action:
@@ -121,18 +157,44 @@ Resources:
                   - lambda:UpdateAlias
                   - lambda:GetFunctionConfiguration
                 Resource:
-                  - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Server-Beta'
-                  - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Server-Beta:*'
-                  - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Beta'
-                  - !Sub 'arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Beta:*'
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Server-Beta"
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Server-Beta:*"
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Beta"
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Beta:*"
+
+# ---------------------------------------------------------------------------------------
+# Post-adoption corrections (apply as a normal update-stack AFTER these four resources are
+# imported, never before). They are the reason this file is faithful-but-wrong:
+#
+#   ArtifactUploadRole / S3ArtifactPutOnly
+#     Resource: arn:aws:s3:::musclecuties-staging-release-artifacts-028417007003/*
+#
+#   StagingDeployRole / LambdaStagingDeploy and BetaDeployRole / LambdaBetaDeploy
+#     Resource: ...:function:musclecuties-staging-backend-api
+#               ...:function:musclecuties-staging-backend-api:*
+#
+# Also deferred, and not modelled here because it is a separate ownership question: the
+# GitLab OIDC provider (gitlab.com) is still present in the account and belongs to no
+# stack. It is unmanaged and must be either adopted or deleted.
+# ---------------------------------------------------------------------------------------
 
 Outputs:
   OidcProviderArn:
     Value: !GetAtt GitHubOidcProvider.Arn
-    Description: ARN of the GitHub OIDC Identity Provider
+    Export:
+      Name: !Sub "${AWS::StackName}-OidcProviderArn"
+
   ArtifactUploadRoleArn:
-    Value: !GetAtt GitHubActionsArtifactUploadRole.Arn
+    Value: !GetAtt ArtifactUploadRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-ArtifactUploadRoleArn"
+
   StagingDeployRoleArn:
-    Value: !GetAtt GitHubActionsStagingDeployRole.Arn
+    Value: !GetAtt StagingDeployRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-StagingDeployRoleArn"
+
   BetaDeployRoleArn:
-    Value: !GetAtt GitHubActionsBetaDeployRole.Arn
+    Value: !GetAtt BetaDeployRole.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-BetaDeployRoleArn"
