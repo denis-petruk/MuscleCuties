@@ -1,4 +1,10 @@
-name: Mobile iOS Release
+name: Mobile iOS Build Verification
+
+# The signed .ipa that goes to Transporter is built on the owner's Mac with the command in
+# docs/mobile/ipa-for-transporter.md. CI deliberately does not attempt it: MAUI cannot produce a
+# signable .ipa without an Apple Distribution identity and provisioning profile on the runner,
+# and an unsigned .ipa cannot be uploaded at all. Failing every run for a missing identity would
+# be noise, so this workflow only proves the iOS app still compiles.
 
 on:
   workflow_dispatch:
@@ -10,14 +16,6 @@ on:
         type: choice
         options:
           - beta
-      target_runtime:
-        description: 'Target runtime (device produces the .ipa for Transporter; simulator is verification only)'
-        required: true
-        default: 'device'
-        type: choice
-        options:
-          - device
-          - simulator
       build_configuration:
         description: 'Build configuration'
         required: true
@@ -32,7 +30,7 @@ permissions:
 
 jobs:
   build_ios:
-    name: build_ios_${{ inputs.target_environment }}_${{ inputs.target_runtime }}
+    name: build_ios_${{ inputs.target_environment }}_simulator
     # .NET for iOS 27.1 requires Xcode 27, which only the xcode-27 image provides.
     runs-on: xcode-27
     steps:
@@ -55,29 +53,9 @@ jobs:
       - name: Report Xcode version
         run: xcodebuild -version
 
-      - name: Resolve runtime identifier
-        id: runtime
-        run: |
-          if [ "${{ inputs.target_runtime }}" = "device" ]; then
-            echo "rid=ios-arm64" >> "$GITHUB_OUTPUT"
-          else
-            echo "rid=iossimulator-arm64" >> "$GITHUB_OUTPUT"
-          fi
-
-      # A device build publishes a signed .ipa, which is the only artefact Transporter accepts.
-      # BuildIpa is disabled only for Debug in the project file, so Release publishes an .ipa.
-      - name: Build MAUI iOS client and produce the .ipa
-        if: inputs.target_runtime == 'device'
-        run: |
-          dotnet publish src/MuscleCuties.UI/MuscleCuties.UI.csproj \
-            -f net10.0-ios \
-            -c ${{ inputs.build_configuration }} \
-            -p:AppTargetEnvironment=${{ inputs.target_environment }} \
-            -p:RuntimeIdentifier=ios-arm64 \
-            -p:BuildIpa=true
-
-      - name: Build MAUI iOS client (simulator, verification only)
-        if: inputs.target_runtime == 'simulator'
+      # Simulator builds are never code signed, so this step cannot fail for want of an Apple
+      # identity. It still compiles the iOS platform code, XAML and the Release AOT path.
+      - name: Build MAUI iOS client (simulator)
         run: |
           dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj \
             -f net10.0-ios \
@@ -85,37 +63,9 @@ jobs:
             -p:AppTargetEnvironment=${{ inputs.target_environment }} \
             -p:RuntimeIdentifier=iossimulator-arm64
 
-      - name: Collect the .ipa for Transporter
-        id: ipa
-        if: inputs.target_runtime == 'device'
-        run: |
-          ipa="$(find src/MuscleCuties.UI/bin -name '*.ipa' -type f -print -quit)"
-          if [ -z "$ipa" ]; then
-            echo "The device build produced no .ipa."
-            echo "An .ipa for Transporter needs an Apple Distribution signing identity and"
-            echo "provisioning profile available on this runner; an unsigned build cannot be"
-            echo "uploaded. Install them on the xcode-27 runner, or build and export the .ipa"
-            echo "locally and upload it yourself."
-            exit 1
-          fi
-          out="MuscleCuties-${{ inputs.target_environment }}-${{ github.sha }}.ipa"
-          cp "$ipa" "$out"
-          shasum -a 256 "$out" | tee "$out.sha256"
-          echo "path=$out" >> "$GITHUB_OUTPUT"
-
-      - name: Upload the .ipa for Transporter
-        if: inputs.target_runtime == 'device'
-        uses: actions/upload-artifact@v4
-        with:
-          name: musclecuties-ios-ipa-${{ inputs.target_environment }}-${{ github.sha }}
-          path: |
-            ${{ steps.ipa.outputs.path }}
-            ${{ steps.ipa.outputs.path }}.sha256
-          retention-days: 30
-
       - name: Archive build output
         uses: actions/upload-artifact@v4
         with:
-          name: musclecuties-ios-${{ inputs.target_environment }}-${{ steps.runtime.outputs.rid }}-${{ github.sha }}
-          path: src/MuscleCuties.UI/bin/${{ inputs.build_configuration }}/net10.0-ios/${{ steps.runtime.outputs.rid }}/
+          name: musclecuties-ios-${{ inputs.target_environment }}-iossimulator-arm64-${{ github.sha }}
+          path: src/MuscleCuties.UI/bin/${{ inputs.build_configuration }}/net10.0-ios/iossimulator-arm64/
           retention-days: 30
