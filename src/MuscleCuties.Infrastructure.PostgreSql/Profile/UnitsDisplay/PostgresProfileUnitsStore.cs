@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Profile;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.UnitsDisplay;
@@ -49,6 +50,49 @@ public sealed class PostgresProfileUnitsStore(PostgresDbContext dbContext, TimeP
             })
             .SingleOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        if (profile is null)
+        {
+            var user = await dbContext.Users
+                .FromSqlInterpolated($"SELECT * FROM app.users WHERE id = {userId} FOR UPDATE")
+                .AsNoTracking()
+                .SingleOrDefaultAsync(cancellationToken)
+                .ConfigureAwait(false);
+            if (user is not null)
+            {
+                profile = await dbContext.UserProfiles.AsNoTracking()
+                    .Where(item => item.UserId == userId)
+                    .Select(item => new
+                    {
+                        item.UnitSystem,
+                        item.BodyWeightUnit,
+                        item.FoodMassUnit,
+                        item.HeightUnit,
+                        item.DistanceUnit,
+                        item.EnergyUnit,
+                        item.ConcurrencyVersion
+                    })
+                    .SingleOrDefaultAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                if (profile is null)
+                {
+                    var initial = DefaultUserProfileFactory.CreateInitial(
+                        userId, user.Username, timeProvider.GetUtcNow().UtcDateTime);
+                    dbContext.UserProfiles.Add(initial);
+                    await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                    profile = new
+                    {
+                        initial.UnitSystem,
+                        initial.BodyWeightUnit,
+                        initial.FoodMassUnit,
+                        initial.HeightUnit,
+                        initial.DistanceUnit,
+                        initial.EnergyUnit,
+                        initial.ConcurrencyVersion
+                    };
+                }
+            }
+        }
 
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 

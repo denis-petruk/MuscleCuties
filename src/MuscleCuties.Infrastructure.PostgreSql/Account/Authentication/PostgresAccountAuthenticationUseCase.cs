@@ -7,6 +7,7 @@ using Microsoft.Extensions.Logging;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 using MuscleCuties.UseCases.Features.Account.Authentication;
 using MuscleCuties.UseCases.Features.Account.Deletion;
 using MuscleCuties.UseCases.Features.Account.Registration;
@@ -207,6 +208,17 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             }
 
             user = CreateAppleAccount(identity, now);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, user.Id, cancellationToken)
+            .ConfigureAwait(false);
+        var hasProfile = await dbContext.UserProfiles.AsNoTracking()
+            .AnyAsync(profile => profile.UserId == user.Id, cancellationToken)
+            .ConfigureAwait(false);
+        if (!hasProfile)
+        {
+            dbContext.UserProfiles.Add(DefaultUserProfileFactory.CreateInitial(user.Id, user.Username, now));
         }
 
         var canStoreAppleToken = string.Equals(user.CredentialType, "Apple", StringComparison.OrdinalIgnoreCase) ||

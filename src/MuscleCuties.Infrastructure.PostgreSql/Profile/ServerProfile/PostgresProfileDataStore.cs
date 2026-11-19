@@ -41,10 +41,35 @@ public sealed class PostgresProfileDataStore(
         {
             var profile = await dbContext.UserProfiles.AsNoTracking()
                 .SingleOrDefaultAsync(item => item.UserId == userId, token).ConfigureAwait(false);
-            var user = profile is null
-                ? null
-                : await dbContext.Users.AsNoTracking()
+            UserRecord? user;
+            if (profile is null)
+            {
+                // Serialize initial profile creation per account so concurrent first-load requests
+                // for accounts created via Sign in with Apple never race on uq_user_profiles_user_id.
+                user = await dbContext.Users
+                    .FromSqlInterpolated($"SELECT * FROM app.users WHERE id = {userId} FOR UPDATE")
+                    .AsNoTracking()
+                    .SingleOrDefaultAsync(token).ConfigureAwait(false);
+                if (user is not null)
+                {
+                    profile = await dbContext.UserProfiles.AsNoTracking()
+                        .SingleOrDefaultAsync(item => item.UserId == userId, token).ConfigureAwait(false);
+                    if (profile is null)
+                    {
+                        var initial = DefaultUserProfileFactory.CreateInitial(
+                            userId, user.Username, timeProvider.GetUtcNow().UtcDateTime);
+                        dbContext.UserProfiles.Add(initial);
+                        await dbContext.SaveChangesAsync(token).ConfigureAwait(false);
+                        profile = initial;
+                    }
+                }
+            }
+            else
+            {
+                user = await dbContext.Users.AsNoTracking()
                     .SingleOrDefaultAsync(item => item.Id == userId, token).ConfigureAwait(false);
+            }
+
             var planningState = profile is null
                 ? null
                 : await dbContext.WorkoutAccountPlanningStates.AsNoTracking()

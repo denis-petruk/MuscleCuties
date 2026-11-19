@@ -7,9 +7,11 @@ using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 using MuscleCuties.UseCases.Features.Account.Authentication;
 using MuscleCuties.UseCases.Features.Account.Deletion;
 using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
+using MuscleCuties.UseCases.Features.Profile.ServerProfile;
 using Xunit;
 
 namespace MuscleCuties.Registration.Integration.Tests;
@@ -169,6 +171,115 @@ public sealed class AppleSignInPostgresTests(DisposableDatabaseFixture fixture)
             var user = await verification.Users.AsNoTracking()
                 .SingleAsync(candidate => candidate.Id == result.Tokens!.UserId);
             Assert.Equal($"{AppleAccountTokenRevoker.StoredAuthCodePrefix}synthetic-timeout-auth-code", user.PasswordHash);
+        }
+        finally
+        {
+            await fixture.DropAsync(connection);
+        }
+    }
+
+    [PostgresFact]
+    public async Task FirstAppleSignInProvisionsInitialProfileSoWorkoutPreferencesCanBeSaved()
+    {
+        if (!fixture.Available)
+            return;
+
+        var connection = await fixture.CreateCopyAsync("apple_profile_provision");
+        try
+        {
+            using var keys = new SyntheticAppleKey();
+            await using var db = CreateDbContext(connection);
+            var authentication = CreateAuthentication(db, keys);
+            var (challengeId, nonce) = await authentication.CreateAppleNonceAsync(default);
+            var token = keys.CreateToken(nonce, "apple.workout@example.invalid", "synthetic-apple-subject-5");
+
+            var authResult = await authentication.LoginWithAppleAsync(
+                new AppleLoginRequest(token, nonce, challengeId), default);
+
+            Assert.Equal(SessionOperationStatus.Succeeded, authResult.Status);
+            var userId = authResult.Tokens!.UserId;
+
+            await using var profileDb = CreateDbContext(connection);
+            var profileStore = new PostgresProfileDataStore(profileDb, TimeProvider.System);
+            var snapshot = await profileStore.LoadAsync(userId, default);
+
+            Assert.NotNull(snapshot);
+            Assert.Equal(1, snapshot!.Version);
+            Assert.Null(snapshot.DateOfBirth);
+            Assert.Equal(string.Empty, snapshot.EquipmentLevel);
+
+            var saveResult = await profileStore.UpdateWorkoutPreferencesAsync(
+                new UpdateServerWorkoutPreferencesRequest(
+                    userId,
+                    snapshot.Version,
+                    [0],
+                    [1, 3, 5],
+                    new Dictionary<int, int> { [0] = 45 },
+                    "FullGym",
+                    new Dictionary<int, int>(),
+                    new HashSet<int>(),
+                    false),
+                default);
+
+            Assert.Equal(ServerProfileWriteStatus.Saved, saveResult.Status);
+        }
+        finally
+        {
+            await fixture.DropAsync(connection);
+        }
+    }
+
+    [PostgresFact]
+    public async Task ProfileLoadBackfillsMissingProfileForExistingUserAndReturnsNullForUnknownUser()
+    {
+        if (!fixture.Available)
+            return;
+
+        var connection = await fixture.CreateCopyAsync("apple_profile_backfill");
+        try
+        {
+            var existingUserId = Guid.CreateVersion7();
+            await using (var seed = CreateDbContext(connection))
+            {
+                seed.Users.Add(new UserRecord
+                {
+                    Id = existingUserId,
+                    Email = "legacy.apple@example.invalid",
+                    Username = "legacy_apple",
+                    AppleUserId = "synthetic-legacy-apple-subject",
+                    CredentialType = "Apple",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    IsOnboardingComplete = true
+                });
+                await seed.SaveChangesAsync();
+            }
+
+            await using var profileDb = CreateDbContext(connection);
+            var profileStore = new PostgresProfileDataStore(profileDb, TimeProvider.System);
+
+            var unknownSnapshot = await profileStore.LoadAsync(Guid.CreateVersion7(), default);
+            Assert.Null(unknownSnapshot);
+
+            var backfilled = await profileStore.LoadAsync(existingUserId, default);
+            Assert.NotNull(backfilled);
+            Assert.Equal(1, backfilled!.Version);
+            Assert.Null(backfilled.DateOfBirth);
+
+            var saveResult = await profileStore.UpdateWorkoutPreferencesAsync(
+                new UpdateServerWorkoutPreferencesRequest(
+                    existingUserId,
+                    backfilled.Version,
+                    [0],
+                    [1, 3, 5],
+                    new Dictionary<int, int> { [0] = 45 },
+                    "HomeDumbbellsBands",
+                    new Dictionary<int, int>(),
+                    new HashSet<int>(),
+                    false),
+                default);
+
+            Assert.Equal(ServerProfileWriteStatus.Saved, saveResult.Status);
         }
         finally
         {
