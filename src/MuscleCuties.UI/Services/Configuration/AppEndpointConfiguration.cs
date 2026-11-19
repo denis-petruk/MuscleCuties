@@ -79,12 +79,12 @@ public static class AppEndpointConfiguration
 
     public static string ResolveBackendBaseUrl(string? overrideUrl = null)
     {
-#if DEBUG
-        if (IsLoopbackOverride(overrideUrl, out var validOverride))
+        if (ActiveEnvironment == AppTargetEnvironment.Local &&
+            IsLoopbackOverride(overrideUrl, out var validOverride))
         {
             return validOverride!.ToString().TrimEnd('/');
         }
-#endif
+
         return GetDefaultBaseUrl(ActiveEnvironment);
     }
 

@@ -73,6 +73,11 @@ public static class PlatformSignInCoordinator
         {
             setErrorMessage("This sign in option is unavailable on this device.");
         }
+        catch (InvalidOperationException ex) when (!string.IsNullOrWhiteSpace(ex.Message))
+        {
+            Trace.WriteLine($"[{callerName}] {providerName} sign in failed ({ex.GetType().Name}).");
+            setErrorMessage(ex.Message);
+        }
         catch (Exception ex)
         {
             Trace.WriteLine($"[{callerName}] {providerName} sign in failed ({ex.GetType().Name}).");

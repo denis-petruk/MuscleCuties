@@ -63,7 +63,7 @@ public sealed class AppEndpointConfigurationTests
     }
 
     [Fact]
-    public void Debug_Build_Targets_Beta_By_Default_And_Allows_Loopback_Override()
+    public void Debug_Build_Always_Targets_Beta_And_Ignores_Stale_Overrides()
     {
 #if DEBUG
         Assert.Equal(AppTargetEnvironment.Beta, AppEndpointConfiguration.ActiveEnvironment);
@@ -77,7 +77,10 @@ public sealed class AppEndpointConfigurationTests
             AppEndpointConfiguration.BetaBaseUrl,
             AppEndpointConfiguration.ResolveBackendBaseUrl("https://malicious.example.com"));
         Assert.Equal(
-            "http://127.0.0.1:5090",
+            AppEndpointConfiguration.BetaBaseUrl,
+            AppEndpointConfiguration.ResolveBackendBaseUrl("http://127.0.0.1:5080"));
+        Assert.Equal(
+            AppEndpointConfiguration.BetaBaseUrl,
             AppEndpointConfiguration.ResolveBackendBaseUrl("http://127.0.0.1:5090/"));
 #endif
     }
