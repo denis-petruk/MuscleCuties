@@ -88,7 +88,7 @@ public sealed class UiThirtyNinePlusWave3Tests
         var page = ReadUi("Pages", "Workout", "StrengthPlanGenerationPage.xaml");
         var vm = ReadUi("ViewModels", "Workout", "StrengthPlanGenerationViewModel.cs");
 
-        // P0 AGENTS.md §3: NeedsPrerequisiteRecovery MUST notify PropertyChanged and gaps must be collected together.
+        // P0 safety invariant: NeedsPrerequisiteRecovery MUST notify PropertyChanged and gaps must be collected together.
         Assert.Contains("nameof(NeedsPrerequisiteRecovery)", vm, StringComparison.Ordinal);
         Assert.Contains("CollectMissingPrerequisites", vm, StringComparison.Ordinal);
         // Preview sheet uses ModalSheetHeader with opaque footer; no dead CanEditDetailsFromPrerequisites inside preview.

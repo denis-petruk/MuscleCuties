@@ -73,7 +73,7 @@ public sealed class UiThirtyNinePlusWave4Tests
         Assert.Contains("ScreenReaderStatusAnnouncementBehavior", page, StringComparison.Ordinal);
         Assert.Contains("Profile_WorkoutPrefs_ExerciseExclusionsHint", choices, StringComparison.Ordinal);
         Assert.Contains("ClearButtonVisibility=\"WhileEditing\"", choices, StringComparison.Ordinal);
-        // All validation gaps reported together (AGENTS.md §3).
+        // All validation gaps reported together.
         Assert.Contains("CollectValidationErrors", vm, StringComparison.Ordinal);
     }
 

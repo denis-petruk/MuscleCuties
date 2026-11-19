@@ -6,7 +6,6 @@ App-wide design and interaction authority for the **warm, wellness-focused** Sof
 
 | Concern | Owning source | Contract |
 | --- | --- | --- |
-| Operating directive and context routing | [AGENTS.md](../AGENTS.md) | Compact always-on rules, architecture boundaries, and verification rules. |
 | Build, test, and repository layout | [README.md](../README.md) | Verified project map and build/test commands. |
 | Health and sensitive-data constraints | [Safety](SAFETY.md) | Fail-safe behavior, privacy, and security. |
 | Approved product flows | [Product workflows](PRODUCT_WORKFLOWS.md) | Exact approved workout-planning and nutrition rules. |
@@ -187,7 +186,7 @@ Resources, MAUI types, brushes, icons, visual states and layout stay in UI. Core
 
 For every UI task:
 
-1. Read `AGENTS.md`, `DESIGN.md`, relevant specification sections and the nearest component. Search targeted symbols/XAML bindings first.
+1. Read `DESIGN.md`, relevant specification sections, and the nearest component. Search targeted symbols/XAML bindings first.
 2. Use the one page frame and identify the content recipe. Reuse the permitted styles/controls. Check the family budget before adding any role; no local override, alias or renamed family may introduce a third look.
 3. Keep layout/behavior in components, styles in resources, copy in catalogs and business conditions in their owning layer. No second palette/token file or page-local style system.
 4. Cover affected states, both appearances, localized semantics and large text together. Preserve routes, bindings, commands, contracts and privacy/safety constraints.

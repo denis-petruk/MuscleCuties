@@ -12,7 +12,7 @@ iOS fitness, nutrition and cycle-tracking app. The client is .NET MAUI (iOS only
 - `src/MuscleCuties.DbMaintenance` — operator CLI: `migrate`, `seed`, `dbcheck`.
 - `services/MuscleCuties.Server` — API composition, auth, Lambda host.
 - `services/MuscleCuties.WorkoutReconciliation` — scheduled worker for pending workout revisions.
-- `tests/` — xUnit suites. `scripts/` — local tooling. `artifacts/` — packaging output, ignored by Git.
+- `tests/` — xUnit suites. `artifacts/` — packaging output, ignored by Git.
 
 ## Build and test
 
@@ -35,10 +35,9 @@ Run the suite that covers the files you changed, not the whole solution.
 ### PostgreSQL-backed suites
 
     brew services start postgresql@16
-    ./scripts/prepare-integration-postgres.sh
-    source .env.integration
+    source .env
 
-The script creates and seeds disposable local databases and writes an ignored `.env.integration` with loopback connection strings only.
+Configure loopback PostgreSQL connection strings in your ignored local `.env` file.
 
 ### Local API
 
@@ -58,9 +57,6 @@ GitHub Actions, in `.github/workflows/`: `ci.yml` (build, unit tests), `db-verif
 
 | File | Read it when |
 | --- | --- |
-| [AGENTS.md](AGENTS.md) | Always; the only file every agent session loads |
-| [docs/ai/PROJECT_INDEX.md](docs/ai/PROJECT_INDEX.md) | Locating unfamiliar components and entry points |
-| [docs/ai/CURRENT_STATE.md](docs/ai/CURRENT_STATE.md) | Verified repository baseline and high-level solution state |
 | [STATUS.md](STATUS.md) | Starting a session: what the last task changed and verified |
 | [ROADMAP.md](ROADMAP.md) | Choosing the next task |
 | [DESIGN.md](DESIGN.md) | Any UI change |

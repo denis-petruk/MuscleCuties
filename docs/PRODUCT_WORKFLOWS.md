@@ -1,6 +1,6 @@
 # Product workflows
 
-User-visible behaviour that is not already in `AGENTS.md`. The safety rules and the single plan-acceptance path live there (§3) and are not repeated here.
+User-visible behaviour and workflow rules. Domain safety invariants are documented in `docs/SAFETY.md`.
 
 ## Workout planning
 

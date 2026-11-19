@@ -1,7 +1,5 @@
 # Product
 
-<!-- impeccable:product-schema 1 -->
-
 ## Platform
 
 ios
@@ -54,7 +52,6 @@ The approved visual direction is Soft Minimal — soft rose, warm neutral and se
 
 ## Evidence on Hand
 
-- `AGENTS.md` — operating contract, safety boundaries, verification rules.
 - `DESIGN.md` and `docs/UI_PRESENTATION_DESIGN_SPEC.md` — owner-approved visual and component authority.
 - `docs/PRODUCT_WORKFLOWS.md` — workout, progression, nutrition, Health and deferred-surface behaviour.
 - `CONTEXT.md` — localization terminology.

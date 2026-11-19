@@ -27,7 +27,7 @@ A shared style for these combinations is **not available**. The style-count limi
 
 Rule: a new exception site must be added to this table in the same change that introduces it. `UiContractGuardTests.Inline_text_colours_match_the_documented_exception_list` fails when the per-file counts drift from this table. It also resolves each site's applied style — including `BasedOn` chains and the implicit label style — and fails when an override repeats the colour pair that style already sets, so the table cannot drift into duplicate colouring. `Page_and_control_xaml_use_tokens_for_dimensions` keeps numeric sizes out of page and control XAML, and the card-budget assertion accepts no Card-family style beyond `CardPrimary` and `CardSecondary`.
 
-Support women through training, nourishment, recovery and cycle awareness with respectful, adult language. Warmth comes from considerate flows, useful guidance and breathing room. Strength training remains central; cycle and injury context must preserve the domain safety rules in `AGENTS.md`.
+Support women through training, nourishment, recovery and cycle awareness with respectful, adult language. Warmth comes from considerate flows, useful guidance and breathing room. Strength training remains central; cycle and injury context must preserve the domain safety rules in `docs/SAFETY.md`.
 
 ## Expression
 
@@ -107,4 +107,4 @@ Nutrition views consume the UI-local macro/target models above; the mapper is th
 - Route copy and selection semantics through the catalog and the shared styles; a per-page literal, ad-hoc key or restated state word is a defect to fix, not a local convention.
 - Keep one expression per screen: one dominant action, one selection recipe, one status treatment. A screen needing a second of any of these needs a design decision, not another style.
 - Design for large text and the longer language first; if a label cannot grow, the layout is the defect.
-- Verify with the UI guard tests first. Simulator build, run and screenshots are allowed (`AGENTS.md` §4); take screenshots only for the final check. Device acceptance belongs to the owner.
+- Verify with the UI guard tests first. Verify simulator builds, runs, and screenshots before final check. Device acceptance belongs to the owner.
