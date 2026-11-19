@@ -90,9 +90,14 @@ Resources:
             Version: "2012-10-17"
             Statement:
               - Effect: Allow
+                # PutObject writes the release object; the read actions are required by
+                # upload-artifact.sh, which head-objects the written object (and the exact
+                # version) to prove its checksum and metadata before handing it to Lambda.
                 Action:
                   - s3:PutObject
                   - s3:PutObjectLegalHold
+                  - s3:GetObject
+                  - s3:GetObjectVersion
                 Resource: !Sub "arn:aws:s3:::${ReleaseArtifactsBucket}/*"
 
   StagingDeployRole:
