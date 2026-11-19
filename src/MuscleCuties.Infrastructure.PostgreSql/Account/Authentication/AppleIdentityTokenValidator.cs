@@ -36,7 +36,9 @@ public sealed class AppleIdentityTokenValidator(
 {
     private const int MaximumIdentityTokenCharacters = 16_384;
     private const int MinimumRsaKeyBits = 2_048;
-    private const long MaximumIdentityLifetimeSeconds = 3_600;
+    // Apple Sign in with Apple issues iOS identityToken JWTs with a 24-hour (86,400 s) exp-iat window.
+    // Replay protection is independently bounded to 5 minutes by the single-use server nonce challenge.
+    private const long MaximumIdentityLifetimeSeconds = 86_400;
     private const long AllowedIssueTimeFutureSeconds = 60;
     private const string AppleIssuer = "https://appleid.apple.com";
 

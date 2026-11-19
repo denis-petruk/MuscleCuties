@@ -90,12 +90,28 @@ public sealed class AppleIdentityTokenValidatorTests
     }
 
     [Fact]
-    public void TokenLifetimeBeyondOneHourIsRejected()
+    public void TwentyFourHourAppleIdentityTokenIsAccepted()
     {
         using var keys = new SyntheticAppleKeys();
         var validator = keys.CreateValidator();
         var now = DateTimeOffset.UtcNow;
-        var token = keys.CreateToken(rawNonce: RawNonce, issuedAt: now, expiresAt: now.AddHours(2));
+        var token = keys.CreateToken(rawNonce: RawNonce, email: "member@example.invalid",
+            issuedAt: now, expiresAt: now.AddHours(24));
+
+        var outcome = validator.Validate(token, RawNonce, out var identity);
+
+        Assert.Equal(AppleIdentityValidationOutcome.Valid, outcome);
+        Assert.NotNull(identity);
+        Assert.Equal("synthetic-apple-subject", identity!.AppleUserId);
+    }
+
+    [Fact]
+    public void TokenLifetimeBeyondTwentyFourHoursIsRejected()
+    {
+        using var keys = new SyntheticAppleKeys();
+        var validator = keys.CreateValidator();
+        var now = DateTimeOffset.UtcNow;
+        var token = keys.CreateToken(rawNonce: RawNonce, issuedAt: now, expiresAt: now.AddHours(25));
 
         var outcome = validator.Validate(token, RawNonce, out _);
 

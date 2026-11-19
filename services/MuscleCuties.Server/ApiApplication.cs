@@ -247,6 +247,7 @@ public static class ApiApplication
         builder.Services.AddScoped<IPreviewRecipePortionUseCase, PreviewRecipePortionUseCase>();
         builder.Services.AddScoped<IGetRecipesAndTemplatesUseCase, GetRecipesAndTemplatesUseCase>();
         builder.Services.AddScoped<ISaveMealTemplateUseCase, SaveMealTemplateUseCase>();
+        builder.Services.AddSingleton<OpenSourceIngredientCache>();
         builder.Services.AddScoped<PostgresNutritionOverviewStore>();
         builder.Services.AddScoped<IServerNutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
         builder.Services.AddScoped<INutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
