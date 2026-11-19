@@ -14,7 +14,7 @@ public sealed class CloudAccountSignInStore(
         var result = await cloudGateway.SignInWithPasswordAsync(emailOrUsername, password, cancellationToken).ConfigureAwait(false);
         if (result.Status == BackendApiStatus.Success && result.Data is not null)
         {
-            return new SignedInAccount(true);
+            return new SignedInAccount(result.Data.IsOnboardingComplete);
         }
 
         if (result.Status == BackendApiStatus.Unauthorized)
@@ -42,7 +42,10 @@ public sealed class CloudAccountSignInStore(
         var response = await cloudGateway.SignInWithAppleAsync(identityToken ?? string.Empty,
             nonce ?? string.Empty, nonceChallengeId ?? string.Empty, cancellationToken, authorizationCode).ConfigureAwait(false);
         if (response.Status == BackendApiStatus.Success && response.Data is not null)
-            return new PlatformAccountOutcome(true, true, false);
+            return new PlatformAccountOutcome(
+                Succeeded: true,
+                IsPendingOnboarding: !response.Data.IsOnboardingComplete,
+                IsOnboardingComplete: response.Data.IsOnboardingComplete);
 
         var message = response.Status switch
         {

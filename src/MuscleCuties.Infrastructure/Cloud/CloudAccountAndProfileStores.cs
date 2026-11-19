@@ -318,9 +318,12 @@ public sealed class CloudAccountRecoveryStore(
 }
 
 public sealed class CloudProfileSetupStore(
-    IPendingRegistrationService pending) : IProfileSetupStore, IProfileSetupPersistence
+    IPendingRegistrationService pending,
+    IBackendSessionTokenStore? tokenStore = null) : IProfileSetupStore, IProfileSetupPersistence
 {
     private const int DefaultCycleLengthDays = 28;
+    private readonly object _onboardingAccountSync = new();
+    private Guid? _authenticatedOnboardingAccountId;
 
     private static ProfileSetupDraft Map(StagedProfileData staged) =>
         new(staged.Name, staged.BirthDate, staged.Height, staged.Weight,
@@ -334,27 +337,77 @@ public sealed class CloudProfileSetupStore(
             draft.SelectedActivityTypes.Where(v => Enum.IsDefined(typeof(WorkoutActivityType), v)).Select(v => (WorkoutActivityType)v).ToHashSet(),
             draft.UseMetricSystem);
 
-    public Task<ProfileSetupLoadResult> LoadAsync(CancellationToken cancellationToken)
+    public async Task<ProfileSetupLoadResult> LoadAsync(CancellationToken cancellationToken)
     {
+        var incompleteAccountId = await TryGetAuthenticatedIncompleteAccountIdAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (incompleteAccountId is { } accountId)
+        {
+            lock (_onboardingAccountSync)
+            {
+                if (_authenticatedOnboardingAccountId != accountId)
+                {
+                    pending.Clear();
+                    _authenticatedOnboardingAccountId = accountId;
+                }
+            }
+
+            return new ProfileSetupLoadResult(
+                true,
+                null,
+                pending.StagedProfile is { } stagedForAccount ? Map(stagedForAccount) : null);
+        }
+
         var reg = pending.CurrentRegistration;
         if (reg is not null)
         {
-            return Task.FromResult(new ProfileSetupLoadResult(
+            return new ProfileSetupLoadResult(
                 true,
                 reg.Username,
-                pending.StagedProfile is { } staged ? Map(staged) : null));
+                pending.StagedProfile is { } staged ? Map(staged) : null);
         }
 
-        return Task.FromResult(new ProfileSetupLoadResult(false, null, null));
+        return new ProfileSetupLoadResult(false, null, null);
     }
 
-    public Task<bool> SaveAndPrepareQuizAsync(ProfileSetupDraft draft, CancellationToken cancellationToken)
+    public async Task<bool> SaveAndPrepareQuizAsync(ProfileSetupDraft draft, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        var incompleteAccountId = await TryGetAuthenticatedIncompleteAccountIdAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (incompleteAccountId is { } accountId)
+        {
+            lock (_onboardingAccountSync)
+            {
+                if (_authenticatedOnboardingAccountId != accountId)
+                {
+                    pending.Clear();
+                    _authenticatedOnboardingAccountId = accountId;
+                }
+            }
+
+            pending.StageProfile(Map(draft));
+            return true;
+        }
+
         if (pending.CurrentRegistration is null)
-            return Task.FromResult(false);
+            return false;
         pending.StageProfile(Map(draft));
-        return Task.FromResult(true);
+        return true;
+    }
+
+    private async Task<Guid?> TryGetAuthenticatedIncompleteAccountIdAsync(CancellationToken cancellationToken)
+    {
+        if (tokenStore is null)
+            return null;
+
+        var tokens = await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
+        return tokens is not null &&
+               tokens.AccountId != Guid.Empty &&
+               !string.IsNullOrWhiteSpace(tokens.AccessToken) &&
+               !tokens.IsOnboardingComplete
+            ? tokens.AccountId
+            : null;
     }
 
     public Task<ProfileSetupDraft?> LoadExistingAsync(CancellationToken cancellationToken)
@@ -373,9 +426,12 @@ public sealed class CloudProfileSetupStore(
 public sealed class CloudOnboardingQuizStore(
     IPendingRegistrationService pending,
     MobileJourneyCloudGateway cloudGateway,
-    IMuscleCutiesBackendApiClient apiClient) : IOnboardingQuizStore
+    IMuscleCutiesBackendApiClient apiClient,
+    IBackendSessionTokenStore? tokenStore = null) : IOnboardingQuizStore
 {
     private const string RegistrationQuizRoute = "/api/v1/accounts/registration/quiz";
+    private const string AuthenticatedOnboardingCompleteRoute = "/api/v1/accounts/onboarding/complete";
+    private const string OnboardingAlreadyCompletedCode = "onboardingAlreadyCompleted";
     private const string RegistrationQuizUnavailableMessage =
         "Registration questions are temporarily unavailable. Please try again.";
     private const string RegistrationConflictCode = "registrationConflict";
@@ -421,6 +477,61 @@ public sealed class CloudOnboardingQuizStore(
         IReadOnlyList<QuizSelectionDto> selections,
         CancellationToken cancellationToken)
     {
+        var tokens = tokenStore is null
+            ? null
+            : await tokenStore.ReadTokensAsync(cancellationToken).ConfigureAwait(false);
+        if (tokens is not null &&
+            tokens.AccountId != Guid.Empty &&
+            !string.IsNullOrWhiteSpace(tokens.AccessToken) &&
+            !tokens.IsOnboardingComplete)
+        {
+            var stagedProfile = pending.StagedProfile;
+            if (stagedProfile is null)
+                return new QuizCommitResult(false, false,
+                    "Please complete your profile details before finishing onboarding.");
+
+            var (normalizedSelections, resolvedWorkoutDaysPerWeek) =
+                NormalizeSelectionsForServerCatalog(selections, _rawServerQuestions);
+
+            var onboardingRequest = new
+            {
+                profile = new
+                {
+                    name = stagedProfile.Name,
+                    birthDate = DateOnly.FromDateTime(stagedProfile.BirthDate),
+                    heightCm = (decimal)stagedProfile.Height,
+                    weightKg = (decimal)stagedProfile.Weight,
+                    workoutDaysPerWeek = resolvedWorkoutDaysPerWeek,
+                    cycleLengthDays = stagedProfile.CycleLength,
+                    selectedActivityTypes = stagedProfile.SelectedActivities.Select(a => (int)a).ToList(),
+                    useMetricSystem = stagedProfile.UseMetricSystem,
+                    profileImagePath = stagedProfile.ProfileImagePath
+                },
+                quizResponses = normalizedSelections
+                    .Select(s => new { questionId = s.QuestionId, answerId = s.AnswerId })
+                    .ToList()
+            };
+
+            var onboardingResponse = await apiClient.SendMutationAsync<object, JsonElement>(
+                HttpMethod.Post,
+                AuthenticatedOnboardingCompleteRoute,
+                onboardingRequest,
+                idempotencyKey: Guid.NewGuid().ToString("N"),
+                cancellationToken).ConfigureAwait(false);
+
+            if (onboardingResponse.Status == BackendApiStatus.Success ||
+                (onboardingResponse.Status == BackendApiStatus.Conflict &&
+                 string.Equals(onboardingResponse.ErrorCode, OnboardingAlreadyCompletedCode, StringComparison.OrdinalIgnoreCase)))
+            {
+                await cloudGateway.MarkOnboardingCompleteAsync(cancellationToken).ConfigureAwait(false);
+                pending.Clear();
+                return new QuizCommitResult(true, false, null);
+            }
+
+            return new QuizCommitResult(false, false,
+                GetRegistrationFailureMessage(onboardingResponse.Status, onboardingResponse.ErrorCode));
+        }
+
         var reg = pending.CurrentRegistration;
         var profile = pending.StagedProfile;
         if (reg is not null && profile is not null)

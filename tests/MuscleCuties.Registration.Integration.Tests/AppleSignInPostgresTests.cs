@@ -2,6 +2,12 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Contracts.Account;
+using MuscleCuties.Contracts.Onboarding;
+using MuscleCuties.Core.Models.Enums.Cycle;
+using MuscleCuties.Core.Models.Enums.Quiz;
+using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
@@ -11,6 +17,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 using MuscleCuties.UseCases.Features.Account.Authentication;
 using MuscleCuties.UseCases.Features.Account.Deletion;
 using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
+using MuscleCuties.UseCases.Features.Account.Registration;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
 using Xunit;
 
@@ -51,7 +58,8 @@ public sealed class AppleSignInPostgresTests(DisposableDatabaseFixture fixture)
             Assert.Equal("synthetic-apple-subject-1", user.AppleUserId);
             Assert.Equal("Apple", user.CredentialType);
             Assert.Equal("new.apple.member@example.invalid", user.Email);
-            Assert.True(user.IsOnboardingComplete);
+            Assert.False(user.IsOnboardingComplete);
+            Assert.False(result.Tokens!.IsOnboardingComplete);
         }
         finally
         {
@@ -222,6 +230,149 @@ public sealed class AppleSignInPostgresTests(DisposableDatabaseFixture fixture)
                 default);
 
             Assert.Equal(ServerProfileWriteStatus.Saved, saveResult.Status);
+        }
+        finally
+        {
+            await fixture.DropAsync(connection);
+        }
+    }
+
+    [PostgresFact]
+    public async Task AuthenticatedAppleAccountCompletesOnboardingAndPersistsProfileQuizAndCycleAnchor()
+    {
+        if (!fixture.Available)
+            return;
+
+        var connection = await fixture.CreateCopyAsync("apple_full_onboarding");
+        try
+        {
+            using var keys = new SyntheticAppleKey();
+            await using var authDb = CreateDbContext(connection);
+            var authentication = CreateAuthentication(authDb, keys);
+            var (challengeId, nonce) = await authentication.CreateAppleNonceAsync(default);
+            var token = keys.CreateToken(nonce, "apple.onboard@example.invalid", "synthetic-apple-subject-onboard");
+
+            var firstSignIn = await authentication.LoginWithAppleAsync(
+                new AppleLoginRequest(token, nonce, challengeId), default);
+            Assert.Equal(SessionOperationStatus.Succeeded, firstSignIn.Status);
+            Assert.NotNull(firstSignIn.Tokens);
+            Assert.False(firstSignIn.Tokens!.IsOnboardingComplete);
+            var userId = firstSignIn.Tokens.UserId;
+
+            await using var onboardingDb = CreateDbContext(connection);
+            var onboardingStore = new PostgresCompleteAccountRegistrationStore(onboardingDb, TimeProvider.System);
+            var onboardingUseCase = new CompleteAccountOnboardingUseCase(onboardingStore, TimeProvider.System);
+            var quiz = await onboardingStore.LoadQuizQuestionsAsync(default);
+            DayOfWeek[] availableWeekdays = [DayOfWeek.Monday, DayOfWeek.Wednesday, DayOfWeek.Friday];
+            var selections = quiz
+                .Where(question => question.QuestionType != QuizQuestionType.GoalPace)
+                .SelectMany(question => question.QuestionType == QuizQuestionType.AvailableWeekdays
+                    ? question.Answers.Where(answer => availableWeekdays.Any(day => answer.MappedValue == (int)day))
+                        .Select(answer => new QuizSelectionDto(question.Id, answer.Id))
+                    : [new QuizSelectionDto(question.Id, question.QuestionType switch
+                    {
+                        QuizQuestionType.Goal => question.Answers.Single(answer =>
+                            answer.MappedValue == (int)UserGoal.MaintainHealth).Id,
+                        QuizQuestionType.ExperienceLevel => question.Answers.Single(answer =>
+                            answer.MappedValue == (int)TrainingExperienceLevel.Beginner).Id,
+                        QuizQuestionType.CurrentCyclePhase => question.Answers.Single(answer =>
+                            answer.MappedValue == (int)CyclePhase.Follicular).Id,
+                        QuizQuestionType.SessionDuration => question.Answers.First().Id,
+                        QuizQuestionType.Equipment => question.Answers.Single(answer =>
+                            answer.MappedValue == 1).Id,
+                        _ => question.Answers.First().Id
+                    })]).ToArray();
+
+            var completion = await onboardingUseCase.ExecuteAsync(
+                userId,
+                new CompleteAccountOnboardingRequest(
+                    new ProfileSetupDraft(
+                        "Synthetic Onboarded Member",
+                        DateTime.UtcNow.AddYears(-26),
+                        166f,
+                        60f,
+                        string.Empty,
+                        28,
+                        [(int)WorkoutActivityType.HighVolumeStrength],
+                        UseMetricSystem: true),
+                    selections),
+                default);
+
+            Assert.Equal(CompleteAccountOnboardingStatus.Completed, completion.Status);
+
+            await using var verifyDb = CreateDbContext(connection);
+            var completedUser = await verifyDb.Users.AsNoTracking().SingleAsync(u => u.Id == userId);
+            Assert.True(completedUser.IsOnboardingComplete);
+            await SyntheticTenantSession.SetAsync(verifyDb, userId);
+            var completedProfile = await verifyDb.UserProfiles.AsNoTracking().SingleAsync(p => p.UserId == userId);
+            Assert.Equal("Synthetic Onboarded Member", completedProfile.Name);
+            Assert.NotNull(completedProfile.DateOfBirth);
+            Assert.Equal(166m, completedProfile.Height);
+            Assert.Equal(60m, completedProfile.Weight);
+            Assert.Equal("MaintainHealth", completedProfile.Goal);
+            Assert.Equal("FullGym", completedProfile.EquipmentLevel);
+            Assert.True(await verifyDb.UserQuizResponses.AsNoTracking().AnyAsync(r => r.UserId == userId));
+            Assert.True(await verifyDb.CycleLogs.AsNoTracking().AnyAsync(c => c.UserId == userId));
+
+            var (challengeId2, nonce2) = await authentication.CreateAppleNonceAsync(default);
+            var token2 = keys.CreateToken(nonce2, "apple.onboard@example.invalid", "synthetic-apple-subject-onboard");
+            var secondSignIn = await authentication.LoginWithAppleAsync(
+                new AppleLoginRequest(token2, nonce2, challengeId2), default);
+            Assert.Equal(SessionOperationStatus.Succeeded, secondSignIn.Status);
+            Assert.True(secondSignIn.Tokens!.IsOnboardingComplete);
+
+            var refreshed = await authentication.RefreshAsync(
+                new RefreshSessionRequest(secondSignIn.Tokens.RefreshToken), default);
+            Assert.Equal(SessionOperationStatus.Succeeded, refreshed.Status);
+            Assert.True(refreshed.Tokens!.IsOnboardingComplete);
+        }
+        finally
+        {
+            await fixture.DropAsync(connection);
+        }
+    }
+
+    [PostgresFact]
+    public async Task LegacyUnfilledAppleAccountIsRoutedBackToOnboardingOnSignIn()
+    {
+        if (!fixture.Available)
+            return;
+
+        var connection = await fixture.CreateCopyAsync("apple_legacy_unfilled");
+        try
+        {
+            using var keys = new SyntheticAppleKey();
+            var legacyUserId = Guid.CreateVersion7();
+            await using (var seed = CreateDbContext(connection))
+            {
+                seed.Users.Add(new UserRecord
+                {
+                    Id = legacyUserId,
+                    Email = "legacy.unfilled@example.invalid",
+                    Username = "legacy_unfilled",
+                    AppleUserId = "synthetic-legacy-unfilled-subject",
+                    CredentialType = "Apple",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow,
+                    IsOnboardingComplete = true
+                });
+                await seed.SaveChangesAsync();
+            }
+
+            await using var db = CreateDbContext(connection);
+            var authentication = CreateAuthentication(db, keys);
+            var (challengeId, nonce) = await authentication.CreateAppleNonceAsync(default);
+            var token = keys.CreateToken(nonce, "legacy.unfilled@example.invalid", "synthetic-legacy-unfilled-subject");
+
+            var result = await authentication.LoginWithAppleAsync(
+                new AppleLoginRequest(token, nonce, challengeId), default);
+
+            Assert.Equal(SessionOperationStatus.Succeeded, result.Status);
+            Assert.NotNull(result.Tokens);
+            Assert.False(result.Tokens!.IsOnboardingComplete);
+            await using var verify = CreateDbContext(connection);
+            var user = await verify.Users.AsNoTracking().SingleAsync(u => u.Id == legacyUserId);
+            Assert.False(user.IsOnboardingComplete);
         }
         finally
         {

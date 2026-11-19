@@ -24,6 +24,15 @@ internal sealed record AccountRegistrationBody(
         Profile?.ToInput()!, QuizResponses, InitialWorkoutPlanName, InitialWorkoutPlanDays, PrivacyConsent);
 }
 
+internal sealed record CompleteAccountOnboardingBody(
+    AccountRegistrationProfileBody? Profile,
+    IReadOnlyList<QuizSelectionDto> QuizResponses)
+{
+    public CompleteAccountOnboardingRequest ToInput() => new(
+        Profile?.ToInput()!,
+        QuizResponses);
+}
+
 internal sealed record AccountRegistrationProfileBody(
     string Name,
     DateTime BirthDate,

@@ -150,7 +150,7 @@ public static class MauiProgram
             sp.GetRequiredService<IOnboardingQuizUseCase>(),
             () => NavigateAfterOnboardingAsync(sp),
             () => NavigateToAsync("//LoginPage"),
-            () => NavigateToAsync($"//{nameof(ProfileSetupPage)}"),
+            () => NavigateAuthenticatedAsync($"//{nameof(ProfileSetupPage)}"),
             () => sp.GetRequiredService<INavigationContextService>()
                 .Set(WorkoutPreferencesAfterOnboardingContextKey, true),
             weekdays => sp.GetRequiredService<INavigationContextService>()

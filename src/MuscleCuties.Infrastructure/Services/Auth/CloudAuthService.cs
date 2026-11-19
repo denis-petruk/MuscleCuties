@@ -67,7 +67,8 @@ public sealed class CloudAuthService(
             Email = appleAccount.Email ?? string.Empty,
             Username = appleAccount.FullName ?? appleAccount.UserIdentifier
         };
-        return new AppleSignInOutcome(true, true, user, false);
+        var isOnboardingComplete = response.Data.IsOnboardingComplete;
+        return new AppleSignInOutcome(true, isOnboardingComplete, user, !isOnboardingComplete);
     }
 
     public async Task<User?> SignInWithExternalProviderAsync(PlatformSignInResult account)
@@ -126,7 +127,7 @@ public sealed class CloudAuthService(
         if (tokens is null || tokens.AccountId == Guid.Empty || string.IsNullOrWhiteSpace(tokens.AccessToken))
             return null;
 
-        return new CurrentUserState(ToLocalUserId(tokens.AccountId), IsOnboardingComplete: true);
+        return new CurrentUserState(ToLocalUserId(tokens.AccountId), tokens.IsOnboardingComplete);
     }
 
     private static int ToLocalUserId(Guid accountId)

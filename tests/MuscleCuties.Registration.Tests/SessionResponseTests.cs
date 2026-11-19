@@ -86,6 +86,50 @@ public sealed class SessionResponseTests
         Xunit.Assert.False(cache.Activated);
     }
 
+    [Xunit.Fact]
+    public async Task AppleSessionReadsIncompleteOnboardingStateFromServerResponse()
+    {
+        var accountId = Guid.NewGuid();
+        var nonceChallengeId = Guid.NewGuid().ToString("D");
+        var api = new StubApiClient(JsonSerializer.Serialize(new
+        {
+            userId = accountId,
+            accessToken = "synthetic-access",
+            refreshToken = "synthetic-refresh",
+            accessExpiresAtUtc = DateTimeOffset.UtcNow.AddHours(1),
+            isOnboardingComplete = false
+        }));
+        var tokens = new RecordingTokenStore();
+        var cache = new RecordingCache();
+        var gateway = new MobileJourneyCloudGateway(api, tokens, cache, TimeProvider.System);
+
+        var response = await gateway.SignInWithAppleAsync("synthetic-identity", "synthetic-nonce", nonceChallengeId);
+
+        Xunit.Assert.Equal(BackendApiStatus.Success, response.Status);
+        Xunit.Assert.NotNull(tokens.Written);
+        Xunit.Assert.False(tokens.Written!.IsOnboardingComplete);
+        Xunit.Assert.False(response.Data!.IsOnboardingComplete);
+    }
+
+    [Xunit.Fact]
+    public void LegacySerializedSessionTokensWithoutIsOnboardingCompleteDefaultToTrue()
+    {
+        var legacyJson = JsonSerializer.Serialize(new
+        {
+            accountId = Guid.NewGuid(),
+            accessToken = "synthetic-access",
+            refreshToken = "synthetic-refresh",
+            accessTokenExpiresAtUtc = DateTimeOffset.UtcNow.AddHours(1)
+        });
+
+        var deserialized = JsonSerializer.Deserialize<BackendSessionTokens>(
+            legacyJson,
+            new JsonSerializerOptions(JsonSerializerDefaults.Web));
+
+        Xunit.Assert.NotNull(deserialized);
+        Xunit.Assert.True(deserialized!.IsOnboardingComplete);
+    }
+
     private sealed class StubApiClient(string responseJson) : IMuscleCutiesBackendApiClient
     {
         public string? LastRoute { get; private set; }

@@ -24,7 +24,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 
 public sealed class PostgresCompleteAccountRegistrationStore(
     PostgresDbContext dbContext,
-    TimeProvider timeProvider) : ICompleteAccountRegistrationStore
+    TimeProvider timeProvider) : ICompleteAccountRegistrationStore, ICompleteAccountOnboardingStore
 {
     private const string RegistrationPurpose = "Registration";
     private const string PasswordCredentialType = "Password";
@@ -124,7 +124,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
                 .Select(answer => new SelectedQuizAnswer(question.QuestionType, question.Id, answer.Id,
                     answer.MappedValue)))
             .ToArray();
-        var profileProjection = TryProjectProfile(request, selectedAnswers, now.UtcDateTime);
+        var profileProjection = TryProjectProfile(request.Profile, selectedAnswers, now.UtcDateTime);
         if (profileProjection is null)
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidQuiz);
 
@@ -308,8 +308,216 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         }).ConfigureAwait(false);
     }
 
+    public async Task<CompleteAccountOnboardingResult> CompleteOnboardingAsync(
+        Guid userId,
+        CompleteAccountOnboardingRequest request,
+        CancellationToken cancellationToken)
+    {
+        var now = timeProvider.GetUtcNow();
+        var questions = await dbContext.QuizQuestions
+            .AsNoTracking()
+            .Include(question => question.Answers)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var responses = request.QuizResponses.GroupBy(response => response.QuestionId)
+            .ToDictionary(group => group.Key, group => group.Select(response => response.AnswerId).ToHashSet());
+        var selectedAnswers = questions.SelectMany(question => question.Answers
+                .Where(answer => responses.TryGetValue(question.Id, out var answerIds) && answerIds.Contains(answer.Id))
+                .Select(answer => new SelectedQuizAnswer(question.QuestionType, question.Id, answer.Id,
+                    answer.MappedValue)))
+            .ToArray();
+        var profileProjection = TryProjectProfile(request.Profile, selectedAnswers, now.UtcDateTime);
+        if (profileProjection is null)
+            return new CompleteAccountOnboardingResult(CompleteAccountOnboardingStatus.InvalidQuiz);
+
+        return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+        {
+            dbContext.ChangeTracker.Clear();
+            await using var transaction = await dbContext.Database
+                .BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken)
+                .ConfigureAwait(false);
+
+            try
+            {
+                var user = await dbContext.Users
+                    .FromSqlInterpolated($"SELECT * FROM app.users WHERE id = {userId} FOR UPDATE")
+                    .SingleOrDefaultAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                if (user is null)
+                    return await RollbackAndReturnAsync(transaction,
+                        new CompleteAccountOnboardingResult(CompleteAccountOnboardingStatus.AccountNotFound))
+                        .ConfigureAwait(false);
+
+                if (user.IsOnboardingComplete)
+                    return await RollbackAndReturnAsync(transaction,
+                        new CompleteAccountOnboardingResult(CompleteAccountOnboardingStatus.AlreadyCompleted, userId))
+                        .ConfigureAwait(false);
+
+                await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
+                    .ConfigureAwait(false);
+
+                var resolvedName = string.IsNullOrWhiteSpace(request.Profile.Name)
+                    ? (user.Username ?? string.Empty).Trim()
+                    : request.Profile.Name.Trim();
+                var resolvedBirthDate = DateOnly.FromDateTime(request.Profile.BirthDate);
+                var resolvedHeight = Convert.ToDecimal(request.Profile.HeightCm, CultureInfo.InvariantCulture);
+                var resolvedWeight = Convert.ToDecimal(request.Profile.WeightKg, CultureInfo.InvariantCulture);
+                var resolvedImagePath = string.IsNullOrWhiteSpace(request.Profile.ProfileImagePath)
+                    ? EmptyProfileImagePath
+                    : request.Profile.ProfileImagePath.Trim();
+
+                var profile = await dbContext.UserProfiles
+                    .SingleOrDefaultAsync(candidate => candidate.UserId == userId, cancellationToken)
+                    .ConfigureAwait(false);
+                if (profile is null)
+                {
+                    profileProjection.Id = Guid.CreateVersion7();
+                    profileProjection.UserId = userId;
+                    profileProjection.Name = resolvedName;
+                    profileProjection.DateOfBirth = resolvedBirthDate;
+                    profileProjection.Height = resolvedHeight;
+                    profileProjection.Weight = resolvedWeight;
+                    profileProjection.CycleLength = request.Profile.CycleLength;
+                    profileProjection.ProfileImagePath = resolvedImagePath;
+                    profileProjection.UpdatedAt = now.UtcDateTime;
+                    profile = profileProjection;
+                    dbContext.UserProfiles.Add(profile);
+                }
+                else
+                {
+                    profile.Name = resolvedName;
+                    profile.DateOfBirth = resolvedBirthDate;
+                    profile.Height = resolvedHeight;
+                    profile.Weight = resolvedWeight;
+                    profile.CycleLength = request.Profile.CycleLength;
+                    profile.Goal = profileProjection.Goal;
+                    profile.WeightGoalPace = profileProjection.WeightGoalPace;
+                    profile.TrainingExperienceLevel = profileProjection.TrainingExperienceLevel;
+                    profile.CurrentCyclePhase = profileProjection.CurrentCyclePhase;
+                    profile.WorkoutDaysPerWeek = profileProjection.WorkoutDaysPerWeek;
+                    profile.AvailableWorkoutWeekdaysJson = profileProjection.AvailableWorkoutWeekdaysJson;
+                    profile.ActivitySessionDurationsJson = profileProjection.ActivitySessionDurationsJson;
+                    profile.RequestedActivitySessionsPerWeekJson = profileProjection.RequestedActivitySessionsPerWeekJson;
+                    profile.DietaryTags = profileProjection.DietaryTags;
+                    profile.EquipmentLevel = profileProjection.EquipmentLevel;
+                    profile.PhaseBaselinesJson = profileProjection.PhaseBaselinesJson;
+                    profile.PreferredWorkoutActivityTypes = profileProjection.PreferredWorkoutActivityTypes;
+                    profile.UnitSystem = profileProjection.UnitSystem;
+                    profile.BodyWeightUnit = profileProjection.BodyWeightUnit;
+                    profile.FoodMassUnit = profileProjection.FoodMassUnit;
+                    profile.HeightUnit = profileProjection.HeightUnit;
+                    profile.DistanceUnit = profileProjection.DistanceUnit;
+                    profile.EnergyUnit = profileProjection.EnergyUnit;
+                    profile.NutritionGoalsJson = profileProjection.NutritionGoalsJson;
+                    profile.ReproductiveContextJson = profileProjection.ReproductiveContextJson;
+                    profile.ProfileImagePath = resolvedImagePath;
+                    profile.ConcurrencyVersion += 1;
+                    profile.UpdatedAt = now.UtcDateTime;
+                }
+
+                var snapshot = new UserProfileSnapshotRecord
+                {
+                    Id = Guid.CreateVersion7(),
+                    UserId = userId,
+                    SnapshotReason = InitialSnapshotReason,
+                    ProfileJson = JsonSerializer.Serialize(profile),
+                    CreatedAt = now.UtcDateTime
+                };
+                dbContext.UserProfileSnapshots.Add(snapshot);
+
+                foreach (var selectedAnswer in selectedAnswers)
+                {
+                    dbContext.UserQuizResponses.Add(new UserQuizResponseRecord
+                    {
+                        Id = Guid.CreateVersion7(),
+                        UserId = userId,
+                        QuizQuestionId = selectedAnswer.QuestionId,
+                        QuizAnswerId = selectedAnswer.AnswerId,
+                        AnsweredAt = now.UtcDateTime,
+                        UserProfileSnapshotId = snapshot.Id
+                    });
+                }
+
+                var hasCycleLogs = await dbContext.CycleLogs.AsNoTracking()
+                    .AnyAsync(cycle => cycle.UserId == userId, cancellationToken)
+                    .ConfigureAwait(false);
+                if (!hasCycleLogs &&
+                    Enum.TryParse<CyclePhase>(profile.CurrentCyclePhase, true, out var onboardingPhase) &&
+                    Enum.IsDefined(onboardingPhase) && onboardingPhase != CyclePhase.Unknown)
+                {
+                    var onboardingLocalDate = DateOnly.FromDateTime(now.UtcDateTime);
+                    var onboardingCycleStart = CyclePhaseRule.GetImpliedCycleStart(
+                        onboardingPhase, onboardingLocalDate, profile.CycleLength);
+                    if (onboardingCycleStart >= MinimumSupportedCycleDate)
+                    {
+                        var onboardingCycle = new CycleLogRecord
+                        {
+                            Id = Guid.CreateVersion7(),
+                            UserId = userId,
+                            StartDate = onboardingCycleStart,
+                            EndDate = null,
+                            CycleLength = UnknownCycleLength,
+                            CreatedAt = now.UtcDateTime
+                        };
+                        dbContext.CycleLogs.Add(onboardingCycle);
+                        dbContext.CyclePhaseLogs.Add(new CyclePhaseLogRecord
+                        {
+                            Id = Guid.CreateVersion7(),
+                            UserId = userId,
+                            CycleLogId = onboardingCycle.Id,
+                            Phase = onboardingPhase.ToString(),
+                            LocalDate = onboardingLocalDate,
+                            LoggedAt = UtcMidnight(onboardingLocalDate),
+                            Note = OnboardingPhaseNote,
+                            CreatedAt = now.UtcDateTime
+                        });
+                    }
+                }
+
+                user.IsOnboardingComplete = true;
+                user.UpdatedAt = now.UtcDateTime;
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+
+                return new CompleteAccountOnboardingResult(CompleteAccountOnboardingStatus.Completed, userId);
+            }
+            catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.SerializationFailure)
+            {
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                return new CompleteAccountOnboardingResult(CompleteAccountOnboardingStatus.Failed,
+                    ErrorMessage: "Onboarding changed concurrently. Please try again.");
+            }
+            catch (DbUpdateException exception) when
+                (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.SerializationFailure)
+            {
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                return new CompleteAccountOnboardingResult(CompleteAccountOnboardingStatus.Failed,
+                    ErrorMessage: "Onboarding changed concurrently. Please try again.");
+            }
+            catch (RetryLimitExceededException exception) when
+                (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.SerializationFailure)
+            {
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                return new CompleteAccountOnboardingResult(CompleteAccountOnboardingStatus.Failed,
+                    ErrorMessage: "Onboarding changed concurrently. Please try again.");
+            }
+            catch (Exception exception) when
+                (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.SerializationFailure)
+            {
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                return new CompleteAccountOnboardingResult(CompleteAccountOnboardingStatus.Failed,
+                    ErrorMessage: "Onboarding changed concurrently. Please try again.");
+            }
+            catch
+            {
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                throw;
+            }
+        }).ConfigureAwait(false);
+    }
+
     private static UserProfileRecord? TryProjectProfile(
-        CompleteAccountRegistrationRequest request,
+        ProfileSetupDraft profileDraft,
         IReadOnlyList<SelectedQuizAnswer> selectedAnswers,
         DateTime now)
     {
@@ -327,7 +535,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
             !TryMapEquipment(equipmentChoice, out var equipmentLevel))
             return null;
 
-        if (!WorkoutPreferencesRule.HasAtLeastOneStrengthStyle(request.Profile.SelectedActivityTypes))
+        if (!WorkoutPreferencesRule.HasAtLeastOneStrengthStyle(profileDraft.SelectedActivityTypes))
             return null;
 
         var availableWeekdays = byType.GetValueOrDefault(QuizQuestionType.AvailableWeekdays) ?? [];
@@ -353,7 +561,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         if (dietary.Any(answer => !Enum.IsDefined((DietaryTag)answer.MappedValue)))
             return null;
 
-        var unitSystem = request.Profile.UseMetricSystem ? "Metric" : "Imperial";
+        var unitSystem = profileDraft.UseMetricSystem ? "Metric" : "Imperial";
         return new UserProfileRecord
         {
             Goal = goal.ToString(),
@@ -365,21 +573,21 @@ public sealed class PostgresCompleteAccountRegistrationStore(
                 .Select(value => ((DayOfWeek)value).ToString()).OrderBy(value => value, StringComparer.Ordinal)),
             ActivitySessionDurationsJson = JsonSerializer.Serialize(
                 RegistrationActivityDurationDefaults.ForSelectedActivities(
-                    request.Profile.SelectedActivityTypes, strengthSessionDurationMinutes)),
+                    profileDraft.SelectedActivityTypes, strengthSessionDurationMinutes)),
             RequestedActivitySessionsPerWeekJson = JsonSerializer.Serialize(
                 RegistrationActivityDurationDefaults.ForSelectedActivityFrequencies(
-                    request.Profile.SelectedActivityTypes)),
+                    profileDraft.SelectedActivityTypes)),
             DietaryTags = string.Join(',', dietary.Select(answer => ((DietaryTag)answer.MappedValue).ToString())
                 .Distinct(StringComparer.Ordinal)),
             EquipmentLevel = equipmentLevel,
             PhaseBaselinesJson = BuildPhaseBaselines(byType),
-            PreferredWorkoutActivityTypes = string.Join(',', request.Profile.SelectedActivityTypes
+            PreferredWorkoutActivityTypes = string.Join(',', profileDraft.SelectedActivityTypes
                 .Distinct().OrderBy(value => value).Select(value => value.ToString(CultureInfo.InvariantCulture))),
             UnitSystem = unitSystem,
-            BodyWeightUnit = request.Profile.UseMetricSystem ? "kg" : "lbs",
+            BodyWeightUnit = profileDraft.UseMetricSystem ? "kg" : "lbs",
             FoodMassUnit = "g",
-            HeightUnit = request.Profile.UseMetricSystem ? "cm" : "in",
-            DistanceUnit = request.Profile.UseMetricSystem ? "km" : "mi",
+            HeightUnit = profileDraft.UseMetricSystem ? "cm" : "in",
+            DistanceUnit = profileDraft.UseMetricSystem ? "km" : "mi",
             EnergyUnit = "kcal",
             NutritionGoalsJson = NoNutritionTargetsJson,
             ReproductiveContextJson = NoReproductiveContextJson,

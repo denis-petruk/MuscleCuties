@@ -103,7 +103,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             return new SessionOperationResult(SessionOperationStatus.InvalidCredentials);
 
         var familyId = Guid.CreateVersion7();
-        var result = await CreateSessionAsync(user.Id, familyId, cancellationToken).ConfigureAwait(false);
+        var result = await CreateSessionAsync(user.Id, familyId, user.IsOnboardingComplete, cancellationToken).ConfigureAwait(false);
         await passwordLoginLimiter.ClearAccountAfterSuccessAsync(user, normalizedIdentifier, cancellationToken).ConfigureAwait(false);
         return result;
     }
@@ -213,12 +213,30 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
 
         await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, user.Id, cancellationToken)
             .ConfigureAwait(false);
-        var hasProfile = await dbContext.UserProfiles.AsNoTracking()
-            .AnyAsync(profile => profile.UserId == user.Id, cancellationToken)
+        var existingProfile = await dbContext.UserProfiles.AsNoTracking()
+            .SingleOrDefaultAsync(profile => profile.UserId == user.Id, cancellationToken)
             .ConfigureAwait(false);
-        if (!hasProfile)
+        if (existingProfile is null)
         {
-            dbContext.UserProfiles.Add(DefaultUserProfileFactory.CreateInitial(user.Id, user.Username, now));
+            var initialProfile = DefaultUserProfileFactory.CreateInitial(user.Id, user.Username, now);
+            dbContext.UserProfiles.Add(initialProfile);
+            existingProfile = initialProfile;
+        }
+
+        // Legacy Apple accounts created before onboarding enforcement had IsOnboardingComplete = true
+        // with an empty profile and zero quiz responses. Route them through onboarding until completed.
+        if (user.IsOnboardingComplete &&
+            string.Equals(user.CredentialType, "Apple", StringComparison.OrdinalIgnoreCase) &&
+            IsUnfilledInitialProfile(existingProfile))
+        {
+            var hasQuizResponses = await dbContext.UserQuizResponses.AsNoTracking()
+                .AnyAsync(response => response.UserId == user.Id, cancellationToken)
+                .ConfigureAwait(false);
+            if (!hasQuizResponses)
+            {
+                user.IsOnboardingComplete = false;
+                user.UpdatedAt = now;
+            }
         }
 
         var canStoreAppleToken = string.Equals(user.CredentialType, "Apple", StringComparison.OrdinalIgnoreCase) ||
@@ -242,10 +260,16 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         }
 
         var familyId = Guid.CreateVersion7();
-        var result = await CreateSessionAsync(user.Id, familyId, cancellationToken).ConfigureAwait(false);
+        var result = await CreateSessionAsync(user.Id, familyId, user.IsOnboardingComplete, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return result;
     }
+
+    private static bool IsUnfilledInitialProfile(UserProfileRecord profile) =>
+        profile.DateOfBirth is null &&
+        profile.Height <= 0m &&
+        profile.Weight <= 0m &&
+        string.IsNullOrWhiteSpace(profile.Goal);
 
     private UserRecord CreateAppleAccount(AppleVerifiedIdentity identity, DateTime now)
     {
@@ -273,7 +297,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             CredentialType = "Apple",
             CreatedAt = now,
             UpdatedAt = now,
-            IsOnboardingComplete = true,
+            IsOnboardingComplete = false,
             PrivacyNoticeVersion = "apple-signin-v1",
             PrivacyNoticeAcceptedAtUtc = now
         };
@@ -328,10 +352,15 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             CreatedAtUtc = now,
             ExpiresAtUtc = timeProvider.GetUtcNow().AddDays(RefreshLifetimeDays).UtcDateTime
         });
+        var isOnboardingComplete = await dbContext.Users.AsNoTracking()
+            .Where(candidate => candidate.Id == session.UserId)
+            .Select(candidate => (bool?)candidate.IsOnboardingComplete)
+            .SingleOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false) ?? true;
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return new SessionOperationResult(SessionOperationStatus.Succeeded,
-            CreateTokens(session.UserId, session.FamilyId, nextToken, timeProvider.GetUtcNow()));
+            CreateTokens(session.UserId, session.FamilyId, nextToken, timeProvider.GetUtcNow(), isOnboardingComplete));
     }
 
     public async Task<bool> RevokeAsync(RevokeSessionRequest request, CancellationToken cancellationToken)
@@ -460,7 +489,11 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return dbContext.Users.AsNoTracking().AnyAsync(u => u.Username != null && u.Username.ToLower() == normalized, cancellationToken);
     }
 
-    private async Task<SessionOperationResult> CreateSessionAsync(Guid userId, Guid familyId, CancellationToken cancellationToken)
+    private async Task<SessionOperationResult> CreateSessionAsync(
+        Guid userId,
+        Guid familyId,
+        bool isOnboardingComplete,
+        CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
         await dbContext.RefreshSessions
@@ -477,10 +510,17 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             ExpiresAtUtc = now.AddDays(RefreshLifetimeDays).UtcDateTime
         });
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return new SessionOperationResult(SessionOperationStatus.Succeeded, CreateTokens(userId, familyId, refreshToken, now));
+        return new SessionOperationResult(
+            SessionOperationStatus.Succeeded,
+            CreateTokens(userId, familyId, refreshToken, now, isOnboardingComplete));
     }
 
-    private SessionTokens CreateTokens(Guid userId, Guid familyId, string refreshToken, DateTimeOffset now)
+    private SessionTokens CreateTokens(
+        Guid userId,
+        Guid familyId,
+        string refreshToken,
+        DateTimeOffset now,
+        bool isOnboardingComplete)
     {
         var expires = now.AddMinutes(AccessLifetimeMinutes);
         var header = Encode(JsonSerializer.SerializeToUtf8Bytes(new { alg = "HS256", typ = "JWT" }));
@@ -493,7 +533,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         var unsignedToken = $"{header}.{payload}";
         using var hmac = new HMACSHA256(accessSigningKey);
         var accessToken = $"{unsignedToken}.{Encode(hmac.ComputeHash(Encoding.ASCII.GetBytes(unsignedToken)))}";
-        return new SessionTokens(userId, accessToken, refreshToken, expires);
+        return new SessionTokens(userId, accessToken, refreshToken, expires, isOnboardingComplete);
     }
 
     private static string Hash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();

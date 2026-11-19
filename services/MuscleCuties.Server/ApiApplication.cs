@@ -173,8 +173,13 @@ public static class ApiApplication
                 builder.Configuration["EmailReceipts:Audience"] ?? string.Empty,
                 serviceProvider.GetRequiredService<TimeProvider>());
         });
-        builder.Services.AddScoped<ICompleteAccountRegistrationStore, PostgresCompleteAccountRegistrationStore>();
+        builder.Services.AddScoped<PostgresCompleteAccountRegistrationStore>();
+        builder.Services.AddScoped<ICompleteAccountRegistrationStore>(sp =>
+            sp.GetRequiredService<PostgresCompleteAccountRegistrationStore>());
+        builder.Services.AddScoped<ICompleteAccountOnboardingStore>(sp =>
+            sp.GetRequiredService<PostgresCompleteAccountRegistrationStore>());
         builder.Services.AddScoped<ICompleteAccountRegistrationUseCase, CompleteAccountRegistrationUseCase>();
+        builder.Services.AddScoped<ICompleteAccountOnboardingUseCase, CompleteAccountOnboardingUseCase>();
         builder.Services.AddScoped<GetRegistrationQuizUseCase>();
         builder.Services.AddScoped<IAccountPasswordResetStore, PostgresAccountPasswordResetStore>();
         builder.Services.AddScoped<IAccountPasswordResetUseCase>(serviceProvider => new CompletePasswordResetUseCase(
@@ -684,6 +689,33 @@ public static class ApiApplication
                 };
             })
             .AllowAnonymous();
+
+        app.MapPost("/api/v1/accounts/onboarding/complete", async (
+                CompleteAccountOnboardingBody request,
+                HttpContext context,
+                ICompleteAccountOnboardingUseCase onboarding,
+                CancellationToken cancellationToken) =>
+            {
+                if (!TryGetAuthenticatedUserId(context, out var userId))
+                    return Results.Unauthorized();
+                if (request.Profile is { HasConflictingCycleLengths: true })
+                    return Results.BadRequest(new AccountRegistrationError("conflictingCycleLengths"));
+
+                var result = await onboarding.ExecuteAsync(userId, request.ToInput(), cancellationToken)
+                    .ConfigureAwait(false);
+                return result.Status switch
+                {
+                    CompleteAccountOnboardingStatus.Completed => Results.Ok(
+                        new AccountRegistrationResponse(userId, OnboardingComplete: true)),
+                    CompleteAccountOnboardingStatus.AlreadyCompleted => Results.Conflict(
+                        new AccountRegistrationError("onboardingAlreadyCompleted")),
+                    CompleteAccountOnboardingStatus.AccountNotFound => Results.NotFound(),
+                    CompleteAccountOnboardingStatus.Failed => Results.Conflict(
+                        new AccountRegistrationError(result.Status.ToString())),
+                    _ => Results.BadRequest(new AccountRegistrationError(result.Status.ToString()))
+                };
+            })
+            .RequireAuthorization();
 
         app.MapPost($"{AuthenticationRoute}/apple/nonce", async (
                 IAccountAuthenticationUseCase authentication,

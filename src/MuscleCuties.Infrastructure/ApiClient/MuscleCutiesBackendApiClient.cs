@@ -13,7 +13,8 @@ public sealed record BackendSessionTokens(
     Guid AccountId,
     string AccessToken,
     string RefreshToken,
-    DateTimeOffset AccessTokenExpiresAtUtc);
+    DateTimeOffset AccessTokenExpiresAtUtc,
+    bool IsOnboardingComplete = true);
 
 public interface IBackendSessionTokenStore
 {
@@ -262,7 +263,8 @@ public sealed class MuscleCutiesBackendApiClient(
             payload.UserId != Guid.Empty ? payload.UserId : existing.AccountId,
             payload.AccessToken,
             payload.RefreshToken,
-            payload.AccessExpiresAtUtc);
+            payload.AccessExpiresAtUtc,
+            payload.IsOnboardingComplete ?? existing.IsOnboardingComplete);
         if (version != sessionState.Version)
             return (null, HttpStatusCode.Unauthorized);
         await tokenStore.WriteTokensAsync(updated, CancellationToken.None).ConfigureAwait(false);
@@ -378,7 +380,8 @@ public sealed class MuscleCutiesBackendApiClient(
         Guid UserId,
         string AccessToken,
         string RefreshToken,
-        DateTimeOffset AccessExpiresAtUtc);
+        DateTimeOffset AccessExpiresAtUtc,
+        bool? IsOnboardingComplete = null);
 }
 
 /// <summary>
@@ -704,7 +707,9 @@ public sealed class MobileJourneyCloudGateway(
                 return new BackendApiResponse<BackendSessionTokens>(BackendApiStatus.ServerError, null,
                     "invalidSessionResponse");
 
-            var tokens = new BackendSessionTokens(userId, accessToken, refreshToken, expires);
+            var isOnboardingComplete = !response.Data.TryGetProperty("isOnboardingComplete", out var onboardingProp) ||
+                                       onboardingProp.ValueKind != JsonValueKind.False;
+            var tokens = new BackendSessionTokens(userId, accessToken, refreshToken, expires, isOnboardingComplete);
             var sessionState = BackendSessionLocks.For(tokenStore);
             var sessionLock = sessionState.Semaphore;
             await sessionLock.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -723,6 +728,27 @@ public sealed class MobileJourneyCloudGateway(
                 "invalidSessionResponse");
 
         return new BackendApiResponse<BackendSessionTokens>(response.Status, null, response.ErrorCode);
+    }
+
+    public async Task MarkOnboardingCompleteAsync(CancellationToken cancellationToken = default)
+    {
+        var sessionState = BackendSessionLocks.For(tokenStore);
+        var sessionLock = sessionState.Semaphore;
+        await sessionLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var existing = await tokenStore.ReadTokensAsync(CancellationToken.None).ConfigureAwait(false);
+            if (existing is null || existing.AccountId == Guid.Empty || existing.IsOnboardingComplete)
+                return;
+
+            await tokenStore.WriteTokensAsync(
+                existing with { IsOnboardingComplete = true },
+                CancellationToken.None).ConfigureAwait(false);
+        }
+        finally
+        {
+            sessionLock.Release();
+        }
     }
 
     public async Task<BackendApiResponse<DashboardOverviewResponse>> GetDashboardOverviewAsync(

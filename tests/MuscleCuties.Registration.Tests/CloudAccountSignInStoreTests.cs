@@ -56,6 +56,44 @@ public sealed class CloudAccountSignInStoreTests
         Assert.Contains("connection", outcome.ErrorMessage, StringComparison.OrdinalIgnoreCase);
     }
 
+    [Theory]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, true)]
+    public async Task SignInWithPlatformPropagatesServerOnboardingCompletionState(
+        bool serverOnboardingComplete,
+        bool expectedPendingOnboarding,
+        bool expectedOnboardingComplete)
+    {
+        var payload = JsonSerializer.Serialize(new
+        {
+            userId = Guid.NewGuid(),
+            accessToken = "synthetic-access",
+            refreshToken = "synthetic-refresh",
+            accessExpiresAtUtc = DateTimeOffset.UtcNow.AddHours(1),
+            isOnboardingComplete = serverOnboardingComplete
+        });
+        var gateway = new MobileJourneyCloudGateway(
+            new JsonApiClient(payload),
+            new NullTokenStore(),
+            new NullCacheService(),
+            TimeProvider.System);
+        var store = new CloudAccountSignInStore(gateway);
+
+        var outcome = await store.SignInWithPlatformAsync(
+            "apple",
+            "synthetic-apple-user",
+            null,
+            null,
+            "synthetic-identity",
+            "synthetic-nonce",
+            Guid.NewGuid().ToString("D"),
+            authorizationCode: "synthetic-auth-code");
+
+        Assert.True(outcome.Succeeded);
+        Assert.Equal(expectedPendingOnboarding, outcome.IsPendingOnboarding);
+        Assert.Equal(expectedOnboardingComplete, outcome.IsOnboardingComplete);
+    }
+
     private static CloudAccountSignInStore CreateStore(BackendApiStatus status)
     {
         var gateway = new MobileJourneyCloudGateway(
@@ -64,6 +102,34 @@ public sealed class CloudAccountSignInStoreTests
             new NullCacheService(),
             TimeProvider.System);
         return new CloudAccountSignInStore(gateway);
+    }
+
+    private sealed class JsonApiClient(string responseJson) : IMuscleCutiesBackendApiClient
+    {
+        public Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
+            string relativePath,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public Task<BackendApiResponse<TResponse>> SendMutationAsync<TRequest, TResponse>(
+            HttpMethod method,
+            string relativePath,
+            TRequest payload,
+            string? idempotencyKey = null,
+            CancellationToken cancellationToken = default)
+        {
+            using var document = JsonDocument.Parse(responseJson);
+            var response = new BackendApiResponse<JsonElement>(
+                BackendApiStatus.Success,
+                document.RootElement.Clone());
+            return Task.FromResult((BackendApiResponse<TResponse>)(object)response);
+        }
+
+        public Task<BackendApiResponse<bool>> DeleteAsync(
+            string relativePath,
+            string? idempotencyKey = null,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
     }
 
     private sealed class StatusApiClient(BackendApiStatus status) : IMuscleCutiesBackendApiClient
