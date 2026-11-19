@@ -38,9 +38,16 @@ dotnet publish src/MuscleCuties.UI/MuscleCuties.UI.csproj \
   -p:CodesignProvision="<your App Store profile name>"
 ```
 
-`-p:BuildIpa=true` is required: the project file sets `BuildIpa` to `false` for **Debug** only,
-and Release leaves it unset. `CodesignProvision` selects the profile; the signing identity is taken
-from the keychain.
+`-p:BuildIpa=true` is required: the project file sets `BuildIpa` to `false` for **Debug** only, and
+Release leaves it unset.
+
+`-p:AppTargetEnvironment=beta` is required, not cosmetic: in Release
+`AppEndpointConfiguration.ActiveEnvironment` throws unless `APP_ENV_BETA` is defined, and
+`MuscleCuties.UI.csproj` defines `APP_ENV_BETA` only when `AppTargetEnvironment` is `beta`. Dropping
+the property still compiles and still produces an `.ipa`, but that build throws as soon as it
+resolves its backend environment, so it cannot be shipped.
+
+`CodesignProvision` selects the profile; the signing identity is taken from the keychain.
 
 ## 3. Output — exact path and file name
 
@@ -66,29 +73,34 @@ Sign in with Apple, Associated Domains and keychain-access-groups.
 
 ## 5. Upload with Transporter
 
-Bump `<ApplicationVersion>` (currently `6`) in `MuscleCuties.UI.csproj` for every upload — App Store
-Connect rejects a build number it already holds for version `1.0`. Then open Transporter, sign in,
-drag the `.ipa` in and press **Deliver**.
+Bump `<ApplicationVersion>` (currently `6`) in `src/MuscleCuties.UI/MuscleCuties.UI.csproj` for every
+upload — App Store Connect rejects a build number it already holds for version `1.0`. Then open
+Transporter, sign in, drag the `.ipa` from section 3 in and press **Deliver**.
 
 ## Verified vs unverified
 
 Verified on 2026-11-19 (macOS, Xcode 26.3, .NET SDK 10.0.203, Microsoft.iOS.Sdk 26.2):
 
-- The command in section 2 was executed in **Release**, with `-p:CodesignKey=-` in place of
-  `-p:CodesignProvision` because no Apple identity was available (ad-hoc signing). It exited 0 and
-  wrote `src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/publish/MuscleCuties.UI.ipa`,
-  **39,763,902 bytes**, containing `Payload/MuscleCuties.UI.app/`. The file name follows
-  `<AssemblyName>MuscleCuties.UI</AssemblyName>`.
+- The command in section 2 was executed in **Release**, on a clean `bin/Release` tree, with
+  `-p:CodesignKey=-` added in place of `-p:CodesignProvision` because no Apple identity was
+  available (ad-hoc signing). It exited **0** and wrote
+  `src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/publish/MuscleCuties.UI.ipa`,
+  **39,764,474 bytes**, containing `Payload/MuscleCuties.UI.app/` for bundle `com.musclecuties.app`.
+- `codesign` reports `Signature=adhoc` and `TeamIdentifier=not set` for that artifact. That is the
+  expected result without an Apple identity; it is not a distribution signature.
 - `dotnet publish` writes the `.ipa` into a `publish/` subdirectory. `dotnet build` does not — it
-  writes to `.../ios-arm64/MuscleCuties.UI.ipa`, one level up.
+  writes to `.../ios-arm64/MuscleCuties.UI.ipa`, one directory up.
 - Release publishes the AOT build and is slow: it took about fifteen minutes here. That is expected,
-  not a hang.
+  not a hang. `-p:RunAOTCompilation=false` evaluates to `false` but the iOS SDK still runs the AOT
+  compiler, so there is no faster Release path.
+- Dropping `-p:AppTargetEnvironment=beta` leaves `APP_ENV_BETA` undefined in Release
+  (`dotnet msbuild … -getProperty:DefineConstants` shows it absent), which is exactly what the
+  runtime guard in `AppEndpointConfiguration.ActiveEnvironment` rejects.
 - MSBuild resolves `BuildIpa=true` in Release when it is passed, and no Release path sets it false
   (`dotnet msbuild … -getProperty:BuildIpa` → `true` for Release, `false` for Debug).
-  `EnableCodeSigning` remains `true` in Release, so signing is never silently dropped.
+  `EnableCodeSigning` stays `true` in Release, so signing is never silently dropped.
 - No `Directory.Build.props`/`Directory.Build.targets` in this repository touches `BuildIpa`,
   `CodesignKey`, `CodesignProvision` or `EnableCodeSigning`.
 
-Not verified, because it needs the Apple identity: distribution signing (the run above is ad-hoc, so
-`codesign` reports an ad-hoc signature rather than your Apple Distribution identity) and the
-Transporter upload itself.
+Not verified, because it needs the Apple identity: distribution signing, and the Transporter upload
+itself.
