@@ -3,10 +3,13 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
+using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Account.Authentication;
+using MuscleCuties.UseCases.Features.Account.Deletion;
+using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
 using Xunit;
 
 namespace MuscleCuties.Registration.Integration.Tests;
@@ -102,6 +105,77 @@ public sealed class AppleSignInPostgresTests(DisposableDatabaseFixture fixture)
         }
     }
 
+    [PostgresFact]
+    public async Task AppleSignInSucceedsAndStoresAuthorizationCodeWhenTokenExchangeThrowsNetworkError()
+    {
+        if (!fixture.Available)
+            return;
+
+        var connection = await fixture.CreateCopyAsync("apple_exchange_error");
+        try
+        {
+            using var keys = new SyntheticAppleKey();
+            await using var db = CreateDbContext(connection);
+            var revoker = new FaultingAppleTokenRevoker(() => throw new HttpRequestException("Network is unreachable"));
+            var authentication = CreateAuthentication(db, keys, revoker);
+            var (challengeId, nonce) = await authentication.CreateAppleNonceAsync(default);
+            var token = keys.CreateToken(nonce, "network.fallback@example.invalid", "synthetic-apple-subject-3");
+
+            var result = await authentication.LoginWithAppleAsync(
+                new AppleLoginRequest(token, nonce, challengeId, "synthetic-apple-auth-code"), default);
+
+            Assert.Equal(SessionOperationStatus.Succeeded, result.Status);
+            Assert.NotNull(result.Tokens);
+            await using var verification = CreateDbContext(connection);
+            var user = await verification.Users.AsNoTracking()
+                .SingleAsync(candidate => candidate.Id == result.Tokens!.UserId);
+            Assert.Equal($"{AppleAccountTokenRevoker.StoredAuthCodePrefix}synthetic-apple-auth-code", user.PasswordHash);
+        }
+        finally
+        {
+            await fixture.DropAsync(connection);
+        }
+    }
+
+    [PostgresFact]
+    public async Task AppleSignInBoundsTokenExchangeTimeoutAndFallsBackToStoredAuthorizationCode()
+    {
+        if (!fixture.Available)
+            return;
+
+        var connection = await fixture.CreateCopyAsync("apple_exchange_timeout");
+        try
+        {
+            using var keys = new SyntheticAppleKey();
+            await using var db = CreateDbContext(connection);
+            var revoker = new FaultingAppleTokenRevoker(async ct =>
+            {
+                await Task.Delay(TimeSpan.FromSeconds(30), ct);
+                return "unexpected-refresh-token";
+            });
+            var authentication = CreateAuthentication(db, keys, revoker);
+            var (challengeId, nonce) = await authentication.CreateAppleNonceAsync(default);
+            var token = keys.CreateToken(nonce, "timeout.fallback@example.invalid", "synthetic-apple-subject-4");
+
+            var startedAt = DateTimeOffset.UtcNow;
+            var result = await authentication.LoginWithAppleAsync(
+                new AppleLoginRequest(token, nonce, challengeId, "synthetic-timeout-auth-code"), default);
+            var elapsed = DateTimeOffset.UtcNow - startedAt;
+
+            Assert.Equal(SessionOperationStatus.Succeeded, result.Status);
+            Assert.NotNull(result.Tokens);
+            Assert.True(elapsed < TimeSpan.FromSeconds(10), $"Expected bounded token exchange timeout, elapsed {elapsed}.");
+            await using var verification = CreateDbContext(connection);
+            var user = await verification.Users.AsNoTracking()
+                .SingleAsync(candidate => candidate.Id == result.Tokens!.UserId);
+            Assert.Equal($"{AppleAccountTokenRevoker.StoredAuthCodePrefix}synthetic-timeout-auth-code", user.PasswordHash);
+        }
+        finally
+        {
+            await fixture.DropAsync(connection);
+        }
+    }
+
     private static PostgresDbContext CreateDbContext(string connection)
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(connection).Options;
@@ -110,7 +184,8 @@ public sealed class AppleSignInPostgresTests(DisposableDatabaseFixture fixture)
 
     private static PostgresAccountAuthenticationUseCase CreateAuthentication(
         PostgresDbContext db,
-        SyntheticAppleKey keys) =>
+        SyntheticAppleKey keys,
+        IAppleAccountTokenRevoker? appleTokenRevoker = null) =>
         new(db,
             new Pbkdf2RegistrationPasswordHasher(),
             TimeProvider.System,
@@ -121,7 +196,28 @@ public sealed class AppleSignInPostgresTests(DisposableDatabaseFixture fixture)
             new Dictionary<string, string>(StringComparer.Ordinal)
             {
                 [AppleKeyId] = keys.PublicKeyPem
-            });
+            },
+            appleTokenRevoker);
+
+    private sealed class FaultingAppleTokenRevoker(Func<CancellationToken, Task<string?>> exchangeAsync)
+        : IAppleAccountTokenRevoker
+    {
+        public FaultingAppleTokenRevoker(Func<string?> syncAction)
+            : this(_ => Task.FromResult(syncAction()))
+        {
+        }
+
+        public Task<string?> ExchangeAuthorizationCodeForRefreshTokenAsync(
+            string? authorizationCode,
+            CancellationToken cancellationToken = default) =>
+            exchangeAsync(cancellationToken);
+
+        public Task<AppleTokenRevocationResult> RevokeAccountTokenAsync(
+            Guid userId,
+            string? authorizationCode = null,
+            CancellationToken cancellationToken = default) =>
+            Task.FromResult(new AppleTokenRevocationResult(true, true));
+    }
 
     private sealed class SyntheticAppleKey : IDisposable
     {

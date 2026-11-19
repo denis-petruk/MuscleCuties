@@ -22,6 +22,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
     private const int MaximumLoginIdentifierCharacters = 320;
     private const int MaximumGeneratedUsernameCharacters = 32;
     private const int GeneratedUsernameSuffixCharacters = 8;
+    private static readonly TimeSpan AppleTokenExchangeTimeout = TimeSpan.FromSeconds(3);
     private readonly PostgresDbContext dbContext;
     private readonly IRegistrationPasswordHasher passwordHasher;
     private readonly PostgresPasswordLoginLimiter passwordLoginLimiter;
@@ -133,9 +134,20 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         string? appleRefreshToken = null;
         if (!string.IsNullOrWhiteSpace(request.AuthorizationCode) && appleTokenRevoker is not null)
         {
-            appleRefreshToken = await appleTokenRevoker
-                .ExchangeAuthorizationCodeForRefreshTokenAsync(request.AuthorizationCode, cancellationToken)
-                .ConfigureAwait(false);
+            using var exchangeCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            exchangeCts.CancelAfter(AppleTokenExchangeTimeout);
+            try
+            {
+                appleRefreshToken = await appleTokenRevoker
+                    .ExchangeAuthorizationCodeForRefreshTokenAsync(request.AuthorizationCode, exchangeCts.Token)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                logger?.LogWarning(
+                    "Apple authorization code exchange skipped during sign-in ({ExceptionType}); falling back to stored authorization code.",
+                    ex.GetType().Name);
+            }
         }
 
         return await dbContext.Database.CreateExecutionStrategy()

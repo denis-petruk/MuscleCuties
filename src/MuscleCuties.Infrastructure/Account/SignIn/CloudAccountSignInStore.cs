@@ -17,7 +17,12 @@ public sealed class CloudAccountSignInStore(
             return new SignedInAccount(true);
         }
 
-        return null;
+        if (result.Status == BackendApiStatus.Unauthorized)
+        {
+            return null;
+        }
+
+        throw new HttpRequestException($"Password sign-in failed with status {result.Status}.");
     }
 
     public async Task<PlatformAccountOutcome> SignInWithPlatformAsync(
@@ -39,12 +44,14 @@ public sealed class CloudAccountSignInStore(
         if (response.Status == BackendApiStatus.Success && response.Data is not null)
             return new PlatformAccountOutcome(true, true, false);
 
-        return new PlatformAccountOutcome(
-            false,
-            false,
-            false,
-            response.Status == BackendApiStatus.ValidationFailed
-                ? "Apple sign in could not be verified. Please try again."
-                : "Apple sign in could not finish. Sign in with email if you already have an account.");
+        var message = response.Status switch
+        {
+            BackendApiStatus.ValidationFailed => "Apple sign in could not be verified. Please try again.",
+            BackendApiStatus.OfflineRejected or BackendApiStatus.Timeout or BackendApiStatus.ServerError or BackendApiStatus.RateLimited
+                => "Apple sign in could not finish. Check your connection and try again.",
+            _ => "Apple sign in could not finish. Sign in with email if you already have an account."
+        };
+
+        return new PlatformAccountOutcome(false, false, false, message);
     }
 }
