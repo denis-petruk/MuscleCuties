@@ -6,8 +6,6 @@ public sealed record StartEmailChallengeRequest(
     MuscleCuties.Contracts.Account.RegistrationPrivacyConsent? PrivacyConsent = null);
 public sealed record ResendEmailChallengeRequest(string ChallengeId, string Email, int Purpose);
 public sealed record VerifyEmailChallengeRequest(string ChallengeId, string Email, string Code, int Purpose);
-public sealed record EmailChallengeStartResult(bool Succeeded, string? ChallengeId, int ResendCooldownSeconds, int ExpiresInSeconds);
-public sealed record EmailChallengeVerificationResult(bool Succeeded, string? VerificationToken, int ReceiptExpiresInSeconds);
 
 public enum EmailChallengeStatus
 {

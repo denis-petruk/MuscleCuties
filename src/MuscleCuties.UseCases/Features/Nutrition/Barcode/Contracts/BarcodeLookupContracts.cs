@@ -12,22 +12,6 @@ public enum BarcodeSymbologyDto
     Code128 = 5
 }
 
-public enum BarcodeCaptureOutcomeDto
-{
-    Decoded = 0,
-    Cancelled = 1,
-    PermissionDenied = 2,
-    CameraUnavailable = 3,
-    UnsupportedSymbology = 4
-}
-
-public sealed record BarcodeCameraCaptureResultDto(
-    BarcodeCaptureOutcomeDto Outcome,
-    string? BarcodeText = null,
-    BarcodeSymbologyDto Symbology = BarcodeSymbologyDto.Auto,
-    string? ErrorMessage = null
-);
-
 public sealed record BarcodeLookupRequest(
     string BarcodeText,
     BarcodeSymbologyDto Symbology = BarcodeSymbologyDto.Auto

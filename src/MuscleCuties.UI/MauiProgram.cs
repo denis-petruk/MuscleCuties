@@ -333,10 +333,6 @@ public static class MauiProgram
             sp.GetRequiredService<IProfileFeedbackUseCase>(),
             () => NavigateToAsync("//ProfilePage")));
 
-        services.AddTransient<InjuryLogViewModel>(sp => new InjuryLogViewModel(
-            sp.GetRequiredService<IWorkoutInjuryUseCase>(),
-            () => NavigateToAsync("..")));
-
         services.AddSingleton<IAppPreloadService, AppPreloadCoordinator>();
     }
 

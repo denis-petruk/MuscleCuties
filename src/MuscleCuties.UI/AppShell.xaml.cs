@@ -217,33 +217,6 @@ public partial class AppShell : Shell
         _authVerified = true;
     }
 
-    internal void SelectRootBeforeWindowAttachment(string route)
-    {
-        if (route != nameof(LoginPage))
-            MarkAuthenticationVerified();
-
-        var root = route == nameof(DashboardPage)
-            ? MainTab
-            : Items.FirstOrDefault(item => item.Items.Any(section =>
-                section.Items.Any(content => content.Route == route)));
-        if (root is null)
-            throw new InvalidOperationException($"Unknown app root: {route}.");
-
-        // A newly mounted Shell must not contain the onboarding and tab roots
-        // together: iOS can enter a native layout loop during their transition.
-        foreach (var item in Items.ToArray())
-            if (!ReferenceEquals(item, root))
-                Items.Remove(item);
-
-        if (ReferenceEquals(root, MainTab))
-        {
-            MainTab.CurrentItem = TodayTab;
-            TodayTab.CurrentItem = DashboardContent;
-        }
-
-        CurrentItem = root;
-    }
-
     private async Task VerifyAuthenticatedNavigationAsync(
         ShellNavigatingEventArgs args,
         ShellNavigatingDeferral deferral,

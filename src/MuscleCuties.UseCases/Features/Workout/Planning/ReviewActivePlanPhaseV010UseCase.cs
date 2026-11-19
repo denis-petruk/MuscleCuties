@@ -40,8 +40,6 @@ public interface IActivePlanPhaseAdjustmentSourceV010
         CancellationToken cancellationToken);
 }
 
-public sealed record CreatePhaseAdjustmentProposalRequestV010(string? TimeZoneId);
-
 public sealed record ActivePlanPhaseAdjustmentPreviewV010(
     PhaseReviewGateResult Gate,
     PhaseAdjustmentPreview Adjustment);
@@ -77,16 +75,6 @@ public sealed record CreatePhaseAdjustmentProposalResultV010(
     string GateStatus,
     PhaseAdjustmentPreviewDtoV010 Preview,
     bool IsPersisted);
-
-public sealed record PhaseAdjustmentChoiceSelectionDtoV010(
-    Guid SessionId,
-    string Choice,
-    string? ExistingTemplateId);
-
-public sealed record DecidePhaseAdjustmentProposalRequestV010(
-    Guid ProposalId,
-    bool ApplyChanges,
-    IReadOnlyList<PhaseAdjustmentChoiceSelectionDtoV010>? Selections);
 
 public sealed record DecidePhaseAdjustmentProposalResultV010(
     string Status,
@@ -207,35 +195,6 @@ public sealed class CreatePhaseAdjustmentProposalV010UseCase(
             reviewSessions.Where(session => optionsBySession.Any(item => item.SessionId == session.SessionId))
                 .ToDictionary(session => session.SessionId, session => session.LocalDate),
             preview.RequiresStrengthDurationRecalculation);
-    }
-}
-
-public sealed class DecidePhaseAdjustmentProposalV010UseCase(IPhaseAdjustmentProposalStoreV010 store)
-{
-    public Task<DecidePhaseAdjustmentProposalResultV010> ExecuteAsync(Guid userId,
-        DecidePhaseAdjustmentProposalRequestV010? request,
-        CancellationToken cancellationToken = default)
-    {
-        if (userId == Guid.Empty || request is null || request.ProposalId == Guid.Empty ||
-            request.Selections is null)
-            return Task.FromResult(new DecidePhaseAdjustmentProposalResultV010(
-                "InvalidInput", false, "PhaseAdjustmentRequestInvalid"));
-
-        var selections = new List<PhaseAdjustmentChoiceSelection>(request.Selections.Count);
-        foreach (var selection in request.Selections)
-        {
-            if (selection is null || selection.SessionId == Guid.Empty ||
-                !Enum.TryParse<PhaseAdjustmentChoice>(selection.Choice, true, out var choice) ||
-                !Enum.IsDefined(choice))
-                return Task.FromResult(new DecidePhaseAdjustmentProposalResultV010(
-                    "InvalidInput", false, "PhaseAdjustmentChoiceInvalid"));
-            selections.Add(new PhaseAdjustmentChoiceSelection(selection.SessionId, choice,
-                selection.ExistingTemplateId));
-        }
-
-        return store.DecideAsync(userId, new PhaseAdjustmentProposalCommandV010(
-            request.ProposalId, request.ApplyChanges, Array.AsReadOnly(selections.ToArray())),
-            cancellationToken);
     }
 }
 

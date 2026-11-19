@@ -66,16 +66,3 @@ public sealed record PlanningVolumeBudget(int Id, int DaysPerWeek, int MuscleGro
 public sealed record PlanningGoalTierWeight(int Id, UserGoal Goal, int MuscleGroupId, PriorityTier Tier);
 
 public sealed record PlanningExercisePreference(Guid Id, Guid UserId, int OriginalExerciseId, int PreferredExerciseId);
-
-/// <summary>A persistence-neutral exercise substitution used by the shared planner.</summary>
-public sealed record PlanningExerciseSubstitution(int OriginalExerciseId, int PreferredExerciseId);
-
-/// <summary>Complete reference-data snapshot assembled by a persistence adapter for workout planning.</summary>
-public sealed record WorkoutPlanningSnapshot(
-    IReadOnlyList<PlanningExercise> Exercises,
-    IReadOnlyList<PlanningExerciseDefinition> ExerciseDefinitions,
-    IReadOnlyList<PlanningArchetype> Archetypes,
-    IReadOnlyList<PlanningWeekTemplate> WeekTemplates,
-    IReadOnlyList<PlanningVolumeBudget> VolumeBudgets,
-    IReadOnlyList<PlanningGoalTierWeight> GoalTierWeights,
-    IReadOnlyList<PlanningExerciseSubstitution> ExerciseSubstitutions);

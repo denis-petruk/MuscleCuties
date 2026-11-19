@@ -1,20 +1,15 @@
 # MuscleCuties presentation specification
 
-App-wide design and interaction authority, revised 2026-11-02 using the Impeccable critique, native iOS guidance, existing source and the owner's four references. The owner selected **more warm and wellness-focused**, preserving the existing soft palette. [DESIGN.md](../DESIGN.md) is the agent entry point; it does not define a second token system.
-
-This revision establishes conventions and an implementation sequence. It does not claim that current screens implement every convention. The [source audit](design/AUDIT_2026-11-02.md) records gaps. No UI build, execution or screenshots were performed in this pass.
-
-The owner approved the [Soft Minimal proposal](design/SOFT_MINIMAL_PROPOSAL.md) on 2026-11-02. It records the selected visual values; [DESIGN.md](../DESIGN.md) is the design entry point, and the [implementation evidence](design/SOFT_MINIMAL_IMPLEMENTATION_EVIDENCE.md) records the source changes and resolved contrast findings. This presentation specification remains the app-wide contract for interaction, accessibility, component, and implementation conventions.
+App-wide design and interaction authority for the **warm, wellness-focused** Soft Minimal palette. [DESIGN.md](../DESIGN.md) is the agent entry point; it does not define a second token system. This presentation specification owns interaction, accessibility, component, and implementation conventions.
 
 ## 1. Authority and source ownership
 
 | Concern | Owning source | Contract |
 | --- | --- | --- |
-| Operating directive and context routing | [AGENTS.md](../AGENTS.md) | Compact always-on rules and on-demand references. |
-| Architecture and data boundaries | [Architecture](ARCHITECTURE.md) | Verified project map and API, client, and persistence boundaries. |
+| Operating directive and context routing | [AGENTS.md](../AGENTS.md) | Compact always-on rules, architecture boundaries, and verification rules. |
+| Build, test, and repository layout | [README.md](../README.md) | Verified project map and build/test commands. |
 | Health and sensitive-data constraints | [Safety](SAFETY.md) | Fail-safe behavior, privacy, and security. |
-| Approved product flows | [Product workflows](PRODUCT_WORKFLOWS.md) | Exact approved workout-planning rules. |
-| Risk-based evidence and gate closure | [Verification gates](VERIFICATION_GATES.md) | G0–G9 definitions and evidence states. |
+| Approved product flows | [Product workflows](PRODUCT_WORKFLOWS.md) | Exact approved workout-planning and nutrition rules. |
 | Design discovery and direction | [DESIGN.md](../DESIGN.md) | Entry point linking to this specification. |
 | App-wide UX/component conventions | This specification | Normative behavior and patterns, distinguished from implementation evidence. |
 | Palette and initialization dependencies | [Colors.xaml](../src/MuscleCuties.UI/Resources/Styles/Colors.xaml) | Sole executable color authority and light/dark pairs; some shared font/geometry resources already live here for initialization order. |
@@ -24,8 +19,7 @@ The owner approved the [Soft Minimal proposal](design/SOFT_MINIMAL_PROPOSAL.md) 
 | Font/icon registration | [MauiProgram.cs](../src/MuscleCuties.UI/MauiProgram.cs) | Agree with resource aliases and source contracts. |
 | Reusable presentation/behavior | [Controls/Shared](../src/MuscleCuties.UI/Controls/Shared), feature controls | Shared header, sheet, metric, field, status and row behavior; no business policy. |
 | Visible/accessible language | [Services/Localization](../src/MuscleCuties.UI/Services/Localization) | Existing EN/RU catalogs, including descriptions, hints and announcements. |
-| Reference sources | [Reference manifest](design/REFERENCES.md) | Original attachments and the decisions they illustrate. |
-| Findings and migration evidence | [Dated audit](design/AUDIT_2026-11-02.md), [STATUS.md](../STATUS.md), [ROADMAP.md](../ROADMAP.md) | Evidence/progress, not alternate authorities. |
+| Progress and verification state | [STATUS.md](../STATUS.md), [ROADMAP.md](../ROADMAP.md) | Current verification evidence and remaining work, not alternate authorities. |
 | Engineering formatting/compiler rules | [.editorconfig](../.editorconfig), [Directory.Build.props](../Directory.Build.props) | Keep code formatting separate from product design. |
 
 **Precedence:** owner instructions → semantic contracts here → executable resource values for implementation. If documentation and source disagree, record and reconcile deliberately; never replace palette values to match stale prose. Avoid duplicating all tokens in JSON, YAML, C# constants or design-tool exports. A future design library must consume a generated export or explicitly reconcile with these sources.
@@ -205,7 +199,7 @@ Existing checks live in [UiCleanlinessAndReachabilityTests.cs](../tests/MuscleCu
 
 ## 7. Rollout and acceptance
 
-The [dated audit](design/AUDIT_2026-11-02.md) records locations and rollout evidence. Sequence:
+Sequence:
 
 1. Repair dark selected-date treatment, reduced motion, sheet focus lifecycle and localized selection hints.
 2. Consolidate cards/callers/source assertions to two styles and page shells to one. Align shared header/sheet/row/metric/choice behavior and semantic icons without changing domain behavior. Passing today's four-card assertion is not evidence of the new budget's completion.

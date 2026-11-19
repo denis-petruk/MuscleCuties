@@ -4,7 +4,6 @@ public sealed record PasswordLoginRequest(string EmailOrUsername, string Passwor
 public sealed record AppleLoginRequest(string IdentityToken, string Nonce, string NonceChallengeId, string? AuthorizationCode = null);
 public sealed record RefreshSessionRequest(string RefreshToken);
 public sealed record ResetPasswordRequest(string Email, string ChallengeId, string VerificationToken, string NewPassword);
-public sealed record ChangePasswordBody(string CurrentPassword, string NewPassword);
 public sealed record RevokeSessionRequest(Guid UserId, string RefreshToken, string? AccessTokenId, DateTimeOffset? AccessTokenExpiresAtUtc);
 public sealed record SessionTokens(
     Guid UserId,

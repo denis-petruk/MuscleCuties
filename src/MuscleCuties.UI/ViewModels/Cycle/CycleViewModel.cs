@@ -112,7 +112,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         ReviewEarlierPhaseRecordsCommand = new RelayCommand(ReviewEarlierPhaseRecords);
         CloseCycleWarningPopupCommand = new RelayCommand(CloseCycleWarningPopup);
         UseCycleWarningSuggestedPhaseCommand = new AsyncRelayCommand(UseCycleWarningSuggestedPhaseAsync);
-        OpenPhaseDetailsCommand = new AsyncRelayCommand<PhaseItem>(OpenPhaseDetailsAsync);
         Phases = BuildPhaseItems(UseDarkTheme);
         InitializeCalendarCommands();
         InitializeQuickLogCommands();
@@ -164,7 +163,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     public RelayCommand ReviewEarlierPhaseRecordsCommand { get; }
     public RelayCommand CloseCycleWarningPopupCommand { get; }
     public AsyncRelayCommand UseCycleWarningSuggestedPhaseCommand { get; }
-    public AsyncRelayCommand<PhaseItem> OpenPhaseDetailsCommand { get; }
     public AsyncRelayCommand OpenCycleSettingsCommand { get; }
 
     private const string PhaseOrderConflictMessage =
@@ -462,14 +460,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         PhaseEditOptions = BuildPhaseOptions(day.IsNeutral ? null : day.Phase, UseDarkTheme);
         IsDatePhaseModalVisible = true;
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
-    }
-
-    private async Task OpenPhaseDetailsAsync(PhaseItem? phase)
-    {
-        if (phase is null)
-            return;
-
-        await _openPhaseDetailsAsync(phase.Phase);
     }
 
     private void CloseDatePhaseModal() => CloseDatePhaseModal(restoreSelection: true);
