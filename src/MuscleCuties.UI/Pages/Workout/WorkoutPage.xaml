@@ -83,7 +83,7 @@
         <CollectionView ItemsSource="{Binding Workouts}" SelectionMode="None">
             <CollectionView.Header>
                 <VerticalStackLayout
-                    Padding="{DynamicResource PresentationPageContentPadding}"
+                    Padding="{StaticResource UiInsets20_8_20_16}"
                     Spacing="{StaticResource UiSpaceControl}"
                     HorizontalOptions="Fill"
                     MaximumWidthRequest="{StaticResource UiDimension640}">
@@ -271,48 +271,53 @@
                                                 Command="{Binding SelectScheduleDayCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutViewModel}}, x:DataType=vm:WorkoutViewModel}"
                                                 CommandParameter="{Binding .}" />
                                         </Border.GestureRecognizers>
-                                        <VerticalStackLayout Spacing="{StaticResource UiSpacing2}"
-                                                             HorizontalOptions="Center"
-                                                             VerticalOptions="Center">
-                                        <Label Text="{Binding DayLabel, Converter={StaticResource LocalizedStringConverter}}"
-                                               Style="{StaticResource DayStripDayName}"
-                                               LineBreakMode="WordWrap" />
-                                        <Label Text="{Binding DayNumberText}"
-                                               Style="{StaticResource DayStripDayName}"
-                                               LineBreakMode="WordWrap" />
-                                        <BoxView WidthRequest="{StaticResource UiDimension4}"
-                                                 HeightRequest="{StaticResource UiDimension4}"
-                                                 CornerRadius="{StaticResource UiCornerRadius2}"
-                                                 HorizontalOptions="Center"
-                                                 Style="{StaticResource DayStripTodayDot}"
-                                                 IsVisible="{Binding IsToday}" />
-                                        <!-- Compact chips wrap instead of clipping: a day can carry
-                                             several sessions, and the column must stay readable at narrow
-                                             widths and large text sizes. -->
-                                        <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Sessions}"
-                                                               Spacing="{StaticResource UiSpacing2}"
-                                                               HorizontalOptions="Center">
-                                            <BindableLayout.ItemTemplate>
-                                                <DataTemplate x:DataType="workoutModels:ScheduleSessionChip">
-                                                    <BoxView WidthRequest="{StaticResource UiDimension6}"
-                                                             HeightRequest="{StaticResource UiDimension6}"
-                                                             CornerRadius="{StaticResource UiCornerRadius3}"
-                                                             Color="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                                                             InputTransparent="True"
-                                                             VerticalOptions="Center">
-                                                        <BoxView.Triggers>
-                                                            <DataTrigger TargetType="BoxView"
-                                                                         Binding="{Binding IsSelected, Source={RelativeSource AncestorType={x:Type sharedControls:SelectionCell}}}"
-                                                                         Value="True">
-                                                                <Setter Property="Color" Value="{StaticResource ContrastInk}" />
-                                                            </DataTrigger>
-                                                        </BoxView.Triggers>
-                                                    </BoxView>
-                                                </DataTemplate>
-                                            </BindableLayout.ItemTemplate>
-                                        </HorizontalStackLayout>
-                                        </VerticalStackLayout>
-                                </sharedControls:SelectionCell>
+                                        <Grid RowDefinitions="Auto,Auto,Auto"
+                                              RowSpacing="{StaticResource UiSpacing2}"
+                                              HorizontalOptions="Center"
+                                              VerticalOptions="Center">
+                                            <Label Grid.Row="0"
+                                                   Text="{Binding DayLabel, Converter={StaticResource LocalizedStringConverter}}"
+                                                   Style="{StaticResource DayStripDayName}"
+                                                   LineBreakMode="WordWrap" />
+                                            <Label Grid.Row="1"
+                                                   Text="{Binding DayNumberText}"
+                                                   Style="{StaticResource DayStripDayNumber}"
+                                                   LineBreakMode="WordWrap" />
+                                            <HorizontalStackLayout Grid.Row="2"
+                                                                   HeightRequest="{StaticResource UiDimension10}"
+                                                                   Spacing="{StaticResource UiSpacing2}"
+                                                                   HorizontalOptions="Center"
+                                                                   VerticalOptions="Center">
+                                                <BoxView WidthRequest="{StaticResource UiDimension4}"
+                                                         HeightRequest="{StaticResource UiDimension4}"
+                                                         CornerRadius="{StaticResource UiCornerRadius2}"
+                                                         VerticalOptions="Center"
+                                                         Style="{StaticResource DayStripTodayDot}"
+                                                         IsVisible="{Binding IsToday}" />
+                                                <HorizontalStackLayout BindableLayout.ItemsSource="{Binding Sessions}"
+                                                                       Spacing="{StaticResource UiSpacing2}"
+                                                                       VerticalOptions="Center">
+                                                    <BindableLayout.ItemTemplate>
+                                                        <DataTemplate x:DataType="workoutModels:ScheduleSessionChip">
+                                                            <Ellipse WidthRequest="{StaticResource UiDimension6}"
+                                                                     HeightRequest="{StaticResource UiDimension6}"
+                                                                     Fill="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                                                                     InputTransparent="True"
+                                                                     VerticalOptions="Center">
+                                                                <Ellipse.Triggers>
+                                                                    <DataTrigger TargetType="Ellipse"
+                                                                                 Binding="{Binding IsSelected, Source={RelativeSource AncestorType={x:Type sharedControls:SelectionCell}}}"
+                                                                                 Value="True">
+                                                                        <Setter Property="Fill" Value="{StaticResource ContrastInk}" />
+                                                                    </DataTrigger>
+                                                                </Ellipse.Triggers>
+                                                            </Ellipse>
+                                                        </DataTemplate>
+                                                    </BindableLayout.ItemTemplate>
+                                                </HorizontalStackLayout>
+                                            </HorizontalStackLayout>
+                                        </Grid>
+                                    </sharedControls:SelectionCell>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </FlexLayout>
@@ -585,7 +590,7 @@
 
                         <VerticalStackLayout Grid.Row="2" Spacing="{StaticResource UiSpaceTight}"
                                              Padding="{DynamicResource PresentationModalPagePadding}">
-                            <Label LineBreakMode="WordWrap" Text="{Binding ReschedulingWorkoutTitle}"
+                            <Label LineBreakMode="WordWrap" Text="{Binding ReschedulingWorkoutTitle, Converter={StaticResource LocalizedStringConverter}}"
                                    Style="{StaticResource BodyStrong}" />
                             <Label LineBreakMode="WordWrap"
                                    Text="{Binding RescheduleStatusMessage, Converter={StaticResource LocalizedStringConverter}}"
@@ -610,7 +615,7 @@
                                                         CommandParameter="{Binding .}" />
                                                 </Border.GestureRecognizers>
                                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                                                    <Label LineBreakMode="WordWrap" Text="{Binding DisplayText}"
+                                                    <Label LineBreakMode="WordWrap" Text="{Binding DisplayText, Converter={StaticResource LocalizedStringConverter}}"
                                                            Style="{StaticResource BodyStrong}" VerticalOptions="Center" />
                                                     <BoxView Grid.Column="1"
                                                              WidthRequest="{StaticResource UiDimension12}"

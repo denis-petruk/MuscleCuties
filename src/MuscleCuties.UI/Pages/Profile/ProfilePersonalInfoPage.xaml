@@ -179,7 +179,8 @@
 
                         <VerticalStackLayout IsVisible="{Binding IsMeasurementHistoryOpen}"
                                              Spacing="{StaticResource UiSpaceControl}">
-                            <ActivityIndicator IsRunning="{Binding IsMeasurementBusy}"
+                            <ActivityIndicator Style="{StaticResource StateBusyInline}"
+                                               IsRunning="{Binding IsMeasurementBusy}"
                                                IsVisible="{Binding IsMeasurementBusy}"
                                                SemanticProperties.Description="{loc:LocalizedText Profile_Measurement_Working}" />
 

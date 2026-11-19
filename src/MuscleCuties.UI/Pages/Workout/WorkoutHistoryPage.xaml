@@ -18,7 +18,9 @@
     <Grid RowDefinitions="Auto,*" ColumnDefinitions="*">
 
         <!-- Top Navigation Bar -->
-        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}">
+        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}"
+              MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
+              HorizontalOptions="Fill">
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Workout_History_ArchiveTitle}"
                 BackCommand="{Binding NavigateBackCommand}">
@@ -122,7 +124,7 @@
                                     <sharedControls:SelectionCell
                                         Style="{StaticResource ChoiceCell}"
                                         IsSelected="{Binding IsSelected}"
-                                        SemanticProperties.Description="{Binding DisplayName}">
+                                        SemanticProperties.Description="{Binding DisplayName, Converter={StaticResource LocalizedStringConverter}}">
                                         <Border.GestureRecognizers>
                                             <TapGestureRecognizer
                                                 Command="{Binding SelectMonthCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutHistoryViewModel}}, x:DataType=vm:WorkoutHistoryViewModel}"
@@ -288,7 +290,7 @@
                            Style="{StaticResource MutedCentered}" IsVisible="{Binding IsEndReached}" />
                     <Button Grid.Row="3" Text="{loc:LocalizedText Workout_History_RetryLoadingButton}" Command="{Binding LoadNextPageCommand}"
                             IsVisible="{Binding IsError}" Style="{StaticResource ButtonSecondary}" />
-                    <Grid Grid.Row="4" HeightRequest="{StaticResource UiDimension20}" />
+                    <Grid Grid.Row="4" HeightRequest="{StaticResource UiDimension96}" />
                 </Grid>
             </CollectionView.Footer>
         </CollectionView>

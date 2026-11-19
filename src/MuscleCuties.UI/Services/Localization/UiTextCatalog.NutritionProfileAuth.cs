@@ -262,6 +262,7 @@ public static partial class UiTextCatalog
         English["Injury_LogContent_RefreshPage"] = "Refresh Today";
         English["Injury_LogContent_SaveInjury"] = "Save injury";
         English["Injury_LogContent_Show"] = "Show";
+        English["Injury_LogContent_Hide"] = "Hide";
         English["Injury_LogContent_SinceValue"] = "Since {0}";
         English["Injury_LogContent_StartedOn"] = "Started on";
         English["Injury_LogContent_StatusRequired"] = "Status (required)";

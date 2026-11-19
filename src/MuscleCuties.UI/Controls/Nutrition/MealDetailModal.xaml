@@ -242,13 +242,13 @@
                                             </Border>
                                             <Label
                                                 Grid.Column="1"
-                                                Text="{Binding Name}"
+                                                Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
                                                 Style="{StaticResource CardTitle}"
                                                 LineBreakMode="WordWrap" />
                                             <Label
                                                 Grid.Row="1"
                                                 Grid.Column="1"
-                                                Text="{Binding Description}"
+                                                Text="{Binding Description, Converter={StaticResource LocalizedStringConverter}}"
                                                 Style="{StaticResource MutedMedium}"
                                                 LineBreakMode="WordWrap" />
                                         </Grid>

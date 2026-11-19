@@ -61,7 +61,7 @@
 
                 <!-- Phase Label & Last Logged Text -->
                 <VerticalStackLayout FlexLayout.Grow="1" FlexLayout.Basis="Auto"
-                                     Margin="{StaticResource UiInsets0_0_8_0}"
+                                     Margin="{StaticResource UiInsets12_0}"
                                      Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
                     <Label
                         Text="{Binding LastPhaseLogText, Converter={StaticResource LocalizedStringConverter}}"

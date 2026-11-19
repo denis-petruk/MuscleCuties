@@ -81,34 +81,19 @@
                             LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
 
-                    <!-- Pill on the right: REST DAY or TRAINING -->
+                    <!-- Pill on the right: TRAINING -->
                     <Border
                         IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
+                        BackgroundColor="{Binding WorkoutActivityBackground}"
                         StrokeShape="{StaticResource UiRoundRectangleRadius999}"
                         StrokeThickness="{StaticResource UiStrokeWidth0}"
                         Padding="{StaticResource UiInsets10_4}"
                         VerticalOptions="Center">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="True">
-                                <Setter Property="BackgroundColor"
-                                        Value="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}" />
-                            </DataTrigger>
-                            <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="False">
-                                <Setter Property="BackgroundColor"
-                                        Value="{Binding WorkoutActivityBackground}" />
-                            </DataTrigger>
-                        </Border.Triggers>
-
-                        <Border>
-                            <Grid>
-                                <Label
-                                    Text="{loc:LocalizedText Dashboard_Workout_PillTraining}"
-                                    IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
-                                    TextColor="{Binding WorkoutActivityTextColor}"
-                                    Style="{StaticResource CaptionLabel}"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
+                        <Label
+                            Text="{loc:LocalizedText Dashboard_Workout_PillTraining}"
+                            TextColor="{Binding WorkoutActivityTextColor}"
+                            Style="{StaticResource CaptionLabel}"
+                            VerticalOptions="Center" />
                     </Border>
                 </FlexLayout>
 
@@ -116,6 +101,7 @@
                 <Label
                     Grid.Row="1"
                     Grid.Column="1"
+                    IsVisible="{Binding ShowWorkoutSubtitle}"
                     Text="{Binding WorkoutSubtitle, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource MutedLabel}"
                     LineBreakMode="WordWrap" />

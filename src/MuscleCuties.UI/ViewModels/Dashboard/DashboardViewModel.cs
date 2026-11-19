@@ -345,6 +345,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         string.Equals(SessionProgressText, "In Progress", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(WorkoutSubtitle, "In Progress", StringComparison.OrdinalIgnoreCase);
 
+    // Suppress redundant status-only subtitles already announced by WorkoutBadgeText ("Today · In Progress" / "Workout completed").
+    public bool ShowWorkoutSubtitle =>
+        !string.IsNullOrWhiteSpace(WorkoutSubtitle) &&
+        !(IsWorkoutInProgress && string.Equals(WorkoutSubtitle.Trim(), "In Progress", StringComparison.OrdinalIgnoreCase)) &&
+        !(IsTodaysWorkoutCompleted && string.Equals(WorkoutSubtitle.Trim(), "Completed Today", StringComparison.OrdinalIgnoreCase));
+
     // One label for the Today primary action, so a finished or running session is never offered as "Start".
     public string WorkoutActionText => IsRestDay
         ? UiTextCatalog.Get("Dashboard_Workout_ViewRestDay")
@@ -810,6 +816,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         // The session state arrives after the badge is first evaluated.
         OnPropertyChanged(nameof(IsWorkoutInProgress));
         OnPropertyChanged(nameof(WorkoutBadgeText));
+        OnPropertyChanged(nameof(ShowWorkoutSubtitle));
     }
 
 
@@ -931,6 +938,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         if (_isBulkLoading) return;
         OnPropertyChanged(nameof(IsWorkoutInProgress));
         OnPropertyChanged(nameof(WorkoutBadgeText));
+        OnPropertyChanged(nameof(ShowWorkoutSubtitle));
     }
 
     partial void OnSessionProgressTextChanged(string value)
@@ -940,6 +948,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         if (_isBulkLoading) return;
         OnPropertyChanged(nameof(WorkoutBadgeText));
         OnPropertyChanged(nameof(IsTodaysWorkoutCompleted));
+        OnPropertyChanged(nameof(ShowWorkoutSubtitle));
     }
 
     partial void OnWorkoutStreakDaysChanged(int value)

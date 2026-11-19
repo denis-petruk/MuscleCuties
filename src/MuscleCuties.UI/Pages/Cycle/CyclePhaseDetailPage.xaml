@@ -14,49 +14,40 @@
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}"
     >
 
-    <ScrollView>
-        <VerticalStackLayout
-            Padding="{DynamicResource PresentationPageContentPadding}"
-            Spacing="{StaticResource UiSpaceControl}"
-            HorizontalOptions="Fill"
-            MaximumWidthRequest="{StaticResource UiDimension640}">
-
+    <Grid RowDefinitions="Auto,*">
+        <Grid Grid.Row="0"
+              Padding="{DynamicResource PresentationPageHeaderPadding}"
+              MaximumWidthRequest="{StaticResource UiDimension640}"
+              HorizontalOptions="Fill">
             <sharedControls:PageHeader
                 Title="{Binding PhaseName, Converter={StaticResource LocalizedStringConverter}}"
                 TitleMaxFontSize="{StaticResource PresentationAccessibilitySectionTitleMaxFontSize}"
                 Subtitle="{Binding PhaseWindow, Converter={StaticResource LocalizedStringConverter}}"
                 BackCommand="{Binding BackCommand}" />
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout
+                Padding="{DynamicResource PresentationPageContentPadding}"
+                Spacing="{StaticResource UiSpaceControl}"
+                HorizontalOptions="Fill"
+                MaximumWidthRequest="{StaticResource UiDimension640}">
 
             <!-- Hero phase card -->
             <Border
                 Style="{StaticResource CardPrimary}">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
-
-                    <Grid Grid.Row="0" ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
-                        <Image
-                            Source="{Binding PhaseIconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                            WidthRequest="{StaticResource UiDimension16}"
-                            HeightRequest="{StaticResource UiDimension16}"
-                            Aspect="AspectFit"
-                            VerticalOptions="Center" />
-                        <Label
-                            Grid.Column="1"
-                            Text="{Binding PhaseWindow, Converter={StaticResource LocalizedStringConverter}}"
-                            Style="{StaticResource FormFieldLabel}"
-                            TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
-                            LineBreakMode="WordWrap" />
-                    </Grid>
+                <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
 
                     <Label
-                        Grid.Row="1"
+                        Grid.Row="0"
                         Text="{Binding Headline, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
                         Style="{StaticResource MetricValue}"
                         LineBreakMode="WordWrap"
-                        SemanticProperties.HeadingLevel="Level1" />
+                        SemanticProperties.HeadingLevel="Level2" />
 
                     <Label
-                        Grid.Row="2"
+                        Grid.Row="1"
                         Text="{Binding Hook, Converter={StaticResource LocalizedStringConverter}}"
                         TextColor="{Binding CurrentPhase, Converter={StaticResource CyclePhaseToTextColorConverter}}"
                         Style="{StaticResource BodyLabel}"
@@ -64,7 +55,7 @@
                         LineBreakMode="WordWrap" />
 
                     <sharedControls:PhaseVisualView
-                        Grid.Row="3"
+                        Grid.Row="2"
                         IsVisible="{Binding HasPhaseImage}"
                         Source="{Binding PhaseImageSource}"
                         WidthRequest="{StaticResource UiDimension150}"
@@ -73,7 +64,7 @@
                         Margin="{StaticResource UiInsets0_4_0_0}" />
 
                     <Border
-                        Grid.Row="4"
+                        Grid.Row="3"
                         Style="{StaticResource CardSecondary}">
                         <Label
                             Text="{Binding QuickRule, Converter={StaticResource LocalizedStringConverter}}"
@@ -239,7 +230,7 @@
                 <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}">
                     <Grid
                         Grid.Row="0"
-                        ColumnDefinitions="22,*,24"
+                        ColumnDefinitions="22,*,Auto"
                         ColumnSpacing="{StaticResource UiSpaceTight}"
                         MinimumHeightRequest="{StaticResource UiDimension48}"
                         SemanticProperties.Description="{loc:LocalizedText Cycle_PhaseDetail_WatchOutSectionAccessibility}"
@@ -356,5 +347,6 @@
                 </Grid>
             </Border>
         </VerticalStackLayout>
-    </ScrollView>
+        </ScrollView>
+    </Grid>
 </ContentPage>

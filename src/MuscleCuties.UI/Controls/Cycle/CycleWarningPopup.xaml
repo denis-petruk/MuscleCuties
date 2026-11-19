@@ -75,7 +75,7 @@
                 </ScrollView>
 
                 <VerticalStackLayout
-                    Grid.Row="2"
+                    Grid.Row="3"
                     Padding="{DynamicResource PresentationActionFooterPadding}"
                     Spacing="{StaticResource UiSpacing10}">
                     <VerticalStackLayout

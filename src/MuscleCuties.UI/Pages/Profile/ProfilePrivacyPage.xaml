@@ -22,7 +22,7 @@
         </Grid>
 
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceControl}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+            <VerticalStackLayout Padding="{DynamicResource PresentationPageContentPadding}" Spacing="{StaticResource UiSpaceControl}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
                 <Border Style="{StaticResource CardPrimary}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Privacy_DataTitle}"

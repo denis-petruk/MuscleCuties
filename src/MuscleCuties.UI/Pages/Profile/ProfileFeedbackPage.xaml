@@ -42,12 +42,14 @@
                                     <Label Text="{loc:LocalizedText Profile_Feedback_SuggestedFixOptional}"
                                            Style="{StaticResource FormFieldLabel}"
                                            VerticalOptions="Center" />
-                                    <Label Grid.Column="1"
-                                           Text="▾"
-                                           Style="{StaticResource BodyLabel}"
-                                           HorizontalTextAlignment="End"
-                                           VerticalOptions="Center"
-                                           AutomationProperties.IsInAccessibleTree="False" />
+                                    <Path Grid.Column="1"
+                                          Data="M2 4 L8 10 L14 4"
+                                          Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                          StrokeThickness="{StaticResource UiStrokeWidth2}"
+                                          WidthRequest="{StaticResource UiDimension16}"
+                                          HeightRequest="{StaticResource UiDimension16}"
+                                          VerticalOptions="Center"
+                                          AutomationProperties.IsInAccessibleTree="False" />
                                 </Grid>
                             </toolkit:Expander.Header>
                             <Border Style="{StaticResource EditorContainer}" Margin="{StaticResource UiInsets0_8}">
@@ -66,12 +68,14 @@
                             <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                 <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Feedback_Details}"
                                                                   IconGlyph="ChatSettings24" />
-                                <Label Grid.Column="1"
-                                       Text="▾"
-                                       Style="{StaticResource BodyLabel}"
-                                       HorizontalTextAlignment="End"
-                                       VerticalOptions="Center"
-                                       AutomationProperties.IsInAccessibleTree="False" />
+                                <Path Grid.Column="1"
+                                      Data="M2 4 L8 10 L14 4"
+                                      Stroke="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
+                                      StrokeThickness="{StaticResource UiStrokeWidth2}"
+                                      WidthRequest="{StaticResource UiDimension16}"
+                                      HeightRequest="{StaticResource UiDimension16}"
+                                      VerticalOptions="Center"
+                                      AutomationProperties.IsInAccessibleTree="False" />
                             </Grid>
                         </toolkit:Expander.Header>
 

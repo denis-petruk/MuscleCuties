@@ -283,7 +283,7 @@
                                 </HorizontalStackLayout>
 
                                 <!-- Movement Notes -->
-                                <Label Style="{StaticResource MutedLabel}" Grid.Row="3" Text="{Binding MovementNotes}"
+                                <Label Style="{StaticResource MutedLabel}" Grid.Row="3" Text="{Binding MovementNotes, Converter={StaticResource LocalizedStringConverter}}"
                                        TextColor="{AppThemeBinding Light={StaticResource TextSecondary}, Dark={StaticResource TextSecondaryDark}}"
                                        LineBreakMode="WordWrap"
                                        IsVisible="{Binding MovementNotes, Converter={StaticResource StringToBoolConverter}}" />

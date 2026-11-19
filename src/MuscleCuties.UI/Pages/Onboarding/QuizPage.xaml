@@ -187,12 +187,11 @@
             <!-- Standard answer list -->
             <ScrollView
                 Grid.Row="1"
-                Padding="{DynamicResource PresentationPageContentPadding}"
                 MaximumWidthRequest="{StaticResource UiDimension640}"
                 HorizontalOptions="Fill"
                 IsVisible="{Binding IsStandardAnswerListVisible}">
                 <VerticalStackLayout
-                    Padding="{StaticResource UiInsets0_4_0_20}"
+                    Padding="{DynamicResource PresentationFormPagePadding}"
                     Spacing="{StaticResource UiSpaceCompact}">
                     <Label
                         Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
@@ -284,11 +283,10 @@
             <!-- Phase pair sliders -->
             <ScrollView
                 Grid.Row="1"
-                Padding="{DynamicResource PresentationPageContentPadding}"
                 MaximumWidthRequest="{StaticResource UiDimension640}"
                 HorizontalOptions="Fill"
                 IsVisible="{Binding IsCurrentQuestionPhasePair}">
-                <Grid RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
+                <Grid Padding="{DynamicResource PresentationFormPagePadding}" RowDefinitions="Auto,Auto,Auto,Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceCompact}">
                     <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
                         <Label
                             Text="{loc:LocalizedText Onboarding_Quiz_Discomfort}"

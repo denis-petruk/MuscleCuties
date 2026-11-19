@@ -20,13 +20,11 @@
     <Grid RowDefinitions="*,Auto,Auto">
     <Grid Grid.RowSpan="3" RowDefinitions="*,Auto,Auto"
           IsVisible="{Binding IsBeforePreview}">
-    <ScrollView Grid.Row="0">
-        <VerticalStackLayout
-            Padding="{DynamicResource PresentationPageContentPadding}"
-            Spacing="{StaticResource UiSpaceControl}"
-            HorizontalOptions="Fill"
-            MaximumWidthRequest="{StaticResource UiDimension640}">
-
+    <Grid Grid.Row="0" RowDefinitions="Auto,*">
+        <Grid Grid.Row="0"
+              Padding="{DynamicResource PresentationPageHeaderPadding}"
+              MaximumWidthRequest="{StaticResource UiDimension640}"
+              HorizontalOptions="Fill">
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Workout_Generation_Title}"
                 BackCommand="{Binding BackCommand}">
@@ -44,6 +42,14 @@
                     </Border>
                 </sharedControls:PageHeader.TitleIcon>
             </sharedControls:PageHeader>
+        </Grid>
+
+        <ScrollView Grid.Row="1">
+            <VerticalStackLayout
+                Padding="{DynamicResource PresentationFormPagePadding}"
+                Spacing="{StaticResource UiSpaceControl}"
+                HorizontalOptions="Fill"
+                MaximumWidthRequest="{StaticResource UiDimension640}">
 
             <!-- CARD 1: Plan Setup & Availability -->
             <Border Style="{StaticResource CardPrimary}">
@@ -223,11 +229,14 @@
                     </VerticalStackLayout>
 
                     <!-- Clearance Confirmation -->
-                    <HorizontalStackLayout>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+                          MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
                         <CheckBox IsChecked="{Binding HiitEvidenceCapture.ConfirmCurrentWeeks}" IsEnabled="{Binding CanEditInputs}"
+                                  VerticalOptions="Center"
                                   SemanticProperties.Description="{loc:LocalizedText Workout_Generation_HiitConfirmCurrentWeeks}" />
-                        <Label Text="{loc:LocalizedText Workout_Generation_HiitConfirmCurrentWeeks}" LineBreakMode="WordWrap" />
-                    </HorizontalStackLayout>
+                        <Label Grid.Column="1" Text="{loc:LocalizedText Workout_Generation_HiitConfirmCurrentWeeks}"
+                               VerticalOptions="Center" LineBreakMode="WordWrap" />
+                    </Grid>
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
                         <Label Text="{loc:LocalizedText Workout_Generation_HiitClearanceConfirmation}"
                                Style="{StaticResource FormFieldLabel}"
@@ -504,6 +513,7 @@
                     Style="{StaticResource ButtonSecondary}" />
         </VerticalStackLayout>
     </ScrollView>
+    </Grid>
 
     <Label Grid.Row="1"
            Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"

@@ -304,7 +304,12 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         or "Ui_Workout_Error_SetsReps"
         or "Ui_Workout_Error_Weight"
         or "Ui_Workout_Error_Duration"
-        or "Workout_Session_OptionalMetricsError");
+        or "Workout_Session_OptionalMetricsError"
+        or "Workout_Session_DistanceInvalid"
+        or "Ui_Workout_Error_MinimumDuration"
+        or "Workout_Session_ActivityNoLongerSafe"
+        or "Workout_Session_HiitConfirmationRequired"
+        or "Workout_Session_SplitSupersetUnavailable");
     public bool HasErrorReference => HasError && !string.IsNullOrEmpty(ErrorReference);
     // The page is pushed before the session is fetched. Without this gate the empty state
     // renders for one frame and then disappears once the activities arrive.

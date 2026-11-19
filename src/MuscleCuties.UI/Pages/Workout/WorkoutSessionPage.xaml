@@ -656,8 +656,11 @@
                                             <Label LineBreakMode="WordWrap"
                                                    Text="{Binding CurrentExercise.WhyText, Converter={StaticResource LocalizedStringConverter}}"
                                                    Style="{StaticResource BodyLabel}" />
-                                            <Label LineBreakMode="WordWrap" Text="{Binding CurrentExercise.CuesText}" Style="{StaticResource BodyLabel}" />
-                                            <Label LineBreakMode="WordWrap" Text="{Binding CurrentExercise.QuickTipsText}"
+                                            <Label LineBreakMode="WordWrap"
+                                                   Text="{Binding CurrentExercise.CuesText, Converter={StaticResource LocalizedStringConverter}}"
+                                                   Style="{StaticResource BodyLabel}" />
+                                            <Label LineBreakMode="WordWrap"
+                                                   Text="{Binding CurrentExercise.QuickTipsText, Converter={StaticResource LocalizedStringConverter}}"
                                                    IsVisible="{Binding CurrentExercise.HasQuickTips}"
                                                    Style="{StaticResource BodyLabel}" />
                                         </VerticalStackLayout>
@@ -1063,7 +1066,7 @@
                                Text="{Binding CurrentExercise.Name, Converter={StaticResource LocalizedStringConverter}}"
                                Style="{StaticResource BodyStrong}" />
 
-                        <Border Grid.Row="1" Style="{StaticResource InputContainer}" HeightRequest="{StaticResource UiDimension120}">
+                        <Border Grid.Row="1" Style="{StaticResource EditorContainer}" HeightRequest="{StaticResource UiDimension120}">
                             <Editor Text="{Binding MovementNoteText, Mode=TwoWay}"
                                     Placeholder="{loc:LocalizedText Workout_Session_NotePlaceholder}"
                                     SemanticProperties.Description="{loc:LocalizedText Workout_Session_NotePlaceholder}"

@@ -36,11 +36,8 @@
             </CollectionView.ItemsLayout>
 
             <CollectionView.Header>
-                <VerticalStackLayout Padding="{DynamicResource PresentationCollectionHeaderPadding}" Spacing="{StaticResource UiSpaceContent}">
+                <VerticalStackLayout Padding="{StaticResource UiInsets0_8_0_12}" Spacing="{StaticResource UiSpaceControl}">
 
-                    <toolkit:LazyView
-                        x:Name="PhaseFocusLazy"
-                        x:TypeArguments="nutritionControls:NutritionPhaseFocusCard" />
                     <toolkit:LazyView
                         x:Name="BalanceCardLazy"
                         x:TypeArguments="nutritionControls:NutritionBalanceCard" />
@@ -60,6 +57,9 @@
                                 SemanticProperties.Description="{loc:LocalizedText Nutrition_PlanMyDay}"
                                 SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_BuildsAFullDayMealPlan}" />
                     </Grid>
+                    <toolkit:LazyView
+                        x:Name="PhaseFocusLazy"
+                        x:TypeArguments="nutritionControls:NutritionPhaseFocusCard" />
 
                     <Label
                         Text="{Binding PageStatusMessage}"
@@ -128,7 +128,7 @@
             </CollectionView.ItemTemplate>
 
             <CollectionView.Footer>
-                <BoxView HeightRequest="{StaticResource UiDimension32}" BackgroundColor="{StaticResource Transparent}" />
+                <BoxView HeightRequest="{StaticResource UiDimension96}" BackgroundColor="{StaticResource Transparent}" />
             </CollectionView.Footer>
         </CollectionView>
 

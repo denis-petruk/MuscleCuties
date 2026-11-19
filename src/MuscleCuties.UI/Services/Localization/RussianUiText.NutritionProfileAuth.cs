@@ -262,6 +262,7 @@ internal static partial class RussianUiText
         Values["Injury_LogContent_RefreshPage"] = "Обновить «Сегодня»";
         Values["Injury_LogContent_SaveInjury"] = "Сохранить травму";
         Values["Injury_LogContent_Show"] = "Показать";
+        Values["Injury_LogContent_Hide"] = "Скрыть";
         Values["Injury_LogContent_SinceValue"] = "С тех пор как {0}";
         Values["Injury_LogContent_StartedOn"] = "Начато";
         Values["Injury_LogContent_StatusRequired"] = "Статус (обязательно)";

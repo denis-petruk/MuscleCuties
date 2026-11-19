@@ -60,7 +60,7 @@
                                     Margin="{StaticResource UiInsets0_0_0_8}"
                                     MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                                     IsSelected="{Binding IsSelected}"
-                                    SemanticProperties.Description="{Binding Name}">
+                                    SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedStringConverter}}">
                                 <!-- Role, selected trait and selected hint come from SelectionCell and CardSecondary. -->
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer

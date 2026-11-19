@@ -17,7 +17,10 @@
     <Grid RowDefinitions="Auto,*"
           BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
         <!-- Header -->
-        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" VerticalOptions="Center">
+        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}"
+              MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
+              HorizontalOptions="Fill"
+              VerticalOptions="Center">
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Profile_PhotoJourney_Title}"
                 Subtitle="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}"
@@ -38,7 +41,7 @@
             ItemsSource="{Binding Photos}"
             ItemSizingStrategy="MeasureFirstItem"
             SelectionMode="None"
-            Margin="{DynamicResource PresentationPageContentPadding}"
+            Margin="{DynamicResource PresentationCollectionHorizontalInset}"
             MaximumWidthRequest="{StaticResource UiDimension640}">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="{StaticResource UiSpaceControl}" />
@@ -214,6 +217,9 @@
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
+            <CollectionView.Footer>
+                <BoxView HeightRequest="{StaticResource UiDimension96}" BackgroundColor="{StaticResource Transparent}" />
+            </CollectionView.Footer>
         </CollectionView>
 
         <Border Grid.Row="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonOverlayPageRow}"

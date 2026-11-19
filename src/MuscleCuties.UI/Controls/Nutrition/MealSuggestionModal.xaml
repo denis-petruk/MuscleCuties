@@ -174,8 +174,7 @@
                             Text="{loc:LocalizedText Common_TryAgain}"
                             Command="{Binding RefreshSuggestionsCommand}"
                             Style="{StaticResource ButtonSecondary}"
-                            HorizontalOptions="Center"
-                            WidthRequest="{StaticResource UiDimension152}" />
+                            HorizontalOptions="Center" />
                     </Grid>
                 </ScrollView>
 

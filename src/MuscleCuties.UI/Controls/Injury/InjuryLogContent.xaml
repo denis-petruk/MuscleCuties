@@ -219,6 +219,7 @@
                                LineBreakMode="WordWrap" />
                         <Label Grid.Row="2" Text="{Binding EmptyStateDetail, Converter={StaticResource LocalizedStringConverter}}"
                                Style="{StaticResource StateEmptyBody}"
+                               HorizontalTextAlignment="Center"
                                LineBreakMode="WordWrap" />
                     </Grid>
                 </Border>
@@ -236,7 +237,7 @@
                             SemanticProperties.Description="{loc:LocalizedText Injury_LogContent_ToggleClearedInjuryHistory}">
                         <Button.Triggers>
                             <DataTrigger TargetType="Button" Binding="{Binding IsHistoryExpanded}" Value="True">
-                                <Setter Property="Text" Value="Hide" />
+                                <Setter Property="Text" Value="{loc:LocalizedText Injury_LogContent_Hide}" />
                             </DataTrigger>
                         </Button.Triggers>
                     </Button>

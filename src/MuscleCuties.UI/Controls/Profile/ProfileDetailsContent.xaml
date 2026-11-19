@@ -143,7 +143,7 @@
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileWorkoutPreferencesPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
                                     sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                     Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
@@ -158,7 +158,7 @@
                                            Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
                                 <mi:MauiIcon
-                                    Grid.Column="3"
+                                    Grid.Column="2"
                                     Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                     WidthRequest="{StaticResource UiDimension16}"
                                     HeightRequest="{StaticResource UiDimension16}"
@@ -177,7 +177,7 @@
                                 <TapGestureRecognizer Command="{Binding OpenRouteCommand}"
                                                       CommandParameter="ProfileNutritionSettingsPage" />
                             </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                            <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
                                 <mi:MauiIcon
                                     sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                                     Icon="{mi:Fluent Food24}" IconSize="{StaticResource UiDimension20}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
@@ -192,7 +192,7 @@
                                            Style="{StaticResource CaptionSmall}" LineBreakMode="WordWrap" />
                                 </Grid>
                                 <mi:MauiIcon
-                                    Grid.Column="3"
+                                    Grid.Column="2"
                                     Icon="{mi:Fluent ChevronRight24}" IconSize="{StaticResource UiDimension16}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                     WidthRequest="{StaticResource UiDimension16}"
                                     HeightRequest="{StaticResource UiDimension16}"
