@@ -37,9 +37,18 @@ else:
     print(json.dumps({'ContentLength': int(os.environ['SIZE']), 'ChecksumSHA256': os.environ['CHECKSUM'], 'VersionId': os.environ.get('VERSION', 'v1'), 'Metadata': {'source-sha': 'a'*40, 'zip-sha256': os.environ['HEX']}}))
 ''')
         fake.chmod(0o755)
-        self.env = dict(os.environ, PATH=str(self.root) + os.pathsep + os.environ['PATH'], AWS_RELEASE_BUCKET='fixture', AWS_REGION='us-east-2', FAKE_STATE=str(self.root/'state'), SIZE=str(self.zip.stat().st_size), CHECKSUM=base64.b64encode(self.digest).decode(), HEX=self.digest.hex())
+        self.env = dict(os.environ, PATH=str(self.root) + os.pathsep + os.environ['PATH'], AWS_RELEASE_BUCKET='fixture', AWS_REGION='us-east-2', ARTIFACT_COMPONENT='Server', FAKE_STATE=str(self.root/'state'), SIZE=str(self.zip.stat().st_size), CHECKSUM=base64.b64encode(self.digest).decode(), HEX=self.digest.hex())
     def run_upload(self):
         return subprocess.run([str(SCRIPT), str(self.zip), str(self.manifest), str(self.root/'output.json')], env=self.env, capture_output=True, text=True)
+
+    def test_component_name_is_required(self):
+        # The component name is part of the S3 key the deployer validates; a guessed default
+        # would file the object under a name deploy_release.py rejects.
+        self.env.pop('ARTIFACT_COMPONENT')
+        result = self.run_upload()
+        self.assertNotEqual(result.returncode, 0)
+        self.assertFalse((self.root / 'output.json').exists())
+
     def test_create_and_retry_reuse(self):
         self.assertEqual(self.run_upload().returncode, 0)
         self.assertEqual(self.run_upload().returncode, 0)
