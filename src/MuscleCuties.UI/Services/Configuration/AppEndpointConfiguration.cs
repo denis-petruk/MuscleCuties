@@ -25,8 +25,7 @@ public static class AppEndpointConfiguration
         get
         {
 #if DEBUG
-            // Safe debug default is always Local to prevent accidental queries against shared data
-            return AppTargetEnvironment.Local;
+            return AppTargetEnvironment.Beta;
 #elif APP_ENV_BETA
             return AppTargetEnvironment.Beta;
 #else
