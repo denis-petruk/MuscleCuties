@@ -1366,6 +1366,63 @@ public sealed class StrengthPlanPreviewV020Tests
             item => item.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength);
         Assert.Contains(StrengthScheduleAssignmentRule.SessionsReducedForMuscleRecovery, decision.ReasonCodes);
     }
+    [Fact]
+    public async Task Preview_stays_inside_weekly_capacity_for_four_days_with_several_companions()
+    {
+        // Beta proposal 01a1f65a: strength plus swimming/yoga/walking/gentle recovery over
+        // Mon/Thu/Fri/Sat produced ten sessions over four days, so the accept guard refused the
+        // stored week with ProposalMixedScheduleInvalid (capacity = days x 2).
+        var days = new HashSet<DayOfWeek>
+        {
+            DayOfWeek.Monday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday
+        };
+        var source = AddSelectedActivity(Profile(), WorkoutActivityType.GeneralStrength,
+                WorkoutActivityType.HighVolumeStrength, WorkoutActivityType.Swimming,
+                WorkoutActivityType.Yoga, WorkoutActivityType.Walking,
+                WorkoutActivityType.GentleRecovery) with
+        {
+            AvailableWeekdays = days,
+            ProfileTrainingExperience = TrainingExperienceLevel.Intermediate,
+            DistinctCompletedWorkoutDays = 20,
+            RequestedSessionsPerWeek = new Dictionary<int, int>
+            {
+                [(int)WorkoutActivityType.GeneralStrength] = 4,
+                [(int)WorkoutActivityType.Yoga] = 2,
+                [(int)WorkoutActivityType.GentleRecovery] = 2
+            }
+        };
+        var request = Request() with
+        {
+            AvailableWeekdays = days,
+            ActivityEligibilityEvidence =
+            [
+                new ActivityEligibilityInputV020(WorkoutActivityDto.Swimming,
+                    HasSwimmingFacilityAccess: true, CanSwimIndependently: true,
+                    WantsContinuousSwimming: false),
+                new ActivityEligibilityInputV020(WorkoutActivityDto.Yoga, IsDemandingYogaContent: false)
+            ]
+        };
+
+        var preview = await new PreviewStrengthPlanV020UseCase(new Source(source))
+            .ExecuteAsync(Guid.NewGuid(), request);
+        Assert.True(preview.MixedActivitySchedule is not null,
+            $"status={preview.Status} limits={string.Join(",", preview.LimitationCodes)} " +
+            $"advisory={string.Join(",", preview.AdvisoryCodes)} sessions={preview.Sessions.Count}");
+        var schedule = preview.MixedActivitySchedule!;
+        var layout = string.Join(", ", schedule.Sessions
+            .GroupBy(session => session.Weekday)
+            .OrderBy(group => group.Key)
+            .Select(group => $"{group.Key}:{group.Count()}[{string.Join("/", group.Select(s => s.ActivityTypeId))}]"));
+        var decisions = string.Join(", ", schedule.Activities.Select(activity =>
+            $"{activity.ActivityTypeId}={activity.Disposition}/{activity.ScheduledSessionsPerWeek}"));
+
+        Assert.True(schedule.Sessions.Count <= days.Count * OwnerMaximumActivitiesPerDay,
+            $"capacity: {layout} | decisions: {decisions} | reasons: {string.Join(",", schedule.InputReasonCodes)}");
+        Assert.All(schedule.Sessions.GroupBy(session => session.Weekday), group =>
+            Assert.True(group.Count() <= OwnerMaximumActivitiesPerDay,
+                $"per-day: {layout} | decisions: {decisions}"));
+    }
+
     private static StrengthPlanPreviewSourceV020 OneDayProfile()
     {
         var source = Profile();

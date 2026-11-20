@@ -9,6 +9,9 @@ namespace MuscleCuties.UseCases.Features.Workout.Planning;
 /// <summary>Projects the canonical prescription into transport and the existing slot envelope.</summary>
 public static class GenerationPlanV2Mapper
 {
+    private const string StrengthSessionsExceedAvailableWeekdaysCode =
+        "StrengthSessionsExceedAvailableWeekdays";
+
     public static StrengthPlanPreviewResponseV020 ForCanonicalUse(StrengthPlanPreviewResponseV020 preview)
     {
         if (preview.Status != "Feasible") return preview;
@@ -23,6 +26,9 @@ public static class GenerationPlanV2Mapper
         if (retainedActivities.Length > 0)
             plan = plan with { Sessions = plan.Sessions.Concat(retainedActivities).ToArray(),
                 SessionCount = plan.Sessions.Count + retainedActivities.Length };
+        var beforeCapacity = plan;
+        plan = LimitWeekToCapacity(plan);
+        var strengthReducedForCapacity = !ReferenceEquals(plan, beforeCapacity);
         var strength = ToStrengthSessions(plan);
         var sessions = plan.Sessions.Select(session =>
         {
@@ -56,7 +62,42 @@ public static class GenerationPlanV2Mapper
                 .Append("NoSafeStrengthContentRemaining").Distinct(StringComparer.Ordinal).ToArray(),
             AdvisoryCodes = preview.AdvisoryCodes.Concat(plan.AdvisoryCodes).Concat(plan.LimitationCodes)
                 .Distinct(StringComparer.Ordinal).OrderBy(code => code, StringComparer.Ordinal).ToArray(),
-            RequiresReducedVolumeAcknowledgment = preview.RequiresReducedVolumeAcknowledgment || plan.Status == "Limited"
+            RequiresReducedVolumeAcknowledgment = preview.RequiresReducedVolumeAcknowledgment ||
+                plan.Status == "Limited" || strengthReducedForCapacity
+        };
+    }
+
+    /// <summary>
+    /// The owner rule allows two activities a day. V2 promotes a strength session onto every
+    /// available weekday as training history grows, so once companions occupy the week the plan can
+    /// ask for more sessions than the week holds. Strength gives way to the free slots and the
+    /// reduction is reported, because the accept path validates this same week and would otherwise
+    /// refuse the whole proposal (ProposalMixedScheduleInvalid).
+    /// </summary>
+    private static GenerationPlanV2 LimitWeekToCapacity(GenerationPlanV2 plan)
+    {
+        var weekdays = plan.Sessions.Select(session => session.Weekday).Distinct().Count();
+        var capacity = weekdays * MixedActivityWeekScheduleRule.MaximumSessionsPerDay;
+        var strength = plan.Sessions.Where(session => session.Exercises.Count > 0)
+            .OrderBy(session => session.SessionIndex).ToArray();
+        var companions = plan.Sessions.Where(session => session.Exercises.Count == 0).ToArray();
+        var allowedStrength = capacity - companions.Length;
+        if (allowedStrength >= strength.Length) return plan;
+
+        // A plan with no strength cannot be applied, so when companions alone fill the week the
+        // newest companions make room for the coverage minimum instead of every strength session.
+        var keptStrength = strength.Take(Math.Max(1, allowedStrength)).ToArray();
+        var keptCompanions = allowedStrength >= 1
+            ? companions
+            : companions.Take(Math.Max(0, capacity - keptStrength.Length)).ToArray();
+        var kept = keptStrength.Concat(keptCompanions)
+            .OrderBy(session => session.SessionIndex).ToArray();
+        return plan with
+        {
+            Sessions = kept,
+            SessionCount = kept.Length,
+            AdvisoryCodes = plan.AdvisoryCodes.Append(StrengthSessionsExceedAvailableWeekdaysCode)
+                .Distinct(StringComparer.Ordinal).OrderBy(code => code, StringComparer.Ordinal).ToArray()
         };
     }
 
