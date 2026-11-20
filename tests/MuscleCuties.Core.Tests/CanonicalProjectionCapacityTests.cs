@@ -55,6 +55,43 @@ public sealed class CanonicalProjectionCapacityTests
     }
 
     [Fact]
+    public void Canonical_week_rebalances_a_three_activity_day_without_dropping_a_companion()
+    {
+        // The week Beta actually stored once five days were available: Tuesday joined, and Friday
+        // carried a strength session plus two companions.
+        var preview = BetaPreview() with
+        {
+            Sessions = StrengthSessions(2),
+            GenerationV2 = new GenerationPlanV2("Feasible", "0.2.0", "1", "catalog", 10, "hash", [], [], [])
+            {
+                Sessions =
+                [
+                    Session(0, DayOfWeek.Monday, RecoveryActivity, false),
+                    Session(1, DayOfWeek.Tuesday, SwimmingActivity, false),
+                    Session(2, DayOfWeek.Tuesday, YogaActivity, false),
+                    Session(3, DayOfWeek.Thursday, StrengthActivity, true),
+                    Session(4, DayOfWeek.Thursday, RecoveryActivity, false),
+                    Session(5, DayOfWeek.Friday, StrengthActivity, true),
+                    Session(6, DayOfWeek.Friday, SwimmingActivity, false),
+                    Session(7, DayOfWeek.Friday, YogaActivity, false),
+                    Session(8, DayOfWeek.Saturday, YogaActivity, false),
+                    Session(9, DayOfWeek.Saturday, WalkingActivity, false)
+                ]
+            }
+        };
+
+        var canonical = GenerationPlanV2Mapper.ForCanonicalUse(preview);
+
+        var schedule = canonical.MixedActivitySchedule!;
+        Assert.Equal(10, schedule.Sessions.Count);
+        Assert.All(schedule.Sessions.GroupBy(session => session.Weekday), group =>
+            Assert.True(group.Count() <= OwnerMaximumActivitiesPerDay, $"{group.Key}:{group.Count()}"));
+        Assert.Equal(2, canonical.Sessions.Count);
+        Assert.DoesNotContain("StrengthSessionsExceedAvailableWeekdays", canonical.AdvisoryCodes);
+        Assert.False(canonical.RequiresReducedVolumeAcknowledgment);
+    }
+
+    [Fact]
     public void Canonical_week_keeps_every_strength_session_when_companions_leave_room()
     {
         var preview = BetaPreview() with { Sessions = StrengthSessions(2), GenerationV2 = Plan(2) };
@@ -95,6 +132,9 @@ public sealed class CanonicalProjectionCapacityTests
             Sessions = all
         };
     }
+
+    private static GenerationSessionV2 Session(int index, DayOfWeek weekday, int activity, bool strength) =>
+        new(index, weekday, LocalDate, activity, strength ? 5 : 0, 60m, strength ? [Exercise()] : []);
 
     private static GenerationExerciseV2 Exercise() =>
         new(0, 101, "Squat", 0, 3, 8, 12, 3, 150, "CalibrationRequired", null, null, false, "Rule")

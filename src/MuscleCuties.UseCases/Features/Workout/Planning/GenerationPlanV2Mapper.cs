@@ -11,6 +11,8 @@ public static class GenerationPlanV2Mapper
 {
     private const string StrengthSessionsExceedAvailableWeekdaysCode =
         "StrengthSessionsExceedAvailableWeekdays";
+    private const string ActivityFrequencyLimitedByAvailableWeekdaysCode =
+        "ActivityFrequencyLimitedByAvailableWeekdays";
 
     public static StrengthPlanPreviewResponseV020 ForCanonicalUse(StrengthPlanPreviewResponseV020 preview)
     {
@@ -28,7 +30,12 @@ public static class GenerationPlanV2Mapper
                 SessionCount = plan.Sessions.Count + retainedActivities.Length };
         var beforeCapacity = plan;
         plan = LimitWeekToCapacity(plan);
-        var strengthReducedForCapacity = !ReferenceEquals(plan, beforeCapacity);
+        var reducedActivities = beforeCapacity.Sessions.GroupBy(session => session.ActivityTypeId)
+            .Where(group => group.Count() > plan.Sessions.Count(session => session.ActivityTypeId == group.Key))
+            .Select(group => group.Key).ToHashSet();
+        var volumeReducedForCapacity = reducedActivities.Count > 0 ||
+            !ReferenceEquals(plan, beforeCapacity) &&
+            beforeCapacity.Sessions.Count > plan.Sessions.Count;
         var strength = ToStrengthSessions(plan);
         var sessions = plan.Sessions.Select(session =>
         {
@@ -43,10 +50,20 @@ public static class GenerationPlanV2Mapper
                 previous?.OccurrencePrescription);
         }).ToArray();
         var decisions = sessions.GroupBy(session => session.ActivityTypeId).Select(group =>
-            preview.MixedActivitySchedule?.Activities.FirstOrDefault(item => item.ActivityTypeId == group.Key) is { } previous
+        {
+            var decision = preview.MixedActivitySchedule?.Activities.FirstOrDefault(item => item.ActivityTypeId == group.Key) is { } previous
                 ? previous with { Disposition = "Scheduled", ScheduledSessionsPerWeek = group.Count() }
                 : new MixedActivityScheduleDecisionV020(group.Key, "Scheduled", null, group.Count(), group.Count(),
-                    group.Count(), [])).ToArray();
+                    group.Count(), []);
+            // A session lost to the two-a-day cap is reported on its activity, never dropped quietly.
+            return reducedActivities.Contains(group.Key)
+                ? decision with
+                {
+                    ReasonCodes = decision.ReasonCodes.Append(ActivityFrequencyLimitedByAvailableWeekdaysCode)
+                        .Distinct(StringComparer.Ordinal).ToArray()
+                }
+                : decision;
+        }).ToArray();
         plan = plan with { PrescriptionHash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new
             { plan.PolicyVersion, plan.InputContractVersion, plan.CatalogVersion, plan.Sessions,
                 plan.LimitationCodes, plan.AdvisoryCodes, plan.ReadinessAdaptationApplied }))) };
@@ -63,7 +80,7 @@ public static class GenerationPlanV2Mapper
             AdvisoryCodes = preview.AdvisoryCodes.Concat(plan.AdvisoryCodes).Concat(plan.LimitationCodes)
                 .Distinct(StringComparer.Ordinal).OrderBy(code => code, StringComparer.Ordinal).ToArray(),
             RequiresReducedVolumeAcknowledgment = preview.RequiresReducedVolumeAcknowledgment ||
-                plan.Status == "Limited" || strengthReducedForCapacity
+                plan.Status == "Limited" || volumeReducedForCapacity
         };
     }
 
@@ -76,28 +93,51 @@ public static class GenerationPlanV2Mapper
     /// </summary>
     private static GenerationPlanV2 LimitWeekToCapacity(GenerationPlanV2 plan)
     {
-        var weekdays = plan.Sessions.Select(session => session.Weekday).Distinct().Count();
-        var capacity = weekdays * MixedActivityWeekScheduleRule.MaximumSessionsPerDay;
-        var strength = plan.Sessions.Where(session => session.Exercises.Count > 0)
-            .OrderBy(session => session.SessionIndex).ToArray();
-        var companions = plan.Sessions.Where(session => session.Exercises.Count == 0).ToArray();
-        var allowedStrength = capacity - companions.Length;
-        if (allowedStrength >= strength.Length) return plan;
+        var maxPerDay = MixedActivityWeekScheduleRule.MaximumSessionsPerDay;
+        var weekdays = plan.Sessions.Select(session => session.Weekday).Distinct().OrderBy(day => day).ToArray();
+        var sessions = plan.Sessions.OrderBy(session => session.SessionIndex).ToList();
+        var strengthReduced = false;
 
-        // A plan with no strength cannot be applied, so when companions alone fill the week the
-        // newest companions make room for the coverage minimum instead of every strength session.
-        var keptStrength = strength.Take(Math.Max(1, allowedStrength)).ToArray();
-        var keptCompanions = allowedStrength >= 1
-            ? companions
-            : companions.Take(Math.Max(0, capacity - keptStrength.Length)).ToArray();
-        var kept = keptStrength.Concat(keptCompanions)
+        var companionCount = sessions.Count(session => session.Exercises.Count == 0);
+        var allowedStrength = weekdays.Length * maxPerDay - companionCount;
+        var strength = sessions.Where(session => session.Exercises.Count > 0)
             .OrderBy(session => session.SessionIndex).ToArray();
+        if (allowedStrength < strength.Length)
+        {
+            // A plan with no strength cannot be applied, so one session always survives.
+            var kept = strength.Take(Math.Max(1, allowedStrength)).ToHashSet();
+            sessions = sessions.Where(session => session.Exercises.Count == 0 || kept.Contains(session)).ToList();
+            strengthReduced = true;
+        }
+
+        // A day holds at most two activities and never the same activity twice. A companion that
+        // lands on a strength day moves to a day with room rather than disappearing.
+        foreach (var day in sessions.GroupBy(session => session.Weekday)
+                     .Where(group => group.Count() > maxPerDay).ToArray())
+        {
+            var ordered = day.OrderBy(session => session.Exercises.Count > 0 ? 0 : 1)
+                .ThenBy(session => session.SessionIndex).ToArray();
+            foreach (var session in ordered.Skip(maxPerDay))
+            {
+                var target = weekdays.FirstOrDefault(candidate => candidate != session.Weekday &&
+                    sessions.Count(other => other.Weekday == candidate) < maxPerDay &&
+                    sessions.All(other => other.Weekday != candidate ||
+                        other.ActivityTypeId != session.ActivityTypeId));
+                if (target == default) sessions.Remove(session);
+                else sessions[sessions.IndexOf(session)] = session with { Weekday = target };
+            }
+        }
+
+        var orderedSessions = sessions.OrderBy(session => session.SessionIndex).ToArray();
+        if (!strengthReduced && orderedSessions.SequenceEqual(plan.Sessions)) return plan;
         return plan with
         {
-            Sessions = kept,
-            SessionCount = kept.Length,
-            AdvisoryCodes = plan.AdvisoryCodes.Append(StrengthSessionsExceedAvailableWeekdaysCode)
-                .Distinct(StringComparer.Ordinal).OrderBy(code => code, StringComparer.Ordinal).ToArray()
+            Sessions = orderedSessions,
+            SessionCount = orderedSessions.Length,
+            AdvisoryCodes = strengthReduced
+                ? plan.AdvisoryCodes.Append(StrengthSessionsExceedAvailableWeekdaysCode)
+                    .Distinct(StringComparer.Ordinal).OrderBy(code => code, StringComparer.Ordinal).ToArray()
+                : plan.AdvisoryCodes
         };
     }
 
