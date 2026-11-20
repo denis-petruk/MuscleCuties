@@ -1,8 +1,8 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   MuscleCuties staging identity plane: GitHub Actions OIDC federation and the three
-  least-privilege deploy roles. Faithful to live state as of 2026-11-19; two known defects
-  are documented immediately below and are deliberately not fixed here.
+  least-privilege deploy roles. Faithful to live state as of 2026-11-19 plus the
+  2026-11-20 s3:ListBucket correction; the remaining known defects are documented below.
 
 # ---------------------------------------------------------------------------------------
 # FAITHFULNESS RECORD — every property compared against `aws iam get-role`,
@@ -23,6 +23,15 @@ Description: >-
 # Both are corrected by ONE update-stack immediately after adoption — see the
 # "Post-adoption corrections" block at the end of this file. Fixing them here instead would
 # make the import report NOT IN_SYNC, which is the single outcome this file avoids.
+#
+# 2026-11-20 — this file is now the deployed template, not only an adoption record:
+#   * Logical IDs are the stack's real ones (GitHubActionsArtifactUploadRole,
+#     GitHubActionsStagingDeployRole, GitHubActionsBetaDeployRole, GitHubOidcProvider). The
+#     shortened names used while drafting the import would have made update-stack create a
+#     second role with an already-taken RoleName instead of updating the existing one.
+#   * S3ArtifactPutOnly gained s3:ListBucket on the bucket ARN. That is a live correction,
+#     not part of the accept-and-reconcile list: a HeadObject on an absent key returns 403,
+#     not 404, without it, and upload-artifact.sh aborted every release run.
 # ---------------------------------------------------------------------------------------
 
 Parameters:
@@ -59,13 +68,12 @@ Resources:
         - sts.amazonaws.com
       ThumbprintList: !Ref OidcThumbprints
 
-  ArtifactUploadRole:
+  GitHubActionsArtifactUploadRole:
     Type: AWS::IAM::Role
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
       RoleName: MuscleCuties-GitHubActions-ArtifactUpload
-      Path: /
       MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -99,14 +107,22 @@ Resources:
                   - s3:GetObject
                   - s3:GetObjectVersion
                 Resource: !Sub "arn:aws:s3:::${ReleaseArtifactsBucket}/*"
+              - Effect: Allow
+                # CORRECTION 2026-11-20. Without ListBucket a HeadObject on a key that does
+                # not exist yet answers 403 instead of 404 (S3 hides existence), and
+                # upload-artifact.sh treats that as "cannot inspect existing object" and
+                # aborts before the first PutObject. Every release run therefore failed
+                # until this statement existed. Scoped to the bucket itself, no /*, so it
+                # permits the existence probe and nothing beyond it.
+                Action: s3:ListBucket
+                Resource: !Sub "arn:aws:s3:::${ReleaseArtifactsBucket}"
 
-  StagingDeployRole:
+  GitHubActionsStagingDeployRole:
     Type: AWS::IAM::Role
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
       RoleName: MuscleCuties-GitHubActions-StagingDeploy
-      Path: /
       MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -136,13 +152,12 @@ Resources:
                   - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Staging"
                   - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Staging:*"
 
-  BetaDeployRole:
+  GitHubActionsBetaDeployRole:
     Type: AWS::IAM::Role
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
       RoleName: MuscleCuties-GitHubActions-BetaDeploy
-      Path: /
       MaxSessionDuration: 3600
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
@@ -165,23 +180,27 @@ Resources:
                   - lambda:UpdateFunctionCode
                   - lambda:PublishVersion
                   - lambda:UpdateAlias
+                  - lambda:GetFunction
                   - lambda:GetFunctionConfiguration
                 Resource:
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Server-Beta"
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Server-Beta:*"
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Beta"
-                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:MuscleCuties-Reconciliation-Beta:*"
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:musclecuties-backend-api"
+                  - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:musclecuties-backend-api:*"
 
 # ---------------------------------------------------------------------------------------
 # Post-adoption corrections (apply as a normal update-stack AFTER these four resources are
 # imported, never before). They are the reason this file is faithful-but-wrong:
 #
-#   ArtifactUploadRole / S3ArtifactPutOnly
+#   GitHubActionsArtifactUploadRole / S3ArtifactPutOnly
 #     Resource: arn:aws:s3:::musclecuties-staging-release-artifacts-028417007003/*
 #
-#   StagingDeployRole / LambdaStagingDeploy and BetaDeployRole / LambdaBetaDeploy
-#     Resource: ...:function:musclecuties-staging-backend-api
-#               ...:function:musclecuties-staging-backend-api:*
+#   GitHubActionsStagingDeployRole / LambdaStagingDeploy and GitHubActionsBetaDeployRole / LambdaBetaDeploy
+#     Resource: ...:function:musclecuties-backend-api
+#               ...:function:musclecuties-backend-api:*
+#
+# Beta is corrected above: the only function in the account is musclecuties-backend-api, and
+# tools/deployment/deploy_release.py drives it through update-function-code, publish-version,
+# update-alias and get-function(-configuration). Staging keeps the placeholder names until that
+# environment exists.
 #
 # The GitLab OIDC provider (gitlab.com) that used to sit here unmanaged was deleted on
 # 2026-11-19. No role ever trusted it, so removing it changed nothing at runtime; GitHub
@@ -195,16 +214,16 @@ Outputs:
       Name: !Sub "${AWS::StackName}-OidcProviderArn"
 
   ArtifactUploadRoleArn:
-    Value: !GetAtt ArtifactUploadRole.Arn
+    Value: !GetAtt GitHubActionsArtifactUploadRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-ArtifactUploadRoleArn"
 
   StagingDeployRoleArn:
-    Value: !GetAtt StagingDeployRole.Arn
+    Value: !GetAtt GitHubActionsStagingDeployRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-StagingDeployRoleArn"
 
   BetaDeployRoleArn:
-    Value: !GetAtt BetaDeployRole.Arn
+    Value: !GetAtt GitHubActionsBetaDeployRole.Arn
     Export:
       Name: !Sub "${AWS::StackName}-BetaDeployRoleArn"
