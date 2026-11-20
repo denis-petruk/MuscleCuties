@@ -53,15 +53,13 @@ jobs:
 
       - name: Bootstrap disposable database schema
         env:
-          MC_PREPARE_DISPOSABLE_WORKOUT_DATABASE: 'True'
-          MC_REGISTRATION_WRITE_TEST_POSTGRES: 'Host=127.0.0.1;Database=mc_test_nutrition_ci;Username=postgres;Password=ci_disposable_only'
-          MC_REGISTRATION_TEST_POSTGRES: 'Host=127.0.0.1;Database=mc_test_nutrition_ci;Username=postgres;Password=ci_disposable_only'
-          MC_RETRY_TEST_POSTGRES: 'Host=127.0.0.1;Database=mc_retry_disposable;Username=postgres;Password=ci_disposable_only'
-          MC_SCHEMA_COMPATIBILITY_POSTGRES: 'Host=127.0.0.1;Database=postgres;Username=postgres;Password=ci_disposable_only'
+          ConnectionStrings__PostgreSql: 'Host=127.0.0.1;Database=mc_test_nutrition_ci;Username=postgres;Password=ci_disposable_only'
         run: |
-          dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj \
-            --configuration Release \
-            --filter 'FullyQualifiedName~DisposableWorkoutDatabaseSetupTests'
+          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release -- migrate
+          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj -c Release --no-build -- seed
+          # Grants name concrete relations, so they can only apply once the schema exists.
+          export PGPASSWORD='ci_disposable_only'
+          psql -h 127.0.0.1 -U postgres -d mc_test_nutrition_ci -v ON_ERROR_STOP=1 -f services/postgresql/roles-and-grants.sql
 
       - name: Setup restricted migrator and template database
         run: |
