@@ -93,22 +93,9 @@ public partial class InjuryLogModal : AnimatedModalView
         if (!_hasContent || BindingContext is not InjuryLogViewModel vm)
             return;
 
-        var headerHeight = AppThemeResources.GetDouble("UiDimension88");
-        var contentPaddingHeight = AppThemeResources.GetDouble("UiDimension24");
-        var rowHeight = AppThemeResources.GetDouble("UiDimension130");
-        var loadingContentHeight = AppThemeResources.GetDouble("UiDimension120");
-        var preferredHeight = vm.ShowAddForm
-            ? BottomSheetSizing.MaximumSheetHeight
-            : headerHeight + contentPaddingHeight + (vm.IsBusy || vm.IsLoadError
-                ? loadingContentHeight
-                : vm.ActiveInjuries.Count == 0
-                    ? AppThemeResources.GetDouble("UiDimension208")
-                    : AppThemeResources.GetDouble("UiDimension34") + vm.ActiveInjuries.Count * rowHeight);
-
-        if (vm.HasClearedInjuries)
-            preferredHeight += headerHeight +
-                               (vm.IsHistoryExpanded ? vm.ClearedInjuries.Count * rowHeight : 0);
-
-        BottomSheetSizing.Apply(SheetSurface, Height, preferredHeight);
+        if (vm.ShowAddForm)
+            BottomSheetSizing.Apply(SheetSurface, Height, BottomSheetSizing.MaximumSheetHeight);
+        else
+            BottomSheetSizing.ApplyContentFit(SheetSurface, Height);
     }
 }

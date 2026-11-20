@@ -3,9 +3,11 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 using MuscleCuties.UseCases.Features.Account.Authentication;
 using MuscleCuties.UseCases.Features.Account.Deletion;
 using MuscleCuties.UseCases.Features.Account.Registration;
@@ -18,11 +20,10 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
     private const int RefreshLifetimeDays = 30;
     private const int AppleNonceLifetimeMinutes = 5;
     private const int ExpiredSessionRetentionDays = 1;
-    private const int MaximumIdentityTokenCharacters = 16_384;
     private const int MaximumLoginIdentifierCharacters = 320;
-    private const int MinimumAppleRsaKeyBits = 2_048;
-    private const long MaximumAppleIdentityLifetimeSeconds = 3_600;
-    private const long AllowedAppleIssueTimeFutureSeconds = 60;
+    private const int MaximumGeneratedUsernameCharacters = 32;
+    private const int GeneratedUsernameSuffixCharacters = 8;
+    private static readonly TimeSpan AppleTokenExchangeTimeout = TimeSpan.FromSeconds(3);
     private readonly PostgresDbContext dbContext;
     private readonly IRegistrationPasswordHasher passwordHasher;
     private readonly PostgresPasswordLoginLimiter passwordLoginLimiter;
@@ -30,9 +31,9 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
     private readonly byte[] accessSigningKey;
     private readonly string issuer;
     private readonly string audience;
-    private readonly string appleAudience;
-    private readonly IReadOnlyDictionary<string, string> applePublicKeysById;
+    private readonly AppleIdentityTokenValidator appleIdentityValidator;
     private readonly IAppleAccountTokenRevoker? appleTokenRevoker;
+    private readonly ILogger<PostgresAccountAuthenticationUseCase>? logger;
 
     public PostgresAccountAuthenticationUseCase(
         PostgresDbContext dbContext,
@@ -43,7 +44,8 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         string audience,
         string appleAudience,
         IReadOnlyDictionary<string, string> applePublicKeysById,
-        IAppleAccountTokenRevoker? appleTokenRevoker = null)
+        IAppleAccountTokenRevoker? appleTokenRevoker = null,
+        ILogger<PostgresAccountAuthenticationUseCase>? logger = null)
     {
         this.dbContext = dbContext;
         this.passwordHasher = passwordHasher;
@@ -52,9 +54,10 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         passwordLoginLimiter = new PostgresPasswordLoginLimiter(dbContext, timeProvider, this.accessSigningKey);
         this.issuer = issuer;
         this.audience = audience;
-        this.appleAudience = appleAudience;
-        this.applePublicKeysById = applePublicKeysById;
+        appleIdentityValidator = new AppleIdentityTokenValidator(
+            appleAudience, applePublicKeysById, timeProvider);
         this.appleTokenRevoker = appleTokenRevoker;
+        this.logger = logger;
     }
 
     public async Task<(string ChallengeId, string Nonce)> CreateAppleNonceAsync(CancellationToken cancellationToken)
@@ -100,7 +103,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             return new SessionOperationResult(SessionOperationStatus.InvalidCredentials);
 
         var familyId = Guid.CreateVersion7();
-        var result = await CreateSessionAsync(user.Id, familyId, cancellationToken).ConfigureAwait(false);
+        var result = await CreateSessionAsync(user.Id, familyId, user.IsOnboardingComplete, cancellationToken).ConfigureAwait(false);
         await passwordLoginLimiter.ClearAccountAfterSuccessAsync(user, normalizedIdentifier, cancellationToken).ConfigureAwait(false);
         return result;
     }
@@ -109,33 +112,54 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         AppleLoginRequest request,
         CancellationToken cancellationToken)
     {
-        if (request is null || !TryVerifyAppleIdentityToken(request.IdentityToken, request.Nonce, out var appleUserId))
+        if (request is null)
             return new SessionOperationResult(SessionOperationStatus.InvalidAppleIdentity);
+
+        var validation = appleIdentityValidator.Validate(request.IdentityToken, request.Nonce, out var identity);
+        if (validation != AppleIdentityValidationOutcome.Valid || identity is null)
+        {
+            logger?.LogInformation("Apple sign-in rejected before session lookup: {Outcome}", validation);
+            return new SessionOperationResult(SessionOperationStatus.InvalidAppleIdentity);
+        }
 
         var now = timeProvider.GetUtcNow().UtcDateTime;
         var nonceId = Guid.TryParse(request.NonceChallengeId, out var parsedId) ? parsedId : Guid.Empty;
         var nonce = await dbContext.AppleSignInNonces.SingleOrDefaultAsync(
             item => item.Id == nonceId && item.NonceHash == Hash(request.Nonce), cancellationToken).ConfigureAwait(false);
         if (nonce is null || nonce.ExpiresAtUtc <= now || nonce.RedeemedAtUtc is not null)
+        {
+            logger?.LogInformation("Apple sign-in rejected at the nonce challenge");
             return new SessionOperationResult(SessionOperationStatus.InvalidAppleIdentity);
+        }
 
         string? appleRefreshToken = null;
         if (!string.IsNullOrWhiteSpace(request.AuthorizationCode) && appleTokenRevoker is not null)
         {
-            appleRefreshToken = await appleTokenRevoker
-                .ExchangeAuthorizationCodeForRefreshTokenAsync(request.AuthorizationCode, cancellationToken)
-                .ConfigureAwait(false);
+            using var exchangeCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            exchangeCts.CancelAfter(AppleTokenExchangeTimeout);
+            try
+            {
+                appleRefreshToken = await appleTokenRevoker
+                    .ExchangeAuthorizationCodeForRefreshTokenAsync(request.AuthorizationCode, exchangeCts.Token)
+                    .ConfigureAwait(false);
+            }
+            catch (Exception ex) when (!cancellationToken.IsCancellationRequested)
+            {
+                logger?.LogWarning(
+                    "Apple authorization code exchange skipped during sign-in ({ExceptionType}); falling back to stored authorization code.",
+                    ex.GetType().Name);
+            }
         }
 
         return await dbContext.Database.CreateExecutionStrategy()
             .ExecuteAsync(() => LoginWithAppleTransactionalAsync(
-                nonceId, appleUserId, request.AuthorizationCode, appleRefreshToken, now, cancellationToken))
+                nonceId, identity, request.AuthorizationCode, appleRefreshToken, now, cancellationToken))
             .ConfigureAwait(false);
     }
 
     private async Task<SessionOperationResult> LoginWithAppleTransactionalAsync(
         Guid nonceId,
-        string appleUserId,
+        AppleVerifiedIdentity identity,
         string? authorizationCode,
         string? appleRefreshToken,
         DateTime now,
@@ -154,11 +178,65 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         }
 
         var user = await dbContext.Users.SingleOrDefaultAsync(
-            candidate => candidate.AppleUserId == appleUserId, cancellationToken).ConfigureAwait(false);
+            candidate => candidate.AppleUserId == identity.AppleUserId, cancellationToken).ConfigureAwait(false);
+        if (user is null && !string.IsNullOrWhiteSpace(identity.Email))
+        {
+            // Existing password accounts keep their credentials and gain the Apple identity when
+            // Apple verifies the same email address. This is the only automatic account link.
+            var normalizedEmail = identity.Email.Trim().ToLowerInvariant();
+            user = await dbContext.Users.SingleOrDefaultAsync(
+                candidate => candidate.NormalizedEmail == normalizedEmail && candidate.AppleUserId == null,
+                cancellationToken).ConfigureAwait(false);
+            if (user is not null)
+            {
+                user.AppleUserId = identity.AppleUserId;
+                user.UpdatedAt = now;
+            }
+        }
+
         if (user is null)
         {
-            await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
-            return new SessionOperationResult(SessionOperationStatus.InvalidAppleIdentity);
+            var requestedEmail = identity.Email?.Trim().ToLowerInvariant();
+            if (!string.IsNullOrWhiteSpace(requestedEmail) &&
+                await dbContext.Users.AsNoTracking().AnyAsync(
+                    candidate => candidate.NormalizedEmail == requestedEmail, cancellationToken)
+                    .ConfigureAwait(false))
+            {
+                logger?.LogWarning("Apple sign-in email is already linked to another Apple identity");
+                await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
+                return new SessionOperationResult(SessionOperationStatus.InvalidAppleIdentity);
+            }
+
+            user = CreateAppleAccount(identity, now);
+            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, user.Id, cancellationToken)
+            .ConfigureAwait(false);
+        var existingProfile = await dbContext.UserProfiles.AsNoTracking()
+            .SingleOrDefaultAsync(profile => profile.UserId == user.Id, cancellationToken)
+            .ConfigureAwait(false);
+        if (existingProfile is null)
+        {
+            var initialProfile = DefaultUserProfileFactory.CreateInitial(user.Id, user.Username, now);
+            dbContext.UserProfiles.Add(initialProfile);
+            existingProfile = initialProfile;
+        }
+
+        // Legacy Apple accounts created before onboarding enforcement had IsOnboardingComplete = true
+        // with an empty profile and zero quiz responses. Route them through onboarding until completed.
+        if (user.IsOnboardingComplete &&
+            string.Equals(user.CredentialType, "Apple", StringComparison.OrdinalIgnoreCase) &&
+            IsUnfilledInitialProfile(existingProfile))
+        {
+            var hasQuizResponses = await dbContext.UserQuizResponses.AsNoTracking()
+                .AnyAsync(response => response.UserId == user.Id, cancellationToken)
+                .ConfigureAwait(false);
+            if (!hasQuizResponses)
+            {
+                user.IsOnboardingComplete = false;
+                user.UpdatedAt = now;
+            }
         }
 
         var canStoreAppleToken = string.Equals(user.CredentialType, "Apple", StringComparison.OrdinalIgnoreCase) ||
@@ -182,9 +260,50 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         }
 
         var familyId = Guid.CreateVersion7();
-        var result = await CreateSessionAsync(user.Id, familyId, cancellationToken).ConfigureAwait(false);
+        var result = await CreateSessionAsync(user.Id, familyId, user.IsOnboardingComplete, cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return result;
+    }
+
+    private static bool IsUnfilledInitialProfile(UserProfileRecord profile) =>
+        profile.DateOfBirth is null &&
+        profile.Height <= 0m &&
+        profile.Weight <= 0m &&
+        string.IsNullOrWhiteSpace(profile.Goal);
+
+    private UserRecord CreateAppleAccount(AppleVerifiedIdentity identity, DateTime now)
+    {
+        var subjectHash = Hash(identity.AppleUserId)[..GeneratedUsernameSuffixCharacters];
+        var email = identity.Email?.Trim().ToLowerInvariant();
+        if (string.IsNullOrWhiteSpace(email))
+            email = $"apple-{subjectHash}@appleid.invalid";
+
+        var usernameBase = email.Split('@')[0];
+        var username = new string(usernameBase
+            .Where(character => char.IsLetterOrDigit(character) || character is '.' or '_' or '-')
+            .ToArray());
+        if (string.IsNullOrWhiteSpace(username))
+            username = "apple";
+        if (username.Length > MaximumGeneratedUsernameCharacters - GeneratedUsernameSuffixCharacters - 1)
+            username = username[..(MaximumGeneratedUsernameCharacters - GeneratedUsernameSuffixCharacters - 1)];
+        username = $"{username}_{subjectHash}";
+
+        var user = new UserRecord
+        {
+            Id = Guid.CreateVersion7(),
+            Email = email,
+            Username = username,
+            AppleUserId = identity.AppleUserId,
+            CredentialType = "Apple",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = false,
+            PrivacyNoticeVersion = "apple-signin-v1",
+            PrivacyNoticeAcceptedAtUtc = now
+        };
+        dbContext.Users.Add(user);
+        logger?.LogInformation("Created an Apple account for a first-time sign-in");
+        return user;
     }
 
     public async Task<SessionOperationResult> RefreshAsync(RefreshSessionRequest request, CancellationToken cancellationToken)
@@ -233,10 +352,15 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             CreatedAtUtc = now,
             ExpiresAtUtc = timeProvider.GetUtcNow().AddDays(RefreshLifetimeDays).UtcDateTime
         });
+        var isOnboardingComplete = await dbContext.Users.AsNoTracking()
+            .Where(candidate => candidate.Id == session.UserId)
+            .Select(candidate => (bool?)candidate.IsOnboardingComplete)
+            .SingleOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false) ?? true;
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         return new SessionOperationResult(SessionOperationStatus.Succeeded,
-            CreateTokens(session.UserId, session.FamilyId, nextToken, timeProvider.GetUtcNow()));
+            CreateTokens(session.UserId, session.FamilyId, nextToken, timeProvider.GetUtcNow(), isOnboardingComplete));
     }
 
     public async Task<bool> RevokeAsync(RevokeSessionRequest request, CancellationToken cancellationToken)
@@ -365,7 +489,11 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return dbContext.Users.AsNoTracking().AnyAsync(u => u.Username != null && u.Username.ToLower() == normalized, cancellationToken);
     }
 
-    private async Task<SessionOperationResult> CreateSessionAsync(Guid userId, Guid familyId, CancellationToken cancellationToken)
+    private async Task<SessionOperationResult> CreateSessionAsync(
+        Guid userId,
+        Guid familyId,
+        bool isOnboardingComplete,
+        CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow();
         await dbContext.RefreshSessions
@@ -382,10 +510,17 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             ExpiresAtUtc = now.AddDays(RefreshLifetimeDays).UtcDateTime
         });
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-        return new SessionOperationResult(SessionOperationStatus.Succeeded, CreateTokens(userId, familyId, refreshToken, now));
+        return new SessionOperationResult(
+            SessionOperationStatus.Succeeded,
+            CreateTokens(userId, familyId, refreshToken, now, isOnboardingComplete));
     }
 
-    private SessionTokens CreateTokens(Guid userId, Guid familyId, string refreshToken, DateTimeOffset now)
+    private SessionTokens CreateTokens(
+        Guid userId,
+        Guid familyId,
+        string refreshToken,
+        DateTimeOffset now,
+        bool isOnboardingComplete)
     {
         var expires = now.AddMinutes(AccessLifetimeMinutes);
         var header = Encode(JsonSerializer.SerializeToUtf8Bytes(new { alg = "HS256", typ = "JWT" }));
@@ -398,66 +533,9 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         var unsignedToken = $"{header}.{payload}";
         using var hmac = new HMACSHA256(accessSigningKey);
         var accessToken = $"{unsignedToken}.{Encode(hmac.ComputeHash(Encoding.ASCII.GetBytes(unsignedToken)))}";
-        return new SessionTokens(userId, accessToken, refreshToken, expires);
-    }
-
-    private bool TryVerifyAppleIdentityToken(string token, string nonce, out string appleUserId)
-    {
-        appleUserId = string.Empty;
-        if (string.IsNullOrWhiteSpace(token) || token.Length > MaximumIdentityTokenCharacters ||
-            string.IsNullOrWhiteSpace(nonce) || applePublicKeysById.Count == 0 || string.IsNullOrWhiteSpace(appleAudience))
-            return false;
-        var pieces = token.Split('.');
-        if (pieces.Length != 3)
-            return false;
-        try
-        {
-            using var headerDoc = JsonDocument.Parse(Decode(pieces[0]));
-            var header = headerDoc.RootElement;
-            if (!header.TryGetProperty("alg", out var alg) || alg.GetString() != "RS256" ||
-                !header.TryGetProperty("kid", out var kid) || kid.GetString() is not { } keyId ||
-                !applePublicKeysById.TryGetValue(keyId, out var pem))
-                return false;
-            using var rsa = RSA.Create();
-            rsa.ImportFromPem(pem);
-            if (rsa.KeySize < MinimumAppleRsaKeyBits || !rsa.VerifyData(
-                    Encoding.ASCII.GetBytes($"{pieces[0]}.{pieces[1]}"), Decode(pieces[2]),
-                    HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1))
-                return false;
-            using var claimsDoc = JsonDocument.Parse(Decode(pieces[1]));
-            var claims = claimsDoc.RootElement;
-            var now = timeProvider.GetUtcNow().ToUnixTimeSeconds();
-            if (!ReadString(claims, "iss", out var tokenIssuer) || tokenIssuer != "https://appleid.apple.com" ||
-                !ReadString(claims, "aud", out var tokenAudience) || tokenAudience != appleAudience ||
-                !ReadString(claims, "sub", out appleUserId) ||
-                !ReadString(claims, "nonce", out var tokenNonce) || tokenNonce != Hash(nonce) ||
-                !claims.TryGetProperty("exp", out var exp) || !exp.TryGetInt64(out var expiresAt) || expiresAt <= now ||
-                !claims.TryGetProperty("iat", out var iat) || !iat.TryGetInt64(out var issuedAt) ||
-                issuedAt > now + AllowedAppleIssueTimeFutureSeconds || expiresAt <= issuedAt ||
-                expiresAt - issuedAt > MaximumAppleIdentityLifetimeSeconds)
-            {
-                appleUserId = string.Empty;
-                return false;
-            }
-            return true;
-        }
-        catch (Exception exception) when (exception is FormatException or JsonException or CryptographicException or ArgumentException)
-        {
-            appleUserId = string.Empty;
-            return false;
-        }
-    }
-
-    private static bool ReadString(JsonElement element, string name, out string value)
-    {
-        value = string.Empty;
-        if (!element.TryGetProperty(name, out var property) || property.ValueKind != JsonValueKind.String)
-            return false;
-        value = property.GetString() ?? string.Empty;
-        return value.Length > 0;
+        return new SessionTokens(userId, accessToken, refreshToken, expires, isOnboardingComplete);
     }
 
     private static string Hash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
     private static string Encode(byte[] value) => Convert.ToBase64String(value).TrimEnd('=').Replace('+', '-').Replace('/', '_');
-    private static byte[] Decode(string value) => Convert.FromBase64String(value.Replace('-', '+').Replace('_', '/').PadRight((value.Length + 3) / 4 * 4, '='));
 }

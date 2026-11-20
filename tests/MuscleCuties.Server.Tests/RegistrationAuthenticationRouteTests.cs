@@ -1,5 +1,9 @@
+using System.IdentityModel.Tokens.Jwt;
 using System.Net;
+using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Security.Claims;
+using System.Text;
 using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
@@ -8,9 +12,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using MuscleCuties.Contracts.Account;
 using MuscleCuties.Server;
 using MuscleCuties.UseCases.Features.Account.Authentication;
+using MuscleCuties.UseCases.Features.Account.Registration;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 using Xunit;
 
@@ -19,6 +25,7 @@ namespace MuscleCuties.Server.Tests;
 public sealed class RegistrationAuthenticationRouteTests
 {
     private const string RegistrationRoute = "/api/v1/accounts/registration";
+    private const string OnboardingCompleteRoute = "/api/v1/accounts/onboarding/complete";
     private const string PasswordRoute = "/api/v1/auth/password";
     private const string RefreshRoute = "/api/v1/auth/refresh";
     private const string SyntheticEmail = "registration@example.test";
@@ -185,11 +192,80 @@ public sealed class RegistrationAuthenticationRouteTests
         quizResponses = new[] { new { questionId = SyntheticQuestionId, answerId = SyntheticAnswerId } }
     };
 
-    private sealed class Fixture(WebApplication app, RegistrationSpy registration, AuthenticationSpy authentication) : IAsyncDisposable
+    [Fact]
+    public async Task AuthenticatedOnboardingCompleteRequiresAuthorizationAndReturnsOnboardingComplete()
     {
+        await using var fixture = await Fixture.StartAsync();
+        var payload = new
+        {
+            profile = new
+            {
+                name = "Synthetic Member",
+                birthDate = $"{SyntheticBirthYear:D4}-{SyntheticBirthMonth:D2}-{SyntheticBirthDay:D2}",
+                heightCm = SyntheticHeightCm,
+                weightKg = SyntheticWeightKg,
+                cycleLengthDays = SyntheticCycleDays,
+                selectedActivityTypes = new[] { SyntheticActivity },
+                useMetricSystem = true
+            },
+            quizResponses = new[] { new { questionId = SyntheticQuestionId, answerId = SyntheticAnswerId } }
+        };
+
+        var unauthenticated = await fixture.Client.PostAsJsonAsync(OnboardingCompleteRoute, payload);
+        Assert.Equal(HttpStatusCode.Unauthorized, unauthenticated.StatusCode);
+
+        using var authenticatedRequest = new HttpRequestMessage(HttpMethod.Post, OnboardingCompleteRoute)
+        {
+            Content = JsonContent.Create(payload)
+        };
+        authenticatedRequest.Headers.Authorization =
+            new AuthenticationHeaderValue("Bearer", fixture.CreateAccessToken(SyntheticUserId));
+
+        var authenticated = await fixture.Client.SendAsync(authenticatedRequest);
+
+        Assert.Equal(HttpStatusCode.OK, authenticated.StatusCode);
+        Assert.Equal(SyntheticUserId, fixture.Onboarding.LastUserId);
+        Assert.NotNull(fixture.Onboarding.LastRequest);
+        Assert.Equal(SyntheticCycleDays, fixture.Onboarding.LastRequest!.Profile.CycleLength);
+        var body = await authenticated.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(SyntheticUserId, body.GetProperty("userId").GetGuid());
+        Assert.True(body.GetProperty("onboardingComplete").GetBoolean());
+    }
+
+    private sealed class Fixture(
+        WebApplication app,
+        RegistrationSpy registration,
+        OnboardingSpy onboarding,
+        AuthenticationSpy authentication) : IAsyncDisposable
+    {
+        private const string TestSigningKey = "synthetic-registration-test-signing-key-only";
+        private const string TestIssuer = "synthetic-registration-tests";
+        private const string TestAudience = "synthetic-registration-client";
+
         public HttpClient Client { get; } = app.GetTestClient();
         public RegistrationSpy Registration { get; } = registration;
+        public OnboardingSpy Onboarding { get; } = onboarding;
         public AuthenticationSpy Authentication { get; } = authentication;
+
+        public string CreateAccessToken(Guid userId)
+        {
+            var credentials = new SigningCredentials(
+                new SymmetricSecurityKey(Encoding.UTF8.GetBytes(TestSigningKey)),
+                SecurityAlgorithms.HmacSha256);
+            var token = new JwtSecurityToken(
+                issuer: TestIssuer,
+                audience: TestAudience,
+                claims:
+                [
+                    new Claim("sub", userId.ToString("D")),
+                    new Claim("jti", Guid.CreateVersion7().ToString("D")),
+                    new Claim("sid", Guid.CreateVersion7().ToString("D"))
+                ],
+                notBefore: DateTime.UtcNow.AddMinutes(-1),
+                expires: DateTime.UtcNow.AddMinutes(10),
+                signingCredentials: credentials);
+            return new JwtSecurityTokenHandler().WriteToken(token);
+        }
 
         public static async Task<Fixture> StartAsync()
         {
@@ -199,27 +275,47 @@ public sealed class RegistrationAuthenticationRouteTests
             builder.Configuration.AddInMemoryCollection(new Dictionary<string, string?>
             {
                 ["ConnectionStrings:PostgreSql"] = "Host=127.0.0.1;Port=1;Database=synthetic;Username=synthetic;Password=synthetic",
-                ["Authentication:SigningKey"] = "synthetic-registration-test-signing-key-only",
-                ["Authentication:Issuer"] = "synthetic-registration-tests",
-                ["Authentication:Audience"] = "synthetic-registration-client"
+                ["Authentication:SigningKey"] = TestSigningKey,
+                ["Authentication:Issuer"] = TestIssuer,
+                ["Authentication:Audience"] = TestAudience
             });
             var registration = new RegistrationSpy();
+            var onboarding = new OnboardingSpy();
             var authentication = new AuthenticationSpy();
             var app = ApiApplication.Build(builder, services =>
             {
                 services.RemoveAll<ICompleteAccountRegistrationUseCase>();
                 services.AddSingleton<ICompleteAccountRegistrationUseCase>(registration);
+                services.RemoveAll<ICompleteAccountOnboardingUseCase>();
+                services.AddSingleton<ICompleteAccountOnboardingUseCase>(onboarding);
                 services.RemoveAll<IAccountAuthenticationUseCase>();
                 services.AddSingleton<IAccountAuthenticationUseCase>(authentication);
             });
             await app.StartAsync();
-            return new Fixture(app, registration, authentication);
+            return new Fixture(app, registration, onboarding, authentication);
         }
 
         public async ValueTask DisposeAsync()
         {
             Client.Dispose();
             await app.DisposeAsync();
+        }
+    }
+
+    private sealed class OnboardingSpy : ICompleteAccountOnboardingUseCase
+    {
+        public CompleteAccountOnboardingStatus Status { get; set; } = CompleteAccountOnboardingStatus.Completed;
+        public Guid? LastUserId { get; private set; }
+        public CompleteAccountOnboardingRequest? LastRequest { get; private set; }
+
+        public Task<CompleteAccountOnboardingResult> ExecuteAsync(
+            Guid userId,
+            CompleteAccountOnboardingRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            LastUserId = userId;
+            LastRequest = request;
+            return Task.FromResult(new CompleteAccountOnboardingResult(Status, userId));
         }
     }
 

@@ -12,7 +12,7 @@ iOS fitness, nutrition and cycle-tracking app. The client is .NET MAUI (iOS only
 - `src/MuscleCuties.DbMaintenance` — operator CLI: `migrate`, `seed`, `dbcheck`.
 - `services/MuscleCuties.Server` — API composition, auth, Lambda host.
 - `services/MuscleCuties.WorkoutReconciliation` — scheduled worker for pending workout revisions.
-- `tests/` — xUnit suites. `scripts/` — local tooling. `artifacts/` — packaging output, ignored by Git.
+- `tests/` — xUnit suites. `artifacts/` — packaging output, ignored by Git.
 
 ## Build and test
 
@@ -35,10 +35,9 @@ Run the suite that covers the files you changed, not the whole solution.
 ### PostgreSQL-backed suites
 
     brew services start postgresql@16
-    ./scripts/prepare-integration-postgres.sh
-    source .env.integration
+    source .env
 
-The script creates and seeds disposable local databases and writes an ignored `.env.integration` with loopback connection strings only.
+Configure loopback PostgreSQL connection strings in your ignored local `.env` file.
 
 ### Local API
 
@@ -53,17 +52,3 @@ The backend reads PostgreSQL connection and JWT signing settings from configurat
 ## CI/CD
 
 GitHub Actions, in `.github/workflows/`: `ci.yml` (build, unit tests), `db-verify.yml` (migration rehearsal on disposable databases), `backend-build.yml` (immutable Lambda packages), `backend-release.yml` (deploy), `db-release.yml` (schema migrations), `mobile-release.yml` (iOS build and packaging).
-
-## Documentation
-
-| File | Read it when |
-| --- | --- |
-| [AGENTS.md](AGENTS.md) | Always; the only file every agent session loads |
-| [STATUS.md](STATUS.md) | Starting a session: what the last task changed and verified |
-| [ROADMAP.md](ROADMAP.md) | Choosing the next task |
-| [DESIGN.md](DESIGN.md) | Any UI change |
-| [docs/UI_PRESENTATION_DESIGN_SPEC.md](docs/UI_PRESENTATION_DESIGN_SPEC.md) | A UI change that needs screen recipes or component details; read the relevant section only |
-| [docs/PRODUCT_WORKFLOWS.md](docs/PRODUCT_WORKFLOWS.md) | Workout planning, logging, progression or health-data behaviour |
-| [CONTEXT.md](CONTEXT.md) | Localization terms |
-
-History lives in Git, not in dated documents.

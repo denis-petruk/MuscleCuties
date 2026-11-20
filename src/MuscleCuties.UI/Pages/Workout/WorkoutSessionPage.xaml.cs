@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Navigation;
@@ -81,13 +82,20 @@ public partial class WorkoutSessionPage : ContentPage
             {
                 await MainThread.InvokeOnMainThreadAsync(async () =>
                 {
-                    CompletionBadge.Scale = AppThemeResources.GetDouble("UiScaleCompletionStart");
-                    await CompletionBadge.ScaleToAsync(
-                        AppThemeResources.GetDouble("UiScaleCelebrationPeak"),
-                        (uint)AppThemeResources.GetDouble("UiMotionDuration340"), Easing.CubicOut);
-                    await CompletionBadge.ScaleToAsync(
-                        AppThemeResources.GetDouble("UiScaleFull"),
-                        (uint)AppThemeResources.GetDouble("UiMotionDuration220"), Easing.CubicInOut);
+                    if (MotionSettings.ReduceMotion)
+                    {
+                        CompletionBadge.Scale = AppThemeResources.GetDouble("UiScaleFull");
+                    }
+                    else
+                    {
+                        CompletionBadge.Scale = AppThemeResources.GetDouble("UiScaleCompletionStart");
+                        await CompletionBadge.ScaleToAsync(
+                            AppThemeResources.GetDouble("UiScaleCelebrationPeak"),
+                            (uint)AppThemeResources.GetDouble("UiMotionDuration340"), Easing.CubicOut);
+                        await CompletionBadge.ScaleToAsync(
+                            AppThemeResources.GetDouble("UiScaleFull"),
+                            (uint)AppThemeResources.GetDouble("UiMotionDuration220"), Easing.CubicInOut);
+                    }
                 });
             }
             catch (Exception exception)

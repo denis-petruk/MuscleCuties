@@ -19,8 +19,21 @@ public partial class ProfilePersonalInfoPage : ContentPage
 
     protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
     {
-        ((ProfilePersonalInfoViewModel)BindingContext).ResetMeasurementVisit();
+        var vm = (ProfilePersonalInfoViewModel)BindingContext;
+        vm.ResetMeasurementVisit();
+        vm.MaskSensitiveInputs();
         base.OnNavigatedFrom(args);
+    }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (BindingContext is ProfilePersonalInfoViewModel vm && vm.HasUnsavedChanges)
+        {
+            vm.BackCommand.Execute(null);
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
     }
 
     private async void OnEditMeasurementClicked(object? sender, EventArgs e)

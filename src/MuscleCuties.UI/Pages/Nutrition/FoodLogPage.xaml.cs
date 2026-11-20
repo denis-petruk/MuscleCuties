@@ -64,4 +64,21 @@ public partial class FoodLogPage : ContentPage, IQueryAttributable
             }
         });
     }
+
+    protected override bool OnBackButtonPressed()
+    {
+        if (_viewModel.Breakdown.IsVisible)
+        {
+            _viewModel.Breakdown.CloseCommand.Execute(null);
+            return true;
+        }
+
+        if (_viewModel.IsEditModalVisible)
+        {
+            _viewModel.CloseEditModalCommand.Execute(null);
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
+    }
 }

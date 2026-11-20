@@ -781,15 +781,25 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             await LoadTrainingExperienceLevelAsync();
             OnPropertyChanged(nameof(HasIneligibleSavedStyle));
 
-            if (SelectedActivity is null)
-                StatusMessage = UiTextCatalog.Get(StrengthPreferenceRequiredKey);
-            else if (!HasValidSavedAvailability)
-                StatusMessage = UiTextCatalog.Get(AvailableDaysMissingKey);
+            var missingPrerequisites = CollectMissingPrerequisites();
+            if (missingPrerequisites.Count > 0)
+            {
+                StatusMessage = string.Join(" ", missingPrerequisites);
+                OnPropertyChanged(nameof(NeedsPrerequisiteRecovery));
+            }
             else if (!HasActiveOtherPreview && !HasMissingRequiredAnswers() && !editHiitAnswers)
             {
                 await InitializePlanPreviewOrAutoApplyAsync(generation);
             }
+            else if (HasMissingRequiredAnswers())
+            {
+                _showMissingAnswers = true;
+                if (ShouldShowHiitUnderlyingCardioChoice)
+                    HiitEvidenceCapture.ShowValidationErrors(DateOnly.FromDateTime(DateTime.Now));
+                NotifyMissingAnswers();
+            }
 
+            OnPropertyChanged(nameof(NeedsPrerequisiteRecovery));
             CreateProposalCommand.NotifyCanExecuteChanged();
         }
         catch (WorkoutPreviewAlreadyOpenException)
@@ -899,7 +909,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 StrengthPlanGenerationDisplayMapper.FormatLocalized(
                     RecentWeekAccessibilityFormatKey,
                     periodLabel,
-                    count.ToString(CultureInfo.CurrentCulture))));
+                    count.ToString(CultureInfo.CurrentCulture)),
+                count));
         }
 
         return result;
@@ -994,15 +1005,18 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             _availableWeekdays = NormalizeWeekdays(preferences.AvailableWeekdays);
             UpdateSelectedProfileActivities(preferences.ActivityTypes);
             NotifyAvailabilityChanged();
+            var refreshGaps = new List<string>();
             if (!preferences.ActivityTypes.Contains((int)selectedActivity.Activity))
             {
                 SelectedActivity = null;
-                StatusMessage = UiTextCatalog.Get(StrengthPreferenceRequiredKey);
-                return;
+                refreshGaps.Add(UiTextCatalog.Get(StrengthPreferenceRequiredKey));
             }
             if (!HasValidSavedAvailability)
+                refreshGaps.Add(UiTextCatalog.Get(AvailableDaysMissingKey));
+            if (refreshGaps.Count > 0)
             {
-                StatusMessage = UiTextCatalog.Get(AvailableDaysMissingKey);
+                StatusMessage = string.Join(" ", refreshGaps);
+                OnPropertyChanged(nameof(NeedsPrerequisiteRecovery));
                 return;
             }
 
@@ -1152,7 +1166,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                         .Select(StrengthPlanGenerationDisplayMapper.ToMixedActivitySessionDisplay)
                         .ToArray();
                     return new MixedActivityDayDisplay(
-                        StrengthPlanGenerationDisplayMapper.ShortWeekdayLabel(day), sessions,
+                        StrengthPlanGenerationDisplayMapper.FullWeekdayLabel(day), sessions,
                         sessions.Length == NoPolicyReasons);
                 }).ToArray()
             : Array.Empty<MixedActivityDayDisplay>();
@@ -1309,9 +1323,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(HasFittingStrengthStyleChoices));
         OnPropertyChanged(nameof(CanOfferExploreOtherFeatures));
         ExploreOtherFeaturesCommand.NotifyCanExecuteChanged();
+        // The picker below already carries the "choose a strength style" label, so this banner only
+        // speaks when it has something the field cannot say.
         StatusMessage = _safetyPlanChanged
-            ? $"{UiTextCatalog.Get("Workout_Generation_SafetyPlanChanged")}{Environment.NewLine}{UiTextCatalog.Get("Workout_Generation_ChooseFittingStrengthStyle")}"
-            : UiTextCatalog.Get("Workout_Generation_ChooseFittingStrengthStyle");
+            ? UiTextCatalog.Get("Workout_Generation_SafetyPlanChanged")
+            : string.Empty;
         return true;
     }
 
@@ -1924,10 +1940,21 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             SelectedClimbingInstructionChoice = null;
     }
 
+    private List<string> CollectMissingPrerequisites()
+    {
+        var gaps = new List<string>();
+        if (SelectedActivity is null)
+            gaps.Add(UiTextCatalog.Get(StrengthPreferenceRequiredKey));
+        if (!HasValidSavedAvailability)
+            gaps.Add(UiTextCatalog.Get(AvailableDaysMissingKey));
+        return gaps;
+    }
+
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(CanEditInputs));
         OnPropertyChanged(nameof(HasUnavailableApplyReason));
+        OnPropertyChanged(nameof(NeedsPrerequisiteRecovery));
         NotifyCommandStates();
     }
 

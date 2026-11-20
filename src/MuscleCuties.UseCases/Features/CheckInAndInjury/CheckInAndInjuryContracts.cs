@@ -72,10 +72,6 @@ public sealed record SaveInjuryObservationRequest(
         MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
     bool? ClinicianAdvisedAvoid = null);
 
-public sealed record CheckInAndInjuryHistorySnapshot(
-    IReadOnlyList<DailyCheckInRecord> CheckIns,
-    IReadOnlyList<InjuryObservationRecord> Injuries);
-
 public sealed class CheckInAndInjuryIdConflictException : Exception
 {
     public CheckInAndInjuryIdConflictException()

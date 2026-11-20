@@ -26,8 +26,19 @@ public partial class DateStripDayItem : ObservableObject
     public string DayNumber { get; }
     public bool IsToday { get; }
 
+    public bool ShowTodayDot => IsToday && !IsSelected;
+
+    public string AccessibilityDescription => IsToday
+        ? $"{DisplayFormat.DayMonthWithWeekday(Date)}, {UiTextCatalog.Get("Common_Today")}"
+        : DisplayFormat.DayMonthWithWeekday(Date);
+
     /// <summary>Zero-based slot in the visible week strip.</summary>
     public int Position { get; set; }
+
+    partial void OnIsSelectedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowTodayDot));
+    }
 }
 
 public partial class MealSectionUiGroup : ObservableObject

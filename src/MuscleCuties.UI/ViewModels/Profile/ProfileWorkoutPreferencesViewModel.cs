@@ -80,6 +80,11 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         ToggleWorkoutActivityCommand = new RelayCommand<WorkoutActivityOptionItem>(ToggleWorkoutActivity);
         ToggleWeekdayCommand = new RelayCommand<WorkoutWeekdayOptionItem>(ToggleWeekday);
         SwitchToGeneralStrengthCommand = new RelayCommand(SwitchToGeneralStrength);
+        ToggleDumbbellsCommand = new RelayCommand(() => HasDumbbells = !HasDumbbells);
+        ToggleBandsCommand = new RelayCommand(() => HasBands = !HasBands);
+        ToggleBandAnchorCommand = new RelayCommand(() => HasConfirmedBandAnchor = !HasConfirmedBandAnchor);
+        ToggleSlidersCommand = new RelayCommand(() => HasSliders = !HasSliders);
+        ToggleGluteFocusCommand = new RelayCommand(() => GluteFocus = !GluteFocus);
         WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(new HashSet<WorkoutActivityDto>());
         AvailableWeekdays = new ObservableCollection<WorkoutWeekdayOptionItem>(CreateWeekdays()
             .Select(day => new WorkoutWeekdayOptionItem(day)));
@@ -106,13 +111,24 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     public bool ShowHomeEquipmentCapabilities =>
         string.Equals(SelectedEquipmentOption?.Value, HomeDumbbellsBandsEquipmentValue, StringComparison.OrdinalIgnoreCase);
 
-    public bool ShowBandAnchorConfirmation => ShowHomeEquipmentCapabilities && HasBands;
+    public bool IsFullGymEquipment =>
+        string.Equals(SelectedEquipmentOption?.Value, FullGymEquipmentValue, StringComparison.OrdinalIgnoreCase);
+
+    // A full gym includes bands, but the anchor is never inferred: the user must confirm it here
+    // just as a home user does. Hiding this for FullGym made the planner's anchor requirement
+    // impossible to satisfy.
+    public bool ShowBandAnchorConfirmation => IsFullGymEquipment || (ShowHomeEquipmentCapabilities && HasBands);
 
     /// <summary>C1/OD-7: a saved strength style that is no longer offered for this profile.</summary>
     public bool HasIneligibleSavedStyle =>
         WorkoutActivityOptions.Any(option => option.IsSelected && option.HasUnavailableReason);
 
     public RelayCommand SwitchToGeneralStrengthCommand { get; }
+    public RelayCommand ToggleDumbbellsCommand { get; }
+    public RelayCommand ToggleBandsCommand { get; }
+    public RelayCommand ToggleBandAnchorCommand { get; }
+    public RelayCommand ToggleSlidersCommand { get; }
+    public RelayCommand ToggleGluteFocusCommand { get; }
 
     public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions =>
         ProfileWorkoutActivityOptions.BuildGroups(WorkoutActivityOptions);
@@ -209,7 +225,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
             var exclusionOptions = await _exerciseExclusionCatalog.ExecuteAsync();
             ExerciseExclusionOptions = new ObservableCollection<WorkoutExerciseExclusionOptionItem>(
                 exclusionOptions.Select(option => new WorkoutExerciseExclusionOptionItem(
-                    option.ExerciseId, option.Name)
+                    option.ExerciseId, UiTextCatalog.TranslateRuntimeText(option.Name))
                 {
                     IsSelected = excludedExerciseIds.Contains(option.ExerciseId)
                 }));
@@ -268,32 +284,15 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
             var selectedActivities = WorkoutActivityOptions.Where(option => option.IsSelected).ToArray();
             var availableWeekdays = AvailableWeekdays.Where(day => day.IsSelected)
                 .Select(day => (int)day.DayOfWeek).ToArray();
-            if (!selectedActivities.Any(option => WorkoutPlanningConstants.IsStrengthActivity(option.ActivityType)))
+            var validationErrors = CollectValidationErrors(selectedActivities, availableWeekdays);
+            if (validationErrors.Count > 0)
             {
-                StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs");
+                StatusMessage = string.Join(" ", validationErrors);
                 return;
             }
 
-            if (availableWeekdays.Length is < WorkoutPreferencesConstraints.MinimumAvailableWeekdays or >
-                WorkoutPreferencesConstraints.MaximumAvailableWeekdays)
-            {
-                StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_PickAtLeastTwoDays");
-                return;
-            }
-
-            if (SelectedEquipmentOption is null)
-            {
-                StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_ChooseEquipment");
-                return;
-            }
-
-            var isHomeEquipment = string.Equals(SelectedEquipmentOption.Value, HomeDumbbellsBandsEquipmentValue,
+            var isHomeEquipment = string.Equals(SelectedEquipmentOption!.Value, HomeDumbbellsBandsEquipmentValue,
                 StringComparison.OrdinalIgnoreCase);
-            if (isHomeEquipment && !HasDumbbells && !HasBands)
-            {
-                StatusMessage = UiTextCatalog.Get("Profile_WorkoutPrefs_HomeNeedsEquipment");
-                return;
-            }
 
             var draftPreferences = new WorkoutPreferencesDto(
                 selectedActivities.Select(option => (int)option.ActivityType).ToArray(),
@@ -314,7 +313,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                     .Select(option => option.ExerciseId).ToHashSet(),
                 GluteFocus: GluteFocus,
                 HasSliders: HasSliders,
-                HasConfirmedBandAnchor: isHomeEquipment && HasBands && HasConfirmedBandAnchor,
+                HasConfirmedBandAnchor: HasConfirmedBandAnchor && (isHomeEquipment ? HasBands : IsFullGymEquipment),
                 HasDumbbells: isHomeEquipment ? HasDumbbells : null,
                 HasBands: isHomeEquipment ? HasBands : null);
             if (!await _useCase.SaveAsync(draftPreferences).ConfigureAwait(true))
@@ -344,6 +343,31 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
             IsBusy = false;
             OnPropertyChanged(nameof(CanSave));
         }
+    }
+
+    private List<string> CollectValidationErrors(
+        WorkoutActivityOptionItem[] selectedActivities,
+        int[] availableWeekdays)
+    {
+        var errors = new List<string>();
+        if (!selectedActivities.Any(option => WorkoutPlanningConstants.IsStrengthActivity(option.ActivityType)))
+            errors.Add(UiTextCatalog.Get("Profile_WorkoutPrefs_AtLeastOneStrengthActivityIs"));
+
+        if (availableWeekdays.Length is < WorkoutPreferencesConstraints.MinimumAvailableWeekdays or >
+            WorkoutPreferencesConstraints.MaximumAvailableWeekdays)
+            errors.Add(UiTextCatalog.Get("Profile_WorkoutPrefs_PickAtLeastTwoDays"));
+
+        if (SelectedEquipmentOption is null)
+        {
+            errors.Add(UiTextCatalog.Get("Profile_WorkoutPrefs_ChooseEquipment"));
+        }
+        else if (string.Equals(SelectedEquipmentOption.Value, HomeDumbbellsBandsEquipmentValue,
+                     StringComparison.OrdinalIgnoreCase) && !HasDumbbells && !HasBands)
+        {
+            errors.Add(UiTextCatalog.Get("Profile_WorkoutPrefs_HomeNeedsEquipment"));
+        }
+
+        return errors;
     }
 
     private async Task OpenPlanSetupAsync()
@@ -511,6 +535,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     partial void OnSelectedEquipmentOptionChanged(SelectionOption<string>? value)
     {
         OnPropertyChanged(nameof(ShowHomeEquipmentCapabilities));
+        OnPropertyChanged(nameof(IsFullGymEquipment));
         OnPropertyChanged(nameof(ShowBandAnchorConfirmation));
         OnPropertyChanged(nameof(HasUnsavedChanges));
     }

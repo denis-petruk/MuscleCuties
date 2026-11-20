@@ -204,6 +204,14 @@ public sealed class Gate60EndToEndPersistenceTests
                 CancellationToken.None);
             Assert.Equal("Accepted", accepted.Status);
 
+            var day = await db.WorkoutDays.AsNoTracking().Where(row => row.UserId == user &&
+                row.ActivityTypeId == (int)WorkoutActivityType.GeneralStrength).OrderBy(row => row.Date).FirstAsync();
+            var detail = await new PostgresWorkoutPlanAndSessionStore(db).GetDetailAsync(user,
+                PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(day.Id));
+            var prescribed = preview.GenerationV2!.Sessions.Single(session => (int)session.Weekday == day.DayOfWeek);
+            Assert.Equal(prescribed.Exercises.OrderBy(exercise => exercise.OrderIndex).Select(exercise => exercise.ExerciseName),
+                detail.Exercises.Select(exercise => exercise.Name));
+
             var profileAfter = await new PostgresProfileDataStore(db, TimeProvider.System).LoadAsync(user, CancellationToken.None);
             Assert.NotNull(profileAfter?.EquipmentCapabilities);
             Assert.True(profileAfter!.EquipmentCapabilities!.HasSliders);

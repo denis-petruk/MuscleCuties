@@ -64,7 +64,6 @@ public partial class WorkoutPage : ContentPage
         {
             _viewModel.IsSessionActivitiesVisible = true;
             SessionActivitiesOverlay.BindingContext = _sessionViewModel;
-            SessionActivitiesOverlay.IsEnabled = false;
             SessionActivitiesOverlay.IsOpen = true;
         });
 
@@ -72,7 +71,6 @@ public partial class WorkoutPage : ContentPage
 
         await MainThread.InvokeOnMainThreadAsync(() =>
         {
-            SessionActivitiesOverlay.IsEnabled = true;
             SessionActivitiesOverlay.IsOpen = true;
         });
     }
@@ -141,6 +139,12 @@ public partial class WorkoutPage : ContentPage
 
     protected override bool OnBackButtonPressed()
     {
+        if (_viewModel.IsRescheduleModalVisible)
+        {
+            _viewModel.CloseRescheduleModalCommand.Execute(null);
+            return true;
+        }
+
         if (SessionActivitiesOverlay.IsOpen || _viewModel.IsSessionActivitiesVisible)
         {
             CloseSessionActivities();

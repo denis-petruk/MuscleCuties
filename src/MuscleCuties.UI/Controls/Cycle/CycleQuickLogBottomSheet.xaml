@@ -212,8 +212,9 @@
                                     <DataTemplate x:DataType="cycleModels:SymptomOptionItem">
                                         <sharedControls:SelectionCell Style="{StaticResource ChoiceCell}"
                                             IsSelected="{Binding IsSelected}"
-                                            FlexLayout.Basis="48%"
-                                            Margin="{StaticResource UiInsets0_0_0_10}"
+                                            FlexLayout.Basis="Auto"
+                                            FlexLayout.Grow="1"
+                                            Margin="{StaticResource UiInsets0_0_8_8}"
                                             MinimumHeightRequest="{StaticResource UiDimension50}"
                                             SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_QuickLog_SymptomFormat}">
                                             <Border.GestureRecognizers>
@@ -250,13 +251,6 @@
                             </FlexLayout>
                         </Grid>
 
-                        <!-- Validation Error / Status message -->
-                        <Label
-                            Text="{Binding QuickLogStatusText, Converter={StaticResource LocalizedStringConverter}}"
-                            Style="{StaticResource ErrorLabel}"
-                            LineBreakMode="WordWrap"
-                            IsVisible="{Binding QuickLogStatusText, Converter={StaticResource StringToBoolConverter}}" />
-
                     </VerticalStackLayout>
                 </ScrollView>
 
@@ -264,17 +258,40 @@
                 <Grid
                     Grid.Row="2"
                     Padding="{DynamicResource PresentationActionFooterPadding}"
-                    RowDefinitions="Auto, Auto"
-                    RowSpacing="{StaticResource UiSpacing10}">
+                    BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                    RowDefinitions="Auto, Auto, Auto, Auto, Auto"
+                    RowSpacing="{StaticResource UiSpaceTight}">
+                    <ActivityIndicator
+                        Grid.Row="0"
+                        Style="{StaticResource StateBusyInline}"
+                        HorizontalOptions="Center"
+                        IsRunning="{Binding IsBusy}"
+                        IsVisible="{Binding IsBusy}" />
+                    <Label
+                        Grid.Row="1"
+                        Text="{Binding QuickLogStatusText, Converter={StaticResource LocalizedStringConverter}}"
+                        Style="{StaticResource ErrorLabel}"
+                        LineBreakMode="WordWrap"
+                        IsVisible="{Binding QuickLogStatusText, Converter={StaticResource StringToBoolConverter}}">
+                        <Label.Behaviors>
+                            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
+                    <Label
+                        Grid.Row="2"
+                        Text="{Binding SaveQuickLogHint}"
+                        Style="{StaticResource CaptionCentered}"
+                        LineBreakMode="WordWrap"
+                        IsVisible="{Binding HasQuickLogInput, Converter={StaticResource InvertedBoolConverter}}" />
                     <!-- Recovery for symptoms logged without an active cycle: offers the missing step instead of a dead end. -->
                     <Button
-                        Grid.Row="0"
+                        Grid.Row="3"
                         Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Cycle_QuickLog_LogPeriodStartAction}"
                         Command="{Binding StartPeriodFromQuickLogCommand}"
                         IsVisible="{Binding IsQuickLogPeriodStartNeeded}" />
                     <Button
-                        Grid.Row="1"
+                        Grid.Row="4"
                         Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Cycle_QuickLog_SaveButton}"
                         Command="{Binding SaveQuickLogCommand}"

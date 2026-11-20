@@ -49,6 +49,30 @@ public sealed class ScenarioMatrix26Tests
     }
 
     [Fact]
+    public void Two_available_strength_days_preserve_two_direct_glute_exposures()
+    {
+        var input = CreateInput([DayOfWeek.Monday, DayOfWeek.Thursday], TrainingFocus.Balanced,
+            StrengthStyleV2.GeneralStrength);
+        var result = WorkoutGenerationEngineV2.Generate(input);
+        var glutes = Assert.Single(result.CoverageSummary!.Muscles, muscle => muscle.Muscle == MuscleGroupV2.GluteusMaximus);
+        Assert.Equal(2, glutes.MeaningfulDirectDays);
+        Assert.True(glutes.IndirectSets > 0);
+    }
+
+    [Fact]
+    public void Missing_direct_glute_equipment_preserves_feasible_work_and_explains_the_gap()
+    {
+        var input = CreateInput([DayOfWeek.Monday, DayOfWeek.Thursday], TrainingFocus.Balanced,
+            StrengthStyleV2.GeneralStrength);
+        var result = WorkoutGenerationEngineV2.Generate(input with {
+            Catalog = input.Catalog.Where(item => !item.MuscleContributions.Any(contribution =>
+                contribution == ExerciseMuscleContributionV2.Direct(MuscleGroupV2.GluteusMaximus))).ToArray()
+        });
+        Assert.Equal(2, result.AdaptedSessions.Count);
+        Assert.Contains("WeeklyCoverageBelowTarget_DirectGluteDays", result.AdvisoryCodes);
+    }
+
+    [Fact]
     public void S03_glute_focus_4day_upper_lower_allocates_direct_abduction_and_lower_patterns()
     {
         var input = CreateInput(

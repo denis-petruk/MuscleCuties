@@ -9,6 +9,7 @@ public partial class WorkoutItem : ObservableObject
 {
     public int WorkoutDayId { get; set; }
     public string Tag { get; set; } = string.Empty;
+    public string IconGlyph => WorkoutActivityIcons.ForTag(Tag);
     public string DayLabel { get; set; } = string.Empty;
     public string Title { get; set; } = string.Empty;
     public string Duration { get; set; } = string.Empty;

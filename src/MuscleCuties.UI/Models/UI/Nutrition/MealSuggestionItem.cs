@@ -1,4 +1,5 @@
 using MuscleCuties.UI.Services.Formatting;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
@@ -37,7 +38,7 @@ public class MealSuggestionItem
 
     public IReadOnlyList<string> SpiceBlendNames => SpiceBlends.Select(s => s.Name).ToList();
 
-    public string CaloriesText => $"{(int)Macros.Calories} kcal";
+    public string CaloriesText => DisplayFormat.Calories(Macros.Calories);
     public string MacrosText => DisplayFormat.Macros(Macros.Protein, Macros.Carbs, Macros.Fats);
 
     public string SpiceBlendSummary => SpiceBlends.Count > 0
@@ -58,31 +59,34 @@ public class MealSuggestionItem
         }
     }
 
-    public string StyleLabel => Style switch
+    public string StyleLabel => UiTextCatalog.Get(Style switch
     {
-        MealStyle.Bowl => "Bowl",
-        MealStyle.Complex => "Complex dish",
-        MealStyle.Handheld => "Handheld",
-        MealStyle.Wrapped => "Wrap",
-        _ => "Plated"
-    };
+        MealStyle.Bowl => "Nutrition_MealStyle_Bowl",
+        MealStyle.Complex => "Nutrition_MealStyle_ComplexDish",
+        MealStyle.Handheld => "Nutrition_MealStyle_Handheld",
+        MealStyle.Wrapped => "Nutrition_MealStyle_Wrap",
+        _ => "Nutrition_MealStyle_Plated"
+    });
 
-    public string StyleDescription => Style switch
+    public string StyleDescription => UiTextCatalog.Get(Style switch
     {
-        MealStyle.Bowl => "Mixed together in a bowl",
-        MealStyle.Complex => "Cooked as one dish",
-        MealStyle.Handheld => "Stacked and eaten by hand",
-        MealStyle.Wrapped => "Rolled or folded in a wrap",
-        _ => "Served separately on a plate"
-    };
+        MealStyle.Bowl => "Nutrition_MealStyle_BowlDescription",
+        MealStyle.Complex => "Nutrition_MealStyle_ComplexDishDescription",
+        MealStyle.Handheld => "Nutrition_MealStyle_HandheldDescription",
+        MealStyle.Wrapped => "Nutrition_MealStyle_WrapDescription",
+        _ => "Nutrition_MealStyle_PlatedDescription"
+    });
 
     public string DirectionsText
     {
         get
         {
-            var carb = Components.FirstOrDefault(c => c.ComponentType == ComponentType.Carb)?.Name ?? "carb base";
-            var protein = Components.FirstOrDefault(c => c.ComponentType == ComponentType.Protein)?.Name ?? "protein";
-            var veg = Components.FirstOrDefault(c => c.ComponentType == ComponentType.Vegetable)?.Name ?? "vegetables";
+            var carb = Components.FirstOrDefault(c => c.ComponentType == ComponentType.Carb)?.Name ??
+                UiTextCatalog.Get("Nutrition_Directions_CarbFallback");
+            var protein = Components.FirstOrDefault(c => c.ComponentType == ComponentType.Protein)?.Name ??
+                UiTextCatalog.Get("Nutrition_Directions_ProteinFallback");
+            var veg = Components.FirstOrDefault(c => c.ComponentType == ComponentType.Vegetable)?.Name ??
+                UiTextCatalog.Get("Nutrition_Directions_VegetableFallback");
             var sauce = Components.FirstOrDefault(c => c.ComponentType == ComponentType.Sauce)?.Name;
             var spice = SpiceBlends.Count > 0 ? SpiceBlends[0].Name : null;
 
@@ -104,51 +108,51 @@ public class MealSuggestionItem
     {
         var steps = new List<string>
         {
-            $"Cook {carb} and place in a bowl as the base.",
-            $"Prepare {protein} and arrange on top.",
-            $"Add {veg} fresh or lightly tossed."
+            UiTextCatalog.Format("Nutrition_Directions_CookBaseBowl", carb),
+            UiTextCatalog.Format("Nutrition_Directions_PrepareAndArrange", protein),
+            UiTextCatalog.Format("Nutrition_Directions_AddVegetables", veg)
         };
         if (sauce is not null)
-            steps.Add($"Drizzle {sauce} over everything.");
+            steps.Add(UiTextCatalog.Format("Nutrition_Directions_DrizzleSauce", sauce));
         if (spice is not null)
-            steps.Add($"Season with {spice} to finish.");
-        steps.Add("Toss gently or eat layered.");
+            steps.Add(UiTextCatalog.Format("Nutrition_Directions_SeasonWith", spice));
+        steps.Add(UiTextCatalog.Get("Nutrition_Directions_TossOrLayer"));
         return steps;
     }
 
     private static List<string> BuildComplexDirections(
         string carb, string protein, string veg, string? sauce, string? spice)
     {
-        var steps = StartProteinSteps(protein, spice, "Brown");
-        steps.Add($"Stir in {veg} and cook until tender.");
+        var steps = StartProteinSteps(protein, spice, brown: true);
+        steps.Add(UiTextCatalog.Format("Nutrition_Directions_StirInVegetables", veg));
         if (sauce is not null)
-            steps.Add($"Pour in {sauce} and simmer to coat.");
-        steps.Add($"Serve hot over prepared {carb}.");
+            steps.Add(UiTextCatalog.Format("Nutrition_Directions_PourSauce", sauce));
+        steps.Add(UiTextCatalog.Format("Nutrition_Directions_ServeOverCarb", carb));
         return steps;
     }
 
     private static List<string> BuildHandheldDirections(
         string carb, string protein, string veg, string? sauce, string? spice)
     {
-        var steps = StartProteinSteps(protein, spice, "Cook");
-        steps.Add($"Lightly toast or warm {carb}.");
-        steps.Add($"Layer {protein} onto {carb}.");
-        steps.Add($"Top with {veg}.");
+        var steps = StartProteinSteps(protein, spice, brown: false);
+        steps.Add(UiTextCatalog.Format("Nutrition_Directions_ToastCarb", carb));
+        steps.Add(UiTextCatalog.Format("Nutrition_Directions_LayerProtein", protein, carb));
+        steps.Add(UiTextCatalog.Format("Nutrition_Directions_TopWith", veg));
         if (sauce is not null)
-            steps.Add($"Finish with a spread of {sauce}.");
-        steps.Add("Close or stack and enjoy.");
+            steps.Add(UiTextCatalog.Format("Nutrition_Directions_FinishSpread", sauce));
+        steps.Add(UiTextCatalog.Get("Nutrition_Directions_CloseAndEnjoy"));
         return steps;
     }
 
     private static List<string> BuildWrappedDirections(
         string carb, string protein, string veg, string? sauce, string? spice)
     {
-        var steps = StartProteinSteps(protein, spice, "Cook");
-        steps.Add($"Warm {carb} until pliable.");
+        var steps = StartProteinSteps(protein, spice, brown: false);
+        steps.Add(UiTextCatalog.Format("Nutrition_Directions_WarmUntilPliable", carb));
         if (sauce is not null)
-            steps.Add($"Spread {sauce} down the centre of {carb}.");
-        steps.Add($"Add {protein} and {veg}.");
-        steps.Add("Fold or roll tightly and serve.");
+            steps.Add(UiTextCatalog.Format("Nutrition_Directions_SpreadSauce", sauce, carb));
+        steps.Add(UiTextCatalog.Format("Nutrition_Directions_AddProteinAndVeg", protein, veg));
+        steps.Add(UiTextCatalog.Get("Nutrition_Directions_FoldAndServe"));
         return steps;
     }
 
@@ -157,23 +161,25 @@ public class MealSuggestionItem
     {
         var steps = new List<string>
         {
-            $"Cook {carb} and serve on one side of the plate.",
-            $"Prepare {protein} and place alongside."
+            UiTextCatalog.Format("Nutrition_Directions_CookServeSide", carb),
+            UiTextCatalog.Format("Nutrition_Directions_PrepareAlongside", protein)
         };
         if (spice is not null)
-            steps.Add($"Season {protein} with {spice} before or after cooking.");
-        steps.Add($"Arrange {veg} on the side as a fresh salad or steamed.");
+            steps.Add(UiTextCatalog.Format("Nutrition_Directions_SeasonBeforeAfter", protein, spice));
+        steps.Add(UiTextCatalog.Format("Nutrition_Directions_ArrangeVeg", veg));
         if (sauce is not null)
-            steps.Add($"Serve {sauce} on the side or drizzle lightly.");
+            steps.Add(UiTextCatalog.Format("Nutrition_Directions_ServeSauceSide", sauce));
         return steps;
     }
 
-    private static List<string> StartProteinSteps(string protein, string? spice, string cookStep)
+    private static List<string> StartProteinSteps(string protein, string? spice, bool brown)
     {
         var steps = new List<string>();
         if (spice is not null)
-            steps.Add($"Season {protein} with {spice}.");
-        steps.Add($"{cookStep} {protein} until done.");
+            steps.Add(UiTextCatalog.Format("Nutrition_Directions_SeasonProtein", protein, spice));
+        steps.Add(UiTextCatalog.Format(
+            brown ? "Nutrition_Directions_BrownProtein" : "Nutrition_Directions_CookProtein",
+            protein));
         return steps;
     }
 }
@@ -205,17 +211,17 @@ public class MealSuggestionComponentItem
 
     public string TypeLabel => ComponentType.ToString();
 
-    public string RoleLabel => Role switch
+    public string RoleLabel => UiTextCatalog.Get(Role switch
     {
-        ComponentRole.CarbBase => "Base",
-        ComponentRole.ProteinBase => "Protein",
-        ComponentRole.SideSalad => "Side salad",
-        ComponentRole.InDishVegetable => "In dish",
-        ComponentRole.SauceOnSide => "On side",
-        ComponentRole.SaucePairedProtein => "With protein",
-        ComponentRole.InDishSauce => "Mixed in",
-        _ => "Item"
-    };
+        ComponentRole.CarbBase => "Nutrition_ComponentRole_Base",
+        ComponentRole.ProteinBase => "Nutrition_ComponentRole_Protein",
+        ComponentRole.SideSalad => "Nutrition_ComponentRole_SideSalad",
+        ComponentRole.InDishVegetable => "Nutrition_ComponentRole_InDish",
+        ComponentRole.SauceOnSide => "Nutrition_ComponentRole_OnSide",
+        ComponentRole.SaucePairedProtein => "Nutrition_ComponentRole_WithProtein",
+        ComponentRole.InDishSauce => "Nutrition_ComponentRole_MixedIn",
+        _ => "Nutrition_ComponentRole_Item"
+    });
 
     public string PortionText => DisplayFormat.GramsShort(Grams);
 
@@ -233,14 +239,14 @@ public sealed record DayMealPlanItem(
     MealSuggestionItem? Suggestion,
     string ErrorMessage = "")
 {
-    public string MealTypeLabel => MealType switch
+    public string MealTypeLabel => UiTextCatalog.Get(MealType switch
     {
-        MealType.Breakfast => "Breakfast",
-        MealType.Lunch => "Lunch",
-        MealType.Dinner => "Dinner",
-        MealType.Snack => "Snack",
-        _ => MealType.ToString()
-    };
+        MealType.Breakfast => "Nutrition_MealType_Breakfast",
+        MealType.Lunch => "Nutrition_MealType_Lunch",
+        MealType.Dinner => "Nutrition_MealType_Dinner",
+        MealType.Snack => "Nutrition_MealType_Snack",
+        _ => "Nutrition_MealType_Snack"
+    });
 
     public string MealTypeIconPathData => MealType switch
     {
@@ -253,26 +259,30 @@ public sealed record DayMealPlanItem(
     };
 
     public string TargetSummaryText =>
-        $"{DisplayFormat.Calories(Target.Calories)} · {TargetSharePercent}% of daily target";
+        UiTextCatalog.Format("Nutrition_DayPlan_TargetSummaryFormat",
+            DisplayFormat.Calories(Target.Calories), TargetSharePercent);
 
     public int TargetSharePercent => !float.IsFinite(DailyCaloriesTarget) || DailyCaloriesTarget <= 0f ||
                                      !float.IsFinite(Target.Calories)
         ? 0
         : Math.Clamp((int)MathF.Round(Target.Calories / DailyCaloriesTarget * 100f), 0, 100);
 
-    public string MealTitle => Suggestion?.ConceptName ??
-                               (IsAlreadyLogged ? "Already logged" :
-                                   Target.Calories < 50f ? "Daily target reached" : "No suitable meal found");
+    public string MealTitle => Suggestion?.ConceptName ?? UiTextCatalog.Get(
+        IsAlreadyLogged
+            ? "Nutrition_DayPlan_AlreadyLogged"
+            : Target.Calories < 50f
+                ? "Nutrition_DayPlan_DailyTargetReached"
+                : "Nutrition_DayPlan_NoSuitableMeal");
 
     public string MealSummaryText => IsAlreadyLogged
-        ? "This meal is already logged today."
+        ? UiTextCatalog.Get("Nutrition_DayPlan_AlreadyLoggedSummary")
         : IsRefreshing
-            ? "Finding another meal idea"
+            ? UiTextCatalog.Get("Nutrition_DayPlan_FindingAnotherMeal")
             : Target.Calories < 50f
-                ? "No calories remain for another planned meal today."
+                ? UiTextCatalog.Get("Nutrition_DayPlan_NoCaloriesRemain")
                 : Suggestion?.ComponentSummary ??
                   (string.IsNullOrWhiteSpace(ErrorMessage)
-                      ? "No meal matched the available foods. Refresh to retry."
+                      ? UiTextCatalog.Get("Nutrition_DayPlan_NoMealMatched")
                       : ErrorMessage);
 
     public string MacrosText => Suggestion?.MacrosText ?? string.Empty;

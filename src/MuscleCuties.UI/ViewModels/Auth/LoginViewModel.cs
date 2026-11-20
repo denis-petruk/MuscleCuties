@@ -1,7 +1,9 @@
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Accessibility;
 using MuscleCuties.UI.Services.Auth;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UseCases.Features.Account.SignIn.Contracts;
 
@@ -40,10 +42,10 @@ public partial class LoginViewModel : ObservableObject
         _navigateToProfileSetupAsync = navigateToProfileSetupAsync;
         _navigateToRecoveryAsync = navigateToRecoveryAsync;
         _photoCacheAccountLifecycle = photoCacheAccountLifecycle;
-        LoginCommand = new AsyncRelayCommand(LoginAsync);
-        GoToRegisterCommand = new AsyncRelayCommand(navigateToRegisterAsync);
-        GoToRecoveryCommand = new AsyncRelayCommand(HandleRecoveryNavigationAsync);
-        SignInWithPlatformCommand = new AsyncRelayCommand(SignInWithPlatformAsync);
+        LoginCommand = new AsyncRelayCommand(LoginAsync, () => !IsBusy);
+        GoToRegisterCommand = new AsyncRelayCommand(navigateToRegisterAsync, () => !IsBusy);
+        GoToRecoveryCommand = new AsyncRelayCommand(HandleRecoveryNavigationAsync, () => !IsBusy);
+        SignInWithPlatformCommand = new AsyncRelayCommand(SignInWithPlatformAsync, () => !IsBusy);
     }
 
     public bool IsPlatformSignInAvailable => _platformSignIn.IsAvailable;
@@ -59,6 +61,20 @@ public partial class LoginViewModel : ObservableObject
     partial void OnEmailChanged(string value)
     {
         InfoMessage = string.Empty;
+        ErrorMessage = string.Empty;
+    }
+
+    partial void OnPasswordChanged(string value)
+    {
+        ErrorMessage = string.Empty;
+    }
+
+    partial void OnIsBusyChanged(bool value)
+    {
+        LoginCommand.NotifyCanExecuteChanged();
+        GoToRegisterCommand.NotifyCanExecuteChanged();
+        GoToRecoveryCommand.NotifyCanExecuteChanged();
+        SignInWithPlatformCommand.NotifyCanExecuteChanged();
     }
 
     public void PrepareForExistingAccount(string email)
@@ -67,6 +83,14 @@ public partial class LoginViewModel : ObservableObject
         Password = string.Empty;
         ErrorMessage = string.Empty;
         InfoMessage = "Ui_Auth_Info_ExistingAccount";
+    }
+
+    public void PrepareForPasswordUpdated(string email)
+    {
+        Email = email;
+        Password = string.Empty;
+        ErrorMessage = string.Empty;
+        InfoMessage = "Ui_Auth_Info_PasswordUpdated";
     }
 
     private async Task HandleRecoveryNavigationAsync()
@@ -79,6 +103,21 @@ public partial class LoginViewModel : ObservableObject
 
     private async Task LoginAsync()
     {
+        if (IsBusy)
+            return;
+
+        var missingEmail = string.IsNullOrWhiteSpace(Email);
+        var missingPassword = string.IsNullOrWhiteSpace(Password);
+        if (missingEmail || missingPassword)
+        {
+            ErrorMessage = missingEmail && missingPassword
+                ? "Ui_Auth_Error_IdentifierAndPasswordRequired"
+                : missingEmail
+                    ? "Ui_Auth_Error_IdentifierRequired"
+                    : "Ui_Auth_Error_PasswordRequired";
+            return;
+        }
+
         IsBusy = true;
         ErrorMessage = string.Empty;
         try
@@ -87,7 +126,9 @@ public partial class LoginViewModel : ObservableObject
                 new PasswordSignInRequest(Email, Password)));
             if (!result.Succeeded)
             {
-                ErrorMessage = "Ui_Auth_Error_InvalidCredentials";
+                ErrorMessage = !string.IsNullOrWhiteSpace(result.ErrorMessage)
+                    ? result.ErrorMessage
+                    : "Ui_Auth_Error_InvalidCredentials";
                 return;
             }
 

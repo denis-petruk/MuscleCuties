@@ -19,16 +19,18 @@
         </BoxView>
         <Border x:Name="SheetSurface" Style="{StaticResource ModalSurface}" VerticalOptions="End"
                 MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}">
-            <Grid RowDefinitions="Auto,Auto,*,Auto">
-                <Grid ColumnDefinitions="*,Auto,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{DynamicResource PresentationModalHeaderPadding}">
+            <Grid RowDefinitions="Auto,Auto,Auto,Auto">
+                <Grid ColumnDefinitions="*,Auto" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpaceTight}"
+                      ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{DynamicResource PresentationModalHeaderPadding}">
                     <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Injury_LogTitle}" Style="{StaticResource ModalTitle}"
                            VerticalOptions="Center" />
-                    <Button Grid.Column="1" Text="{loc:LocalizedText Common_Add}"
+                    <Button Grid.Row="1" Grid.ColumnSpan="2" Text="{loc:LocalizedText Common_Add}"
                             Command="{Binding ToggleAddFormCommand}"
                             IsVisible="{Binding ShowAddForm, Converter={StaticResource InvertedBoolConverter}}"
                             Style="{StaticResource ButtonSecondary}"
+                            HorizontalOptions="Fill"
                             SemanticProperties.Description="{loc:LocalizedText Injury_AddAnInjury}" />
-                    <Border Grid.Column="2" Style="{StaticResource ModalIconButton}"
+                    <Border Grid.Column="1" Style="{StaticResource ModalIconButton}"
                             SemanticProperties.Description="{loc:LocalizedText Injury_Modal_CloseInjuryLog}">
                         <Border.GestureRecognizers>
                             <TapGestureRecognizer
@@ -40,18 +42,27 @@
                 <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
                 <injuryControls:InjuryLogContent Grid.Row="2" />
                 <!-- Form actions stay on the sheet edge instead of riding the end of a long scroll. -->
-                <sharedControls:AdaptiveRow Grid.Row="3" Columns="2"
-                      ColumnSpacing="{StaticResource UiSpaceTight}"
-                      RowSpacing="{StaticResource UiSpaceTight}"
-                      Padding="{DynamicResource PresentationActionFooterPadding}"
-                      IsVisible="{Binding ShowAddForm}">
-                    <Button Text="{loc:LocalizedText Common_Cancel}"
-                            Command="{Binding CancelEditCommand}"
-                            Style="{StaticResource ButtonSecondary}" />
-                    <Button Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
-                            AutomationId="InjurySaveButton" Command="{Binding SaveInjuryCommand}"
-                            Style="{StaticResource ButtonPrimary}" />
-                </sharedControls:AdaptiveRow>
+                <VerticalStackLayout Grid.Row="3"
+                                     Spacing="{StaticResource UiSpaceTight}"
+                                     Padding="{DynamicResource PresentationActionFooterPadding}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
+                                     IsVisible="{Binding ShowAddForm}">
+                    <Label Text="{Binding SaveInjuryPrerequisiteHint}"
+                           Style="{StaticResource CaptionCentered}"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding ShowSaveInjuryPrerequisiteHint}" />
+                    <sharedControls:AdaptiveRow Columns="2"
+                          ColumnSpacing="{StaticResource UiSpaceTight}"
+                          RowSpacing="{StaticResource UiSpaceTight}">
+                        <Button Text="{loc:LocalizedText Common_Cancel}"
+                                Command="{Binding CancelEditCommand}"
+                                Style="{StaticResource ButtonSecondary}" />
+                        <Button Text="{loc:LocalizedText Injury_LogContent_SaveInjury}"
+                                AutomationId="InjurySaveButton" Command="{Binding SaveInjuryCommand}"
+                                SemanticProperties.Hint="{Binding SaveInjuryPrerequisiteHint}"
+                                Style="{StaticResource ButtonPrimary}" />
+                    </sharedControls:AdaptiveRow>
+                </VerticalStackLayout>
             </Grid>
         </Border>
     </Grid>

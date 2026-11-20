@@ -66,7 +66,6 @@ public sealed record QuickFood(
 }
 
 public sealed record WaterQuickAddDefaults(IReadOnlyList<int> VolumesMillilitres);
-public sealed record FastLookupFood(string Name, double Calories, double Protein, double Carbs, double Fats, bool IsCustom);
 
 public enum BarcodeSymbology
 {
@@ -328,12 +327,3 @@ public sealed record CustomFoodResult(
     string? ServingSizeUnit,
     string? ServingOptionsJson,
     string NutritionSummary);
-
-public enum NutritionCyclePhase
-{
-    Unknown,
-    Menstrual,
-    Follicular,
-    Ovulation,
-    Luteal
-}

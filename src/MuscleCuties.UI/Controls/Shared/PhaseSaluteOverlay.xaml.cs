@@ -27,6 +27,29 @@ public partial class PhaseSaluteOverlay : ContentView
             IconSource = iconSource;
 
         IsVisible = true;
+
+        if (MotionSettings.ReduceMotion)
+        {
+            // Static celebration: same information, no slide, scale, rotation or spark travel.
+            OverlayLayer.Opacity = AppThemeResources.GetDouble("UiOpacityFull");
+            LeftBurst.Opacity = AppThemeResources.GetDouble("UiOpacityCelebration");
+            RightBurst.Opacity = AppThemeResources.GetDouble("UiOpacityCelebration");
+            LeftBurst.TranslationX = AppThemeResources.GetDouble("UiMotionOffsetCelebrationSettle");
+            RightBurst.TranslationX = -AppThemeResources.GetDouble("UiMotionOffsetCelebrationSettle");
+            LeftBurst.Scale = AppThemeResources.GetDouble("UiScaleCelebrationSettle");
+            RightBurst.Scale = AppThemeResources.GetDouble("UiScaleCelebrationSettle");
+            LeftBurst.Rotation = AppThemeResources.GetDouble("UiMotionRotationCelebrationSettle");
+            RightBurst.Rotation = -AppThemeResources.GetDouble("UiMotionRotationCelebrationSettle");
+            LeftSparkTop.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
+            LeftSparkBottom.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
+            RightSparkTop.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
+            RightSparkBottom.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
+
+            await Task.Delay((int)AppThemeResources.GetDouble("UiMotionDuration1200"));
+            IsVisible = false;
+            return;
+        }
+
         OverlayLayer.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
 
         LeftBurst.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");

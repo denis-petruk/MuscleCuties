@@ -97,17 +97,15 @@
                             BindableLayout.ItemsSource="{Binding PhaseEditOptions}">
                             <BindableLayout.ItemTemplate>
                                 <DataTemplate x:DataType="cycleModels:CyclePhaseOptionItem">
-                                <Border Style="{StaticResource CardSecondary}"
+                                <sharedControls:SelectionCell Style="{StaticResource CardSecondary}"
                                     MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    IsSelected="{Binding IsSelected}"
                                     SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_DatePhaseModal_SelectPhaseFormat}">
                                     <Border.GestureRecognizers>
                                         <TapGestureRecognizer
                                             Command="{Binding SelectPhaseOptionCommand, Source={RelativeSource AncestorType={x:Type vm:CycleViewModel}}, x:DataType=vm:CycleViewModel}"
                                             CommandParameter="{Binding .}" />
                                     </Border.GestureRecognizers>
-                                    <Border.Triggers>
-
-                                    </Border.Triggers>
 
                                     <Grid RowDefinitions="Auto, Auto" ColumnDefinitions="Auto, *, Auto"
                                           ColumnSpacing="{StaticResource UiSpaceCompact}" RowSpacing="{StaticResource UiSpacing3}">
@@ -142,7 +140,7 @@
                                                 IsVisible="{Binding IsSelected}" />
                                         </Border>
                                     </Grid>
-                                </Border>
+                                </sharedControls:SelectionCell>
                                 </DataTemplate>
                             </BindableLayout.ItemTemplate>
                         </VerticalStackLayout>

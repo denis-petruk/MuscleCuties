@@ -23,14 +23,7 @@ public class WorkoutActivitySectionItem : ObservableObject, IEnumerable<WorkoutE
 
     public string Tag { get; init; } = string.Empty;
 
-    public string IconGlyph => Tag switch
-    {
-        "STRENGTH" => "Dumbbell24",
-        "CARDIO" => "PulseSquare24",
-        "RECOVERY" => "LeafThree24",
-        "REST" => "WeatherMoon24",
-        _ => "Sport24"
-    };
+    public string IconGlyph => WorkoutActivityIcons.ForTag(Tag);
 
     public string Title { get; init; } = string.Empty;
     public string Subtitle { get; init; } = string.Empty;

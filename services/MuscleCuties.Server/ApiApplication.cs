@@ -173,8 +173,13 @@ public static class ApiApplication
                 builder.Configuration["EmailReceipts:Audience"] ?? string.Empty,
                 serviceProvider.GetRequiredService<TimeProvider>());
         });
-        builder.Services.AddScoped<ICompleteAccountRegistrationStore, PostgresCompleteAccountRegistrationStore>();
+        builder.Services.AddScoped<PostgresCompleteAccountRegistrationStore>();
+        builder.Services.AddScoped<ICompleteAccountRegistrationStore>(sp =>
+            sp.GetRequiredService<PostgresCompleteAccountRegistrationStore>());
+        builder.Services.AddScoped<ICompleteAccountOnboardingStore>(sp =>
+            sp.GetRequiredService<PostgresCompleteAccountRegistrationStore>());
         builder.Services.AddScoped<ICompleteAccountRegistrationUseCase, CompleteAccountRegistrationUseCase>();
+        builder.Services.AddScoped<ICompleteAccountOnboardingUseCase, CompleteAccountOnboardingUseCase>();
         builder.Services.AddScoped<GetRegistrationQuizUseCase>();
         builder.Services.AddScoped<IAccountPasswordResetStore, PostgresAccountPasswordResetStore>();
         builder.Services.AddScoped<IAccountPasswordResetUseCase>(serviceProvider => new CompletePasswordResetUseCase(
@@ -207,10 +212,11 @@ public static class ApiApplication
         // Optional USDA FoodData Central fallback for sparse catalog searches. Enabled only when
         // FDC_API_KEY (or Fdc:ApiKey) is configured; see docs/FDC_API_SETUP.md.
         var fdcApiKey = builder.Configuration["FDC_API_KEY"] ?? builder.Configuration["Fdc:ApiKey"];
+        const int fdcSearchTimeoutSeconds = 8;
         builder.Services.AddHttpClient(nameof(FdcExternalFoodSource), client =>
         {
             client.BaseAddress = FdcExternalFoodSource.BaseUri;
-            client.Timeout = TimeSpan.FromSeconds(4);
+            client.Timeout = TimeSpan.FromSeconds(fdcSearchTimeoutSeconds);
         });
         builder.Services.AddScoped<IExternalFoodSource>(serviceProvider => new FdcExternalFoodSource(
             serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient(nameof(FdcExternalFoodSource)),
@@ -246,6 +252,7 @@ public static class ApiApplication
         builder.Services.AddScoped<IPreviewRecipePortionUseCase, PreviewRecipePortionUseCase>();
         builder.Services.AddScoped<IGetRecipesAndTemplatesUseCase, GetRecipesAndTemplatesUseCase>();
         builder.Services.AddScoped<ISaveMealTemplateUseCase, SaveMealTemplateUseCase>();
+        builder.Services.AddSingleton<OpenSourceIngredientCache>();
         builder.Services.AddScoped<PostgresNutritionOverviewStore>();
         builder.Services.AddScoped<IServerNutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
         builder.Services.AddScoped<INutritionOverviewStore>(sp => sp.GetRequiredService<PostgresNutritionOverviewStore>());
@@ -349,7 +356,8 @@ public static class ApiApplication
                 signingKey!, issuer!, audience!,
                 builder.Configuration["AppleSignIn:Audience"] ?? string.Empty,
                 appleKeys,
-                serviceProvider.GetService<IAppleAccountTokenRevoker>()));
+                serviceProvider.GetService<IAppleAccountTokenRevoker>(),
+                serviceProvider.GetService<Microsoft.Extensions.Logging.ILogger<PostgresAccountAuthenticationUseCase>>()));
         builder.Services.AddHttpClient("ResendEmailDelivery", client => client.Timeout = TimeSpan.FromSeconds(15))
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         builder.Services.AddHttpClient("FirstPartyEmailChallengeRelay", client => client.Timeout = TimeSpan.FromSeconds(15))
@@ -681,6 +689,33 @@ public static class ApiApplication
                 };
             })
             .AllowAnonymous();
+
+        app.MapPost("/api/v1/accounts/onboarding/complete", async (
+                CompleteAccountOnboardingBody request,
+                HttpContext context,
+                ICompleteAccountOnboardingUseCase onboarding,
+                CancellationToken cancellationToken) =>
+            {
+                if (!TryGetAuthenticatedUserId(context, out var userId))
+                    return Results.Unauthorized();
+                if (request.Profile is { HasConflictingCycleLengths: true })
+                    return Results.BadRequest(new AccountRegistrationError("conflictingCycleLengths"));
+
+                var result = await onboarding.ExecuteAsync(userId, request.ToInput(), cancellationToken)
+                    .ConfigureAwait(false);
+                return result.Status switch
+                {
+                    CompleteAccountOnboardingStatus.Completed => Results.Ok(
+                        new AccountRegistrationResponse(userId, OnboardingComplete: true)),
+                    CompleteAccountOnboardingStatus.AlreadyCompleted => Results.Conflict(
+                        new AccountRegistrationError("onboardingAlreadyCompleted")),
+                    CompleteAccountOnboardingStatus.AccountNotFound => Results.NotFound(),
+                    CompleteAccountOnboardingStatus.Failed => Results.Conflict(
+                        new AccountRegistrationError(result.Status.ToString())),
+                    _ => Results.BadRequest(new AccountRegistrationError(result.Status.ToString()))
+                };
+            })
+            .RequireAuthorization();
 
         app.MapPost($"{AuthenticationRoute}/apple/nonce", async (
                 IAccountAuthenticationUseCase authentication,

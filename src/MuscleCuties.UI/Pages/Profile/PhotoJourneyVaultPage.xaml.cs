@@ -10,31 +10,12 @@ public partial class PhotoJourneyVaultPage : ContentPage
     public const int ComparisonSelectionRow = 3;
     public const int ComparisonSecondColumnIndex = 1;
     public const int ComparisonOverlayPageRow = 1;
-    private const double MinimumComparisonFraction = 0.1d;
-    private const double MaximumComparisonFraction = 0.9d;
-    private const double InitialComparisonFraction = 0.5d;
-    private const double WholeComparisonWidth = 1d;
     private readonly PhotoJourneyVaultViewModel _viewModel;
+    private bool _isAddingPhoto;
 
     public PhotoJourneyVaultPage(PhotoJourneyVaultViewModel vm)
     {
         _viewModel = this.InitializeAndBind(InitializeComponent, vm);
-        ComparisonSlider.Minimum = MinimumComparisonFraction;
-        ComparisonSlider.Maximum = MaximumComparisonFraction;
-        ComparisonSlider.Value = InitialComparisonFraction;
-        UpdateComparisonDivider(InitialComparisonFraction);
-    }
-
-    private void OnComparisonSliderChanged(object? sender, ValueChangedEventArgs args)
-    {
-        UpdateComparisonDivider(args.NewValue);
-    }
-
-    private void UpdateComparisonDivider(double fraction)
-    {
-        var clamped = Math.Clamp(fraction, MinimumComparisonFraction, MaximumComparisonFraction);
-        ComparisonFirstColumn.Width = new GridLength(clamped, GridUnitType.Star);
-        ComparisonSecondColumn.Width = new GridLength(WholeComparisonWidth - clamped, GridUnitType.Star);
     }
 
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
@@ -55,8 +36,24 @@ public partial class PhotoJourneyVaultPage : ContentPage
         base.OnNavigatedFrom(args);
     }
 
+    protected override bool OnBackButtonPressed()
+    {
+        if (_viewModel.IsComparisonOpen)
+        {
+            _viewModel.CloseComparisonCommand.Execute(null);
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
+    }
+
     private async void OnAddPhotoClicked(object? sender, EventArgs e)
     {
+        if (_isAddingPhoto)
+            return;
+
+        _isAddingPhoto = true;
+        AddPhotoButton.IsEnabled = false;
         string? rawPath = null;
         try
         {
@@ -86,9 +83,10 @@ public partial class PhotoJourneyVaultPage : ContentPage
             if (!await _viewModel.AddPhotoAsync(rawPath, DateTime.Today, weightKg, notes ?? string.Empty))
                 throw new InvalidOperationException("The photo was not saved.");
             if (_viewModel.IsLoadError)
-                await DisplayAlertAsync(UiTextCatalog.TranslateRuntimeText("Photo Vault"),
+                await DisplayAlertAsync(
+                    UiTextCatalog.Get("Profile_PhotoJourney_Title"),
                     UiTextCatalog.TranslateRuntimeText("The photo was saved, but the vault could not refresh. Reopen it to view the photo."),
-                    "OK");
+                    UiTextCatalog.Get("Profile_Privacy_Ok"));
         }
         catch
         {
@@ -96,15 +94,23 @@ public partial class PhotoJourneyVaultPage : ContentPage
                 try { File.Delete(rawPath); }
                 catch
                 {
-                    await DisplayAlertAsync(UiTextCatalog.TranslateRuntimeText("Photo Vault"),
+                    await DisplayAlertAsync(
+                        UiTextCatalog.Get("Profile_PhotoJourney_Title"),
                         UiTextCatalog.TranslateRuntimeText(
                             "The photo could not be saved, and its local copy could not be removed. Please try again."),
-                        "OK");
+                        UiTextCatalog.Get("Profile_Privacy_Ok"));
                     return;
                 }
 
-            await DisplayAlertAsync(UiTextCatalog.TranslateRuntimeText("Photo Vault"),
-                UiTextCatalog.TranslateRuntimeText("Could not add the photo right now. Please try again."), "OK");
+            await DisplayAlertAsync(
+                UiTextCatalog.Get("Profile_PhotoJourney_Title"),
+                UiTextCatalog.Get("Profile_PhotoVault_AddPhotoFailed"),
+                UiTextCatalog.Get("Profile_Privacy_Ok"));
+        }
+        finally
+        {
+            _isAddingPhoto = false;
+            AddPhotoButton.IsEnabled = true;
         }
     }
 }

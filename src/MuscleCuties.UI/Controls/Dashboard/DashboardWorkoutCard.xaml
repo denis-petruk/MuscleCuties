@@ -16,12 +16,13 @@
 
             <!-- Header: the icon owns a fixed column; the status line and title stay in the text
                  column so the support line below aligns with the title, not with the icon. -->
-            <Grid ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto"
+            <Grid x:Name="HeaderGrid" ColumnDefinitions="Auto,*" RowDefinitions="Auto,Auto"
                   ColumnSpacing="{StaticResource UiSpaceCompact}"
                   RowSpacing="{StaticResource UiSpaceTight}">
                 <!-- At accessibility sizes the status pill is as wide as the title, so the header wraps
                      instead of squeezing the workout name into one letter per line. -->
                 <Border
+                    sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
                     WidthRequest="{StaticResource UiDimension42}"
                     HeightRequest="{StaticResource UiDimension42}"
                     StrokeThickness="{StaticResource UiStrokeWidth0}"
@@ -80,34 +81,19 @@
                             LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
 
-                    <!-- Pill on the right: REST DAY or TRAINING -->
+                    <!-- Pill on the right: TRAINING -->
                     <Border
                         IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
+                        BackgroundColor="{Binding WorkoutActivityBackground}"
                         StrokeShape="{StaticResource UiRoundRectangleRadius999}"
                         StrokeThickness="{StaticResource UiStrokeWidth0}"
                         Padding="{StaticResource UiInsets10_4}"
                         VerticalOptions="Center">
-                        <Border.Triggers>
-                            <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="True">
-                                <Setter Property="BackgroundColor"
-                                        Value="{AppThemeBinding Light={StaticResource RestStatusBadgeSurfaceLight}, Dark={StaticResource RestStatusBadgeSurfaceDark}}" />
-                            </DataTrigger>
-                            <DataTrigger TargetType="Border" Binding="{Binding IsRestDay}" Value="False">
-                                <Setter Property="BackgroundColor"
-                                        Value="{Binding WorkoutActivityBackground}" />
-                            </DataTrigger>
-                        </Border.Triggers>
-
-                        <Border>
-                            <Grid>
-                                <Label
-                                    Text="{loc:LocalizedText Dashboard_Workout_PillTraining}"
-                                    IsVisible="{Binding IsRestDay, Converter={StaticResource InvertedBoolConverter}}"
-                                    TextColor="{Binding WorkoutActivityTextColor}"
-                                    Style="{StaticResource CaptionLabel}"
-                                    VerticalOptions="Center" />
-                            </Grid>
-                        </Border>
+                        <Label
+                            Text="{loc:LocalizedText Dashboard_Workout_PillTraining}"
+                            TextColor="{Binding WorkoutActivityTextColor}"
+                            Style="{StaticResource CaptionLabel}"
+                            VerticalOptions="Center" />
                     </Border>
                 </FlexLayout>
 
@@ -115,6 +101,7 @@
                 <Label
                     Grid.Row="1"
                     Grid.Column="1"
+                    IsVisible="{Binding ShowWorkoutSubtitle}"
                     Text="{Binding WorkoutSubtitle, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource MutedLabel}"
                     LineBreakMode="WordWrap" />

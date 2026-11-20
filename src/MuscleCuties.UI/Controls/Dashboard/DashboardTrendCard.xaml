@@ -127,7 +127,7 @@
                     <VerticalStackLayout>
                         <Label Text="{loc:LocalizedText Dashboard_Trend_HeaviestLift}"
                                Style="{StaticResource MutedLabel}" />
-                        <Label Text="{Binding HeaviestLiftExerciseName}"
+                        <Label Text="{Binding HeaviestLiftExerciseName, Converter={StaticResource LocalizedStringConverter}}"
                                Style="{StaticResource CaptionLabel}"
                                IsVisible="{Binding HasHeaviestLiftExerciseName}"
                                LineBreakMode="WordWrap" />

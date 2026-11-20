@@ -6,6 +6,7 @@ using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Targets;
@@ -17,8 +18,14 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
 /// </summary>
 public sealed class PostgresNutritionOverviewStore(
     PostgresDbContext db,
-    IServerNutritionTargetProjectionStore targetStore) : IServerNutritionOverviewStore, INutritionOverviewStore
+    IServerNutritionTargetProjectionStore targetStore,
+    IExternalFoodSource? externalFoodSource = null,
+    OpenSourceIngredientCache? externalIngredientCache = null) : IServerNutritionOverviewStore, INutritionOverviewStore
 {
+    private readonly OpenSourceMealGenerator? _openSourceMealGenerator =
+        externalFoodSource is not null
+            ? new OpenSourceMealGenerator(externalFoodSource, externalIngredientCache)
+            : null;
     private const float GeneralDefaultCalories = 2000f;
     private const float GeneralDefaultProtein = 140f;
     private const float GeneralDefaultCarbs = 200f;
@@ -659,61 +666,103 @@ public sealed class PostgresNutritionOverviewStore(
         var shares = GetMealShares(breakfastPreference);
 
         var isSweet = string.Equals(breakfastPreference, "Sweet", StringComparison.OrdinalIgnoreCase);
+        var seed = date.DayNumber;
 
-        var breakfastItem = BuildDayMealPlanItem(
+        var breakfastTask = BuildDayMealPlanItemAsync(
             "Breakfast",
+            breakfastPreference,
             totalCalories * shares.Breakfast,
             totalProtein * shares.Breakfast,
             totalCarbs * shares.Breakfast,
             totalFats * shares.Breakfast,
             totalCalories,
-            isSweet ? SweetBreakfastCatalog[0] : SavouryBreakfastCatalog[0]);
+            isSweet ? SweetBreakfastCatalog[0] : SavouryBreakfastCatalog[0],
+            seed,
+            cancellationToken);
 
-        var lunchItem = BuildDayMealPlanItem(
+        var lunchTask = BuildDayMealPlanItemAsync(
             "Lunch",
+            breakfastPreference,
             totalCalories * shares.Lunch,
             totalProtein * shares.Lunch,
             totalCarbs * shares.Lunch,
             totalFats * shares.Lunch,
             totalCalories,
-            LunchCatalog[0]);
+            LunchCatalog[0],
+            seed,
+            cancellationToken);
 
-        var dinnerItem = BuildDayMealPlanItem(
+        var dinnerTask = BuildDayMealPlanItemAsync(
             "Dinner",
+            breakfastPreference,
             totalCalories * shares.Dinner,
             totalProtein * shares.Dinner,
             totalCarbs * shares.Dinner,
             totalFats * shares.Dinner,
             totalCalories,
-            DinnerCatalog[0]);
+            DinnerCatalog[0],
+            seed,
+            cancellationToken);
 
-        var snackItem = BuildDayMealPlanItem(
+        var snackTask = BuildDayMealPlanItemAsync(
             "Snack",
+            breakfastPreference,
             totalCalories * shares.Snack,
             totalProtein * shares.Snack,
             totalCarbs * shares.Snack,
             totalFats * shares.Snack,
             totalCalories,
-            SnackCatalog[0]);
+            SnackCatalog[0],
+            seed,
+            cancellationToken);
 
-        return [breakfastItem, lunchItem, dinnerItem, snackItem];
+        var items = await Task.WhenAll(breakfastTask, lunchTask, dinnerTask, snackTask).ConfigureAwait(false);
+        return items;
     }
 
-    public Task<DayMealPlanItemDto> RefreshDayMealAsync(
+    public async Task<DayMealPlanItemDto> RefreshDayMealAsync(
         Guid userId,
         DayMealPlanItemDto item,
         string breakfastPreference,
         CancellationToken cancellationToken = default)
     {
+        var currentName = item.Suggestion?.ConceptName;
+        if (_openSourceMealGenerator is not null)
+        {
+            var openSourceSuggestion = await _openSourceMealGenerator.GenerateMealAsync(
+                item.MealType,
+                breakfastPreference,
+                item.TargetCalories,
+                item.TargetFats,
+                excludeConceptName: currentName,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (openSourceSuggestion is not null)
+            {
+                return new DayMealPlanItemDto(
+                    item.MealType,
+                    item.TargetCalories,
+                    item.TargetProtein,
+                    item.TargetCarbs,
+                    item.TargetFats,
+                    item.DailyCaloriesTarget,
+                    false,
+                    openSourceSuggestion,
+                    string.Empty);
+            }
+        }
+
         var catalog = GetCatalogForMealType(item.MealType, breakfastPreference);
         if (catalog.Count == 0)
-            return Task.FromResult(item);
+            return item;
 
-        var currentName = item.Suggestion?.ConceptName;
-        var candidate = catalog.FirstOrDefault(c => !string.Equals(c.Name, currentName, StringComparison.OrdinalIgnoreCase))
-                        ?? catalog[0];
+        var currentIndex = string.IsNullOrWhiteSpace(currentName)
+            ? -1
+            : catalog.ToList().FindIndex(c => string.Equals(c.Name, currentName, StringComparison.OrdinalIgnoreCase));
+        var candidate = currentIndex >= 0
+            ? catalog[(currentIndex + 1) % catalog.Count]
+            : catalog[0];
 
-        var refreshed = BuildDayMealPlanItem(
+        return BuildDayMealPlanItem(
             item.MealType,
             item.TargetCalories,
             item.TargetProtein,
@@ -721,8 +770,6 @@ public sealed class PostgresNutritionOverviewStore(
             item.TargetFats,
             item.DailyCaloriesTarget,
             candidate);
-
-        return Task.FromResult(refreshed);
     }
 
     public async Task<IReadOnlyList<MealSuggestionDto>> GetMealSuggestionsAsync(
@@ -746,10 +793,24 @@ public sealed class PostgresNutritionOverviewStore(
         };
 
         var targetCals = target.Calories * targetRatio;
+        var targetFats = target.Fats * targetRatio;
+
+        if (_openSourceMealGenerator is not null)
+        {
+            var openSourceSuggestions = await _openSourceMealGenerator.GenerateSuggestionsAsync(
+                mealType,
+                breakfastPreference,
+                targetCals,
+                targetFats,
+                excludeConceptNames,
+                cancellationToken).ConfigureAwait(false);
+            if (openSourceSuggestions.Count > 0)
+                return openSourceSuggestions;
+        }
 
         var suggestions = catalog
             .Where(c => excludeConceptNames == null || !excludeConceptNames.Contains(c.Name))
-            .Select(c => MapConceptToSuggestion(c, targetCals, target.Fats * targetRatio))
+            .Select(c => MapConceptToSuggestion(c, targetCals, targetFats))
             .OfType<MealSuggestionDto>()
             .ToList();
 
@@ -821,6 +882,52 @@ public sealed class PostgresNutritionOverviewStore(
             string.Equals(breakfastPreference, nameof(BreakfastPreference.Sweet), StringComparison.OrdinalIgnoreCase)
                 ? BreakfastPreference.Sweet
                 : BreakfastPreference.Savoury);
+
+    private async Task<DayMealPlanItemDto> BuildDayMealPlanItemAsync(
+        string mealType,
+        string breakfastPreference,
+        float targetCalories,
+        float targetProtein,
+        float targetCarbs,
+        float targetFats,
+        float dailyTargetCalories,
+        ReferenceConceptItem fallbackConcept,
+        int seedIndex,
+        CancellationToken cancellationToken)
+    {
+        if (_openSourceMealGenerator is not null)
+        {
+            var openSourceSuggestion = await _openSourceMealGenerator.GenerateMealAsync(
+                mealType,
+                breakfastPreference,
+                targetCalories,
+                targetFats,
+                seedIndex: seedIndex,
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (openSourceSuggestion is not null)
+            {
+                return new DayMealPlanItemDto(
+                    mealType,
+                    targetCalories,
+                    targetProtein,
+                    targetCarbs,
+                    targetFats,
+                    dailyTargetCalories,
+                    false,
+                    openSourceSuggestion,
+                    string.Empty);
+            }
+        }
+
+        return BuildDayMealPlanItem(
+            mealType,
+            targetCalories,
+            targetProtein,
+            targetCarbs,
+            targetFats,
+            dailyTargetCalories,
+            fallbackConcept);
+    }
 
     private static DayMealPlanItemDto BuildDayMealPlanItem(
         string mealType,

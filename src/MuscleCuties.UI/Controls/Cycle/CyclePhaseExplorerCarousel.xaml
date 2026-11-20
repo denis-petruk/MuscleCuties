@@ -5,10 +5,10 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:cycleModels="clr-namespace:MuscleCuties.UI.Models.UI.Cycle"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Cycle"
-    x:DataType="vm:CycleViewModel"
-    SemanticProperties.Hint="{loc:LocalizedText Cycle_PhaseExplorer_CarouselAccessibility}">
+    x:DataType="vm:CycleViewModel">
 
 
     <Border Style="{StaticResource CardPrimary}">
@@ -37,15 +37,9 @@
                             BackgroundColor="{Binding BackgroundColor}"
                             Stroke="{Binding AccentColor}"
                             StrokeThickness="{StaticResource UiStrokeWidth0}"
-                            Padding="{StaticResource UiInsets12_8}"
-                            SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseExplorer_ExplorePhaseFormat}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer
-                                    Command="{Binding SelectPhaseExplorerPillCommand, Source={RelativeSource AncestorType={x:Type vm:CycleViewModel}}, x:DataType=vm:CycleViewModel}"
-                                    CommandParameter="{Binding .}" />
-                            </Border.GestureRecognizers>
-
-                            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                            Padding="{StaticResource UiInsets12_8}">
+                            <Grid ColumnDefinitions="Auto, *" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center"
+                                  AutomationProperties.IsInAccessibleTree="False">
                                 <Image
                                     Source="{Binding IconSource}"
                                     WidthRequest="{StaticResource UiDimension28}"
@@ -63,6 +57,7 @@
                                             Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource BodyStrong}"
                                             TextColor="{Binding TextColor}"
+                                            sharedControls:CappedTextSize.IsPhasePill="True"
                                             LineBreakMode="WordWrap" />
                                         <Border
                                             IsVisible="{Binding IsActivePhase}"
@@ -77,6 +72,10 @@
                                                 LineBreakMode="WordWrap" />
                                         </Border>
                                 </FlexLayout>
+
+                                <sharedControls:CardTapTarget Grid.ColumnSpan="2"
+                                    Clicked="OnPhasePillClicked"
+                                    SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Cycle_PhaseExplorer_ExplorePhaseFormat}" />
                             </Grid>
                         </Border>
                     </DataTemplate>

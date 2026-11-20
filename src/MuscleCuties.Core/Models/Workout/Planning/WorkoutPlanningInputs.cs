@@ -1,20 +1,7 @@
 using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Models.Workout.Planning;
-
-public sealed record AdaptiveProfile(
-    int UserId,
-    UserGoal Goal,
-    TrainingExperienceLevel Experience,
-    int DaysPerWeek,
-    int SessionMinutesCap,
-    HashSet<WorkoutActivityType> Selected,
-    Equipment Equipment,
-    List<Injury> Injuries,
-    int BaselineSteps,
-    CyclePhaseBaselines? Baselines = null);
 
 public sealed record Injury(InjuryFlag Site, InjuryStatus Status, DateOnly Since);
 
@@ -133,9 +120,3 @@ public sealed record CyclePhaseBaselines(
 }
 
 public sealed record PhaseBaseline(int Pain, int Energy);
-
-public sealed record GatingResult(
-    WorkoutActivityType Activity,
-    double SetMultiplier,
-    int RpeCap,
-    List<string> Notes);

@@ -36,6 +36,10 @@ public partial class WorkoutHistoryViewModel : ObservableObject
 
     [ObservableProperty] private int? _editingRpe;
 
+    [ObservableProperty] private string _editingRpeText = string.Empty;
+
+    [ObservableProperty] private string _rpeValidationError = string.Empty;
+
     [ObservableProperty] private string _errorMessage = string.Empty;
 
     private int _filterRequestId;
@@ -123,10 +127,6 @@ public partial class WorkoutHistoryViewModel : ObservableObject
 
                 var distinctMonths = (await _workoutArchiveUseCase.GetAvailableHistoryMonthsAsync()).ToList();
                 if (requestId != _filterRequestId) return;
-
-                var now = DateTime.UtcNow;
-                if (!distinctMonths.Any(p => p.Year == now.Year && p.Month == now.Month))
-                    distinctMonths.Insert(0, new HistoryMonthOptionDto(now.Year, now.Month));
 
                 foreach (var option in distinctMonths)
                 {
@@ -313,9 +313,10 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             DetailDistanceFormatted = detail.DistanceKm is { } distanceKm
                 ? UiTextCatalog.Format("Workout_History_DistanceFormat", distanceKm)
                 : string.Empty;
-            var startedText = detail.StartedAt.TimeOfDay == TimeSpan.Zero
-                ? DisplayFormat.DateWithWeekday(detail.StartedAt)
-                : DisplayFormat.DateWithWeekdayStamp(detail.StartedAt);
+            var startedAt = detail.AccountLocalStartedAt ?? detail.StartedAt;
+            var startedText = detail.AccountLocalStartedAt is null && startedAt.TimeOfDay == TimeSpan.Zero
+                ? DisplayFormat.DateWithWeekday(startedAt)
+                : DisplayFormat.DateWithWeekdayStamp(startedAt);
             DetailStartedFormatted = detail.TimePrecision == "legacyUnknown"
                 ? UiTextCatalog.Format("Workout_History_TimeZoneUnknownFormat", startedText)
                 : startedText;
@@ -330,6 +331,8 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             };
             EditingNotes = detail.Notes ?? string.Empty;
             EditingRpe = detail.RpeRating;
+            EditingRpeText = detail.RpeRating?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+            RpeValidationError = string.Empty;
 
             ExerciseGroups.Clear();
             var grouped = detail.Sets
@@ -337,7 +340,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
 
             foreach (var grp in grouped)
             {
-                var groupUi = new ExerciseSetsUiGroup(grp.Key);
+                var groupUi = new ExerciseSetsUiGroup(UiTextCatalog.TranslateRuntimeText(grp.Key));
                 foreach (var set in grp.OrderBy(s => s.SetNumber))
                 {
                     groupUi.Sets.Add(set);
@@ -434,12 +437,69 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         }
     }
 
+    public bool HasSessions => Sessions.Count > 0;
+    public bool IsFilteredByMonth => SelectedMonth is not null && !SelectedMonth.IsAllMonths;
+    public bool ShowInitialLoadError => IsError && Sessions.Count == 0;
+    public bool ShowFooterLoadError => IsError && Sessions.Count > 0;
+
+    partial void OnIsErrorChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowInitialLoadError));
+        OnPropertyChanged(nameof(ShowFooterLoadError));
+    }
+
+    partial void OnHasNoSessionsChanged(bool value)
+    {
+        OnPropertyChanged(nameof(HasSessions));
+    }
+
+    partial void OnSelectedMonthChanged(MonthFilterItem? value)
+    {
+        OnPropertyChanged(nameof(IsFilteredByMonth));
+    }
+
+    partial void OnEditingRpeTextChanged(string value)
+    {
+        RpeValidationError = string.Empty;
+        var trimmed = value?.Trim() ?? string.Empty;
+        if (string.IsNullOrEmpty(trimmed))
+        {
+            EditingRpe = null;
+            return;
+        }
+
+        if (int.TryParse(trimmed, out var parsed) && parsed is >= 1 and <= 10)
+            EditingRpe = parsed;
+    }
+
+    [RelayCommand]
+    public Task RetryAsync()
+    {
+        return Sessions.Count == 0 ? LoadHistoryAsync() : LoadNextPageAsync();
+    }
+
     [RelayCommand]
     public async Task SaveSessionNotesAsync()
     {
-        if (SelectedSessionDetail is null)
+        if (SelectedSessionDetail is null || IsSavingNotes)
             return;
 
+        var trimmedRpe = EditingRpeText?.Trim() ?? string.Empty;
+        if (!string.IsNullOrEmpty(trimmedRpe))
+        {
+            if (!int.TryParse(trimmedRpe, out var parsedRpe) || parsedRpe is < 1 or > 10)
+            {
+                RpeValidationError = "Workout_History_RpeRangeError";
+                return;
+            }
+            EditingRpe = parsedRpe;
+        }
+        else
+        {
+            EditingRpe = null;
+        }
+
+        RpeValidationError = string.Empty;
         IsSavingNotes = true;
         try
         {

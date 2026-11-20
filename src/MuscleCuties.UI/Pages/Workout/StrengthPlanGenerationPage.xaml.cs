@@ -61,8 +61,15 @@ public partial class StrengthPlanGenerationPage : ContentPage
 
     private void OnPageSizeChanged(object? sender, EventArgs args)
     {
-        if (Height > 0)
-            PreviewSheet.MaximumHeightRequest = Math.Min(BottomSheetSizing.MaximumSheetHeight,
-                Height * AppThemeResources.GetDouble("UiPreviewSheetHeightFraction"));
+        if (Height <= 0)
+            return;
+
+        // MaximumHeightRequest alone lets the sheet measure to its full content height, which pushes
+        // the action footer below the screen at accessibility sizes. A matching HeightRequest gives
+        // the star-sized ScrollView the remaining space and keeps Apply plan on screen.
+        var sheetHeight = Math.Min(BottomSheetSizing.MaximumSheetHeight,
+            Height * AppThemeResources.GetDouble("UiPreviewSheetHeightFraction"));
+        PreviewSheet.HeightRequest = sheetHeight;
+        PreviewSheet.MaximumHeightRequest = sheetHeight;
     }
 }

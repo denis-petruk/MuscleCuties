@@ -15,6 +15,12 @@ public partial class OtpVerificationPage : ContentPage
         this.BindWithTiming(viewModel, started);
     }
 
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        Dispatcher.DispatchDelayed(TimeSpan.FromMilliseconds(75), () => OtpEntry.Focus());
+    }
+
     protected override void OnDisappearing()
     {
         base.OnDisappearing();

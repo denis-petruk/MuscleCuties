@@ -23,7 +23,12 @@ public partial class StrengthPlanActivityChoice : ObservableObject
 public sealed record StrengthPlanRecentWeekDisplay(
     string Label,
     string SessionCount,
-    string AccessibilityDescription);
+    string AccessibilityDescription,
+    int Count = 0)
+{
+    /// <summary>Four points per session, capped for the compact week strip; zero stays absent.</summary>
+    public double BarHeight => Count <= 0 ? 0d : Math.Clamp(Count * 4d, 4d, 40d);
+}
 
 public sealed record ActivityEvidenceAnswerChoice(string Label, bool Value);
 
@@ -31,6 +36,8 @@ public sealed record MixedActivitySessionDisplay(string Title, string Details)
 {
     public string Day { get; init; } = string.Empty;
     public string Activity { get; init; } = string.Empty;
+    /// <summary>Activity-specific glyph, so two different planned activities never share a picture.</summary>
+    public string IconGlyph { get; init; } = "CircleSmall24";
     public string Duration { get; init; } = string.Empty;
     /// <summary>Warm-up, main, cool-down and interval split of a timed phase.</summary>
     public string PhaseDetail { get; init; } = string.Empty;
@@ -40,7 +47,13 @@ public sealed record MixedActivitySessionDisplay(string Title, string Details)
 public sealed record MixedActivityDayDisplay(
     string Day,
     IReadOnlyList<MixedActivitySessionDisplay> Sessions,
-    bool IsRestDay);
+    bool IsRestDay)
+{
+    /// <summary>The icon is bound as an image so the day header is never an empty decorative box.
+    /// A training day shows a calendar, never the session's own activity glyph: the header names
+    /// the day, the rows name the activity.</summary>
+    public string DayIconGlyph => IsRestDay ? "WeatherMoon24" : "CalendarDay24";
+}
 
 public sealed record MixedActivityDecisionDisplay(string Activity, string Status, string Frequency,
     ObservableCollection<string> Reasons)

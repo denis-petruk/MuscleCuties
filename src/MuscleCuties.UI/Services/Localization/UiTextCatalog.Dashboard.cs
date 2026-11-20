@@ -90,9 +90,9 @@ public static partial class UiTextCatalog
         English["Dashboard_CheckIn_SleepSectionTitle"] = "SLEEP LAST NIGHT";
         English["Dashboard_CheckIn_StorageNotice"] = "Saved to your private account";
         English["Dashboard_CheckIn_AdditionalDetails"] = "Additional details (optional)";
-        English["Dashboard_CheckIn_SubmitButton"] = "Save check-in";
+        English["Dashboard_CheckIn_SubmitButton"] = "Save";
         English["Dashboard_CheckIn_SubmitHint"] = "Save your daily check-in";
-        English["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Answer every required question to save your check-in.";
+        English["Dashboard_CheckIn_SubmitPrerequisiteHint"] = "Answer all questions.";
         English["Dashboard_CheckIn_Subtitle"] = "How are you feeling today?";
         English["Dashboard_CheckIn_SuccessMessage"] = "Check-in saved";
         English["Dashboard_CheckIn_SuggestFromAppleHealth"] = "Suggest ratings from Apple Health";
@@ -142,6 +142,11 @@ public static partial class UiTextCatalog
         English["Dashboard_Readiness_NoCurrentCheckIn"] = "Complete today’s check-in to see suggestions based on how you feel.";
         English["Dashboard_Readiness_ReviewPending"] = "Your check-in is saved. Training suggestions based on this check-in are not available yet.";
         English["Dashboard_Readiness_CompleteCheckIn"] = "Complete check-in";
+        English["Dashboard_Readiness_ViewCheckIn"] = "View today’s check-in";
+        English["Dashboard_Page_OpenInjuryLogActiveA11y"] = "Injury log, active injuries recorded";
+        English["Dashboard_Nutrition_SummaryA11yFormat"] = "Nutrition: {0} {1}. Protein {2}, Carbs {3}, Fat {4}. Double tap to open food log.";
+        English["Dashboard_CheckIn_SleepPoorLabel"] = "Poor";
+        English["Dashboard_CheckIn_SleepRestfulLabel"] = "Restful";
         English["Dashboard_CheckIn_IncompleteRequiredRatings"] = "Answer every required check-in question to see your check-in score.";
         English["Dashboard_Readiness_ReadinessLabel"] = "Readiness";
         English["Dashboard_Readiness_ReadinessScoreFormat"] = "Readiness score: {0}";
@@ -162,7 +167,7 @@ public static partial class UiTextCatalog
         English["Dashboard_Startup_RetryUnlockHint"] = "Double tap to retry unlocking data";
         English["Dashboard_Startup_UnlockFailedA11y"] = "Unable to unlock data";
         English["Dashboard_Startup_UnlockFailedMessage"] = "Your data is secure. Try again to unlock it.";
-        English["Dashboard_Startup_UnlockFailedTitle"] = "Unable to Unlock Data";
+        English["Dashboard_Startup_UnlockFailedTitle"] = "Unable to unlock data";
         English["Dashboard_Targets_CardA11y"] = "Planning estimates for hydration and sleep.";
         English["Dashboard_Targets_Disclaimer"] = "These estimates await qualified review. Water uses body weight and movement records; sleep uses your planned activity and cycle estimate.";
         English["Dashboard_Targets_HydrationEstimate"] = "Hydration estimate";

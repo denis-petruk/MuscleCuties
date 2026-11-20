@@ -7,6 +7,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:controls="clr-namespace:MuscleCuties.UI.Controls.Workout"
+    xmlns:shared="clr-namespace:MuscleCuties.UI.Controls.Shared"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     x:DataType="controls:WorkoutActivityPreferencePicker">
 
@@ -39,21 +41,22 @@
                         <BindableLayout.ItemTemplate>
                             <DataTemplate x:DataType="workoutModels:WorkoutActivityOptionItem">
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                                <Border
+                                <shared:SelectionCell
                                     Style="{StaticResource CardSecondary}"
                                     HorizontalOptions="Fill"
                                     Margin="{StaticResource UiInsets0}"
                                     IsEnabled="{Binding CanToggle}"
+                                    IsSelected="{Binding IsSelected}"
                                     SemanticProperties.Description="{Binding Title, Converter={StaticResource LocalizedStringConverter}}">
                                     <Border.Triggers>
-                                        <DataTrigger TargetType="Border" Binding="{Binding CanToggle}" Value="False">
+                                        <DataTrigger TargetType="shared:SelectionCell" Binding="{Binding CanToggle}" Value="False">
                                             <Setter Property="Opacity" Value="{StaticResource UiOpacitySubtle}" />
                                         </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="True">
+                                        <DataTrigger TargetType="shared:SelectionCell" Binding="{Binding IsSelected}" Value="True">
                                             <Setter Property="SemanticProperties.Hint"
                                                     Value="{loc:LocalizedText Workout_ActivityPreference_SelectedHint}" />
                                         </DataTrigger>
-                                        <DataTrigger TargetType="Border" Binding="{Binding IsSelected}" Value="False">
+                                        <DataTrigger TargetType="shared:SelectionCell" Binding="{Binding IsSelected}" Value="False">
                                             <Setter Property="SemanticProperties.Hint"
                                                     Value="{loc:LocalizedText Workout_ActivityPreference_UnselectedHint}" />
                                         </DataTrigger>
@@ -74,13 +77,27 @@
                                             BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource InputSurfaceDark}}"
                                             VerticalOptions="Center"
                                             InputTransparent="True">
-                                            <Image
-                                                Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
-                                                WidthRequest="{StaticResource UiDimension22}"
-                                                HeightRequest="{StaticResource UiDimension22}"
-                                                Aspect="AspectFit"
-                                                HorizontalOptions="Center"
-                                                VerticalOptions="Center" />
+                                            <Grid HorizontalOptions="Center" VerticalOptions="Center">
+                                                <Image
+                                                    Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                                    IsVisible="{Binding HasGlyphIcon}"
+                                                    WidthRequest="{StaticResource UiDimension22}"
+                                                    HeightRequest="{StaticResource UiDimension22}"
+                                                    Aspect="AspectFit"
+                                                    InputTransparent="True" />
+                                                <Image
+                                                    Source="{Binding IconImage}"
+                                                    IsVisible="{Binding HasIconImage}"
+                                                    WidthRequest="{StaticResource UiDimension24}"
+                                                    HeightRequest="{StaticResource UiDimension24}"
+                                                    Aspect="AspectFit"
+                                                    InputTransparent="True">
+                                                    <Image.Behaviors>
+                                                        <toolkit:IconTintColorBehavior
+                                                            TintColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}" />
+                                                    </Image.Behaviors>
+                                                </Image>
+                                            </Grid>
                                         </Border>
 
                                         <Grid Grid.Column="1" RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpaceMicro}"
@@ -89,12 +106,15 @@
                                                 Grid.Row="0"
                                                 Text="{Binding Title, Converter={StaticResource LocalizedStringConverter}}"
                                                 Style="{StaticResource BodyStrong}"
+                                                shared:CappedTextSize.IsCompactLabel="True"
                                                 LineBreakMode="WordWrap" />
 
                                             <Label
                                                 Grid.Row="1"
                                                 Text="{Binding Subtitle, Converter={StaticResource LocalizedStringConverter}}"
+                                                IsVisible="{Binding IsOffered}"
                                                 Style="{StaticResource MutedMedium}"
+                                                shared:CappedTextSize.IsCompactChoiceLabel="True"
                                                 TextColor="{AppThemeBinding Light={StaticResource TextHeadingLight}, Dark={StaticResource ActivityDescriptionDark}}"
                                                 LineBreakMode="WordWrap">
                                                 <Label.Triggers>
@@ -111,6 +131,7 @@
                                                 Text="{Binding UnavailableReason}"
                                                 IsVisible="{Binding HasUnavailableReason}"
                                                 Style="{StaticResource MutedLabel}"
+                                                shared:CappedTextSize.IsCompactChoiceLabel="True"
                                                 LineBreakMode="WordWrap" />
                                         </Grid>
 
@@ -124,7 +145,7 @@
                                                   IsVisible="{Binding IsSelected}" />
                                         </Border>
                                     </Grid>
-                                </Border>
+                                </shared:SelectionCell>
                                 </VerticalStackLayout>
                             </DataTemplate>
                         </BindableLayout.ItemTemplate>

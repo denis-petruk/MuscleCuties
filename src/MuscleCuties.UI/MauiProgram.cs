@@ -125,7 +125,7 @@ public static class MauiProgram
             sp.GetRequiredService<IAccountRecoveryUseCase>(),
             sp.GetRequiredService<IAccountPasswordValidator>(),
             () => NavigateToAsync(".."),
-            email => _ = NavigateToExistingLoginAsync(sp, email)));
+            email => _ = NavigateToPasswordUpdatedLoginAsync(sp, email)));
 
         services.AddTransient<OtpVerificationViewModel>(sp => new OtpVerificationViewModel(
             sp.GetRequiredService<IRegistrationOtpUseCase>(),
@@ -150,7 +150,7 @@ public static class MauiProgram
             sp.GetRequiredService<IOnboardingQuizUseCase>(),
             () => NavigateAfterOnboardingAsync(sp),
             () => NavigateToAsync("//LoginPage"),
-            () => NavigateToAsync($"//{nameof(ProfileSetupPage)}"),
+            () => NavigateAuthenticatedAsync($"//{nameof(ProfileSetupPage)}"),
             () => sp.GetRequiredService<INavigationContextService>()
                 .Set(WorkoutPreferencesAfterOnboardingContextKey, true),
             weekdays => sp.GetRequiredService<INavigationContextService>()
@@ -326,15 +326,12 @@ public static class MauiProgram
 
         services.AddTransient<ProfileUnitsDisplayViewModel>(sp => new ProfileUnitsDisplayViewModel(
             sp.GetRequiredService<IProfileUnitsUseCase>(),
-            () => NavigateToAsync("//ProfilePage")));
+            () => NavigateToAsync("//ProfilePage"),
+            sp.GetRequiredService<IProfileRefreshNotifier>()));
 
         services.AddTransient<ProfileFeedbackViewModel>(sp => new ProfileFeedbackViewModel(
             sp.GetRequiredService<IProfileFeedbackUseCase>(),
             () => NavigateToAsync("//ProfilePage")));
-
-        services.AddTransient<InjuryLogViewModel>(sp => new InjuryLogViewModel(
-            sp.GetRequiredService<IWorkoutInjuryUseCase>(),
-            () => NavigateToAsync("..")));
 
         services.AddSingleton<IAppPreloadService, AppPreloadCoordinator>();
     }
@@ -484,6 +481,14 @@ public static class MauiProgram
     {
         services.GetRequiredService<INavigationContextService>()
             .Set(LoginPage.ExistingEmailContextKey, email);
+        return NavigateToAsync("..");
+    }
+
+    private static Task NavigateToPasswordUpdatedLoginAsync(IServiceProvider services, string email)
+    {
+        // Route back to LoginPage with the password-updated confirmation banner (PrepareForPasswordUpdated).
+        services.GetRequiredService<INavigationContextService>()
+            .Set(LoginPage.PasswordUpdatedEmailContextKey, email);
         return NavigateToAsync("..");
     }
 

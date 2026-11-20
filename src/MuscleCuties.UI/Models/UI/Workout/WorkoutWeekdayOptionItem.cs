@@ -18,6 +18,10 @@ public partial class WorkoutWeekdayOptionItem(DayOfWeek dayOfWeek) : ObservableO
 
     public DayOfWeek DayOfWeek { get; } = dayOfWeek;
 
+    // Same leading glyph tile the onboarding quiz answer cards use, so the profile chooser and the
+    // quiz read as one control.
+    public string IconGlyph => "CalendarDay24";
+
     private int CalendarIndex => Array.IndexOf(CalendarOrder, DayOfWeek);
     public string ShortLabel { get; } = UiTextCatalog.Get(dayOfWeek switch
     {

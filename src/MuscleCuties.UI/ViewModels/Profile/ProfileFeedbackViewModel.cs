@@ -1,8 +1,10 @@
 using System.Diagnostics;
+using System.Net.Mail;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Profile;
 using MuscleCuties.UI.Models.UI.Common;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Profile.Feedback;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
@@ -20,6 +22,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
     [ObservableProperty] private string _feedbackText = string.Empty;
     [ObservableProperty] private bool _includeContactEmail;
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private bool _isStatusError;
     [ObservableProperty] private string _screenName = string.Empty;
     private SelectionOption<FeedbackPriority>? _selectedPriorityOption;
     private SelectionOption<FeedbackTopic>? _selectedTopicOption;
@@ -31,9 +34,10 @@ public partial class ProfileFeedbackViewModel : ObservableObject
     {
         _useCase = useCase;
         _navigateBackAsync = navigateBackAsync;
-        BackCommand = new AsyncRelayCommand(navigateBackAsync);
+        BackCommand = new AsyncRelayCommand(BackAsync);
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         SendFeedbackCommand = new AsyncRelayCommand(SendFeedbackAsync);
+        CopyFeedbackCommand = new AsyncRelayCommand(CopyFeedbackAsync);
         RemoveAttachmentCommand = new RelayCommand(RemoveAttachment);
         SelectedTopicOption = TopicOptions[0];
         SelectedPriorityOption = PriorityOptions[0];
@@ -60,6 +64,14 @@ public partial class ProfileFeedbackViewModel : ObservableObject
 
     public bool IsReadyToSend =>
         !IsBusy && (!string.IsNullOrWhiteSpace(FeedbackText) || !string.IsNullOrWhiteSpace(AdjustmentText));
+
+    public bool ShowSubmitHint => !IsReadyToSend && !IsBusy;
+
+    public bool HasUnsavedDraft =>
+        !string.IsNullOrWhiteSpace(FeedbackText) ||
+        !string.IsNullOrWhiteSpace(AdjustmentText) ||
+        !string.IsNullOrWhiteSpace(ScreenName) ||
+        HasAttachment;
 
     public bool HasAttachment => _attachment is not null;
     public string SelectedTopicLabel => SelectedTopicOption?.Label ?? "Design or style";
@@ -91,8 +103,25 @@ public partial class ProfileFeedbackViewModel : ObservableObject
 
     public AsyncRelayCommand LoadDataCommand { get; }
     public AsyncRelayCommand SendFeedbackCommand { get; }
+    public AsyncRelayCommand CopyFeedbackCommand { get; }
     public RelayCommand RemoveAttachmentCommand { get; }
     public AsyncRelayCommand BackCommand { get; }
+
+    private async Task BackAsync()
+    {
+        if (HasUnsavedDraft && Shell.Current is { } shell)
+        {
+            var discard = await shell.DisplayAlertAsync(
+                UiTextCatalog.Get("Profile_UnsavedChanges_Title"),
+                UiTextCatalog.Get("Profile_UnsavedChanges_Message"),
+                UiTextCatalog.Get("Profile_UnsavedChanges_Discard"),
+                UiTextCatalog.Get("Profile_UnsavedChanges_KeepEditing"));
+            if (!discard)
+                return;
+        }
+
+        await _navigateBackAsync();
+    }
 
     public void AttachFile(
         string fileName,
@@ -113,6 +142,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         AttachmentName = fileName;
         AttachmentStatus = message;
         OnPropertyChanged(nameof(HasAttachment));
+        OnPropertyChanged(nameof(HasUnsavedDraft));
     }
 
     public void SetAttachmentError(string message)
@@ -123,24 +153,38 @@ public partial class ProfileFeedbackViewModel : ObservableObject
     private Task LoadDataAsync()
     {
         StatusMessage = string.Empty;
+        IsStatusError = false;
         return Task.CompletedTask;
     }
 
     private async Task SendFeedbackAsync()
     {
+        if (IsBusy)
+            return;
+
         if (string.IsNullOrWhiteSpace(FeedbackText) && string.IsNullOrWhiteSpace(AdjustmentText))
         {
+            IsStatusError = true;
             StatusMessage = "Ui_Profile_Feedback_Error_Describe";
             return;
         }
 
+        if (IncludeContactEmail && !IsValidEmail(ContactEmail))
+        {
+            IsStatusError = true;
+            StatusMessage = UiTextCatalog.Get("Profile_Feedback_InvalidEmail");
+            return;
+        }
+
         IsBusy = true;
+        IsStatusError = false;
         try
         {
             var result = await _useCase.OpenDraftAsync(new ProfileFeedbackRequest(
                 SelectedTopicLabel, SelectedPriorityLabel, ScreenName, FeedbackText,
                 AdjustmentText, IncludeContactEmail, ContactEmail,
                 _attachment));
+            IsStatusError = !result.DraftOpened;
             StatusMessage = result.Message;
             if (result.DraftOpened)
                 await _navigateBackAsync();
@@ -148,6 +192,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         catch (Exception ex)
         {
             Trace.WriteLine($"[ProfileFeedbackViewModel] Feedback handoff failed ({ex.GetType().Name}).");
+            IsStatusError = true;
             StatusMessage = "Ui_Profile_Feedback_Error_NoMail";
         }
         finally
@@ -156,27 +201,71 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         }
     }
 
+    private async Task CopyFeedbackAsync()
+    {
+        if (IsBusy || !HasUnsavedDraft)
+            return;
+
+        var lines = new List<string>
+        {
+            $"Topic: {SelectedTopicLabel}",
+            $"Priority: {SelectedPriorityLabel}"
+        };
+        if (!string.IsNullOrWhiteSpace(ScreenName))
+            lines.Add($"Screen: {ScreenName.Trim()}");
+        if (!string.IsNullOrWhiteSpace(FeedbackText))
+            lines.Add($"Message: {FeedbackText.Trim()}");
+        if (!string.IsNullOrWhiteSpace(AdjustmentText))
+            lines.Add($"Suggested fix: {AdjustmentText.Trim()}");
+        if (IncludeContactEmail && !string.IsNullOrWhiteSpace(ContactEmail))
+            lines.Add($"Reply email: {ContactEmail.Trim()}");
+
+        await Clipboard.Default.SetTextAsync(string.Join(Environment.NewLine, lines));
+        IsStatusError = false;
+        StatusMessage = UiTextCatalog.Get("Profile_Feedback_Copied");
+    }
+
+    private static bool IsValidEmail(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+            return false;
+        var trimmed = value.Trim();
+        return MailAddress.TryCreate(trimmed, out var parsed) &&
+               string.Equals(parsed.Address, trimmed, StringComparison.OrdinalIgnoreCase) &&
+               trimmed.Contains('.', StringComparison.Ordinal);
+    }
+
     partial void OnFeedbackTextChanged(string value)
     {
         OnPropertyChanged(nameof(IsReadyToSend));
+        OnPropertyChanged(nameof(ShowSubmitHint));
+        OnPropertyChanged(nameof(HasUnsavedDraft));
     }
 
     partial void OnAdjustmentTextChanged(string value)
     {
         OnPropertyChanged(nameof(IsReadyToSend));
+        OnPropertyChanged(nameof(ShowSubmitHint));
+        OnPropertyChanged(nameof(HasUnsavedDraft));
+    }
+
+    partial void OnScreenNameChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasUnsavedDraft));
     }
 
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(IsReadyToSend));
+        OnPropertyChanged(nameof(ShowSubmitHint));
     }
 
     private void RemoveAttachment()
     {
         _attachment = null;
         AttachmentName = string.Empty;
-        AttachmentStatus =
-            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Profile_Feedback_AttachmentRemoved");
+        AttachmentStatus = UiTextCatalog.Get("Profile_Feedback_AttachmentRemoved");
         OnPropertyChanged(nameof(HasAttachment));
+        OnPropertyChanged(nameof(HasUnsavedDraft));
     }
 }

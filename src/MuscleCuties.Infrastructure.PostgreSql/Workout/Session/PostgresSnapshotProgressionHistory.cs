@@ -25,6 +25,9 @@ internal static class PostgresSnapshotProgressionHistory
             .ToListAsync(ct);
         var dayIds = sessions.Where(s => s.PlannedWorkoutDayId.HasValue).Select(s => s.PlannedWorkoutDayId!.Value).Distinct().ToArray();
         var days = await db.WorkoutDays.AsNoTracking().Where(d => d.UserId == userId && dayIds.Contains(d.Id)).ToListAsync(ct);
+        var definitionNamesById = await db.WorkoutExerciseDefinitions.AsNoTracking()
+            .Where(row => exerciseIds.Contains(row.Id))
+            .ToDictionaryAsync(row => row.Id, row => row.Name, ct);
         var result = new Dictionary<int, IReadOnlyList<SnapshotProgressionExposure>>();
         foreach (var exerciseId in exerciseIds)
         {
@@ -55,6 +58,15 @@ internal static class PostgresSnapshotProgressionHistory
                 }
                 var one = prescribed.Length == 1 ? prescribed[0] : null;
                 var generationExercise = snapshot.GenerationV2?.Exercises.SingleOrDefault(item => item.ExerciseId == exerciseId);
+                var usesV2Definition = generationExercise is not null ||
+                    prescribed.Any(e => e.PlanningSlotId?.StartsWith("v2-", StringComparison.Ordinal) == true);
+                if (usesV2Definition && matchingSets.Length > 0 &&
+                    (!definitionNamesById.TryGetValue(exerciseId, out var expectedName) ||
+                     matchingSets.Any(s => !string.Equals(s.ExerciseName, expectedName, StringComparison.Ordinal))))
+                {
+                    exposures.Add(new(session.CompletedAt!.Value, 0, 0, null, []));
+                    break;
+                }
                 var isUnilateral = unilateralExerciseIds?.Contains(exerciseId) == true || generationExercise?.IsUnilateral == true;
                 exposures.Add(new(session.CompletedAt!.Value,
                     generationExercise?.WorkingSets ?? one?.Sets ?? 0,

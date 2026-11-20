@@ -1,14 +1,4 @@
-using MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
-
 namespace MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
-
-public sealed record DiaryMealCategoryDto(
-    Guid Id,
-    Guid OwnerId,
-    string Name,
-    int DisplayOrder,
-    bool IsArchived,
-    MealType? LegacyMealType);
 
 public sealed record DiaryNutritionTargetDto(
     decimal Calories,
@@ -20,11 +10,6 @@ public sealed record DiaryWeekdayOverrideDto(
     Guid OwnerId,
     DayOfWeek Weekday,
     bool IsEnabled,
-    DiaryNutritionTargetDto Target);
-
-public sealed record DiaryPerMealTargetDto(
-    Guid OwnerId,
-    Guid CategoryId,
     DiaryNutritionTargetDto Target);
 
 public enum DiaryTargetProvenanceDto

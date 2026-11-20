@@ -35,6 +35,7 @@
                     StrokeThickness="{StaticResource UiStrokeWidth1_8}"
                     WidthRequest="{StaticResource UiDimension20}"
                     HeightRequest="{StaticResource UiDimension20}"
+                    FlexLayout.Shrink="0"
                     VerticalOptions="Center" />
 
                 <Label
@@ -44,6 +45,7 @@
                     LineBreakMode="WordWrap"
                     HorizontalTextAlignment="Start"
                     FlexLayout.Grow="1"
+                    FlexLayout.Shrink="0"
                     SemanticProperties.Description="{Binding SemanticDescription, Source={x:Reference Root}}"
                     VerticalOptions="Center" />
 
@@ -55,11 +57,13 @@
                     <Label
                         Text="{Binding CaloriesText, Source={x:Reference Root}}"
                         Style="{StaticResource BodyStrong}"
+                        LineBreakMode="WordWrap"
                         HorizontalTextAlignment="End" />
                     <Label
                         Text="{Binding TargetShareText, Source={x:Reference Root}}"
                         Style="{StaticResource MutedLabel}"
                         FontSize="{StaticResource UiFontSize12}"
+                        LineBreakMode="WordWrap"
                         HorizontalTextAlignment="End"
                         IsVisible="{Binding HasTargetShare, Source={x:Reference Root}}" />
                 </VerticalStackLayout>
@@ -132,7 +136,7 @@
             IsVisible="{Binding IsEmpty, Source={x:Reference Root}}"
             ColumnDefinitions="Auto,*,Auto"
             ColumnSpacing="{StaticResource UiSpaceTight}"
-            Padding="{StaticResource UiInsets0_8}">
+            Padding="{StaticResource UiInsets16_8}">
             <Path
                 Data="{Binding MealTypeIconData, Source={x:Reference Root}, Converter={StaticResource StringToGeometryConverter}}"
                 Style="{StaticResource NutritionLineIcon}"

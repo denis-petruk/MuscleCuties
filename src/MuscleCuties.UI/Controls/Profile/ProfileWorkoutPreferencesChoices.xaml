@@ -6,55 +6,69 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:commonModels="clr-namespace:MuscleCuties.UI.Models.UI.Common"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:workoutModels="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     xmlns:workoutControls="clr-namespace:MuscleCuties.UI.Controls.Workout"
     x:DataType="vm:ProfileWorkoutPreferencesViewModel">
 
 
-    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
-        <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
-            <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableEquipment}"
-                   Style="{StaticResource FormFieldLabel}" />
-            <Border Style="{StaticResource PickerContainer}">
-                <Picker
-                    Title="{loc:LocalizedText Profile_WorkoutPrefs_ChooseEquipment}"
-                    ItemsSource="{Binding EquipmentOptions}"
-                    ItemDisplayBinding="{Binding Label, Converter={StaticResource LocalizedStringConverter}, x:DataType=commonModels:ILabeledOption}"
-                    SelectedItem="{Binding SelectedEquipmentOption, Mode=TwoWay}"
-                    AutomationId="WorkoutPrefsEquipmentPicker" />
-            </Border>
-            <Label Text="{loc:LocalizedText Workout_Generation_EquipmentBetaNotice}"
-                   Style="{StaticResource MutedLabel}"
-                   LineBreakMode="WordWrap" />
+    <VerticalStackLayout Spacing="{StaticResource UiSpaceContent}">
+        <Border Style="{StaticResource CardPrimary}">
+            <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
+                <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableEquipment}"
+                       Style="{StaticResource FormFieldLabel}" />
+                <Border Style="{StaticResource PickerContainer}">
+                    <Picker
+                        Title="{loc:LocalizedText Profile_WorkoutPrefs_ChooseEquipment}"
+                        ItemsSource="{Binding EquipmentOptions}"
+                        ItemDisplayBinding="{Binding Label, Converter={StaticResource LocalizedStringConverter}, x:DataType=commonModels:ILabeledOption}"
+                        SelectedItem="{Binding SelectedEquipmentOption, Mode=TwoWay}"
+                        SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_AvailableEquipment}"
+                        AutomationId="WorkoutPrefsEquipmentPicker" />
+                </Border>
+                <Label Text="{loc:LocalizedText Workout_Generation_EquipmentBetaNotice}"
+                       Style="{StaticResource MutedLabel}"
+                       LineBreakMode="WordWrap" />
 
-            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
-                                 IsVisible="{Binding ShowHomeEquipmentCapabilities}">
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
-                    <CheckBox IsChecked="{Binding HasDumbbells, Mode=TwoWay}"
-                              VerticalOptions="Center"
-                              AutomationId="WorkoutPrefsDumbbellsCheckBox"
-                              SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasDumbbells}" />
-                    <Label Grid.Column="1"
-                           Text="{loc:LocalizedText Profile_WorkoutPrefs_HasDumbbells}"
-                           Style="{StaticResource BodyLabel}"
-                           VerticalOptions="Center"
-                           LineBreakMode="WordWrap" />
-                </Grid>
-                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
-                    <CheckBox IsChecked="{Binding HasBands, Mode=TwoWay}"
-                              VerticalOptions="Center"
-                              AutomationId="WorkoutPrefsBandsCheckBox"
-                              SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasBands}" />
-                    <Label Grid.Column="1"
-                           Text="{loc:LocalizedText Profile_WorkoutPrefs_HasBands}"
-                           Style="{StaticResource BodyLabel}"
-                           VerticalOptions="Center"
-                           LineBreakMode="WordWrap" />
-                </Grid>
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                     IsVisible="{Binding ShowHomeEquipmentCapabilities}">
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleDumbbellsCommand}" />
+                        </Grid.GestureRecognizers>
+                        <CheckBox IsChecked="{Binding HasDumbbells, Mode=TwoWay}"
+                                  VerticalOptions="Center"
+                                  AutomationId="WorkoutPrefsDumbbellsCheckBox"
+                                  SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasDumbbells}" />
+                        <Label Grid.Column="1"
+                               Text="{loc:LocalizedText Profile_WorkoutPrefs_HasDumbbells}"
+                               Style="{StaticResource BodyLabel}"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
+                    </Grid>
+                    <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                        <Grid.GestureRecognizers>
+                            <TapGestureRecognizer Command="{Binding ToggleBandsCommand}" />
+                        </Grid.GestureRecognizers>
+                        <CheckBox IsChecked="{Binding HasBands, Mode=TwoWay}"
+                                  VerticalOptions="Center"
+                                  AutomationId="WorkoutPrefsBandsCheckBox"
+                                  SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasBands}" />
+                        <Label Grid.Column="1"
+                               Text="{loc:LocalizedText Profile_WorkoutPrefs_HasBands}"
+                               Style="{StaticResource BodyLabel}"
+                               VerticalOptions="Center"
+                               LineBreakMode="WordWrap" />
+                    </Grid>
+                </VerticalStackLayout>
+
                 <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}"
                       MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
                       IsVisible="{Binding ShowBandAnchorConfirmation}">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ToggleBandAnchorCommand}" />
+                    </Grid.GestureRecognizers>
                     <CheckBox IsChecked="{Binding HasConfirmedBandAnchor, Mode=TwoWay}"
                               VerticalOptions="Center"
                               AutomationId="WorkoutPrefsBandAnchorCheckBox"
@@ -65,111 +79,131 @@
                            VerticalOptions="Center"
                            LineBreakMode="WordWrap" />
                 </Grid>
-            </VerticalStackLayout>
 
-            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
-                <CheckBox IsChecked="{Binding HasSliders, Mode=TwoWay}"
-                          VerticalOptions="Center"
-                          AutomationId="WorkoutPrefsSlidersCheckBox"
-                          SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasSliders}" />
-                <Label Grid.Column="1"
-                       Text="{loc:LocalizedText Profile_WorkoutPrefs_HasSliders}"
-                       Style="{StaticResource BodyLabel}"
-                       VerticalOptions="Center"
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ToggleSlidersCommand}" />
+                    </Grid.GestureRecognizers>
+                    <CheckBox IsChecked="{Binding HasSliders, Mode=TwoWay}"
+                              VerticalOptions="Center"
+                              AutomationId="WorkoutPrefsSlidersCheckBox"
+                              SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_HasSliders}" />
+                    <Label Grid.Column="1"
+                           Text="{loc:LocalizedText Profile_WorkoutPrefs_HasSliders}"
+                           Style="{StaticResource BodyLabel}"
+                           VerticalOptions="Center"
+                           LineBreakMode="WordWrap" />
+                </Grid>
+
+                <!-- C1/OD-7: a saved style the reviewed templates restrict states why and offers the switch. -->
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                     IsVisible="{Binding HasIneligibleSavedStyle}">
+                    <Label Text="{loc:LocalizedText Workout_Generation_StyleNeedsHistory}"
+                           Style="{StaticResource MutedLabel}"
+                           LineBreakMode="WordWrap" />
+                    <Button Text="{loc:LocalizedText Workout_Generation_SwitchToGeneralStrength}"
+                            Command="{Binding SwitchToGeneralStrengthCommand}"
+                            Style="{StaticResource ButtonSecondary}"
+                            AutomationId="WorkoutPrefsSwitchToGeneralStrengthButton" />
+                </VerticalStackLayout>
+
+                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                    <Grid.GestureRecognizers>
+                        <TapGestureRecognizer Command="{Binding ToggleGluteFocusCommand}" />
+                    </Grid.GestureRecognizers>
+                    <CheckBox IsChecked="{Binding GluteFocus, Mode=TwoWay}"
+                              VerticalOptions="Center"
+                              SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_GluteFocus}" />
+                    <Label Grid.Column="1"
+                           Text="{loc:LocalizedText Profile_WorkoutPrefs_GluteFocus}"
+                           Style="{StaticResource BodyLabel}"
+                           VerticalOptions="Center"
+                           LineBreakMode="WordWrap" />
+                </Grid>
+            </VerticalStackLayout>
+        </Border>
+
+        <Border Style="{StaticResource CardPrimary}">
+            <workoutControls:WorkoutActivityPreferencePicker
+                ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
+                ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
+        </Border>
+
+        <Border Style="{StaticResource CardPrimary}">
+            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_ExerciseExclusions}"
+                       Style="{StaticResource SectionTitle}"
+                       LineBreakMode="WordWrap"
+                       SemanticProperties.HeadingLevel="Level2" />
+                <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_ExerciseExclusionsHint}"
+                       Style="{StaticResource MutedLabel}"
                        LineBreakMode="WordWrap" />
-            </Grid>
-        </VerticalStackLayout>
-
-         <!-- C1/OD-7: a saved style the reviewed templates restrict states why and offers the switch. -->
-         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
-                              IsVisible="{Binding HasIneligibleSavedStyle}">
-             <Label Text="{loc:LocalizedText Workout_Generation_StyleNeedsHistory}"
-                    Style="{StaticResource MutedLabel}"
-                    LineBreakMode="WordWrap" />
-             <Button Text="{loc:LocalizedText Workout_Generation_SwitchToGeneralStrength}"
-                     Command="{Binding SwitchToGeneralStrengthCommand}"
-                     Style="{StaticResource ButtonSecondary}"
-                     AutomationId="WorkoutPrefsSwitchToGeneralStrengthButton" />
-         </VerticalStackLayout>
-
-         <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
-             <CheckBox IsChecked="{Binding GluteFocus, Mode=TwoWay}"
-                       VerticalOptions="Center"
-                       SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_GluteFocus}" />
-             <Label Grid.Column="1"
-                    Text="{loc:LocalizedText Profile_WorkoutPrefs_GluteFocus}"
-                    Style="{StaticResource BodyLabel}"
-                    VerticalOptions="Center"
-                    LineBreakMode="WordWrap" />
-         </Grid>
-
-         <workoutControls:WorkoutActivityPreferencePicker
-             ActivityGroups="{Binding GroupedWorkoutActivityOptions}"
-             ToggleActivityCommand="{Binding ToggleWorkoutActivityCommand}" />
-
-         <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
-             <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_ExerciseExclusions}"
-                    Style="{StaticResource SectionTitle}"
-                    LineBreakMode="WordWrap"
-                    SemanticProperties.HeadingLevel="Level2" />
-            <Border Style="{StaticResource PickerContainer}">
-                <Entry Placeholder="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
-                       Text="{Binding ExerciseExclusionSearchText, Mode=TwoWay}"
-                       ReturnType="Search" VerticalOptions="Center" />
-            </Border>
-            <FlexLayout BindableLayout.ItemsSource="{Binding SelectedExerciseExclusions}"
-                        Wrap="Wrap" JustifyContent="Start">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
-                        <Border Style="{StaticResource CardSecondary}" Margin="{StaticResource UiInsets0_0_8_8}"
-                                SemanticProperties.Description="{Binding Name}"
-                                SemanticProperties.Hint="{loc:LocalizedText Profile_WorkoutPrefs_RemoveAvoidedExercise}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleCommand}" />
-                            </Border.GestureRecognizers>
-                            <HorizontalStackLayout Spacing="{StaticResource UiSpaceTight}">
-                                <Label Text="{Binding Name}" Style="{StaticResource BodyLabel}" VerticalOptions="Center" />
-                                <Path Data="M6 6L18 18M18 6L6 18" Stroke="{StaticResource Primary}"
-                                      StrokeThickness="{StaticResource UiStrokeWidth2}"
-                                      WidthRequest="{StaticResource UiDimension14}"
-                                      HeightRequest="{StaticResource UiDimension14}"
-                                      VerticalOptions="Center" InputTransparent="True" />
-                            </HorizontalStackLayout>
-                        </Border>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
-            </FlexLayout>
-            <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" IsVisible="{Binding HasExerciseExclusionQuery}"
-                                 BindableLayout.ItemsSource="{Binding FilteredExerciseExclusionOptions}">
-                <BindableLayout.ItemTemplate>
-                    <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
-                        <Border
-                            Style="{StaticResource CardSecondary}"
-                            SemanticProperties.Description="{Binding Name}">
-                            <Border.GestureRecognizers>
-                                <TapGestureRecognizer Command="{Binding ToggleCommand}" />
-                            </Border.GestureRecognizers>
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
-                                <Label
-                                    Text="{Binding Name}"
-                                    Style="{StaticResource BodyStrong}"
-                                    LineBreakMode="WordWrap"
-                                    VerticalOptions="Center" />
-                                <Path Grid.Column="1" Data="M12 5V19M5 12H19"
-                                      Stroke="{StaticResource Primary}"
-                                      StrokeThickness="{StaticResource UiStrokeWidth2}"
-                                      WidthRequest="{StaticResource UiDimension18}"
-                                      HeightRequest="{StaticResource UiDimension18}" VerticalOptions="Center"
-                                      InputTransparent="True" />
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </BindableLayout.ItemTemplate>
+                <Border Style="{StaticResource PickerContainer}">
+                    <Entry Placeholder="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
+                           Text="{Binding ExerciseExclusionSearchText, Mode=TwoWay}"
+                           ClearButtonVisibility="WhileEditing"
+                           SemanticProperties.Description="{loc:LocalizedText Profile_WorkoutPrefs_SearchExercises}"
+                           ReturnType="Search" VerticalOptions="Center" />
+                </Border>
+                <FlexLayout BindableLayout.ItemsSource="{Binding SelectedExerciseExclusions}"
+                            Wrap="Wrap" JustifyContent="Start">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
+                            <Border Style="{StaticResource CardSecondary}" Margin="{StaticResource UiInsets0_0_8_8}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                    <sharedControls:CardTapTarget
+                                        Grid.ColumnSpan="2"
+                                        Command="{Binding ToggleCommand}"
+                                        SemanticProperties.Description="{Binding Name}"
+                                        SemanticProperties.Hint="{loc:LocalizedText Profile_WorkoutPrefs_RemoveAvoidedExercise}" />
+                                    <Label Text="{Binding Name}" Style="{StaticResource BodyLabel}"
+                                           LineBreakMode="WordWrap" VerticalOptions="Center"
+                                           InputTransparent="True" />
+                                    <Path Grid.Column="1" Data="M6 6L18 18M18 6L6 18" Stroke="{StaticResource Primary}"
+                                          StrokeThickness="{StaticResource UiStrokeWidth2}"
+                                          WidthRequest="{StaticResource UiDimension14}"
+                                          HeightRequest="{StaticResource UiDimension14}"
+                                          VerticalOptions="Center" InputTransparent="True" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </FlexLayout>
+                <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}" IsVisible="{Binding HasExerciseExclusionQuery}"
+                                     BindableLayout.ItemsSource="{Binding FilteredExerciseExclusionOptions}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="workoutModels:WorkoutExerciseExclusionOptionItem">
+                            <Border
+                                Style="{StaticResource CardSecondary}"
+                                MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}">
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                                    <sharedControls:CardTapTarget
+                                        Grid.ColumnSpan="2"
+                                        Command="{Binding ToggleCommand}"
+                                        SemanticProperties.Description="{Binding Name}" />
+                                    <Label
+                                        Text="{Binding Name}"
+                                        Style="{StaticResource BodyStrong}"
+                                        LineBreakMode="WordWrap"
+                                        VerticalOptions="Center"
+                                        InputTransparent="True" />
+                                    <Path Grid.Column="1" Data="M12 5V19M5 12H19"
+                                          Stroke="{StaticResource Primary}"
+                                          StrokeThickness="{StaticResource UiStrokeWidth2}"
+                                          WidthRequest="{StaticResource UiDimension18}"
+                                          HeightRequest="{StaticResource UiDimension18}" VerticalOptions="Center"
+                                          InputTransparent="True" />
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
+                </VerticalStackLayout>
+                <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_NoExerciseSearchResults}"
+                       Style="{StaticResource MutedLabel}"
+                       IsVisible="{Binding HasNoExerciseExclusionMatches}"
+                       LineBreakMode="WordWrap" />
             </VerticalStackLayout>
-            <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_NoExerciseSearchResults}"
-                   Style="{StaticResource MutedLabel}"
-                   IsVisible="{Binding HasNoExerciseExclusionMatches}"
-                   LineBreakMode="WordWrap" />
-        </VerticalStackLayout>
+        </Border>
     </VerticalStackLayout>
 </ContentView>

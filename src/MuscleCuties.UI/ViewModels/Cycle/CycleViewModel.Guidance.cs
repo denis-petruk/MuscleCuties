@@ -39,11 +39,13 @@ public partial class CycleViewModel
 
     public RelayCommand<PhaseExplorerPillItem> SelectPhaseExplorerPillCommand { get; private set; } = null!;
     public RelayCommand ClosePhaseSummarySheetCommand { get; private set; } = null!;
+    public IAsyncRelayCommand OpenSelectedPhaseDetailsCommand { get; private set; } = null!;
 
     private void InitializeGuidanceCommands()
     {
         SelectPhaseExplorerPillCommand = new RelayCommand<PhaseExplorerPillItem>(SelectPhaseExplorerPill);
         ClosePhaseSummarySheetCommand = new RelayCommand(ClosePhaseSummarySheet);
+        OpenSelectedPhaseDetailsCommand = new AsyncRelayCommand(OpenSelectedPhaseDetailsAsync);
 
         RefreshGuidanceContent(CurrentPhase, UseDarkTheme);
     }
@@ -58,6 +60,16 @@ public partial class CycleViewModel
     private void ClosePhaseSummarySheet()
     {
         IsPhaseSummarySheetVisible = false;
+    }
+
+    private async Task OpenSelectedPhaseDetailsAsync()
+    {
+        if (SelectedPhaseSummary is null)
+            return;
+
+        var phase = SelectedPhaseSummary.Phase;
+        IsPhaseSummarySheetVisible = false;
+        await _openPhaseDetailsAsync(phase);
     }
 
     private void RefreshGuidanceContent(CyclePhase phase, bool useDarkTheme)

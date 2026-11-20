@@ -55,6 +55,66 @@ public sealed class WorkoutGenerationEngineV2Tests
     }
 
     [Fact]
+    public void Four_day_lower_sessions_keep_a_trunk_slot_and_at_least_four_exercises()
+    {
+        var input = CreateBaseInput(
+            availableDays: [DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Thursday, DayOfWeek.Friday],
+            focus: TrainingFocus.Balanced,
+            style: StrengthStyleV2.HighVolumeStrength,
+            experience: TrainingExperienceLevel.Intermediate);
+
+        var result = WorkoutGenerationEngineV2.Generate(input);
+        var lowerSessions = result.AdaptedSessions
+            .Where(session => session.SplitKind == SplitKindV2.UpperLower)
+            .Where(session => session.Exercises.Any(exercise => exercise.Pattern is
+                MovementPattern.SquatPattern or MovementPattern.Lunge or MovementPattern.HipHinge or
+                MovementPattern.HipThrust))
+            .ToArray();
+
+        Assert.Equal(2, lowerSessions.Length);
+        Assert.All(lowerSessions, session =>
+        {
+            Assert.True(session.Exercises.Count >= 4,
+                $"Lower session {session.SessionIndex} has only {session.Exercises.Count} exercises.");
+            Assert.Contains(session.Exercises, exercise => exercise.Pattern is
+                MovementPattern.AntiExtension or MovementPattern.AntiRotation or MovementPattern.AntiLateralFlexion);
+        });
+    }
+
+    [Fact]
+    public void Thirty_minute_two_day_high_volume_plan_keeps_a_full_body_session()
+    {
+        var input = CreateBaseInput(
+            availableDays: [DayOfWeek.Monday, DayOfWeek.Thursday],
+            focus: TrainingFocus.Balanced,
+            style: StrengthStyleV2.HighVolumeStrength) with
+        {
+            SessionDurationMinutesByActivity = new Dictionary<WorkoutActivityType, int>
+            {
+                [WorkoutActivityType.HighVolumeStrength] = 30
+            }
+        };
+
+        var result = WorkoutGenerationEngineV2.Generate(input);
+
+        Assert.All(result.AdaptedSessions, session =>
+        {
+            Assert.True(session.EstimatedTotalMinutes <= 30m,
+                $"Session {session.SessionIndex} takes {session.EstimatedTotalMinutes} minutes.");
+            Assert.True(session.Exercises.Count >= 4,
+                $"Session {session.SessionIndex} has only {session.Exercises.Count} exercises: " +
+                string.Join(", ", session.Exercises.Select(exercise => exercise.ExerciseName)) +
+                $". Trace: {string.Join("; ", result.RuleTrace)}");
+            Assert.Contains(session.Exercises, exercise => exercise.Pattern is
+                MovementPattern.SquatPattern or MovementPattern.Lunge or MovementPattern.HipHinge or MovementPattern.HipThrust);
+            Assert.Contains(session.Exercises, exercise => exercise.Pattern is
+                MovementPattern.HorizontalPush or MovementPattern.VerticalPush);
+            Assert.Contains(session.Exercises, exercise => exercise.Pattern is
+                MovementPattern.HorizontalPull or MovementPattern.VerticalPull);
+        });
+    }
+
+    [Fact]
     public void High_intensity_strength_uses_1_rir_2_sets_and_approved_rep_rest_ranges()
     {
         var input = CreateBaseInput(

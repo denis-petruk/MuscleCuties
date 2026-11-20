@@ -79,7 +79,7 @@ public partial class QuizViewModel : ObservableObject
         RetryLoadQuestionsCommand = new AsyncRelayCommand(RetryLoadQuestionsAsync);
         SelectAnswerCommand = new RelayCommand<SelectableQuizAnswer>(SelectAnswer);
         NextCommand = new AsyncRelayCommand(NextAsync);
-        BackCommand = new RelayCommand(Back, () => !IsFirstQuestion);
+        BackCommand = new RelayCommand(Back, () => !IsFirstQuestion && !IsBusy);
         GoToLoginCommand = new AsyncRelayCommand(() =>
             _navigateToLoginAsync?.Invoke() ?? Task.CompletedTask);
         EditProfileCommand = new AsyncRelayCommand(EditProfileAsync);
@@ -118,6 +118,8 @@ public partial class QuizViewModel : ObservableObject
         QuizQuestionType.DietaryPreference or QuizQuestionType.AvailableWeekdays;
     public bool IsCurrentQuestionAvailableWeekdays =>
         CurrentQuestion?.QuestionType == QuizQuestionType.AvailableWeekdays;
+    public bool IsCurrentQuestionDietaryPreference =>
+        CurrentQuestion?.QuestionType == QuizQuestionType.DietaryPreference;
     public bool IsCurrentQuestionGoal => CurrentQuestion?.QuestionType == QuizQuestionType.Goal;
     public bool IsCurrentQuestionEquipment => CurrentQuestion?.QuestionType == QuizQuestionType.Equipment;
 
@@ -128,8 +130,9 @@ public partial class QuizViewModel : ObservableObject
 
     internal static bool IsOfferedAnswer(QuizQuestionType questionType, QuizAnswerDto answer) => true;
     public bool IsCurrentQuestionPhasePair => IsPainQuestion(CurrentQuestion?.QuestionType);
+    public bool IsPhasePairVisible => IsCurrentQuestionPhasePair && !AccountCreatedNeedsLogin;
     public bool IsStandardAnswerListVisible =>
-        !IsCurrentQuestionPhasePair;
+        !IsCurrentQuestionPhasePair && !AccountCreatedNeedsLogin;
     public int SelectedWeekdayCount => IsCurrentQuestionAvailableWeekdays
         ? CurrentAnswers.Count(answer => answer.IsSelected)
         : 0;
@@ -157,6 +160,15 @@ public partial class QuizViewModel : ObservableObject
         QuizQuestionType.FollicularPain => "How does your follicular phase usually feel?",
         QuizQuestionType.OvulatoryPain => "How does ovulation usually feel?",
         QuizQuestionType.LutealPain => "How does your luteal phase usually feel?",
+        _ => string.Empty
+    };
+
+    public string CurrentPhasePairHelperText => CurrentQuestion?.QuestionType switch
+    {
+        QuizQuestionType.MenstrualPain => "Onboarding_Quiz_PhaseHelper_Menstrual",
+        QuizQuestionType.FollicularPain => "Onboarding_Quiz_PhaseHelper_Follicular",
+        QuizQuestionType.OvulatoryPain => "Onboarding_Quiz_PhaseHelper_Ovulatory",
+        QuizQuestionType.LutealPain => "Onboarding_Quiz_PhaseHelper_Luteal",
         _ => string.Empty
     };
 
@@ -198,6 +210,13 @@ public partial class QuizViewModel : ObservableObject
     partial void OnAccountCreatedNeedsLoginChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowQuizBackButton));
+        OnPropertyChanged(nameof(IsStandardAnswerListVisible));
+        OnPropertyChanged(nameof(IsPhasePairVisible));
+    }
+
+    partial void OnIsBusyChanged(bool value)
+    {
+        BackCommand.NotifyCanExecuteChanged();
     }
 
     public async Task EnsureQuestionsLoadedAsync()
@@ -683,9 +702,11 @@ public partial class QuizViewModel : ObservableObject
     {
         OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));
         OnPropertyChanged(nameof(IsCurrentQuestionAvailableWeekdays));
+        OnPropertyChanged(nameof(IsCurrentQuestionDietaryPreference));
         OnPropertyChanged(nameof(IsCurrentQuestionEquipment));
         OnPropertyChanged(nameof(IsCurrentQuestionGoal));
         OnPropertyChanged(nameof(IsCurrentQuestionPhasePair));
+        OnPropertyChanged(nameof(IsPhasePairVisible));
         OnPropertyChanged(nameof(IsStandardAnswerListVisible));
         OnPropertyChanged(nameof(SelectedWeekdayCount));
         OnPropertyChanged(nameof(IsFirstQuestion));
@@ -699,6 +720,7 @@ public partial class QuizViewModel : ObservableObject
         OnPropertyChanged(nameof(QuestionsStateMessage));
         OnPropertyChanged(nameof(CurrentQuestionIconGlyph));
         OnPropertyChanged(nameof(PhasePairTitle));
+        OnPropertyChanged(nameof(CurrentPhasePairHelperText));
         OnPropertyChanged(nameof(PainSliderLabel));
         OnPropertyChanged(nameof(EnergySliderLabel));
         BackCommand.NotifyCanExecuteChanged();

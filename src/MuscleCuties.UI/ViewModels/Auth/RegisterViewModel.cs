@@ -1,8 +1,10 @@
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Microsoft.Maui.Accessibility;
 using MuscleCuties.Contracts.Account;
 using MuscleCuties.UI.Services.Auth;
+using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 using MuscleCuties.UseCases.Features.Account.SignIn.Contracts;
@@ -57,10 +59,10 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         _navigateToExistingLoginAsync = navigateToExistingLoginAsync;
         _navigateToOtpVerificationAsync = navigateToOtpVerificationAsync;
         _navigateToPrivacyPolicyAsync = navigateToPrivacyPolicyAsync;
-        RegisterCommand = new AsyncRelayCommand(RegisterAsync);
-        GoBackCommand = new AsyncRelayCommand(GoBackAsync);
-        SignInWithPlatformCommand = new AsyncRelayCommand(SignInWithPlatformAsync);
-        GoToPrivacyPolicyCommand = new AsyncRelayCommand(GoToPrivacyPolicyAsync);
+        RegisterCommand = new AsyncRelayCommand(RegisterAsync, () => !IsBusy);
+        GoBackCommand = new AsyncRelayCommand(GoBackAsync, () => !IsBusy);
+        SignInWithPlatformCommand = new AsyncRelayCommand(SignInWithPlatformAsync, () => !IsBusy);
+        GoToPrivacyPolicyCommand = new AsyncRelayCommand(GoToPrivacyPolicyAsync, () => !IsBusy);
     }
 
     public AsyncRelayCommand RegisterCommand { get; }
@@ -72,9 +74,38 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
     public bool IsAppleSignInAvailable => IsPlatformSignInAvailable;
     public string PlatformRegisterButtonText => _platformSignIn.RegisterButtonText;
 
+    partial void OnEmailChanged(string value)
+    {
+        ErrorMessage = string.Empty;
+    }
+
+    partial void OnUsernameChanged(string value)
+    {
+        ErrorMessage = string.Empty;
+    }
+
+    partial void OnPasswordChanged(string value)
+    {
+        ErrorMessage = string.Empty;
+    }
+
+    partial void OnConfirmPasswordChanged(string value)
+    {
+        ErrorMessage = string.Empty;
+    }
+
     partial void OnHasAcceptedPrivacyNoticeChanged(bool value)
     {
         _privacyConsentAcceptedAtUtc = value ? DateTimeOffset.UtcNow : null;
+        ErrorMessage = string.Empty;
+    }
+
+    partial void OnIsBusyChanged(bool value)
+    {
+        RegisterCommand.NotifyCanExecuteChanged();
+        GoBackCommand.NotifyCanExecuteChanged();
+        SignInWithPlatformCommand.NotifyCanExecuteChanged();
+        GoToPrivacyPolicyCommand.NotifyCanExecuteChanged();
     }
 
     private async Task GoToPrivacyPolicyAsync()
@@ -139,7 +170,7 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
 
             if (result.Status != AccountRegistrationStatus.Started || result.AttemptId is not { } attemptId)
             {
-                ErrorMessage = result.ErrorMessage ?? "Email verification is unavailable. Please try again later.";
+                ErrorMessage = result.ErrorMessage ?? "Ui_Auth_Error_VerificationUnavailable";
                 return;
             }
 

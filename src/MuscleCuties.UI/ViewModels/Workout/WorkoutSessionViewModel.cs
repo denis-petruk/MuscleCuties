@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
+using MuscleCuties.Infrastructure.Services.Workout;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Workout;
@@ -31,7 +32,7 @@ public sealed record SessionExerciseProgress(int Index, string Name, bool IsLogg
     public string AccessibilityText => UiTextCatalog.Format(
         "Workout_Session_ExerciseProgressAccessibilityFormat",
         Index + 1,
-        Name,
+        UiTextCatalog.TranslateRuntimeText(Name),
         UiTextCatalog.Get(IsCurrent ? "Workout_Session_ExerciseStateCurrent"
             : IsLogged ? "Workout_Session_ExerciseStateLogged"
             : IsSkipped ? "Workout_Session_ExerciseStateSkipped"
@@ -89,7 +90,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     public bool HasDoseAdjustmentNote => !string.IsNullOrWhiteSpace(DoseAdjustmentNote);
     [ObservableProperty] private string _dayTitle = "Workout";
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(HasNoActivities),
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(CanRetryLoad), nameof(HasNoActivities),
         nameof(HasActivityChoices))]
     private string _errorText = string.Empty;
 
@@ -297,7 +298,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(HasErrorReference))]
     private string _errorReference = string.Empty;
 
+    private bool _isInitialLoadError;
+
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
+    public bool CanRetryLoad => HasError && _isInitialLoadError;
     public bool HasErrorReference => HasError && !string.IsNullOrEmpty(ErrorReference);
     // The page is pushed before the session is fetched. Without this gate the empty state
     // renders for one frame and then disappears once the activities arrive.
@@ -306,6 +310,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     public bool HasSwapCandidates => SwapCandidates.Count > 0;
     public bool HasSwapError => !string.IsNullOrEmpty(SwapErrorText);
     public bool CanDismissSwap => !SwapNeedsReload;
+    public bool CanConfirmSwap => !IsBusy && !IsSwapLoading && (SwapNeedsReload || SwapCandidates.Any(c => c.IsSelected));
+    public bool ShowSwapConfirmHint => HasSwapCandidates && !CanConfirmSwap && !IsSwapLoading;
+    public string SwapConfirmHint => ShowSwapConfirmHint ? UiTextCatalog.Get("Workout_Swap_SelectCandidateHint") : string.Empty;
     public string SwapConfirmText => SwapNeedsReload
         ? UiTextCatalog.Get("Workout_Swap_ReloadExercise")
         : UiTextCatalog.Get("Workout_Swap_ConfirmSwap");
@@ -549,18 +556,31 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
                             _ = ResumeTimingAsync(_plannedSessionId.Value);
                         }
                     }
+                    else if (_sessionCreated && SelectedActivity.Exercises.Count > 0)
+                    {
+                        ShowSummary();
+                    }
                 }
             }
         }
         catch (Exception exception)
         {
             if (version == _loadVersion)
+            {
+                _isInitialLoadError = true;
                 ApplyFailure(ApiFailurePresenter.FromException(exception, "Ui_Workout_Error_Load"));
+                OnPropertyChanged(nameof(CanRetryLoad));
+            }
         }
         finally
         {
             if (version == _loadVersion)
             {
+                if (!HasError)
+                {
+                    _isInitialLoadError = false;
+                    OnPropertyChanged(nameof(CanRetryLoad));
+                }
                 _hasLoadedSession = true;
                 IsBusy = false;
                 OnPropertyChanged(nameof(HasNoActivities));
@@ -592,7 +612,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         if (SelectedActivity is null) return;
         ExercisePreviewNames =
             new ObservableCollection<string>(
-                SelectedActivity.Exercises.Select((exercise, index) => $"{index + 1}. {exercise.Name}"));
+                SelectedActivity.Exercises.Select((exercise, index) =>
+                    $"{index + 1}. {UiTextCatalog.TranslateRuntimeText(exercise.Name)}"));
         var targets = string.Join(" ",
             SelectedActivity.Exercises.Select(exercise => exercise.TargetText + " " + exercise.RecommendationText));
         var rpe = Regex.Match(targets, @"RPE\s*(\d+(?:[.,]\d+)?(?:\s*[-–]\s*\d+(?:[.,]\d+)?)?)",
@@ -809,10 +830,10 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             CelebrationText = celebration switch
             {
                 CelebrationType.BigPR => UiTextCatalog.Format(
-                    "Workout_Session_CelebrationPrFormat", exercise.Name),
+                    "Workout_Session_CelebrationPrFormat", UiTextCatalog.TranslateRuntimeText(exercise.Name)),
                 CelebrationType.MediumFirstTime => UiTextCatalog.Format(
-                    "Workout_Session_CelebrationFirstFormat", exercise.Name),
-                _ => UiTextCatalog.Format("Workout_Session_CelebrationLoggedFormat", exercise.Name)
+                    "Workout_Session_CelebrationFirstFormat", UiTextCatalog.TranslateRuntimeText(exercise.Name)),
+                _ => UiTextCatalog.Format("Workout_Session_CelebrationLoggedFormat", UiTextCatalog.TranslateRuntimeText(exercise.Name))
             };
         }
         catch (Exception)
@@ -937,7 +958,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     {
         ExerciseProgress = new ObservableCollection<SessionExerciseProgress>(
             SelectedActivity!.Exercises.Select((exercise, index) =>
-                new SessionExerciseProgress(index, exercise.Name, exercise.IsLogged, index == CurrentExerciseIndex,
+                new SessionExerciseProgress(index, UiTextCatalog.TranslateRuntimeText(exercise.Name),
+                    exercise.IsLogged, index == CurrentExerciseIndex,
                     _skippedIds.Contains(exercise.WorkoutDayExerciseId))));
     }
 
@@ -1399,6 +1421,24 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             return;
         }
 
+        if (IsMovementNoteOpen)
+        {
+            IsMovementNoteOpen = false;
+            return;
+        }
+
+        if (IsAbandonConfirmationVisible)
+        {
+            IsAbandonConfirmationVisible = false;
+            return;
+        }
+
+        if (IsPainReportVisible)
+        {
+            IsPainReportVisible = false;
+            return;
+        }
+
         if (IsSwapPanelVisible)
         {
             CloseSwapPanel();
@@ -1623,6 +1663,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     {
         if (IsBusy || SwapNeedsReload || option is null || !SwapCandidates.Contains(option)) return;
         foreach (var candidate in SwapCandidates) candidate.IsSelected = candidate == option;
+        OnPropertyChanged(nameof(CanConfirmSwap));
+        OnPropertyChanged(nameof(ShowSwapConfirmHint));
+        OnPropertyChanged(nameof(SwapConfirmHint));
     }
 
     [RelayCommand]
@@ -1855,14 +1898,14 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     private bool ValidateInputs(WorkoutExerciseItem exercise)
     {
-        if (exercise.IsUnilateral && exercise.Sets.Any(set => !set.IsWarmup &&
-                (!set.LeftSideReps.HasValue || !set.RightSideReps.HasValue)))
+        var capturedSets = exercise.Sets.Where(set => set.IsCapturedWorkingSet).ToArray();
+        if (exercise.IsUnilateral && (capturedSets.Length == 0 || capturedSets.Any(set => !set.HasEnteredReps)))
             ErrorText = "Workout_Session_SideRepsRequired";
         else if (exercise.UsesStrengthMetrics && (ParsePositiveInt(exercise.LoggedSetsText) == 0 ||
                                              ParsePositiveInt(exercise.LoggedRepsText) == 0))
             ErrorText = "Ui_Workout_Error_SetsReps";
         else if (exercise.UsesStrengthMetrics && exercise.UsesWeight &&
-                 ParseOptionalFloat(exercise.LoggedWeightText) is null)
+                 !WorkoutWeightEntryRule.IsAcceptable(ResolveEnteredWeight(exercise)))
             ErrorText = "Ui_Workout_Error_Weight";
         else if (exercise.UsesDurationMetric && ParseDurationSeconds(exercise.LoggedDurationMinutesText) is null)
             ErrorText = "Ui_Workout_Error_Duration";
@@ -1877,6 +1920,13 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             ErrorText = "Workout_Session_OptionalMetricsError";
         return !HasError;
     }
+
+    /// <summary>Gate 77: one resolution of the entered load, shared by validation and the payload.</summary>
+    private static double? ResolveEnteredWeight(WorkoutExerciseItem exercise) =>
+        WorkoutWeightEntryRule.ResolveEnteredWeightKg(
+            exercise.Sets.Select(set => new WorkoutEnteredSet(set.WeightInput, set.IsWarmup, set.WasEdited))
+                .ToArray(),
+            exercise.LoggedWeightText);
 
     private static bool InvalidOptionalFloat(string value)
     {
@@ -1900,8 +1950,9 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     private static float? ParseOptionalFloat(string? value)
     {
-        if ((float.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var parsed) ||
-             float.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed)) &&
+        const NumberStyles styles = NumberStyles.Float | NumberStyles.AllowThousands;
+        if ((float.TryParse(value, styles, CultureInfo.CurrentCulture, out var parsed) ||
+             float.TryParse(value, styles, CultureInfo.InvariantCulture, out parsed)) &&
             float.IsFinite(parsed) && parsed >= 0)
             return parsed;
         return null;
@@ -1934,7 +1985,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
                 set.SetNumber,
                 set.EffectiveReps,
                 item.UsesWeight
-                    ? (decimal)(ParseOptionalFloat(set.WeightInput) ?? ParseOptionalFloat(item.LoggedWeightText) ?? set.WeightKg)
+                    ? (decimal)(ParseOptionalFloat(set.WeightInput) ?? ResolveEnteredWeight(item) ?? set.WeightKg)
                     : 0m,
                 set.Rir is >= 0 and <= 10 ? (int)Math.Round(set.Rir.Value) : null,
                 set.TechniqueAcceptable,
@@ -1949,7 +2000,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             : item.UsesStrengthMetrics ? ParsePositiveInt(item.LoggedRepsText) : 0;
         var completedWeight = observedSets is { Count: > 0 }
             ? (float?)observedSets.Max(set => set.LoadKg)
-            : item.UsesStrengthMetrics && item.UsesWeight ? ParseOptionalFloat(item.LoggedWeightText) : 0f;
+            : item.UsesStrengthMetrics && item.UsesWeight ? (float?)ResolveEnteredWeight(item) : 0f;
 
         return new WorkoutExerciseLogDto(
             item.WorkoutDayExerciseId, item.ExerciseId,

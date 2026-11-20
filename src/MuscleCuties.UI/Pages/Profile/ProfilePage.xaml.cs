@@ -1,4 +1,5 @@
 using MuscleCuties.UI.Controls.Profile;
+using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Profile;
@@ -8,11 +9,26 @@ namespace MuscleCuties.UI.Pages.Profile;
 public partial class ProfilePage : ContentPage
 {
     private readonly ProfileViewModel _viewModel;
+    private IDisposable? _profileNameCapSubscription;
 
     public ProfilePage(ProfileViewModel vm)
     {
         _viewModel = vm;
         this.InitializeAndBind(InitializeComponent, vm);
+    }
+
+    protected override void OnAppearing()
+    {
+        base.OnAppearing();
+        _profileNameCapSubscription ??= CappedTextSize.Attach(
+            ProfileNameLabel, "UiFontSize18", "PresentationAccessibilityProfileNameMaxFontSize");
+    }
+
+    protected override void OnDisappearing()
+    {
+        _profileNameCapSubscription?.Dispose();
+        _profileNameCapSubscription = null;
+        base.OnDisappearing();
     }
 
     private static string T(string text)
@@ -51,9 +67,9 @@ public partial class ProfilePage : ContentPage
     {
         // First confirmation dialog
         var firstConfirm = await DisplayAlertAsync(
-            T("Delete Account and Local Data"),
+            UiTextCatalog.Get("Profile_Page_DeleteAccountAndLocalData"),
             T(
-                "Are you sure you want to delete your account? All workout logs, cycle records, nutrition logs, and progress photos stored on this device will be permanently deleted."),
+                "Are you sure you want to delete your account? All workout logs, cycle records, nutrition logs, and progress photos stored in your account and on this device will be permanently deleted."),
             T("Continue"),
             T("Cancel"));
 
@@ -64,7 +80,7 @@ public partial class ProfilePage : ContentPage
         var finalConfirm = await DisplayAlertAsync(
             T("Final Confirmation"),
             T(
-                "This action cannot be undone. It deletes this account's local records and photos. Other accounts on this device remain. You will see an error if cleanup is incomplete."),
+                "This action cannot be undone. It deletes this account's cloud and local records and photos. Other accounts on this device remain. You will see an error if cleanup is incomplete."),
             T("Delete this account"),
             T("Cancel"));
 
@@ -74,7 +90,7 @@ public partial class ProfilePage : ContentPage
         await _viewModel.DeleteAccountAndDataCommand.ExecuteAsync(null);
     }
 
-    private async void OnProfileImageTapped(object? sender, TappedEventArgs e)
+    private async void OnProfileImageTapped(object? sender, EventArgs e)
     {
         var choosePhoto = T("Choose photo");
         var useIcon = T("Use MuscleCuties icon");
@@ -129,8 +145,10 @@ public partial class ProfilePage : ContentPage
         }
         catch
         {
-            await DisplayAlertAsync(T("Profile image"), T("Could not change the image on this device right now."),
-                "OK");
+            await DisplayAlertAsync(
+                T("Profile image"),
+                T("Could not change the image on this device right now."),
+                UiTextCatalog.Get("Profile_Privacy_Ok"));
         }
     }
 }

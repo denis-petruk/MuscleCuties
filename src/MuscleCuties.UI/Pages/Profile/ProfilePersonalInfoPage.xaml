@@ -10,6 +10,8 @@
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:ProfilePersonalInfoViewModel"
     Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
+    SafeAreaEdges="All"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid RowDefinitions="Auto,*,Auto">
@@ -45,6 +47,7 @@
                                 <Entry Placeholder="{loc:LocalizedText Auth_EmailAddress}"
                                        Text="{Binding Email}"
                                        Keyboard="Email"
+                                       IsSpellCheckEnabled="False"
                                        SemanticProperties.Description="{loc:LocalizedText Auth_Email}" />
                             </Border>
                         </Grid>
@@ -78,8 +81,8 @@
                             </Border>
                         </sharedControls:AdaptiveRow>
 
-                        <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                            <Grid Grid.Column="0" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                        <sharedControls:AdaptiveRow Columns="2" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Grid.Row="0" Text="{loc:LocalizedText Common_Height}"
                                        Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
@@ -101,7 +104,7 @@
                                 </Border>
                             </Grid>
 
-                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
+                            <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource PresentationFieldSpacing}">
                                 <Label Grid.Row="0" Text="{loc:LocalizedText Common_Weight}"
                                        Style="{StaticResource FormFieldLabel}" />
                                 <Border Grid.Row="1" Style="{StaticResource InputContainer}">
@@ -122,7 +125,7 @@
                                     </Grid>
                                 </Border>
                             </Grid>
-                        </Grid>
+                        </sharedControls:AdaptiveRow>
 
                         <BoxView HeightRequest="{StaticResource UiDimension1}"
                                  Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
@@ -169,9 +172,8 @@
 
                 <Border Style="{StaticResource CardPrimary}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
-                        <Label Text="{loc:LocalizedText Profile_Measurement_Title}"
-                               Style="{StaticResource SectionTitle}"
-                               SemanticProperties.HeadingLevel="Level2" />
+                        <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Measurement_Title}"
+                                                          IconGlyph="Target24" />
                         <Button Text="{loc:LocalizedText Profile_Measurement_ViewHistory}"
                                 Style="{StaticResource ButtonSecondary}"
                                 IsVisible="{Binding IsMeasurementHistoryOpen, Converter={StaticResource InvertedBoolConverter}}"
@@ -179,7 +181,8 @@
 
                         <VerticalStackLayout IsVisible="{Binding IsMeasurementHistoryOpen}"
                                              Spacing="{StaticResource UiSpaceControl}">
-                            <ActivityIndicator IsRunning="{Binding IsMeasurementBusy}"
+                            <ActivityIndicator Style="{StaticResource StateBusyInline}"
+                                               IsRunning="{Binding IsMeasurementBusy}"
                                                IsVisible="{Binding IsMeasurementBusy}"
                                                SemanticProperties.Description="{loc:LocalizedText Profile_Measurement_Working}" />
 
@@ -244,6 +247,18 @@
                                                         MaximumDate="{Binding MaxMeasurementDate}"
                                                         Format="d"
                                                         SemanticProperties.Description="{loc:LocalizedText Profile_Measurement_Date}" />
+                                        </Border>
+                                    </VerticalStackLayout>
+
+                                    <VerticalStackLayout Spacing="{StaticResource PresentationFieldSpacing}">
+                                        <Label Text="{loc:LocalizedText Profile_Measurement_Unit}"
+                                               Style="{StaticResource FormFieldLabel}" />
+                                        <Border Style="{StaticResource PickerContainer}">
+                                            <Picker Title="{loc:LocalizedText Profile_Measurement_Unit}"
+                                                    ItemsSource="{Binding MeasurementUnits}"
+                                                    ItemDisplayBinding="{Binding Label, x:DataType=commonModels:ILabeledOption, Converter={StaticResource LocalizedStringConverter}}"
+                                                    SelectedItem="{Binding MeasurementUnit}"
+                                                    SemanticProperties.Description="{loc:LocalizedText Profile_Measurement_Unit}" />
                                         </Border>
                                     </VerticalStackLayout>
 
@@ -336,12 +351,21 @@
                             <Label Grid.Row="0" Text="{loc:LocalizedText Profile_PersonalInfo_CurrentPassword}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry AutomationId="ProfileCurrentPassword"
-                                       Placeholder="{loc:LocalizedText Profile_PersonalInfo_EnterCurrentPassword}"
-                                       Text="{Binding CurrentPassword}"
-                                       IsPassword="True"
-                                       ReturnType="Next"
-                                       SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_CurrentPassword}" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                    <Entry AutomationId="ProfileCurrentPassword"
+                                           Placeholder="{loc:LocalizedText Profile_PersonalInfo_EnterCurrentPassword}"
+                                           Text="{Binding CurrentPassword}"
+                                           IsPassword="{Binding IsCurrentPasswordHidden}"
+                                           IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                           ReturnType="Next"
+                                           SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_CurrentPassword}" />
+                                    <Button Grid.Column="1"
+                                            Text="{Binding CurrentPasswordToggleText}"
+                                            Command="{Binding ToggleCurrentPasswordVisibilityCommand}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            sharedControls:CappedTextSize.IsCompactControl="True"
+                                            VerticalOptions="Center" />
+                                </Grid>
                             </Border>
                         </Grid>
 
@@ -349,13 +373,22 @@
                             <Label Grid.Row="0" Text="{loc:LocalizedText Auth_NewPassword}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry AutomationId="ProfileNewPassword"
-                                       Placeholder="{loc:LocalizedText Profile_PersonalInfo_CreateNewPassword}"
-                                       Text="{Binding NewPassword}"
-                                       IsPassword="True"
-                                       ReturnType="Next"
-                                       SemanticProperties.Description="{loc:LocalizedText Auth_NewPassword}"
-                                       SemanticProperties.Hint="{loc:LocalizedText Profile_PersonalInfo_UseAtLeastEightCharactersWith}" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                    <Entry AutomationId="ProfileNewPassword"
+                                           Placeholder="{loc:LocalizedText Profile_PersonalInfo_CreateNewPassword}"
+                                           Text="{Binding NewPassword}"
+                                           IsPassword="{Binding IsNewPasswordHidden}"
+                                           IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                           ReturnType="Next"
+                                           SemanticProperties.Description="{loc:LocalizedText Auth_NewPassword}"
+                                           SemanticProperties.Hint="{loc:LocalizedText Profile_PersonalInfo_UseAtLeastEightCharactersWith}" />
+                                    <Button Grid.Column="1"
+                                            Text="{Binding NewPasswordToggleText}"
+                                            Command="{Binding ToggleNewPasswordVisibilityCommand}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            sharedControls:CappedTextSize.IsCompactControl="True"
+                                            VerticalOptions="Center" />
+                                </Grid>
                             </Border>
                             <Label Grid.Row="2"
                                    Text="{loc:LocalizedText Profile_PersonalInfo_UseAtLeastEightCharactersWith}"
@@ -367,25 +400,44 @@
                             <Label Grid.Row="0" Text="{loc:LocalizedText Auth_ConfirmPassword}"
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
-                                <Entry AutomationId="ProfileConfirmPassword"
-                                       Placeholder="{loc:LocalizedText Profile_PersonalInfo_RepeatNewPassword}"
-                                       Text="{Binding ConfirmNewPassword}"
-                                       IsPassword="True"
-                                       ReturnType="Done"
-                                       ReturnCommand="{Binding ChangePasswordCommand}"
-                                       SemanticProperties.Description="{loc:LocalizedText Auth_ConfirmNewPassword}"
-                                       SemanticProperties.Hint="{loc:LocalizedText Profile_PersonalInfo_ReEnterYourNewPasswordThen}" />
+                                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                                    <Entry AutomationId="ProfileConfirmPassword"
+                                           Placeholder="{loc:LocalizedText Profile_PersonalInfo_RepeatNewPassword}"
+                                           Text="{Binding ConfirmNewPassword}"
+                                           IsPassword="{Binding IsConfirmPasswordHidden}"
+                                           IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
+                                           ReturnType="Done"
+                                           ReturnCommand="{Binding ChangePasswordCommand}"
+                                           SemanticProperties.Description="{loc:LocalizedText Auth_ConfirmNewPassword}"
+                                           SemanticProperties.Hint="{loc:LocalizedText Profile_PersonalInfo_ReEnterYourNewPasswordThen}" />
+                                    <Button Grid.Column="1"
+                                            Text="{Binding ConfirmPasswordToggleText}"
+                                            Command="{Binding ToggleConfirmPasswordVisibilityCommand}"
+                                            Style="{StaticResource ButtonSecondary}"
+                                            sharedControls:CappedTextSize.IsCompactControl="True"
+                                            VerticalOptions="Center" />
+                                </Grid>
                             </Border>
                         </Grid>
 
                         <Label Text="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource CaptionSmall}"
+                               Style="{StaticResource ErrorLabel}"
                                LineBreakMode="WordWrap"
                                IsVisible="{Binding PasswordStatusMessage, Converter={StaticResource StringToBoolConverter}}"
-                               SemanticProperties.Description="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}" />
+                               SemanticProperties.Description="{Binding PasswordStatusMessage, Converter={StaticResource LocalizedStringConverter}}">
+                            <Label.Behaviors>
+                                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                            </Label.Behaviors>
+                            <Label.Triggers>
+                                <DataTrigger TargetType="Label" Binding="{Binding IsPasswordStatusError}" Value="False">
+                                    <Setter Property="Style" Value="{StaticResource AccentLabel}" />
+                                </DataTrigger>
+                            </Label.Triggers>
+                        </Label>
 
                         <Button Text="{loc:LocalizedText Profile_PersonalInfo_ChangePassword}"
                                 Style="{StaticResource ButtonSecondary}"
+                                IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                                 Command="{Binding ChangePasswordCommand}"
                                 SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_ChangePassword}" />
                     </VerticalStackLayout>
@@ -393,16 +445,32 @@
             </VerticalStackLayout>
         </ScrollView>
 
-        <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+        <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill"
+                             BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
+            <ActivityIndicator Style="{StaticResource StateBusyInline}"
+                               IsRunning="{Binding IsBusy}"
+                               IsVisible="{Binding IsBusy}" />
             <Label Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
-                   Style="{StaticResource CaptionSmall}"
+                   Style="{StaticResource ErrorLabel}"
                    LineBreakMode="WordWrap"
                    IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}"
-                   SemanticProperties.Description="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}" />
+                   SemanticProperties.Description="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}">
+                <Label.Behaviors>
+                    <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                </Label.Behaviors>
+                <Label.Triggers>
+                    <DataTrigger TargetType="Label" Binding="{Binding IsStatusError}" Value="False">
+                        <Setter Property="Style" Value="{StaticResource AccentLabel}" />
+                    </DataTrigger>
+                </Label.Triggers>
+            </Label>
             <Button Style="{StaticResource ButtonPrimary}"
                     Text="{loc:LocalizedText Profile_PersonalInfo_SavePersonalInfo}"
+                    IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                     Command="{Binding SaveCommand}"
                     SemanticProperties.Description="{loc:LocalizedText Profile_PersonalInfo_SavePersonalInfo}" />
         </VerticalStackLayout>
+
+        <sharedControls:PageLoadingOverlay Grid.RowSpan="3" BackCommand="{Binding BackCommand}" />
     </Grid>
 </ContentPage>

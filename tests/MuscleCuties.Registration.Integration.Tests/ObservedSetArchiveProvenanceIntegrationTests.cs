@@ -32,8 +32,10 @@ public sealed class ObservedSetArchiveProvenanceIntegrationTests(ITestOutputHelp
         "recovery", "breathing", "pilates", "walk"
     ];
 
-    [PostgresFact]
-    public async Task ObservedSetsPersistProvenanceWhileAggregateRowsRemainUnobserved()
+    [PostgresTheory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task ObservedSetsPersistProvenanceWhileAggregateRowsRemainUnobserved(bool crossesMidnight)
     {
         var connectionString = RequireLocalTestConnectionString();
         var options = new DbContextOptionsBuilder<PostgresDbContext>().UseNpgsql(connectionString).Options;
@@ -108,40 +110,63 @@ public sealed class ObservedSetArchiveProvenanceIntegrationTests(ITestOutputHelp
             Reps = PlannedReps
         };
         database.WorkoutDayExercises.AddRange(observedDayExercise, legacyDayExercise);
+        Guid? plannedSessionId = crossesMidnight ? Guid.CreateVersion7() : null;
+        if (plannedSessionId is { } id)
+        {
+            database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+            {
+                Id = id,
+                UserId = userId,
+                PlannedWorkoutDayId = dayId,
+                PlannedLocalDate = today,
+                WorkoutName = "Synthetic observed archive",
+                StartedAt = nowUtc,
+                CreatedAt = nowUtc,
+                UpdatedAt = nowUtc
+            });
+        }
         await database.SaveChangesAsync();
 
         try
         {
             var store = new PostgresWorkoutPlanAndSessionStore(database);
-            await store.LogAsync(
-                userId,
-                new LogWorkoutSessionRequest(
-                    PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId),
-                    today,
-                    [
-                        new WorkoutExerciseLogDto(
-                            PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(observedDayExercise.Id),
-                            observedExercise.Id,
-                            PlannedSets,
-                            PlannedReps,
-                            60f)
-                        {
-                            ObservedSets =
-                            [
-                                new ObservedSetRecord(1, 12, 60m, 2, true),
-                                new ObservedSetRecord(2, 11, 60m, 1, true),
-                                new ObservedSetRecord(3, 10, 60m, 0, false)
-                            ]
-                        },
-                        // Aggregate-only client: no per-set rows, so this must never become evidence.
-                        new WorkoutExerciseLogDto(
-                            PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(legacyDayExercise.Id),
-                            legacyExercise.Id,
-                            PlannedSets,
-                            PlannedReps,
-                            40f)
-                    ]),
-                CancellationToken.None);
+            var stableDayId = PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId);
+            var observed = new WorkoutExerciseLogDto(
+                PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(observedDayExercise.Id),
+                observedExercise.Id,
+                PlannedSets,
+                PlannedReps,
+                60f)
+            {
+                ObservedSets =
+                [
+                    new ObservedSetRecord(1, 12, 60m, 2, true),
+                    new ObservedSetRecord(2, 11, 60m, 1, true),
+                    new ObservedSetRecord(3, 10, 60m, 0, false)
+                ]
+            };
+            await store.LogAsync(userId, new LogWorkoutSessionRequest(stableDayId, today, [observed], plannedSessionId));
+            var existingObservedIds = await database.ExerciseSetLogs.AsNoTracking()
+                .Where(row => row.UserId == userId && row.IsObserved)
+                .OrderBy(row => row.SetNumber)
+                .Select(row => row.Id)
+                .ToArrayAsync();
+            Assert.Equal(PlannedSets, existingObservedIds.Length);
+
+            // The app submits one exercise at a time. An aggregate-only log must leave earlier observations intact.
+            var legacy = new WorkoutExerciseLogDto(
+                PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(legacyDayExercise.Id),
+                legacyExercise.Id,
+                PlannedSets,
+                PlannedReps,
+                40f);
+            var secondLogDate = crossesMidnight ? today.AddDays(1) : today;
+            await store.LogAsync(userId, new LogWorkoutSessionRequest(stableDayId, secondLogDate, [legacy], plannedSessionId));
+            var workoutLogs = await database.WorkoutLogs.AsNoTracking()
+                .Where(row => row.UserId == userId)
+                .ToListAsync();
+            Assert.Equal(today, Assert.Single(workoutLogs).Date);
+            Assert.Equal(100, workoutLogs[0].CompletionPercent);
 
             var archivedSets = await database.ExerciseSetLogs.AsNoTracking()
                 .Where(row => row.UserId == userId)
@@ -172,6 +197,7 @@ public sealed class ObservedSetArchiveProvenanceIntegrationTests(ITestOutputHelp
 
             Assert.Equal(PlannedSets, observedRows.Count);
             Assert.All(observedRows, row => Assert.True(row.IsObserved));
+            Assert.Equal(existingObservedIds, observedRows.Select(row => row.Id));
             Assert.Equal([1, 2, 3], observedRows.Select(row => row.SetNumber));
             Assert.Equal([12, 11, 10], observedRows.Select(row => row.RepsCompleted));
             Assert.Equal([2, 1, 0], observedRows.Select(row => row.RirActual));

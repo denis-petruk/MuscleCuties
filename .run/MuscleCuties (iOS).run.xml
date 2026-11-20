@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="MuscleCuties (iOS)" type="XamarinIOSProject" factoryName="Xamarin.iOS">
+    <option name="PROJECT_PATH" value="$PROJECT_DIR$/src/MuscleCuties.UI/MuscleCuties.UI.csproj" />
+    <option name="PROGRAM_PARAMETERS" value="" />
+    <option name="IS_PASS_PARENT_ENVS" value="false" />
+    <option name="EXTRA_MLAUNCH_PARAMETERS" value="" />
+    <option name="PLATFORM_TYPE" value="IOS" />
+    <method v="2">
+      <option name="Build" />
+    </method>
+  </configuration>
+</component>

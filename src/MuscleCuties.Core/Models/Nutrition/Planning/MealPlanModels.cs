@@ -24,31 +24,3 @@ public sealed record MealCalorieAllocation(
     float Calories,
     float Share,
     MacroNutrients Macros);
-
-public sealed record FallbackMealItem(
-    string Name,
-    string Description,
-    MealType MealType,
-    MacroNutrients Macros,
-    IReadOnlyList<string> IngredientNames)
-{
-    public float Calories => Macros.Calories;
-}
-
-public sealed record MealPlan(
-    CalorieBudget Budget,
-    IReadOnlyList<MealPlanEntry> Entries)
-{
-    public MacroNutrients TotalMacros
-        => MacroNutrients.Sum(Entries.Select(e => e.Meal.Macros));
-
-    public IReadOnlyList<MealPlanEntry> MainMeals
-        => Entries.Where(e => e.Meal.MealType is not MealType.Snack).ToList();
-
-    public IReadOnlyList<MealPlanEntry> Snacks
-        => Entries.Where(e => e.Meal.MealType is MealType.Snack).ToList();
-}
-
-public sealed record MealPlanEntry(
-    FallbackMealItem Meal,
-    MealCalorieAllocation Target);

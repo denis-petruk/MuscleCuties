@@ -36,7 +36,7 @@
             </CollectionView.ItemsLayout>
 
             <CollectionView.Header>
-                <VerticalStackLayout Padding="{DynamicResource PresentationCollectionHeaderPadding}" Spacing="{StaticResource UiSpaceContent}">
+                <VerticalStackLayout Padding="{StaticResource UiInsets0_8_0_12}" Spacing="{StaticResource UiSpaceControl}">
 
                     <toolkit:LazyView
                         x:Name="PhaseFocusLazy"
@@ -44,7 +44,7 @@
                     <toolkit:LazyView
                         x:Name="BalanceCardLazy"
                         x:TypeArguments="nutritionControls:NutritionBalanceCard" />
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}"
+                    <sharedControls:AdaptiveRow Columns="2" ColumnSpacing="{StaticResource UiSpaceTight}"
                           Margin="{StaticResource UiInsets0_4}">
                         <Button Style="{StaticResource ButtonPrimary}"
                                 Text="{loc:LocalizedText Nutrition_Page_AddMeal}"
@@ -52,20 +52,23 @@
                                 LineBreakMode="WordWrap"
                                 SemanticProperties.Description="{loc:LocalizedText Nutrition_Page_AddMeal}"
                                 SemanticProperties.Hint="{loc:LocalizedText Nutrition_Page_OpensMealLogger}" />
-                        <Button Grid.Column="1"
-                                Style="{StaticResource ButtonSecondary}"
+                        <Button Style="{StaticResource ButtonSecondary}"
                                 Text="{loc:LocalizedText Nutrition_PlanMyDay}"
                                 Command="{Binding StartDayPlanCommand}"
                                 LineBreakMode="WordWrap"
                                 SemanticProperties.Description="{loc:LocalizedText Nutrition_PlanMyDay}"
                                 SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_BuildsAFullDayMealPlan}" />
-                    </Grid>
+                    </sharedControls:AdaptiveRow>
 
                     <Label
                         Text="{Binding PageStatusMessage}"
                         IsVisible="{Binding IsPageStatusVisible}"
                         Style="{StaticResource BodyLabel}"
-                        LineBreakMode="WordWrap" />
+                        LineBreakMode="WordWrap">
+                        <Label.Behaviors>
+                            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
 
                     <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceTight}"
                           Margin="{StaticResource UiInsets4_6_4_0}">
@@ -128,7 +131,7 @@
             </CollectionView.ItemTemplate>
 
             <CollectionView.Footer>
-                <BoxView HeightRequest="{StaticResource UiDimension32}" BackgroundColor="{StaticResource Transparent}" />
+                <BoxView HeightRequest="{StaticResource UiDimension96}" BackgroundColor="{StaticResource Transparent}" />
             </CollectionView.Footer>
         </CollectionView>
 

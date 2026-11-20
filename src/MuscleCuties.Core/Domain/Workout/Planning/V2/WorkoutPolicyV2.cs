@@ -59,6 +59,7 @@ public static class WorkoutPolicyV2
     public const int HighRollingStrengthDayCount = 4;
     public const int MaximumWorkingSetsPerExercise = 5;
     public const int MinimumRoutineWorkingSetsPerExercise = 2;
+    public const int TargetDirectGluteDays = 2;
     public const int MeaningfulExposureMinimumDirectSets = 2;
     public const int GeneralWarmupMinimumMinutes = 5;
     public const int GeneralWarmupMaximumMinutes = 8;

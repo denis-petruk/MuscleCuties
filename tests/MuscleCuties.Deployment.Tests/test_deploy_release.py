@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import subprocess
 import tempfile
+import re
 import unittest
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -170,6 +171,64 @@ class DeployTests(unittest.TestCase):
         self.assertEqual(report['status'], 'blocked')
         self.assertEqual(report['failure_code'], 'missing_server_alias')
         self.assertFalse(report['mutation_attempted'])
+
+
+    def test_unconfigured_worker_is_skipped_not_fatal(self):
+        # Only one Lambda exists today. An unset worker must be recorded as skipped and must not
+        # block a release of the function that does exist, nor leave a half-deployed state.
+        for key in ['WORKER_FUNCTION', 'WORKER_ALIAS', 'WORKER_ZIP', 'WORKER_MANIFEST', 'WORKER_OBJECT']:
+            self.env.pop(key, None)
+        result = self.run_deploy()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        report = self.report()
+        self.assertEqual(report['status'], 'verified')
+        self.assertEqual(report['components']['server']['post_code_sha256'], self.server['b64'])
+        self.assertEqual(report['components']['worker']['status'], 'skipped')
+        self.assertEqual(report['components']['worker']['reason'], 'WORKER_FUNCTION is not configured')
+
+
+class WorkflowContractTests(unittest.TestCase):
+    """The workflow YAML and the deployer must agree; they are one system."""
+
+    WORKFLOW = ROOT / '.github' / 'workflows' / 'backend-release.yml'
+    SCRIPT = ROOT / 'tools' / 'deployment' / 'deploy_release.py'
+
+    def setUp(self):
+        self.workflow = self.WORKFLOW.read_text()
+        self.script = self.SCRIPT.read_text()
+
+    def test_artifact_component_matches_the_key_prefix_the_deployer_requires(self):
+        # validate_component expects lambda/<spec name>/<sha>/<digest>/, so the upload step has to
+        # file the object under exactly that name. It once filed under MuscleCuties.Server, which
+        # failed the release after the upload had already succeeded.
+        for name in ('Server', 'WorkoutReconciliation'):
+            self.assertIn('component("%s"' % name, self.script)
+            self.assertIn('ARTIFACT_COMPONENT: %s\n' % name, self.workflow)
+            self.assertNotIn('ARTIFACT_COMPONENT: MuscleCuties.%s' % name, self.workflow)
+
+    def test_deploy_step_supplies_every_required_variable(self):
+        required = ['TARGET_ENV', 'AWS_REGION', 'SERVER_FUNCTION', 'SERVER_ALIAS',
+                    'SERVER_ZIP', 'SERVER_MANIFEST', 'SERVER_OBJECT', 'REPORT_PATH', 'HEALTH_URL']
+        for name in required:
+            self.assertIn('\n          ' + name + ':', self.workflow,
+                          name + ' is read by the deployer but never supplied by the workflow')
+
+    def test_artifact_paths_named_by_the_deployer_are_produced_upstream(self):
+        # Every file the deploy step names must actually be written by the packaging job or by the
+        # upload step; a rename in either place would otherwise only surface during a real release.
+        build = (ROOT / '.github' / 'workflows' / 'backend-build.yml').read_text()
+        produced = build + self.workflow
+        for name in ('SERVER_ZIP', 'SERVER_MANIFEST', 'SERVER_OBJECT',
+                     'WORKER_ZIP', 'WORKER_MANIFEST', 'WORKER_OBJECT'):
+            match = re.search(r'\n          ' + name + r': (\S+)', self.workflow)
+            self.assertIsNotNone(match, name + ' is never supplied')
+            base = match.group(1).rsplit('/', 1)[-1]
+            self.assertIn(base, produced, base + ' is named but never produced')
+
+    def test_oidc_jobs_request_id_token(self):
+        for job in ('upload_artifacts', 'deploy_beta', 'rollback_beta'):
+            start = self.workflow.index(job + ':')
+            self.assertIn('id-token: write', self.workflow[start:start + 900], job)
 
 
 if __name__ == '__main__':

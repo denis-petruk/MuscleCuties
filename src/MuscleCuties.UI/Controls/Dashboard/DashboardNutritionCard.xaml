@@ -6,19 +6,21 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:dashboard="clr-namespace:MuscleCuties.UI.Controls.Dashboard"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="vm:DashboardViewModel">
-    <Border Style="{StaticResource CardPrimary}" SemanticProperties.Description="{loc:LocalizedText Dashboard_Nutrition_ProgressA11y}">
-        <Border.GestureRecognizers>
-            <TapGestureRecognizer Command="{Binding OpenNutritionCommand}" />
-        </Border.GestureRecognizers>
-        <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
-            <Grid ColumnDefinitions="*,Auto">
-                <Label Text="{loc:LocalizedText Dashboard_Nutrition_Title}" Style="{StaticResource SectionTitle}" />
-                <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_Nutrition_ViewAll}" TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
-                       Style="{StaticResource MutedLabel}" VerticalOptions="Center" />
-            </Grid>
-            <Grid ColumnDefinitions="76,*" ColumnSpacing="{StaticResource UiSpaceControl}">
+    <Border Style="{StaticResource CardPrimary}">
+        <Grid>
+        <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" InputTransparent="True"
+                             AutomationProperties.IsInAccessibleTree="False">
+            <FlexLayout Direction="Row" Wrap="Wrap" AlignItems="Center" JustifyContent="SpaceBetween">
+                <Label Text="{loc:LocalizedText Dashboard_Nutrition_Title}" Style="{StaticResource SectionTitle}"
+                       LineBreakMode="WordWrap" FlexLayout.Grow="1" />
+                <Label Text="{loc:LocalizedText Dashboard_Nutrition_ViewAll}" TextColor="{AppThemeBinding Light={StaticResource PrimaryDark}, Dark={StaticResource SecondaryDarkText}}"
+                       Style="{StaticResource MutedLabel}" VerticalOptions="Center"
+                       LineBreakMode="WordWrap" Margin="{StaticResource UiInsets8_0_0_0}" />
+            </FlexLayout>
+            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceControl}">
                 <Grid WidthRequest="{StaticResource UiDimension76}" HeightRequest="{StaticResource UiDimension76}">
                     <dashboard:DashboardProgressRing Progress="{Binding CaloriesProgress}"
                                                      RingColor="{StaticResource Primary}"
@@ -40,7 +42,7 @@
                            Style="{StaticResource MutedLabel}" />
                 </VerticalStackLayout>
             </Grid>
-            <Grid ColumnDefinitions="*,*,*" ColumnSpacing="{StaticResource UiSpacing6}">
+            <sharedControls:AdaptiveRow Columns="3" ColumnSpacing="{StaticResource UiSpacing6}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
                     <Grid WidthRequest="{StaticResource UiDimension60}" HeightRequest="{StaticResource UiDimension60}" HorizontalOptions="Center">
                         <dashboard:DashboardProgressRing Progress="{Binding ProteinProgress}"
@@ -97,7 +99,10 @@
                            Style="{StaticResource CaptionTinyCentered}"
                            LineBreakMode="WordWrap" />
                 </VerticalStackLayout>
-            </Grid>
+            </sharedControls:AdaptiveRow>
         </VerticalStackLayout>
+        <sharedControls:CardTapTarget Command="{Binding OpenNutritionCommand}"
+                                      SemanticProperties.Description="{Binding NutritionCardAccessibilityText}" />
+        </Grid>
     </Border>
 </ContentView>

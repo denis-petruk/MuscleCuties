@@ -11,6 +11,8 @@
     x:DataType="local:ProfilePrivacyPage"
     x:Name="PrivacyRoot"
     Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
+    SafeAreaEdges="All"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid RowDefinitions="Auto,*">
@@ -22,7 +24,7 @@
         </Grid>
 
         <ScrollView Grid.Row="1">
-            <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceControl}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
+            <VerticalStackLayout Padding="{DynamicResource PresentationPageContentPadding}" Spacing="{StaticResource UiSpaceControl}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
                 <Border Style="{StaticResource CardPrimary}">
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_Privacy_DataTitle}"
@@ -67,12 +69,25 @@
                     </VerticalStackLayout>
                 </Border>
 
-                <Border Style="{StaticResource CardPrimary}" x:DataType="profile:ProfileHealthSyncViewModel" IsVisible="{Binding HealthSync.IsAvailable, Source={x:Reference PrivacyRoot}}">
-                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" BindingContext="{Binding HealthSync, Source={x:Reference PrivacyRoot}}">
+                <Border Style="{StaticResource CardPrimary}" IsVisible="{Binding HealthSync.IsAvailable}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}"
+                                         BindingContext="{Binding HealthSync}"
+                                         x:DataType="profile:ProfileHealthSyncViewModel">
                         <sharedControls:IconSectionHeader Text="{loc:LocalizedText Profile_HealthSync_Title}"
                                                           IconGlyph="HeartCircle24" />
-                        <Label Text="{Binding StatusText}" Style="{StaticResource BodyLabel}" />
-                        <Label Text="{Binding ErrorText}" IsVisible="{Binding HasError}" Style="{StaticResource ErrorLabel}" />
+                        <ActivityIndicator Style="{StaticResource StateBusyInline}"
+                                           IsRunning="{Binding IsBusy}"
+                                           IsVisible="{Binding IsBusy}" />
+                        <Label Text="{Binding StatusText}" Style="{StaticResource BodyLabel}" LineBreakMode="WordWrap">
+                            <Label.Behaviors>
+                                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                            </Label.Behaviors>
+                        </Label>
+                        <Label Text="{Binding ErrorText}" IsVisible="{Binding HasError}" Style="{StaticResource ErrorLabel}" LineBreakMode="WordWrap">
+                            <Label.Behaviors>
+                                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                            </Label.Behaviors>
+                        </Label>
                         <Button Text="{loc:LocalizedText Profile_HealthSync_Connect}" Style="{StaticResource ButtonPrimary}"
                                 Command="{Binding ConnectCommand}" IsVisible="{Binding IsConnected, Converter={StaticResource InvertedBoolConverter}}" HorizontalOptions="Fill" />
                         <Button Text="{loc:LocalizedText Profile_HealthSync_Refresh}" Style="{StaticResource ButtonSecondary}"

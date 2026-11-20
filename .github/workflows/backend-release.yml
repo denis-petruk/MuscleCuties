@@ -60,7 +60,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::028417007003:role/MuscleCuties-GitHubActions-ArtifactUpload
+          role-to-assume: ${{ secrets.AWS_ARTIFACT_UPLOAD_ROLE_ARN }}
           aws-region: us-east-2
           role-session-name: github-actions-artifact-upload-${{ github.run_id }}
 
@@ -68,7 +68,9 @@ jobs:
         env:
           AWS_RELEASE_BUCKET: musclecuties-release-artifacts-028417007003
           AWS_REGION: us-east-2
-          ARTIFACT_COMPONENT: MuscleCuties.Server
+          ARTIFACT_COMPONENT: Server
+          # Must equal the component name deploy_release.py expects in the S3 key
+          # prefix lambda/<component>/<source_sha>/<zip_sha256>/.
         run: |
           bash tools/deployment/upload-artifact.sh \
             artifacts/MuscleCuties.Server.zip \
@@ -79,7 +81,7 @@ jobs:
         env:
           AWS_RELEASE_BUCKET: musclecuties-release-artifacts-028417007003
           AWS_REGION: us-east-2
-          ARTIFACT_COMPONENT: MuscleCuties.WorkoutReconciliation
+          ARTIFACT_COMPONENT: WorkoutReconciliation
         run: |
           bash tools/deployment/upload-artifact.sh \
             artifacts/MuscleCuties.WorkoutReconciliation.zip \
@@ -122,13 +124,15 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::028417007003:role/MuscleCuties-GitHubActions-BetaDeploy
+          role-to-assume: ${{ secrets.AWS_BETA_DEPLOY_ROLE_ARN }}
           aws-region: us-east-2
           role-session-name: github-actions-beta-deploy-${{ github.run_id }}
 
       # Required repository/environment variables:
-      #   BETA_SERVER_FUNCTION, BETA_WORKER_FUNCTION
-      #   BETA_SERVER_ALIAS, BETA_WORKER_ALIAS (aliases are required so rollback has a target)
+      #   BETA_SERVER_FUNCTION, BETA_SERVER_ALIAS (an alias is required so rollback has a target)
+      # Optional, and only when a reconciliation worker actually exists:
+      #   BETA_WORKER_FUNCTION, BETA_WORKER_ALIAS. When BETA_WORKER_FUNCTION is unset the worker
+      #   is reported as skipped instead of failing the release.
       #   BETA_API_ENDPOINT (required; /health/live and /health/ready must return 200)
       #   AWS_ACCOUNT_ID (optional; when set, STS identity must match)
       # The report is written only after each serving CodeSha256 matches the candidate digests.
@@ -141,7 +145,7 @@ jobs:
             exit 1
           fi
 
-      - name: Deploy and verify both Lambda functions
+      - name: Deploy and verify the configured Lambda functions
         env:
           TARGET_ENV: beta
           AWS_REGION: us-east-2
@@ -203,7 +207,7 @@ jobs:
       - name: Configure AWS Credentials (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::028417007003:role/MuscleCuties-GitHubActions-BetaDeploy
+          role-to-assume: ${{ secrets.AWS_BETA_DEPLOY_ROLE_ARN }}
           aws-region: us-east-2
           role-session-name: github-actions-beta-rollback-${{ github.run_id }}
 

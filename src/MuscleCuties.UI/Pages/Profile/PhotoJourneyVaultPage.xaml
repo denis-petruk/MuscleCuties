@@ -6,18 +6,24 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:profileControls="clr-namespace:MuscleCuties.UI.Controls.Profile"
     xmlns:profileModels="clr-namespace:MuscleCuties.UI.Models.UI.Profile"
     xmlns:photoPage="clr-namespace:MuscleCuties.UI.Pages.Profile"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Profile"
     x:DataType="vm:PhotoJourneyVaultViewModel"
     Shell.NavBarIsVisible="False"
+    Shell.TabBarIsVisible="False"
+    SafeAreaEdges="All"
     BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
 
     <Grid RowDefinitions="Auto,*"
           BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
         <!-- Header -->
-        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}" VerticalOptions="Center">
+        <Grid Grid.Row="0" Padding="{DynamicResource PresentationPageHeaderPadding}"
+              MaximumWidthRequest="{StaticResource PageContentMaxWidth}"
+              HorizontalOptions="Fill"
+              VerticalOptions="Center">
             <sharedControls:PageHeader
                 Title="{loc:LocalizedText Profile_PhotoJourney_Title}"
                 Subtitle="{loc:LocalizedText Profile_PhotoJourney_PrivateStoredOnThisDevice}"
@@ -38,35 +44,47 @@
             ItemsSource="{Binding Photos}"
             ItemSizingStrategy="MeasureFirstItem"
             SelectionMode="None"
-            Margin="{DynamicResource PresentationPageContentPadding}"
-            MaximumWidthRequest="{StaticResource UiDimension640}">
+            Margin="{DynamicResource PresentationCollectionHorizontalInset}"
+            MaximumWidthRequest="{StaticResource PageContentMaxWidth}">
             <CollectionView.ItemsLayout>
                 <LinearItemsLayout Orientation="Vertical" ItemSpacing="{StaticResource UiSpaceControl}" />
             </CollectionView.ItemsLayout>
             <CollectionView.Header>
                 <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}" Margin="{StaticResource UiInsets0}">
-                    <!-- Air-Gap Privacy Card -->
-                    <Border Style="{StaticResource CardPrimary}">
-                        <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
-                            <mi:MauiIcon
-                                Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension24}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                WidthRequest="{StaticResource UiDimension24}"
-                                HeightRequest="{StaticResource UiDimension24}"
-                                VerticalOptions="Center" />
-                            <Grid Grid.Column="1" RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing2}">
-                                <Label Text="{loc:LocalizedText Profile_PhotoJourney_PrivacyFirstPhotoVault}"
-                                       Style="{StaticResource BodyStrong}" />
-                                <Label Grid.Row="1" Text="{loc:LocalizedText Profile_PhotoJourney_YourPhotosAreStoredLocallyAnd}"
-                                       Style="{StaticResource CaptionSmall}"
-                                       LineBreakMode="WordWrap" />
-                            </Grid>
-                        </Grid>
+                    <!-- Action Button -->
+                    <Button x:Name="AddPhotoButton"
+                            Style="{StaticResource ButtonPrimary}"
+                            Text="{loc:LocalizedText Profile_PhotoJourney_PlusAddProgressPhoto}"
+                            Clicked="OnAddPhotoClicked" />
+
+                    <!-- Comparison selection banner -->
+                    <Border Style="{StaticResource CardSecondary}"
+                            IsVisible="{Binding HasPendingComparisonSelection}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+                            <Label Text="{Binding ComparisonSelectionBannerText}"
+                                   Style="{StaticResource BodyLabel}"
+                                   LineBreakMode="WordWrap" />
+                            <Button Text="{loc:LocalizedText Profile_PhotoVault_CancelCompare}"
+                                    Command="{Binding CloseComparisonCommand}"
+                                    Style="{StaticResource ButtonSecondary}"
+                                    HorizontalOptions="Start" />
+                        </VerticalStackLayout>
                     </Border>
 
-                    <!-- Action Button -->
-                    <Button Style="{StaticResource ButtonSecondary}"
-                        Text="{loc:LocalizedText Profile_PhotoJourney_PlusAddProgressPhoto}"
-                        Clicked="OnAddPhotoClicked" />
+                    <!-- Status feedback -->
+                    <Label Text="{Binding StatusMessage}"
+                           IsVisible="{Binding HasStatusMessage}"
+                           Style="{StaticResource ErrorLabel}"
+                           LineBreakMode="WordWrap">
+                        <Label.Behaviors>
+                            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                        <Label.Triggers>
+                            <DataTrigger TargetType="Label" Binding="{Binding IsStatusError}" Value="False">
+                                <Setter Property="Style" Value="{StaticResource AccentLabel}" />
+                            </DataTrigger>
+                        </Label.Triggers>
+                    </Label>
 
                     <!-- Empty state sits with the action. MAUI centres CollectionView.EmptyView in
                          the remaining viewport, which opened a large gap below the button. -->
@@ -100,10 +118,8 @@
                 <DataTemplate x:DataType="profileModels:PhotoVaultItem">
                     <Border Style="{StaticResource CardPrimary}">
                         <Grid RowDefinitions="Auto,Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing10}">
-                            <!-- Photo header / meta: the localized date and weight badge stack in the
-                                 growing column so large text and Russian copy wrap instead of being
-                                 squeezed by the Delete action. -->
-                            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
+                            <!-- Photo header / meta: AdaptiveRow stacks cleanly at accessibility sizes. -->
+                            <sharedControls:AdaptiveRow Columns="2" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
                                 <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" VerticalOptions="Center">
                                     <Label
                                         Text="{Binding DateFormatted}"
@@ -123,28 +139,20 @@
                                 </VerticalStackLayout>
 
                                 <Button
-                                    Grid.Column="1"
                                     VerticalOptions="Start"
+                                    HorizontalOptions="End"
                                     Text="{loc:LocalizedText Common_Delete}"
                                     Command="{Binding DeletePhotoCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
                                     CommandParameter="{Binding .}"
                                     Style="{StaticResource ButtonSecondary}"
-                                    SemanticProperties.Description="{loc:LocalizedText Common_Delete}" />
-                            </Grid>
+                                    SemanticProperties.Description="{Binding DeleteAccessibilityDescription}" />
+                            </sharedControls:AdaptiveRow>
 
                             <!-- Photo Image with Tap-to-Reveal Blur -->
                             <Border
                                 Grid.Row="1"
                                 Style="{StaticResource CardSecondary}"
-                                HeightRequest="{StaticResource UiDimension240}"
-                                SemanticProperties.Description="{Binding AccessibilityDescription}"
-                                SemanticProperties.Hint="{loc:LocalizedText Profile_PhotoJourney_RevealOrHideHint}">
-                                <Border.GestureRecognizers>
-                                    <TapGestureRecognizer
-                                        Command="{Binding ToggleItemRevealCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
-                                        CommandParameter="{Binding .}" />
-                                </Border.GestureRecognizers>
-
+                                MinimumHeightRequest="{StaticResource UiDimension240}">
                                 <Grid IsClippedToBounds="True">
                                     <!-- Revealed Photo Image -->
                                     <Image
@@ -152,7 +160,8 @@
                                         Aspect="AspectFill"
                                         IsVisible="{Binding IsImageShown}"
                                         HeightRequest="{StaticResource UiDimension240}"
-                                        HorizontalOptions="Fill" />
+                                        HorizontalOptions="Fill"
+                                        InputTransparent="True" />
 
                                     <!-- Privacy cover: the rounded card surface is the only background so
                                          hidden photos never show a rectangular patch inside it. -->
@@ -161,7 +170,8 @@
                                         RowDefinitions="Auto,Auto,Auto"
                                         RowSpacing="{StaticResource UiSpacing6}"
                                         VerticalOptions="Center"
-                                        HorizontalOptions="Fill">
+                                        HorizontalOptions="Fill"
+                                        InputTransparent="True">
                                         <mi:MauiIcon
                                             Icon="{mi:Fluent ShieldLock24}" IconSize="{StaticResource UiDimension32}" IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
                                             WidthRequest="{StaticResource UiDimension32}"
@@ -170,18 +180,27 @@
                                         <Label
                                             Grid.Row="1"
                                             Text="{loc:LocalizedText Profile_PhotoJourney_PhotoHiddenForPrivacy}"
-                                            Style="{StaticResource SectionTitle}"
+                                            Style="{StaticResource BodyStrong}"
                                             IsVisible="{Binding IsImageAvailable}"
-                                            HorizontalTextAlignment="Center" />
+                                            HorizontalTextAlignment="Center"
+                                            LineBreakMode="WordWrap" />
                                         <Label Grid.Row="2"
                                                Text="{loc:LocalizedText Profile_PhotoJourney_TapToReveal}"
                                                Style="{StaticResource CaptionSmallCentered}"
-                                               IsVisible="{Binding IsImageAvailable}" />
+                                               IsVisible="{Binding IsImageAvailable}"
+                                               LineBreakMode="WordWrap" />
                                         <Label Grid.Row="{x:Static photoPage:PhotoJourneyVaultPage.PhotoUnavailableOverlayRow}"
                                                Text="{loc:LocalizedText Profile_PhotoJourney_PhotoUnavailable}"
                                                Style="{StaticResource CaptionCentered}"
-                                               IsVisible="{Binding IsImageAvailable, Converter={StaticResource InvertedBoolConverter}}" />
+                                               IsVisible="{Binding IsImageAvailable, Converter={StaticResource InvertedBoolConverter}}"
+                                               LineBreakMode="WordWrap" />
                                     </Grid>
+
+                                    <sharedControls:CardTapTarget
+                                        Command="{Binding ToggleItemRevealCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
+                                        CommandParameter="{Binding .}"
+                                        SemanticProperties.Description="{Binding AccessibilityDescription}"
+                                        SemanticProperties.Hint="{loc:LocalizedText Profile_PhotoJourney_RevealOrHideHint}" />
                                 </Grid>
                             </Border>
 
@@ -196,15 +215,17 @@
                                  truncated "Use as first/second photo" at narrow widths, large text and RU. -->
                             <VerticalStackLayout Grid.Row="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSelectionRow}"
                                                  Spacing="{StaticResource UiSpaceTight}"
-                                                 IsVisible="{Binding IsImageAvailable}">
+                                                 IsVisible="{Binding CanComparePhotos, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}">
                                 <Button Text="{loc:LocalizedText Profile_PhotoJourney_FirstPhoto}"
                                         Command="{Binding SelectFirstComparisonPhotoCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
                                         CommandParameter="{Binding .}"
+                                        IsVisible="{Binding IsImageAvailable}"
                                         LineBreakMode="WordWrap"
                                         Style="{StaticResource ButtonSecondary}" />
                                 <Button Text="{loc:LocalizedText Profile_PhotoJourney_SecondPhoto}"
                                         Command="{Binding SelectSecondComparisonPhotoCommand, Source={RelativeSource AncestorType={x:Type vm:PhotoJourneyVaultViewModel}}, x:DataType=vm:PhotoJourneyVaultViewModel}"
                                         CommandParameter="{Binding .}"
+                                        IsVisible="{Binding IsImageAvailable}"
                                         LineBreakMode="WordWrap"
                                         Style="{StaticResource ButtonSecondary}" />
                             </VerticalStackLayout>
@@ -212,66 +233,13 @@
                     </Border>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
+            <CollectionView.Footer>
+                <BoxView HeightRequest="{StaticResource UiDimension96}" BackgroundColor="{StaticResource Transparent}" />
+            </CollectionView.Footer>
         </CollectionView>
 
-        <Border Grid.Row="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonOverlayPageRow}"
-                IsVisible="{Binding IsComparisonOpen}"
-                Style="{StaticResource CardPrimary}"
-                Margin="{StaticResource UiInsets20}"
-                VerticalOptions="Center"
-                MaximumWidthRequest="{StaticResource UiDimension640}">
-            <!-- One scroll owner keeps Close reachable at large text on short screens. -->
-            <ScrollView>
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
-                    <Label Text="{loc:LocalizedText Profile_PhotoJourney_ComparePhotos}"
-                           Style="{StaticResource SectionTitle}"
-                           SemanticProperties.HeadingLevel="Level2" />
-                    <Label Text="{loc:LocalizedText Profile_PhotoJourney_ComparisonInstructions}"
-                           Style="{StaticResource CaptionLabel}"
-                           LineBreakMode="WordWrap" />
-                    <!-- Each half clips its own AspectFill image, so moving the divider crops rather
-                         than stretches, and neither photo can draw over the other at narrow widths. -->
-                    <Grid HeightRequest="{StaticResource UiDimension280}"
-                          ColumnSpacing="{StaticResource UiSpacing2}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition x:Name="ComparisonFirstColumn" Width="*" />
-                            <ColumnDefinition x:Name="ComparisonSecondColumn" Width="*" />
-                        </Grid.ColumnDefinitions>
-                        <Grid IsClippedToBounds="True">
-                            <Image Source="{Binding ComparisonFirstImagePath}"
-                                   Aspect="AspectFill"
-                                   SemanticProperties.Description="{loc:LocalizedText Profile_PhotoJourney_FirstComparisonLabel}" />
-                        </Grid>
-                        <Grid Grid.Column="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSecondColumnIndex}"
-                              IsClippedToBounds="True">
-                            <Image Source="{Binding ComparisonSecondImagePath}"
-                                   Aspect="AspectFill"
-                                   SemanticProperties.Description="{loc:LocalizedText Profile_PhotoJourney_SecondComparisonLabel}" />
-                        </Grid>
-                    </Grid>
-                    <!-- Captions stay pinned to the outer edges rather than following the divider,
-                         so they never truncate when one half is narrow. -->
-                    <Grid ColumnDefinitions="*,*" ColumnSpacing="{StaticResource UiSpaceTight}">
-                        <Label Text="{loc:LocalizedText Profile_PhotoJourney_FirstComparisonLabel}"
-                               Style="{StaticResource CaptionLabel}"
-                               LineBreakMode="WordWrap" />
-                        <Label Grid.Column="{x:Static photoPage:PhotoJourneyVaultPage.ComparisonSecondColumnIndex}"
-                               Text="{loc:LocalizedText Profile_PhotoJourney_SecondComparisonLabel}"
-                               Style="{StaticResource CaptionLabel}"
-                               HorizontalTextAlignment="End"
-                               LineBreakMode="WordWrap" />
-                    </Grid>
-                    <Slider x:Name="ComparisonSlider"
-                            ValueChanged="OnComparisonSliderChanged"
-                            SemanticProperties.Description="{loc:LocalizedText Profile_PhotoJourney_ComparisonSliderDescription}" />
-                    <Button Text="{loc:LocalizedText Profile_PhotoJourney_CloseComparison}"
-                            Command="{Binding CloseComparisonCommand}"
-                            LineBreakMode="WordWrap"
-                            Style="{StaticResource ButtonSecondary}" />
-                </VerticalStackLayout>
-            </ScrollView>
-        </Border>
+        <profileControls:PhotoComparisonModal Grid.RowSpan="2" />
 
-        <sharedControls:PageLoadingOverlay Grid.RowSpan="2" />
+        <sharedControls:PageLoadingOverlay Grid.RowSpan="2" BackCommand="{Binding NavigateBackCommand}" />
     </Grid>
 </ContentPage>

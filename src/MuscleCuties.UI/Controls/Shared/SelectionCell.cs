@@ -1,3 +1,7 @@
+#if IOS
+using UIKit;
+#endif
+
 namespace MuscleCuties.UI.Controls.Shared;
 
 /// <summary>
@@ -11,11 +15,40 @@ public sealed class SelectionCell : Border
         nameof(IsSelected),
         typeof(bool),
         typeof(SelectionCell),
-        false);
+        false,
+        propertyChanged: static (bindable, _, _) =>
+            ((SelectionCell)bindable).ApplyAccessibilityTraits());
 
     public bool IsSelected
     {
         get => (bool)GetValue(IsSelectedProperty);
         set => SetValue(IsSelectedProperty, value);
+    }
+
+    protected override void OnHandlerChanged()
+    {
+        base.OnHandlerChanged();
+        ApplyAccessibilityTraits();
+    }
+
+    /// <summary>
+    ///     A selection cell is a real button on iOS, with the selected trait carrying the current
+    ///     choice independently of the visual checkmark. SemanticProperties supplies the localized
+    ///     label and hint; the native trait supplies the button role and selected state VoiceOver
+    ///     announces.
+    /// </summary>
+    private void ApplyAccessibilityTraits()
+    {
+#if IOS
+        if (Handler?.PlatformView is not UIView nativeView)
+            return;
+
+        nativeView.IsAccessibilityElement = true;
+        var traits = nativeView.AccessibilityTraits | UIAccessibilityTrait.Button;
+        traits = IsSelected
+            ? traits | UIAccessibilityTrait.Selected
+            : traits & ~UIAccessibilityTrait.Selected;
+        nativeView.AccessibilityTraits = traits;
+#endif
     }
 }

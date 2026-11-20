@@ -28,7 +28,6 @@
             <Border
                 Grid.Row="0"
                 Grid.Column="1"
-                Grid.RowSpan="3"
                 WidthRequest="{StaticResource UiDimension36}"
                 HeightRequest="{StaticResource UiDimension36}"
                 StrokeShape="{StaticResource UiRoundRectangleRadius18}"
@@ -49,12 +48,14 @@
             <Label
                 Grid.Row="1"
                 Grid.Column="0"
+                Grid.ColumnSpan="2"
                 Text="{Binding PhaseFocusTitle, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource SectionTitle}"
                 LineBreakMode="WordWrap" />
             <Label
                 Grid.Row="2"
                 Grid.Column="0"
+                Grid.ColumnSpan="2"
                 Text="{Binding PhaseFocusCopy, Converter={StaticResource LocalizedStringConverter}}"
                 Style="{StaticResource MutedLabel}"
                 LineBreakMode="WordWrap" />

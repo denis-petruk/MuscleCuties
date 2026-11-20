@@ -18,11 +18,18 @@
     <ProjectReference Include="../../src/MuscleCuties.Contracts/MuscleCuties.Contracts.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj" />
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Quiz/QuizViewModel.cs" Link="Mobile/QuizViewModel.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/ViewModels/Dashboard/DailyCheckInViewModel.cs" Link="Mobile/DailyCheckInViewModel.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/ViewModels/Auth/LoginViewModel.cs" Link="Mobile/LoginViewModel.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Services/Auth/AccountLoginScheduler.cs" Link="Mobile/AccountLoginScheduler.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Services/Auth/PlatformAccountSignInAdapter.cs" Link="Mobile/PlatformAccountSignInAdapter.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Services/Profile/IPhotoCacheAccountLifecycle.cs" Link="Mobile/IPhotoCacheAccountLifecycle.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Services/Formatting/DisplayFormat.cs" Link="Mobile/DisplayFormat.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Models/UI/Quiz/SelectableQuizAnswer.cs" Link="Mobile/SelectableQuizAnswer.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/AppPageLoadGate.cs" Link="Mobile/AppPageLoadGate.cs" />
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Common/IPageLoadAware.cs" Link="Mobile/IPageLoadAware.cs" />
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Workout/InjuryLogViewModel.cs" Link="Mobile/InjuryLogViewModel.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryLogItem.cs" Link="Mobile/InjuryLogItem.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/WorkoutActivityIcons.cs" Link="Mobile/WorkoutActivityIcons.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryFlagOption.cs" Link="Mobile/InjuryFlagOption.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryStatusOption.cs" Link="Mobile/InjuryStatusOption.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Models/UI/Workout/InjuryAdviceOption.cs" Link="Mobile/InjuryAdviceOption.cs" />

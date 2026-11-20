@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
@@ -38,7 +39,8 @@ internal static class StrengthPlanGenerationDisplayMapper
             Day = FullWeekdayLabel(session.Weekday),
             Activity = ActivityLabel(session.ActivityTypeId),
             Duration = duration,
-            PhaseDetail = PhaseDetailText(session.OccurrencePrescription)
+            PhaseDetail = PhaseDetailText(session.OccurrencePrescription),
+            IconGlyph = WorkoutActivityIcons.ForActivity(session.ActivityTypeId)
         };
     }
 
@@ -262,6 +264,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         "WeeklyCoverageMissing_UpperPull_BandAnchorRequired" => "Workout_Generation_MissingUpperPullBandAnchor",
         "WeeklyCoverageMissing_DirectCalves" => "Workout_Generation_MissingDirectCalves",
         "WeeklyCoverageMissing_DirectRearDelts" => "Workout_Generation_MissingDirectRearDelts",
+        "WeeklyCoverageBelowTarget_DirectGluteDays" => "Workout_Generation_BelowTargetDirectGluteDays",
         "WeeklyCoverageBelowTarget_DynamicCore" => "Workout_Generation_BelowTargetDynamicCore",
         "WeeklyCoverageMissing_GluteFocusHipAbduction" => "Workout_Generation_MissingGluteFocusAbduction",
         _ => "Workout_Generation_Reason_General"
@@ -287,7 +290,9 @@ internal static class StrengthPlanGenerationDisplayMapper
             notes.Add(UiTextCatalog.Get("Workout_Generation_MissingDirectRearDelts"));
         if (codes.Contains("WeeklyCoverageBelowTarget_DynamicCore"))
             notes.Add(UiTextCatalog.Get("Workout_Generation_BelowTargetDynamicCore"));
-        if (codes.Contains("WeeklyCoverageMissing_GluteFocusAbduction"))
+        if (codes.Contains("WeeklyCoverageBelowTarget_DirectGluteDays"))
+            notes.Add(UiTextCatalog.Get("Workout_Generation_BelowTargetDirectGluteDays"));
+        if (codes.Contains("WeeklyCoverageMissing_GluteFocusHipAbduction") || codes.Contains("WeeklyCoverageMissing_GluteFocusAbduction"))
             notes.Add(UiTextCatalog.Get("Workout_Generation_MissingGluteFocusAbduction"));
         if (codes.Contains("WeeklyMovementCoverageMissing_KneeExtension"))
             notes.Add(UiTextCatalog.Get("Workout_Generation_MissingKneeExtension"));

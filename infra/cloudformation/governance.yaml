@@ -1,0 +1,248 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  MuscleCuties staging governance: audit trail, spend guard and configuration recording.
+
+  Drift detection itself is scheduled from a GitHub Actions cron and not from a Lambda
+  here. The point of this project is that nothing exists without an owner, and a
+  hand-rolled drift Lambda would be exactly the kind of unowned component that was
+  deleted during the previous audit.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: staging
+    AllowedValues: [staging]
+
+  AlarmTopicArn:
+    Type: String
+    Description: Topic from the Observability stack; budget notifications publish here.
+    Default: arn:aws:sns:us-east-2:028417007003:musclecuties-staging-operational-alarms
+
+  MonthlyBudgetUsd:
+    Type: Number
+    Default: 20
+
+# ---------------------------------------------------------------------------------------
+# FAITHFULNESS RECORD — checked 2026-11-19. Nothing in this file adopts an existing
+# resource; every item was confirmed absent first: `cloudtrail describe-trails` empty,
+# `configservice describe-configuration-recorders` empty, `describe-delivery-channels`
+# empty, and no RDS event subscription exists.
+#
+# ACCEPT-AND-RECONCILE — one hard precondition:
+#   A budget named `MuscleCuties` ALREADY EXISTS, unmanaged (COST / MONTHLY / 20 USD,
+#   matching BudgetLimit below exactly). `AWS::Budgets::Budget` creates by name, so
+#   deploying this stack while it exists fails with a duplicate-name error. Delete the
+#   existing budget first, then deploy:
+#     aws budgets delete-budget --account-id 028417007003 --budget-name MuscleCuties
+#   This is deliberately left to the operator: the existing budget is unmanaged and
+#   deleting it is a destructive action outside a template write.
+#
+# SINGLETONS: only one trail, one configuration recorder and one delivery channel may
+# exist per region. All three were confirmed absent, so creation is safe. If any is ever
+# created out of band, this stack cannot deploy until it is removed.
+# ---------------------------------------------------------------------------------------
+
+Resources:
+  LogBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Sub "musclecuties-${Environment}-audit-${AWS::AccountId}"
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      LifecycleConfiguration:
+        Rules:
+          - Id: expire-audit-logs
+            Status: Enabled
+            ExpirationInDays: 365
+      Tags:
+        - { Key: Project, Value: MuscleCuties }
+        - { Key: Environment, Value: !Ref Environment }
+
+  LogBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LogBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AWSCloudTrailAclCheck
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:GetBucketAcl
+            Resource: !GetAtt LogBucket.Arn
+            Condition:
+              StringEquals:
+                aws:SourceArn: !Sub "arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/musclecuties-${Environment}-trail"
+          - Sid: AWSCloudTrailWrite
+            Effect: Allow
+            Principal:
+              Service: cloudtrail.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub "${LogBucket.Arn}/AWSLogs/${AWS::AccountId}/*"
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+                aws:SourceArn: !Sub "arn:aws:cloudtrail:${AWS::Region}:${AWS::AccountId}:trail/musclecuties-${Environment}-trail"
+          - Sid: AWSConfigWrite
+            Effect: Allow
+            Principal:
+              Service: config.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub "${LogBucket.Arn}/config/*"
+            Condition:
+              StringEquals:
+                s3:x-amz-acl: bucket-owner-full-control
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !GetAtt LogBucket.Arn
+              - !Sub "${LogBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+
+  Trail:
+    Type: AWS::CloudTrail::Trail
+    DependsOn: LogBucketPolicy
+    Properties:
+      TrailName: !Sub "musclecuties-${Environment}-trail"
+      S3BucketName: !Ref LogBucket
+      IsMultiRegionTrail: true
+      EnableLogFileValidation: true
+      IncludeGlobalServiceEvents: true
+      IsLogging: true
+      Tags:
+        - { Key: Project, Value: MuscleCuties }
+        - { Key: Environment, Value: !Ref Environment }
+
+  MonthlyBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: MuscleCuties
+        BudgetType: COST
+        TimeUnit: MONTHLY
+        BudgetLimit:
+          Amount: !Ref MonthlyBudgetUsd
+          Unit: USD
+      NotificationsWithSubscribers:
+        - Notification:
+            NotificationType: ACTUAL
+            ComparisonOperator: GREATER_THAN
+            Threshold: 80
+          Subscribers:
+            - SubscriptionType: SNS
+              Address: !Ref AlarmTopicArn
+        - Notification:
+            NotificationType: FORECASTED
+            ComparisonOperator: GREATER_THAN
+            Threshold: 100
+          Subscribers:
+            - SubscriptionType: SNS
+              Address: !Ref AlarmTopicArn
+
+  ConfigRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: config.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWS_ConfigRole
+      Policies:
+        - PolicyName: WriteConfigDelivery
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action: s3:PutObject
+                Resource: !Sub "${LogBucket.Arn}/config/*"
+                Condition:
+                  StringEquals:
+                    s3:x-amz-acl: bucket-owner-full-control
+
+  Recorder:
+    Type: AWS::Config::ConfigurationRecorder
+    Properties:
+      RoleARN: !GetAtt ConfigRole.Arn
+      RecordingGroup:
+        AllSupported: true
+        IncludeGlobalResourceTypes: true
+
+  DeliveryChannel:
+    Type: AWS::Config::DeliveryChannel
+    Properties:
+      S3BucketName: !Ref LogBucket
+      S3KeyPrefix: config
+
+  BucketPublicReadRule:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: s3-bucket-public-read-prohibited
+      Source:
+        Owner: AWS
+        SourceIdentifier: S3_BUCKET_PUBLIC_READ_PROHIBITED
+
+  BucketPublicWriteRule:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: s3-bucket-public-write-prohibited
+      Source:
+        Owner: AWS
+        SourceIdentifier: S3_BUCKET_PUBLIC_WRITE_PROHIBITED
+
+  # Expected to report NON_COMPLIANT for the staging database while the public-access
+  # decision is deferred (ADR-0005). That is the rule doing its job, not a defect.
+  RdsPublicAccessRule:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: rds-instance-public-access-check
+      Source:
+        Owner: AWS
+        SourceIdentifier: RDS_INSTANCE_PUBLIC_ACCESS_CHECK
+
+  RequiredTagsRule:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: required-tags
+      InputParameters:
+        tag1Key: Project
+        tag2Key: Environment
+        tag3Key: Owner
+        tag4Key: ManagedBy
+        tag5Key: CostCenter
+      Source:
+        Owner: AWS
+        SourceIdentifier: REQUIRED_TAGS
+
+  EncryptedVolumesRule:
+    Type: AWS::Config::ConfigRule
+    Properties:
+      ConfigRuleName: encrypted-volumes
+      Source:
+        Owner: AWS
+        SourceIdentifier: ENCRYPTED_VOLUMES
+
+Outputs:
+  TrailArn:
+    Value: !GetAtt Trail.Arn
+  AuditBucket:
+    Value: !Ref LogBucket
+  BudgetName:
+    Value: !Ref MonthlyBudget

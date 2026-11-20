@@ -40,7 +40,6 @@ public partial class FoodLogViewModel
     public bool CanChangeHydration => (_hydrationDay is not null || IsLegacyHydration)
         && !IsLoading && !IsLoadError && !IsWriting && !IsHydrationBusy && !HasHydrationRetry;
     public bool CanOpenHydrationDetails => _hydrationDay is not null;
-    public bool HasHydrationSecondaryActions => IsLegacyHydration || CanOpenHydrationDetails;
     public bool CanEditHydrationEntry => SelectedHydrationEntry is not null;
     public bool CanEditHydrationPreset => SelectedHydrationPreset is not null;
     public bool CanMoveHydrationPresetUp => SelectedHydrationPreset is { } selected
@@ -99,7 +98,6 @@ public partial class FoodLogViewModel
     {
         OnPropertyChanged(nameof(CanChangeHydration));
         OnPropertyChanged(nameof(CanOpenHydrationDetails));
-        OnPropertyChanged(nameof(HasHydrationSecondaryActions));
     }
 
     private void RefreshHydrationPresetOrderActions()
@@ -279,13 +277,21 @@ public partial class FoodLogViewModel
     }
 
     [RelayCommand]
-    private Task DeleteHydrationPresetAsync()
+    private async Task DeleteHydrationPresetAsync()
     {
         if (SelectedHydrationPreset is not { } preset)
-            return Task.CompletedTask;
+            return;
+
+        var confirmed = await ConfirmAsync(
+            UiTextCatalog.Get("Nutrition_Hydration_DeletePreset"),
+            UiTextCatalog.Get("Nutrition_FoodLog_DeleteItemMessage"),
+            UiTextCatalog.Get("Common_Delete"),
+            UiTextCatalog.Get("Common_Cancel"));
+        if (!confirmed)
+            return;
 
         var operationId = Guid.NewGuid();
-        return ChangePresetsAsync((version, ct) =>
+        await ChangePresetsAsync((version, ct) =>
             _hydrationClient!.DeletePresetAsync(version, preset.Id, operationId, ct));
     }
 

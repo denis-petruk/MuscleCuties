@@ -168,10 +168,10 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         CloseRescheduleModalCommand = new RelayCommand(CloseRescheduleModal);
         Filters = new ObservableCollection<FilterChipItem>
         {
-            new() { Column = 0, Label = UiTextCatalog.Get("Workout_Filter_All"), IsSelected = true },
-            new() { Column = 1, Label = UiTextCatalog.Get("Workout_Filter_Strength") },
-            new() { Column = 2, Label = UiTextCatalog.Get("Workout_Filter_Cardio") },
-            new() { Column = 3, Label = UiTextCatalog.Get("Workout_Filter_Recovery") }
+            new() { Column = 0, Tag = WorkoutListFilterRule.AllTag, Label = UiTextCatalog.Get("Workout_Filter_All"), IsSelected = true },
+            new() { Column = 1, Tag = WorkoutListFilterRule.StrengthTag, Label = UiTextCatalog.Get("Workout_Filter_Strength") },
+            new() { Column = 2, Tag = WorkoutListFilterRule.CardioTag, Label = UiTextCatalog.Get("Workout_Filter_Cardio") },
+            new() { Column = 3, Tag = WorkoutListFilterRule.RecoveryTag, Label = UiTextCatalog.Get("Workout_Filter_Recovery") }
         };
         Weeks = new ObservableCollection<FilterChipItem>
         {
@@ -180,6 +180,27 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             new() { Column = 2, Index = FirstWeekIndex + 2, Label = UiTextCatalog.Get("Workout_Page_Week3") },
             new() { Column = 3, Index = FirstWeekIndex + 3, Label = UiTextCatalog.Get("Workout_Page_Week4") }
         };
+        var initialWeekStart = DateTime.Today.AddDays(-(((int)DateTime.Today.DayOfWeek + 6) % 7));
+        _datedSchedule = Enumerable.Range(0, 7).Select(offset =>
+        {
+            var date = initialWeekStart.AddDays(offset);
+            var isToday = date.Date == DateTime.Today.Date;
+            return new ScheduleDayItem
+            {
+                Date = date,
+                WeekIndex = FirstWeekIndex,
+                DayLabel = FormatDayLabel(date.DayOfWeek),
+                WorkoutTag = "REST",
+                WorkoutTitle = string.Empty,
+                Sessions = [new ScheduleSessionChip(0, "REST", WorkoutPresentationPalette.Background("REST"), false, 1, string.Empty, false)],
+                IsToday = isToday,
+                IsRestDay = true,
+                IsSelected = isToday,
+                AccentColor = WorkoutPresentationPalette.Background("REST"),
+                AccentTextColor = WorkoutPresentationPalette.Text("REST")
+            };
+        }).ToArray();
+        ScheduleDays = new ObservableCollection<ScheduleDayItem>(_datedSchedule);
     }
 
     private void SyncWeekChips(int weekIndex)
@@ -219,8 +240,22 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public bool HasNoPlan => string.IsNullOrEmpty(ActivePlanName);
     public bool HasInProgressWorkout => InProgressWorkout is { IsInProgress: true, WorkoutDayId: > MissingWorkoutDayId };
     public bool ShowNoPlanPrompt => _hasLoadedOverview && HasNoPlan && HasNoWorkouts;
+    [ObservableProperty] private string _statusMessage = string.Empty;
+
+    public bool HasScheduleDays => _hasLoadedOverview && !IsLoadError && ScheduleDays.Count > 0;
+    /// <summary>
+    /// A plan always offers its weeks. The chip row must not follow the selected week's days: a
+    /// week without dated days would hide the only control that leads back to a week with sessions.
+    /// </summary>
+    public bool HasPlanWeeks => _hasLoadedOverview && !IsBusy && !HasNoPlan;
+    public bool HasNoScheduleDays => _hasLoadedOverview && !IsBusy && !HasNoPlan && !HasScheduleDays;
     public bool HasWorkouts => !IsBusy && Workouts.Count > 0;
     public bool HasNoWorkouts => !IsBusy && !IsLoadError && Workouts.Count == 0;
+    /// <summary>
+    /// The empty card belongs to the page flow, not to the collection's EmptyView, which is not
+    /// drawn inside this header-bearing list and left a blank page under the chips.
+    /// </summary>
+    public bool ShowEmptyWorkouts => _hasLoadedOverview && HasNoWorkouts && !ShowNoPlanPrompt;
     public string ActivePlanTitle => ActivePlanName ?? "No active plan";
 
     public string PlanSummaryText => _lastOverview is null
@@ -273,19 +308,18 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     public string EmptyWorkoutsTitle => HasNoPlan
         ? "Workout_Generation_PromptNoPlanTitle"
-        : SelectedFilterLabel == "All"
-            ? "No workouts scheduled"
-            : $"No {SelectedFilterLabel.ToLowerInvariant()} workouts";
+        : "Workout_Page_EmptyFilterTitle";
 
     public string EmptyWorkoutsSubtitle => HasNoPlan
         ? "Workout_Generation_PromptNoPlanSubtitle"
-        : "Try another filter or show the full week.";
+        : "Workout_Page_EmptyFilterSubtitle";
 
-    public string EmptyWorkoutsButtonText => HasNoPlan ? "Workout_Generation_PromptGeneratePlanButton" : "Show All";
+    public string EmptyWorkoutsButtonText => HasNoPlan
+        ? "Workout_Generation_PromptGeneratePlanButton"
+        : "Workout_Page_EmptyFilterShowAll";
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Bound in workout page XAML.")]
     public bool EmptyWorkoutsButtonVisible => true;
 
-    private string SelectedFilterLabel => Filters.FirstOrDefault(f => f.IsSelected)?.Label ?? "All";
     public AsyncRelayCommand EmptyWorkoutsActionCommand { get; }
     public AsyncRelayCommand GeneratePlanCommand { get; }
     public AsyncRelayCommand OpenHistoryCommand { get; }
@@ -367,6 +401,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     {
         var weekToRestore = SelectedWeekIndex;
         IsBusy = true;
+        IsLoadError = false;
         var loadStarted = Stopwatch.GetTimestamp();
         try
         {
@@ -406,12 +441,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                     ? day.Sessions.OrderBy(s => s.DayOrder ?? 0).Select(s => new ScheduleSessionChip(
                         s.WorkoutDayId,
                         s.Tag,
-                        WorkoutPresentationPalette.Background(s.Tag),
+                        WorkoutPresentationPalette.Text(s.Tag),
                         s.IsCompleted,
                         s.DayOrder,
                         s.Title,
                         s.IsEasierAlternative)).ToList()
-                    : (day.WorkoutDayId > 0
+                    : (!day.IsRestDay && day.WorkoutDayId > 0
                         ? new List<ScheduleSessionChip>
                         {
                             new(
@@ -423,17 +458,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                                 day.Title,
                                 day.IsEasierAlternative)
                         }
-                        : new List<ScheduleSessionChip>
-                        {
-                            new(
-                                0,
-                                day.Tag,
-                                WorkoutPresentationPalette.Background(day.Tag),
-                                day.IsCompleted,
-                                1,
-                                day.Title,
-                                false)
-                        });
+                        : []);
 
                 return new ScheduleDayItem
                 {
@@ -442,6 +467,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
                     DayLabel = day.DayLabel,
                     WorkoutTag = day.Tag,
                     WorkoutTitle = day.Title,
+                    AccessibilityDescription = BuildScheduleDayAccessibility(day),
                     WorkoutDayId = day.WorkoutDayId,
                     CompanionWorkoutDayId = day.CompanionWorkoutDayId,
                     SessionWorkoutDayIds = day.Sessions?.Select(s => s.WorkoutDayId).ToList()
@@ -462,6 +488,13 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             WriteLoadStage("view state", loadStarted);
             // NotifyWorkoutStateProperties() is called by OnWorkoutsChanged (via ApplyFilter)
             // and by OnActivePlanChanged. No explicit call needed here.
+        }
+        catch (Exception ex)
+        {
+            // A failed overview must not masquerade as an empty week. Keep the old plan on screen
+            // and offer a retry instead of presenting "no workouts scheduled" as a real state.
+            IsLoadError = true;
+            Trace.WriteLine($"[Workout] Overview load failed ({ex.GetType().Name}).");
         }
         finally
         {
@@ -506,7 +539,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     private void ApplyFilter()
     {
-        var selected = Filters.FirstOrDefault(f => f.IsSelected);
+        var selectedFilterTag = Filters.FirstOrDefault(f => f.IsSelected)?.Tag;
         var selectedWeekIds = GetSelectedWeekWorkoutIds();
         var hasWeekSchedule = _datedSchedule.Any(day => day.WeekIndex == SelectedWeekIndex);
         var weekWorkouts = hasWeekSchedule
@@ -524,16 +557,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             weekWorkouts = weekWorkouts.Where(w => dayIds.Contains(w.WorkoutDayId) || string.Equals(w.DayLabel, day.DayLabel, StringComparison.OrdinalIgnoreCase));
         }
 
-        if (selected is null || selected.Label == "All")
-            Workouts = new ObservableCollection<WorkoutItem>(weekWorkouts.Where(IsVisibleWorkoutItem));
-        else if (selected.Label == "Recovery")
-            Workouts = new ObservableCollection<WorkoutItem>(weekWorkouts.Where(IsRecoveryWorkoutItem));
-        else
-            Workouts = new ObservableCollection<WorkoutItem>(
-                weekWorkouts.Where(w => !w.IsRestDay && string.Equals(
-                    w.Tag,
-                    selected.Label.ToUpperInvariant(),
-                    StringComparison.OrdinalIgnoreCase)));
+        Workouts = new ObservableCollection<WorkoutItem>(weekWorkouts.Where(workout =>
+            WorkoutListFilterRule.IsVisible(workout.IsRestDay, workout.Tag, selectedFilterTag)));
         // NotifyWorkoutStateProperties() is already called by OnWorkoutsChanged; do not call again.
     }
 
@@ -754,7 +779,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             return;
         }
 
-        var allFilter = Filters.FirstOrDefault(f => f.Label == "All");
+        var allFilter = Filters.FirstOrDefault(f => f.Tag == WorkoutListFilterRule.AllTag);
         if (allFilter is not null)
             SelectFilter(allFilter);
     }
@@ -884,6 +909,7 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private async Task ToggleSessionOptionalAsync(WorkoutItem? workout)
     {
         if (workout is null || workout.WorkoutDayId <= 0 || workout.IsCompleted || workout.IsRestDay) return;
+        StatusMessage = string.Empty;
         var wasOptional = workout.IsOptional;
         var wasEasierAlternative = workout.IsEasierAlternative;
         workout.IsOptional = !wasOptional;
@@ -894,18 +920,20 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             await _overview.SetSessionOptionalAsync(new SetWorkoutSessionOptionalRequest(
                 workout.WorkoutDayId, workout.IsOptional, workout.IsEasierAlternative));
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.WriteLine($"[WorkoutViewModel] Toggle optional failed ({ex.GetType().Name}).");
             workout.IsOptional = wasOptional;
             workout.IsEasierAlternative = wasEasierAlternative;
             OnPropertyChanged(nameof(Workouts));
-            throw;
+            StatusMessage = Services.Api.ApiFailurePresenter.FromException(ex, "Workout_Overview_UpdateFailed").MessageText;
         }
     }
 
     private async Task ToggleEasierAlternativeAsync(WorkoutItem? workout)
     {
         if (workout is null || !workout.CanMarkEasierAlternative) return;
+        StatusMessage = string.Empty;
         var previous = workout.IsEasierAlternative;
         workout.IsEasierAlternative = !previous;
         try
@@ -913,10 +941,11 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
             await _overview.SetSessionOptionalAsync(new SetWorkoutSessionOptionalRequest(
                 workout.WorkoutDayId, IsOptional: true, IsEasierAlternative: workout.IsEasierAlternative));
         }
-        catch
+        catch (Exception ex)
         {
+            Trace.WriteLine($"[WorkoutViewModel] Toggle easier alternative failed ({ex.GetType().Name}).");
             workout.IsEasierAlternative = previous;
-            throw;
+            StatusMessage = Services.Api.ApiFailurePresenter.FromException(ex, "Workout_Overview_UpdateFailed").MessageText;
         }
     }
 
@@ -1045,16 +1074,6 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         }
     }
 
-    private static bool IsVisibleWorkoutItem(WorkoutItem workout)
-    {
-        return !workout.IsRestDay;
-    }
-
-    private static bool IsRecoveryWorkoutItem(WorkoutItem workout)
-    {
-        return !workout.IsRestDay && workout.Tag.Contains("RECOVERY", StringComparison.OrdinalIgnoreCase);
-    }
-
     private static string BuildFeaturedIntensity(string tag)
     {
         if (tag.Contains("RECOVERY", StringComparison.OrdinalIgnoreCase))
@@ -1071,17 +1090,33 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         return UiTextCatalog.Get("Dashboard_Workout_IntensityModerate");
     }
 
+    private static string BuildScheduleDayAccessibility(WorkoutScheduleEntry day)
+    {
+        var description = UiTextCatalog.Format(
+            "Workout_Page_ScheduleDayAccessibility",
+            UiTextCatalog.TranslateRuntimeText(day.DayLabel),
+            DisplayFormat.DayNumberPadded(day.Date.ToDateTime(TimeOnly.MinValue)),
+            UiTextCatalog.TranslateRuntimeText(day.Title));
+
+        return day.IsToday
+            ? UiTextCatalog.Format(
+                "Workout_Page_ScheduleDayTodayAccessibility",
+                description,
+                UiTextCatalog.Get("Common_Today"))
+            : description;
+    }
+
     private static string FormatDayLabel(DayOfWeek dayOfWeek)
     {
         return dayOfWeek switch
         {
-            DayOfWeek.Sunday => "SUN",
-            DayOfWeek.Monday => "MON",
-            DayOfWeek.Tuesday => "TUE",
-            DayOfWeek.Wednesday => "WED",
-            DayOfWeek.Thursday => "THU",
-            DayOfWeek.Friday => "FRI",
-            DayOfWeek.Saturday => "SAT",
+            DayOfWeek.Sunday => UiTextCatalog.Get("Workout_Schedule_DaySunday"),
+            DayOfWeek.Monday => UiTextCatalog.Get("Workout_Schedule_DayMonday"),
+            DayOfWeek.Tuesday => UiTextCatalog.Get("Workout_Schedule_DayTuesday"),
+            DayOfWeek.Wednesday => UiTextCatalog.Get("Workout_Schedule_DayWednesday"),
+            DayOfWeek.Thursday => UiTextCatalog.Get("Workout_Schedule_DayThursday"),
+            DayOfWeek.Friday => UiTextCatalog.Get("Workout_Schedule_DayFriday"),
+            DayOfWeek.Saturday => UiTextCatalog.Get("Workout_Schedule_DaySaturday"),
             _ => string.Empty
         };
     }
@@ -1093,8 +1128,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(ShowNoPlanPrompt));
         OnPropertyChanged(nameof(HasWorkouts));
         OnPropertyChanged(nameof(HasNoWorkouts));
+        OnPropertyChanged(nameof(HasScheduleDays));
+        OnPropertyChanged(nameof(HasNoScheduleDays));
         OnPropertyChanged(nameof(ActivePlanTitle));
         OnPropertyChanged(nameof(PlanSummaryText));
+        OnPropertyChanged(nameof(HasPlanWeeks));
+        OnPropertyChanged(nameof(ShowEmptyWorkouts));
         OnPropertyChanged(nameof(EmptyWorkoutsTitle));
         OnPropertyChanged(nameof(EmptyWorkoutsSubtitle));
         OnPropertyChanged(nameof(EmptyWorkoutsButtonText));
@@ -1111,6 +1150,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     partial void OnWorkoutsChanged(ObservableCollection<WorkoutItem> value)
     {
         NotifyWorkoutStateProperties();
+    }
+
+    partial void OnScheduleDaysChanged(ObservableCollection<ScheduleDayItem> value)
+    {
+        OnPropertyChanged(nameof(HasScheduleDays));
+        OnPropertyChanged(nameof(HasNoScheduleDays));
     }
 
     partial void OnIsBusyChanged(bool value)

@@ -25,8 +25,7 @@ public static class AppEndpointConfiguration
         get
         {
 #if DEBUG
-            // Safe debug default is always Local to prevent accidental queries against shared data
-            return AppTargetEnvironment.Local;
+            return AppTargetEnvironment.Beta;
 #elif APP_ENV_BETA
             return AppTargetEnvironment.Beta;
 #else
@@ -80,12 +79,12 @@ public static class AppEndpointConfiguration
 
     public static string ResolveBackendBaseUrl(string? overrideUrl = null)
     {
-#if DEBUG
-        if (IsLoopbackOverride(overrideUrl, out var validOverride))
+        if (ActiveEnvironment == AppTargetEnvironment.Local &&
+            IsLoopbackOverride(overrideUrl, out var validOverride))
         {
             return validOverride!.ToString().TrimEnd('/');
         }
-#endif
+
         return GetDefaultBaseUrl(ActiveEnvironment);
     }
 

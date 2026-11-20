@@ -6,6 +6,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:mi="http://www.aathifmahir.com/dotnet/2022/maui/icons"
     xmlns:dashboardControls="clr-namespace:MuscleCuties.UI.Controls.Dashboard"
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:injuryControls="clr-namespace:MuscleCuties.UI.Controls.Injury"
@@ -27,19 +28,21 @@
                     <Border Style="{StaticResource HeaderIconButton}"
                             HorizontalOptions="End"
                             SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_OpenInjuryLogA11y}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Command="{Binding OpenInjuryModalCommand}" />
-                        </Border.GestureRecognizers>
                         <Grid>
-                            <Path Data="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9 M13.7 21a2 2 0 0 1-3.4 0"
-                                  Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                  StrokeThickness="{StaticResource UiStrokeWidth1_75}" StrokeLineCap="Round" StrokeLineJoin="Round"
-                                  Aspect="Uniform" WidthRequest="{StaticResource UiDimension18}" HeightRequest="{StaticResource UiDimension18}"
-                                  HorizontalOptions="Center" VerticalOptions="Center" />
+                            <mi:MauiIcon Icon="{mi:Fluent HeartPulse32}" IconSize="{StaticResource UiDimension22}"
+                                         IconColor="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                         WidthRequest="{StaticResource UiDimension22}" HeightRequest="{StaticResource UiDimension22}"
+                                         HorizontalOptions="Center" VerticalOptions="Center"
+                                         InputTransparent="True"
+                                         AutomationProperties.IsInAccessibleTree="False" />
                             <BoxView WidthRequest="{StaticResource UiDimension8}" HeightRequest="{StaticResource UiDimension8}" CornerRadius="{StaticResource UiCornerRadius4}" Margin="{StaticResource UiInsets0_6_6_0}"
                                      Color="{AppThemeBinding Light={StaticResource ErrorLight}, Dark={StaticResource ErrorDark}}"
                                      HorizontalOptions="End" VerticalOptions="Start"
+                                     InputTransparent="True"
+                                     AutomationProperties.IsInAccessibleTree="False"
                                      IsVisible="{Binding HasActiveInjuries}" />
+                            <sharedControls:CardTapTarget Command="{Binding OpenInjuryModalCommand}"
+                                                          SemanticProperties.Description="{Binding InjuryButtonAccessibilityText}" />
                         </Grid>
                     </Border>
                 </sharedControls:PageHeader.ActionContent>
@@ -86,65 +89,62 @@
 
             <Border Grid.Row="5"
                     Style="{StaticResource CardSecondary}"
-                    HorizontalOptions="Fill"
-                    SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_StreaksA11y}">
-                <Grid ColumnDefinitions="*,*,*" RowDefinitions="Auto,Auto"
-                      ColumnSpacing="{StaticResource UiSpaceTight}"
-                      RowSpacing="{StaticResource UiSpaceTight}">
-                    <Grid Grid.Row="0" Grid.Column="0" ColumnDefinitions="Auto,Auto"
-                          ColumnSpacing="{StaticResource UiSpacing6}"
-                          HorizontalOptions="Center">
-                        <Image Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
-                               Aspect="AspectFit"
-                               WidthRequest="{StaticResource UiDimension20}"
-                               HeightRequest="{StaticResource UiDimension20}"
-                               VerticalOptions="Center" />
-                        <Label Grid.Column="1"
-                               Text="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource MetricValue}"
-                               VerticalOptions="Center" />
-                    </Grid>
-                    <Label Grid.Row="1" Grid.Column="0"
-                           Text="{loc:LocalizedText Dashboard_Page_WorkoutStreak}"
-                           Style="{StaticResource CaptionCentered}"
-                           VerticalOptions="Start" LineBreakMode="WordWrap" />
+                    HorizontalOptions="Fill">
+                <sharedControls:AdaptiveRow Columns="3" ColumnSpacing="{StaticResource UiSpaceTight}" RowSpacing="{StaticResource UiSpaceTight}">
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}" HorizontalOptions="Center">
+                            <Image Source="{AppThemeBinding Light=icon_muscle.png, Dark=icon_muscle_dark.png}"
+                                   Aspect="AspectFit"
+                                   WidthRequest="{StaticResource UiDimension20}"
+                                   HeightRequest="{StaticResource UiDimension20}"
+                                   VerticalOptions="Center"
+                                   AutomationProperties.IsInAccessibleTree="False" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding WorkoutStreakDays, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource MetricValue}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                        <Label Text="{loc:LocalizedText Dashboard_Page_WorkoutStreak}"
+                               Style="{StaticResource CaptionCentered}"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
 
-                    <Grid Grid.Row="0" Grid.Column="1" ColumnDefinitions="Auto,Auto"
-                          ColumnSpacing="{StaticResource UiSpacing6}"
-                          HorizontalOptions="Center">
-                        <Image Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
-                               Aspect="AspectFit"
-                               WidthRequest="{StaticResource UiDimension20}"
-                               HeightRequest="{StaticResource UiDimension20}"
-                               VerticalOptions="Center" />
-                        <Label Grid.Column="1"
-                               Text="{Binding NutritionStreakDays, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource MetricValue}"
-                               VerticalOptions="Center" />
-                    </Grid>
-                    <Label Grid.Row="1" Grid.Column="1"
-                           Text="{loc:LocalizedText Dashboard_Page_FoodLogStreak}"
-                           Style="{StaticResource CaptionCentered}"
-                           VerticalOptions="Start" LineBreakMode="WordWrap" />
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}" HorizontalOptions="Center">
+                            <Image Source="{AppThemeBinding Light=icon_fire.png, Dark=icon_fire_dark.png}"
+                                   Aspect="AspectFit"
+                                   WidthRequest="{StaticResource UiDimension20}"
+                                   HeightRequest="{StaticResource UiDimension20}"
+                                   VerticalOptions="Center"
+                                   AutomationProperties.IsInAccessibleTree="False" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding NutritionStreakDays, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource MetricValue}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                        <Label Text="{loc:LocalizedText Dashboard_Page_FoodLogStreak}"
+                               Style="{StaticResource CaptionCentered}"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
 
-                    <Grid Grid.Row="0" Grid.Column="2" ColumnDefinitions="Auto,Auto"
-                          ColumnSpacing="{StaticResource UiSpacing6}"
-                          HorizontalOptions="Center">
-                        <Image Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
-                               Aspect="AspectFit"
-                               WidthRequest="{StaticResource UiDimension20}"
-                               HeightRequest="{StaticResource UiDimension20}"
-                               VerticalOptions="Center" />
-                        <Label Grid.Column="1"
-                               Text="{Binding CycleCount, Converter={StaticResource LocalizedStringConverter}}"
-                               Style="{StaticResource MetricValue}"
-                               VerticalOptions="Center" />
-                    </Grid>
-                    <Label Grid.Row="1" Grid.Column="2"
-                           Text="{loc:LocalizedText Dashboard_Page_CyclesLogged}"
-                           Style="{StaticResource CaptionCentered}"
-                           VerticalOptions="Start" LineBreakMode="WordWrap" />
-                </Grid>
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}" HorizontalOptions="Center">
+                        <Grid ColumnDefinitions="Auto,Auto" ColumnSpacing="{StaticResource UiSpacing6}" HorizontalOptions="Center">
+                            <Image Source="{AppThemeBinding Light=tab_cycle.png, Dark=tab_cycle_dark.png}"
+                                   Aspect="AspectFit"
+                                   WidthRequest="{StaticResource UiDimension20}"
+                                   HeightRequest="{StaticResource UiDimension20}"
+                                   VerticalOptions="Center"
+                                   AutomationProperties.IsInAccessibleTree="False" />
+                            <Label Grid.Column="1"
+                                   Text="{Binding CycleCount, Converter={StaticResource LocalizedStringConverter}}"
+                                   Style="{StaticResource MetricValue}"
+                                   VerticalOptions="Center" />
+                        </Grid>
+                        <Label Text="{loc:LocalizedText Dashboard_Page_CyclesLogged}"
+                               Style="{StaticResource CaptionCentered}"
+                               LineBreakMode="WordWrap" />
+                    </VerticalStackLayout>
+                </sharedControls:AdaptiveRow>
             </Border>
 
                     <toolkit:LazyView
@@ -154,30 +154,32 @@
 
                     <!-- Progress Photo Check-In -->
                     <Border Grid.Row="7"
-                            Style="{StaticResource CardPrimary}"
-                            SemanticProperties.Description="{loc:LocalizedText Dashboard_Page_PhotoCheckInA11y}">
-                        <Grid ColumnDefinitions="40,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
-                            <Border
-                                Style="{StaticResource DecorativeIconSurface}" VerticalOptions="Center">
-                                <Path Data="M3 7h4l2-3h6l2 3h4v13H3z M12 10a4 4 0 1 0 0 8a4 4 0 0 0 0-8z"
-                                      Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
-                                      StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
-                                      Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension21}" HeightRequest="{StaticResource UiDimension21}"
-                                      HorizontalOptions="Center" VerticalOptions="Center" />
-                            </Border>
-                            <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
-                                <Label Text="{loc:LocalizedText Dashboard_Page_ProgressPhotoTitle}" Style="{StaticResource CardTitle}" LineBreakMode="WordWrap" />
-                                <Label
-                                    Text="{Binding PhotoCheckInText, Converter={StaticResource LocalizedStringConverter}}"
-                                    Style="{StaticResource CaptionSmall}"
-                                    LineBreakMode="WordWrap" />
-                            </VerticalStackLayout>
-                            <Button Grid.Column="2"
-                                    Text="{Binding PhotoButtonText, Converter={StaticResource LocalizedStringConverter}}"
+                            Style="{StaticResource CardPrimary}">
+                        <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                            <Grid ColumnDefinitions="Auto,*" ColumnSpacing="{StaticResource UiSpaceCompact}" VerticalOptions="Center">
+                                <Border
+                                    sharedControls:AccessibilityDecoration.HideAtAccessibilitySize="True"
+                                    AutomationProperties.IsInAccessibleTree="False"
+                                    Style="{StaticResource DecorativeIconSurface}" VerticalOptions="Center">
+                                    <Path Data="M3 7h4l2-3h6l2 3h4v13H3z M12 10a4 4 0 1 0 0 8a4 4 0 0 0 0-8z"
+                                          Stroke="{AppThemeBinding Light={StaticResource TextPrimary}, Dark={StaticResource TextPrimaryDark}}"
+                                          StrokeThickness="{StaticResource UiStrokeWidth1_7}" StrokeLineCap="Round" StrokeLineJoin="Round"
+                                          Fill="{StaticResource Transparent}" Aspect="Uniform" WidthRequest="{StaticResource UiDimension21}" HeightRequest="{StaticResource UiDimension21}"
+                                          HorizontalOptions="Center" VerticalOptions="Center" />
+                                </Border>
+                                <VerticalStackLayout Grid.Column="1" Spacing="{StaticResource UiSpacing2}" VerticalOptions="Center">
+                                    <Label Text="{loc:LocalizedText Dashboard_Page_ProgressPhotoTitle}" Style="{StaticResource CardTitle}" LineBreakMode="WordWrap" />
+                                    <Label
+                                        Text="{Binding PhotoCheckInText, Converter={StaticResource LocalizedStringConverter}}"
+                                        Style="{StaticResource CaptionSmall}"
+                                        LineBreakMode="WordWrap" />
+                                </VerticalStackLayout>
+                            </Grid>
+                            <Button Text="{Binding PhotoButtonText, Converter={StaticResource LocalizedStringConverter}}"
                                     Command="{Binding OpenPhotoVaultCommand}"
                                     Style="{StaticResource ButtonSecondary}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_Page_OpenPhotoVaultA11y}" />
-                        </Grid>
+                        </VerticalStackLayout>
                     </Border>
                 </Grid>
             </ScrollView>

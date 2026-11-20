@@ -107,13 +107,14 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Photo_AddToday");
     private bool _isCycleLengthEstimated;
     [ObservableProperty] private int _predictedCycleLength = 28;
-    [ObservableProperty] private string _readinessLabel = string.Empty;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ReadinessProgress), nameof(CompositeScore))]
     private int _readinessScore;
     [ObservableProperty] private string _readinessTrendSummary =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Readiness_TrendEmpty");
-    [ObservableProperty] private bool _hasTodayReadinessScore;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasTodayReadinessGuidance))]
+    private bool _hasTodayReadinessScore;
     [ObservableProperty] private bool _hasTodayReadinessRecord;
     [ObservableProperty] private bool _todayReadinessReviewPending;
     [ObservableProperty] private bool _todayReadinessIncomplete;
@@ -206,6 +207,9 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     public AsyncRelayCommand OpenPhotoVaultCommand { get; }
 
     public bool IsAnyModalVisible => IsInjuryModalVisible || IsCheckInModalVisible;
+
+    public bool HasTodayReadinessGuidance => HasTodayReadinessScore &&
+                                             _readinessPresentationSettings.AreReadinessSuggestionsEnabled;
 
     public DailyCheckInViewModel CheckInVm => _checkInVm ??= new DailyCheckInViewModel(
         _dailyCheckIn, _invalidateDashboard, CloseCheckInAfterCompletionAsync, _healthSync, _userIdProvider);
@@ -341,6 +345,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         string.Equals(SessionProgressText, "In Progress", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(WorkoutSubtitle, "In Progress", StringComparison.OrdinalIgnoreCase);
 
+    // Suppress redundant status-only subtitles already announced by WorkoutBadgeText ("Today · In Progress" / "Workout completed").
+    public bool ShowWorkoutSubtitle =>
+        !string.IsNullOrWhiteSpace(WorkoutSubtitle) &&
+        !(IsWorkoutInProgress && string.Equals(WorkoutSubtitle.Trim(), "In Progress", StringComparison.OrdinalIgnoreCase)) &&
+        !(IsTodaysWorkoutCompleted && string.Equals(WorkoutSubtitle.Trim(), "Completed Today", StringComparison.OrdinalIgnoreCase));
+
     // One label for the Today primary action, so a finished or running session is never offered as "Start".
     public string WorkoutActionText => IsRestDay
         ? UiTextCatalog.Get("Dashboard_Workout_ViewRestDay")
@@ -349,6 +359,17 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             : IsWorkoutInProgress
                 ? UiTextCatalog.Get("Workout_Overview_ResumeWorkout")
                 : UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
+
+    public string InjuryButtonAccessibilityText => UiTextCatalog.Get(
+        HasActiveInjuries ? "Dashboard_Page_OpenInjuryLogActiveA11y" : "Dashboard_Page_OpenInjuryLogA11y");
+
+    public string NutritionCardAccessibilityText => UiTextCatalog.Format(
+        "Dashboard_Nutrition_SummaryA11yFormat",
+        CaloriesConsumed,
+        CaloriesGoal,
+        ProteinText,
+        CarbsText,
+        FatsText);
 
     public string WorkoutStreakText => WorkoutStreakDays == 1
         ? "1 day session streak"
@@ -519,6 +540,13 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [RelayCommand]
     private void CloseCheckInModal() => IsCheckInModalVisible = false;
 
+    internal void ResetCheckInForAccountChange()
+    {
+        IsCheckInModalVisible = false;
+        _checkInVm?.ResetForAccountChange();
+        Invalidate();
+    }
+
     /// <summary>
     /// Submitting or skipping closes the sheet and refreshes the dashboard in place. This replaces
     /// the navigation to the dashboard route the check-in page performed when it was a page.
@@ -635,14 +663,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             if (summary.TodayReadiness is not null)
             {
                 ReadinessScore = summary.ReadinessScore;
-                ReadinessLabel = summary.ReadinessLabel;
                 RecoveryScore = summary.RecoveryScore;
                 RecoveryLabel = summary.RecoveryLabel;
             }
             else
             {
                 ReadinessScore = 0;
-                ReadinessLabel = string.Empty;
                 RecoveryScore = 0;
                 RecoveryLabel = string.Empty;
             }
@@ -741,7 +767,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         {
             ReadinessScore = 0;
             RecoveryScore = 0;
-            ReadinessLabel = string.Empty;
             RecoveryLabel = string.Empty;
         }
 
@@ -793,6 +818,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private void NotifyMacroProperties()
     {
         MacroProgressFormatter.NotifyAll(OnPropertyChanged);
+        OnPropertyChanged(nameof(NutritionCardAccessibilityText));
+    }
+
+    partial void OnHasActiveInjuriesChanged(bool value)
+    {
+        OnPropertyChanged(nameof(InjuryButtonAccessibilityText));
     }
 
     private void NotifyUserLinkedProperties()
@@ -802,6 +833,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         // The session state arrives after the badge is first evaluated.
         OnPropertyChanged(nameof(IsWorkoutInProgress));
         OnPropertyChanged(nameof(WorkoutBadgeText));
+        OnPropertyChanged(nameof(ShowWorkoutSubtitle));
     }
 
 
@@ -923,6 +955,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         if (_isBulkLoading) return;
         OnPropertyChanged(nameof(IsWorkoutInProgress));
         OnPropertyChanged(nameof(WorkoutBadgeText));
+        OnPropertyChanged(nameof(ShowWorkoutSubtitle));
     }
 
     partial void OnSessionProgressTextChanged(string value)
@@ -932,6 +965,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         if (_isBulkLoading) return;
         OnPropertyChanged(nameof(WorkoutBadgeText));
         OnPropertyChanged(nameof(IsTodaysWorkoutCompleted));
+        OnPropertyChanged(nameof(ShowWorkoutSubtitle));
     }
 
     partial void OnWorkoutStreakDaysChanged(int value)

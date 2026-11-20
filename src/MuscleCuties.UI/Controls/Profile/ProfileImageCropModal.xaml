@@ -9,7 +9,12 @@
     xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     x:DataType="local:ProfileImageCropModal">
 
-    <Grid BackgroundColor="{StaticResource ModalScrim}">
+    <Grid>
+        <BoxView Style="{StaticResource ModalBackdrop}">
+            <BoxView.GestureRecognizers>
+                <TapGestureRecognizer Tapped="OnCancelTapped" />
+            </BoxView.GestureRecognizers>
+        </BoxView>
         <Border
             x:Name="SheetSurface"
             Style="{StaticResource ModalSurface}" MaximumHeightRequest="{StaticResource ModalSheetMaximumHeight}"
@@ -17,21 +22,11 @@
 
             <Grid RowDefinitions="Auto,Auto,*,Auto" RowSpacing="{StaticResource UiSpacing0}">
 
-                <Grid Grid.Row="0" ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}" Padding="{DynamicResource PresentationModalHeaderPadding}">
-                    <Label
-                        Text="{loc:LocalizedText Profile_ImageCrop_CropPhoto}"
-                        Style="{StaticResource ModalTitle}"
-                        VerticalOptions="Center" />
-                    <Border
-                        Grid.Column="1"
-                        Style="{StaticResource ModalIconButton}"
-                        SemanticProperties.Description="{loc:LocalizedText Profile_ImageCrop_CancelCrop}">
-                        <Border.GestureRecognizers>
-                            <TapGestureRecognizer Tapped="OnCancelTapped" />
-                        </Border.GestureRecognizers>
-                        <Path Style="{StaticResource ModalCloseIcon}" />
-                    </Border>
-                </Grid>
+                <sharedControls:ModalSheetHeader
+                    Grid.Row="0"
+                    Title="{loc:LocalizedText Profile_ImageCrop_CropPhoto}"
+                    CloseCommand="{Binding CancelCommand}"
+                    CloseDescription="{loc:LocalizedText Profile_ImageCrop_CancelCrop}" />
 
                 <BoxView Grid.Row="1" Style="{StaticResource ModalDivider}" />
 
@@ -73,12 +68,14 @@
                 <sharedControls:AdaptiveRow Grid.Row="3" Columns="2"
                                             ColumnSpacing="{StaticResource UiSpaceCompact}"
                                             RowSpacing="{StaticResource UiSpaceCompact}"
+                                            BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}"
                                             Padding="{DynamicResource PresentationActionFooterPadding}">
                     <Button
                         Style="{StaticResource ButtonSecondary}"
                         Text="{loc:LocalizedText Common_Cancel}"
                         Clicked="OnCancelTapped" />
                     <Button
+                        x:Name="UsePhotoButton"
                         Style="{StaticResource ButtonPrimary}"
                         Text="{loc:LocalizedText Profile_ImageCrop_UsePhoto}"
                         Clicked="OnUsePhotoTapped" />

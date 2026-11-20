@@ -31,10 +31,53 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
     private const int FallbackMinutesPerExercise = 12;
     private const int MaximumSwapCandidates = 8;
     private const string PlannedDurationMinuteFormat = "0";
-    private const string StrengthTag = "STRENGTH";
-    private const string CardioTag = "CARDIO";
-    private const string RecoveryTag = "RECOVERY";
-    private const string RestTag = "REST";
+    private const string StrengthTag = WorkoutActivityTagRule.Strength;
+    private const string CardioTag = WorkoutActivityTagRule.Cardio;
+    private const string RecoveryTag = WorkoutActivityTagRule.Recovery;
+    private const string RestTag = WorkoutActivityTagRule.Rest;
+
+    // Accepted V2 occurrences retain definition IDs for progression and immutable prescriptions.
+    // Older day rows use public catalog IDs. The two database sequences overlap.
+    private static bool UsesDefinitionId(WorkoutDayExerciseRecord row) =>
+        row.PlanningTemplateId == "MC-V2" || row.PlanningSlotId?.StartsWith("v2-", StringComparison.Ordinal) == true;
+
+    private async Task<Dictionary<int, Exercise>> LoadCatalogAsync(IEnumerable<int> storedIds,
+        bool usesDefinitionIds, CancellationToken cancellationToken)
+    {
+        var ids = storedIds.Distinct().ToArray();
+        if (ids.Length == 0) return [];
+        if (!usesDefinitionIds)
+            return await dbContext.Exercises.AsNoTracking().Where(row => ids.Contains(row.Id))
+                .ToDictionaryAsync(row => row.Id, cancellationToken).ConfigureAwait(false);
+
+        var definitions = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
+            .Where(row => ids.Contains(row.Id)).Select(row => new { row.Id, row.SourceExerciseId })
+            .ToListAsync(cancellationToken).ConfigureAwait(false);
+        var codes = definitions.Where(row => row.SourceExerciseId.HasValue)
+            .ToDictionary(row => row.Id, row => $"ENGINE_{row.SourceExerciseId!.Value}");
+        var wanted = codes.Values.ToArray();
+        var mirrors = await dbContext.Exercises.AsNoTracking().Where(row => wanted.Contains(row.Code))
+            .ToDictionaryAsync(row => row.Code, cancellationToken).ConfigureAwait(false);
+        if (codes.Count != ids.Length || mirrors.Count != ids.Length)
+            throw new InvalidOperationException("The reviewed exercise catalog mapping is incomplete.");
+        return codes.ToDictionary(pair => pair.Key, pair => mirrors[pair.Value]);
+    }
+
+    private async Task<Dictionary<int, Exercise>> LoadSessionCatalogAsync(
+        IReadOnlyCollection<WorkoutDayExerciseRecord> rows, CancellationToken cancellationToken)
+    {
+        var legacy = await LoadCatalogAsync(rows.Where(row => !UsesDefinitionId(row)).Select(row => row.ExerciseId),
+            false, cancellationToken);
+        var reviewed = await LoadCatalogAsync(rows.Where(UsesDefinitionId).Select(row => row.ExerciseId),
+            true, cancellationToken);
+        foreach (var (id, exercise) in reviewed)
+        {
+            if (legacy.TryGetValue(id, out var other) && other.Id != exercise.Id)
+                throw new InvalidOperationException("Historical workout rows have conflicting exercise identities.");
+            legacy[id] = exercise;
+        }
+        return legacy;
+    }
 
     public static int ToStableWorkoutIntId(Guid id)
     {
@@ -130,13 +173,17 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 }
             }
 
-            var exerciseIds = dayExercises.Select(e => e.ExerciseId).Distinct().ToArray();
-            var exercisesById = exerciseIds.Length == 0
-                ? new Dictionary<int, Exercise>()
-                : await dbContext.Exercises.AsNoTracking()
-                    .Where(e => exerciseIds.Contains(e.Id))
-                    .ToDictionaryAsync(e => e.Id, cancellationToken)
-                    .ConfigureAwait(false);
+            var canonicalRows = dayExercises.Where(UsesDefinitionId).ToArray();
+            var mirrored = await LoadCatalogAsync(canonicalRows.Select(row => row.ExerciseId), true, cancellationToken);
+            var exercisesById = await LoadCatalogAsync(dayExercises.Where(row => !UsesDefinitionId(row))
+                .Select(row => row.ExerciseId), false, cancellationToken);
+            // Normalize only detached overview rows so a retired legacy day and an active V2 day can coexist.
+            foreach (var row in canonicalRows)
+            {
+                var exercise = mirrored[row.ExerciseId];
+                row.ExerciseId = exercise.Id;
+                exercisesById[exercise.Id] = exercise;
+            }
 
             var exercisesByDayId = dayExercises
                 .GroupBy(e => e.WorkoutDayId)
@@ -399,12 +446,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             if (generationV2 is not null)
                 orderedExercises = orderedExercises.OrderBy(item => generationExercises[item.ExerciseId].OrderIndex).ToList();
             var exerciseIds = orderedExercises.Select(e => e.ExerciseId).Distinct().ToArray();
-            var exercisesById = exerciseIds.Length == 0
-                ? new Dictionary<int, Exercise>()
-                : await dbContext.Exercises.AsNoTracking()
-                    .Where(e => exerciseIds.Contains(e.Id))
-                    .ToDictionaryAsync(e => e.Id, cancellationToken)
-                    .ConfigureAwait(false);
+            var exercisesById = await LoadSessionCatalogAsync(orderedExercises, cancellationToken);
 
             // Bodyweight/slider movements use zero added kg; resistance-band movements use repetition-based
             // logging without fabricated kg resistance. Join via ENGINE_<planningId> -> SourceExerciseId first.
@@ -492,10 +534,11 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 generationV2?.Exercises.Where(item => item.IsUnilateral).Select(item => item.ExerciseId).ToHashSet())
                 .ConfigureAwait(false);
 
-            var notesByExerciseId = exerciseIds.Length == 0
+            var publicExerciseIds = exercisesById.Values.Select(exercise => exercise.Id).Distinct().ToArray();
+            var notesByExerciseId = publicExerciseIds.Length == 0
                 ? new Dictionary<int, string>()
                 : await dbContext.UserMovementNotes.AsNoTracking()
-                    .Where(n => n.UserId == userId && exerciseIds.Contains(n.ExerciseId))
+                    .Where(n => n.UserId == userId && publicExerciseIds.Contains(n.ExerciseId))
                     .ToDictionaryAsync(n => n.ExerciseId, n => n.Notes, cancellationToken)
                     .ConfigureAwait(false);
 
@@ -507,7 +550,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 var catalogEx = exercisesById.GetValueOrDefault(dayEx.ExerciseId);
                 var prevLog = latestPreviousByExerciseId.GetValueOrDefault(dayEx.ExerciseId);
                 var currLog = currentByDayExerciseId.GetValueOrDefault(dayEx.Id);
-                var movementNote = notesByExerciseId.GetValueOrDefault(dayEx.ExerciseId, string.Empty);
+                var movementNote = catalogEx is null ? string.Empty : notesByExerciseId.GetValueOrDefault(catalogEx.Id, string.Empty);
                 var observedWeeks = observedHistory.GetValueOrDefault(dayEx.ExerciseId);
                 var generationExercise = generationExercises.GetValueOrDefault(dayEx.ExerciseId);
                 if (prescription?.SplitSupersetWorkoutDayExerciseIds.Contains(dayEx.Id) == true &&
@@ -666,6 +709,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await WorkoutSessionAccountLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
 
             WorkoutDayRecord? day;
+            var logDate = request.Date;
             PlannedPrescriptionSnapshot? sessionPrescription = null;
             if (request.PlannedSessionId is { } plannedSessionId)
             {
@@ -678,6 +722,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     .SingleOrDefaultAsync(item => item.UserId == userId && item.Id == id, cancellationToken).ConfigureAwait(false) : null;
                 if (day is null || ToStableWorkoutIntId(day.Id) != request.WorkoutDayId)
                     throw new InvalidOperationException("The planned workout session is unavailable.");
+                logDate = plannedSession?.PlannedLocalDate ?? day.Date ?? request.Date;
                 sessionPrescription = PlannedPrescriptionSnapshot.Deserialize(plannedSession?.PlannedPrescriptionSnapshotJson);
                 if (plannedSession?.PlannedPrescriptionSnapshotJson is not null &&
                     (sessionPrescription is null || sessionPrescription.DayId != day.Id || sessionPrescription.Exercises is null))
@@ -744,10 +789,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 throw new InvalidOperationException("Log at least one exercise or activity before saving this workout.");
 
             var exerciseIds = dayExercises.Select(e => e.ExerciseId).Distinct().ToArray();
-            var catalogExercises = await dbContext.Exercises.AsNoTracking()
-                .Where(e => exerciseIds.Contains(e.Id))
-                .ToDictionaryAsync(e => e.Id, cancellationToken)
-                .ConfigureAwait(false);
+            var catalogExercises = await LoadSessionCatalogAsync(dayExercises, cancellationToken);
 
             foreach (var (dayExercise, input) in validInputs)
             {
@@ -764,8 +806,9 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             }
 
             var primaryLog = await dbContext.WorkoutLogs
-                .Where(l => l.UserId == userId && l.WorkoutDayId == day.Id && l.Date == request.Date &&
-                            l.PlannedSessionId == request.PlannedSessionId)
+                .Where(l => l.UserId == userId && l.WorkoutDayId == day.Id &&
+                            l.PlannedSessionId == request.PlannedSessionId &&
+                            (request.PlannedSessionId != null || l.Date == logDate))
                 .OrderByDescending(l => l.CreatedAt)
                 .FirstOrDefaultAsync(cancellationToken)
                 .ConfigureAwait(false);
@@ -778,7 +821,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     UserId = userId,
                     WorkoutDayId = day.Id,
                     PlannedSessionId = request.PlannedSessionId,
-                    Date = request.Date,
+                    Date = logDate,
                     CompletionPercent = 0,
                     CreatedAt = nowUtc
                 };
@@ -864,6 +907,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 nowUtc,
                 primaryLog.CompletionPercent >= CompletedWorkoutPercent,
                 existingExerciseLogs,
+                validInputs.Select(pair => pair.DayExercise.Id).ToHashSet(),
                 catalogExercises,
                 request.PlannedSessionId,
                 observedByDayExerciseId,
@@ -1078,8 +1122,12 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .ConfigureAwait(false)
                 ?? throw new KeyNotFoundException("Workout exercise was not found.");
 
+            var catalog = await LoadCatalogAsync([dayExercise.ExerciseId], UsesDefinitionId(dayExercise), cancellationToken);
+            var catalogExercise = catalog.GetValueOrDefault(dayExercise.ExerciseId)
+                ?? throw new InvalidOperationException("The exercise catalog entry is unavailable.");
+
             var note = await dbContext.UserMovementNotes.AsNoTracking()
-                .FirstOrDefaultAsync(n => n.UserId == userId && n.ExerciseId == dayExercise.ExerciseId, cancellationToken)
+                .FirstOrDefaultAsync(n => n.UserId == userId && n.ExerciseId == catalogExercise.Id, cancellationToken)
                 .ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -1106,8 +1154,12 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .ConfigureAwait(false)
                 ?? throw new KeyNotFoundException("Workout exercise was not found.");
 
+            var catalog = await LoadCatalogAsync([dayExercise.ExerciseId], UsesDefinitionId(dayExercise), cancellationToken);
+            var catalogExercise = catalog.GetValueOrDefault(dayExercise.ExerciseId)
+                ?? throw new InvalidOperationException("The exercise catalog entry is unavailable.");
+
             var existing = await dbContext.UserMovementNotes
-                .FirstOrDefaultAsync(n => n.UserId == userId && n.ExerciseId == dayExercise.ExerciseId, cancellationToken)
+                .FirstOrDefaultAsync(n => n.UserId == userId && n.ExerciseId == catalogExercise.Id, cancellationToken)
                 .ConfigureAwait(false);
 
             var trimmed = request.Notes?.Trim() ?? string.Empty;
@@ -1124,15 +1176,12 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             }
             else
             {
-                var catalogExercise = await dbContext.Exercises.AsNoTracking()
-                    .SingleOrDefaultAsync(e => e.Id == dayExercise.ExerciseId, cancellationToken)
-                    .ConfigureAwait(false);
                 dbContext.UserMovementNotes.Add(new UserMovementNoteRecord
                 {
                     Id = Guid.CreateVersion7(),
                     UserId = userId,
-                    ExerciseId = dayExercise.ExerciseId,
-                    ExerciseName = catalogExercise?.Name ?? "Exercise",
+                    ExerciseId = catalogExercise.Id,
+                    ExerciseName = catalogExercise.Name,
                     Notes = trimmed,
                     CreatedAt = nowUtc,
                     UpdatedAt = nowUtc
@@ -1234,6 +1283,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         DateTime nowUtc,
         bool isCompleted,
         IReadOnlyList<WorkoutExerciseLogRecord> exerciseLogs,
+        IReadOnlySet<Guid> updatedDayExerciseIds,
         IReadOnlyDictionary<int, Exercise> catalogExercises,
         Guid? plannedSessionId,
         IReadOnlyDictionary<Guid, IReadOnlyList<ObservedSetRecord>> observedByDayExerciseId,
@@ -1280,14 +1330,19 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         }
 
         var existingSets = await dbContext.ExerciseSetLogs
-            .Where(s => s.UserId == userId && s.WorkoutSessionLogId == session.Id)
+            .Where(s => s.UserId == userId && s.WorkoutSessionLogId == session.Id && !s.IsDeleted)
             .ToListAsync(cancellationToken)
             .ConfigureAwait(false);
-        if (existingSets.Count > 0)
-            dbContext.ExerciseSetLogs.RemoveRange(existingSets);
+        var updatedLogs = exerciseLogs.Where(log => updatedDayExerciseIds.Contains(log.WorkoutDayExerciseId)).ToArray();
+        var updatedExerciseIds = updatedLogs.Select(log => log.ExerciseId.ToString(CultureInfo.InvariantCulture))
+            .ToHashSet(StringComparer.Ordinal);
+        dbContext.ExerciseSetLogs.RemoveRange(existingSets.Where(set =>
+            set.ExerciseId is { } exerciseId && updatedExerciseIds.Contains(exerciseId)));
 
-        decimal totalVolume = 0m;
-        foreach (var exLog in exerciseLogs)
+        var totalVolume = existingSets.Where(set => !set.IsWarmup &&
+                (set.ExerciseId is null || !updatedExerciseIds.Contains(set.ExerciseId)))
+            .Sum(set => set.WeightKg * set.RepsCompleted);
+        foreach (var exLog in updatedLogs)
         {
             var exName = catalogExercises.GetValueOrDefault(exLog.ExerciseId)?.Name ?? "Exercise";
 
@@ -1388,24 +1443,17 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         var dayIds = window.Select(day => day.Id).ToArray();
         var exercises = await dbContext.WorkoutDayExercises.AsNoTracking()
             .Where(row => row.UserId == userId && dayIds.Contains(row.WorkoutDayId))
-            .Select(row => new { row.WorkoutDayId, row.ExerciseId })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
-        var exerciseIds = exercises.Select(row => row.ExerciseId).Distinct().ToArray();
-        var planningIdByExerciseId = (await dbContext.Exercises.AsNoTracking()
-                .Where(row => exerciseIds.Contains(row.Id))
-                .Select(row => new { row.Id, row.Code })
-                .ToListAsync(cancellationToken).ConfigureAwait(false))
-            .ToDictionary(row => row.Id, row => ExtractPlanningId(row.Code) ?? row.Id);
-        var planningIds = planningIdByExerciseId.Values.Distinct().ToArray();
-        // Contributions are stored against reviewed definition rows, whose ids the database assigns;
-        // the day exercise only carries a planning id in its ENGINE_<id> code. Translate through the
-        // persisted source id, exactly as the swap path does, or every strength reschedule fails closed.
-        var definitionIdByPlanningId = (await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
-                .Where(row => row.SourceExerciseId != null && planningIds.Contains(row.SourceExerciseId.Value))
-                .Select(row => new { row.Id, row.SourceExerciseId })
-                .ToListAsync(cancellationToken).ConfigureAwait(false))
-            .ToDictionary(row => row.SourceExerciseId!.Value, row => row.Id);
-        var definitionIds = definitionIdByPlanningId.Values.ToArray();
+        var legacyRows = exercises.Where(row => !UsesDefinitionId(row)).ToArray();
+        var legacyCatalog = await LoadCatalogAsync(legacyRows.Select(row => row.ExerciseId), false, cancellationToken);
+        var sourceByLegacyId = legacyCatalog.ToDictionary(pair => pair.Key, pair => ExtractPlanningId(pair.Value.Code));
+        var sourceIds = sourceByLegacyId.Values.OfType<int>().Distinct().ToArray();
+        var definitionBySource = await dbContext.WorkoutExerciseDefinitions.AsNoTracking()
+            .Where(row => row.SourceExerciseId.HasValue && sourceIds.Contains(row.SourceExerciseId.Value))
+            .ToDictionaryAsync(row => row.SourceExerciseId!.Value, row => row.Id, cancellationToken);
+        var definitionByRow = exercises.ToDictionary(row => row.Id, row => UsesDefinitionId(row) ? row.ExerciseId :
+            sourceByLegacyId.GetValueOrDefault(row.ExerciseId) is { } source ? definitionBySource.GetValueOrDefault(source) : 0);
+        var definitionIds = definitionByRow.Values.Distinct().ToArray();
         var musclesByDefinitionId = (await dbContext.ExerciseMuscleContributions.AsNoTracking()
                 .Where(row => definitionIds.Contains(row.ExerciseId) && row.Fraction > 0)
                 .Select(row => new { row.ExerciseId, row.MuscleGroupId })
@@ -1424,9 +1472,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 var complete = dayExercises.Length > 0;
                 foreach (var row in dayExercises)
                 {
-                    if (planningIdByExerciseId.TryGetValue(row.ExerciseId, out var planningId) &&
-                        definitionIdByPlanningId.TryGetValue(planningId, out var definitionId) &&
-                        musclesByDefinitionId.TryGetValue(definitionId, out var values) && values.Count > 0)
+                    if (musclesByDefinitionId.TryGetValue(definitionByRow[row.Id], out var values) && values.Count > 0)
                         set.UnionWith(values);
                     else
                         complete = false;
@@ -1655,7 +1701,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         var isRunning = ContainsAny(name, "run", "jog", "sprint", "tempo");
         var isSwimming = ContainsAny(name, "swim", "pool");
         var isHiit = ContainsAny(name, "hiit", "interval") && !isCycling && !isRunning;
-        var isDistanceCardio = isCycling || isRunning || isSwimming || ContainsAny(name, "walk");
+        var isDistanceCardio = isCycling || isRunning || isSwimming ||
+            WorkoutActivityTagRule.IsTimedWalk(name, dayExercise.DurationSeconds);
 
         var activityTag = ClassifyExerciseTag(dayExercise, workoutType, exercise);
         var isLogged = IsExerciseLogComplete(currentLog, dayExercise, name);
@@ -1816,14 +1863,16 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         var warmups = actualWarmups.Length > 0
             ? actualWarmups.Select((set, index) => new WorkoutSetDetailDto(index + 1,
                 (double)set.WeightKg, set.RepsCompleted, (double?)set.Rpe, true, set.RestTimeSeconds,
-                set.LeftSideReps, set.RightSideReps) { IsObserved = true }).ToArray()
+                set.LeftSideReps, set.RightSideReps)
+                { IsObserved = true, TechniqueAcceptable = set.TechniqueAcceptable }).ToArray()
             : Enumerable.Range(1, Math.Max(0, plannedWarmupSets))
                 .Select(number => new WorkoutSetDetailDto(number, plannedWeightKg, plannedRepetitions,
                     null, true, restSeconds)).ToArray();
         var working = actualWorking.Length > 0
             ? actualWorking.Select((set, index) => new WorkoutSetDetailDto(warmups.Length + index + 1,
                 (double)set.WeightKg, set.RepsCompleted, (double?)set.Rpe, false, set.RestTimeSeconds,
-                set.LeftSideReps, set.RightSideReps) { IsObserved = true }).ToArray()
+                set.LeftSideReps, set.RightSideReps)
+                { IsObserved = true, TechniqueAcceptable = set.TechniqueAcceptable }).ToArray()
             : Enumerable.Range(1, Math.Max(1, plannedWorkingSets))
                 .Select(number => new WorkoutSetDetailDto(warmups.Length + number, plannedWeightKg,
                     plannedRepetitions, null, false, restSeconds)).ToArray();
@@ -1959,10 +2008,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
     }
 
     private static bool UsesEnduranceMetrics(WorkoutDayExerciseRecord dayExercise, string name) =>
-        dayExercise.DurationSeconds is > 0 ||
-        ContainsAny(name, "plank", "copenhagen", "bike", "cycle", "cycling", "ride", "run", "jog",
-            "sprint", "tempo", "swim", "pool", "hiit", "interval", "yoga", "vinyasa", "mobility",
-            "recovery", "breathing", "pilates", "walk");
+        WorkoutActivityTagRule.UsesEnduranceMetrics(name, dayExercise.DurationSeconds);
 
     private static string BuildPrimaryTag(
         WorkoutDayRecord day,
@@ -2009,19 +2055,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
     private static string ClassifyExerciseTag(
         WorkoutDayExerciseRecord exercise,
         string workoutType,
-        Exercise? catalogExercise)
-    {
-        var name = catalogExercise?.Name ?? string.Empty;
-        if (ContainsAny(name, "yoga", "vinyasa", "mobility", "recovery", "breathing", "pilates", "stretch"))
-            return RecoveryTag;
-        if (ContainsAny(name, "run", "jog", "sprint", "tempo", "cycle", "cycling", "ride", "bike", "swim", "pool", "hiit", "interval", "walk", "dance"))
-            return CardioTag;
-        if (string.Equals(workoutType, nameof(WorkoutType.Recovery), StringComparison.OrdinalIgnoreCase))
-            return RecoveryTag;
-        if (string.Equals(workoutType, nameof(WorkoutType.Cardio), StringComparison.OrdinalIgnoreCase) && exercise.DurationSeconds is > 0)
-            return CardioTag;
-        return StrengthTag;
-    }
+        Exercise? catalogExercise) =>
+        WorkoutActivityTagRule.Classify(workoutType, catalogExercise?.Name, exercise.DurationSeconds);
 
     private static string BuildSectionTitle(string tag) => tag switch
     {

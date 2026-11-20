@@ -46,7 +46,15 @@
                                    />
                 <VerticalStackLayout Grid.Row="1" Spacing="{StaticResource UiSpaceTight}">
                     <Label LineBreakMode="WordWrap" Text="{Binding SwapErrorText, Converter={StaticResource LocalizedStringConverter}}"
-                           Style="{StaticResource ErrorLabel}" IsVisible="{Binding HasSwapError}" />
+                           Style="{StaticResource ErrorLabel}" IsVisible="{Binding HasSwapError}">
+                        <Label.Behaviors>
+                            <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                        </Label.Behaviors>
+                    </Label>
+                    <Button Style="{StaticResource ButtonSecondary}"
+                            Text="{loc:LocalizedText Common_TryAgain}"
+                            Command="{Binding OpenSwapPanelCommand}"
+                            IsVisible="{Binding HasSwapError}" />
                     <Label LineBreakMode="WordWrap" Text="{Binding SwapEmptyTextKey, Converter={StaticResource LocalizedStringConverter}}"
                            Style="{StaticResource BodyLabel}" IsVisible="{Binding ShowNoSwapCandidates}" />
                 </VerticalStackLayout>
@@ -56,10 +64,12 @@
                                 SelectionMode="None">
                     <CollectionView.ItemTemplate>
                         <DataTemplate x:DataType="models:ExerciseSwapOption">
-                            <Border Style="{StaticResource CardSecondary}"
+                            <sharedControls:SelectionCell Style="{StaticResource CardSecondary}"
                                     Margin="{StaticResource UiInsets0_0_0_8}"
-                                    SemanticProperties.Description="{Binding Name}">
-                                <!-- Selected semantics come from the shared CardSecondary style. -->
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    IsSelected="{Binding IsSelected}"
+                                    SemanticProperties.Description="{Binding Name, Converter={StaticResource LocalizedStringConverter}}">
+                                <!-- Role, selected trait and selected hint come from SelectionCell and CardSecondary. -->
                                 <Border.GestureRecognizers>
                                     <TapGestureRecognizer
                                         Command="{Binding SelectSwapCandidateCommand, Source={RelativeSource AncestorType={x:Type vm:WorkoutSessionViewModel}}, x:DataType=vm:WorkoutSessionViewModel}"
@@ -67,7 +77,7 @@
                                 </Border.GestureRecognizers>
                                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceTight}">
                                     <VerticalStackLayout Spacing="{StaticResource UiSpaceMicro}">
-                                        <Label Text="{Binding Name}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
+                                        <Label Text="{Binding Name, Converter={StaticResource LocalizedStringConverter}}" Style="{StaticResource BodyStrong}" LineBreakMode="WordWrap" />
                                         <Label
                                             Text="{Binding MuscleMatch, Converter={StaticResource LocalizedStringConverter}}"
                                             Style="{StaticResource CaptionLabel}"
@@ -85,15 +95,23 @@
                                            IsVisible="{Binding IsSelected}" Style="{StaticResource AccentLabel}"
                                            VerticalOptions="Center" />
                                 </Grid>
-                            </Border>
+                            </sharedControls:SelectionCell>
                         </DataTemplate>
                     </CollectionView.ItemTemplate>
                 </CollectionView>
                 </Grid>
                 <VerticalStackLayout Grid.Row="3" Spacing="{StaticResource UiSpaceMicro}"
-                                     Padding="{DynamicResource PresentationActionFooterPadding}">
+                                     Padding="{DynamicResource PresentationActionFooterPadding}"
+                                     BackgroundColor="{AppThemeBinding Light={StaticResource CardSurface}, Dark={StaticResource CardSurfaceDark}}">
+                    <Label Text="{Binding SwapConfirmHint}"
+                           Style="{StaticResource CaptionCentered}"
+                           LineBreakMode="WordWrap"
+                           IsVisible="{Binding ShowSwapConfirmHint}" />
                     <Button Style="{StaticResource ButtonPrimary}" Text="{Binding SwapConfirmText, Converter={StaticResource LocalizedStringConverter}}"
-                            Command="{Binding ConfirmSwapCommand}" IsVisible="{Binding HasSwapCandidates}" />
+                            Command="{Binding ConfirmSwapCommand}"
+                            IsEnabled="{Binding CanConfirmSwap}"
+                            SemanticProperties.Hint="{Binding SwapConfirmHint}"
+                            IsVisible="{Binding HasSwapCandidates}" />
                     <Button Text="{loc:LocalizedText Workout_Swap_LeaveSessionButton}" Command="{Binding FinishSessionCommand}"
                             IsVisible="{Binding SwapNeedsReload}"
                             Style="{StaticResource ButtonSecondary}" />

@@ -1,8 +1,11 @@
+using System.Globalization;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
+using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Resources.Styles;
+using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Controls.Cycle;
 
@@ -31,6 +34,7 @@ public sealed class CycleMonthGrid : Grid
         propertyChanged: OnIsExpandedChanged);
 
     private readonly List<Border> _dayCells = [];
+    private int _currentLeadingOffset = -1;
     private CycleDayItem? _visuallySelectedDay;
 
     public CycleMonthGrid()
@@ -103,27 +107,58 @@ public sealed class CycleMonthGrid : Grid
             return;
         }
 
-        EnsureCellCount(days.Count);
+        var firstDate = days[0].Date;
+        var leadingOffset = firstDate.HasValue
+            ? ((int)firstDate.Value.DayOfWeek + 6) % DaysPerWeek
+            : 0;
+
+        EnsureCellCount(days.Count, leadingOffset);
         UpdateExistingCells(days);
         _visuallySelectedDay = days.FirstOrDefault(day => day.IsSelected);
         ApplySelectionRing();
     }
 
-    private void EnsureCellCount(int count)
+    private void EnsureCellCount(int count, int leadingOffset)
     {
-        if (_dayCells.Count == count)
+        if (_dayCells.Count == count && _currentLeadingOffset == leadingOffset)
             return;
 
         ClearCells();
-        var rowCount = (int)Math.Ceiling(count / (double)DaysPerWeek);
-        for (var row = 0; row < rowCount; row++)
+        _currentLeadingOffset = leadingOffset;
+
+        // Row 0: localized Monday-first weekday headers; Rows 1..N: calendar day cells aligned to DayOfWeek.
+        var dayRowCount = (int)Math.Ceiling((count + leadingOffset) / (double)DaysPerWeek);
+        RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+        for (var row = 0; row < dayRowCount; row++)
             RowDefinitions.Add(new RowDefinition(GridLength.Auto));
+
+        var shortestNames = CultureInfo.CurrentCulture.DateTimeFormat.ShortestDayNames;
+        var weekdayOrder = new[] { 1, 2, 3, 4, 5, 6, 0 };
+        var headerStyle = Application.Current?.Resources["CaptionTinyCentered"] as Style;
+        for (var col = 0; col < DaysPerWeek; col++)
+        {
+            var headerLabel = new Label
+            {
+                Text = shortestNames[weekdayOrder[col]],
+                HorizontalTextAlignment = TextAlignment.Center,
+                Margin = AppThemeResources.GetThickness("UiInsets0_0_0_4"),
+                LineBreakMode = LineBreakMode.NoWrap
+            };
+            if (headerStyle is not null)
+                headerLabel.Style = headerStyle;
+            CappedTextSize.SetIsCompactLabel(headerLabel, true);
+            AutomationProperties.SetIsInAccessibleTree(headerLabel, false);
+            headerLabel.SetValue(RowProperty, 0);
+            headerLabel.SetValue(ColumnProperty, col);
+            Children.Add(headerLabel);
+        }
 
         for (var index = 0; index < count; index++)
         {
+            var slot = index + leadingOffset;
             var cell = CreateDayCell();
-            cell.SetValue(RowProperty, index / DaysPerWeek);
-            cell.SetValue(ColumnProperty, index % DaysPerWeek);
+            cell.SetValue(RowProperty, 1 + slot / DaysPerWeek);
+            cell.SetValue(ColumnProperty, slot % DaysPerWeek);
             _dayCells.Add(cell);
             Children.Add(cell);
         }
@@ -155,6 +190,8 @@ public sealed class CycleMonthGrid : Grid
     private void ApplySelectionRing()
     {
         var selected = _visuallySelectedDay;
+        var selectedHint = UiTextCatalog.Get("Common_Selected");
+        var unselectedHint = UiTextCatalog.Get("Common_NotSelected");
 
         foreach (var cell in _dayCells)
         {
@@ -174,6 +211,9 @@ public sealed class CycleMonthGrid : Grid
             {
                 VisualStateManager.GoToState(cell, "Unselected");
             }
+
+            if (cell.Content is Button button)
+                SemanticProperties.SetHint(button, isSelected ? selectedHint : unselectedHint);
         }
     }
 
@@ -182,6 +222,7 @@ public sealed class CycleMonthGrid : Grid
         Children.Clear();
         RowDefinitions.Clear();
         _dayCells.Clear();
+        _currentLeadingOffset = -1;
     }
 
     private static Border CreateDayCell()
@@ -196,6 +237,7 @@ public sealed class CycleMonthGrid : Grid
             Padding = AppThemeResources.GetThickness("UiInsets2"),
             LineBreakMode = LineBreakMode.NoWrap
         };
+        CappedTextSize.SetIsCompactControl(button, true);
 
         return new Border
         {

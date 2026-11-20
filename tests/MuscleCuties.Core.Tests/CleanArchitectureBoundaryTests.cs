@@ -7,7 +7,7 @@ using MuscleCuties.UseCases.Features.Cycle.Contracts;
 namespace MuscleCuties.Core.Tests;
 
 /// <summary>
-/// Programmatic verification of mandatory Clean Architecture boundaries and invariants from AGENTS.md:
+/// Programmatic verification of mandatory Clean Architecture boundaries and invariants:
 /// 1. MuscleCuties.Core references zero outer assemblies/packages (UseCases, Infrastructure, PostgreSql, Server, UI, EntityFrameworkCore, Maui, AspNetCore, Sqlite).
 /// 2. MuscleCuties.UseCases references only MuscleCuties.Core (zero Infrastructure, PostgreSql, Server, UI, EntityFrameworkCore, Maui, Sqlite).
 /// 3. Zero SQLite references across Core and UseCases.
@@ -310,7 +310,7 @@ public class CleanArchitectureBoundaryTests
     [Fact]
     public void Zero_unauthorized_or_duplicate_workout_planners_or_fallback_generators()
     {
-        // Enforce AGENTS.md invariant and R07 resolution:
+        // Enforce single-planner invariant and R07 resolution:
         // 1. No competing or duplicate IWorkoutPlanner / WorkoutPlanner classes exist.
         // 2. MauiProgram / Composition has zero registrations for IWorkoutPlanner or WorkoutPlanner.
         // 3. Keep one authoritative workout planning client in UI (IStrengthPlanProposalClientV020) and application service (IWorkoutPlanningApplicationService).

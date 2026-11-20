@@ -37,7 +37,7 @@ public partial class ProfileSetupViewModel : ObservableObject
     [ObservableProperty] private SelectionOption<UserGoal>? _selectedGoalOption;
 
     [ObservableProperty] private int _selectedHeightCm;
-    [ObservableProperty] private int _selectedInches = 6;
+    [ObservableProperty] private int _selectedInches;
 
     [ObservableProperty] private int _selectedWeightKg;
     [ObservableProperty] private int _selectedWeightLbs;
@@ -62,7 +62,7 @@ public partial class ProfileSetupViewModel : ObservableObject
     {
         _useCase = useCase;
         _navigateToQuizAsync = navigateToQuizAsync;
-        ContinueCommand = new AsyncRelayCommand(ContinueAsync);
+        ContinueCommand = new AsyncRelayCommand(ContinueAsync, () => !IsBusy);
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
         ConfirmBirthDateCommand = new RelayCommand(ConfirmBirthDate);
         SelectMetricUnitsCommand = new RelayCommand(() => UseMetricSystem = true);
@@ -96,7 +96,7 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions { get; private set; } = [];
 
-    public string WeightUnit => UseMetricSystem ? "kg" : "lbs";
+    public string WeightUnit => UseMetricSystem ? "Common_Unit_Kg" : "Common_Unit_Lbs";
     public bool HasProfileImage => !string.IsNullOrWhiteSpace(ProfileImagePath) && File.Exists(ProfileImagePath);
     public bool HasNoProfileImage => !HasProfileImage;
     public string ProfileImageSource => HasProfileImage ? ProfileImagePath : string.Empty;
@@ -124,56 +124,129 @@ public partial class ProfileSetupViewModel : ObservableObject
 
     private async Task LoadDataAsync()
     {
-        var result = await _useCase.LoadAsync();
-        if (result.HasPendingRegistration)
+        if (IsBusy)
+            return;
+
+        IsBusy = true;
+        ErrorMessage = string.Empty;
+        try
         {
-            if (result.Profile is { } staged)
+            var result = await _useCase.LoadAsync();
+            if (result.HasPendingRegistration)
             {
-                Name = staged.Name;
-                ApplyLoadedBirthDate(staged.BirthDate);
-                ProfileImagePath = staged.ProfileImagePath;
-                CycleLength = staged.CycleLength;
-                UseMetricSystem = staged.UseMetricSystem;
-                SelectedHeightCm = (int)staged.HeightCm;
-                SelectedWeightKg = (int)staged.WeightKg;
-                var totalInches = (int)Math.Round(staged.HeightCm / CentimetersPerInch);
-                SelectedFeet = totalInches / InchesPerFoot;
-                SelectedInches = totalInches % InchesPerFoot;
-                SelectedWeightLbs = (int)Math.Round(staged.WeightKg / KilogramsPerPound);
+                if (result.Profile is { } staged)
+                {
+                    Name = staged.Name;
+                    ApplyLoadedBirthDate(staged.BirthDate);
+                    ProfileImagePath = staged.ProfileImagePath;
+                    CycleLength = staged.CycleLength;
+                    UseMetricSystem = staged.UseMetricSystem;
+                    SelectedHeightCm = (int)staged.HeightCm;
+                    SelectedWeightKg = (int)staged.WeightKg;
+                    var totalInches = (int)Math.Round(staged.HeightCm / CentimetersPerInch);
+                    SelectedFeet = totalInches / InchesPerFoot;
+                    SelectedInches = totalInches % InchesPerFoot;
+                    SelectedWeightLbs = (int)Math.Round(staged.WeightKg / KilogramsPerPound);
 
-                var selectedOptions = ProfileWorkoutActivityOptions.Build(
-                    staged.SelectedActivityTypes.Select(value => (WorkoutActivityDto)value).ToHashSet());
-                foreach (var option in WorkoutActivityOptions)
-                    option.IsSelected = selectedOptions.Any(s => s.ActivityType == option.ActivityType && s.IsSelected);
-            }
-            else if (!string.IsNullOrWhiteSpace(result.PendingUsername))
-            {
-                Name = result.PendingUsername;
+                    var selectedOptions = ProfileWorkoutActivityOptions.Build(
+                        staged.SelectedActivityTypes.Select(value => (WorkoutActivityDto)value).ToHashSet());
+                    foreach (var option in WorkoutActivityOptions)
+                        option.IsSelected = selectedOptions.Any(s => s.ActivityType == option.ActivityType && s.IsSelected);
+                }
+                else if (!string.IsNullOrWhiteSpace(result.PendingUsername))
+                {
+                    Name = result.PendingUsername;
+                }
+
+                return;
             }
 
-            return;
+            var profile = result.Profile;
+            if (profile is null)
+                return;
+
+            Name = profile.Name;
+            ApplyLoadedBirthDate(profile.BirthDate);
+            ProfileImagePath = profile.ProfileImagePath;
+            var selectedActivities = profile.SelectedActivityTypes
+                .Select(value => (WorkoutActivityDto)value).ToHashSet();
+            var loadedOptions = ProfileWorkoutActivityOptions.Build(selectedActivities);
+            foreach (var option in WorkoutActivityOptions)
+                option.IsSelected =
+                    loadedOptions.Any(loaded => loaded.ActivityType == option.ActivityType && loaded.IsSelected);
+            _hasLoadedProfile = true;
         }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[ProfileSetupViewModel] Load failed ({ex.GetType().Name}).");
+            ErrorMessage = "Onboarding_ProfileSetup_LoadError";
+        }
+        finally
+        {
+            IsBusy = false;
+        }
+    }
 
-        var profile = result.Profile;
-        if (profile is null)
-            return;
-
-        Name = profile.Name;
-        ApplyLoadedBirthDate(profile.BirthDate);
-        ProfileImagePath = profile.ProfileImagePath;
-        var selectedActivities = profile.SelectedActivityTypes
-            .Select(value => (WorkoutActivityDto)value).ToHashSet();
-        var loadedOptions = ProfileWorkoutActivityOptions.Build(selectedActivities);
-        foreach (var option in WorkoutActivityOptions)
-            option.IsSelected =
-                loadedOptions.Any(loaded => loaded.ActivityType == option.ActivityType && loaded.IsSelected);
-        _hasLoadedProfile = true;
+    partial void OnIsBusyChanged(bool value)
+    {
+        ContinueCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnUseMetricSystemChanged(bool value)
     {
+        if (value)
+        {
+            if (SelectedHeightCm == 0 && SelectedFeet > 0)
+                SelectedHeightCm = Math.Clamp(
+                    (int)Math.Round((SelectedFeet * InchesPerFoot + SelectedInches) * CentimetersPerInch), 100, 220);
+            if (SelectedWeightKg == 0 && SelectedWeightLbs > 0)
+                SelectedWeightKg = Math.Clamp((int)Math.Round(SelectedWeightLbs * KilogramsPerPound), 30, 200);
+        }
+        else
+        {
+            if (SelectedFeet == 0 && SelectedHeightCm > 0)
+            {
+                var totalInches = (int)Math.Round(SelectedHeightCm / CentimetersPerInch);
+                SelectedFeet = Math.Clamp(totalInches / InchesPerFoot, 4, 7);
+                SelectedInches = Math.Clamp(totalInches % InchesPerFoot, 0, 11);
+            }
+
+            if (SelectedWeightLbs == 0 && SelectedWeightKg > 0)
+                SelectedWeightLbs = Math.Clamp((int)Math.Round(SelectedWeightKg / KilogramsPerPound), 66, 440);
+        }
+
         OnPropertyChanged(nameof(WeightUnit));
         OnPropertyChanged(nameof(UseImperialSystem));
+    }
+
+    partial void OnSelectedHeightCmChanged(int value)
+    {
+        if (value > 0 && HeightError == HeightRequiredError)
+            HeightError = string.Empty;
+    }
+
+    partial void OnSelectedFeetChanged(int value)
+    {
+        if (value > 0 && HeightError == HeightRequiredError)
+            HeightError = string.Empty;
+    }
+
+    partial void OnSelectedWeightKgChanged(int value)
+    {
+        if (value > 0 && WeightError == WeightRequiredError)
+            WeightError = string.Empty;
+    }
+
+    partial void OnSelectedWeightLbsChanged(int value)
+    {
+        if (value > 0 && WeightError == WeightRequiredError)
+            WeightError = string.Empty;
+    }
+
+    partial void OnWellnessAcknowledgedChanged(bool value)
+    {
+        if (value && WellnessError == WellnessRequiredError)
+            WellnessError = string.Empty;
     }
 
     partial void OnBirthDateChanged(DateTime oldValue, DateTime newValue)
@@ -296,7 +369,10 @@ public partial class ProfileSetupViewModel : ObservableObject
             // answer the planner depends on is missing.
             if (BirthDateError.Length > 0 || HeightError.Length > 0 || WeightError.Length > 0 ||
                 StrengthActivityError.Length > 0 || WellnessError.Length > 0)
+            {
+                ErrorMessage = "Onboarding_ProfileSetup_CompleteHighlightedFields";
                 return;
+            }
 
             var heightCm = UseMetricSystem
                 ? SelectedHeightCm
@@ -314,8 +390,8 @@ public partial class ProfileSetupViewModel : ObservableObject
             {
                 ErrorMessage = result.ErrorMessage ??
                     (result.Error == ProfileSetupError.AccountMissing
-                        ? "Active account not found. Please try again."
-                        : "Check your profile details and try again.");
+                        ? "Ui_Onboarding_Error_SetupFailed"
+                        : "Auth_Register_Error_InvalidProfile");
                 return;
             }
 
@@ -349,6 +425,8 @@ public partial class ProfileSetupViewModel : ObservableObject
             return;
 
         ErrorMessage = ProfileWorkoutActivityOptions.ToggleSelection(WorkoutActivityOptions, item);
+        if (WorkoutActivityOptions.Any(option => option.IsSelected && WorkoutPlanningConstants.IsStrengthActivity(option.ActivityType)))
+            StrengthActivityError = string.Empty;
     }
 
     public void SetProfileImage(string? imagePath)

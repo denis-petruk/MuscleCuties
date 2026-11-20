@@ -20,8 +20,8 @@
               HorizontalOptions="Fill"
               MaximumWidthRequest="{StaticResource UiDimension640}">
             <sharedControls:PageHeader
-                Title="{Binding CurrentMonthLabel, Converter={StaticResource LocalizedStringConverter}}"
-                Subtitle="{loc:LocalizedText Cycle_Page_Title}"
+                Title="{loc:LocalizedText Cycle_Page_Title}"
+                Subtitle="{Binding CurrentMonthLabel, Converter={StaticResource LocalizedStringConverter}}"
                 ShowBack="False">
                 <sharedControls:PageHeader.ActionContent>
                     <Border Style="{StaticResource HeaderIconButton}"
@@ -45,25 +45,30 @@
             </sharedControls:PageHeader>
         </Grid>
 
-        <ScrollView Grid.Row="1">
-            <VerticalStackLayout
-                Padding="{DynamicResource PresentationPageContentPadding}"
-                Spacing="{StaticResource UiSpaceControl}"
-                HorizontalOptions="Fill"
-                MaximumWidthRequest="{StaticResource UiDimension640}">
-                <toolkit:LazyView x:Name="HeroCardLazy"
-                                  x:TypeArguments="cycleControls:CycleHeroCard" />
-                <toolkit:LazyView x:Name="CalendarCardLazy"
-                                  x:TypeArguments="cycleControls:CycleCalendarCard" />
-                <toolkit:LazyView x:Name="PhaseExplorerLazy"
-                                  x:TypeArguments="cycleControls:CyclePhaseExplorerCarousel" />
-                <Label
-                    Text="{loc:LocalizedText Cycle_Page_MedicalDisclaimer}"
-                    Style="{StaticResource CaptionTinyCentered}"
-                    LineBreakMode="WordWrap"
-                    Margin="{StaticResource UiInsets0_8_0_0}" />
-            </VerticalStackLayout>
-        </ScrollView>
+        <RefreshView Grid.Row="1"
+                     Command="{Binding RefreshCommand}"
+                     IsRefreshing="{Binding IsRefreshing}"
+                     RefreshColor="{StaticResource Primary}">
+            <ScrollView>
+                <VerticalStackLayout
+                    Padding="{DynamicResource PresentationPageContentPadding}"
+                    Spacing="{StaticResource UiSpaceControl}"
+                    HorizontalOptions="Fill"
+                    MaximumWidthRequest="{StaticResource UiDimension640}">
+                    <toolkit:LazyView x:Name="HeroCardLazy"
+                                      x:TypeArguments="cycleControls:CycleHeroCard" />
+                    <toolkit:LazyView x:Name="CalendarCardLazy"
+                                      x:TypeArguments="cycleControls:CycleCalendarCard" />
+                    <toolkit:LazyView x:Name="PhaseExplorerLazy"
+                                      x:TypeArguments="cycleControls:CyclePhaseExplorerCarousel" />
+                    <Label
+                        Text="{loc:LocalizedText Cycle_Page_MedicalDisclaimer}"
+                        Style="{StaticResource CaptionTinyCentered}"
+                        LineBreakMode="WordWrap"
+                        Margin="{StaticResource UiInsets0_8_0_0}" />
+                </VerticalStackLayout>
+            </ScrollView>
+        </RefreshView>
 
         <toolkit:LazyView
             x:Name="DatePhaseModal"
@@ -85,6 +90,9 @@
             Grid.RowSpan="2"
             x:TypeArguments="cycleControls:CyclePhaseSummarySheet"
             InputTransparent="{Binding IsPhaseSummarySheetVisible, Converter={StaticResource InvertedBoolConverter}}" />
-        <sharedControls:PageLoadingOverlay Grid.RowSpan="2" />
+        <sharedControls:PageLoadingOverlay
+            Grid.RowSpan="2"
+            MessageText="{Binding LoadErrorMessage}"
+            RetryCommand="{Binding RetryLoadCommand}" />
     </Grid>
 </ContentPage>

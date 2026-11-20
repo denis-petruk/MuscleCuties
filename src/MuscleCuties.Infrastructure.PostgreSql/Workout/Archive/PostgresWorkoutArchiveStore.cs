@@ -30,6 +30,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
 
+            var accountZone = await LoadAccountTimeZoneAsync(userId, cancellationToken).ConfigureAwait(false);
             var sessions = await dbContext.WorkoutSessionLogs.AsNoTracking()
                 .Where(w => w.UserId == userId && !w.IsDeleted && w.CompletedAt != null)
                 .OrderByDescending(w => w.StartedAt)
@@ -39,7 +40,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            var summaries = await BuildSummariesAsync(dbContext, userId, sessions, cancellationToken)
+            var summaries = await BuildSummariesAsync(dbContext, userId, sessions, accountZone, cancellationToken)
                 .ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -55,13 +56,14 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
         CancellationToken cancellationToken = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            var (start, end) = GetHistoryDateRange(year, month);
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken)
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
 
+            var accountZone = await LoadAccountTimeZoneAsync(userId, cancellationToken).ConfigureAwait(false);
+            var (start, end) = GetHistoryDateRange(year, month, accountZone);
             var sessions = await dbContext.WorkoutSessionLogs.AsNoTracking()
                 .Where(w => w.UserId == userId && !w.IsDeleted && w.CompletedAt != null && w.StartedAt >= start && w.StartedAt < end)
                 .OrderByDescending(w => w.StartedAt)
@@ -71,7 +73,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
-            var summaries = await BuildSummariesAsync(dbContext, userId, sessions, cancellationToken)
+            var summaries = await BuildSummariesAsync(dbContext, userId, sessions, accountZone, cancellationToken)
                 .ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
@@ -119,6 +121,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 .ToListAsync(cancellationToken)
                 .ConfigureAwait(false);
 
+            var accountZone = await LoadAccountTimeZoneAsync(userId, cancellationToken).ConfigureAwait(false);
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
             var detailKind = sets.Count > 0 ? RecordedSetsDetailKind : NoSetDetailsDetailKind;
@@ -135,7 +138,8 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 detailKind,
                 RecordedWallTimePrecision)
             {
-                DistanceKm = session.DistanceKm
+                DistanceKm = session.DistanceKm,
+                AccountLocalStartedAt = ToLocalStart(session.StartedAt, accountZone)
             };
         }).ConfigureAwait(false);
 
@@ -259,6 +263,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
 
+            var accountZone = await LoadAccountTimeZoneAsync(userId, cancellationToken).ConfigureAwait(false);
             var dates = await dbContext.WorkoutSessionLogs.AsNoTracking()
                 .Where(w => w.UserId == userId && !w.IsDeleted && w.CompletedAt != null)
                 .Select(w => w.StartedAt)
@@ -268,6 +273,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
             return dates
+                .Select(date => ToLocalStart(date, accountZone))
                 .Select(d => new { d.Year, d.Month })
                 .Distinct()
                 .OrderByDescending(d => d.Year)
@@ -283,13 +289,14 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
         CancellationToken cancellationToken = default) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-            var (start, end) = GetHistoryDateRange(year, month);
             dbContext.ChangeTracker.Clear();
             await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken)
                 .ConfigureAwait(false);
             await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
                 .ConfigureAwait(false);
 
+            var accountZone = await LoadAccountTimeZoneAsync(userId, cancellationToken).ConfigureAwait(false);
+            var (start, end) = GetHistoryDateRange(year, month, accountZone);
             var count = await dbContext.WorkoutSessionLogs
                 .CountAsync(w => w.UserId == userId && !w.IsDeleted && w.CompletedAt != null && w.StartedAt >= start && w.StartedAt < end, cancellationToken)
                 .ConfigureAwait(false);
@@ -375,6 +382,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
         PostgresDbContext dbContext,
         Guid userId,
         IReadOnlyList<WorkoutSessionLogRecord> sessions,
+        TimeZoneInfo accountZone,
         CancellationToken cancellationToken)
     {
         if (sessions.Count == 0)
@@ -418,19 +426,48 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 detailKind,
                 RecordedWallTimePrecision)
             {
-                DistanceKm = session.DistanceKm
+                DistanceKm = session.DistanceKm,
+                AccountLocalStartedAt = ToLocalStart(session.StartedAt, accountZone)
             });
         }
 
         return result;
     }
 
-    private static (DateTime Start, DateTime End) GetHistoryDateRange(int year, int month)
+    private async Task<TimeZoneInfo> LoadAccountTimeZoneAsync(Guid userId, CancellationToken cancellationToken)
+    {
+        var zoneId = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
+            .Where(state => state.UserId == userId)
+            .Select(state => state.TimeZoneId)
+            .SingleOrDefaultAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (string.IsNullOrWhiteSpace(zoneId)) return TimeZoneInfo.Utc;
+        try { return TimeZoneInfo.FindSystemTimeZoneById(zoneId); }
+        catch (TimeZoneNotFoundException) { return TimeZoneInfo.Utc; }
+        catch (InvalidTimeZoneException) { return TimeZoneInfo.Utc; }
+    }
+
+    private static DateTime ToLocalStart(DateTime startedAt, TimeZoneInfo zone) =>
+        DateTime.SpecifyKind(
+            TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(startedAt, DateTimeKind.Utc), zone),
+            DateTimeKind.Unspecified);
+
+    private static (DateTime Start, DateTime End) GetHistoryDateRange(int year, int month, TimeZoneInfo zone)
     {
         if (year is < MinValidYear or > MaxValidYear || month is < MinValidMonth or > MaxValidMonth)
             throw new ArgumentOutOfRangeException(nameof(year), "A valid year and month are required.");
-        var start = new DateTime(year, month == 0 ? 1 : month, 1, 0, 0, 0, DateTimeKind.Utc);
+        var start = new DateTime(year, month == 0 ? 1 : month, 1);
         var end = month == 0 ? start.AddYears(1) : start.AddMonths(1);
-        return (start, end);
+        return (ToUtcBoundary(start, zone), ToUtcBoundary(end, zone));
+    }
+
+    private static DateTime ToUtcBoundary(DateTime local, TimeZoneInfo zone)
+    {
+        // A month can begin in a skipped or repeated hour in some account zones.
+        while (zone.IsInvalidTime(local))
+            local = local.AddMinutes(1);
+        return zone.IsAmbiguousTime(local)
+            ? new DateTimeOffset(local, zone.GetAmbiguousTimeOffsets(local).Max()).UtcDateTime
+            : TimeZoneInfo.ConvertTimeToUtc(local, zone);
     }
 }

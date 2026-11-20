@@ -75,6 +75,7 @@ public sealed record WorkoutSetDetailDto(
     int? RightSideReps = null)
 {
     public bool IsObserved { get; init; }
+    public bool TechniqueAcceptable { get; init; } = true;
 }
 
 public sealed record WorkoutExerciseDetailDto(

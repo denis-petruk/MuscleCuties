@@ -25,6 +25,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _errorMessage = string.Empty;
     [ObservableProperty] private string _infoMessage = string.Empty;
     [ObservableProperty] private bool _isBusy;
+    [ObservableProperty] private bool _isSessionExpired;
     [ObservableProperty] private bool _isVerifying;
 
     [ObservableProperty] private string _otpCode = string.Empty;
@@ -49,13 +50,16 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
             ResendButtonText = text;
         }, _timeProvider);
 
-        VerifyCommand = new AsyncRelayCommand(VerifyAsync);
-        ResendCodeCommand = new AsyncRelayCommand(ResendCodeAsync, () => CanResend && !IsBusy);
-        GoBackCommand = new AsyncRelayCommand(GoBackAsync);
+        VerifyCommand = new AsyncRelayCommand(VerifyAsync, () => CanVerify);
+        ResendCodeCommand = new AsyncRelayCommand(ResendCodeAsync, () => CanResendNow);
+        GoBackCommand = new AsyncRelayCommand(GoBackAsync, () => !IsBusy);
         StartCountdown(60);
     }
 
     public string Email => _session.Email;
+    public bool CanVerify => !IsBusy && !IsSessionExpired;
+    public bool CanResendNow => CanResend && !IsBusy && !IsSessionExpired;
+    public bool ShowCountdownText => !CanResend && !IsSessionExpired;
     public AsyncRelayCommand VerifyCommand { get; }
     public AsyncRelayCommand ResendCodeCommand { get; }
     public AsyncRelayCommand GoBackCommand { get; }
@@ -72,16 +76,37 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
     partial void OnOtpCodeChanged(string value)
     {
         ErrorMessage = string.Empty;
+        if (string.IsNullOrEmpty(value))
+            return;
+
+        var digitsOnly = new string(value.Where(char.IsDigit).Take(6).ToArray());
+        if (!string.Equals(digitsOnly, value, StringComparison.Ordinal))
+            OtpCode = digitsOnly;
     }
 
     partial void OnCanResendChanged(bool value)
     {
+        OnPropertyChanged(nameof(CanResendNow));
+        OnPropertyChanged(nameof(ShowCountdownText));
+        ResendCodeCommand.NotifyCanExecuteChanged();
+    }
+
+    partial void OnIsSessionExpiredChanged(bool value)
+    {
+        OnPropertyChanged(nameof(CanVerify));
+        OnPropertyChanged(nameof(CanResendNow));
+        OnPropertyChanged(nameof(ShowCountdownText));
+        VerifyCommand.NotifyCanExecuteChanged();
         ResendCodeCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsBusyChanged(bool value)
     {
+        OnPropertyChanged(nameof(CanVerify));
+        OnPropertyChanged(nameof(CanResendNow));
+        VerifyCommand.NotifyCanExecuteChanged();
         ResendCodeCommand.NotifyCanExecuteChanged();
+        GoBackCommand.NotifyCanExecuteChanged();
     }
 
     private async Task VerifyAsync()
@@ -90,6 +115,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
             return;
         if (!_session.IsActive)
         {
+            IsSessionExpired = true;
             ErrorMessage = "Ui_Auth_Error_SessionExpired";
             return;
         }
@@ -115,20 +141,22 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
                 return;
             if (result.Expired)
             {
+                IsSessionExpired = true;
+                StopCountdown();
                 ErrorMessage = "Ui_Auth_Error_SessionExpired";
                 return;
             }
 
             if (!result.Verified)
             {
-                // Only an invalid code reaches this branch: an expired session is reported above. Never surface
-                // a server error code or English sentence directly, so both locales stay consistent.
-                ErrorMessage = "Ui_Auth_Error_InvalidVerificationCode";
+                ErrorMessage = "Ui_Auth_Error_IncorrectVerificationCode";
                 return;
             }
 
             if (!_otp.ConfirmSession(_session.SessionId))
             {
+                IsSessionExpired = true;
+                StopCountdown();
                 ErrorMessage = "Ui_Auth_Error_SessionExpired";
                 return;
             }

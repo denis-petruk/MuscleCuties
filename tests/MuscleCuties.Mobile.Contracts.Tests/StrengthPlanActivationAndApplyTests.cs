@@ -169,6 +169,8 @@ public sealed class StrengthPlanActivationAndApplyTests
     }
 
     [Theory]
+    [InlineData("WeeklyCoverageBelowTarget_DirectGluteDays", "Workout_Generation_BelowTargetDirectGluteDays")]
+    [InlineData("WeeklyCoverageMissing_GluteFocusHipAbduction", "Workout_Generation_MissingGluteFocusAbduction")]
     [InlineData("WeeklyMovementCoverageMissing_KneeExtension", "Workout_Generation_MissingKneeExtension")]
     [InlineData("WeeklyMovementCoverageMissing_KneeFlexion", "Workout_Generation_MissingKneeFlexion")]
     [InlineData("WeeklyMovementCoverageMissing_HipExtension", "Workout_Generation_MissingHipExtension")]

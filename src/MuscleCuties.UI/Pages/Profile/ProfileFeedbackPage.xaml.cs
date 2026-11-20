@@ -16,6 +16,17 @@ public partial class ProfileFeedbackPage : ContentPage
         this.BeginPageLoad(() => ((ProfileFeedbackViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
     }
 
+    protected override bool OnBackButtonPressed()
+    {
+        if (BindingContext is ProfileFeedbackViewModel vm && vm.HasUnsavedDraft)
+        {
+            vm.BackCommand.Execute(null);
+            return true;
+        }
+
+        return base.OnBackButtonPressed();
+    }
+
     private async void OnAttachFileClicked(object? sender, EventArgs e)
     {
         var vm = (ProfileFeedbackViewModel)BindingContext;

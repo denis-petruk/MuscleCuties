@@ -62,6 +62,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     [ObservableProperty] private bool _isCycleWarningPopupVisible;
     [ObservableProperty] private bool _isDatePhaseModalVisible;
     [ObservableProperty] private bool _isLoadError;
+    [ObservableProperty] private bool _isRefreshing;
+    private Services.Api.ApiFailureNotice? _lastLoadFailure;
     [ObservableProperty] private string _lastPhaseLogText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_NoShiftLogged");
     [ObservableProperty] private ObservableCollection<CyclePhaseOptionItem> _phaseEditOptions = new();
@@ -101,6 +103,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         _openCycleSettingsAsync = openCycleSettingsAsync;
         OpenCycleSettingsCommand = new AsyncRelayCommand(OpenCycleSettingsAsync);
         LoadDataCommand = new AsyncRelayCommand(() => _loadGate.RunAsync(LoadDataCoreAsync, this));
+        RefreshCommand = new AsyncRelayCommand(RefreshAsync);
         AdvancePhaseCommand = new AsyncRelayCommand(AdvancePhaseAsync, CanAdvancePhase);
         CloseDatePhaseModalCommand = new RelayCommand(CloseDatePhaseModal);
         SelectPhaseOptionCommand = new RelayCommand<CyclePhaseOptionItem>(SelectPhaseOption);
@@ -109,7 +112,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         ReviewEarlierPhaseRecordsCommand = new RelayCommand(ReviewEarlierPhaseRecords);
         CloseCycleWarningPopupCommand = new RelayCommand(CloseCycleWarningPopup);
         UseCycleWarningSuggestedPhaseCommand = new AsyncRelayCommand(UseCycleWarningSuggestedPhaseAsync);
-        OpenPhaseDetailsCommand = new AsyncRelayCommand<PhaseItem>(OpenPhaseDetailsAsync);
         Phases = BuildPhaseItems(UseDarkTheme);
         InitializeCalendarCommands();
         InitializeQuickLogCommands();
@@ -161,7 +163,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     public RelayCommand ReviewEarlierPhaseRecordsCommand { get; }
     public RelayCommand CloseCycleWarningPopupCommand { get; }
     public AsyncRelayCommand UseCycleWarningSuggestedPhaseCommand { get; }
-    public AsyncRelayCommand<PhaseItem> OpenPhaseDetailsCommand { get; }
     public AsyncRelayCommand OpenCycleSettingsCommand { get; }
 
     private const string PhaseOrderConflictMessage =
@@ -221,12 +222,47 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         UseDarkTheme = useDarkTheme;
     }
 
+    public AsyncRelayCommand RefreshCommand { get; }
+    public string LoadErrorMessage => _lastLoadFailure?.MessageText ?? UiTextCatalog.Get("Dashboard_Shared_CouldNotLoadData");
+    public System.Windows.Input.ICommand? RetryLoadCommand => _lastLoadFailure?.IsRetryable == false ? null : LoadDataCommand;
+
+    private async Task RefreshAsync()
+    {
+        if (IsBusy)
+        {
+            IsRefreshing = false;
+            return;
+        }
+
+        IsRefreshing = true;
+        try
+        {
+            _loadGate.MarkStale();
+            await _loadGate.RunAsync(LoadDataCoreAsync, this);
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
+    }
+
     private async Task LoadDataCoreAsync()
     {
         IsBusy = true;
+        _lastLoadFailure = null;
+        OnPropertyChanged(nameof(LoadErrorMessage));
+        OnPropertyChanged(nameof(RetryLoadCommand));
         try
         {
             await RefreshCycleDataAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[CycleViewModel] Load failed ({ex.GetType().Name}).");
+            _lastLoadFailure = Services.Api.ApiFailurePresenter.FromException(ex, "Dashboard_Shared_CouldNotLoadData");
+            IsLoadError = true;
+            OnPropertyChanged(nameof(LoadErrorMessage));
+            OnPropertyChanged(nameof(RetryLoadCommand));
         }
         finally
         {
@@ -424,14 +460,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         PhaseEditOptions = BuildPhaseOptions(day.IsNeutral ? null : day.Phase, UseDarkTheme);
         IsDatePhaseModalVisible = true;
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
-    }
-
-    private async Task OpenPhaseDetailsAsync(PhaseItem? phase)
-    {
-        if (phase is null)
-            return;
-
-        await _openPhaseDetailsAsync(phase.Phase);
     }
 
     private void CloseDatePhaseModal() => CloseDatePhaseModal(restoreSelection: true);
@@ -762,7 +790,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     {
         _suggestedPhase = suggestedPhase;
         OnPropertyChanged(nameof(HasSuggestedPhase));
-        PhaseJumpWarningTitle = "Keep your rhythm clean";
+        PhaseJumpWarningTitle = MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(
+            "Cycle_Warning_OrderTitle");
         PhaseJumpWarningText = FormatCycleOrderWarningMessage(message);
         HasPhaseJumpWarning = true;
     }
@@ -770,9 +799,12 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     private void ShowCycleOrderPopup(string message, CyclePhase suggestedPhase)
     {
         _cycleWarningSuggestedPhase = suggestedPhase;
-        CycleWarningSuggestedActionText = $"Use {suggestedPhase}";
+        CycleWarningSuggestedActionText = MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
+            "Cycle_Warning_UsePhaseFormat", FormatPhaseName(suggestedPhase));
         OnPropertyChanged(nameof(HasCycleWarningSuggestedPhase));
-        ShowCycleWarningPopup("Quick cycle check", FormatCycleOrderWarningMessage(message));
+        ShowCycleWarningPopup(
+            MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Warning_QuickCheckTitle"),
+            FormatCycleOrderWarningMessage(message));
     }
 
     private void ShowCycleWarningPopup(string title, string message)
@@ -835,7 +867,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     private static string FormatPhaseName(CyclePhase phase)
     {
-        return phase.ToString().ToLowerInvariant();
+        return MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(
+            $"Cycle_Phase_{phase}_Name");
     }
 
     partial void OnUseDarkThemeChanged(bool value)

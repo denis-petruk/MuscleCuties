@@ -307,6 +307,10 @@ public static class WorkoutGenerationEngineV2
         var priorWeekIds = input.PriorWeekExerciseIds?.ToHashSet() ?? [];
         var isGluteFocus = input.Focus == TrainingFocus.GluteSpecialization;
         var sessionCount = strengthWeekdays.Length;
+        var directGluteIds = eligibleCatalog.Where(item => item.MuscleContributions.Any(contribution =>
+            contribution.Muscle == MuscleGroupV2.GluteusMaximus && contribution.Kind == MuscleContributionKind.Direct))
+            .Select(item => item.ExerciseId).ToHashSet();
+        var meaningfulGluteDays = 0;
 
         var sessions = new List<PlannedSessionV2>(sessionCount);
         var usedCounts = new Dictionary<int, int>();
@@ -358,8 +362,13 @@ public static class WorkoutGenerationEngineV2
                 // Hip extension (if not already covered by HipThrust/HipHinge above)
                 if (!preferHipThrustFirst || !slots.Any(s => s.Pattern is MovementPattern.HipHinge or MovementPattern.HipThrust))
                 {
+                    var prioritizeDirect = meaningfulGluteDays < WorkoutPolicyV2.TargetDirectGluteDays &&
+                        !slots.Any(item => directGluteIds.Contains(item.ExerciseId)) &&
+                        eligibleCatalog.Any(item => item.Pattern is (MovementPattern.HipHinge or MovementPattern.HipThrust) &&
+                            directGluteIds.Contains(item.ExerciseId));
                     AddBestCandidate(slots, eligibleCatalog, usedCounts, existingIds, priorWeekIds,
-                        c => c.Pattern is MovementPattern.HipHinge or MovementPattern.HipThrust,
+                        c => c.Pattern is (MovementPattern.HipHinge or MovementPattern.HipThrust) &&
+                            (!prioritizeDirect || directGluteIds.Contains(c.ExerciseId)),
                         preferMachine: true);
                 }
 
@@ -419,8 +428,10 @@ public static class WorkoutGenerationEngineV2
                     preferMachine: true);
             }
 
-            // Gate 52: Dynamic Core (target 2 occasions weekly)
-            if (i < 2 || sessionCount == 1)
+            // Gate 52: Dynamic Core (target 2 occasions weekly). Every lower day gets its
+            // own trunk slot; without it a split lower session drops to three exercises while
+            // the paired upper day carries six.
+            if (!isUpperDay && (alternatingSplit || i < 2 || sessionCount == 1))
             {
                 AddBestCandidate(slots, eligibleCatalog, usedCounts, existingIds, priorWeekIds,
                     c => (c.VarietyTag == ExerciseVarietyTag.DynamicCore ||
@@ -445,6 +456,10 @@ public static class WorkoutGenerationEngineV2
             // Apply 7-step duration optimization ladder (Gate 63, 76, §11)
             var optimized = OptimizeSessionToFitBudget(
                 prescribed, eligibleCatalog, styleSpec, budgetMinutes, input.Focus, limitations, advisories, trace, out var totalMinutes);
+
+            if (optimized.Where(exercise => directGluteIds.Contains(exercise.ExerciseId)).Sum(exercise => exercise.WorkingSets)
+                >= WorkoutPolicyV2.MeaningfulExposureMinimumDirectSets)
+                meaningfulGluteDays++;
 
             sessions.Add(new PlannedSessionV2(
                 SessionIndex: i,
@@ -775,6 +790,46 @@ public static class WorkoutGenerationEngineV2
             trace.Add($"TrimmedAccessory:{removable.ex.ExerciseId}");
         }
 
+        // A short session must not collapse to two exercises and lose an entire movement region.
+        // Before trimming priority work, reduce working sets (never below two) so a four-exercise
+        // full-body floor can fit the user's budget.
+        if (totalMinutes > budgetMinutes && working.Count >= 4)
+        {
+            var reducedSets = false;
+            var candidates = working
+                .Select((exercise, index) => new { exercise, index })
+                .Where(candidate => candidate.exercise.WorkingSets > 2)
+                .Reverse()
+                .ToArray();
+            foreach (var candidate in candidates)
+            {
+                var sets = candidate.exercise.WorkingSets;
+                while (sets > 2 && totalMinutes > budgetMinutes)
+                {
+                    sets--;
+                    var catalogItem = catalogById[candidate.exercise.ExerciseId];
+                    var minutes = EstimateSingleExerciseMinutes(catalogItem,
+                        candidate.exercise.WarmUpSets, sets, candidate.exercise.MaxRepetitions,
+                        candidate.exercise.RestSeconds,
+                        candidate.exercise.SupersetGroupId is null ? 1m : SupersetRestSavingFactor);
+                    working[candidate.index] = candidate.exercise with
+                    {
+                        WorkingSets = sets,
+                        EstimatedMinutes = minutes
+                    };
+                    totalMinutes = CalculateSessionMinutes(working);
+                    trace.Add($"TrimmedSets:{candidate.exercise.ExerciseId}:{sets}");
+                    reducedSets = true;
+                }
+                if (totalMinutes <= budgetMinutes)
+                    break;
+            }
+            if (reducedSets)
+                limitations.Add(PartialCoverageTimeLimitedCode);
+            if (totalMinutes <= budgetMinutes)
+                return working;
+        }
+
         // Step 6-7: If still over budget, trim lowest-priority remaining exercise while preserving >= 1 safe core exercise
         while (totalMinutes > budgetMinutes && working.Count > 1)
         {
@@ -1038,6 +1093,9 @@ public static class WorkoutGenerationEngineV2
                 ? "WeeklyCoverageMissing_UpperPull_BandAnchorRequired"
                 : "WeeklyCoverageMissing_UpperPull_Equipment");
         }
+        if (summary.Muscles.Any(muscle => muscle.Muscle == MuscleGroupV2.GluteusMaximus &&
+                muscle.MeaningfulDirectDays < WorkoutPolicyV2.TargetDirectGluteDays))
+            advisories.Add("WeeklyCoverageBelowTarget_DirectGluteDays");
         if (!summary.CoversDirectCalves) advisories.Add("WeeklyCoverageMissing_DirectCalves");
         if (!summary.CoversDirectRearDelts) advisories.Add("WeeklyCoverageMissing_DirectRearDelts");
         if (summary.DynamicCoreOccasions < 2) advisories.Add("WeeklyCoverageBelowTarget_DynamicCore");

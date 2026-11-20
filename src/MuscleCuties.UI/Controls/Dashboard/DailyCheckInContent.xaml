@@ -7,6 +7,7 @@
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Dashboard"
     x:DataType="vm:DailyCheckInViewModel">
 
@@ -19,24 +20,21 @@
             <VerticalStackLayout Spacing="{StaticResource UiSpacing6}">
                 <Label
                     Text="{loc:LocalizedText Dashboard_CheckIn_Subtitle}"
-                    Style="{StaticResource MutedLabel}" />
+                    Style="{StaticResource MutedLabel}"
+                    IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}" />
                 <Label
                     Text="{Binding ErrorMessage, Converter={StaticResource LocalizedStringConverter}}"
                     Style="{StaticResource ErrorLabel}"
-                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}" />
+                    LineBreakMode="WordWrap"
+                    IsVisible="{Binding ErrorMessage, Converter={StaticResource StringToBoolConverter}}">
+                    <Label.Behaviors>
+                        <sharedControls:ScreenReaderStatusAnnouncementBehavior />
+                    </Label.Behaviors>
+                </Label>
             </VerticalStackLayout>
 
-            <Border Style="{StaticResource CardPrimary}" IsVisible="{Binding ShowHealthRationale}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpacing10}">
-                    <Label Text="{loc:LocalizedText Dashboard_CheckIn_HealthRationaleTitle}" Style="{StaticResource SectionTitle}" />
-                    <Label Text="{loc:LocalizedText Dashboard_CheckIn_HealthRationaleBody}" Style="{StaticResource MutedLabel}" />
-                    <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Dashboard_CheckIn_HealthConnect}"
-                            Command="{Binding ConnectHealthCommand}" HorizontalOptions="Fill" />
-                    <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Dashboard_CheckIn_HealthNotNow}"
-                            Command="{Binding NotNowHealthCommand}" HorizontalOptions="Fill" />
-                </VerticalStackLayout>
-            </Border>
-
+            <VerticalStackLayout Spacing="{StaticResource UiSpaceControl}"
+                                 IsVisible="{Binding IsCompleted, Converter={StaticResource InvertedBoolConverter}}">
             <Button
                 Style="{StaticResource ButtonSecondary}"
                 Text="{loc:LocalizedText Dashboard_CheckIn_SuggestFromAppleHealth}"
@@ -51,15 +49,19 @@
                     <Label
                         Text="{Binding SleepAutoFilledBadgeText}"
                         IsVisible="{Binding IsSleepAutoFilled}"
-                        Style="{StaticResource CaptionLabel}"
-                        TextColor="{StaticResource Primary}" />
+                        Style="{StaticResource AccentLabel}"
+                        LineBreakMode="WordWrap" />
 
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                        <Label
-                            Grid.Row="0"
-                            Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}"
-                            Style="{StaticResource FormFieldLabel}"
-                            VerticalOptions="Center" />
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                            <Label
+                                Text="{loc:LocalizedText Dashboard_CheckIn_PlanningSleepQuality}"
+                                Style="{StaticResource FormFieldLabel}"
+                                VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="{Binding PlanningSleepDisplay}"
+                                   Style="{StaticResource CaptionStrong}"
+                                   VerticalOptions="Center" />
+                        </Grid>
                         <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="{StaticResource UiSpacing6}">
                             <Button x:Name="SleepQualityChip1" AutomationId="SleepQualityChip1" Style="{StaticResource ButtonSecondary}" Grid.Column="0"
                                     Text="{loc:LocalizedText Common_Scale_1}"
@@ -82,13 +84,15 @@
                                     CommandParameter="5" Clicked="OnSleepQualityClicked"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_SleepQuality5A11y}" />
                         </Grid>
-                        <Grid Grid.Row="2" ColumnDefinitions="*,*">
-                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryLowLabel}"
-                                   Style="{StaticResource CaptionLabel}" />
-                            <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryHighLabel}"
+                        <FlexLayout Grid.Row="2" Direction="Row" Wrap="Wrap" JustifyContent="SpaceBetween">
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_SleepPoorLabel}"
                                    Style="{StaticResource CaptionLabel}"
+                                   LineBreakMode="WordWrap" />
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_SleepRestfulLabel}"
+                                   Style="{StaticResource CaptionLabel}"
+                                   LineBreakMode="WordWrap"
                                    HorizontalTextAlignment="End" />
-                        </Grid>
+                        </FlexLayout>
                     </Grid>
                 </VerticalStackLayout>
             </Border>
@@ -97,10 +101,14 @@
             <Border Style="{StaticResource CardPrimary}">
                 <VerticalStackLayout Spacing="{StaticResource UiSpacing14}">
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
-                        <Label Grid.Row="0"
-                               Text="{loc:LocalizedText Dashboard_CheckIn_EnergyTitle}"
-                               Style="{StaticResource FormFieldLabel}"
-                               VerticalOptions="Center" />
+                        <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyTitle}"
+                                   Style="{StaticResource FormFieldLabel}"
+                                   VerticalOptions="Center" />
+                            <Label Grid.Column="1" Text="{Binding EnergyDisplay}"
+                                   Style="{StaticResource CaptionStrong}"
+                                   VerticalOptions="Center" />
+                        </Grid>
                         <Grid Grid.Row="1" ColumnDefinitions="*,*,*,*,*" ColumnSpacing="{StaticResource UiSpacing6}">
                             <Button x:Name="EnergyChip1" AutomationId="EnergyChip1" Style="{StaticResource ButtonSecondary}" Grid.Column="0"
                                     Text="{loc:LocalizedText Common_Scale_1}"
@@ -128,13 +136,15 @@
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Energy5A11y}"
                                     SemanticProperties.Hint="{loc:LocalizedText Dashboard_CheckIn_Energy5Hint}" />
                         </Grid>
-                        <Grid Grid.Row="2" ColumnDefinitions="*,*">
+                        <FlexLayout Grid.Row="2" Direction="Row" Wrap="Wrap" JustifyContent="SpaceBetween">
                             <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryLowLabel}"
-                                   Style="{StaticResource CaptionLabel}" />
-                            <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryHighLabel}"
                                    Style="{StaticResource CaptionLabel}"
+                                   LineBreakMode="WordWrap" />
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_EnergyVeryHighLabel}"
+                                   Style="{StaticResource CaptionLabel}"
+                                   LineBreakMode="WordWrap"
                                    HorizontalTextAlignment="End" />
-                        </Grid>
+                        </FlexLayout>
                     </Grid>
 
                     <Grid RowDefinitions="Auto,Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
@@ -163,13 +173,29 @@
                                     Text="{loc:LocalizedText Common_Scale_5}" CommandParameter="5" Clicked="OnFatigueClicked"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Fatigue5A11y}" />
                         </Grid>
-                        <Grid Grid.Row="2" ColumnDefinitions="*,*">
-                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_FatigueLowLabel}" Style="{StaticResource CaptionLabel}" />
-                            <Label Grid.Column="1" Text="{loc:LocalizedText Dashboard_CheckIn_FatigueHighLabel}"
-                                   Style="{StaticResource CaptionLabel}" HorizontalTextAlignment="End" />
-                        </Grid>
+                        <FlexLayout Grid.Row="2" Direction="Row" Wrap="Wrap" JustifyContent="SpaceBetween">
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_FatigueLowLabel}"
+                                   Style="{StaticResource CaptionLabel}"
+                                   LineBreakMode="WordWrap" />
+                            <Label Text="{loc:LocalizedText Dashboard_CheckIn_FatigueHighLabel}"
+                                   Style="{StaticResource CaptionLabel}"
+                                   LineBreakMode="WordWrap"
+                                   HorizontalTextAlignment="End" />
+                        </FlexLayout>
                     </Grid>
 
+                </VerticalStackLayout>
+            </Border>
+
+            <!-- Optional integration prompt sits after the primary check-in questions. -->
+            <Border Style="{StaticResource CardSecondary}" IsVisible="{Binding ShowHealthRationale}">
+                <VerticalStackLayout Spacing="{StaticResource UiSpacing10}">
+                    <Label Text="{loc:LocalizedText Dashboard_CheckIn_HealthRationaleTitle}" Style="{StaticResource SectionTitle}" />
+                    <Label Text="{loc:LocalizedText Dashboard_CheckIn_HealthRationaleBody}" Style="{StaticResource MutedLabel}" />
+                    <Button Style="{StaticResource ButtonPrimary}" Text="{loc:LocalizedText Dashboard_CheckIn_HealthConnect}"
+                            Command="{Binding ConnectHealthCommand}" HorizontalOptions="Fill" />
+                    <Button Style="{StaticResource ButtonSecondary}" Text="{loc:LocalizedText Dashboard_CheckIn_HealthNotNow}"
+                            Command="{Binding NotNowHealthCommand}" HorizontalOptions="Fill" />
                 </VerticalStackLayout>
             </Border>
 
@@ -253,18 +279,17 @@
                                     CommandParameter="5" Clicked="OnSorenessClicked"
                                     SemanticProperties.Description="{loc:LocalizedText Dashboard_CheckIn_Soreness5A11y}" />
                         </Grid>
-                        <Grid Grid.Row="2" ColumnDefinitions="*, *">
+                        <FlexLayout Grid.Row="2" Direction="Row" Wrap="Wrap" JustifyContent="SpaceBetween">
                             <Label
-                                Grid.Column="0"
                                 Text="{loc:LocalizedText Dashboard_CheckIn_PainNone}"
                                 Style="{StaticResource CaptionLabel}"
-                                HorizontalOptions="Start" />
+                                LineBreakMode="WordWrap" />
                             <Label
-                                Grid.Column="1"
                                 Text="{loc:LocalizedText Dashboard_CheckIn_PainSevere}"
                                 Style="{StaticResource CaptionLabel}"
-                                HorizontalOptions="End" />
-                        </Grid>
+                                LineBreakMode="WordWrap"
+                                HorizontalTextAlignment="End" />
+                        </FlexLayout>
                     </Grid>
                     <Grid RowDefinitions="Auto,Auto" RowSpacing="{StaticResource UiSpacing6}">
                         <Label Grid.Row="0"
@@ -339,6 +364,7 @@
                 </Grid>
                 </VerticalStackLayout>
             </Border>
+            </VerticalStackLayout>
 
             <!-- Result -->
             <Border

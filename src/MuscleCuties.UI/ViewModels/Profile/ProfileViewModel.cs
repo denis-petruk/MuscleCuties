@@ -36,7 +36,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private bool _hasActiveInjuries;
     [ObservableProperty] private bool _hasVaultPhotos;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading), nameof(IsAccountActionBusy))]
     private bool _isBusy;
 
     [ObservableProperty] private bool _isLoadError;
@@ -47,14 +47,20 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private string _memberSince = string.Empty;
 
     [ObservableProperty] private string _name = string.Empty;
-    [ObservableProperty] private string _nutritionPacingText = UiTextCatalog.Get("Profile_Summary_Maintenance");
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(NutritionRowAccessibilityText))]
+    private string _nutritionPacingText = UiTextCatalog.Get("Profile_Summary_Maintenance");
     [ObservableProperty] private int _nutritionStreakDays;
     [ObservableProperty] private string _profileImagePath = string.Empty;
-    [ObservableProperty] private string _availableWeekdaysText = UiTextCatalog.Format(
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WorkoutAvailabilityRowAccessibilityText))]
+    private string _availableWeekdaysText = UiTextCatalog.Format(
         "Profile_Summary_AvailableDaysFormat", 3);
 
     // Account & Preferences Section
-    [ObservableProperty] private string _unitsDisplayText = UiTextCatalog.Get("Profile_Summary_MetricUnits");
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(UnitsDisplayRowAccessibilityText))]
+    private string _unitsDisplayText = UiTextCatalog.Get("Profile_Summary_MetricUnits");
     [ObservableProperty] private int _vaultPhotoCount;
     [ObservableProperty] private string _vaultPhotoCountText = UiTextCatalog.Format(
         "Profile_Summary_PhotoCountFormat", 0);
@@ -103,8 +109,37 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     public AsyncRelayCommand OpenVaultCommand { get; }
     public bool HasAccountActionError => !string.IsNullOrWhiteSpace(AccountActionError);
 
+    // The photo preview has three mutually exclusive states: an actionable empty state,
+    // a revealed photo, and the privacy veil. Without photos there is nothing to reveal,
+    // so the veil and its "show" action must not appear.
+    public bool ShowVaultEmptyState => !HasVaultPhotos;
+    public bool ShowVaultPhotoPreview => HasVaultPhotos && IsVaultRevealed;
+    public bool ShowVaultPrivacyOverlay => HasVaultPhotos && !IsVaultRevealed;
+
+    public string WorkoutAvailabilityRowAccessibilityText =>
+        RowAccessibilityText("Profile_Details_WorkoutAvailability", AvailableWeekdaysText);
+
+    public string NutritionRowAccessibilityText =>
+        RowAccessibilityText("Profile_Details_Nutrition", NutritionPacingText);
+
+    public static string PersonalInfoRowAccessibilityText =>
+        RowAccessibilityText("Profile_Details_PersonalInfo",
+            UiTextCatalog.Get("Profile_Details_NameEmailPasswordCycleBaselines"));
+
+    public string UnitsDisplayRowAccessibilityText =>
+        RowAccessibilityText("Profile_Details_UnitsDisplay", UnitsDisplayText);
+
+    public static string PrivacyRowAccessibilityText =>
+        RowAccessibilityText("Profile_Privacy_Policy",
+            UiTextCatalog.Get("Profile_Details_HealthRecordsStayOnThisDevice"));
+
+    public static string SendFeedbackRowAccessibilityText =>
+        RowAccessibilityText("Profile_Details_SendFeedback",
+            UiTextCatalog.Get("Profile_Details_ReportAnIssueOrSuggestA"));
+
     public AsyncRelayCommand LoadDataCommand { get; }
     public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
+    public bool IsAccountActionBusy => IsBusy && _loadGate.HasLoaded;
 
     public void Dispose()
     {
@@ -179,6 +214,14 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         await _navigateToPreferenceAsync("PhotoJourneyVaultPage");
     }
 
+    /// <summary>
+    ///     A settings row is one VoiceOver element. Its value is part of the label because a row
+    ///     that carries a tap gesture stops exposing its child labels once it is a button.
+    /// </summary>
+    private static string RowAccessibilityText(string titleKey, string detail) =>
+        UiTextCatalog.Format("Profile_Details_RowAccessibilityFormat",
+            UiTextCatalog.Get(titleKey), UiTextCatalog.TranslateRuntimeText(detail));
+
     private async Task OpenRouteAsync(string? route)
     {
         if (string.IsNullOrWhiteSpace(route))
@@ -189,7 +232,9 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
 
     private async Task LogoutAsync()
     {
+        if (IsBusy) return;
         IsBusy = true;
+        AccountActionError = string.Empty;
         try
         {
             _refreshNotifier.InvalidateAll();
@@ -197,6 +242,11 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
                 await _photoCache.ClearAsync();
             await _useCase.LogoutAsync();
             await _navigateToLoginAsync();
+        }
+        catch (Exception ex)
+        {
+            Trace.WriteLine($"[ProfileViewModel] Logout failed ({ex.GetType().Name}).");
+            AccountActionError = UiTextCatalog.Get("Profile_Logout_Failed");
         }
         finally
         {
@@ -299,5 +349,18 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(HasProfileImage));
         OnPropertyChanged(nameof(HasNoProfileImage));
         OnPropertyChanged(nameof(ProfileImageSource));
+    }
+
+    partial void OnHasVaultPhotosChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowVaultEmptyState));
+        OnPropertyChanged(nameof(ShowVaultPhotoPreview));
+        OnPropertyChanged(nameof(ShowVaultPrivacyOverlay));
+    }
+
+    partial void OnIsVaultRevealedChanged(bool value)
+    {
+        OnPropertyChanged(nameof(ShowVaultPhotoPreview));
+        OnPropertyChanged(nameof(ShowVaultPrivacyOverlay));
     }
 }

@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 
+using MuscleCuties.Infrastructure.Services.Workout;
 using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Localization;
@@ -12,7 +13,7 @@ namespace MuscleCuties.UI.Models.UI.Workout;
 public partial class WorkoutExerciseItem : ObservableObject
 {
     [ObservableProperty] private bool _isExpanded;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanMarkOptional))] private bool _isLogged;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanMarkOptional), nameof(CalibrationPromptText), nameof(HasRecommendationText))] private bool _isLogged;
     [ObservableProperty] private bool _isOptional;
     [ObservableProperty] private int _optionalSets;
     private bool _lastSavedIsOptional;
@@ -54,6 +55,7 @@ public partial class WorkoutExerciseItem : ObservableObject
     public bool CanMarkOptional => !IsLogged;
     public int ExerciseId { get; set; }
     public string ActivityTag { get; set; } = string.Empty;
+    public string IconGlyph => WorkoutActivityIcons.ForTag(ActivityTag);
     public string ActivityTitle { get; set; } = string.Empty;
     public Color ActivityBackground { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
     public Color ActivityTextColor { get; set; } = AppThemeResources.GetRequired<Color>("TextPrimary");
@@ -65,7 +67,11 @@ public partial class WorkoutExerciseItem : ObservableObject
     public string QuickTipsText { get; set; } = string.Empty;
     public string TargetText { get; set; } = string.Empty;
     public string PreviousText { get; set; } = string.Empty;
+    public bool HasPreviousLog => !string.IsNullOrWhiteSpace(PreviousText) &&
+        !PreviousText.Equals("No previous log", StringComparison.OrdinalIgnoreCase);
     public string RecommendationText { get; set; } = string.Empty;
+    public bool HasRecommendationText => !string.IsNullOrWhiteSpace(RecommendationText) &&
+        string.IsNullOrWhiteSpace(CalibrationPromptText);
     public bool UsesEnduranceMetrics { get; set; }
     public bool UsesStrengthMetrics => !UsesEnduranceMetrics;
     public bool UsesDurationMetric { get; set; }
@@ -152,7 +158,7 @@ public partial class WorkoutExerciseItem : ObservableObject
         : string.Empty;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(UnilateralModeLabel))] private bool _isUnilateral;
     public string UnilateralModeLabel => IsUnilateral ? UiTextCatalog.Get("Workout_Session_UnilateralPerSide") : string.Empty;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CalibrationPromptText))] private bool _requiresInitialCalibration;
+    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CalibrationPromptText), nameof(HasRecommendationText))] private bool _requiresInitialCalibration;
     public string CalibrationPromptText => RequiresInitialCalibration && !IsLogged
         ? UiTextCatalog.Get("Workout_Session_CalibrationPrompt")
         : string.Empty;
@@ -174,6 +180,10 @@ public partial class WorkoutExerciseItem : ObservableObject
     public void AddSet()
     {
         var nextSetNumber = Sets.Count + 1;
+        var nextWorkingSetNumber = Sets.Where(set => !set.IsWarmup)
+            .Select(set => set.DisplaySetNumber > 0 ? set.DisplaySetNumber : set.SetNumber)
+            .DefaultIfEmpty()
+            .Max() + 1;
         var previousSet = Sets.LastOrDefault();
         var weight = previousSet?.WeightKg ?? (TryParseWeight(LoggedWeightText, out var w) ? w : 0.0);
         var reps = previousSet?.RepsCompleted ??
@@ -198,9 +208,13 @@ public partial class WorkoutExerciseItem : ObservableObject
             RemoveCommand = RemoveSetCommand,
             ShowWeight = UsesWeight,
             ShowPerSideReps = IsUnilateral,
+            DisplaySetNumber = nextWorkingSetNumber,
             WasEdited = true
         };
+        if (UsesWeight && RequiresInitialCalibration && previousSet?.EnteredWeightKg is null)
+            set.ClearUnobservedCalibrationWeightInput();
         Sets.Add(set);
+        RenumberSets();
         UpdateAggregatesFromSets(fromUser: true);
     }
 
@@ -209,7 +223,7 @@ public partial class WorkoutExerciseItem : ObservableObject
     {
         if (set is null || Sets.Count <= 1) return;
         Sets.Remove(set);
-        for (var i = 0; i < Sets.Count; i++) Sets[i].SetNumber = i + 1;
+        RenumberSets();
         UpdateAggregatesFromSets(fromUser: true);
     }
 
@@ -247,24 +261,47 @@ public partial class WorkoutExerciseItem : ObservableObject
         UpdateAggregatesFromSets();
     }
 
+    /// <summary>
+    /// Assigns the absolute set number used for persistence and the per-kind ordinal used by the row
+    /// label and automation ids, so a warm-up no longer hides "Working set 1".
+    /// </summary>
+    public void RenumberSets()
+    {
+        var numbers = WorkoutSetNumbering.Number(Sets.Select(set => set.IsWarmup).ToArray());
+        for (var index = 0; index < Sets.Count; index++)
+        {
+            Sets[index].SetNumber = numbers[index].AbsoluteNumber;
+            Sets[index].DisplaySetNumber = numbers[index].DisplayNumber;
+            Sets[index].ShowDivider = index > 0;
+            Sets[index].CanRemove = Sets.Count > 1;
+        }
+    }
+
     public void UpdateAggregatesFromSets(bool fromUser = false)
     {
         SetsWereEdited |= fromUser || Sets.Any(s => s.WasEdited);
+        RenumberSets();
         if (Sets.Count == 0) return;
         LoggedSetsText = Sets.Count.ToString(CultureInfo.InvariantCulture);
         var workingSets = Sets.Where(s => !s.IsWarmup).ToList();
         var primarySets = workingSets.Count > 0 ? workingSets : Sets.ToList();
         var avgReps = (int)Math.Round(primarySets.Average(s => s.EffectiveReps));
         LoggedRepsText = avgReps.ToString(CultureInfo.InvariantCulture);
-        var maxWeight = primarySets.Max(s => s.WeightKg);
-        if (!RequiresInitialCalibration || primarySets.Any(set => !string.IsNullOrWhiteSpace(set.WeightInput)))
-            LoggedWeightText = DisplayFormat.Decimal1(maxWeight);
+        // A calibration exercise clears its unobserved rows, so the exercise-level load has to come
+        // from whatever the user actually typed, including a warm-up row, or validation sees no load
+        // even though the screen holds one.
+        var enteredWeight = WorkoutWeightEntryRule.ResolveEnteredWeightKg(
+            Sets.Select(set => new WorkoutEnteredSet(set.WeightInput, set.IsWarmup, set.WasEdited)).ToArray(),
+            fallbackText: null);
+        if (enteredWeight is { } weight)
+            LoggedWeightText = DisplayFormat.Decimal1(weight);
     }
 
     private static bool TryParseWeight(string? value, out double weight)
     {
-        return double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out weight) ||
-               double.TryParse(value, NumberStyles.Float, CultureInfo.InvariantCulture, out weight);
+        var parsed = ExerciseSetInputItem.ParseWeight(value);
+        weight = (double)parsed.GetValueOrDefault();
+        return parsed.HasValue;
     }
 
     public void CommitEffortSliderValue(double value)

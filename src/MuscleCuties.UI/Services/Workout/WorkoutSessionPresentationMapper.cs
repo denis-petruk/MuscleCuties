@@ -106,6 +106,8 @@ internal static class WorkoutSessionPresentationMapper
             UsesEffortMetric = source.UsesEffortMetric,
             UsesWeight = source.UsesWeight
         };
+        var warmupSetNumber = 0;
+        var workingSetNumber = 0;
         foreach (var set in source.Sets)
         {
             var input = new ExerciseSetInputItem(
@@ -116,6 +118,10 @@ internal static class WorkoutSessionPresentationMapper
                 OnChanged = () => item.UpdateAggregatesFromSets(fromUser: true),
                 RemoveCommand = item.RemoveSetCommand,
                 ShowWeight = item.UsesWeight,
+                DisplaySetNumber = set.IsWarmup ? ++warmupSetNumber : ++workingSetNumber,
+                IsObserved = set.IsObserved,
+                TechniqueAcceptable = set.TechniqueAcceptable,
+                WasEdited = false,
                 ShowPerSideReps = item.IsUnilateral
             };
             if (source.RequiresInitialCalibration && !set.IsObserved)
@@ -126,6 +132,7 @@ internal static class WorkoutSessionPresentationMapper
         if (item.Sets.Count == 0 && item.UsesStrengthMetrics)
             item.EnsureSets(source.PlannedSets + source.PlannedWarmUpSets > 0
                 ? source.PlannedSets + source.PlannedWarmUpSets : 3);
+        item.RenumberSets();
         item.SyncSavedOptionalState();
         return item;
     }
