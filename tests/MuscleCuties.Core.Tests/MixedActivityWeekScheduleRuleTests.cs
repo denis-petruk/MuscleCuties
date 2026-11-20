@@ -813,6 +813,48 @@ public sealed class MixedActivityWeekScheduleRuleTests
         Assert.Equal(MixedActivityScheduleDisposition.Blocked, Decision(result, WorkoutActivityType.Hiit).Disposition);
     }
 
+    [Fact]
+    public void Companions_stay_inside_the_two_per_day_cap_while_strength_is_assigned_later()
+    {
+        // Production shape: a chosen strength style with no weekly target is scheduled by
+        // StrengthScheduleAssignmentRule.Reconcile, so this rule places only the companions. They must
+        // respect the two-a-day cap and the validator, or the later strength reassignment finds no
+        // legal day and the week grows past what the accept path allows.
+        var days = new[] { DayOfWeek.Monday, DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday };
+        var result = Evaluate(
+            [WorkoutActivityType.HighVolumeStrength, WorkoutActivityType.Walking, WorkoutActivityType.Swimming,
+                WorkoutActivityType.Yoga, WorkoutActivityType.GentleRecovery],
+            days,
+            Durations(
+                (WorkoutActivityType.HighVolumeStrength, StrengthSessionMinutes),
+                (WorkoutActivityType.Walking, SelectedCardioSessionMinutes),
+                (WorkoutActivityType.Swimming, SelectedCardioSessionMinutes),
+                (WorkoutActivityType.Yoga, GentleYogaSessionMinutes),
+                (WorkoutActivityType.GentleRecovery, GentleYogaSessionMinutes)),
+            Evidence(
+                (WorkoutActivityType.HighVolumeStrength, EvidenceFor(WorkoutActivityType.HighVolumeStrength)),
+                (WorkoutActivityType.Walking, EvidenceFor(WorkoutActivityType.Walking)),
+                (WorkoutActivityType.Swimming, EvidenceFor(WorkoutActivityType.Swimming,
+                    hasSwimmingFacilityAccess: true, canSwimIndependently: true,
+                    wantsContinuousSwimming: false)),
+                (WorkoutActivityType.Yoga, EvidenceFor(WorkoutActivityType.Yoga, isDemandingYogaContent: false)),
+                (WorkoutActivityType.GentleRecovery, EvidenceFor(WorkoutActivityType.GentleRecovery))),
+            RequestedFrequencies(
+                (WorkoutActivityType.Walking, ExpectedTwoCardioSessions),
+                (WorkoutActivityType.GentleRecovery, ExpectedTwoCardioSessions),
+                (WorkoutActivityType.Yoga, ExpectedSingleSession)),
+            chosenStrengthActivity: WorkoutActivityType.HighVolumeStrength);
+
+        Assert.Empty(result.InputReasons);
+        Assert.All(result.Sessions.GroupBy(session => session.Day), day =>
+            Assert.True(day.Count() <= MixedActivityWeekScheduleRule.MaximumSessionsPerDay,
+                $"{day.Key} carries {day.Count()} sessions"));
+        Assert.Empty(WorkoutScheduleValidationRule.Validate(
+            result.Sessions.Select(session => new WorkoutScheduleValidationSession(
+                session.Day, session.Activity, session.IsHardSession)).ToArray(),
+            requireStrengthMuscles: false));
+    }
+
     private static MixedActivityWeekScheduleResult Evaluate(
         IReadOnlyList<WorkoutActivityType> selectedActivities,
         IReadOnlyList<DayOfWeek> availableDays,

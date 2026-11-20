@@ -650,17 +650,39 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
-    public void Weekday_preferences_use_compact_rows_not_a_card_per_day()
+    public void Weekday_preferences_reuse_the_onboarding_quiz_answer_cards()
     {
+        // Owner call (2026-11-19): the profile chooser must read exactly like the onboarding quiz
+        // weekday question. One card per day with the leading glyph tile and the quiz checkbox, no
+        // divided list rows and no radio ring, and the selected state spoken by SelectionCell's
+        // native trait rather than a "Not selected" hint (the same rule the quiz answers follow).
         var preferencesPage = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Pages", "Profile",
             "ProfileWorkoutPreferencesPage.xaml"));
+        var weekdayCard = Between(preferencesPage,
+            "<DataTemplate x:DataType=\"workoutModels:WorkoutWeekdayOptionItem\">", "</DataTemplate>");
 
-        Assert.DoesNotContain("Style=\"{StaticResource CardSecondary}\"", preferencesPage, StringComparison.Ordinal);
-        Assert.Contains("Style=\"{StaticResource ProfileMenuRow}\"", preferencesPage, StringComparison.Ordinal);
-        Assert.DoesNotContain(
-            "SemanticProperties.Hint=\"{loc:LocalizedText Common_NotSelected}\"",
-            preferencesPage,
+        Assert.Contains("Style=\"{StaticResource CardSecondary}\"", weekdayCard, StringComparison.Ordinal);
+        Assert.Contains("Source=\"{Binding IconGlyph", weekdayCard, StringComparison.Ordinal);
+        Assert.Contains("Style=\"{StaticResource SelectionCheckbox}\"", weekdayCard, StringComparison.Ordinal);
+        Assert.Contains("Style=\"{StaticResource PlanChoiceCheckmark}\"", weekdayCard, StringComparison.Ordinal);
+        Assert.DoesNotContain("Style=\"{StaticResource ProfileMenuRow}\"", weekdayCard, StringComparison.Ordinal);
+        Assert.DoesNotContain("Style=\"{StaticResource SelectionRadioRing}\"", weekdayCard, StringComparison.Ordinal);
+        Assert.DoesNotContain("DividerSubtleLight", weekdayCard, StringComparison.Ordinal);
+        Assert.DoesNotContain("SemanticProperties.Hint=\"{loc:LocalizedText Common_NotSelected}\"", weekdayCard,
             StringComparison.Ordinal);
+
+        var weekdayOption = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Models", "UI",
+            "Workout", "WorkoutWeekdayOptionItem.cs"));
+        Assert.Contains("IconGlyph", weekdayOption, StringComparison.Ordinal);
+    }
+
+    private static string Between(string text, string start, string end)
+    {
+        var from = text.IndexOf(start, StringComparison.Ordinal);
+        Assert.True(from >= 0, $"expected {start}");
+        var to = text.IndexOf(end, from, StringComparison.Ordinal);
+        Assert.True(to > from, $"expected {end} after {start}");
+        return text[from..(to + end.Length)];
     }
 
     [Fact]

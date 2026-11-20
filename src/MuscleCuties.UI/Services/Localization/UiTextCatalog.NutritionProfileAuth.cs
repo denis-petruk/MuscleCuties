@@ -891,7 +891,6 @@ public static partial class UiTextCatalog
         English["Profile_Units_SelectMetricUnits"] = "Select Metric units";
         English["Profile_Units_UnitsAndDisplay"] = "Units and display";
         English["Profile_WorkoutPrefs_ActivityPreferences"] = "Activity preferences";
-        English["Profile_WorkoutPrefs_AvailableWeekdays"] = "Available weekdays";
         English["Profile_WorkoutPrefs_AvailableWeekdaysHint"] = "Select 2 to 7 weekdays when you are available to train.";
         English["Onboarding_Quiz_GluteFocusSaveFailed"] = "Your answers were saved. Glute focus could not be saved. Tap Finish to retry before creating your first plan.";
         English["Profile_WorkoutPrefs_GluteFocus"] = "Glute-focused strength plans";

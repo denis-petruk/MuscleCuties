@@ -891,7 +891,6 @@ internal static partial class RussianUiText
         Values["Profile_Units_SelectMetricUnits"] = "Выбрать метрические единицы";
         Values["Profile_Units_UnitsAndDisplay"] = "Единицы измерения и отображение";
         Values["Profile_WorkoutPrefs_ActivityPreferences"] = "Предпочтения активности";
-        Values["Profile_WorkoutPrefs_AvailableWeekdays"] = "Доступные дни недели";
         Values["Profile_WorkoutPrefs_AvailableWeekdaysHint"] = "Выберите от 2 до 7 дней недели, когда вы можете тренироваться.";
         Values["Onboarding_Quiz_GluteFocusSaveFailed"] = "Ответы сохранены. Не удалось сохранить акцент на ягодицы. Нажмите «Завершить», чтобы повторить попытку перед созданием первого плана.";
         Values["Profile_WorkoutPrefs_GluteFocus"] = "Акцент на ягодичные мышцы";

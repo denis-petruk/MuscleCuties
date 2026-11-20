@@ -102,6 +102,22 @@
                                LineBreakMode="WordWrap" />
                     </VerticalStackLayout>
 
+                    <!-- The strength style is a questionnaire answer: chosen during setup with the other
+                         training preferences, never hosted by the apply panel. -->
+                    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
+                                         IsVisible="{Binding HasFittingStrengthStyleChoices}">
+                        <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ChooseFittingStrengthStyle}"
+                               Style="{StaticResource FormFieldLabel}" />
+                        <Border Style="{StaticResource PickerContainer}">
+                            <Picker ItemsSource="{Binding FittingStrengthStyleChoices}"
+                                    SelectedItem="{Binding SelectedFittingStrengthStyle}"
+                                    SemanticProperties.Description="{loc:LocalizedText Workout_Generation_ChooseFittingStrengthStyle}"
+                                    ItemDisplayBinding="{Binding Label}"
+                                    IsEnabled="{Binding CanEditInputs}"
+                                    VerticalOptions="Center" />
+                        </Border>
+                    </VerticalStackLayout>
+
                     <!-- C1/OD-7: a saved style restricted to established history states why and offers
                          the General strength alternative. -->
                     <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}"
@@ -536,15 +552,6 @@
                         Style="{StaticResource StateBusyInline}" IsRunning="{Binding IsBusy}"
                                IsVisible="{Binding IsBusy}"
                                HorizontalOptions="Center" />
-            <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ChooseFittingStrengthStyle}" IsVisible="{Binding HasFittingStrengthStyleChoices}" Style="{StaticResource FormFieldLabel}" />
-            <Border Style="{StaticResource PickerContainer}" IsVisible="{Binding HasFittingStrengthStyleChoices}">
-                <Picker ItemsSource="{Binding FittingStrengthStyleChoices}"
-                        SelectedItem="{Binding SelectedFittingStrengthStyle}"
-                        SemanticProperties.Description="{loc:LocalizedText Workout_Generation_ChooseFittingStrengthStyle}"
-                        ItemDisplayBinding="{Binding Label}"
-                        IsEnabled="{Binding CanEditInputs}"
-                        VerticalOptions="Center" />
-            </Border>
             <Label LineBreakMode="WordWrap" Text="{loc:LocalizedText Workout_Generation_ActivePreviewElsewhere}" IsVisible="{Binding HasActiveOtherPreview}" Style="{StaticResource MutedLabel}" />
             <Button Text="{loc:LocalizedText Workout_Generation_TakeOverPreview}" Command="{Binding TakeOverPreviewCommand}" IsVisible="{Binding HasActiveOtherPreview}" Style="{StaticResource ButtonSecondary}" />
             <!-- G-01: the initiating action states the replacement consequence up front; the
@@ -674,10 +681,13 @@
                                                                 ColumnSpacing="{StaticResource UiSpaceTight}"
                                                                 RowSpacing="{StaticResource UiSpaceMicro}">
 
-                                                                <mi:MauiIcon Icon="{mi:Fluent Dumbbell24}" IconSize="{StaticResource UiDimension14}"
-                                                                             IconColor="{AppThemeBinding Light={StaticResource Primary}, Dark={StaticResource SecondaryDarkText}}"
-                                                                             WidthRequest="{StaticResource UiDimension14}" HeightRequest="{StaticResource UiDimension14}"
-                                                                             VerticalOptions="Center" />
+                                                                <Image Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}, ConverterParameter=Accent}"
+                                                                       WidthRequest="{StaticResource UiDimension14}"
+                                                                       HeightRequest="{StaticResource UiDimension14}"
+                                                                       Aspect="AspectFit"
+                                                                       HorizontalOptions="Center"
+                                                                       VerticalOptions="Center"
+                                                                       InputTransparent="True" />
 
                                                                 <Label
                                                                     Grid.Column="1"

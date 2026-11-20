@@ -1323,9 +1323,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(HasFittingStrengthStyleChoices));
         OnPropertyChanged(nameof(CanOfferExploreOtherFeatures));
         ExploreOtherFeaturesCommand.NotifyCanExecuteChanged();
+        // The picker below already carries the "choose a strength style" label, so this banner only
+        // speaks when it has something the field cannot say.
         StatusMessage = _safetyPlanChanged
-            ? $"{UiTextCatalog.Get("Workout_Generation_SafetyPlanChanged")}{Environment.NewLine}{UiTextCatalog.Get("Workout_Generation_ChooseFittingStrengthStyle")}"
-            : UiTextCatalog.Get("Workout_Generation_ChooseFittingStrengthStyle");
+            ? UiTextCatalog.Get("Workout_Generation_SafetyPlanChanged")
+            : string.Empty;
         return true;
     }
 

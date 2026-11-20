@@ -1,4 +1,6 @@
+using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.ViewModels.Workout;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 using Xunit;
 
@@ -52,12 +54,29 @@ public sealed class StrengthPlanPreviewRationaleTests
     }
 
     [Fact]
+    public void Planned_session_rows_use_a_distinct_activity_icon_instead_of_one_repeated_glyph()
+    {
+        var activities = Enum.GetValues<WorkoutActivityDto>()
+            // Rest and Other are never planned sessions; every schedulable activity is covered.
+            .Where(activity => activity is not WorkoutActivityDto.RestDay and not WorkoutActivityDto.Other)
+            .ToArray();
+
+        var glyphs = activities.Select(activity => WorkoutActivityIcons.ForActivity((int)activity)).ToArray();
+
+        Assert.Equal(activities.Length, glyphs.Distinct(StringComparer.Ordinal).Count());
+        Assert.DoesNotContain("CircleSmall24", glyphs);
+        Assert.Equal("SwimmingPool24", WorkoutActivityIcons.ForActivity((int)WorkoutActivityDto.Swimming));
+        Assert.Equal("CircleSmall24", WorkoutActivityIcons.ForActivity(-1));
+        Assert.Equal("CircleSmall24", WorkoutActivityIcons.ForActivity(int.MaxValue));
+    }
+
+    [Fact]
     public void Preview_day_header_keeps_a_visible_icon_for_training_and_rest_days()
     {
         var training = new MixedActivityDayDisplay("Понедельник", [], false);
         var rest = new MixedActivityDayDisplay("Среда", [], true);
 
-        Assert.Equal("Dumbbell24", training.DayIconGlyph);
+        Assert.Equal("CalendarDay24", training.DayIconGlyph);
         Assert.Equal("WeatherMoon24", rest.DayIconGlyph);
     }
 

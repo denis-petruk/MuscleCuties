@@ -39,6 +39,9 @@
                 <VerticalStackLayout Padding="{StaticResource UiInsets0_8_0_12}" Spacing="{StaticResource UiSpaceControl}">
 
                     <toolkit:LazyView
+                        x:Name="PhaseFocusLazy"
+                        x:TypeArguments="nutritionControls:NutritionPhaseFocusCard" />
+                    <toolkit:LazyView
                         x:Name="BalanceCardLazy"
                         x:TypeArguments="nutritionControls:NutritionBalanceCard" />
                     <sharedControls:AdaptiveRow Columns="2" ColumnSpacing="{StaticResource UiSpaceTight}"
@@ -56,9 +59,6 @@
                                 SemanticProperties.Description="{loc:LocalizedText Nutrition_PlanMyDay}"
                                 SemanticProperties.Hint="{loc:LocalizedText Nutrition_MealEntry_BuildsAFullDayMealPlan}" />
                     </sharedControls:AdaptiveRow>
-                    <toolkit:LazyView
-                        x:Name="PhaseFocusLazy"
-                        x:TypeArguments="nutritionControls:NutritionPhaseFocusCard" />
 
                     <Label
                         Text="{Binding PageStatusMessage}"

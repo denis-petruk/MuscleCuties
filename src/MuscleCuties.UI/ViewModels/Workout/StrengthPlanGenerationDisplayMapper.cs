@@ -1,5 +1,6 @@
 using System.Collections.ObjectModel;
 using System.Globalization;
+using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
@@ -38,7 +39,8 @@ internal static class StrengthPlanGenerationDisplayMapper
             Day = FullWeekdayLabel(session.Weekday),
             Activity = ActivityLabel(session.ActivityTypeId),
             Duration = duration,
-            PhaseDetail = PhaseDetailText(session.OccurrencePrescription)
+            PhaseDetail = PhaseDetailText(session.OccurrencePrescription),
+            IconGlyph = WorkoutActivityIcons.ForActivity(session.ActivityTypeId)
         };
     }
 

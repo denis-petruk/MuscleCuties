@@ -27,65 +27,59 @@
     </Grid>
     <ScrollView IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}" Grid.Row="1">
         <VerticalStackLayout Padding="{DynamicResource PresentationFormPagePadding}" Spacing="{StaticResource UiSpaceContent}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill">
-            <Border Style="{StaticResource CardPrimary}">
-                <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
-                    <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdays}"
-                           Style="{StaticResource SectionTitle}"
-                           SemanticProperties.HeadingLevel="Level2" />
-                    <Label Text="{loc:LocalizedText Profile_WorkoutPrefs_AvailableWeekdaysHint}"
-                           Style="{StaticResource MutedLabel}"
-                           LineBreakMode="WordWrap" />
-                    <!-- Seven fixed options read as one grouped checklist. Compact rows keep all
-                         choices in a single scan and leave the commit action visible. -->
-                    <VerticalStackLayout
-                        Spacing="0"
-                        BindableLayout.ItemsSource="{Binding AvailableWeekdays}">
-                        <BindableLayout.ItemTemplate>
-                            <DataTemplate x:DataType="workoutModels:WorkoutWeekdayOptionItem">
-                                <VerticalStackLayout Spacing="0">
-                                    <sharedControls:SelectionCell Style="{StaticResource ProfileMenuRow}"
-                                            MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
-                                            IsSelected="{Binding IsSelected}"
-                                            SemanticProperties.Description="{Binding Label}">
-                                        <Border.Triggers>
-                                            <DataTrigger TargetType="sharedControls:SelectionCell" Binding="{Binding IsSelected}" Value="True">
-                                                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_Selected}" />
-                                            </DataTrigger>
-                                            <DataTrigger TargetType="sharedControls:SelectionCell" Binding="{Binding IsSelected}" Value="False">
-                                                <Setter Property="SemanticProperties.Hint" Value="{loc:LocalizedText Common_NotSelected}" />
-                                            </DataTrigger>
-                                        </Border.Triggers>
-                                        <Border.GestureRecognizers>
-                                            <TapGestureRecognizer
-                                                Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileWorkoutPreferencesViewModel}}, Path=ToggleWeekdayCommand}"
-                                                CommandParameter="{Binding .}" />
-                                        </Border.GestureRecognizers>
-                                        <Grid ColumnDefinitions="*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
-                                            <Label Text="{Binding Label}"
-                                                   Style="{StaticResource BodyLabel}"
-                                                   sharedControls:CappedTextSize.IsCompactLabel="True"
-                                                   VerticalOptions="Center"
-                                                   LineBreakMode="WordWrap" />
-                                            <Border Grid.Column="1" Style="{StaticResource SelectionRadioRing}" VerticalOptions="Center">
-                                                <BoxView WidthRequest="{StaticResource UiDimension8}"
-                                                         HeightRequest="{StaticResource UiDimension8}"
-                                                         CornerRadius="{StaticResource UiCornerRadius4}"
-                                                         Color="{StaticResource ContrastInk}"
-                                                         HorizontalOptions="Center"
-                                                         VerticalOptions="Center"
-                                                         IsVisible="{Binding IsSelected}" />
-                                            </Border>
-                                        </Grid>
-                                    </sharedControls:SelectionCell>
-                                    <BoxView HeightRequest="{StaticResource UiDimension1}"
-                                             Color="{AppThemeBinding Light={StaticResource DividerSubtleLight}, Dark={StaticResource DividerSubtleDark}}" />
-                                </VerticalStackLayout>
-                            </DataTemplate>
-                        </BindableLayout.ItemTemplate>
-                    </VerticalStackLayout>
-                    <Label Text="{Binding SelectedWeekdayCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_SelectedWeekdaysFormat}" Style="{StaticResource MutedCentered}" />
+            <!-- One-to-one with the onboarding quiz weekday question: same answer cards, same leading
+                 glyph tile and same selection checkbox, so the choice reads identically in both places. -->
+            <VerticalStackLayout Spacing="{StaticResource UiSpaceCompact}">
+                <VerticalStackLayout
+                    Spacing="{StaticResource UiSpacing10}"
+                    BindableLayout.ItemsSource="{Binding AvailableWeekdays}">
+                    <BindableLayout.ItemTemplate>
+                        <DataTemplate x:DataType="workoutModels:WorkoutWeekdayOptionItem">
+                            <sharedControls:SelectionCell Style="{StaticResource CardSecondary}"
+                                    MinimumHeightRequest="{StaticResource PresentationMinimumTouchSize}"
+                                    IsSelected="{Binding IsSelected}"
+                                    SemanticProperties.Description="{Binding Label}">
+                                <!-- VoiceOver gets the selected state from SelectionCell's native
+                                     selected trait, exactly as in the quiz answer cards. -->
+                                <Border.GestureRecognizers>
+                                    <TapGestureRecognizer
+                                        Command="{Binding Source={RelativeSource AncestorType={x:Type vm:ProfileWorkoutPreferencesViewModel}}, Path=ToggleWeekdayCommand}"
+                                        CommandParameter="{Binding .}" />
+                                </Border.GestureRecognizers>
+                                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="{StaticResource UiSpaceCompact}">
+                                    <Border
+                                        Grid.Column="0"
+                                        WidthRequest="{StaticResource UiDimension36}"
+                                        HeightRequest="{StaticResource UiDimension36}"
+                                        StrokeShape="{StaticResource UiRoundRectangleRadius12}"
+                                        StrokeThickness="{StaticResource UiStrokeWidth0}"
+                                        BackgroundColor="{AppThemeBinding Light={StaticResource AccentSurface}, Dark={StaticResource AccentSurfaceDeepDark}}"
+                                        VerticalOptions="Center">
+                                        <Image
+                                            Source="{Binding IconGlyph, Converter={StaticResource StringToFluentIconImageSourceConverter}}"
+                                            WidthRequest="{StaticResource UiDimension18}"
+                                            HeightRequest="{StaticResource UiDimension18}"
+                                            Aspect="AspectFit"
+                                            HorizontalOptions="Center"
+                                            VerticalOptions="Center" />
+                                    </Border>
+                                    <Label Grid.Column="1"
+                                           Text="{Binding Label}"
+                                           Style="{StaticResource AccentLabel}"
+                                           sharedControls:CappedTextSize.IsCompactLabel="True"
+                                           VerticalOptions="Center" />
+                                    <Border Grid.Column="2" Style="{StaticResource SelectionCheckbox}" VerticalOptions="Center">
+                                        <Path Data="M5 12L10 17L19 7"
+                                              Style="{StaticResource PlanChoiceCheckmark}"
+                                              IsVisible="{Binding IsSelected}" />
+                                    </Border>
+                                </Grid>
+                            </sharedControls:SelectionCell>
+                        </DataTemplate>
+                    </BindableLayout.ItemTemplate>
                 </VerticalStackLayout>
-            </Border>
+                <Label Text="{Binding SelectedWeekdayCount, Converter={StaticResource LocalizedFormatConverter}, ConverterParameter=Profile_WorkoutPrefs_SelectedWeekdaysFormat}" Style="{StaticResource MutedCentered}" />
+            </VerticalStackLayout>
 
             <toolkit:LazyView
                 x:Name="PreferenceChoicesLazy"

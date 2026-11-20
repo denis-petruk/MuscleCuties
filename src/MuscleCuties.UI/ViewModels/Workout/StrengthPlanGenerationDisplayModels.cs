@@ -36,6 +36,8 @@ public sealed record MixedActivitySessionDisplay(string Title, string Details)
 {
     public string Day { get; init; } = string.Empty;
     public string Activity { get; init; } = string.Empty;
+    /// <summary>Activity-specific glyph, so two different planned activities never share a picture.</summary>
+    public string IconGlyph { get; init; } = "CircleSmall24";
     public string Duration { get; init; } = string.Empty;
     /// <summary>Warm-up, main, cool-down and interval split of a timed phase.</summary>
     public string PhaseDetail { get; init; } = string.Empty;
@@ -47,8 +49,10 @@ public sealed record MixedActivityDayDisplay(
     IReadOnlyList<MixedActivitySessionDisplay> Sessions,
     bool IsRestDay)
 {
-    /// <summary>The icon is bound as an image so the day header is never an empty decorative box.</summary>
-    public string DayIconGlyph => IsRestDay ? "WeatherMoon24" : "Dumbbell24";
+    /// <summary>The icon is bound as an image so the day header is never an empty decorative box.
+    /// A training day shows a calendar, never the session's own activity glyph: the header names
+    /// the day, the rows name the activity.</summary>
+    public string DayIconGlyph => IsRestDay ? "WeatherMoon24" : "CalendarDay24";
 }
 
 public sealed record MixedActivityDecisionDisplay(string Activity, string Status, string Frequency,
