@@ -7,9 +7,12 @@ Description: >-
   freeze the current name and, worse, an import template that omits Environment would be
   invisible to drift while quietly losing all secret variables on the next update.
 
-  Secrets are never written into this file. The eight secret variables resolve from
+  Secrets are never written into this file. The seven secret variables resolve from
   Secrets Manager at deploy time via dynamic references; the secret itself is created
-  out of band (see RUNBOOK-lambda-cutover.md).
+  out of band (see RUNBOOK-lambda-cutover.md). Transactional email needs no secret:
+  verification codes are sent through SES v2 under the execution role's IAM permission
+  (see the SesSendPolicy in identity.yaml), so the environment holds no email provider
+  credential at all.
 
   Code is pinned to a specific object key so the deployed package is reproducible and
   hash-verifiable: CodeSha256 must equal
@@ -128,7 +131,8 @@ Resources:
           EmailReceipts__Audience: MuscleCutiesEmailReceipt
           EmailReceipts__ActiveKeyId: v20261020a
           EmailChallenges__ActiveHmacKeyId: v20261020a
-          Resend__FromEmail: "MuscleCuties <noreply@musclecuties.app>"
+          Ses__FromAddress: "MuscleCuties <noreply@musclecuties.app>"
+          Ses__Region: us-east-2
           Storage__S3__Region: us-east-2
           Storage__S3__BucketName: musclecuties-media-staging-028417007003
           Lambda__DatabasePool__MinPoolSize: "0"
@@ -137,7 +141,6 @@ Resources:
           Lambda__DatabasePool__RunMigrationsOnColdStart: "false"
           # --- secret configuration, resolved from Secrets Manager at deploy time ---
           ConnectionStrings__PostgreSql: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:ConnectionStrings__PostgreSql}}"
-          Resend__ApiKey: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:Resend__ApiKey}}"
           Authentication__SigningKey: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:Authentication__SigningKey}}"
           EmailReceipts__PrivateKeyPem: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:EmailReceipts__PrivateKeyPem}}"
           EmailReceipts__PublicKeys__v20261020a: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:EmailReceipts__PublicKeys__v20261020a}}"
