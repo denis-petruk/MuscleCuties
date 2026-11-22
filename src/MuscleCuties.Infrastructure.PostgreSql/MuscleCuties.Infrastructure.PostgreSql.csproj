@@ -23,6 +23,7 @@
         <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.3"/>
     </ItemGroup>
     <ItemGroup>
+        <PackageReference Include="AWSSDK.SimpleEmailV2" Version="4.1.1"/>
         <PackageReference Include="SkiaSharp" Version="3.119.1"/>
         <PackageReference Include="SkiaSharp.NativeAssets.Linux" Version="3.119.1"/>
     </ItemGroup>

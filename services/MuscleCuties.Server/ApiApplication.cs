@@ -2,6 +2,8 @@ using System.IO.Compression;
 using System.Net;
 using System.Text;
 using System.Text.Json;
+using Amazon;
+using Amazon.SimpleEmailV2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.HttpOverrides;
@@ -358,29 +360,32 @@ public static class ApiApplication
                 appleKeys,
                 serviceProvider.GetService<IAppleAccountTokenRevoker>(),
                 serviceProvider.GetService<Microsoft.Extensions.Logging.ILogger<PostgresAccountAuthenticationUseCase>>()));
-        builder.Services.AddHttpClient("ResendEmailDelivery", client => client.Timeout = TimeSpan.FromSeconds(15))
-            .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
         builder.Services.AddHttpClient("FirstPartyEmailChallengeRelay", client => client.Timeout = TimeSpan.FromSeconds(15))
             .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false });
+        // AWS SES v2 is authorized by the Lambda execution role; no provider API key is stored.
+        builder.Services.AddSingleton<IAmazonSimpleEmailServiceV2>(_ =>
+            new AmazonSimpleEmailServiceV2Client(RegionEndpoint.GetBySystemName(
+                builder.Configuration["Ses:Region"]
+                ?? builder.Configuration["AWS_REGION"]
+                ?? "us-east-2")));
+        builder.Services.AddSingleton<ISesEmailTransport>(serviceProvider =>
+            new AmazonSesEmailTransport(serviceProvider.GetRequiredService<IAmazonSimpleEmailServiceV2>()));
         builder.Services.AddScoped<IEmailChallengeDelivery>(serviceProvider =>
         {
-            var resendApiKey = new[]
-                {
-                    builder.Configuration["Resend:ApiKey"],
-                    builder.Configuration["RESEND_API_KEY"],
-                    builder.Configuration["EmailChallenges:ResendApiKey"]
-                }
-                .FirstOrDefault(key => !string.IsNullOrWhiteSpace(key));
+            var fromAddress = builder.Configuration["Ses:FromAddress"];
+            var realDeliveryEnabled = builder.Configuration.GetValue<bool>("Ses:EnableRealDelivery");
 
-            if (!string.IsNullOrWhiteSpace(resendApiKey))
+            if (!string.IsNullOrWhiteSpace(fromAddress) &&
+                (!builder.Environment.IsDevelopment() || realDeliveryEnabled))
             {
-                var fromEmail = builder.Configuration["Resend:FromEmail"]
-                    ?? builder.Configuration["EmailChallenges:FromEmail"];
-                var resendClient = serviceProvider.GetRequiredService<IHttpClientFactory>().CreateClient("ResendEmailDelivery");
-                return new ResendEmailChallengeDelivery(resendClient, resendApiKey, fromEmail);
+                return new SesEmailChallengeDelivery(
+                    serviceProvider.GetRequiredService<ISesEmailTransport>(),
+                    fromAddress,
+                    builder.Configuration["Ses:ConfigurationSetName"],
+                    serviceProvider.GetService<Microsoft.Extensions.Logging.ILogger<SesEmailChallengeDelivery>>());
             }
 
-            // A local, disposable backend has no provider credentials; log the code so registration stays
+            // A local, disposable backend has no AWS identity; log the code so registration stays
             // testable end to end in Development. Every other environment keeps the relay-only path.
             if (builder.Environment.IsDevelopment())
                 return new LocalDevelopmentEmailChallengeDelivery();

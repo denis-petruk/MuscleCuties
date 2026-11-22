@@ -1,22 +1,41 @@
-using System.Net.Http.Headers;
-using System.Net.Http.Json;
-using System.Text.Json.Serialization;
+using Amazon.Runtime;
+using Amazon.SimpleEmailV2;
+using Amazon.SimpleEmailV2.Model;
+using Microsoft.Extensions.Logging;
 using MuscleCuties.UseCases.Features.Account.EmailChallenge;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
 
-public sealed class ResendEmailChallengeDelivery(
-    HttpClient httpClient,
-    string? apiKey,
-    string? fromEmail = null,
-    string? apiEndpoint = null) : IEmailChallengeDelivery
+/// <summary>
+/// Narrow seam over the SES v2 client so the request composition can be verified without network calls
+/// and without faking the entire AWS SDK surface.
+/// </summary>
+public interface ISesEmailTransport
 {
-    private const string DefaultResendEndpoint = "https://api.resend.com/emails";
-    private const string ResendApiHost = "api.resend.com";
-    private const string DefaultFromAddress = "MuscleCuties <noreply@musclecuties.app>";
+    Task SendAsync(SendEmailRequest request, CancellationToken cancellationToken);
+}
+
+public sealed class AmazonSesEmailTransport(IAmazonSimpleEmailServiceV2 client) : ISesEmailTransport
+{
+    public Task SendAsync(SendEmailRequest request, CancellationToken cancellationToken) =>
+        client.SendEmailAsync(request, cancellationToken);
+}
+
+/// <summary>
+/// Delivers verification codes through AWS SES v2 using the Lambda execution role's credentials.
+/// No long-lived provider API key is stored or read: authorization is the IAM permission granted to
+/// the function role, and the sender identity is the SES-verified domain.
+/// </summary>
+public sealed class SesEmailChallengeDelivery(
+    ISesEmailTransport transport,
+    string? fromAddress,
+    string? configurationSetName = null,
+    ILogger<SesEmailChallengeDelivery>? logger = null) : IEmailChallengeDelivery
+{
     private const int RegistrationPurpose = 1;
     private const int PasswordRecoveryPurpose = 2;
     private const int RequiredCodeLength = 6;
+    private const string Utf8 = "UTF-8";
 
     public async Task<bool> SendAsync(
         string normalizedEmail,
@@ -24,23 +43,14 @@ public sealed class ResendEmailChallengeDelivery(
         int purpose,
         CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(apiKey) ||
-            string.IsNullOrWhiteSpace(normalizedEmail) ||
+        if (string.IsNullOrWhiteSpace(fromAddress) ||
+            !IsPlausibleEmail(normalizedEmail) ||
             string.IsNullOrWhiteSpace(code) ||
-            code.Length != RequiredCodeLength)
+            code.Length != RequiredCodeLength ||
+            !code.All(char.IsAsciiDigit))
         {
             return false;
         }
-
-        var endpoint = apiEndpoint ?? DefaultResendEndpoint;
-        if (!Uri.TryCreate(endpoint, UriKind.Absolute, out var uri) ||
-            uri.Scheme != Uri.UriSchemeHttps ||
-            !string.Equals(uri.Host, ResendApiHost, StringComparison.OrdinalIgnoreCase))
-        {
-            return false;
-        }
-
-        var sender = !string.IsNullOrWhiteSpace(fromEmail) ? fromEmail : DefaultFromAddress;
 
         string subject;
         string textBody;
@@ -64,37 +74,76 @@ public sealed class ResendEmailChallengeDelivery(
                 return false;
         }
 
-        var payload = new ResendEmailPayload
+        var request = new SendEmailRequest
         {
-            From = sender,
-            To = [normalizedEmail],
-            Subject = subject,
-            Html = htmlBody,
-            Text = textBody
+            FromEmailAddress = fromAddress,
+            Destination = new Destination { ToAddresses = [normalizedEmail] },
+            Content = new EmailContent
+            {
+                Simple = new Message
+                {
+                    Subject = new Content { Data = subject, Charset = Utf8 },
+                    Body = new Body
+                    {
+                        Html = new Content { Data = htmlBody, Charset = Utf8 },
+                        Text = new Content { Data = textBody, Charset = Utf8 }
+                    }
+                }
+            }
         };
 
-        using var request = new HttpRequestMessage(HttpMethod.Post, uri)
-        {
-            Content = JsonContent.Create(payload)
-        };
-        request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", apiKey.Trim());
+        if (!string.IsNullOrWhiteSpace(configurationSetName))
+            request.ConfigurationSetName = configurationSetName;
 
         try
         {
-            using var response = await httpClient
-                .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-                .ConfigureAwait(false);
+            await transport.SendAsync(request, cancellationToken).ConfigureAwait(false);
+            return true;
+        }
+        catch (AmazonServiceException exception)
+        {
+            // A rejected send, e.g. the sandbox refusing an unverified recipient.
+            LogFailure(exception);
+            return false;
+        }
+        catch (AmazonClientException exception)
+        {
+            // SDK client failures (missing or unreachable credentials, endpoint resolution). Both
+            // this and the service rejection above must degrade to "delivery unavailable", not a 500.
+            LogFailure(exception);
+            return false;
+        }
+        catch (HttpRequestException exception)
+        {
+            LogFailure(exception);
+            return false;
+        }
+        catch (OperationCanceledException exception) when (!cancellationToken.IsCancellationRequested)
+        {
+            LogFailure(exception);
+            return false;
+        }
+    }
 
-            return response.IsSuccessStatusCode;
-        }
-        catch (HttpRequestException)
-        {
+    /// <summary>
+    /// Records why a code could not be delivered. Deliberately logs only the failure shape: the
+    /// recipient address, the code and the message body stay out of logs.
+    /// </summary>
+    private void LogFailure(Exception exception)
+    {
+        logger?.LogWarning(
+            "SES verification email was not sent ({ExceptionType}, error code {ErrorCode}).",
+            exception.GetType().Name,
+            exception is AmazonServiceException serviceException ? serviceException.ErrorCode : "none");
+    }
+
+    private static bool IsPlausibleEmail(string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value) || value.Length > 254)
             return false;
-        }
-        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
-        {
-            return false;
-        }
+        var at = value.IndexOf('@');
+        return at > 0 && at < value.Length - 1 && value.IndexOf('@', at + 1) < 0 &&
+               !value.Any(char.IsWhiteSpace);
     }
 
     private static string BuildRegistrationText(string code) =>
@@ -188,22 +237,4 @@ public sealed class ResendEmailChallengeDelivery(
         </body>
         </html>
         """;
-
-    private sealed class ResendEmailPayload
-    {
-        [JsonPropertyName("from")]
-        public required string From { get; init; }
-
-        [JsonPropertyName("to")]
-        public required string[] To { get; init; }
-
-        [JsonPropertyName("subject")]
-        public required string Subject { get; init; }
-
-        [JsonPropertyName("html")]
-        public required string Html { get; init; }
-
-        [JsonPropertyName("text")]
-        public required string Text { get; init; }
-    }
 }

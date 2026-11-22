@@ -53,6 +53,13 @@ Parameters:
     Type: String
     Default: musclecuties-release-artifacts-028417007003
 
+  # The Lambda execution role the app stack also references (app.yaml ExecutionRoleArn).
+  # It was created with the function and is not adopted here; this stack only attaches a
+  # narrowly scoped SES sending policy to it by name.
+  BackendApiExecutionRoleName:
+    Type: String
+    Default: musclecuties-backend-api-role-oot9kwhk
+
   OidcThumbprints:
     Type: CommaDelimitedList
     Default: "6938fd4d98bab03faadb97b34396831e3780aea1,1c5876104010567b1a7d8ee0e69f6940cc73b73f"
@@ -116,6 +123,29 @@ Resources:
                 # permits the existence probe and nothing beyond it.
                 Action: s3:ListBucket
                 Resource: !Sub "arn:aws:s3:::${ReleaseArtifactsBucket}"
+
+  # Transactional verification codes are sent through SES v2. Sending is authorized by this
+  # attached policy, so the application stores no provider API key: neither the Lambda
+  # environment nor the Secrets Manager payload carries an email credential.
+  # Scoped to the one verified identity this account sends from; not account-wide SES access.
+  BackendApiSesSendPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: MuscleCuties-BackendApi-SesSend
+      Description: >-
+        Lets the beta API function send registration and password-recovery codes through
+        SES v2 from the verified musclecuties.app identity.
+      Roles:
+        - !Ref BackendApiExecutionRoleName
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: SendVerificationCodesFromVerifiedIdentity
+            Effect: Allow
+            Action:
+              - ses:SendEmail
+            Resource:
+              - !Sub "arn:aws:ses:${AWS::Region}:${AWS::AccountId}:identity/musclecuties.app"
 
   GitHubActionsStagingDeployRole:
     Type: AWS::IAM::Role
