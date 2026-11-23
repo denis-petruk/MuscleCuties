@@ -3,6 +3,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 
+using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.Infrastructure.Services.Workout;
 using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Formatting;
@@ -128,11 +129,15 @@ public partial class WorkoutExerciseItem : ObservableObject
 
     public double EffortSliderValue
     {
-        get => TryGetEffort(out var effort) ? effort : 5d;
-        set => SetEffort(value, false);
+        get => WorkoutEffortRule.TryParseLogged(_loggedEffortText, out var effort)
+            ? effort
+            : WorkoutEffortRule.NeutralSliderPosition;
+        set => SetEffort(value, allowNeutralCommit: false);
     }
 
-    public string EffortDisplayText => TryGetEffort(out var effort) ? $"{effort} / 10" : "Move to choose";
+    public string EffortDisplayText => WorkoutEffortRule.TryParseLogged(_loggedEffortText, out var effort)
+        ? WorkoutEffortRule.Format(effort)
+        : "Move to choose";
 
     public string DetailsButtonText => IsExpanded ? "Hide" : "Info";
     public string LogButtonText => IsLogged ? "Update" : "Log";
@@ -304,29 +309,20 @@ public partial class WorkoutExerciseItem : ObservableObject
         return parsed.HasValue;
     }
 
-    public void CommitEffortSliderValue(double value)
-    {
-        SetEffort(value, true);
-    }
+    public void CommitEffortSliderValue(double value) => SetEffort(value, allowNeutralCommit: true);
 
-    private void SetEffort(double value, bool allowNeutralIfUnset)
+    private void SetEffort(double value, bool allowNeutralCommit)
     {
-        if (!double.IsFinite(value))
+        if (!WorkoutEffortRule.TryRoundSlider(value, out var effort))
             return;
 
-        var effort = (int)Math.Clamp(Math.Round(value, MidpointRounding.AwayFromZero), 1d, 10d);
         // An untouched centered thumb is a neutral starting position, not a recorded rating.
-        if (!allowNeutralIfUnset && !TryGetEffort(out _) && effort == 5)
+        if (!allowNeutralCommit &&
+            WorkoutEffortRule.IsUntouchedNeutralThumb(
+                effort, WorkoutEffortRule.TryParseLogged(_loggedEffortText, out _)))
             return;
 
         LoggedEffortText = effort.ToString(CultureInfo.InvariantCulture);
-        OnPropertyChanged(nameof(EffortSliderValue));
-    }
-
-    private bool TryGetEffort(out int effort)
-    {
-        return int.TryParse(LoggedEffortText, NumberStyles.None, CultureInfo.InvariantCulture, out effort) &&
-               effort is >= 1 and <= 10;
     }
 
     partial void OnIsExpandedChanged(bool value)

@@ -31,18 +31,6 @@ public static class TransportCompositionExtensions
     {
 
 
-        services.AddHttpClient<IWgerApiClient, WgerApiClient>(client =>
-        {
-            client.BaseAddress = WgerApiClient.BaseUri;
-            client.Timeout = TimeSpan.FromSeconds(15);
-        });
-
-        services.AddHttpClient<IExerciseDbClient, ExerciseDbClient>(client =>
-        {
-            client.BaseAddress = ExerciseDbClient.BaseUri;
-            client.Timeout = TimeSpan.FromSeconds(15);
-        });
-
         services.AddSingleton<IExerciseMediaStore>(_ =>
             new LocalExerciseMediaStore(Path.Combine(FileSystem.AppDataDirectory, "exercises")));
 
