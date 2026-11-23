@@ -198,8 +198,8 @@ public sealed class ServerRouteParityTests
             var startupMilliseconds = Stopwatch.GetElapsedTime(startupStarted).TotalMilliseconds;
             var cold = await SendMeasuredAsync(coldFixture.Client, route.Method, route.Pattern, budgetMilliseconds);
             coldMeasurements[$"{route.Method} {route.Pattern}"] = new ColdMeasurement(cold, startupMilliseconds);
-            AppendLatencyProgress(
-                $"startup {startupMilliseconds:F0} ms; cold {cold.Milliseconds:F0} ms {cold.StatusCode} {route.Method} {route.Pattern}");
+            Console.WriteLine(
+                $"latency {route.Method} {route.Pattern}: startup {startupMilliseconds:F0} ms, cold {cold.Milliseconds:F0} ms ({cold.StatusCode}), budget {budgetMilliseconds} ms");
         }
 
         await using var warmFixture = await ServerFixture.StartAsync(databaseConnectionString: databaseConnectionString);
@@ -219,7 +219,8 @@ public sealed class ServerRouteParityTests
             }
             warm.Sort();
             var warmP95Index = (int)Math.Ceiling(0.95 * warm.Count) - 1;
-            AppendLatencyProgress($"warm p95 {warm[warmP95Index]:F0} ms ({warm.Count} samples) {route.Method} {route.Pattern}");
+            Console.WriteLine(
+                $"latency {route.Method} {route.Pattern}: warm p95 {warm[warmP95Index]:F0} ms ({warm.Count} samples), budget {budgetMilliseconds} ms");
             measurements.Add(new RouteLatency(
                 route.Method,
                 route.Pattern,
@@ -229,6 +230,7 @@ public sealed class ServerRouteParityTests
                 Math.Round(cold.StartupMs, 2),
                 Math.Round(cold.Response.Milliseconds, 2),
                 Math.Round(warm[warmP95Index], 2),
+                warm.Count,
                 cold.Response.StatusCode,
                 route.Pattern.Contains("/photos", StringComparison.Ordinal)
                     ? "S3 presigned-URL boundary; only the local handler path is measured"
@@ -276,9 +278,12 @@ public sealed class ServerRouteParityTests
         });
 
         Assert.True(overBudget.Length == 0,
-            $"{overBudget.Length} route(s) exceeded {budgetMilliseconds} ms:\n" +
+            $"{overBudget.Length} route(s) exceeded the {budgetMilliseconds} ms budget " +
+            $"(cold = first request on a fresh host, warm = p95 of up to {warmSamples} requests on one shared host):\n" +
             string.Join("\n", overBudget.Select(route =>
-                $"{route.Method} {route.Route}: cold {route.ColdMs:F1} ms, warm p95 {route.WarmP95Ms:F1} ms")));
+                $"{route.Method} {route.Route}: cold {route.ColdMs:F1} ms (1 sample), " +
+                $"warm p95 {route.WarmP95Ms:F1} ms ({route.WarmSamples} {(route.WarmSamples == 1 ? "sample" : "samples")}), " +
+                $"budget {budgetMilliseconds} ms")));
     }
 
     private static async Task<MeasuredResponse> SendMeasuredAsync(HttpClient client, string method, string pattern, int budgetMilliseconds)
@@ -323,14 +328,6 @@ public sealed class ServerRouteParityTests
             "&mealType=breakfast&breakfastPreference=balanced";
     }
 
-    private static readonly object LatencyProgressLock = new();
-
-    private static void AppendLatencyProgress(string line)
-    {
-        lock (LatencyProgressLock)
-            File.AppendAllText("/tmp/mc-latency-progress.log", line + Environment.NewLine);
-    }
-
     private static string RelativeReportPath(string path) =>
         Path.GetRelativePath(FindRepositoryRoot(), path);
 
@@ -350,7 +347,8 @@ public sealed class ServerRouteParityTests
     private sealed record MeasuredResponse(double Milliseconds, int StatusCode);
     private sealed record ColdMeasurement(MeasuredResponse Response, double StartupMs);
     private sealed record RouteLatency(string Method, string Route, string StartupProcedure, string ColdProcedure,
-        string WarmProcedure, double StartupMs, double ColdMs, double WarmP95Ms, int StatusCode, string? ExternalDependency);
+        string WarmProcedure, double StartupMs, double ColdMs, double WarmP95Ms, int WarmSamples, int StatusCode,
+        string? ExternalDependency);
     private sealed record ServerLatencyReport(string MeasuredAtUtc, string Environment, string MeasurementNote,
         string StartupProcedure, string DatabaseMode, int BudgetMs, string Result, IReadOnlyList<RouteLatency> Routes);
 
