@@ -2,6 +2,8 @@ using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 
+using MuscleCuties.Infrastructure.Cloud;
+
 namespace MuscleCuties.Infrastructure.Cycle.Overview;
 
 public sealed class CloudCycleOverviewStore(
@@ -97,8 +99,8 @@ public sealed class CloudCycleOverviewStore(
                     ? f
                     : null;
                 return new CyclePhaseEntry(
-                    ToStableIntId(log.Id),
-                    log.CycleId.HasValue ? ToStableIntId(log.CycleId.Value) : null,
+                    StableIntId.From(log.Id),
+                    log.CycleId.HasValue ? StableIntId.From(log.CycleId.Value) : null,
                     phase,
                     flow,
                     log.LoggedAt,
@@ -114,8 +116,8 @@ public sealed class CloudCycleOverviewStore(
                     ? st
                     : SymptomTypeDto.Other;
                 return new CycleSymptomEntry(
-                    ToStableIntId(symptom.Id),
-                    ToStableIntId(symptom.CycleId),
+                    StableIntId.From(symptom.Id),
+                    StableIntId.From(symptom.CycleId),
                     symptom.Date.ToDateTime(TimeOnly.MinValue),
                     type,
                     symptom.Severity,
@@ -125,7 +127,7 @@ public sealed class CloudCycleOverviewStore(
 
         var history = overview.History.Cycles
             .Select(cycle => new CycleHistoryItem(
-                ToStableIntId(cycle.Id),
+                StableIntId.From(cycle.Id),
                 cycle.StartDate.ToDateTime(TimeOnly.MinValue),
                 cycle.EndDate?.ToDateTime(TimeOnly.MinValue),
                 cycle.CycleLength))
@@ -134,11 +136,4 @@ public sealed class CloudCycleOverviewStore(
         return new CycleOverviewSnapshot(summary, phaseLogs, symptoms, history);
     }
 
-    private static int ToStableIntId(Guid id)
-    {
-        Span<byte> bytes = stackalloc byte[16];
-        id.TryWriteBytes(bytes);
-        var raw = BitConverter.ToInt32(bytes[..4]) & int.MaxValue;
-        return raw == 0 ? 1 : raw;
-    }
 }

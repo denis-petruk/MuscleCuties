@@ -1,5 +1,7 @@
 using System.Text.Json;
 
+using MuscleCuties.Infrastructure.Services.Media;
+
 namespace MuscleCuties.Core.Services.Profile;
 
 /// <summary>Canonical local paths shared by photo storage and account deletion.</summary>
@@ -40,13 +42,4 @@ public static class ProfileMediaPaths
         return null;
     }
 
-    public static bool IsWithinRoot(string path, string? rootDirectory)
-    {
-        if (string.IsNullOrWhiteSpace(rootDirectory) || !Path.IsPathFullyQualified(path))
-            return false;
-        var root = Normalize(rootDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        var normalized = Normalize(path);
-        return normalized.StartsWith(root + Path.DirectorySeparatorChar,
-            OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
-    }
 }

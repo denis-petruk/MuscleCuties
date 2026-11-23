@@ -13,6 +13,8 @@ using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 
+using MuscleCuties.Infrastructure.PostgreSql.Common;
+
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 
 public sealed class PostgresWorkoutActiveSessionStore(
@@ -64,12 +66,12 @@ public sealed class PostgresWorkoutActiveSessionStore(
 
     public Task<ActiveWorkoutSessionSnapshot?> ResumeTimingAsync(Guid userId, ResumeWorkoutTimingCommand command,
         CancellationToken cancellationToken) => UpdateTimingAsync(userId, command.SessionId,
-        BuildCommandKey(ResumeTimingCommandPrefix, command.IdempotencyKey),
+        IdempotencyCommandKey.Build(ResumeTimingCommandPrefix, command.IdempotencyKey),
         PostgresIdempotencyExecutor.ComputeRequestHash(new { command.SessionId }), null, cancellationToken);
 
     public Task<ActiveWorkoutSessionSnapshot?> CheckpointTimingAsync(Guid userId, CheckpointWorkoutTimingCommand command,
         CancellationToken cancellationToken) => UpdateTimingAsync(userId, command.SessionId,
-        BuildCommandKey(CheckpointTimingCommandPrefix, command.IdempotencyKey),
+        IdempotencyCommandKey.Build(CheckpointTimingCommandPrefix, command.IdempotencyKey),
         PostgresIdempotencyExecutor.ComputeRequestHash(new { command.SessionId, command.IntervalId, command.MeasuredSeconds, command.Pause }),
         command, cancellationToken);
 
@@ -147,7 +149,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
         StartWorkoutSessionCommand command,
         CancellationToken cancellationToken)
     {
-        var commandKey = BuildCommandKey(StartCommandPrefix, command.IdempotencyKey);
+        var commandKey = IdempotencyCommandKey.Build(StartCommandPrefix, command.IdempotencyKey);
         // Preserve the pre-classification hash shape for in-flight legacy retries.
         var requestHash = command.UnplannedActivity is null
             ? PostgresIdempotencyExecutor.ComputeRequestHash(new
@@ -340,7 +342,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
         UpsertWorkoutSessionSetCommand command,
         CancellationToken cancellationToken)
     {
-        var commandKey = BuildCommandKey(UpsertSetCommandPrefix, command.IdempotencyKey);
+        var commandKey = IdempotencyCommandKey.Build(UpsertSetCommandPrefix, command.IdempotencyKey);
         var requestHash = PostgresIdempotencyExecutor.ComputeRequestHash(new
         {
             command.SessionId,
@@ -386,7 +388,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
         FinishWorkoutSessionCommand command,
         CancellationToken cancellationToken)
     {
-        var commandKey = BuildCommandKey(FinishCommandPrefix, command.IdempotencyKey);
+        var commandKey = IdempotencyCommandKey.Build(FinishCommandPrefix, command.IdempotencyKey);
         var requestHash = PostgresIdempotencyExecutor.ComputeRequestHash(new
         {
             command.SessionId,
@@ -495,7 +497,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
         CancelWorkoutSessionCommand command,
         CancellationToken cancellationToken)
     {
-        var commandKey = BuildCommandKey(CancelCommandPrefix, command.IdempotencyKey);
+        var commandKey = IdempotencyCommandKey.Build(CancelCommandPrefix, command.IdempotencyKey);
         var requestHash = PostgresIdempotencyExecutor.ComputeRequestHash(new { command.SessionId });
 
         var execution = await idempotencyExecutor.ExecuteAsync<ActiveWorkoutSessionSnapshot?>(
@@ -672,14 +674,6 @@ public sealed class PostgresWorkoutActiveSessionStore(
         context.Database.ExecuteSqlInterpolatedAsync(
             $"SELECT pg_advisory_xact_lock(hashtextextended({sessionId.ToString("D")}, 0))",
             cancellationToken);
-
-    private static string BuildCommandKey(string prefix, string idempotencyKey)
-    {
-        var normalized = prefix + idempotencyKey.Trim();
-        return normalized.Length <= 128
-            ? normalized
-            : prefix + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(idempotencyKey.Trim()))).ToLowerInvariant();
-    }
 
     private static bool IsUniqueViolation(DbUpdateException exception) =>
         exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };

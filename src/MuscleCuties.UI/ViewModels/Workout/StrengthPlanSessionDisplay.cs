@@ -10,10 +10,10 @@ public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
 {
     public static StrengthPlanSessionDisplay From(StrengthPlanPreviewSessionV020 session, bool hasOmittedMovements = false)
     {
-        var title = FormatLocalized("Workout_Generation_SessionDayTitleFormat",
+        var title = LocalizedFormat.Format("Workout_Generation_SessionDayTitleFormat",
             session.PlannedWeekday is { } weekday
                 ? UiTextCatalog.Get(WeekdayLabelKey(weekday))
-                : FormatLocalized("Workout_Generation_SessionTitleFormat",
+                : LocalizedFormat.Format("Workout_Generation_SessionTitleFormat",
                     session.SessionIndex.ToString(CultureInfo.CurrentCulture)));
         var duration = session.EstimatedMinutes is { } minutes
             ? UiTextCatalog.Get("Workout_Generation_EstimatedMinutesFormat")
@@ -31,7 +31,7 @@ public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
                 ? UiTextCatalog.Get("Workout_Generation_MovementOmittedReason")
                 : slot.Sets is { } sets && slot.MinimumRepetitions is { } minimum &&
                           slot.MaximumRepetitions is { } maximum
-                ? FormatLocalized("Workout_Generation_SlotDetailsFormat",
+                ? LocalizedFormat.Format("Workout_Generation_SlotDetailsFormat",
                     sets.ToString(CultureInfo.CurrentCulture), minimum.ToString(CultureInfo.CurrentCulture),
                     maximum.ToString(CultureInfo.CurrentCulture))
                 : UiTextCatalog.Get("Workout_Generation_PrescriptionPending");
@@ -61,14 +61,6 @@ public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
         return selectionReason.Contains(' ', StringComparison.Ordinal)
             ? selectionReason
             : string.Empty;
-    }
-
-    private static string FormatLocalized(string key, params string[] arguments)
-    {
-        var formatted = UiTextCatalog.Get(key);
-        for (var argumentIndex = 0; argumentIndex < arguments.Length; argumentIndex++)
-            formatted = formatted.Replace($"{{{argumentIndex}}}", arguments[argumentIndex], StringComparison.Ordinal);
-        return formatted;
     }
 
     private static string OmittedMovementKey(StrengthMovementSlotDto movement) => movement switch

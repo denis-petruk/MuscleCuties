@@ -81,22 +81,4 @@ internal static class PlanningSafetyInputs
         planningState?.EffectiveExperience ?? (Enum.TryParse<TrainingExperienceLevel>(
             profile?.TrainingExperienceLevel, true, out var level) && Enum.IsDefined(level) ? level : null);
 
-    internal static IReadOnlySet<int> ParseExcludedExerciseIds(string? json)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "[]" : json);
-            if (document.RootElement.ValueKind != JsonValueKind.Array)
-                return new HashSet<int>();
-            return document.RootElement.EnumerateArray()
-                .Where(value => value.ValueKind == JsonValueKind.Number &&
-                                value.TryGetInt32(out var exerciseId) && exerciseId > 0)
-                .Select(value => value.GetInt32())
-                .ToHashSet();
-        }
-        catch (JsonException)
-        {
-            return new HashSet<int>();
-        }
-    }
 }

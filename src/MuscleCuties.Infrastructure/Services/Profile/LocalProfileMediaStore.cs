@@ -1,3 +1,5 @@
+using MuscleCuties.Infrastructure.Services.Media;
+
 namespace MuscleCuties.Core.Services.Profile;
 
 /// <summary>
@@ -53,7 +55,7 @@ public sealed class LocalProfileMediaStore(string rootDirectory, Action<string> 
             protectPath(directory);
             foreach (var path in Directory.EnumerateFiles(directory))
             {
-                if (!ProfileMediaPaths.IsWithinRoot(path, directory))
+                if (!MediaPathSafety.IsWithinRoot(path, directory))
                     throw new IOException("A photo reference points outside its storage directory.");
                 protectPath(path);
             }
@@ -65,7 +67,7 @@ public sealed class LocalProfileMediaStore(string rootDirectory, Action<string> 
         if (folder is not ("profile" or "vault"))
             throw new ArgumentException("Unknown photo storage directory.", nameof(folder));
         var directory = Path.Combine(rootDirectory, folder);
-        if (!ProfileMediaPaths.IsWithinRoot(directory, rootDirectory))
+        if (!MediaPathSafety.IsWithinRoot(directory, rootDirectory))
             throw new IOException("Photo storage points outside app storage.");
         return directory;
     }

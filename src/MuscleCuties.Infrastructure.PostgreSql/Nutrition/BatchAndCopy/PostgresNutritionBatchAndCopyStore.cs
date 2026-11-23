@@ -9,6 +9,8 @@ using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
 
+using MuscleCuties.Infrastructure.PostgreSql.Common;
+
 namespace MuscleCuties.Infrastructure.PostgreSql.Nutrition.BatchAndCopy;
 
 /// <summary>Executes atomic PostgreSQL batch, copy, preview-copy, and quick-add diary commands with durable idempotency.</summary>
@@ -45,7 +47,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         CommitPreviewedNutritionCopyRequest request,
         CancellationToken cancellationToken)
     {
-        var commandKey = BuildCommandKey(CopyPreviewCommitCommandPrefix, request.IdempotencyKey);
+        var commandKey = IdempotencyCommandKey.Build(CopyPreviewCommitCommandPrefix, request.IdempotencyKey);
         var requestHash = PostgresIdempotencyExecutor.ComputeRequestHash(new
         {
             request.SourceDate,
@@ -135,7 +137,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         BatchSaveNutritionDiaryRequest request,
         CancellationToken cancellationToken)
     {
-        var commandKey = BuildCommandKey(BatchCommandPrefix, request.IdempotencyKey);
+        var commandKey = IdempotencyCommandKey.Build(BatchCommandPrefix, request.IdempotencyKey);
         var requestHash = PostgresIdempotencyExecutor.ComputeRequestHash(new
         {
             request.Date,
@@ -228,7 +230,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         CopyNutritionDiaryRequest request,
         CancellationToken cancellationToken)
     {
-        var commandKey = BuildCommandKey(CopyCommandPrefix, request.IdempotencyKey);
+        var commandKey = IdempotencyCommandKey.Build(CopyCommandPrefix, request.IdempotencyKey);
         var requestHash = PostgresIdempotencyExecutor.ComputeRequestHash(new
         {
             request.SourceDate,
@@ -426,7 +428,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         QuickAddNutritionDiaryRequest request,
         CancellationToken cancellationToken)
     {
-        var commandKey = BuildCommandKey(QuickAddCommandPrefix, request.IdempotencyKey);
+        var commandKey = IdempotencyCommandKey.Build(QuickAddCommandPrefix, request.IdempotencyKey);
         var requestHash = request.LegacyTimestampUnspecified
             ? PostgresIdempotencyExecutor.ComputeRequestHash(new
             {
@@ -598,14 +600,6 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         };
         context.DailyNutritionLogs.Add(log);
         return log;
-    }
-
-    private static string BuildCommandKey(string prefix, string idempotencyKey)
-    {
-        var normalized = prefix + idempotencyKey.Trim();
-        return normalized.Length <= 128
-            ? normalized
-            : prefix + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(idempotencyKey.Trim()))).ToLowerInvariant();
     }
 
     private static Guid CreateDeterministicUuid(Guid userId, string commandKey, int index)

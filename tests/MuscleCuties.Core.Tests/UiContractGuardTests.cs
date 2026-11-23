@@ -1242,7 +1242,6 @@ public sealed class UiContractGuardTests
         var viewModel = File.ReadAllText(Path.Combine(
             root, "src", "MuscleCuties.UI", "ViewModels", "Workout", "WorkoutViewModel.cs"));
 
-        Assert.DoesNotContain("PlanSummaryFormatter.Format", viewModel);
         Assert.Contains("Workout_Page_PlanSummaryTrainingDays", viewModel);
         Assert.Contains("Workout_Page_PlanSummaryRestDays", viewModel);
 

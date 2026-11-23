@@ -59,13 +59,13 @@ public static partial class FoodCatalogRankingRule
             return [];
 
         var primaryMatches = validCandidates
-            .Where(food => MatchesTokens(BuildPrimarySearchableText(food), tokens))
+            .Where(food => MatchesTokens(BuildPrimarySearchableText(food.Name, food.BrandName, food.BrandOwner, food.GtinUpc), tokens))
             .ToList();
 
         var matches = primaryMatches.Count > 0
             ? primaryMatches
             : validCandidates
-                .Where(food => MatchesTokens(BuildFullSearchableText(food), tokens))
+                .Where(food => MatchesTokens(BuildFullSearchableText(BuildPrimarySearchableText(food.Name, food.BrandName, food.BrandOwner, food.GtinUpc), food.Ingredients), tokens))
                 .ToList();
 
         if (matches.Count == 0)
@@ -84,7 +84,7 @@ public static partial class FoodCatalogRankingRule
                 .First())
             .OrderBy(food => RankName(food.Name, tokens))
             .ThenBy(food => WholeFoodRank(food.Name, tokens))
-            .ThenBy(food => SearchFieldRank(BuildPrimarySearchableText(food), tokens))
+            .ThenBy(food => SearchFieldRank(BuildPrimarySearchableText(food.Name, food.BrandName, food.BrandOwner, food.GtinUpc), tokens))
             .ThenBy(food => food.IsCustom ? 0 : 1)
             .ThenBy(food => DataTypeRank(food.DataType))
             .ThenByDescending(CountPrimaryMacros)
@@ -223,7 +223,11 @@ public static partial class FoodCatalogRankingRule
             : 1;
     }
 
-    private static int DataTypeRank(string? dataType)
+    /// <summary>
+    /// USDA data-type preference used by search ranking. Shared with the infrastructure filter so the
+    /// ordering is defined once.
+    /// </summary>
+    public static int DataTypeRank(string? dataType)
     {
         return dataType?.Trim().ToUpperInvariant() switch
         {
@@ -254,23 +258,19 @@ public static partial class FoodCatalogRankingRule
         return $"catalog:{food.Id.ToString(CultureInfo.InvariantCulture)}";
     }
 
-    private static string BuildPrimarySearchableText(FoodCatalogCandidate food)
-    {
-        return string.Join(
-            " ",
-            food.Name,
-            food.BrandName,
-            food.BrandOwner,
-            food.GtinUpc);
-    }
+    /// <summary>
+    /// The identity text a food is matched against: name plus every brand identifier. Shared with the
+    /// infrastructure search filter, which ranks the same catalog shape.
+    /// </summary>
+    public static string BuildPrimarySearchableText(
+        string? name, string? brandName, string? brandOwner, string? gtinUpc) =>
+        string.Join(" ", name, brandName, brandOwner, gtinUpc);
 
-    private static string BuildFullSearchableText(FoodCatalogCandidate food)
-    {
-        return string.Join(
-            " ",
-            BuildPrimarySearchableText(food),
-            food.Ingredients);
-    }
+    /// <summary>
+    /// Primary text plus ingredients, for the lower-confidence match pass.
+    /// </summary>
+    public static string BuildFullSearchableText(string primaryText, string? ingredients) =>
+        string.Join(" ", primaryText, ingredients);
 
     [GeneratedRegex("[^a-z0-9]+")]
     private static partial Regex SearchCleanupRegex();

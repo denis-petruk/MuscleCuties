@@ -1,3 +1,5 @@
+using MuscleCuties.Infrastructure.Services.Media;
+
 namespace MuscleCuties.Core.Services.ExerciseMedia;
 
 /// <summary>
@@ -28,16 +30,6 @@ public static class ExerciseMediaPaths
         }
 
         return resolved;
-    }
-
-    public static bool IsWithinRoot(string path, string? rootDirectory)
-    {
-        if (string.IsNullOrWhiteSpace(rootDirectory) || !Path.IsPathFullyQualified(path))
-            return false;
-        var root = Normalize(rootDirectory).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
-        var normalized = Normalize(path);
-        return normalized.StartsWith(root + Path.DirectorySeparatorChar,
-            OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
     }
 
     public static bool IsLocalMedia(string? pathOrUri)

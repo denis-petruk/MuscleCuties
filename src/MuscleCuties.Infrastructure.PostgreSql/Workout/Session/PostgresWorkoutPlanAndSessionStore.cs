@@ -1696,11 +1696,11 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
     {
         var name = exercise?.Name ?? "Exercise";
         var usesEndurance = UsesEnduranceMetrics(dayExercise, name);
-        var isTimeUnderTension = ContainsAny(name, "plank", "copenhagen");
-        var isCycling = ContainsAny(name, "bike", "cycle", "cycling", "ride");
-        var isRunning = ContainsAny(name, "run", "jog", "sprint", "tempo");
-        var isSwimming = ContainsAny(name, "swim", "pool");
-        var isHiit = ContainsAny(name, "hiit", "interval") && !isCycling && !isRunning;
+        var isTimeUnderTension = WorkoutActivityTagRule.ContainsAny(name, "plank", "copenhagen");
+        var isCycling = WorkoutActivityTagRule.ContainsAny(name, "bike", "cycle", "cycling", "ride");
+        var isRunning = WorkoutActivityTagRule.ContainsAny(name, "run", "jog", "sprint", "tempo");
+        var isSwimming = WorkoutActivityTagRule.ContainsAny(name, "swim", "pool");
+        var isHiit = WorkoutActivityTagRule.ContainsAny(name, "hiit", "interval") && !isCycling && !isRunning;
         var isDistanceCardio = isCycling || isRunning || isSwimming ||
             WorkoutActivityTagRule.IsTimedWalk(name, dayExercise.DurationSeconds);
 
@@ -2174,11 +2174,4 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return required.ToString();
     }
 
-    private static bool ContainsAny(string value, params string[] terms)
-    {
-        // Match activity word stems (run/running), never fragments inside strength names (crunch).
-        var words = value.Split(value.Where(character => !char.IsLetterOrDigit(character)).Distinct().ToArray(),
-            StringSplitOptions.RemoveEmptyEntries);
-        return words.Any(word => terms.Any(term => word.StartsWith(term, StringComparison.OrdinalIgnoreCase)));
-    }
 }

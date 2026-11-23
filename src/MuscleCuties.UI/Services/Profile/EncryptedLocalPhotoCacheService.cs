@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 
+using MuscleCuties.Infrastructure.Caching;
+
 namespace MuscleCuties.UI.Services.Profile;
 
 public sealed class EncryptedLocalPhotoCacheService(
@@ -127,19 +129,8 @@ public sealed class EncryptedLocalPhotoCacheService(
         }
     }
 
-    public async Task ClearAsync(CancellationToken cancellationToken = default)
-    {
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            _activeAccountId = null;
-            await ClearCoreAsync(cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
+    public Task ClearAsync(CancellationToken cancellationToken = default) =>
+        AccountScopedCacheClear.RunAsync(_gate, () => _activeAccountId = null, ClearCoreAsync, cancellationToken);
 
     private async Task<byte[]> GetOrCreateKeyAsync(CancellationToken cancellationToken)
     {

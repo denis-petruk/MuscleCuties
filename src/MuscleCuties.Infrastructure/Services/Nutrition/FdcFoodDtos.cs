@@ -2,11 +2,6 @@ using System.Text.Json.Serialization;
 
 namespace MuscleCuties.Core.Services.Nutrition;
 
-public class FdcFoodSearchResponse
-{
-    [JsonPropertyName("foods")] public List<FdcFoodSearchResult> Foods { get; set; } = [];
-}
-
 public abstract class FdcFoodItemBase
 {
     [JsonPropertyName("fdcId")] public int FdcId { get; set; }
@@ -105,9 +100,3 @@ public class FdcMeasureUnit
     [JsonPropertyName("abbreviation")] public string? Abbreviation { get; set; }
 }
 
-public class FdcFoodsRequest
-{
-    [JsonPropertyName("fdcIds")] public List<int> FdcIds { get; set; } = [];
-
-    [JsonPropertyName("format")] public string Format { get; set; } = "full";
-}

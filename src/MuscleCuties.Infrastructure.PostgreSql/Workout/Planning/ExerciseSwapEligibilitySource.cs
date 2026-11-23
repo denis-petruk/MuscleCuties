@@ -7,6 +7,8 @@ using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 
+using MuscleCuties.Core.Domain.Workout;
+
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
 /// <summary>
@@ -54,7 +56,7 @@ internal static class ExerciseSwapEligibilitySource
         var experience = ExerciseSwapEligibilityRule.Experience(strengthActivity, history, localDate,
             PlanningSafetyInputs.ProfileTrainingExperience(planningState, profile));
 
-        var excluded = new HashSet<int>(PlanningSafetyInputs.ParseExcludedExerciseIds(
+        var excluded = new HashSet<int>(ExcludedExerciseIds.Parse(
             profile?.ExcludedStrengthExerciseIdsJson));
         if (acceptedRequest?.ExcludedExerciseIds is { } acceptedExclusions)
             excluded.UnionWith(acceptedExclusions.Where(id => id > 0));

@@ -46,13 +46,13 @@ public static class FoodSearchResultFilter
             .ToList();
 
         var primaryMatches = candidates
-            .Where(result => MatchesTokens(BuildPrimarySearchableText(result), tokens))
+            .Where(result => MatchesTokens(FoodCatalogRankingRule.BuildPrimarySearchableText(result.Description, result.BrandName, result.BrandOwner, result.GtinUpc), tokens))
             .ToList();
 
         var matches = primaryMatches.Count > 0
             ? primaryMatches
             : candidates
-                .Where(result => MatchesTokens(BuildFullSearchableText(result), tokens))
+                .Where(result => MatchesTokens(FoodCatalogRankingRule.BuildFullSearchableText(FoodCatalogRankingRule.BuildPrimarySearchableText(result.Description, result.BrandName, result.BrandOwner, result.GtinUpc), result.Ingredients), tokens))
                 .ToList();
 
         return matches
@@ -60,16 +60,16 @@ public static class FoodSearchResultFilter
             .Select(group => group
                 .OrderBy(result => RankName(result.Description, tokens))
                 .ThenBy(result => WholeFoodRank(result.Description, tokens))
-                .ThenBy(result => SearchFieldRank(BuildPrimarySearchableText(result), tokens))
-                .ThenBy(result => DataTypeRank(result.DataType))
+                .ThenBy(result => SearchFieldRank(FoodCatalogRankingRule.BuildPrimarySearchableText(result.Description, result.BrandName, result.BrandOwner, result.GtinUpc), tokens))
+                .ThenBy(result => FoodCatalogRankingRule.DataTypeRank(result.DataType))
                 .ThenByDescending(CountSearchPrimaryMacros)
                 .ThenBy(result => HasBrandIdentifier(result) ? 0 : 1)
                 .ThenBy(result => result.Description.Length)
                 .First())
             .OrderBy(result => RankName(result.Description, tokens))
             .ThenBy(result => WholeFoodRank(result.Description, tokens))
-            .ThenBy(result => SearchFieldRank(BuildPrimarySearchableText(result), tokens))
-            .ThenBy(result => DataTypeRank(result.DataType))
+            .ThenBy(result => SearchFieldRank(FoodCatalogRankingRule.BuildPrimarySearchableText(result.Description, result.BrandName, result.BrandOwner, result.GtinUpc), tokens))
+            .ThenBy(result => FoodCatalogRankingRule.DataTypeRank(result.DataType))
             .ThenByDescending(CountSearchPrimaryMacros)
             .ThenBy(result => result.Description.Length)
             .ToList();
@@ -167,18 +167,6 @@ public static class FoodSearchResultFilter
             : 1;
     }
 
-    private static int DataTypeRank(string? dataType)
-    {
-        return dataType?.Trim().ToUpperInvariant() switch
-        {
-            "FOUNDATION" => 0,
-            "SR LEGACY" => 1,
-            "SURVEY (FNDDS)" => 2,
-            "BRANDED" => 3,
-            _ => 4
-        };
-    }
-
     private static int CountPrimaryMacros(FoodItem food)
     {
         return Convert.ToInt32(food.Protein > 0f) +
@@ -213,24 +201,6 @@ public static class FoodSearchResultFilter
             FoodSearchTextNormalizer.NormalizeSearchText(food.GtinUpc ?? string.Empty));
     }
 
-    private static string BuildPrimarySearchableText(FoodItem food)
-    {
-        return string.Join(
-            " ",
-            food.Name,
-            food.BrandName,
-            food.BrandOwner,
-            food.GtinUpc);
-    }
-
-    private static string BuildFullSearchableText(FoodItem food)
-    {
-        return string.Join(
-            " ",
-            BuildPrimarySearchableText(food),
-            food.Ingredients);
-    }
-
     private static string BuildDedupKey(FdcFoodSearchResult result)
     {
         var name = NormalizeName(result.Description);
@@ -244,24 +214,6 @@ public static class FoodSearchResultFilter
             FoodSearchTextNormalizer.NormalizeSearchText(result.BrandName ?? string.Empty),
             FoodSearchTextNormalizer.NormalizeSearchText(result.BrandOwner ?? string.Empty),
             FoodSearchTextNormalizer.NormalizeSearchText(result.GtinUpc ?? string.Empty));
-    }
-
-    private static string BuildPrimarySearchableText(FdcFoodSearchResult result)
-    {
-        return string.Join(
-            " ",
-            result.Description,
-            result.BrandName,
-            result.BrandOwner,
-            result.GtinUpc);
-    }
-
-    private static string BuildFullSearchableText(FdcFoodSearchResult result)
-    {
-        return string.Join(
-            " ",
-            BuildPrimarySearchableText(result),
-            result.Ingredients);
     }
 
     private static bool HasBrandIdentifier(FdcFoodSearchResult result)

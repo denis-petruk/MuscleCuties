@@ -1,4 +1,5 @@
 using System.Text.Json;
+using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Services.Workout;
@@ -56,7 +57,7 @@ internal static class CloudWorkoutPreferencesSnapshotMapper
             ? equipment.ToString()
             : Equipment.FullGym.ToString();
 
-        var excludedExerciseIds = ParseExcludedExerciseIds(snapshot.ExcludedStrengthExerciseIdsJson);
+        var excludedExerciseIds = ExcludedExerciseIds.Parse(snapshot.ExcludedStrengthExerciseIdsJson);
 
         return new WorkoutPreferencesDto(activities, weekdays, durations, equipmentLevel, frequencies,
             excludedExerciseIds, snapshot.GluteFocus,
@@ -64,25 +65,6 @@ internal static class CloudWorkoutPreferencesSnapshotMapper
             snapshot.EquipmentCapabilities?.HasConfirmedBandAnchor,
             snapshot.EquipmentCapabilities?.HasDumbbells,
             snapshot.EquipmentCapabilities?.HasBands);
-    }
-
-    private static HashSet<int> ParseExcludedExerciseIds(string? json)
-    {
-        try
-        {
-            using var document = JsonDocument.Parse(string.IsNullOrWhiteSpace(json) ? "[]" : json);
-            if (document.RootElement.ValueKind != JsonValueKind.Array)
-                return new HashSet<int>();
-            return document.RootElement.EnumerateArray()
-                .Where(value => value.ValueKind == JsonValueKind.Number &&
-                                value.TryGetInt32(out var exerciseId) && exerciseId > 0)
-                .Select(value => value.GetInt32())
-                .ToHashSet();
-        }
-        catch (JsonException)
-        {
-            return new HashSet<int>();
-        }
     }
 
     private static int[] ParseAvailableWeekdays(string? json)

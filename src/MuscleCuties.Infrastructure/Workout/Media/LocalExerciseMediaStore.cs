@@ -1,5 +1,7 @@
 using MuscleCuties.Core.Services.ExerciseMedia;
 
+using MuscleCuties.Infrastructure.Services.Media;
+
 namespace MuscleCuties.Infrastructure.Workout.Media;
 
 /// <summary>
@@ -42,7 +44,7 @@ public sealed class LocalExerciseMediaStore : IExerciseMediaStore
         var directory = Path.Combine(RootDirectory, sanitizedFolder);
         var path = Path.Combine(directory, sanitizedName);
 
-        if (!ExerciseMediaPaths.IsWithinRoot(path, RootDirectory))
+        if (!MediaPathSafety.IsWithinRoot(path, RootDirectory))
             throw new IOException("Exercise media path points outside root directory.");
 
         return path;
@@ -50,7 +52,7 @@ public sealed class LocalExerciseMediaStore : IExerciseMediaStore
 
     public Task<bool> DeleteMediaAsync(string localPath)
     {
-        if (string.IsNullOrWhiteSpace(localPath) || !ExerciseMediaPaths.IsWithinRoot(localPath, RootDirectory))
+        if (string.IsNullOrWhiteSpace(localPath) || !MediaPathSafety.IsWithinRoot(localPath, RootDirectory))
             return Task.FromResult(false);
 
         try
@@ -96,7 +98,7 @@ public sealed class LocalExerciseMediaStore : IExerciseMediaStore
         var targetFileName = $"{sanitizedBase}{extension}";
         var path = Path.Combine(directory, targetFileName);
 
-        if (!ExerciseMediaPaths.IsWithinRoot(path, RootDirectory))
+        if (!MediaPathSafety.IsWithinRoot(path, RootDirectory))
             throw new IOException("Exercise media path points outside app storage.");
 
         try

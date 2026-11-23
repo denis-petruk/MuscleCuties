@@ -70,7 +70,11 @@ public static class CheckInObservationRule
           IsWithin(stress, MinimumPlanningScaleValue, MaximumPlanningScaleValue) &&
           timeZoneId is not null && IsValidTimeZoneId(timeZoneId)));
 
-    private static bool IsValidTimeZoneId(string timeZoneId)
+    /// <summary>
+    /// A time zone id is valid only when the platform can resolve it. Cloud stores use this
+    /// instead of keeping a second copy of the lookup.
+    /// </summary>
+    public static bool IsValidTimeZoneId(string? timeZoneId)
     {
         if (string.IsNullOrWhiteSpace(timeZoneId))
             return false;

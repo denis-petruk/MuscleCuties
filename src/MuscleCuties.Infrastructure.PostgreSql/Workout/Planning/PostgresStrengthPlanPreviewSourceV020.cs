@@ -170,7 +170,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
             EquipmentAnswerMissing = parsedEquipment is null,
             GoalAnswerMissing = parsedGoal is null,
             SelectedActivityTypes = ParseActivityTypes(profile?.PreferredWorkoutActivityTypes),
-            ExcludedExerciseIds = PlanningSafetyInputs.ParseExcludedExerciseIds(profile?.ExcludedStrengthExerciseIdsJson),
+            ExcludedExerciseIds = ExcludedExerciseIds.Parse(profile?.ExcludedStrengthExerciseIdsJson),
             AvailableWeekdays = ParseAvailableWeekdays(profile?.AvailableWorkoutWeekdaysJson),
             ActivitySessionDurationsMinutes = ParseActivityDurations(profile?.ActivitySessionDurationsJson),
             RequestedSessionsPerWeek = ParseActivityFrequencies(

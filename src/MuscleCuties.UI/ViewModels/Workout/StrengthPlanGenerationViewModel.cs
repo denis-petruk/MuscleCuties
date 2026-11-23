@@ -321,7 +321,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         code.StartsWith(MovementOmittedAdvisoryPrefix, StringComparison.Ordinal)) == true;
     public bool HasDurationOmissions => Preview?.AdvisoryCodes.Any(code =>
         code.StartsWith(MovementOmittedForDurationAdvisoryPrefix, StringComparison.Ordinal)) == true;
-    public string DurationOmissionsText => StrengthPlanGenerationDisplayMapper.FormatLocalized(
+    public string DurationOmissionsText => LocalizedFormat.Format(
         "Workout_Generation_DurationMovementOmitted", string.Join(", ",
             (Preview?.AdvisoryCodes ?? []).Where(code => code.StartsWith(MovementOmittedForDurationAdvisoryPrefix, StringComparison.Ordinal))
                 .Select(code => DurationOmittedMovementLabel(code[(code.LastIndexOf(':') + 1)..]))
@@ -345,7 +345,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         : null;
     public bool CanUseLongerDuration => HasDurationChoice && LongerDurationMinutes is { } minutes &&
         minutes <= WorkoutPreferencesConstraints.MaximumActivitySessionDurationMinutes;
-    public string LongerDurationText => StrengthPlanGenerationDisplayMapper.FormatLocalized(
+    public string LongerDurationText => LocalizedFormat.Format(
         "Workout_Generation_UseLongerDuration", (LongerDurationMinutes ?? WorkoutPreferencesConstraints.MinimumActivitySessionDurationMinutes).ToString(CultureInfo.CurrentCulture));
     public bool HasOptionalOmissions => HasOmittedMovements || HasDurationOmissions || Preview?.MixedActivitySchedule?.Activities.Any(
         decision => decision.ActivityTypeId != (int)WorkoutActivityDto.RestDay &&
@@ -372,7 +372,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool HasPlanDetails => HasActivityDecisions || HasStrengthPreviewSessions;
     public bool HasChosenStrengthSummary => Preview?.EffectiveActivityTypeId is not null && HasStrengthPreviewSessions;
     public string ChosenStrengthSummary => Preview?.EffectiveActivityTypeId is { } activity
-        ? StrengthPlanGenerationDisplayMapper.FormatLocalized("Workout_Generation_ChosenStrengthSummary",
+        ? LocalizedFormat.Format("Workout_Generation_ChosenStrengthSummary",
             StrengthPlanGenerationDisplayMapper.ActivityLabel(activity),
             StrengthPreviewSessions.Count.ToString(CultureInfo.CurrentCulture))
         : string.Empty;
@@ -410,7 +410,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             var aerobicMinutes = Preview.MixedActivitySchedule?.Sessions
                 .Where(session => session.ActivityTypeId != (int)WorkoutActivityDto.RestDay)
                 .Sum(session => (int)Math.Round(session.DurationMinutes)) ?? 0;
-            return StrengthPlanGenerationDisplayMapper.FormatLocalized(
+            return LocalizedFormat.Format(
                 "Workout_Generation_WeeklySummaryFormat",
                 sessions.ToString(CultureInfo.CurrentCulture),
                 workingSets.ToString(CultureInfo.CurrentCulture),
@@ -474,7 +474,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool HasSavedStrengthActivity => SelectedActivity is not null;
     public bool IsPageLoading => IsLoadingData;
     public bool CanEditInputs => !IsBusy && Preview is null && !IsProposalAccepted && !IsTrainNavigationPending;
-    public string SavedAvailabilitySummary => StrengthPlanGenerationDisplayMapper.FormatLocalized(
+    public string SavedAvailabilitySummary => LocalizedFormat.Format(
         SavedAvailabilityFormatKey,
         string.Join(", ", _availableWeekdays.Select(StrengthPlanGenerationDisplayMapper.FullWeekdayLabel)));
     public string PreviewLimitationMessage =>
@@ -872,7 +872,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
             var recentWindowStart = localDate.AddDays(-(RecentHistoryWindowDays - HistoryOffsetOne));
             var recentSessionCount = sessionDates.Count(sessionDate => sessionDate >= recentWindowStart);
-            RecentTrainingSummary = StrengthPlanGenerationDisplayMapper.FormatLocalized(
+            RecentTrainingSummary = LocalizedFormat.Format(
                 RecentHistorySummaryFormatKey,
                 recentSessionCount.ToString(CultureInfo.CurrentCulture));
 
@@ -899,14 +899,14 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             var count = sessionDates.Count(sessionDate => sessionDate >= periodStart && sessionDate <= periodEnd);
             var periodLabel = periodIndex == NoPolicyReasons
                 ? UiTextCatalog.Get(RecentWeekLastSevenDaysKey)
-                : StrengthPlanGenerationDisplayMapper.FormatLocalized(
+                : LocalizedFormat.Format(
                     RecentWeekRangeFormatKey,
                     (daysAgo + HistoryOffsetOne).ToString(CultureInfo.CurrentCulture),
                     (daysAgo + DaysPerHistoryPeriod).ToString(CultureInfo.CurrentCulture));
             result.Add(new StrengthPlanRecentWeekDisplay(
                 periodLabel,
                 count.ToString(CultureInfo.CurrentCulture),
-                StrengthPlanGenerationDisplayMapper.FormatLocalized(
+                LocalizedFormat.Format(
                     RecentWeekAccessibilityFormatKey,
                     periodLabel,
                     count.ToString(CultureInfo.CurrentCulture)),
@@ -1174,7 +1174,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         var restDays = allDays.Where(day => day.IsRestDay).Select(day => day.Day).ToArray();
         MixedActivityDays = new ObservableCollection<MixedActivityDayDisplay>(trainingDays);
         RestDaysSummary = trainingDays.Length > NoPolicyReasons && restDays.Length > NoPolicyReasons
-            ? StrengthPlanGenerationDisplayMapper.FormatLocalized(
+            ? LocalizedFormat.Format(
                 "Workout_Generation_RestDaysSummaryFormat", string.Join(" · ", restDays))
             : NoStatusMessage;
             ActivityDecisions = new ObservableCollection<MixedActivityDecisionDisplay>(

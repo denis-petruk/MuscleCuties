@@ -54,7 +54,10 @@ public static class WorkoutActivityTagRule
     public static bool IsTimedWalk(string? exerciseName, int? durationSeconds) =>
         durationSeconds is > 0 && ContainsAny(exerciseName ?? string.Empty, WalkTerms);
 
-    private static bool ContainsAny(string value, string[] terms)
+    /// <summary>
+    /// Matches whole activity word stems (run/running), never fragments inside strength names (crunch).
+    /// </summary>
+    public static bool ContainsAny(string value, params string[] terms)
     {
         // Match activity word stems (run/running), never fragments inside strength names (crunch).
         var words = value.Split(value.Where(character => !char.IsLetterOrDigit(character)).Distinct().ToArray(),

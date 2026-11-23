@@ -22,6 +22,7 @@
 
   <ItemGroup>
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Formatting\DisplayFormat.cs" Link="DisplayFormat.cs" />
+    <Compile Include="..\..\src\MuscleCuties.UI\Services\Localization\LocalizedFormat.cs" Link="LocalizedFormat.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\Models\UI\Workout\ExerciseSetInputItem.cs" Link="ExerciseSetInputItem.cs" />
     <Using Include="System.Globalization" />
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Workout\WorkoutAccountCalendarClient.cs" Link="WorkoutAccountCalendarClient.cs" />

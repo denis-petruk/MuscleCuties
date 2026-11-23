@@ -3,6 +3,8 @@ using System.Text;
 using System.Text.Json;
 using MuscleCuties.UseCases.Features.Caching;
 
+using MuscleCuties.Infrastructure.Caching;
+
 namespace MuscleCuties.Infrastructure.Caching;
 
 public sealed class EncryptedLocalSnapshotCacheService(
@@ -127,19 +129,8 @@ public sealed class EncryptedLocalSnapshotCacheService(
         CancellationToken cancellationToken = default) =>
         LoadSnapshotCoreAsync<DailyNutritionTargetsSnapshot>(accountId, NutritionTargetsKind, cancellationToken);
 
-    public async Task ClearAsync(CancellationToken cancellationToken = default)
-    {
-        await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
-        try
-        {
-            _activeAccountId = null;
-            await ClearCoreAsync(cancellationToken).ConfigureAwait(false);
-        }
-        finally
-        {
-            _gate.Release();
-        }
-    }
+    public Task ClearAsync(CancellationToken cancellationToken = default) =>
+        AccountScopedCacheClear.RunAsync(_gate, () => _activeAccountId = null, ClearCoreAsync, cancellationToken);
 
     private async Task SaveSnapshotCoreAsync<T>(
         Guid accountId,

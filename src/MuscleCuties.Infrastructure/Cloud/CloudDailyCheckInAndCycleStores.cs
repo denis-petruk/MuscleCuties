@@ -17,6 +17,8 @@ using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 
+using MuscleCuties.Core.Domain.Workout;
+
 namespace MuscleCuties.Infrastructure.Cloud;
 
 public sealed class CloudDailyCheckInStore(
@@ -57,7 +59,7 @@ public sealed class CloudDailyCheckInStore(
             request.PlanningFatigue is not (>= 1 and <= 5) ||
             request.PlanningSoreness is not (null or >= 1 and <= 5) ||
             request.PlanningStress is not (null or >= 1 and <= 5) ||
-            !IsValidTimeZoneId(request.PlanningTimeZoneId))
+            !CheckInObservationRule.IsValidTimeZoneId(request.PlanningTimeZoneId))
             throw new ArgumentException("Energy, fatigue, sleep quality and a valid local time zone are required.", nameof(request));
         var localZone = TimeZoneInfo.FindSystemTimeZoneById(request.PlanningTimeZoneId!);
         var todayInLocalZone = DateOnly.FromDateTime(
@@ -127,20 +129,6 @@ public sealed class CloudDailyCheckInStore(
             readiness.Band ?? readiness.Status, string.Empty, false, readiness);
     }
 
-    private static bool IsValidTimeZoneId(string? timeZoneId)
-    {
-        if (string.IsNullOrWhiteSpace(timeZoneId))
-            return false;
-        try
-        {
-            _ = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
-            return true;
-        }
-        catch (Exception exception) when (exception is TimeZoneNotFoundException or InvalidTimeZoneException)
-        {
-            return false;
-        }
-    }
 }
 
 public sealed class CloudWorkoutInjuryStore(
@@ -305,7 +293,7 @@ public sealed class CloudWorkoutInjuryStore(
         {
             if (!_intIdByGuid.TryGetValue(record.Id, out var intId))
             {
-                intId = ToStablePositiveIntId(record.Id);
+                intId = StableIntId.From(record.Id);
                 while (_recordByIntId.TryGetValue(intId, out var existing) && existing.Id != record.Id)
                 {
                     intId = intId == int.MaxValue ? 1 : intId + 1;
@@ -319,13 +307,6 @@ public sealed class CloudWorkoutInjuryStore(
         }
     }
 
-    private static int ToStablePositiveIntId(Guid id)
-    {
-        Span<byte> bytes = stackalloc byte[16];
-        id.TryWriteBytes(bytes);
-        var raw = BitConverter.ToInt32(bytes[..4]) & int.MaxValue;
-        return raw == 0 ? 1 : raw;
-    }
 }
 
 public sealed class CloudCycleDailyLogStore(

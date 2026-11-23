@@ -1,3 +1,5 @@
+using MuscleCuties.UseCases.Features.Caching;
+
 namespace MuscleCuties.UI.Services.Profile;
 
 public interface ILocalPhotoCacheService
@@ -8,9 +10,6 @@ public interface ILocalPhotoCacheService
     Task ClearAsync(CancellationToken cancellationToken = default);
 }
 
-public interface IProtectedPhotoCacheKeyStore
+public interface IProtectedPhotoCacheKeyStore : ISnapshotCacheKeyStore
 {
-    Task<byte[]?> ReadAsync(CancellationToken cancellationToken = default);
-    Task WriteAsync(byte[] key, CancellationToken cancellationToken = default);
-    Task RemoveAsync(CancellationToken cancellationToken = default);
 }

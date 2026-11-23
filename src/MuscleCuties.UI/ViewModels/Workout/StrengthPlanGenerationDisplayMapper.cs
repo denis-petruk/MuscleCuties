@@ -23,16 +23,16 @@ internal static class StrengthPlanGenerationDisplayMapper
     public static MixedActivitySessionDisplay ToMixedActivitySessionDisplay(
         MixedActivityScheduleSessionV020 session)
     {
-        var title = FormatLocalized("Workout_Generation_MixedSessionTitleFormat",
+        var title = LocalizedFormat.Format("Workout_Generation_MixedSessionTitleFormat",
             FullWeekdayLabel(session.Weekday), ActivityLabel(session.ActivityTypeId));
         var effortKey = session.IsHardSession
             ? "Workout_Generation_HigherEffortSession"
             : "Workout_Generation_RegularEffortSession";
         var duration = session.DurationMinutes > NoDurationMinutes
-            ? FormatLocalized("Workout_Generation_MixedSessionDurationFormat",
+            ? LocalizedFormat.Format("Workout_Generation_MixedSessionDurationFormat",
                 session.DurationMinutes.ToString("0", CultureInfo.CurrentCulture))
             : UiTextCatalog.Get("Workout_Generation_EstimateUnavailable");
-        var details = FormatLocalized("Workout_Generation_MixedSessionDetailsFormat", duration,
+        var details = LocalizedFormat.Format("Workout_Generation_MixedSessionDetailsFormat", duration,
             UiTextCatalog.Get(effortKey));
         return new MixedActivitySessionDisplay(title, details)
         {
@@ -55,21 +55,21 @@ internal static class StrengthPlanGenerationDisplayMapper
 
         var parts = new List<string>();
         if (prescription.WarmupMinutes is { } warmup)
-            parts.Add(FormatLocalized("Workout_Generation_PhaseWarmupFormat",
+            parts.Add(LocalizedFormat.Format("Workout_Generation_PhaseWarmupFormat",
                 warmup.ToString("0.#", CultureInfo.CurrentCulture)));
         if (prescription.MainMinutes is { } main)
-            parts.Add(FormatLocalized("Workout_Generation_PhaseMainFormat",
+            parts.Add(LocalizedFormat.Format("Workout_Generation_PhaseMainFormat",
                 main.ToString("0.#", CultureInfo.CurrentCulture)));
         if (prescription.CooldownMinutes is { } cooldown)
-            parts.Add(FormatLocalized("Workout_Generation_PhaseCooldownFormat",
+            parts.Add(LocalizedFormat.Format("Workout_Generation_PhaseCooldownFormat",
                 cooldown.ToString("0.#", CultureInfo.CurrentCulture)));
         if (prescription.IntervalWorkCount is { } workCount && prescription.IntervalWorkSeconds is { } workSeconds)
-            parts.Add(FormatLocalized("Workout_Generation_PhaseIntervalsFormat",
+            parts.Add(LocalizedFormat.Format("Workout_Generation_PhaseIntervalsFormat",
                 workCount.ToString(CultureInfo.CurrentCulture),
                 workSeconds.ToString("0.#", CultureInfo.CurrentCulture)));
         if (prescription.IntervalRecoveryCount is { } recoveryCount &&
             prescription.IntervalRecoverySeconds is { } recoverySeconds)
-            parts.Add(FormatLocalized("Workout_Generation_PhaseRecoveryFormat",
+            parts.Add(LocalizedFormat.Format("Workout_Generation_PhaseRecoveryFormat",
                 recoveryCount.ToString(CultureInfo.CurrentCulture),
                 recoverySeconds.ToString("0.#", CultureInfo.CurrentCulture)));
         return string.Join(" · ", parts);
@@ -83,7 +83,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         var status = string.IsNullOrWhiteSpace(prescriptionStatus) ||
                      string.Equals(prescriptionStatus, "Eligible", StringComparison.Ordinal)
             ? disposition
-            : FormatLocalized("Workout_Generation_ActivityDecisionStatusFormat", disposition,
+            : LocalizedFormat.Format("Workout_Generation_ActivityDecisionStatusFormat", disposition,
                 PrescriptionStatusLabel(prescriptionStatus));
 
         if (decision.ScheduledSessionsPerWeek > 0 &&
@@ -463,27 +463,19 @@ internal static class StrengthPlanGenerationDisplayMapper
         {
             NoPolicyReasons => NoStatusMessage,
             OneWithheldSession => UiTextCatalog.Get(SessionWithheldOneKey),
-            _ => FormatLocalized(SessionWithheldManyKey, withheld.ToString(CultureInfo.CurrentCulture))
+            _ => LocalizedFormat.Format(SessionWithheldManyKey, withheld.ToString(CultureInfo.CurrentCulture))
         };
     }
 
     private static bool IsSessionWithheldCode(string? code) =>
         code is not null && code.StartsWith(SessionWithheldCodePrefix, StringComparison.Ordinal);
 
-    public static string FormatLocalized(string key, params string[] arguments)
-    {
-        var formatted = UiTextCatalog.Get(key);
-        for (var argumentIndex = 0; argumentIndex < arguments.Length; argumentIndex++)
-            formatted = formatted.Replace($"{{{argumentIndex}}}", arguments[argumentIndex], StringComparison.Ordinal);
-        return formatted;
-    }
-
     private static string ActivityFrequencySummary(MixedActivityScheduleDecisionV020 decision)
     {
         if (decision.ScheduledSessionsPerWeek > NoPolicyReasons)
             return FrequencyValue(decision.ScheduledSessionsPerWeek);
         return decision.TargetSessionsPerWeek is > NoPolicyReasons
-            ? FormatLocalized("Workout_Generation_ActivityTargetFormat",
+            ? LocalizedFormat.Format("Workout_Generation_ActivityTargetFormat",
                 FrequencyValue(decision.TargetSessionsPerWeek))
             : NoStatusMessage;
     }
@@ -493,14 +485,14 @@ internal static class StrengthPlanGenerationDisplayMapper
         if (!value.HasValue)
             return UiTextCatalog.Get("Workout_Generation_NotSpecified");
 
-        return FormatLocalized(value.Value == OneSessionPerWeek
+        return LocalizedFormat.Format(value.Value == OneSessionPerWeek
                 ? "Workout_Generation_ActivityFrequencyOneSessionFormat"
                 : "Workout_Generation_ActivityFrequencyMultipleSessionsFormat",
             value.Value.ToString(CultureInfo.CurrentCulture));
     }
 
     private static string FrequencySummaryValue(int? value) => value.HasValue
-        ? FormatLocalized("Workout_Generation_ActivityFrequencyPerWeekFormat",
+        ? LocalizedFormat.Format("Workout_Generation_ActivityFrequencyPerWeekFormat",
             value.Value.ToString(CultureInfo.CurrentCulture))
         : UiTextCatalog.Get("Workout_Generation_NotSpecified");
 
