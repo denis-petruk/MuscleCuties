@@ -1,12 +1,8 @@
-using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;

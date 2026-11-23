@@ -1,8 +1,5 @@
 using System.Data;
-using System.Security.Cryptography;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
-using Npgsql;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Persistence;
 

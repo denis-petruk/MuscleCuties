@@ -1,10 +1,5 @@
-using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 

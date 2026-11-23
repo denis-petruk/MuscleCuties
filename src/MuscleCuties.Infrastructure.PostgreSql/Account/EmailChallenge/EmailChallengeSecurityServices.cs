@@ -1,8 +1,6 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
-using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using System.Net.Http;
 using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.UseCases.Features.Account.EmailChallenge;

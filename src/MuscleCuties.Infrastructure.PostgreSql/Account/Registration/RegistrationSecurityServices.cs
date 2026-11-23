@@ -1,8 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
 using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.UseCases.Features.Account.Registration;
 

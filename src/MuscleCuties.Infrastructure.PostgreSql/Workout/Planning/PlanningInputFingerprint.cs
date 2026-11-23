@@ -1,6 +1,3 @@
-using System.Security.Cryptography;
-using System.Text.Json;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 

@@ -165,7 +165,7 @@ public sealed class ServerRouteParityTests
         const int budgetMilliseconds = 1000;
         const int warmSamples = 20;
         const string reportEnvironmentVariable = "MC_WRITE_LATENCY_REPORT";
-        var databaseConnectionString = LatencyGateEnvironment.RequireConnection();
+        var databaseConnectionString = Environment.GetEnvironmentVariable(LatencyGateFactAttribute.ConnectionVariable)!;
         var owner = Guid.NewGuid();
 
         await using var mapFixture = await ServerFixture.StartAsync(databaseConnectionString: databaseConnectionString);

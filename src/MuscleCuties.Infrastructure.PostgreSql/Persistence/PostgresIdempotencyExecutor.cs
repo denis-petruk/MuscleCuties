@@ -1,8 +1,3 @@
-using System.Security.Cryptography;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using Npgsql;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Persistence;
 

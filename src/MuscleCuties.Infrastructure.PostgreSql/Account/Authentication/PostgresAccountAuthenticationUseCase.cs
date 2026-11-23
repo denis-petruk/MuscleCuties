@@ -1,12 +1,6 @@
-using System.Globalization;
-using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 using MuscleCuties.UseCases.Features.Account.Authentication;
 using MuscleCuties.UseCases.Features.Account.Deletion;

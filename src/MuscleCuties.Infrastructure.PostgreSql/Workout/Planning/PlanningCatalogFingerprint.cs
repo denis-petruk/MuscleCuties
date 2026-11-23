@@ -1,7 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 

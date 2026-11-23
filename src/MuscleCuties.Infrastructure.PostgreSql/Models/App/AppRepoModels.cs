@@ -1,4 +1,3 @@
-using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Models.App;
 

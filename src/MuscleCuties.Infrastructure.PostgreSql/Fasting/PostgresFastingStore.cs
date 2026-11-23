@@ -1,9 +1,4 @@
-using System.Globalization;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Fasting;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Fasting;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Fasting;

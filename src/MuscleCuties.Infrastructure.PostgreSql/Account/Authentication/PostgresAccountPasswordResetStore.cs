@@ -1,6 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Account.Authentication;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;

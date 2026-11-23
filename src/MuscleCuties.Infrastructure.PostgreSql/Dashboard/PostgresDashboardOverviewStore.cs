@@ -1,13 +1,9 @@
-using System.Globalization;
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Dashboard;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Nutrition;
-using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Dashboard.Overview;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;

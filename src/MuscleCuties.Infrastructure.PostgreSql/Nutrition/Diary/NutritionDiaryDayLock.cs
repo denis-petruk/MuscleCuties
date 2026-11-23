@@ -1,6 +1,3 @@
-using System.Globalization;
-using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
 

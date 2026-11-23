@@ -1,23 +1,16 @@
-using System.Globalization;
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Workout;
-using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Workout.Planning;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Session;

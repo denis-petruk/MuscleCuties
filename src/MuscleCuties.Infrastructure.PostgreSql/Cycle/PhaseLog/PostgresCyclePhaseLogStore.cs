@@ -1,14 +1,10 @@
 using System.Data;
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 using MuscleCuties.UseCases.Features.Cycle.Contracts;
-using Npgsql;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
 

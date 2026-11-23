@@ -1,7 +1,4 @@
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Nutrition;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
 using MuscleCuties.UseCases.Features.Nutrition.CustomFoods.Contracts;
 

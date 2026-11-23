@@ -1,11 +1,6 @@
 using System.Data;
-using System.Globalization;
-using System.Security.Cryptography;
 using System.Text;
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Auth;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Account.EmailChallenge;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;

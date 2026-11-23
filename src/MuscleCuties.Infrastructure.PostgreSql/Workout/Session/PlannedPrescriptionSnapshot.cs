@@ -1,6 +1,3 @@
-using System.Text.Json;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 

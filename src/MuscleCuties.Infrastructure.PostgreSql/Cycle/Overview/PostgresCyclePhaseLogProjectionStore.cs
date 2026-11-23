@@ -1,6 +1,4 @@
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Models.Enums.Cycle;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Cycle.Overview;

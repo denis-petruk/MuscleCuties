@@ -1,8 +1,4 @@
-using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
-using MuscleCuties.UseCases.Features.Workout.Planning;
-using Npgsql;
 using NpgsqlTypes;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;

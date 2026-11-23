@@ -1,9 +1,6 @@
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Operations;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogVersioning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Nutrition.CatalogVersioning;

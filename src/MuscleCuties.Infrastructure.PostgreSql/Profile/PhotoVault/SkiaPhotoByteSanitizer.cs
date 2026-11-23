@@ -1,5 +1,4 @@
 using System.Buffers.Binary;
-using System.Security.Cryptography;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
 using SkiaSharp;
 

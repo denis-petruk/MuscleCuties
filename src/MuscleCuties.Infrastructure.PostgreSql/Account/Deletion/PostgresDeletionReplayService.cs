@@ -1,5 +1,3 @@
-using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Account.Deletion;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;

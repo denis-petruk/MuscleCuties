@@ -1,8 +1,4 @@
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Profile;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 

@@ -1,24 +1,15 @@
 using System.Data;
-using System.Globalization;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Onboarding;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Domain.Workout.Planning;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Contracts.Account;
 using MuscleCuties.Contracts.Onboarding;
 using MuscleCuties.UseCases.Features.Account.Registration;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
-using Npgsql;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 

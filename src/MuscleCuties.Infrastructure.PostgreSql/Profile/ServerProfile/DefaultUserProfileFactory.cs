@@ -1,4 +1,3 @@
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 

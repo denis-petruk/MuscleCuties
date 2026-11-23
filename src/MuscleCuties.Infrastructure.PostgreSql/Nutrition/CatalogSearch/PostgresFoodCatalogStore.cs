@@ -1,7 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 

@@ -1,17 +1,8 @@
-using System.Security.Cryptography;
 using System.Text;
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
-using Npgsql;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
-using MuscleCuties.Core.Domain.Workout.Planning;
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 
 using MuscleCuties.Infrastructure.PostgreSql.Common;
 

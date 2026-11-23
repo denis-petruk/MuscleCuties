@@ -1,6 +1,4 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Configurations.App;
 

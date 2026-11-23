@@ -1,8 +1,3 @@
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Core.Domain.Workout.Planning;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 

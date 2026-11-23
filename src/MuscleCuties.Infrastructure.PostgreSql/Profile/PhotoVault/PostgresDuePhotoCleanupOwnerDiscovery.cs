@@ -1,4 +1,3 @@
-using Npgsql;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 

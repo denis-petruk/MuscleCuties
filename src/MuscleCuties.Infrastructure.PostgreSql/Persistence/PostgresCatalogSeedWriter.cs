@@ -1,4 +1,3 @@
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Persistence;

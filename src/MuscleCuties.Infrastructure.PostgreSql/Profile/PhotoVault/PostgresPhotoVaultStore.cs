@@ -1,11 +1,7 @@
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.Configuration;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault.Contracts;
-using Npgsql;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 

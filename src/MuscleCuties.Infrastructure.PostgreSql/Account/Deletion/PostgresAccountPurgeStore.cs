@@ -1,11 +1,7 @@
-using Microsoft.EntityFrameworkCore;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
-using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.UseCases.Features.Account.Deletion;
 using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
-using Npgsql;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 

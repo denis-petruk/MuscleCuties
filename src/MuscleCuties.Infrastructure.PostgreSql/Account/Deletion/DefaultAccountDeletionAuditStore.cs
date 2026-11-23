@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Text.Json;
 using MuscleCuties.UseCases.Features.Account.Deletion;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;

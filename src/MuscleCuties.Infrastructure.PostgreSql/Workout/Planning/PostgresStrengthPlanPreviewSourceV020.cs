@@ -1,16 +1,10 @@
-using System.Text.Json;
-using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Core.Domain.Workout;
-using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Domain.Workout.Planning.Catalog;
 using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Workout.Planning;
-using MuscleCuties.Infrastructure.PostgreSql.Persistence;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
