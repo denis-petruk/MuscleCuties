@@ -17,6 +17,15 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
   </ItemGroup>
   <ItemGroup>
+    <!-- The linked UI view models and option models rely on the toolkit usings the UI project supplies globally. -->
+    <Using Include="CommunityToolkit.Mvvm.ComponentModel" />
+    <Using Include="System.Collections.ObjectModel" />
+    <Using Include="MuscleCuties.UI.Services.Localization" />
+    <Using Include="System.Diagnostics" />
+    <Using Include="System.Globalization" />
+    <Using Include="CommunityToolkit.Mvvm.Input" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="../../src/MuscleCuties.Contracts/MuscleCuties.Contracts.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj" />

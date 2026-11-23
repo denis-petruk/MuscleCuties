@@ -56,7 +56,7 @@ public sealed class AdaptiveRow : Grid
 
     private void ApplyLayout(bool force)
     {
-        var columns = Math.Max(1, IsAccessibilityTextSize() ? 1 : Columns);
+        var columns = Math.Max(1, AccessibilityDecoration.IsAccessibilityTextSize() ? 1 : Columns);
         var childCount = Children.Count;
         // Placement has to be redone for every child: the first measure after a child is added would
         // otherwise hand it row 0 / column 0 and stack every later tile on top of the first.
@@ -84,15 +84,5 @@ public sealed class AdaptiveRow : Grid
             SetColumn(bindable, index % columns);
             index++;
         }
-    }
-
-    private static bool IsAccessibilityTextSize()
-    {
-#if IOS
-        var category = UIKit.UIApplication.SharedApplication.PreferredContentSizeCategory?.ToString();
-        return category is not null && category.Contains("Accessibility", StringComparison.Ordinal);
-#else
-        return false;
-#endif
     }
 }

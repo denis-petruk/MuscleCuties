@@ -91,21 +91,9 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
     private string BuildSnapshot() =>
         $"{Goal}|{WeightGoalPace}|{BuildDietaryTags()}|{CaloriesGoal}|{ProteinGoal}|{CarbsGoal}|{FatsGoal}|{FiberGoal}|{WaterGoal}|{IronGoal}|{VitaminB12Goal}|{VitaminCGoal}|{VitaminDGoal}|{VitaminAGoal}|{VitaminB6Goal}|{FolateGoal}|{CalciumGoal}|{MagnesiumGoal}|{ZincGoal}|{PotassiumGoal}";
 
-    private async Task BackAsync()
-    {
-        if (HasUnsavedChanges && Shell.Current is { } shell)
-        {
-            var discard = await shell.DisplayAlertAsync(
-                UiTextCatalog.Get("Profile_UnsavedChanges_Title"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_Message"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_Discard"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_KeepEditing"));
-            if (!discard)
-                return;
-        }
-
-        await _navigateBackAsync();
-    }
+    private async Task BackAsync() =>
+        await ProfileNavigationGuard.TryNavigateBackAsync(HasUnsavedChanges, ProfileDiscardPrompt.ConfirmAsync,
+            _navigateBackAsync);
 
     public void CommitCaloriesEdit()
     {

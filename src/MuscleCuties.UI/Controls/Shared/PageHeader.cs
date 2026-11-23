@@ -210,7 +210,7 @@ public class PageHeader : ContentView
         };
         // At an accessibility text size the contextual action takes a row of its own: sharing the
         // title's line leaves a column too narrow for one long Russian word ("тренировок").
-        var actionOnOwnRow = IsAccessibilityTextSize();
+        var actionOnOwnRow = AccessibilityDecoration.IsAccessibilityTextSize();
         var titleRow = hasEyebrow ? 1 : 0;
         var subtitleRow = titleRow + 1;
         var actionRow = subtitleRow + 1;
@@ -358,16 +358,6 @@ public class PageHeader : ContentView
             : CappedTextSize.Attach(title, "UiFontSize27", "PresentationAccessibilityTitleMaxFontSize");
     }
 
-    private static bool IsAccessibilityTextSize()
-    {
-#if IOS
-        var category = UIKit.UIApplication.SharedApplication.PreferredContentSizeCategory?.ToString();
-        return category is not null && category.Contains("Accessibility", StringComparison.Ordinal);
-#else
-        return false;
-#endif
-    }
-
     private void ApplyText()
     {
         if (_titleLabel is null)
@@ -380,7 +370,7 @@ public class PageHeader : ContentView
         _subtitleLabel.Text = Subtitle;
         // At accessibility sizes the subtitle can take most of the viewport above a form. The page
         // title and the form's own labels carry the context; the subtitle is the expendable line.
-        _subtitleLabel.IsVisible = !IsAccessibilityTextSize()
+        _subtitleLabel.IsVisible = !AccessibilityDecoration.IsAccessibilityTextSize()
             && StatusContent is null
             && !string.IsNullOrWhiteSpace(Subtitle);
     }
@@ -404,7 +394,7 @@ public class PageHeader : ContentView
 
         // The status view and the text subtitle share one line; the status wins when present.
         if (_subtitleLabel is not null)
-            _subtitleLabel.IsVisible = !IsAccessibilityTextSize()
+            _subtitleLabel.IsVisible = !AccessibilityDecoration.IsAccessibilityTextSize()
                 && StatusContent is null
                 && !string.IsNullOrWhiteSpace(Subtitle);
     }

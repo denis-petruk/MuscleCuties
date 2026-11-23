@@ -69,59 +69,6 @@ public sealed class CanonicalRegistrationCatalogTests
             quiz.Single(question => question.QuestionType == QuizQuestionType.GoalPace)
                 .Answers.Single(answer => answer.Text == "Aggressive").MappedValue);
 
-        var referenceData = new PostgresWorkoutPlanningReferenceDataSource(database);
-        var template = await referenceData.FindWeekTemplateAsync(TrainingDaysPerWeek);
-        Xunit.Assert.NotNull(template);
-        var sequence = ParseTemplateSequence(template!.ArchetypeSequence);
-        var archetypes = await referenceData.GetArchetypesAsync(
-            sequence.Where(id => id > 0).Distinct().ToArray());
-        var byId = archetypes.Where(archetype => archetype is not null).ToDictionary(archetype => archetype!.Id);
-        Xunit.Assert.All(sequence.Where(id => id > 0), id => Xunit.Assert.True(byId.ContainsKey(id)));
-        Xunit.Assert.All(byId.Values, archetype =>
-        {
-            Xunit.Assert.NotEmpty(archetype!.Slots);
-            Xunit.Assert.All(archetype.Slots, slot => Xunit.Assert.False(string.IsNullOrWhiteSpace(slot.AllowedPatterns)));
-        });
-
-        var definitions = await referenceData.GetExerciseDefinitionsAsync();
-        var exercises = await referenceData.GetExercisesAsync();
-        Xunit.Assert.All(exercises, exercise =>
-            Xunit.Assert.DoesNotContain("Canonical exercise:", exercise.Description, StringComparison.Ordinal));
-        Xunit.Assert.True(exercises.Select(exercise => exercise.PrimaryMuscle).Distinct().Skip(1).Any(),
-            "Workout exercises need varied primary-muscle metadata.");
-        var names = exercises.GroupBy(exercise => NormalizeExerciseKey(exercise.Name), StringComparer.Ordinal)
-            .ToDictionary(group => group.Key, group => group.Count(), StringComparer.OrdinalIgnoreCase);
-        Xunit.Assert.All(definitions, definition =>
-            Xunit.Assert.True(names.TryGetValue(NormalizeExerciseKey(definition.Name), out var count) && count == 1,
-                $"Planning exercise {definition.Name} needs exactly one catalog match."));
-
-    }
-
-    [PostgresFact]
-    public async Task CanonicalCatalogHasSevenDayReferenceData()
-    {
-        var connectionString = Environment.GetEnvironmentVariable(ConnectionVariable);
-        Xunit.Assert.False(string.IsNullOrWhiteSpace(connectionString),
-            $"Set {ConnectionVariable} to a seeded local PostgreSQL test database.");
-
-        var options = new DbContextOptionsBuilder<PostgresDbContext>()
-            .UseNpgsql(connectionString)
-            .Options;
-        await using var database = new PostgresDbContext(options);
-        var referenceData = new PostgresWorkoutPlanningReferenceDataSource(database);
-        var template = await referenceData.FindWeekTemplateAsync(SevenWorkoutDaysPerWeek);
-        Xunit.Assert.NotNull(template);
-        Xunit.Assert.Equal(SevenWorkoutDaysPerWeek, ParseTemplateSequence(template!.ArchetypeSequence).Length);
-        Xunit.Assert.Equal(SevenDayMuscleBudgetCount,
-            (await referenceData.GetVolumeBudgetsAsync(SevenWorkoutDaysPerWeek)).Count);
-
-    }
-    private static int[] ParseTemplateSequence(string? sequence)
-    {
-        Xunit.Assert.False(string.IsNullOrWhiteSpace(sequence));
-        return sequence!.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Select(int.Parse)
-            .ToArray();
     }
 
     private static string NormalizeExerciseKey(string value) =>

@@ -11,8 +11,6 @@ namespace MuscleCuties.UI.Infrastructure.Network;
 
 public sealed partial class ExerciseDbClient : IExerciseDbClient
 {
-    private const int MaxRateLimitRetries = 2;
-    private const int MaxServerErrorRetries = 1;
     private static readonly TimeSpan DefaultRateLimitDelay = TimeSpan.FromMilliseconds(500);
     private static readonly TimeSpan MaxRateLimitDelay = TimeSpan.FromSeconds(3);
     public static readonly Uri BaseUri = new("https://exercisedb.p.rapidapi.com/");
@@ -69,9 +67,9 @@ public sealed partial class ExerciseDbClient : IExerciseDbClient
 
         try
         {
-            var response = await SendWithRetryAsync(
+            var response = await HttpRetryPolicy.SendWithRetryAsync(_httpClient,
                 () => new HttpRequestMessage(HttpMethod.Get, mediaUri),
-                ct).ConfigureAwait(false);
+                DefaultRateLimitDelay, MaxRateLimitDelay, ct).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -112,7 +110,8 @@ public sealed partial class ExerciseDbClient : IExerciseDbClient
     {
         try
         {
-            using var response = await SendWithRetryAsync(createRequest, ct).ConfigureAwait(false);
+            using var response = await HttpRetryPolicy.SendWithRetryAsync(_httpClient, createRequest,
+                DefaultRateLimitDelay, MaxRateLimitDelay, ct).ConfigureAwait(false);
             if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound)
                 return default;
 
@@ -139,55 +138,9 @@ public sealed partial class ExerciseDbClient : IExerciseDbClient
         }
     }
 
-    private async Task<HttpResponseMessage> SendWithRetryAsync(
-        Func<HttpRequestMessage> createRequest,
-        CancellationToken ct)
-    {
-        var rateLimitRetries = 0;
-        var serverErrorRetries = 0;
-
-        while (true)
-        {
-            using var request = createRequest();
-            var response = await _httpClient.SendAsync(
-                request,
-                HttpCompletionOption.ResponseHeadersRead,
-                ct).ConfigureAwait(false);
-
-            if (response.StatusCode == HttpStatusCode.TooManyRequests && rateLimitRetries < MaxRateLimitRetries)
-            {
-                var delay = NetworkRetryHelper.GetRateLimitDelay(response, DefaultRateLimitDelay, MaxRateLimitDelay);
-                response.Dispose();
-                rateLimitRetries++;
-                await Task.Delay(delay, ct).ConfigureAwait(false);
-                continue;
-            }
-
-            if ((int)response.StatusCode >= 500 && serverErrorRetries < MaxServerErrorRetries)
-            {
-                response.Dispose();
-                serverErrorRetries++;
-                await Task.Delay(DefaultRateLimitDelay * serverErrorRetries, ct).ConfigureAwait(false);
-                continue;
-            }
-
-            return response;
-        }
-    }
-
-    [SuppressMessage("Performance", "CA1822:Mark members as static",
-        Justification = "Accesses _logger via LogOfflineSkipped.")]
-    private bool CanSendRequest()
-    {
-        if (!NetworkRetryHelper.HasInternetAccess())
-        {
-            if (_logger is not null)
-                LogOfflineSkipped(_logger);
-            return false;
-        }
-
-        return true;
-    }
+    private bool CanSendRequest() =>
+        HttpRetryPolicy.CanSendRequest(NetworkRetryHelper.HasInternetAccess,
+            _logger is { } logger ? () => LogOfflineSkipped(logger) : null);
 
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "ExerciseDB API returned {StatusCode}.")]
     private static partial void LogExerciseDbStatus(ILogger logger, HttpStatusCode statusCode);

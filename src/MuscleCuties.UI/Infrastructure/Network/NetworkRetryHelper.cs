@@ -19,28 +19,4 @@ internal static class NetworkRetryHelper
             return true;
         }
     }
-
-    public static TimeSpan GetRateLimitDelay(HttpResponseMessage response, TimeSpan? defaultDelay = null,
-        TimeSpan? maxDelay = null)
-    {
-        var fallback = defaultDelay ?? DefaultRateLimitDelay;
-        var max = maxDelay ?? MaxRateLimitDelay;
-
-        var retryAfter = response.Headers.RetryAfter;
-        if (retryAfter?.Delta is { } delta)
-            return ClampDelay(delta, fallback, max);
-
-        if (retryAfter?.Date is { } date)
-            return ClampDelay(date - DateTimeOffset.UtcNow, fallback, max);
-
-        return fallback;
-    }
-
-    private static TimeSpan ClampDelay(TimeSpan delay, TimeSpan fallback, TimeSpan max)
-    {
-        if (delay <= TimeSpan.Zero)
-            return fallback;
-
-        return delay > max ? max : delay;
-    }
 }

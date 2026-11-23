@@ -121,21 +121,9 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
     private string BuildSnapshot() =>
         $"{Name}|{Email}|{BirthDate:O}|{HeightCm}|{WeightKg}|{CycleLength}|{SelectedPregnancyOption?.Value}|{SelectedContraceptionOption?.Value}";
 
-    private async Task BackAsync()
-    {
-        if (HasUnsavedChanges && Shell.Current is { } shell)
-        {
-            var discard = await shell.DisplayAlertAsync(
-                UiTextCatalog.Get("Profile_UnsavedChanges_Title"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_Message"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_Discard"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_KeepEditing"));
-            if (!discard)
-                return;
-        }
-
-        await _navigateBackAsync();
-    }
+    private async Task BackAsync() =>
+        await ProfileNavigationGuard.TryNavigateBackAsync(HasUnsavedChanges, ProfileDiscardPrompt.ConfirmAsync,
+            _navigateBackAsync);
 
     public bool IsGoalPaceVisible => UsesWeightGoalPace(Goal);
 

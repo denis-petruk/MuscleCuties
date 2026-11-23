@@ -1293,7 +1293,7 @@ public class UiCleanlinessAndReachabilityTests
     public void Page_headers_drop_the_subtitle_at_accessibility_text_sizes()
     {
         var header = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Shared", "PageHeader.cs"));
-        Assert.Equal(2, Regex.Matches(header, "!IsAccessibilityTextSize\\(\\)").Count);
+        Assert.Equal(2, Regex.Matches(header, "!AccessibilityDecoration\\.IsAccessibilityTextSize\\(\\)").Count);
     }
 
     [Fact]
@@ -1383,6 +1383,21 @@ public class UiCleanlinessAndReachabilityTests
 
     private static int EffectiveGridColumn(XElement element) =>
         int.TryParse(element.Attribute("Grid.Column")?.Value, out var column) ? column : 0;
+
+    [Fact]
+    public void Accessibility_text_size_check_has_one_definition_that_every_control_uses()
+    {
+        var shared = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Shared");
+        var decoration = File.ReadAllText(Path.Combine(shared, "AccessibilityDecoration.cs"));
+        Assert.Contains("internal static bool IsAccessibilityTextSize()", decoration);
+
+        foreach (var control in new[] { "PageHeader.cs", "AdaptiveRow.cs" })
+        {
+            var source = File.ReadAllText(Path.Combine(shared, control));
+            Assert.Contains("AccessibilityDecoration.IsAccessibilityTextSize()", source);
+            Assert.DoesNotContain("private static bool IsAccessibilityTextSize()", source);
+        }
+    }
 
     private static string FindRepositoryRoot()
     {
