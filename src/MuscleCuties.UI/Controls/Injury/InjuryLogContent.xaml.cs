@@ -5,47 +5,29 @@ namespace MuscleCuties.UI.Controls.Injury;
 
 public partial class InjuryLogContent : ContentView
 {
-    private InjuryLogViewModel? _subscribedViewModel;
+    private readonly InjuryLogSubscription _subscription;
 
     public InjuryLogContent()
     {
         InitializeComponent();
+        _subscription = new InjuryLogSubscription(OnViewModelPropertyChanged);
     }
 
     protected override void OnBindingContextChanged()
     {
-        DetachViewModel();
+        _subscription.Detach();
         base.OnBindingContextChanged();
 
-        AttachViewModel();
+        _subscription.Attach(BindingContext);
     }
 
     protected override void OnHandlerChanged()
     {
         base.OnHandlerChanged();
         if (Handler is null)
-            DetachViewModel();
+            _subscription.Detach();
         else
-            AttachViewModel();
-    }
-
-    private void AttachViewModel()
-    {
-        if (BindingContext is not InjuryLogViewModel vm || ReferenceEquals(_subscribedViewModel, vm))
-            return;
-
-        DetachViewModel();
-        _subscribedViewModel = vm;
-        vm.PropertyChanged += OnViewModelPropertyChanged;
-    }
-
-    private void DetachViewModel()
-    {
-        if (_subscribedViewModel is null)
-            return;
-
-        _subscribedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
-        _subscribedViewModel = null;
+            _subscription.Attach(BindingContext);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

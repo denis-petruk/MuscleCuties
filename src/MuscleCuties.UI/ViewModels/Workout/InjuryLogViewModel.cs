@@ -478,6 +478,18 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     ///     Resets the add/edit form to a blank state. Called when the hosting
     ///     modal or page opens so that stale edit state never carries over.
     /// </summary>
+    /// <summary>
+    ///     Opens the log from either host page: clears the previous draft, tells the page to show the sheet, then loads
+    ///     the current injuries unless a load is already running.
+    /// </summary>
+    public async Task OpenModalAsync(Action showModal)
+    {
+        ResetForm();
+        showModal();
+        if (!IsBusy)
+            await LoadCommand.ExecuteAsync(null);
+    }
+
     public void ResetForm()
     {
         CancelEdit();

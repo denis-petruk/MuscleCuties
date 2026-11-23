@@ -1422,11 +1422,55 @@ public class UiCleanlinessAndReachabilityTests
         var mapper = File.ReadAllText(Path.Combine(workoutViewModels, "StrengthPlanGenerationDisplayMapper.cs"));
         var sessionDisplay = File.ReadAllText(Path.Combine(workoutViewModels, "StrengthPlanSessionDisplay.cs"));
 
-        Assert.Equal(1, Regex.Matches(mapper, "\"Workout_Generation_DayMonday\"").Count);
+        Assert.Single(Regex.Matches(mapper, "\"Workout_Generation_DayMonday\"").Cast<Match>());
         Assert.DoesNotContain("\"Workout_Generation_DayMonday\"", sessionDisplay, StringComparison.Ordinal);
         Assert.Contains("UiTextCatalog.Get(WeekdayLabelKey(weekday))", mapper, StringComparison.Ordinal);
         Assert.Contains("StrengthPlanGenerationDisplayMapper.WeekdayLabelKey(weekday)", sessionDisplay,
             StringComparison.Ordinal);
+    }
+
+
+    [Fact]
+    public void Injury_modal_opening_has_one_shared_command_and_both_pages_delegate()
+    {
+        var uiRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "ViewModels");
+        var dashboard = File.ReadAllText(Path.Combine(uiRoot, "Dashboard", "DashboardViewModel.cs"));
+        var workout = File.ReadAllText(Path.Combine(uiRoot, "Workout", "WorkoutViewModel.cs"));
+        var log = File.ReadAllText(Path.Combine(uiRoot, "Workout", "InjuryLogViewModel.cs"))
+            .Replace("\r\n", "\n", StringComparison.Ordinal);
+
+        Assert.Contains("public async Task OpenModalAsync(Action showModal)", log, StringComparison.Ordinal);
+        Assert.Contains("ResetForm();\n        showModal();", log, StringComparison.Ordinal);
+        Assert.Single(Regex.Matches(log, "LoadCommand\\.ExecuteAsync").Cast<Match>());
+        foreach (var page in new[] { dashboard, workout })
+        {
+            Assert.DoesNotContain("InjuryLogVm.ResetForm();", page, StringComparison.Ordinal);
+            Assert.DoesNotContain("InjuryLogVm.LoadCommand.ExecuteAsync", page, StringComparison.Ordinal);
+            Assert.Contains("await InjuryLogVm.OpenModalAsync(() => IsInjuryModalVisible = true);", page,
+                StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void Injury_log_controls_share_one_property_subscription_implementation()
+    {
+        var root = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Injury");
+        var content = File.ReadAllText(Path.Combine(root, "InjuryLogContent.xaml.cs"));
+        var modal = File.ReadAllText(Path.Combine(root, "InjuryLogModal.xaml.cs"));
+
+        foreach (var control in new[] { content, modal })
+        {
+            Assert.DoesNotContain(".PropertyChanged += ", control, StringComparison.Ordinal);
+            Assert.DoesNotContain(".PropertyChanged -= ", control, StringComparison.Ordinal);
+            Assert.Contains("_subscription.Attach(BindingContext)", control, StringComparison.Ordinal);
+            Assert.Contains("_subscription.Detach()", control, StringComparison.Ordinal);
+        }
+
+        var subscriptionPath = Path.Combine(root, "InjuryLogSubscription.cs");
+        Assert.True(File.Exists(subscriptionPath), "the shared injury log subscription helper is missing");
+        var subscription = File.ReadAllText(subscriptionPath);
+        Assert.Single(Regex.Matches(subscription, "\\.PropertyChanged \\+= ").Cast<Match>());
+        Assert.Single(Regex.Matches(subscription, "\\.PropertyChanged -= ").Cast<Match>());
     }
 
 }

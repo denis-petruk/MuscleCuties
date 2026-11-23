@@ -509,10 +509,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [RelayCommand]
     private async Task OpenInjuryModalAsync()
     {
-        InjuryLogVm.ResetForm();
-        IsInjuryModalVisible = true;
-        if (!InjuryLogVm.IsBusy)
-            await InjuryLogVm.LoadCommand.ExecuteAsync(null);
+        await InjuryLogVm.OpenModalAsync(() => IsInjuryModalVisible = true);
     }
 
     [RelayCommand]

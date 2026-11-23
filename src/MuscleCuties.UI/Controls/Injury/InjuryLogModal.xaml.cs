@@ -10,7 +10,12 @@ public partial class InjuryLogModal : AnimatedModalView
         BindableProperty.Create(nameof(CloseCommand), typeof(ICommand), typeof(InjuryLogModal));
 
     private bool _hasContent;
-    private InjuryLogViewModel? _subscribedViewModel;
+    private readonly InjuryLogSubscription _subscription;
+
+    public InjuryLogModal()
+    {
+        _subscription = new InjuryLogSubscription(OnViewModelPropertyChanged);
+    }
 
     public ICommand? CloseCommand
     {
@@ -40,9 +45,9 @@ public partial class InjuryLogModal : AnimatedModalView
 
     protected override void OnBindingContextChanged()
     {
-        DetachViewModel();
+        _subscription.Detach();
         base.OnBindingContextChanged();
-        AttachViewModel();
+        _subscription.Attach(BindingContext);
         UpdateSheetHeight();
     }
 
@@ -50,28 +55,9 @@ public partial class InjuryLogModal : AnimatedModalView
     {
         base.OnHandlerChanged();
         if (Handler is null)
-            DetachViewModel();
+            _subscription.Detach();
         else
-            AttachViewModel();
-    }
-
-    private void AttachViewModel()
-    {
-        if (BindingContext is not InjuryLogViewModel vm || ReferenceEquals(vm, _subscribedViewModel))
-            return;
-
-        DetachViewModel();
-        _subscribedViewModel = vm;
-        vm.PropertyChanged += OnViewModelPropertyChanged;
-    }
-
-    private void DetachViewModel()
-    {
-        if (_subscribedViewModel is null)
-            return;
-
-        _subscribedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
-        _subscribedViewModel = null;
+            _subscription.Attach(BindingContext);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
