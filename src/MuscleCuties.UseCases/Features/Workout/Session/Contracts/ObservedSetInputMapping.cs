@@ -42,22 +42,3 @@ public static class ObservedSetInputMapping
         return observed.Length > 0 ? observed : null;
     }
 }
-
-public static class TimedActivityActualFactory
-{
-    /// <summary>
-    /// Builds the timed-only activity actual. The session finish endpoint records duration;
-    /// this payload is what marks the row-less activity complete without inventing sets.
-    /// </summary>
-    public static ActivityActualLogDto Build(
-        WorkoutActivityDto activityType,
-        int durationSeconds,
-        int? effortRpe = null,
-        string? notes = null) =>
-        new(
-            WorkoutDayActivityId: null,
-            ActivityType: activityType,
-            DurationSeconds: Math.Max(0, durationSeconds),
-            EffortRpe: effortRpe,
-            Notes: notes);
-}

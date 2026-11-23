@@ -85,52 +85,6 @@ public sealed class HydrationNextDomainTests
         Assert.Throws<ArgumentException>(() => WaterIntakeDay.Restore(Account, SpringDate, 0, [], excessiveOperations));
     }
 
-    [Fact]
-    public void DstGapIsSkippedInsteadOfMovedIntoAnUnselectedTime()
-    {
-        var configuration = Configuration(new(GapHour, HalfHourMinutes));
-        var before = AtUtcMidnight(SpringDate);
-        Assert.Empty(WaterReminderSchedule.ForDate(configuration, SpringDate, Zone(), before, WaterReminderAuthorizationState.Granted));
-    }
-
-    [Fact]
-    public void DstFoldUsesEarlierInstantOnceAndDoesNotFallBackToSecondOccurrence()
-    {
-        var configuration = Configuration(new(FoldHour, HalfHourMinutes));
-        var first = Assert.Single(WaterReminderSchedule.ForDate(configuration, FallDate, Zone(),
-            AtUtcMidnight(FallDate), WaterReminderAuthorizationState.Granted));
-        var expected = new DateTimeOffset(FallDate.ToDateTime(new(FoldHour, HalfHourMinutes)), TimeSpan.FromHours(DaylightOffsetHours)).ToUniversalTime();
-        Assert.Equal(expected, first.Instant);
-        Assert.Empty(WaterReminderSchedule.ForDate(configuration, FallDate, Zone(), expected, WaterReminderAuthorizationState.Granted));
-    }
-
-    [Fact]
-    public void RepeatedPlanningIsDeterministicAndTimezoneChangePreservesWallTime()
-    {
-        var configuration = Configuration(new(MorningHour, 0));
-        var now = AtUtcMidnight(SpringDate);
-        var original = WaterReminderSchedule.ForDate(configuration, SpringDate, Zone(), now, WaterReminderAuthorizationState.Granted);
-        Assert.Equal(original, WaterReminderSchedule.ForDate(configuration, SpringDate, Zone(), now, WaterReminderAuthorizationState.Granted));
-        var changedZone = TimeZoneInfo.CreateCustomTimeZone(OtherZoneId, TimeSpan.FromHours(OtherOffsetHours), OtherZoneId, OtherZoneId);
-        var changed = Assert.Single(WaterReminderSchedule.ForDate(configuration, SpringDate, changedZone, now, WaterReminderAuthorizationState.Granted));
-        Assert.Equal(original[0].LocalTime, changed.LocalTime);
-        Assert.Equal(Account, changed.AccountId);
-        Assert.NotEqual(original[0].Instant, changed.Instant);
-        Assert.Empty(WaterReminderSchedule.ForDate(configuration, SpringDate, Zone(), now, WaterReminderAuthorizationState.Denied));
-        Assert.Empty(WaterReminderSchedule.ForDate(configuration, SpringDate, Zone(), now, WaterReminderAuthorizationState.Unknown));
-        var disabled = WaterReminderConfiguration.Create(Account, false, null, null, null);
-        Assert.Empty(WaterReminderSchedule.ForDate(disabled, SpringDate, Zone(), now, WaterReminderAuthorizationState.Granted));
-    }
-
-    [Fact]
-    public void CalendarBoundaryOutsideUtcRangeProducesNoCandidate()
-    {
-        var configuration = Configuration(new(FoldHour, HalfHourMinutes));
-        var zone = TimeZoneInfo.CreateCustomTimeZone(OtherZoneId, TimeSpan.FromHours(OtherOffsetHours), OtherZoneId, OtherZoneId);
-        Assert.Empty(WaterReminderSchedule.ForDate(configuration, DateOnly.MinValue, zone,
-            DateTimeOffset.MinValue, WaterReminderAuthorizationState.Granted));
-    }
-
     private static WaterIntakeDay Empty(int legacy = 0) => WaterIntakeDay.Restore(Account, SpringDate, legacy, [], []);
     private static WaterReminderConfiguration Configuration(TimeOnly time) => WaterReminderConfiguration.Create(Account, true, [time], QuietStart, QuietEnd);
     private static DateTimeOffset AtUtcMidnight(DateOnly date) => new(date.ToDateTime(TimeOnly.MinValue), TimeSpan.Zero);

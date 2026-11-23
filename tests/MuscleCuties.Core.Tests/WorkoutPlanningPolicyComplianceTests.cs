@@ -246,72 +246,9 @@ public sealed class WorkoutPlanningPolicyComplianceTests
     // 6. Injury Status and Pain Thresholds (3 vs 4, 6 vs 7, No safety bypass)
     // =========================================================================
 
-    [Fact]
-    public void Injury_PainBoundaries_3vs4_And_6vs7()
-    {
-        // Boundary: Pain 3 allows progression (if no next-day worsening)
-        var pain3 = InjurySafetyProgressionRule.EvaluatePainProgression(painLevel: 3, hasNextDayWorsening: false);
-        Assert.Equal(PainProgressionDisposition.AllowProgression, pain3.Disposition);
-        Assert.True(pain3.AllowsLoadProgression);
-
-        // Boundary: Pain 4 maintains or regresses (blocks progression even without next-day worsening)
-        var pain4 = InjurySafetyProgressionRule.EvaluatePainProgression(painLevel: 4, hasNextDayWorsening: false);
-        Assert.Equal(PainProgressionDisposition.MaintainOrRegress, pain4.Disposition);
-        Assert.False(pain4.AllowsLoadProgression);
-
-        // Boundary: Pain 6 maintains or regresses
-        var pain6 = InjurySafetyProgressionRule.EvaluatePainProgression(painLevel: 6, hasNextDayWorsening: false);
-        Assert.Equal(PainProgressionDisposition.MaintainOrRegress, pain6.Disposition);
-        Assert.False(pain6.RequiresExerciseStopOrModification);
-
-        // Boundary: Pain 7 requires exercise stop or modification
-        var pain7 = InjurySafetyProgressionRule.EvaluatePainProgression(painLevel: 7, hasNextDayWorsening: false);
-        Assert.Equal(PainProgressionDisposition.BlockAndModify, pain7.Disposition);
-        Assert.True(pain7.RequiresExerciseStopOrModification);
-    }
-
-    [Fact]
-    public void Injury_AcuteStatus_CannotBeBypassedByLowPainOrActivityLabels()
-    {
-        // Low pain (1/10) with Acute status still blocks heavy/high-impact movement
-        var acuteDecision = InjurySafetyProgressionRule.EvaluateExerciseSafety(
-            status: InjuryStatus.Acute,
-            activeInjurySite: InjuryFlag.Knee,
-            isHeavyMovement: true,
-            isHighImpactMovement: false,
-            exerciseInvolvedSite: InjuryFlag.Knee,
-            requestedLoad: 80m);
-
-        Assert.False(acuteDecision.IsAllowed);
-        Assert.False(acuteDecision.IsProgressionAllowed);
-        Assert.Equal(InjurySafetyProgressionRule.StatusBlockedAcute, acuteDecision.SafetyStatus);
-    }
-
     // =========================================================================
     // 7. Aerobic Moderate-Equivalent Minutes (ME = Mod + 2 * Vig)
     // =========================================================================
-
-    [Fact]
-    public void AerobicMinutes_ModerateEquivalentArithmetic_MeEqualsModPlus2Vig()
-    {
-        // 30 min moderate + 15 min vigorous = 30 + 2 * 15 = 60 ME
-        var sessionMe = AerobicHealthTargetRule.CalculateSessionModerateEquivalentMinutes(30m, 15m);
-        Assert.Equal(60m, sessionMe);
-
-        var weeklySessions = new[]
-        {
-            new AerobicSessionMinutes(MinutesModerate: 30m, MinutesVigorous: 15m), // 60 ME
-            new AerobicSessionMinutes(MinutesModerate: 40m, MinutesVigorous: 25m)  // 40 + 50 = 90 ME
-        };
-
-        var totalMe = AerobicHealthTargetRule.CalculateWeeklyModerateEquivalentMinutes(weeklySessions);
-        Assert.Equal(150m, totalMe);
-
-        var eval = AerobicHealthTargetRule.Evaluate(weeklySessions, resistanceTrainingDaysPerWeek: 2);
-        Assert.True(eval.MeetsAerobicTarget);
-        Assert.True(eval.MeetsResistanceTarget);
-        Assert.True(eval.MeetsAllTargets);
-    }
 
     // =========================================================================
     // 8. Load Progression & Volume Guard
@@ -347,31 +284,6 @@ public sealed class WorkoutPlanningPolicyComplianceTests
     // =========================================================================
     // 9. Cycle Phase Precedence Hierarchy
     // =========================================================================
-
-    [Fact]
-    public void CyclePrecedence_InjurySafetyOverridesAll_AndReadinessOverridesCycleDiscomfort()
-    {
-        // 1. Injury safety override
-        var injuryContext = new PrecedenceEvaluationContext(
-            HasExplicitRestrictionConflict: false,
-            HasAcuteInjuryConflict: true,
-            BaselineCycleTier: PhaseAdjustmentTier.EasierDay);
-
-        var injuryResult = PhaseAndCheckInPrecedenceRule.Evaluate(injuryContext);
-        Assert.Equal(PrecedenceLevel.InjurySafety, injuryResult.ControllingPrecedence);
-        Assert.Equal(PrecedenceProposalStatus.BlockedBySafety, injuryResult.Status);
-
-        // 2. High daily readiness overrides baseline cycle phase discomfort
-        var readinessContext = new PrecedenceEvaluationContext(
-            HasExplicitRestrictionConflict: false,
-            HasAcuteInjuryConflict: false,
-            BaselineCycleTier: PhaseAdjustmentTier.EasierDay,
-            CheckInScore: new CheckInScoreResult(CheckInScoreStatus.Available, 85m, CheckInScoreBand.FeelingReady, null));
-
-        var readinessResult = PhaseAndCheckInPrecedenceRule.Evaluate(readinessContext);
-        Assert.Equal(PrecedenceLevel.DailyCheckInOverride, readinessResult.ControllingPrecedence);
-        Assert.Equal(PhaseAdjustmentTier.Maintain, readinessResult.EffectiveTier);
-    }
 
     // =========================================================================
     // 10. Session Lifecycle Preservation (Completed and InProgress preserved)

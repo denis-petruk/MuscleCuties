@@ -54,24 +54,6 @@ public sealed class ObservedSetCaptureAndProgressionContractTests
     }
 
     [Fact]
-    public void TimedActivity_BuildsRowLessActualPayload()
-    {
-        var actual = TimedActivityActualFactory.Build(WorkoutActivityDto.Yoga, 1_800);
-        var request = new LogWorkoutSessionRequest(
-            WorkoutDayId: 42,
-            Date: new DateOnly(2026, 11, 7),
-            Exercises: null,
-            PlannedSessionId: Guid.NewGuid(),
-            ActivityActuals: [actual]);
-
-        Assert.Equal(WorkoutActivityDto.Yoga, actual.ActivityType);
-        Assert.Equal(1_800, actual.DurationSeconds);
-        Assert.Null(actual.WorkoutDayActivityId);
-        Assert.Null(request.Exercises);
-        Assert.Single(request.ActivityActuals!);
-    }
-
-    [Fact]
     public void PersistedObservedSets_UseRealTierAndMuscleGroupForProgression()
     {
         var sessionOne = Guid.NewGuid();
