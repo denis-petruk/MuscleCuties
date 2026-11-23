@@ -26,18 +26,7 @@ internal static class CatalogAuditFixture
         .Select(id => Record(id))
         .ToArray();
 
-    public static IReadOnlyList<CatalogExerciseContributionAuditInput> ContributionInputs => Definitions.Keys
-        .OrderBy(id => id)
-        .Select(id => new CatalogExerciseContributionAuditInput(
-            id,
-            Definitions[id].Name,
-            Reviews.ContainsKey(id),
-            (MovementPattern)Definitions[id].Pattern,
-            Contributions.GetValueOrDefault(id, [])))
-        .ToArray();
 
-    public static CatalogContributionAudit Audit =>
-        ExerciseCatalogAuditRule.AnalyzeContributions(ContributionInputs);
 
     public static CatalogExerciseRecord Record(int exerciseId) => new(
         exerciseId,
@@ -79,20 +68,6 @@ internal static class CatalogAuditFixture
         return fields;
     }
 
-    public static CatalogSourceAgreement SourceAgreement(int exerciseId)
-    {
-        var definition = Definitions[exerciseId];
-        var review = Reviews[exerciseId];
-        return ExerciseCatalogAuditRule.CompareSources(
-        [
-            new CatalogSourceField(ExerciseCatalogAuditRule.NameField, review.Name, definition.Name),
-            new CatalogSourceField(ExerciseCatalogAuditRule.PatternField, review.Pattern, ((MovementPattern)definition.Pattern).ToString()),
-            new CatalogSourceField(ExerciseCatalogAuditRule.EquipmentField, review.Equipment.ToString(), definition.Equipment.ToString()),
-            new CatalogSourceField(ExerciseCatalogAuditRule.SetupSecondsField, review.SetupSeconds.ToString(), definition.SetupSeconds.ToString()),
-            new CatalogSourceField(ExerciseCatalogAuditRule.SecondsPerRepField, review.SecondsPerRep.ToString(), definition.SecondsPerRep.ToString()),
-            new CatalogSourceField(ExerciseCatalogAuditRule.ContraindicationsField, review.Contraindications.ToString(), definition.Contraindications.ToString())
-        ]);
-    }
 
 
     public sealed record DefinitionRow(

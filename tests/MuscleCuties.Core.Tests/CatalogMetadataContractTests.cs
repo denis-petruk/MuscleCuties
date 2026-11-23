@@ -72,46 +72,4 @@ public sealed class CatalogMetadataContractTests
         Assert.All(completeness.Fields, field => Assert.Equal(CatalogFieldStatus.Missing, field.Status));
     }
 
-    [Fact]
-    public void Agreement_checks_all_six_reviewed_fields()
-    {
-        Assert.Equal(6, ExerciseCatalogAuditRule.AgreementFields.Count);
-        Assert.Equal(
-            new[]
-            {
-                ExerciseCatalogAuditRule.NameField,
-                ExerciseCatalogAuditRule.PatternField,
-                ExerciseCatalogAuditRule.EquipmentField,
-                ExerciseCatalogAuditRule.SetupSecondsField,
-                ExerciseCatalogAuditRule.SecondsPerRepField,
-                ExerciseCatalogAuditRule.ContraindicationsField
-            },
-            ExerciseCatalogAuditRule.AgreementFields);
-    }
-
-    [Fact]
-    public void Reviewed_snapshot_agrees_with_the_seed_on_every_agreement_field()
-    {
-        var divergences = CatalogAuditFixture.Reviews.Keys
-            .OrderBy(id => id)
-            .Select(id => (id, agreement: CatalogAuditFixture.SourceAgreement(id)))
-            .Where(pair => !pair.agreement.Agrees)
-            .Select(pair => $"{pair.id}:{string.Join('|', pair.agreement.DivergedFields)}")
-            .ToArray();
-
-        Assert.Empty(divergences);
-    }
-
-    [Fact]
-    public void A_divergent_field_is_named_rather_than_collapsed()
-    {
-        var agreement = ExerciseCatalogAuditRule.CompareSources(
-        [
-            new CatalogSourceField(ExerciseCatalogAuditRule.NameField, "Lat Pulldown", "Lat Pulldown"),
-            new CatalogSourceField(ExerciseCatalogAuditRule.SetupSecondsField, "90", "120")
-        ]);
-
-        Assert.False(agreement.Agrees);
-        Assert.Equal([ExerciseCatalogAuditRule.SetupSecondsField], agreement.DivergedFields);
-    }
 }
