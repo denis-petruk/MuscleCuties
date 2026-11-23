@@ -1452,25 +1452,36 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
-    public void Injury_log_controls_share_one_property_subscription_implementation()
+    public void Injury_log_controls_subscribe_through_one_shared_base_view()
     {
-        var root = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Injury");
-        var content = File.ReadAllText(Path.Combine(root, "InjuryLogContent.xaml.cs"));
-        var modal = File.ReadAllText(Path.Combine(root, "InjuryLogModal.xaml.cs"));
+        var sharedRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Shared");
+        var basePath = Path.Combine(sharedRoot, "ViewModelSubscribingView.cs");
+        Assert.True(File.Exists(basePath), "the shared subscribing base view is missing");
+        var baseView = File.ReadAllText(basePath);
+        Assert.Single(Regex.Matches(baseView, "\\.PropertyChanged \\+= ").Cast<Match>());
+        Assert.Single(Regex.Matches(baseView, "\\.PropertyChanged -= ").Cast<Match>());
+        Assert.Contains(": ContentView", baseView, StringComparison.Ordinal);
 
+        var injuryRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Injury");
+        var content = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogContent.xaml.cs"));
+        var modal = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogModal.xaml.cs"));
+        Assert.Contains(": ViewModelSubscribingView", content, StringComparison.Ordinal);
+        Assert.Contains(": AnimatedModalView", modal, StringComparison.Ordinal);
         foreach (var control in new[] { content, modal })
         {
             Assert.DoesNotContain(".PropertyChanged += ", control, StringComparison.Ordinal);
             Assert.DoesNotContain(".PropertyChanged -= ", control, StringComparison.Ordinal);
-            Assert.Contains("_subscription.Attach(BindingContext)", control, StringComparison.Ordinal);
-            Assert.Contains("_subscription.Detach()", control, StringComparison.Ordinal);
+            Assert.DoesNotContain("override void OnHandlerChanged", control, StringComparison.Ordinal);
+            Assert.DoesNotContain("AttachViewModel", control, StringComparison.Ordinal);
+            Assert.DoesNotContain("DetachViewModel", control, StringComparison.Ordinal);
         }
 
-        var subscriptionPath = Path.Combine(root, "InjuryLogSubscription.cs");
-        Assert.True(File.Exists(subscriptionPath), "the shared injury log subscription helper is missing");
-        var subscription = File.ReadAllText(subscriptionPath);
-        Assert.Single(Regex.Matches(subscription, "\\.PropertyChanged \\+= ").Cast<Match>());
-        Assert.Single(Regex.Matches(subscription, "\\.PropertyChanged -= ").Cast<Match>());
+        var contentXaml = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogContent.xaml"));
+        Assert.Contains("<sharedControls:ViewModelSubscribingView", contentXaml, StringComparison.Ordinal);
+        Assert.Contains("</sharedControls:ViewModelSubscribingView>", contentXaml, StringComparison.Ordinal);
+
+        var modalBase = File.ReadAllText(Path.Combine(sharedRoot, "AnimatedModalView.cs"));
+        Assert.Contains("class AnimatedModalView : ViewModelSubscribingView", modalBase, StringComparison.Ordinal);
     }
 
 }

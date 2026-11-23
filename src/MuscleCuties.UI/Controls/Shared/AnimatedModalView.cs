@@ -8,7 +8,7 @@ using Microsoft.Maui.Accessibility;
 
 namespace MuscleCuties.UI.Controls.Shared;
 
-public class AnimatedModalView : ContentView
+public class AnimatedModalView : ViewModelSubscribingView
 {
     public static readonly BindableProperty IsOpenProperty =
         BindableProperty.Create(nameof(IsOpen), typeof(bool), typeof(AnimatedModalView), false,

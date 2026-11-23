@@ -1,9 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<ContentView
+<sharedControls:ViewModelSubscribingView
     x:Class="MuscleCuties.UI.Controls.Injury.InjuryLogContent"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:sharedControls="clr-namespace:MuscleCuties.UI.Controls.Shared"
     xmlns:loc="clr-namespace:MuscleCuties.UI.Services.Localization"
     xmlns:vm="clr-namespace:MuscleCuties.UI.ViewModels.Workout"
     xmlns:ui="clr-namespace:MuscleCuties.UI.Models.UI.Workout"
@@ -257,4 +258,4 @@
             </Grid>
         </VerticalStackLayout>
     </ScrollView>
-</ContentView>
+</sharedControls:ViewModelSubscribingView>
