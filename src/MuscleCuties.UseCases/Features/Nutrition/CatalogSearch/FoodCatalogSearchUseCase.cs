@@ -40,34 +40,8 @@ public sealed class FoodCatalogSearchUseCase(IFoodCatalogSearchStore store) : IF
         var pagedCandidates = ranked.Skip((int)skip).Take(clampedPageSize).ToList();
         var hasMore = ranked.Count > skip + pagedCandidates.Count;
 
-        var items = pagedCandidates.Select(MapToDto).ToList();
+        var items = pagedCandidates.Select(FoodCatalogItemMapper.ToDto).ToList();
         return new FoodCatalogSearchResponse(items, safePageNumber, clampedPageSize, hasMore);
     }
 
-    private static FoodCatalogItemDto MapToDto(FoodCatalogCandidate candidate)
-    {
-        var sourceSummary = FoodCatalogProvenanceRule.Classify(candidate) switch
-        {
-            FoodCatalogSourceKind.CustomFood => "Nutrition_Source_CustomFood",
-            FoodCatalogSourceKind.UsdaFoodDataCentral => "Nutrition_Source_UsdaFoodDataCentral",
-            _ => "Nutrition_Source_LocalFood"
-        };
-
-        var item = new FoodCatalogItemDto(
-            candidate.Id,
-            candidate.Name,
-            candidate.Calories,
-            candidate.Protein,
-            candidate.Carbs,
-            candidate.Fats,
-            candidate.ServingSize,
-            candidate.ServingSizeUnit,
-            candidate.ServingOptionsJson,
-            sourceSummary,
-            string.Empty,
-            candidate.IsCustom,
-            FoodCatalogIdentity.ToKey(candidate)
-        );
-        return item with { NutritionSummary = FoodCatalogNutritionSummary.Build(item) };
-    }
 }

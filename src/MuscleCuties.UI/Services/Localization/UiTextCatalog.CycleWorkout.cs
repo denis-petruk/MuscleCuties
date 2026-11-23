@@ -50,10 +50,8 @@ public static partial class UiTextCatalog
         English["Injury_Log_ClinicianAdvisedAvoid_Label"] = "A clinician advised avoiding this movement";
         English["Injury_Log_Safety_StopAndSeekCare"] = "Stop if pain worsens and seek care from a qualified professional. This is not medical advice; your plan still applies with adjusted movements.";
         English["Injury_Log_Safety_ClinicianRestriction"] = "A clinician advised avoiding this movement. Your plan keeps strength training and substitutes other movements; this is not medical advice.";
-        English["Workout_StyleOffer_Title"] = "Another strength option";
         English["Workout_StyleOffer_Message"] = "Your updated plan can also use {0}. Review that option?";
         English["Workout_StyleOffer_Review"] = "Review option";
-        English["Workout_StyleOffer_Keep"] = "Keep current plan";
         English["Workout_Session_FinishTimedActivity"] = "Finish activity";
         English["Workout_Session_AbandonActivity"] = "Abandon activity";
         English["Workout_Overview_InProgressTitle"] = "Workout in progress";

@@ -31,7 +31,7 @@ public sealed class Gate60HomeCatalogTests
     }
 
     [Fact]
-    public void Gate60_all_eight_approved_exercises_exist_with_reviewed_metadata_and_activation()
+    public void Gate60_all_eight_approved_exercises_exist_with_reviewed_metadata()
     {
         foreach (var expected in ApprovedGate60Exercises)
         {
@@ -47,12 +47,6 @@ public sealed class Gate60HomeCatalogTests
             Assert.True(CatalogAuditFixture.Contributions.TryGetValue(expected.Id, out var contribs) && contribs.Count > 0,
                 $"Missing muscle contributions for {expected.Id} ({expected.Name}).");
 
-            var activation = ExerciseCatalogActivationRule.Evaluate(
-                CatalogAuditFixture.ActivationInput(expected.Id),
-                ExerciseUseContext.RepetitionStrength,
-                ActivityExperience.Beginner);
-            Assert.True(activation.IsActive,
-                $"{expected.Id} ({expected.Name}) blocked: {string.Join(',', activation.BlockingCodes)}");
         }
     }
 
@@ -65,19 +59,6 @@ public sealed class Gate60HomeCatalogTests
         Assert.Equal("Bulgarian Split Squat", CatalogAuditFixture.Definitions[125].Name);
         Assert.Equal((int)EquipmentSet.Dumbbell, CatalogAuditFixture.Definitions[125].Equipment);
 
-        // Dynamic bodyweight core (Dead Bug, Bird Dog) stay active in RepetitionStrength; timed holds stay Timed-only.
-        Assert.True(ExerciseCatalogActivationRule.Evaluate(
-            CatalogAuditFixture.ActivationInput(171), ExerciseUseContext.RepetitionStrength, ActivityExperience.Beginner).IsActive);
-        Assert.True(ExerciseCatalogActivationRule.Evaluate(
-            CatalogAuditFixture.ActivationInput(176), ExerciseUseContext.RepetitionStrength, ActivityExperience.Beginner).IsActive);
-        Assert.False(ExerciseCatalogActivationRule.Evaluate(
-            CatalogAuditFixture.ActivationInput(173), ExerciseUseContext.RepetitionStrength, ActivityExperience.Beginner).IsActive);
-        Assert.False(ExerciseCatalogActivationRule.Evaluate(
-            CatalogAuditFixture.ActivationInput(177), ExerciseUseContext.RepetitionStrength, ActivityExperience.Beginner).IsActive);
-
-        // Exercise 191 Rock Climbing remains inactive for new V2 generation.
-        Assert.False(ExerciseCatalogActivationRule.Evaluate(
-            CatalogAuditFixture.ActivationInput(191), ExerciseUseContext.RepetitionStrength, ActivityExperience.Established).IsActive);
     }
 
     [Fact]

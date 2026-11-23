@@ -37,35 +37,8 @@ public sealed class LookupBarcodeUseCase(IBarcodeFoodLookupStore store) : ILooku
             !FoodCatalogNutritionRule.HasDisplayableNutrition(candidate))
             return new BarcodeLookupResult(false, true, barcode.NormalizedValue, null, "Food item not found for barcode.");
 
-        var dto = MapToDto(candidate);
+        var dto = FoodCatalogItemMapper.ToDto(candidate);
         return new BarcodeLookupResult(true, true, barcode.NormalizedValue, dto, null);
-    }
-
-    private static FoodCatalogItemDto MapToDto(FoodCatalogCandidate candidate)
-    {
-        var sourceSummary = FoodCatalogProvenanceRule.Classify(candidate) switch
-        {
-            FoodCatalogSourceKind.CustomFood => "Nutrition_Source_CustomFood",
-            FoodCatalogSourceKind.UsdaFoodDataCentral => "Nutrition_Source_UsdaFoodDataCentral",
-            _ => "Nutrition_Source_LocalFood"
-        };
-
-        var item = new FoodCatalogItemDto(
-            candidate.Id,
-            candidate.Name,
-            candidate.Calories,
-            candidate.Protein,
-            candidate.Carbs,
-            candidate.Fats,
-            candidate.ServingSize,
-            candidate.ServingSizeUnit,
-            candidate.ServingOptionsJson,
-            sourceSummary,
-            string.Empty,
-            candidate.IsCustom,
-            FoodCatalogIdentity.ToKey(candidate)
-        );
-        return item with { NutritionSummary = FoodCatalogNutritionSummary.Build(item) };
     }
 
     private static BarcodeFormat MapSymbology(BarcodeSymbologyDto symbology) => symbology switch
