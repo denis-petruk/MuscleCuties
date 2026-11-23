@@ -19,24 +19,3 @@ public sealed record EmailChallengeVerifyResult(
     string? VerificationToken,
     string? ErrorMessage = null);
 
-public interface IEmailChallengeService
-{
-    Task<EmailChallengeStartResult> StartChallengeAsync(
-        string email,
-        EmailChallengePurpose purpose,
-        CancellationToken cancellationToken = default,
-        RegistrationPrivacyConsent? privacyConsent = null);
-
-    Task<EmailChallengeStartResult> ResendChallengeAsync(
-        string challengeId,
-        string email,
-        EmailChallengePurpose purpose,
-        CancellationToken cancellationToken = default);
-
-    Task<EmailChallengeVerifyResult> VerifyChallengeAsync(
-        string challengeId,
-        string email,
-        string code,
-        EmailChallengePurpose purpose,
-        CancellationToken cancellationToken = default);
-}

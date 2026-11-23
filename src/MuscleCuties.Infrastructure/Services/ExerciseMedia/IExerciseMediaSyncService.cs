@@ -16,9 +16,3 @@ public sealed class ExerciseMediaDownloadResult
     public int FailedCount { get; set; }
 }
 
-public interface IExerciseMediaSyncService
-{
-    Task<ExerciseSyncResult> SyncExerciseCatalogAsync(CancellationToken ct = default);
-    Task<ExerciseMediaDownloadResult> DownloadMissingMediaAsync(CancellationToken ct = default);
-    Task<string?> EnsureExerciseVisualMediaAsync(int exerciseId, CancellationToken ct = default);
-}
