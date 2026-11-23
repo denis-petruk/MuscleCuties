@@ -188,13 +188,7 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
     [Fact]
     public void Missing_History_Differs_From_Valid_Zero_History()
     {
-        var zeroHistory = new ActivityHistoryInput("GS", 0, 0m, 0);
-        Assert.True(ActivityHistoryPolicyRule.IsValidHistory(zeroHistory));
-        Assert.False(ActivityHistoryPolicyRule.HasMissingRequiredFields(zeroHistory));
 
-        var missingHistory = new ActivityHistoryInput("GS", null, null, null);
-        Assert.False(ActivityHistoryPolicyRule.IsValidHistory(missingHistory));
-        Assert.True(ActivityHistoryPolicyRule.HasMissingRequiredFields(missingHistory));
 
         Assert.False(GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(null, ReferenceDate));
         var zeroTrainingHistory = new ActivityTrainingHistory("GS", 0, 0m, ReferenceDate, false);

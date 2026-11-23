@@ -79,21 +79,6 @@ internal static class CatalogAuditFixture
         return fields;
     }
 
-    public static CatalogActivationInput ActivationInput(int exerciseId)
-    {
-        var definition = Definitions[exerciseId];
-        var review = Reviews.GetValueOrDefault(exerciseId);
-        var contribution = Audit.Exercises.SingleOrDefault(exercise => exercise.ExerciseId == exerciseId);
-        return new CatalogActivationInput(
-            Record(exerciseId),
-            ExerciseCatalogMetadataContract.Evaluate(Record(exerciseId)),
-            contribution,
-            review?.TimingMethods,
-            review?.SupportedExperiences,
-            (MovementPattern)definition.Pattern,
-            review?.SupportsAerobicContext ?? false);
-    }
-
     public static CatalogSourceAgreement SourceAgreement(int exerciseId)
     {
         var definition = Definitions[exerciseId];
