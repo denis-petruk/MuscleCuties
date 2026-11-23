@@ -86,6 +86,8 @@ jobs:
           if not reports:
               sys.exit("Latency gate produced no trx result, so it never ran. Set MC_LATENCY_POSTGRES and provision PostgreSQL.")
           counters = ElementTree.parse(reports[0]).getroot().find(".//{*}Counters")
+          if counters is None:
+              sys.exit(f"Latency gate trx has no counters, so it cannot prove the gate ran: {reports[0]}")
           total = int(counters.get("total", "0"))
           executed = int(counters.get("executed", "0"))
           notExecuted = int(counters.get("notExecuted", "0"))
