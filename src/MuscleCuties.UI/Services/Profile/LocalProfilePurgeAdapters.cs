@@ -5,17 +5,6 @@ using MuscleCuties.UseCases.Features.Profile.Overview;
 
 namespace MuscleCuties.UI.Services.Profile;
 
-public sealed class LocalProfileAccountSession(IServiceScopeFactory scopeFactory) : IProfileAccountSession
-{
-    public async Task<int> GetCurrentUserIdAsync(CancellationToken cancellationToken)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        await using var scope = scopeFactory.CreateAsyncScope();
-        return await scope.ServiceProvider.GetRequiredService<IAuthService>()
-            .GetCurrentUserIdAsync().ConfigureAwait(false);
-    }
-}
-
 public sealed class LocalProfileAccountDeletion(
     IAppAccountPurgeService purgeService,
     IProfileAccountSession session) : IProfileAccountDeletion
