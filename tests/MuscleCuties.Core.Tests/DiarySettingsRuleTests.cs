@@ -91,17 +91,15 @@ public sealed class DiarySettingsRuleTests
     }
 
     [Fact]
-    public void DtoPolicyReportsOverrideProvenanceAndRejectsNegativeValues()
+    public void ResolveReportsWeekdayOverrideProvenanceAndRejectsNegativeTargets()
     {
-        var policy = new DiaryTargetPolicyUseCase();
-        var effective = policy.Resolve(Owner, Monday,
-            new DiaryNutritionTargetDto(1800m, 100m, 200m, 60m),
-            new DiaryWeekdayOverrideDto(Owner, Monday.DayOfWeek, true,
-                new DiaryNutritionTargetDto(2000m, 120m, 210m, 70m)));
+        var effective = DiaryTargetPolicy.Resolve(Monday, Owner,
+            DiaryNutritionTarget.Create(1800m, 100m, 200m, 60m),
+            DiaryWeekdayOverride.Create(Owner, Monday.DayOfWeek, true,
+                DiaryNutritionTarget.Create(2000m, 120m, 210m, 70m)));
 
-        Assert.Equal(DiaryTargetProvenanceDto.UserWeekdayOverride, effective.Provenance);
+        Assert.Equal(DiaryTargetSource.UserWeekdayOverride, effective.Source);
         Assert.Equal(2000m, effective.Target?.Calories);
-        Assert.Throws<ArgumentOutOfRangeException>(() => policy.Resolve(Owner, Monday,
-            new DiaryNutritionTargetDto(-1m, 100m, 200m, 60m), null));
+        Assert.Throws<ArgumentOutOfRangeException>(() => DiaryNutritionTarget.Create(-1m, 100m, 200m, 60m));
     }
 }

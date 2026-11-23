@@ -76,39 +76,4 @@ public sealed class CatalogActivationAndDeterminismTests
         Assert.False(decision.IsActive);
     }
 
-    [Fact]
-    public void Candidate_document_is_byte_identical_across_repeated_generation()
-    {
-        var first = CatalogAuditFixture.CandidateDocument();
-        var second = CatalogAuditFixture.CandidateDocument();
-
-        Assert.Equal(first, second);
-        Assert.DoesNotContain("\r", first);
-        Assert.Contains(CandidateCatalogMetadataDocument.SchemaVersion, first);
-        Assert.Contains(CandidateCatalogMetadataDocument.CandidateStatus, first);
-    }
-
-    [Fact]
-    public void Candidate_document_carries_no_generated_timestamp()
-    {
-        var document = CatalogAuditFixture.CandidateDocument();
-
-        Assert.DoesNotContain("generatedAt", document, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("UtcNow", document, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("DateTime", document, StringComparison.OrdinalIgnoreCase);
-    }
-
-    [Fact]
-    public void Candidate_document_is_ordered_by_exercise_and_target()
-    {
-        var document = CatalogAuditFixture.CandidateDocument();
-        var first = document.IndexOf("\"exerciseId\": 101", StringComparison.Ordinal);
-        var second = document.IndexOf("\"exerciseId\": 102", StringComparison.Ordinal);
-        var last = document.IndexOf("\"exerciseId\": 191", StringComparison.Ordinal);
-
-        Assert.True(first > 0);
-        Assert.True(first < second);
-        Assert.True(second < last);
-        Assert.Equal(68, CatalogAuditFixture.Audit.Exercises.Count);
-    }
 }

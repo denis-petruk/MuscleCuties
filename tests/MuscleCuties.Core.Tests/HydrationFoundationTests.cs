@@ -130,23 +130,6 @@ public sealed class HydrationFoundationTests
         Assert.False(store.WriteAttempted);
     }
 
-    [Theory]
-    [InlineData(WaterReminderPermissionDto.Unknown, false)]
-    [InlineData(WaterReminderPermissionDto.Denied, false)]
-    [InlineData(WaterReminderPermissionDto.Granted, true)]
-    public async Task ReminderPreviewRequiresOptInAndGrantedPermission(WaterReminderPermissionDto permission, bool eligible)
-    {
-        var useCase = new PreviewWaterReminderUseCase();
-        var disabled = await useCase.ExecuteAsync(new(false, null, null, null, permission));
-        Assert.False(disabled.OptedIn);
-        Assert.False(disabled.CanRequestScheduling);
-        Assert.Empty(disabled.LocalTimes);
-        var enabled = await useCase.ExecuteAsync(new(true, [Morning], QuietStart, QuietEnd, permission));
-        Assert.True(enabled.OptedIn);
-        Assert.Equal(eligible, enabled.CanRequestScheduling);
-        Assert.Equal(permission, enabled.Permission);
-    }
-
     [Fact]
     public void ReminderRejectsMissingQuietHoursDuplicateTimesAndQuietWindowTimes()
     {
@@ -163,20 +146,6 @@ public sealed class HydrationFoundationTests
         var tooMany = Enumerable.Range(0, FixedWaterReminderSettings.MaximumReminderTimes + 1)
             .Select(minute => new TimeOnly(MiddayHour, minute));
         Assert.Throws<ArgumentException>(() => FixedWaterReminderSettings.Enable(tooMany, QuietStart, QuietEnd));
-    }
-
-    [Fact]
-    public async Task ReminderNormalizesUnrecognizedPermissionAndObservesCancellation()
-    {
-        var useCase = new PreviewWaterReminderUseCase();
-        var input = new PreviewWaterReminderInputDto(true, [Morning], QuietStart, QuietEnd,
-            (WaterReminderPermissionDto)int.MaxValue);
-        var output = await useCase.ExecuteAsync(input);
-        Assert.Equal(WaterReminderPermissionDto.Unknown, output.Permission);
-        Assert.False(output.CanRequestScheduling);
-        using var cancellation = new CancellationTokenSource();
-        cancellation.Cancel();
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => useCase.ExecuteAsync(input, cancellation.Token));
     }
 
     private static WaterPresetCatalog Catalog() => WaterPresetCatalog.Restore(Account, [WaterPreset.Create(CupId, "Cup", CupMillilitres)]);

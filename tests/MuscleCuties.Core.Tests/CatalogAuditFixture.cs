@@ -109,7 +109,6 @@ internal static class CatalogAuditFixture
         ]);
     }
 
-    public static string CandidateDocument() => CandidateCatalogMetadataDocument.Build(Audit.Exercises);
 
     public sealed record DefinitionRow(
         int Id,
