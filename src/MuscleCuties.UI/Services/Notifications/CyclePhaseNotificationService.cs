@@ -1,8 +1,6 @@
-using System.Globalization;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 
 namespace MuscleCuties.UI.Services.Notifications;

@@ -1,9 +1,7 @@
-using System.Collections.ObjectModel;
 using System.Windows.Input;
 using MauiIcons.Core;
 using MauiIcons.Fluent;
 using MuscleCuties.UI.Models.UI.Workout;
-using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Controls.Workout;
 

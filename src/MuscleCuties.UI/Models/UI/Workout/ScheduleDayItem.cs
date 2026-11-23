@@ -1,8 +1,5 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Graphics;
 
-using MuscleCuties.UI.Resources.Styles;
-using MuscleCuties.UI.Services.Formatting;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 

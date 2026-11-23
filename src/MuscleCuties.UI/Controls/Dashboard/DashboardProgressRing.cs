@@ -1,6 +1,5 @@
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Controls.Dashboard;
 

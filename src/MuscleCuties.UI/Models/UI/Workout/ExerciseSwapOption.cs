@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 

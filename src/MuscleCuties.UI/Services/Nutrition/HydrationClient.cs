@@ -1,6 +1,4 @@
-using System.Globalization;
 using MuscleCuties.Infrastructure.ApiClient;
-using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Api;
 
 namespace MuscleCuties.UI.Services.Nutrition;

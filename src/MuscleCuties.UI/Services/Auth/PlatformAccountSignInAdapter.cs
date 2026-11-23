@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.UseCases.Features.Account.SignIn.Contracts;
 

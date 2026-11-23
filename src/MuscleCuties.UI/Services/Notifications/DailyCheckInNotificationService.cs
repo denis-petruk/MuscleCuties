@@ -1,5 +1,4 @@
 using MuscleCuties.Core.Services.Notifications;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 
 namespace MuscleCuties.UI.Services.Notifications;

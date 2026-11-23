@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using MuscleCuties.UI.ViewModels.Common;
 
 namespace MuscleCuties.UI.Services.Profile;

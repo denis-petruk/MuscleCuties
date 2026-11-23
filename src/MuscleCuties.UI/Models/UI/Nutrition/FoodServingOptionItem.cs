@@ -1,4 +1,3 @@
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 

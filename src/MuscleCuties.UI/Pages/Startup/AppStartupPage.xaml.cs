@@ -1,6 +1,4 @@
 using Microsoft.Maui.Controls;
-using MuscleCuties.UI.Resources.Styles;
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Pages.Startup;
 

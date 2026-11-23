@@ -1,4 +1,3 @@
-using System.Globalization;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 

@@ -1,4 +1,3 @@
-using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes;

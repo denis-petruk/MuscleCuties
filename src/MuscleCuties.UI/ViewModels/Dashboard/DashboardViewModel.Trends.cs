@@ -1,10 +1,5 @@
-using System.Globalization;
 using System.Text;
-using MuscleCuties.UI.Services.Formatting;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Dashboard;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Units;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 

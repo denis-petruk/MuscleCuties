@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using MuscleCuties.UI.ViewModels.Auth;
 
 namespace MuscleCuties.UI.Pages.Auth;

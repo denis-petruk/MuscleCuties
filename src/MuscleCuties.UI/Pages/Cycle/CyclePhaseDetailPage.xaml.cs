@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using MauiIcons.Core;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;

@@ -1,5 +1,4 @@
 using Microsoft.Maui.Graphics;
-using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Services.Workout;
 

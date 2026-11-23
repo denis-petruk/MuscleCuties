@@ -1,7 +1,6 @@
 using System.Net;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.Infrastructure.Cloud;
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Services.Api;
 

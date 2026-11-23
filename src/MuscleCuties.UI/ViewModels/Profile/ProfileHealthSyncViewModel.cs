@@ -1,8 +1,4 @@
-using System.Diagnostics;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Services.Health;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 
 namespace MuscleCuties.UI.ViewModels.Profile;

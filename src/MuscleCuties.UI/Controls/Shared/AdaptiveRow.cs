@@ -1,5 +1,4 @@
 using Microsoft.Maui.Controls;
-using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Controls.Shared;
 

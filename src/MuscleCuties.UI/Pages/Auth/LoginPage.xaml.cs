@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.ViewModels.Auth;
 

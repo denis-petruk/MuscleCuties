@@ -1,5 +1,3 @@
-using MuscleCuties.UI.Services.Formatting;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;

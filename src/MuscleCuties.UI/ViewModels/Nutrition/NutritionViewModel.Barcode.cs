@@ -1,8 +1,3 @@
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.UI.Models.UI.Nutrition;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode.Contracts;

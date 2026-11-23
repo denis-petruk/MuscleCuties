@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.Input;
 
 namespace MuscleCuties.UI.ViewModels.Common;
 

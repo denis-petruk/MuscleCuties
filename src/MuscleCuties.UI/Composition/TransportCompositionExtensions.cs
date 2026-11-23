@@ -13,7 +13,6 @@ using MuscleCuties.UI.Infrastructure.Network;
 using MuscleCuties.UI.Services;
 using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UI.Services.Configuration;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Security;
 using MuscleCuties.UseCases.Features.Caching;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;

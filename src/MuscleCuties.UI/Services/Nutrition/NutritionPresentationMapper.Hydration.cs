@@ -1,6 +1,5 @@
 using MuscleCuties.Core.Domain.Hydration;
 using MuscleCuties.Infrastructure.ApiClient;
-using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Api;
 using MuscleCuties.UseCases.Features.Hydration.Contracts;
 

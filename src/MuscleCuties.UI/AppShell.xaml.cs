@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using Microsoft.Maui.Controls;
 using MuscleCuties.Core.Data;
@@ -10,7 +9,6 @@ using MuscleCuties.UI.Pages.Nutrition;
 using MuscleCuties.UI.Pages.Onboarding;
 using MuscleCuties.UI.Pages.Profile;
 using MuscleCuties.UI.Pages.Workout;
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI;
 

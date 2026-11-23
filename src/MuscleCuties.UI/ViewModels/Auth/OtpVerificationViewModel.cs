@@ -1,7 +1,3 @@
-using System.Diagnostics;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Account.Otp.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Auth;

@@ -1,4 +1,3 @@
-using System.Globalization;
 using Microsoft.Maui.Controls.Shapes;
 
 namespace MuscleCuties.UI.Resources.Converters;

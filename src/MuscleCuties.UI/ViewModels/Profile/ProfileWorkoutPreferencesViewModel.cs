@@ -1,12 +1,5 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Models.UI.Workout;
-using MuscleCuties.UI.Services.Profile;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;

@@ -1,7 +1,5 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using MuscleCuties.UI.Controls.Dashboard;
-using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Dashboard;
 using MuscleCuties.UI.ViewModels.Workout;
 

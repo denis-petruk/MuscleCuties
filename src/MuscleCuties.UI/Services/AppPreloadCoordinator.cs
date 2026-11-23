@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using MuscleCuties.Core.Services;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UI.ViewModels.Cycle;

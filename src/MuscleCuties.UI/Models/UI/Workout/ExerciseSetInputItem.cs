@@ -1,8 +1,4 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Workout;
-using MuscleCuties.UI.Services.Formatting;
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 

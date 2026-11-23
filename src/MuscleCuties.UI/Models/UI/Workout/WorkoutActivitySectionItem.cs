@@ -1,9 +1,6 @@
 using System.Collections;
-using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Maui.Graphics;
 
-using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.Models.UI.Workout;

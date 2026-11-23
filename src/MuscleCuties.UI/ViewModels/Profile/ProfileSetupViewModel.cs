@@ -1,12 +1,7 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Contracts.Onboarding;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Models.UI.Workout;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;

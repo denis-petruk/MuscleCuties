@@ -1,8 +1,5 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Windows.Input;
-using MuscleCuties.UI.Controls.Shared;
-using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Controls.Injury;

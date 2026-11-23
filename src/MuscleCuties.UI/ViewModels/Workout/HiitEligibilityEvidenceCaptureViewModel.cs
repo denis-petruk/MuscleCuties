@@ -1,8 +1,4 @@
-using System.Collections.ObjectModel;
-using System.Globalization;
 using System.Text;
-using CommunityToolkit.Mvvm.ComponentModel;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 

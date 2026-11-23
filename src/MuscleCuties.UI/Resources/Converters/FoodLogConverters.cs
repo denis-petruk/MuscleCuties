@@ -1,6 +1,4 @@
-using System.Globalization;
 using Microsoft.Maui.Controls;
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Resources.Converters;
 

@@ -1,5 +1,3 @@
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 

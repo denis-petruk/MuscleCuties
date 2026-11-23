@@ -1,4 +1,3 @@
-using System.Collections.ObjectModel;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UseCases.Features.Workout.Contracts;

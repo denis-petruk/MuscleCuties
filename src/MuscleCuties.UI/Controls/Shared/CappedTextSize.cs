@@ -1,5 +1,4 @@
 using System.Runtime.CompilerServices;
-using MuscleCuties.UI.Resources.Styles;
 #if IOS
 using Foundation;
 using UIKit;

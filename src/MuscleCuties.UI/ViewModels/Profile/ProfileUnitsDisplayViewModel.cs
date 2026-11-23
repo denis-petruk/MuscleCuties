@@ -1,8 +1,3 @@
-using System.Diagnostics;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.UI.Services.Localization;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 

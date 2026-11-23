@@ -1,7 +1,5 @@
-using MuscleCuties.UI.Services.Formatting;
 using Microsoft.Maui.Graphics;
 
-using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 

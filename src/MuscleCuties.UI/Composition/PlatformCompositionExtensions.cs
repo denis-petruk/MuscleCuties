@@ -10,7 +10,6 @@ using MuscleCuties.UI.Services;
 using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.Services.Notifications;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Security;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 #if IOS || MACCATALYST

@@ -1,16 +1,9 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
-using MuscleCuties.UI.Services.Formatting;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Dashboard;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Cycle;
 using MuscleCuties.UseCases.Features.Cycle.DailyLog;

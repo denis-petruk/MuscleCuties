@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Cycle;
 
 namespace MuscleCuties.UI.Pages.Cycle;

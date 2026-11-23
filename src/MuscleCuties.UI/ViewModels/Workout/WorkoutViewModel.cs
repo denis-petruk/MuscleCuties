@@ -1,16 +1,9 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.Graphics;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Pages.Profile;
 using MuscleCuties.UI.Pages.Workout;
-using MuscleCuties.UI.Services.Formatting;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Workout;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Api;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Workout.Injury;

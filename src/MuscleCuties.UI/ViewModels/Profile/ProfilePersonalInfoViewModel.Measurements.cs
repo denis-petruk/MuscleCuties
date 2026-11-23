@@ -1,12 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Services.Api;
-using MuscleCuties.UI.Services.Localization;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 using MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
 

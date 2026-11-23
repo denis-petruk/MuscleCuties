@@ -1,9 +1,5 @@
-using System.Collections.ObjectModel;
 using System.Diagnostics.CodeAnalysis;
-using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.UI.Models.UI.Nutrition;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 

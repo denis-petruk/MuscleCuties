@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using CommunityToolkit.Maui;
 using MauiIcons.Fluent;
 using MuscleCuties.Contracts.Account;
@@ -21,10 +20,8 @@ using MuscleCuties.UI.Pages.Startup;
 using MuscleCuties.UI.Pages.Workout;
 using MuscleCuties.UI.Services;
 using MuscleCuties.UI.Services.Auth;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.Services.Nutrition;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.ViewModels.Auth;
 using MuscleCuties.UI.ViewModels.Cycle;

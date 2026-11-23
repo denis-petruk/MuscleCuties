@@ -1,6 +1,4 @@
-using System.Collections.ObjectModel;
 using System.Collections.Specialized;
-using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Dashboard;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;

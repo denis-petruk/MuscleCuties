@@ -1,4 +1,3 @@
-using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;

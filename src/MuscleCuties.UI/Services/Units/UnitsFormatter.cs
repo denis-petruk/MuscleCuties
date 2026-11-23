@@ -1,5 +1,4 @@
 using MuscleCuties.Core.Domain.Profile;
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Services.Units;
 

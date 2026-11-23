@@ -1,11 +1,9 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using System.Runtime.CompilerServices;
 using System.Windows.Input;
 using CommunityToolkit.Maui.Views;
 using Microsoft.Maui.Controls;
 using MuscleCuties.UI.Controls.Injury;
-using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UI.ViewModels.Workout;
 

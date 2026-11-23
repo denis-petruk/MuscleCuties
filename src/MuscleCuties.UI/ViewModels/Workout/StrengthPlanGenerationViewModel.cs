@@ -1,14 +1,8 @@
-using System.Collections.ObjectModel;
 using System.ComponentModel;
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using Microsoft.Maui.ApplicationModel;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UI.Pages.Profile;
 using MuscleCuties.UI.Services.Api;
-using MuscleCuties.UI.Services.Localization;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.ViewModels.Profile;

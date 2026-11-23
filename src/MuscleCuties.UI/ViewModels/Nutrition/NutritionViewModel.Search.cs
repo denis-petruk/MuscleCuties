@@ -1,7 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using CommunityToolkit.Mvvm.ComponentModel;
-using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 

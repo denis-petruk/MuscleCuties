@@ -1,6 +1,3 @@
-using System.Collections.ObjectModel;
-using MuscleCuties.UI.Services.Formatting;
-using CommunityToolkit.Mvvm.ComponentModel;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 

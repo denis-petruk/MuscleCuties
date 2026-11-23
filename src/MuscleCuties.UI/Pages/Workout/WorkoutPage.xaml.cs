@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using System.Diagnostics;
 using MuscleCuties.UI.Controls.Injury;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Navigation;

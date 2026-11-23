@@ -1,7 +1,3 @@
-using System.Globalization;
-using MuscleCuties.UI.Services.Formatting;
-using CommunityToolkit.Mvvm.ComponentModel;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 

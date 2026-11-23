@@ -1,4 +1,3 @@
-using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Pages.Workout;

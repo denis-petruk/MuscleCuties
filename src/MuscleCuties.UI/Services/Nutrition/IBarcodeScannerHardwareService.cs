@@ -1,4 +1,3 @@
-using MuscleCuties.UI.Models.UI.Nutrition;
 
 namespace MuscleCuties.UI.Services.Nutrition;
 

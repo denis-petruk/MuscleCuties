@@ -1,5 +1,3 @@
-using System.Globalization;
-using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UseCases.Features.Workout.Archive;
 
 namespace MuscleCuties.UI.Resources.Converters;

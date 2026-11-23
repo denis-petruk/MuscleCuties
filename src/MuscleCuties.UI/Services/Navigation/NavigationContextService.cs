@@ -1,6 +1,5 @@
 using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
 
 namespace MuscleCuties.UI.Services.Navigation;
 

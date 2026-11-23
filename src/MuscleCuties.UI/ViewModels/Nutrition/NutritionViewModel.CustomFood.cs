@@ -1,6 +1,3 @@
-using System.Diagnostics;
-using System.Globalization;
-using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 

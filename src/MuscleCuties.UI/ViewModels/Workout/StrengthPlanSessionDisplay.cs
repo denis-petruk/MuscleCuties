@@ -1,6 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Globalization;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Workout;

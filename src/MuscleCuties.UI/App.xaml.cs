@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Maui.Controls;
@@ -12,7 +11,6 @@ using MuscleCuties.UI.Pages.Dashboard;
 using MuscleCuties.UI.Pages.Onboarding;
 using MuscleCuties.UI.Pages.Startup;
 using MuscleCuties.UI.Services.Notifications;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.Services.Security;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Navigation;

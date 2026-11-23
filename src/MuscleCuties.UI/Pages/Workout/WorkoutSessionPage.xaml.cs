@@ -1,8 +1,5 @@
 using System.ComponentModel;
-using System.Diagnostics;
-using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.Models.UI.Workout;
-using MuscleCuties.UI.Resources.Styles;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.ViewModels.Workout;
 using WorkoutViewModel = MuscleCuties.UI.ViewModels.Workout.WorkoutViewModel;

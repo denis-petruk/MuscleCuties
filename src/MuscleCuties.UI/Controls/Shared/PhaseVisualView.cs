@@ -1,4 +1,3 @@
-using MuscleCuties.UI.Resources.Styles;
 using SkiaSharp.Extended.UI.Controls;
 
 namespace MuscleCuties.UI.Controls.Shared;

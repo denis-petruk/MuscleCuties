@@ -1,11 +1,5 @@
-using System.Collections.ObjectModel;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Nutrition;
-using MuscleCuties.UI.Models.UI.Nutrition;
-using MuscleCuties.UI.Services.Formatting;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;

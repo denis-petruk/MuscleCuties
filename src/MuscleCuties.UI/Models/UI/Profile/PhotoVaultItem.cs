@@ -1,6 +1,3 @@
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using MuscleCuties.UI.Services.Localization;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;

@@ -1,6 +1,5 @@
 #if IOS || MACCATALYST
 using Microsoft.Maui.Graphics;
-using MuscleCuties.UI.Resources.Styles;
 using UIKit;
 
 namespace MuscleCuties.UI;

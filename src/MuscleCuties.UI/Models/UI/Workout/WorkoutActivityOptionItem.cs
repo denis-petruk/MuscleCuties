@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.UI.Models.UI.Workout;

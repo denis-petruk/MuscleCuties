@@ -1,7 +1,4 @@
 using MuscleCuties.UI.Controls.Profile;
-using MuscleCuties.UI.Controls.Shared;
-using MuscleCuties.UI.Services.Localization;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Profile;
 
 namespace MuscleCuties.UI.Pages.Profile;

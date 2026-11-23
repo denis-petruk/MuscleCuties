@@ -1,6 +1,3 @@
-using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.UI.Models.UI.Nutrition;
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 

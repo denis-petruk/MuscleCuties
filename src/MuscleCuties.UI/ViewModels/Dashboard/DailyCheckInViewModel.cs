@@ -1,11 +1,5 @@
-using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using IHealthSyncService = MuscleCuties.Core.Services.Health.IHealthSyncService;
-using MuscleCuties.UI.Services.Formatting;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;

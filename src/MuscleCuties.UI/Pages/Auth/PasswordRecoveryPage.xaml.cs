@@ -1,6 +1,4 @@
-using System.Diagnostics;
 using System.ComponentModel;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Auth;
 
 namespace MuscleCuties.UI.Pages.Auth;

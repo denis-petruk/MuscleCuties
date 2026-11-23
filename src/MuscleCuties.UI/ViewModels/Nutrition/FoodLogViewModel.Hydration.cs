@@ -1,11 +1,5 @@
-using System.Collections.ObjectModel;
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Infrastructure.ApiClient;
-using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Api;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;

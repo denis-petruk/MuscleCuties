@@ -1,5 +1,3 @@
-using System.Globalization;
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Resources.Converters;
 

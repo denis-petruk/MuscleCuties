@@ -1,7 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.UI.Models.UI.Cycle;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;

@@ -1,5 +1,4 @@
 using MuscleCuties.UI.Models.UI.Quiz;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Quiz;
 
 namespace MuscleCuties.UI.Pages.Onboarding;

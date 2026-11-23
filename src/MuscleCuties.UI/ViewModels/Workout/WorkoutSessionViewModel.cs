@@ -1,17 +1,10 @@
-using System.Collections.ObjectModel;
-using System.Diagnostics;
-using System.Globalization;
 using System.Text.RegularExpressions;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.Infrastructure.Services.Workout;
 using MuscleCuties.UI.Models.UI.Workout;
-using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Workout;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Api;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Workout.Session;

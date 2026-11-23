@@ -1,12 +1,6 @@
-using System.Collections.ObjectModel;
 using System.Collections.Concurrent;
 using System.Text;
 using System.ComponentModel;
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.UI.Models.UI.Nutrition;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;

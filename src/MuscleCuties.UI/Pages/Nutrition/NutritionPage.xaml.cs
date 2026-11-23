@@ -1,6 +1,4 @@
 using System.ComponentModel;
-using System.Diagnostics;
-using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.Navigation;
 using MuscleCuties.UI.ViewModels.Nutrition;
 

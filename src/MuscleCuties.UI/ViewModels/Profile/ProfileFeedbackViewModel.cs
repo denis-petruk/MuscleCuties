@@ -1,10 +1,6 @@
-using System.Diagnostics;
 using System.Net.Mail;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Profile;
 using MuscleCuties.UI.Models.UI.Common;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Profile.Feedback;
 
 namespace MuscleCuties.UI.ViewModels.Profile;

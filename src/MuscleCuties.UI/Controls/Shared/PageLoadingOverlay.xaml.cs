@@ -1,6 +1,5 @@
 using System.ComponentModel;
 using System.Windows.Input;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UI.ViewModels.Common;
 
 namespace MuscleCuties.UI.Controls.Shared;

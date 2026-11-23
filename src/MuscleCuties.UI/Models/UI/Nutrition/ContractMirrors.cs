@@ -1,6 +1,5 @@
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
-using MuscleCuties.UI.Models.UI.Nutrition;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 

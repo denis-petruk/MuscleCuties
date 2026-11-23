@@ -1,4 +1,3 @@
-using System.Globalization;
 
 namespace MuscleCuties.UI.Services.Localization;
 

@@ -1,8 +1,4 @@
 using System.Windows.Input;
-using CommunityToolkit.Mvvm.Input;
-using MuscleCuties.UI.Controls.Shared;
-using MuscleCuties.UI.Resources.Styles;
-using MuscleCuties.UI.Services.Profile;
 
 namespace MuscleCuties.UI.Controls.Profile;
 

@@ -1,7 +1,5 @@
 using System.Windows.Input;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.UI.Resources.Styles;
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Controls.Shared;
 

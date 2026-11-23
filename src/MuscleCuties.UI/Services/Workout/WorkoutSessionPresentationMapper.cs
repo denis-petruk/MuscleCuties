@@ -1,7 +1,4 @@
-using System.Collections.ObjectModel;
-using System.Globalization;
 using MuscleCuties.UI.Models.UI.Workout;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.UI.Services.Workout;

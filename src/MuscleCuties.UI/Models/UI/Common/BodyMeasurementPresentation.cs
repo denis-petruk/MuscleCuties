@@ -1,6 +1,4 @@
-using System.Globalization;
 using MuscleCuties.Core.Domain.Progress;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
 
 namespace MuscleCuties.UI.Models.UI.Common;

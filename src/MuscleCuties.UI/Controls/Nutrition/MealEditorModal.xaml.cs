@@ -1,5 +1,4 @@
 using System.ComponentModel;
-using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Nutrition;
 
 namespace MuscleCuties.UI.Controls.Nutrition;

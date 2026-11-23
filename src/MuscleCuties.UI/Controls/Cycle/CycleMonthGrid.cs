@@ -1,11 +1,7 @@
-using System.Globalization;
 using System.Windows.Input;
 using Microsoft.Maui.Controls;
 using Microsoft.Maui.Controls.Shapes;
-using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.Models.UI.Cycle;
-using MuscleCuties.UI.Resources.Styles;
-using MuscleCuties.UI.Services.Localization;
 
 namespace MuscleCuties.UI.Controls.Cycle;
 

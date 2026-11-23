@@ -1,4 +1,3 @@
-using MuscleCuties.UI.Models.UI.Nutrition;
 #if IOS
 using AVFoundation;
 using CoreFoundation;

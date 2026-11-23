@@ -1,8 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using MuscleCuties.UI.Services.Formatting;
-using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Workout.Archive;
 
 namespace MuscleCuties.UI.Models.UI.Workout;

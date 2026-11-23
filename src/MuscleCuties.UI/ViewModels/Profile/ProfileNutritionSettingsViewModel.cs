@@ -1,11 +1,5 @@
-using System.Diagnostics;
-using System.Globalization;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UI.Models.UI.Common;
-using MuscleCuties.UI.Services.Localization;
-using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 

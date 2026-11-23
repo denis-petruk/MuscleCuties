@@ -1,7 +1,3 @@
-using System.Collections.ObjectModel;
-using System.Globalization;
-using MuscleCuties.UI.Models.UI.Nutrition;
-using MuscleCuties.UI.Services.Formatting;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;

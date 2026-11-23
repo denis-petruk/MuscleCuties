@@ -1,5 +1,3 @@
-using MuscleCuties.UI.Controls.Shared;
-using MuscleCuties.UI.Resources.Styles;
 
 namespace MuscleCuties.UI.Controls.Dashboard;
 
