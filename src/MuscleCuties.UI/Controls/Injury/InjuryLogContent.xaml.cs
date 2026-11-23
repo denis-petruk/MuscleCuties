@@ -10,24 +10,7 @@ public partial class InjuryLogContent : ContentView
     public InjuryLogContent()
     {
         InitializeComponent();
-        _subscription = new InjuryLogSubscription(OnViewModelPropertyChanged);
-    }
-
-    protected override void OnBindingContextChanged()
-    {
-        _subscription.Detach();
-        base.OnBindingContextChanged();
-
-        _subscription.Attach(BindingContext);
-    }
-
-    protected override void OnHandlerChanged()
-    {
-        base.OnHandlerChanged();
-        if (Handler is null)
-            _subscription.Detach();
-        else
-            _subscription.Attach(BindingContext);
+        _subscription = new InjuryLogSubscription(this, OnViewModelPropertyChanged);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

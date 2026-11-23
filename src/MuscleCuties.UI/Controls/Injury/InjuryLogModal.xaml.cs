@@ -14,7 +14,8 @@ public partial class InjuryLogModal : AnimatedModalView
 
     public InjuryLogModal()
     {
-        _subscription = new InjuryLogSubscription(OnViewModelPropertyChanged);
+        _subscription = new InjuryLogSubscription(this, OnViewModelPropertyChanged);
+        BindingContextChanged += (_, _) => UpdateSheetHeight();
     }
 
     public ICommand? CloseCommand
@@ -41,23 +42,6 @@ public partial class InjuryLogModal : AnimatedModalView
         base.OnSizeAllocated(width, height);
         if (_hasContent)
             UpdateSheetHeight();
-    }
-
-    protected override void OnBindingContextChanged()
-    {
-        _subscription.Detach();
-        base.OnBindingContextChanged();
-        _subscription.Attach(BindingContext);
-        UpdateSheetHeight();
-    }
-
-    protected override void OnHandlerChanged()
-    {
-        base.OnHandlerChanged();
-        if (Handler is null)
-            _subscription.Detach();
-        else
-            _subscription.Attach(BindingContext);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

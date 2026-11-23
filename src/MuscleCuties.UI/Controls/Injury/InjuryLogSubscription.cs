@@ -4,30 +4,57 @@ using MuscleCuties.UI.ViewModels.Workout;
 namespace MuscleCuties.UI.Controls.Injury;
 
 /// <summary>
-///     Keeps one injury log control subscribed to exactly one view model instance. Both controls relied on the same
-///     order: detach the previous instance before attaching the current one, never attach the same instance twice, and
-///     do nothing when there is no instance to detach.
+///     Keeps one injury log control subscribed to exactly one view model instance, and owns the lifecycle wiring both
+///     controls used to repeat: detach the previous instance before attaching the current one, never attach the same
+///     instance twice, and do nothing when there is no instance to detach. Survives rebinding and handler recreation.
 /// </summary>
-internal sealed class InjuryLogSubscription(PropertyChangedEventHandler handler)
+internal sealed class InjuryLogSubscription
 {
+    private readonly PropertyChangedEventHandler _handler;
     private InjuryLogViewModel? _current;
 
-    public void Attach(object? bindingContext)
+    public InjuryLogSubscription(VisualElement element, PropertyChangedEventHandler handler)
     {
-        if (bindingContext is not InjuryLogViewModel vm || ReferenceEquals(_current, vm))
+        _handler = handler;
+        element.BindingContextChanged += OnBindingContextChanged;
+        element.HandlerChanged += OnHandlerChanged;
+    }
+
+    private void OnBindingContextChanged(object? sender, EventArgs e)
+    {
+        Detach();
+
+        if (sender is VisualElement element)
+            Attach(element.BindingContext);
+    }
+
+    private void OnHandlerChanged(object? sender, EventArgs e)
+    {
+        if (sender is not VisualElement element)
+            return;
+
+        if (element.Handler is null)
+            Detach();
+        else
+            Attach(element.BindingContext);
+    }
+
+    private void Attach(object? bindingContext)
+    {
+        if (bindingContext is not InjuryLogViewModel viewModel || ReferenceEquals(_current, viewModel))
             return;
 
         Detach();
-        _current = vm;
-        vm.PropertyChanged += handler;
+        _current = viewModel;
+        viewModel.PropertyChanged += _handler;
     }
 
-    public void Detach()
+    private void Detach()
     {
         if (_current is null)
             return;
 
-        _current.PropertyChanged -= handler;
+        _current.PropertyChanged -= _handler;
         _current = null;
     }
 }

@@ -1475,9 +1475,31 @@ public class UiCleanlinessAndReachabilityTests
         {
             Assert.DoesNotContain(".PropertyChanged += ", control, StringComparison.Ordinal);
             Assert.DoesNotContain(".PropertyChanged -= ", control, StringComparison.Ordinal);
-            Assert.Contains("_subscription.Attach(BindingContext)", control, StringComparison.Ordinal);
-            Assert.Contains("_subscription.Detach()", control, StringComparison.Ordinal);
+            Assert.Contains("new InjuryLogSubscription(this, OnViewModelPropertyChanged)", control,
+                StringComparison.Ordinal);
         }
+    }
+
+    [Fact]
+    public void Injury_log_controls_delegate_their_lifecycle_to_the_subscription_helper()
+    {
+        var root = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Injury");
+        var content = File.ReadAllText(Path.Combine(root, "InjuryLogContent.xaml.cs"));
+        var modal = File.ReadAllText(Path.Combine(root, "InjuryLogModal.xaml.cs"));
+        var helper = File.ReadAllText(Path.Combine(root, "InjuryLogSubscription.cs"));
+
+        foreach (var control in new[] { content, modal })
+        {
+            Assert.DoesNotContain("override void OnHandlerChanged", control, StringComparison.Ordinal);
+            Assert.DoesNotContain("override void OnBindingContextChanged", control, StringComparison.Ordinal);
+            Assert.Contains("new InjuryLogSubscription(this, OnViewModelPropertyChanged)", control,
+                StringComparison.Ordinal);
+        }
+
+        Assert.Contains("element.BindingContextChanged", helper, StringComparison.Ordinal);
+        Assert.Contains("element.HandlerChanged", helper, StringComparison.Ordinal);
+        Assert.Single(Regex.Matches(helper, "\\.PropertyChanged \\+= ").Cast<Match>());
+        Assert.Single(Regex.Matches(helper, "\\.PropertyChanged -= ").Cast<Match>());
     }
 
     [Fact]
