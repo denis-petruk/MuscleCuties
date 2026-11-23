@@ -1452,36 +1452,44 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
-    public void Injury_log_controls_subscribe_through_one_shared_base_view()
+    public void Injury_log_controls_share_one_subscription_helper_without_inheritance()
     {
         var sharedRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Shared");
-        var basePath = Path.Combine(sharedRoot, "ViewModelSubscribingView.cs");
-        Assert.True(File.Exists(basePath), "the shared subscribing base view is missing");
-        var baseView = File.ReadAllText(basePath);
-        Assert.Single(Regex.Matches(baseView, "\\.PropertyChanged \\+= ").Cast<Match>());
-        Assert.Single(Regex.Matches(baseView, "\\.PropertyChanged -= ").Cast<Match>());
-        Assert.Contains(": ContentView", baseView, StringComparison.Ordinal);
+        Assert.False(File.Exists(Path.Combine(sharedRoot, "ViewModelSubscribingView.cs")),
+            "the inert subscribing base view should be gone");
+        var modalBase = File.ReadAllText(Path.Combine(sharedRoot, "AnimatedModalView.cs"));
+        Assert.Contains("class AnimatedModalView : ContentView", modalBase, StringComparison.Ordinal);
 
         var injuryRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Injury");
+        var helper = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogSubscription.cs"));
+        Assert.Single(Regex.Matches(helper, "\\.PropertyChanged \\+= ").Cast<Match>());
+        Assert.Single(Regex.Matches(helper, "\\.PropertyChanged -= ").Cast<Match>());
+
         var content = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogContent.xaml.cs"));
         var modal = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogModal.xaml.cs"));
-        Assert.Contains(": ViewModelSubscribingView", content, StringComparison.Ordinal);
-        Assert.Contains(": AnimatedModalView", modal, StringComparison.Ordinal);
+        var contentXaml = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogContent.xaml"));
+        Assert.Contains("<ContentView", contentXaml, StringComparison.Ordinal);
+        Assert.DoesNotContain("ViewModelSubscribingView", contentXaml, StringComparison.Ordinal);
+        Assert.Contains(": ContentView", content, StringComparison.Ordinal);
         foreach (var control in new[] { content, modal })
         {
             Assert.DoesNotContain(".PropertyChanged += ", control, StringComparison.Ordinal);
             Assert.DoesNotContain(".PropertyChanged -= ", control, StringComparison.Ordinal);
-            Assert.DoesNotContain("override void OnHandlerChanged", control, StringComparison.Ordinal);
-            Assert.DoesNotContain("AttachViewModel", control, StringComparison.Ordinal);
-            Assert.DoesNotContain("DetachViewModel", control, StringComparison.Ordinal);
+            Assert.Contains("_subscription.Attach(BindingContext)", control, StringComparison.Ordinal);
+            Assert.Contains("_subscription.Detach()", control, StringComparison.Ordinal);
         }
+    }
 
-        var contentXaml = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogContent.xaml"));
-        Assert.Contains("<sharedControls:ViewModelSubscribingView", contentXaml, StringComparison.Ordinal);
-        Assert.Contains("</sharedControls:ViewModelSubscribingView>", contentXaml, StringComparison.Ordinal);
+    [Fact]
+    public void Profile_feedback_back_command_uses_the_shared_guard_and_prompt()
+    {
+        var feedback = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "ViewModels", "Profile",
+            "ProfileFeedbackViewModel.cs"));
 
-        var modalBase = File.ReadAllText(Path.Combine(sharedRoot, "AnimatedModalView.cs"));
-        Assert.Contains("class AnimatedModalView : ViewModelSubscribingView", modalBase, StringComparison.Ordinal);
+        Assert.Contains("ProfileNavigationGuard.TryNavigateBackAsync(HasUnsavedDraft, ProfileDiscardPrompt.ConfirmAsync,",
+            feedback, StringComparison.Ordinal);
+        Assert.DoesNotContain("DisplayAlertAsync", feedback, StringComparison.Ordinal);
+        Assert.DoesNotContain("Profile_UnsavedChanges_", feedback, StringComparison.Ordinal);
     }
 
 }

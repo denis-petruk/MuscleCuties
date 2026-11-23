@@ -1,16 +1,33 @@
 using System.ComponentModel;
-using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Controls.Injury;
 
-public partial class InjuryLogContent : ViewModelSubscribingView
+public partial class InjuryLogContent : ContentView
 {
+    private readonly InjuryLogSubscription _subscription;
+
     public InjuryLogContent()
     {
-        ViewModelSubscriptionType = typeof(InjuryLogViewModel);
-        ViewModelPropertyChanged = OnViewModelPropertyChanged;
         InitializeComponent();
+        _subscription = new InjuryLogSubscription(OnViewModelPropertyChanged);
+    }
+
+    protected override void OnBindingContextChanged()
+    {
+        _subscription.Detach();
+        base.OnBindingContextChanged();
+
+        _subscription.Attach(BindingContext);
+    }
+
+    protected override void OnHandlerChanged()
+    {
+        base.OnHandlerChanged();
+        if (Handler is null)
+            _subscription.Detach();
+        else
+            _subscription.Attach(BindingContext);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
