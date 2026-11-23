@@ -1460,46 +1460,35 @@ public class UiCleanlinessAndReachabilityTests
         var modalBase = File.ReadAllText(Path.Combine(sharedRoot, "AnimatedModalView.cs"));
         Assert.Contains("class AnimatedModalView : ContentView", modalBase, StringComparison.Ordinal);
 
-        var injuryRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Injury");
-        var helper = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogSubscription.cs"));
-        Assert.Single(Regex.Matches(helper, "\\.PropertyChanged \\+= ").Cast<Match>());
-        Assert.Single(Regex.Matches(helper, "\\.PropertyChanged -= ").Cast<Match>());
-
-        var content = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogContent.xaml.cs"));
-        var modal = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogModal.xaml.cs"));
-        var contentXaml = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogContent.xaml"));
+        var contentXaml = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Injury",
+            "InjuryLogContent.xaml"));
         Assert.Contains("<ContentView", contentXaml, StringComparison.Ordinal);
         Assert.DoesNotContain("ViewModelSubscribingView", contentXaml, StringComparison.Ordinal);
-        Assert.Contains(": ContentView", content, StringComparison.Ordinal);
-        foreach (var control in new[] { content, modal })
-        {
-            Assert.DoesNotContain(".PropertyChanged += ", control, StringComparison.Ordinal);
-            Assert.DoesNotContain(".PropertyChanged -= ", control, StringComparison.Ordinal);
-            Assert.Contains("new InjuryLogSubscription(this, OnViewModelPropertyChanged)", control,
-                StringComparison.Ordinal);
-        }
     }
 
     [Fact]
-    public void Injury_log_controls_delegate_their_lifecycle_to_the_subscription_helper()
+    public void Daily_check_in_and_injury_log_controls_delegate_subscription_to_the_shared_helper()
     {
-        var root = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Injury");
-        var content = File.ReadAllText(Path.Combine(root, "InjuryLogContent.xaml.cs"));
-        var modal = File.ReadAllText(Path.Combine(root, "InjuryLogModal.xaml.cs"));
-        var helper = File.ReadAllText(Path.Combine(root, "InjuryLogSubscription.cs"));
+        var sharedRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Shared");
+        var binding = File.ReadAllText(Path.Combine(sharedRoot, "ViewModelSubscriptionBinding.cs"));
+        Assert.Contains("BindingContextChanged", binding, StringComparison.Ordinal);
+        Assert.Contains("HandlerChanged", binding, StringComparison.Ordinal);
 
-        foreach (var control in new[] { content, modal })
+        var checkIn = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Dashboard",
+            "DailyCheckInContent.xaml.cs"));
+        var injuryRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Injury");
+        var content = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogContent.xaml.cs"));
+        var modal = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogModal.xaml.cs"));
+
+        foreach (var control in new[] { checkIn, content, modal })
         {
             Assert.DoesNotContain("override void OnHandlerChanged", control, StringComparison.Ordinal);
             Assert.DoesNotContain("override void OnBindingContextChanged", control, StringComparison.Ordinal);
-            Assert.Contains("new InjuryLogSubscription(this, OnViewModelPropertyChanged)", control,
-                StringComparison.Ordinal);
+            Assert.DoesNotContain(".PropertyChanged += ", control, StringComparison.Ordinal);
+            Assert.DoesNotContain(".PropertyChanged -= ", control, StringComparison.Ordinal);
+            Assert.DoesNotContain("RequestedThemeChanged", control, StringComparison.Ordinal);
+            Assert.Contains("ViewModelSubscriptionBinding.BindToControl<", control, StringComparison.Ordinal);
         }
-
-        Assert.Contains("element.BindingContextChanged", helper, StringComparison.Ordinal);
-        Assert.Contains("element.HandlerChanged", helper, StringComparison.Ordinal);
-        Assert.Single(Regex.Matches(helper, "\\.PropertyChanged \\+= ").Cast<Match>());
-        Assert.Single(Regex.Matches(helper, "\\.PropertyChanged -= ").Cast<Match>());
     }
 
     [Fact]

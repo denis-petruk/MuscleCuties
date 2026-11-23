@@ -1,16 +1,18 @@
 using System.ComponentModel;
+using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Controls.Injury;
 
 public partial class InjuryLogContent : ContentView
 {
-    private readonly InjuryLogSubscription _subscription;
+    private readonly ViewModelSubscription<InjuryLogViewModel> _subscription;
 
     public InjuryLogContent()
     {
         InitializeComponent();
-        _subscription = new InjuryLogSubscription(this, OnViewModelPropertyChanged);
+        _subscription = ViewModelSubscriptionBinding.BindToControl<InjuryLogViewModel>(this,
+            OnViewModelPropertyChanged);
     }
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)

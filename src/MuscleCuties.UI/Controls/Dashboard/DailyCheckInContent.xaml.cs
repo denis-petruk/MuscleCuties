@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using Microsoft.Maui.Controls;
+using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Dashboard;
 
 namespace MuscleCuties.UI.Controls.Dashboard;
@@ -13,12 +14,21 @@ public partial class DailyCheckInContent : ContentView
     private const string SelectedVisualState = "Selected";
     private const string UnselectedVisualState = "Unselected";
 
-    private DailyCheckInViewModel? _subscribedViewModel;
-    private bool _isThemeSubscribed;
+    private readonly AppThemeSubscription _themeSubscription;
+    private readonly ViewModelSubscription<DailyCheckInViewModel> _subscription;
 
     public DailyCheckInContent()
     {
         InitializeComponent();
+        _themeSubscription = new AppThemeSubscription(UpdateChipGroups);
+        _subscription = ViewModelSubscriptionBinding.BindToControl<DailyCheckInViewModel>(this,
+            OnViewModelPropertyChanged,
+            onAttached: () =>
+            {
+                _themeSubscription.Attach();
+                UpdateChipGroups();
+            },
+            onDetached: _themeSubscription.Detach);
     }
 
     private Button[] SleepQualityChips =>
@@ -29,63 +39,6 @@ public partial class DailyCheckInContent : ContentView
     private Button[] PainChips => [PainChip0, PainChip1, PainChip2, PainChip3];
     private Button[] SorenessChips => [SorenessChip1, SorenessChip2, SorenessChip3, SorenessChip4, SorenessChip5];
     private Button[] BloatingChips => [BloatingNoChip, BloatingYesChip];
-
-    protected override void OnBindingContextChanged()
-    {
-        DetachViewModel();
-        base.OnBindingContextChanged();
-        AttachViewModel();
-    }
-
-    protected override void OnHandlerChanged()
-    {
-        base.OnHandlerChanged();
-        if (Handler is null)
-            DetachViewModel();
-        else
-            AttachViewModel();
-    }
-
-    private void AttachViewModel()
-    {
-        if (BindingContext is not DailyCheckInViewModel vm || ReferenceEquals(_subscribedViewModel, vm))
-            return;
-
-        DetachViewModel();
-        _subscribedViewModel = vm;
-        vm.PropertyChanged += OnViewModelPropertyChanged;
-        SubscribeThemeChange();
-        UpdateChipGroups();
-    }
-
-    private void DetachViewModel()
-    {
-        if (_subscribedViewModel is { } vm)
-            vm.PropertyChanged -= OnViewModelPropertyChanged;
-
-        _subscribedViewModel = null;
-        UnsubscribeThemeChange();
-    }
-
-    private void SubscribeThemeChange()
-    {
-        if (_isThemeSubscribed || Application.Current is not { } app)
-            return;
-
-        app.RequestedThemeChanged += OnRequestedThemeChanged;
-        _isThemeSubscribed = true;
-    }
-
-    private void UnsubscribeThemeChange()
-    {
-        if (!_isThemeSubscribed || Application.Current is not { } app)
-            return;
-
-        app.RequestedThemeChanged -= OnRequestedThemeChanged;
-        _isThemeSubscribed = false;
-    }
-
-    private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e) => UpdateChipGroups();
 
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {

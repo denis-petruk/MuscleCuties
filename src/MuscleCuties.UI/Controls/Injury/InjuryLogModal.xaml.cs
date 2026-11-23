@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Windows.Input;
+using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Controls.Injury;
@@ -10,11 +11,12 @@ public partial class InjuryLogModal : AnimatedModalView
         BindableProperty.Create(nameof(CloseCommand), typeof(ICommand), typeof(InjuryLogModal));
 
     private bool _hasContent;
-    private readonly InjuryLogSubscription _subscription;
+    private readonly ViewModelSubscription<InjuryLogViewModel> _subscription;
 
     public InjuryLogModal()
     {
-        _subscription = new InjuryLogSubscription(this, OnViewModelPropertyChanged);
+        _subscription = ViewModelSubscriptionBinding.BindToControl<InjuryLogViewModel>(this,
+            OnViewModelPropertyChanged);
         BindingContextChanged += (_, _) => UpdateSheetHeight();
     }
 

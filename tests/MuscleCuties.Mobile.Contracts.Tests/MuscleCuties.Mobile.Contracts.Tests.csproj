@@ -28,6 +28,7 @@
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Auth/ResendCountdownCoordinator.cs" Link="Mobile/ResendCountdownCoordinator.cs" />
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Profile/ProfileNavigationGuard.cs" Link="Mobile/ProfileNavigationGuard.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Infrastructure/Network/HttpRetryPolicy.cs" Link="Mobile/HttpRetryPolicy.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/Controls/Shared/ViewModelSubscription.cs" Link="Mobile/ViewModelSubscription.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Models/UI/Quiz/SelectableQuizAnswer.cs" Link="Mobile/SelectableQuizAnswer.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/AppPageLoadGate.cs" Link="Mobile/AppPageLoadGate.cs" />
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Common/IPageLoadAware.cs" Link="Mobile/IPageLoadAware.cs" />
