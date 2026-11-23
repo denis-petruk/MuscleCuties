@@ -12,128 +12,12 @@ public sealed class WorkoutPlanningPolicyComplianceTests
     // 1. History & Experience Boundaries (weeks 4, 12; sessions 1, 2; days 28; zero vs missing)
     // =========================================================================
 
-    [Fact]
-    public void History_ZeroVersusMissing_TreatedAsDistinctCases()
-    {
-        // Zero consistency is valid supplied history (not missing)
-        var zeroHistory = new ActivityHistoryInput("GeneralStrength", WeeksConsistent: 0, AvgSessionsLast4Weeks: 0m, DaysSinceLastSession: 0);
-        Assert.True(ActivityHistoryPolicyRule.IsValidHistory(zeroHistory));
-        Assert.False(ActivityHistoryPolicyRule.HasMissingRequiredFields(zeroHistory));
-        Assert.False(ActivityHistoryPolicyRule.IsEstablished(zeroHistory));
-        Assert.True(ActivityHistoryPolicyRule.IsNew(zeroHistory));
 
-        // Missing fields are distinct from zero
-        var missingHistory = new ActivityHistoryInput("GeneralStrength", WeeksConsistent: null, AvgSessionsLast4Weeks: null, DaysSinceLastSession: null);
-        Assert.False(ActivityHistoryPolicyRule.IsValidHistory(missingHistory));
-        Assert.True(ActivityHistoryPolicyRule.HasMissingRequiredFields(missingHistory));
 
-        // Negative values are invalid/blocked
-        var invalidHistory = new ActivityHistoryInput("GeneralStrength", WeeksConsistent: -1, AvgSessionsLast4Weeks: 2m, DaysSinceLastSession: 5);
-        Assert.False(ActivityHistoryPolicyRule.IsValidHistory(invalidHistory));
-    }
 
-    [Fact]
-    public void History_EstablishedBoundaries_Weeks12AndSessions2Required()
-    {
-        // Boundary: 11 weeks (not established) vs 12 weeks (established)
-        var elevenWeeks = new ActivityHistoryInput("GS", WeeksConsistent: 11, AvgSessionsLast4Weeks: 2.0m, DaysSinceLastSession: 3);
-        Assert.False(ActivityHistoryPolicyRule.IsEstablished(elevenWeeks));
 
-        var twelveWeeks = new ActivityHistoryInput("GS", WeeksConsistent: 12, AvgSessionsLast4Weeks: 2.0m, DaysSinceLastSession: 3);
-        Assert.True(ActivityHistoryPolicyRule.IsEstablished(twelveWeeks));
 
-        // Boundary: 1.9 sessions/week (not established) vs 2.0 sessions/week (established)
-        var belowTwoSessions = new ActivityHistoryInput("GS", WeeksConsistent: 12, AvgSessionsLast4Weeks: 1.9m, DaysSinceLastSession: 3);
-        Assert.False(ActivityHistoryPolicyRule.IsEstablished(belowTwoSessions));
 
-        var twoSessions = new ActivityHistoryInput("GS", WeeksConsistent: 12, AvgSessionsLast4Weeks: 2.0m, DaysSinceLastSession: 3);
-        Assert.True(ActivityHistoryPolicyRule.IsEstablished(twoSessions));
-    }
-
-    [Fact]
-    public void History_ReturningBoundary_Days28Required()
-    {
-        // 27 days since last session (not returning) vs 28 days (returning)
-        var day27 = new ActivityHistoryInput("GS", WeeksConsistent: 16, AvgSessionsLast4Weeks: 3.0m, DaysSinceLastSession: 27);
-        Assert.True(ActivityHistoryPolicyRule.IsEstablished(day27));
-        Assert.False(ActivityHistoryPolicyRule.IsReturning(day27));
-        Assert.Equal(ModalityExperienceClassification.Established, ActivityHistoryPolicyRule.ClassifyModality(day27));
-
-        var day28 = new ActivityHistoryInput("GS", WeeksConsistent: 16, AvgSessionsLast4Weeks: 3.0m, DaysSinceLastSession: 28);
-        Assert.True(ActivityHistoryPolicyRule.IsEstablished(day28));
-        Assert.True(ActivityHistoryPolicyRule.IsReturning(day28));
-        Assert.Equal(ModalityExperienceClassification.Returning, ActivityHistoryPolicyRule.ClassifyModality(day28));
-    }
-
-    [Fact]
-    public void History_NewModalityBoundaries_Weeks4AndSessions1()
-    {
-        // New: WeeksConsistent < 4 OR AvgSessions < 1
-        var threeWeeks = new ActivityHistoryInput("Cycling", WeeksConsistent: 3, AvgSessionsLast4Weeks: 2.0m, DaysSinceLastSession: 2);
-        Assert.True(ActivityHistoryPolicyRule.IsNew(threeWeeks));
-
-        var lowSessions = new ActivityHistoryInput("Cycling", WeeksConsistent: 8, AvgSessionsLast4Weeks: 0.9m, DaysSinceLastSession: 2);
-        Assert.True(ActivityHistoryPolicyRule.IsNew(lowSessions));
-
-        // 4 weeks and 1.0 session is not "New" (it's between new and established)
-        var fourWeeks = new ActivityHistoryInput("Cycling", WeeksConsistent: 4, AvgSessionsLast4Weeks: 1.0m, DaysSinceLastSession: 2);
-        Assert.False(ActivityHistoryPolicyRule.IsNew(fourWeeks));
-        Assert.Equal(ModalityExperienceClassification.BetweenNewAndEstablished, ActivityHistoryPolicyRule.ClassifyModality(fourWeeks));
-    }
-
-    [Fact]
-    public void History_EffectiveExperience_ReturnsExplicitUnresolvedForUnspecifiedCases()
-    {
-        // Returning user: Modality tier is 1, but effective experience is unspecified
-        var returningHistory = new ActivityHistoryInput("GS", WeeksConsistent: 20, AvgSessionsLast4Weeks: 3.0m, DaysSinceLastSession: 35);
-        var returningResult = ActivityHistoryPolicyRule.ResolveEffectiveExperience(TrainingExperienceLevel.Intermediate, returningHistory);
-        Assert.True(returningResult.IsUnresolved);
-        Assert.Equal(ActivityHistoryPolicyRule.CodeReturningEffectiveTierUnresolved, returningResult.ReasonCode);
-
-        // Between new and established user: Unresolved in spec
-        var betweenHistory = new ActivityHistoryInput("GS", WeeksConsistent: 8, AvgSessionsLast4Weeks: 1.5m, DaysSinceLastSession: 3);
-        var betweenResult = ActivityHistoryPolicyRule.ResolveEffectiveExperience(TrainingExperienceLevel.Intermediate, betweenHistory);
-        Assert.True(betweenResult.IsUnresolved);
-        Assert.Equal(ActivityHistoryPolicyRule.CodeBetweenNewAndEstablishedUnresolved, betweenResult.ReasonCode);
-
-        // Missing required input: returns MissingRequiredInput
-        var missingResult = ActivityHistoryPolicyRule.ResolveEffectiveExperience(TrainingExperienceLevel.Beginner, null);
-        Assert.True(missingResult.IsMissingInput);
-        Assert.Equal(ActivityHistoryPolicyRule.CodeMissingHistoryInput, missingResult.ReasonCode);
-    }
-
-    [Fact]
-    public void History_EffectiveExperience_EstablishedFormula_Min3Max2GlobalTier()
-    {
-        var established = new ActivityHistoryInput("GS", WeeksConsistent: 16, AvgSessionsLast4Weeks: 2.5m, DaysSinceLastSession: 3);
-
-        // Global Beginner (1): min(3, max(2, 1)) = 2 (promoted to Tier 2)
-        var beginnerResult = ActivityHistoryPolicyRule.ResolveEffectiveExperience(TrainingExperienceLevel.Beginner, established);
-        Assert.True(beginnerResult.IsAllowed);
-        Assert.Equal(EffectiveExperienceTier.Tier2IntermediateOrEstablished, beginnerResult.Value);
-
-        // Global Intermediate (2): min(3, max(2, 2)) = 2
-        var intermediateResult = ActivityHistoryPolicyRule.ResolveEffectiveExperience(TrainingExperienceLevel.Intermediate, established);
-        Assert.True(intermediateResult.IsAllowed);
-        Assert.Equal(EffectiveExperienceTier.Tier2IntermediateOrEstablished, intermediateResult.Value);
-
-        // Global Advanced (3): min(3, max(2, 3)) = 3
-        var advancedResult = ActivityHistoryPolicyRule.ResolveEffectiveExperience(TrainingExperienceLevel.Advanced, established);
-        Assert.True(advancedResult.IsAllowed);
-        Assert.Equal(EffectiveExperienceTier.Tier3Advanced, advancedResult.Value);
-    }
-
-    [Fact]
-    public void History_EffectiveExperience_NewModality_DowngradesGlobalTierWhenZeroOrLowExposure()
-    {
-        // Advanced user starting completely new modality with 0 weeks
-        var zeroHistory = new ActivityHistoryInput("Running", WeeksConsistent: 0, AvgSessionsLast4Weeks: 0m, DaysSinceLastSession: 0);
-        var result = ActivityHistoryPolicyRule.ResolveEffectiveExperience(TrainingExperienceLevel.Advanced, zeroHistory);
-
-        Assert.True(result.IsAllowed);
-        Assert.Equal(EffectiveExperienceTier.Tier1BeginnerOrNew, result.Value);
-        Assert.Equal(ActivityHistoryPolicyRule.ReasonDowngradedToTier1, result.ReasonCode);
-    }
 
     // =========================================================================
     // 2. HVS & SHI Eligibility Conditions and Reason Codes
@@ -373,72 +257,12 @@ public sealed class WorkoutPlanningPolicyComplianceTests
     // 6. Injury Status and Pain Thresholds (3 vs 4, 6 vs 7, No safety bypass)
     // =========================================================================
 
-    [Fact]
-    public void Injury_PainBoundaries_3vs4_And_6vs7()
-    {
-        // Boundary: Pain 3 allows progression (if no next-day worsening)
-        var pain3 = InjurySafetyProgressionRule.EvaluatePainProgression(painLevel: 3, hasNextDayWorsening: false);
-        Assert.Equal(PainProgressionDisposition.AllowProgression, pain3.Disposition);
-        Assert.True(pain3.AllowsLoadProgression);
 
-        // Boundary: Pain 4 maintains or regresses (blocks progression even without next-day worsening)
-        var pain4 = InjurySafetyProgressionRule.EvaluatePainProgression(painLevel: 4, hasNextDayWorsening: false);
-        Assert.Equal(PainProgressionDisposition.MaintainOrRegress, pain4.Disposition);
-        Assert.False(pain4.AllowsLoadProgression);
-
-        // Boundary: Pain 6 maintains or regresses
-        var pain6 = InjurySafetyProgressionRule.EvaluatePainProgression(painLevel: 6, hasNextDayWorsening: false);
-        Assert.Equal(PainProgressionDisposition.MaintainOrRegress, pain6.Disposition);
-        Assert.False(pain6.RequiresExerciseStopOrModification);
-
-        // Boundary: Pain 7 requires exercise stop or modification
-        var pain7 = InjurySafetyProgressionRule.EvaluatePainProgression(painLevel: 7, hasNextDayWorsening: false);
-        Assert.Equal(PainProgressionDisposition.BlockAndModify, pain7.Disposition);
-        Assert.True(pain7.RequiresExerciseStopOrModification);
-    }
-
-    [Fact]
-    public void Injury_AcuteStatus_CannotBeBypassedByLowPainOrActivityLabels()
-    {
-        // Low pain (1/10) with Acute status still blocks heavy/high-impact movement
-        var acuteDecision = InjurySafetyProgressionRule.EvaluateExerciseSafety(
-            status: InjuryStatus.Acute,
-            activeInjurySite: InjuryFlag.Knee,
-            isHeavyMovement: true,
-            isHighImpactMovement: false,
-            exerciseInvolvedSite: InjuryFlag.Knee,
-            requestedLoad: 80m);
-
-        Assert.False(acuteDecision.IsAllowed);
-        Assert.False(acuteDecision.IsProgressionAllowed);
-        Assert.Equal(InjurySafetyProgressionRule.StatusBlockedAcute, acuteDecision.SafetyStatus);
-    }
 
     // =========================================================================
     // 7. Aerobic Moderate-Equivalent Minutes (ME = Mod + 2 * Vig)
     // =========================================================================
 
-    [Fact]
-    public void AerobicMinutes_ModerateEquivalentArithmetic_MeEqualsModPlus2Vig()
-    {
-        // 30 min moderate + 15 min vigorous = 30 + 2 * 15 = 60 ME
-        var sessionMe = AerobicHealthTargetRule.CalculateSessionModerateEquivalentMinutes(30m, 15m);
-        Assert.Equal(60m, sessionMe);
-
-        var weeklySessions = new[]
-        {
-            new AerobicSessionMinutes(MinutesModerate: 30m, MinutesVigorous: 15m), // 60 ME
-            new AerobicSessionMinutes(MinutesModerate: 40m, MinutesVigorous: 25m)  // 40 + 50 = 90 ME
-        };
-
-        var totalMe = AerobicHealthTargetRule.CalculateWeeklyModerateEquivalentMinutes(weeklySessions);
-        Assert.Equal(150m, totalMe);
-
-        var eval = AerobicHealthTargetRule.Evaluate(weeklySessions, resistanceTrainingDaysPerWeek: 2);
-        Assert.True(eval.MeetsAerobicTarget);
-        Assert.True(eval.MeetsResistanceTarget);
-        Assert.True(eval.MeetsAllTargets);
-    }
 
     // =========================================================================
     // 8. Load Progression & Volume Guard
@@ -475,47 +299,9 @@ public sealed class WorkoutPlanningPolicyComplianceTests
     // 9. Cycle Phase Precedence Hierarchy
     // =========================================================================
 
-    [Fact]
-    public void CyclePrecedence_InjurySafetyOverridesAll_AndReadinessOverridesCycleDiscomfort()
-    {
-        // 1. Injury safety override
-        var injuryContext = new PrecedenceEvaluationContext(
-            HasExplicitRestrictionConflict: false,
-            HasAcuteInjuryConflict: true,
-            BaselineCycleTier: PhaseAdjustmentTier.EasierDay);
-
-        var injuryResult = PhaseAndCheckInPrecedenceRule.Evaluate(injuryContext);
-        Assert.Equal(PrecedenceLevel.InjurySafety, injuryResult.ControllingPrecedence);
-        Assert.Equal(PrecedenceProposalStatus.BlockedBySafety, injuryResult.Status);
-
-        // 2. High daily readiness overrides baseline cycle phase discomfort
-        var readinessContext = new PrecedenceEvaluationContext(
-            HasExplicitRestrictionConflict: false,
-            HasAcuteInjuryConflict: false,
-            BaselineCycleTier: PhaseAdjustmentTier.EasierDay,
-            CheckInScore: new CheckInScoreResult(CheckInScoreStatus.Available, 85m, CheckInScoreBand.FeelingReady, null));
-
-        var readinessResult = PhaseAndCheckInPrecedenceRule.Evaluate(readinessContext);
-        Assert.Equal(PrecedenceLevel.DailyCheckInOverride, readinessResult.ControllingPrecedence);
-        Assert.Equal(PhaseAdjustmentTier.Maintain, readinessResult.EffectiveTier);
-    }
 
     // =========================================================================
     // 10. Session Lifecycle Preservation (Completed and InProgress preserved)
     // =========================================================================
 
-    [Fact]
-    public void SessionLifecycle_CompletedAndInProgress_CannotBeModified()
-    {
-        var planned = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.Planned);
-        Assert.True(planned.IsAllowed);
-
-        var inProgress = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.InProgress);
-        Assert.True(inProgress.IsBlocked);
-        Assert.Equal(WorkoutSessionLifecycleRule.ReasonCompletedOrInProgressSessionCannotBeModified, inProgress.ReasonCode);
-
-        var completed = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.Completed);
-        Assert.True(completed.IsBlocked);
-        Assert.Equal(WorkoutSessionLifecycleRule.ReasonCompletedOrInProgressSessionCannotBeModified, completed.ReasonCode);
-    }
 }

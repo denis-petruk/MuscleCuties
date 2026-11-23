@@ -41,8 +41,8 @@ public sealed class DiaryMealCategory
 
         return
         [
-            new DiaryMealCategory(CreateDeterministicDefaultId(ownerId, MealType.Breakfast), ownerId, "Breakfast", 0, false, MealType.Breakfast),
-            new DiaryMealCategory(CreateDeterministicDefaultId(ownerId, MealType.Lunch), ownerId, "Lunch", 1, false, MealType.Lunch),
+            new DiaryMealCategory(CreateDeterministicDefaultId(ownerId, MealType.Breakfast), ownerId, MealPlanDefaults.BreakfastMealName, 0, false, MealType.Breakfast),
+            new DiaryMealCategory(CreateDeterministicDefaultId(ownerId, MealType.Lunch), ownerId, MealPlanDefaults.LunchMealName, 1, false, MealType.Lunch),
             new DiaryMealCategory(CreateDeterministicDefaultId(ownerId, MealType.Dinner), ownerId, "Dinner", 2, false, MealType.Dinner),
             new DiaryMealCategory(CreateDeterministicDefaultId(ownerId, MealType.Snack), ownerId, "Snack", 3, false, MealType.Snack)
         ];

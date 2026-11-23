@@ -1,8 +1,9 @@
+using MuscleCuties.Core.Domain.Nutrition;
 namespace MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 public sealed record NutritionOverviewRequest(
     DateOnly Date,
-    string BreakfastPreference = "Savoury"
+    string BreakfastPreference = MealPlanDefaults.BreakfastPreference
 );
 
 public sealed record NutritionTargetMacrosDto(

@@ -11,7 +11,6 @@ namespace MuscleCuties.UI.ViewModels.Nutrition;
 
 public partial class NutritionViewModel
 {
-    private const int BarcodeCameraCaptureTimeoutSeconds = 20;
     private const string BarcodeStatusEnterDigitsKey = "Nutrition_Barcode_StatusEnterDigits";
     private const string BarcodeStatusSearchingCatalogKey = "Nutrition_Barcode_StatusSearchingCatalog";
     private const string BarcodeStatusFoundInCatalogFormatKey = "Nutrition_Barcode_StatusFoundInCatalogFormat";
@@ -25,8 +24,6 @@ public partial class NutritionViewModel
     private const string BarcodeStatusScanCancelledKey = "Nutrition_Barcode_StatusScanCancelled";
     private const string BarcodeStatusLookupUnavailableKey = "Nutrition_Barcode_StatusLookupUnavailable";
     private const string BarcodeStatusLookupFailedKey = "Nutrition_Barcode_StatusLookupFailed";
-    private static readonly TimeSpan BarcodeCameraCaptureTimeout =
-        TimeSpan.FromSeconds(BarcodeCameraCaptureTimeoutSeconds);
 
     private readonly ILookupBarcodeUseCase? _barcodeUseCase;
     private readonly IBarcodeScannerHardwareService? _barcodeHardwareService;
@@ -53,26 +50,24 @@ public partial class NutritionViewModel
         var sessionRevision = ++_barcodeScannerSessionRevision;
         using var cts = new CancellationTokenSource();
         _barcodeCameraCancellation = cts;
-        var captureTimedOut = false;
 
         try
         {
-            var captureTask = _barcodeHardwareService.CaptureBarcodeAsync(cts.Token);
-            var completed = await Task.WhenAny(captureTask, Task.Delay(BarcodeCameraCaptureTimeout, cts.Token))
-                .ConfigureAwait(true);
-            if (!ReferenceEquals(completed, captureTask) && !captureTask.IsCompleted)
+            var attempt = await BarcodeCameraCapture.CaptureAsync(_barcodeHardwareService, cts);
+            if (attempt.Failed || attempt.Capture is null)
             {
-                captureTimedOut = true;
-                cts.Cancel();
+                if (sessionRevision == _barcodeScannerSessionRevision)
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
+                return;
             }
 
-            var capture = await captureTask;
+            var capture = attempt.Capture;
             if (sessionRevision != _barcodeScannerSessionRevision ||
                 !IsBarcodeSourceVisible ||
                 !IsMealEditorVisible)
                 return;
 
-            if (captureTimedOut)
+            if (attempt.TimedOut)
             {
                 BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusNoCodeDetectedKey);
                 return;
@@ -97,11 +92,6 @@ public partial class NutritionViewModel
                     BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
                     break;
             }
-        }
-        catch (Exception)
-        {
-            if (sessionRevision == _barcodeScannerSessionRevision)
-                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
         }
         finally
         {

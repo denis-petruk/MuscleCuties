@@ -4,6 +4,7 @@ using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Targets;
+using MuscleCuties.Core.Domain.Nutrition;
 
 namespace MuscleCuties.Server.Nutrition;
 
@@ -26,7 +27,7 @@ public static class ServerOverviewEndpointMappings
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
             if (!TryUser(principal, out var userId)) return Results.Unauthorized();
-            try { return Results.Ok(await useCase.GetOverviewAsync(userId, date, breakfastPreference ?? "Savoury", cancellationToken).ConfigureAwait(false)); }
+            try { return Results.Ok(await useCase.GetOverviewAsync(userId, date, breakfastPreference ?? MealPlanDefaults.BreakfastPreference, cancellationToken).ConfigureAwait(false)); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
         });
 
@@ -34,7 +35,7 @@ public static class ServerOverviewEndpointMappings
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
             if (!TryUser(principal, out var userId)) return Results.Unauthorized();
-            try { return Results.Ok(await useCase.GetDayMealPlanAsync(userId, date, breakfastPreference ?? "Savoury", cancellationToken).ConfigureAwait(false)); }
+            try { return Results.Ok(await useCase.GetDayMealPlanAsync(userId, date, breakfastPreference ?? MealPlanDefaults.BreakfastPreference, cancellationToken).ConfigureAwait(false)); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
         });
 
@@ -42,7 +43,7 @@ public static class ServerOverviewEndpointMappings
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
             if (!TryUser(principal, out var userId)) return Results.Unauthorized();
-            try { return Results.Ok(await useCase.RefreshDayMealAsync(userId, item, breakfastPreference ?? "Savoury", cancellationToken).ConfigureAwait(false)); }
+            try { return Results.Ok(await useCase.RefreshDayMealAsync(userId, item, breakfastPreference ?? MealPlanDefaults.BreakfastPreference, cancellationToken).ConfigureAwait(false)); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
         });
 
@@ -50,7 +51,7 @@ public static class ServerOverviewEndpointMappings
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
             if (!TryUser(principal, out var userId)) return Results.Unauthorized();
-            try { return Results.Ok(await useCase.GetMealSuggestionsAsync(userId, mealType, breakfastPreference ?? "Savoury", null, cancellationToken).ConfigureAwait(false)); }
+            try { return Results.Ok(await useCase.GetMealSuggestionsAsync(userId, mealType, breakfastPreference ?? MealPlanDefaults.BreakfastPreference, null, cancellationToken).ConfigureAwait(false)); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
         });
 

@@ -3,48 +3,8 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Overview;
 
-public interface INutritionOverviewUseCase
+public interface INutritionOverviewUseCase : INutritionOverviewStore
 {
-    Task<NutritionOverviewResponse> GetOverviewAsync(
-        NutritionOverviewRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<NutritionTargetMacrosDto> GetPlanTargetsAsync(
-        string breakfastPreference,
-        CancellationToken cancellationToken = default);
-
-    Task LogMealAsync(
-        LogMealRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task UpdateMealAsync(
-        UpdateMealRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<MealIngredientInputDto>> GetMealIngredientsAsync(
-        int mealId,
-        CancellationToken cancellationToken = default);
-
-    Task<CustomFoodResultDto> CreateCustomFoodAsync(
-        CreateCustomFoodRequest request,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<MealSuggestionDto>> GetMealSuggestionsAsync(
-        string mealType,
-        string breakfastPreference,
-        IReadOnlySet<string>? excludeConceptNames,
-        CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<DayMealPlanItemDto>> GetDayMealPlanAsync(
-        string breakfastPreference,
-        CancellationToken cancellationToken = default);
-
-    Task<DayMealPlanItemDto> RefreshDayMealAsync(
-        DayMealPlanItemDto item,
-        string breakfastPreference,
-        CancellationToken cancellationToken = default);
-
-    Task EnsureReferenceDataReadyAsync(CancellationToken cancellationToken = default);
 }
 
 public sealed class NutritionOverviewUseCase(INutritionOverviewStore store) : INutritionOverviewUseCase
@@ -66,7 +26,7 @@ public sealed class NutritionOverviewUseCase(INutritionOverviewStore store) : IN
         string breakfastPreference,
         CancellationToken cancellationToken = default)
     {
-        var preference = breakfastPreference ?? "Savoury";
+        var preference = breakfastPreference ?? MealPlanDefaults.BreakfastPreference;
         var targets = await store.GetPlanTargetsAsync(preference, cancellationToken).ConfigureAwait(false);
         return NutritionTargetContractMapper.WithMealDistribution(targets, preference);
     }
@@ -132,8 +92,8 @@ public sealed class NutritionOverviewUseCase(INutritionOverviewStore store) : IN
         CancellationToken cancellationToken = default)
     {
         return store.GetMealSuggestionsAsync(
-            mealType ?? "Lunch",
-            breakfastPreference ?? "Savoury",
+            mealType ?? MealPlanDefaults.DefaultMealType,
+            breakfastPreference ?? MealPlanDefaults.BreakfastPreference,
             excludeConceptNames,
             cancellationToken);
     }
@@ -142,7 +102,7 @@ public sealed class NutritionOverviewUseCase(INutritionOverviewStore store) : IN
         string breakfastPreference,
         CancellationToken cancellationToken = default)
     {
-        return store.GetDayMealPlanAsync(breakfastPreference ?? "Savoury", cancellationToken);
+        return store.GetDayMealPlanAsync(breakfastPreference ?? MealPlanDefaults.BreakfastPreference, cancellationToken);
     }
 
     public Task<DayMealPlanItemDto> RefreshDayMealAsync(
@@ -151,7 +111,7 @@ public sealed class NutritionOverviewUseCase(INutritionOverviewStore store) : IN
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(item);
-        return store.RefreshDayMealAsync(item, breakfastPreference ?? "Savoury", cancellationToken);
+        return store.RefreshDayMealAsync(item, breakfastPreference ?? MealPlanDefaults.BreakfastPreference, cancellationToken);
     }
 
     public Task EnsureReferenceDataReadyAsync(CancellationToken cancellationToken = default)

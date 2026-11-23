@@ -352,20 +352,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     public bool IsPageLoading => IsBusy;
 
     [RelayCommand]
-    private async Task OpenInjuryModalAsync()
-    {
-        InjuryLogVm.ResetForm();
-        IsInjuryModalVisible = true;
-        if (!InjuryLogVm.IsBusy)
-            await InjuryLogVm.LoadCommand.ExecuteAsync(null);
-    }
+    private Task OpenInjuryModalAsync() =>
+        InjuryModalPresenter.OpenAsync(InjuryLogVm, visible => IsInjuryModalVisible = visible);
 
     [RelayCommand]
-    private void CloseInjuryModal()
-    {
-        _injuryLogVm?.ResetForm();
-        IsInjuryModalVisible = false;
-    }
+    private void CloseInjuryModal() =>
+        InjuryModalPresenter.Close(_injuryLogVm, visible => IsInjuryModalVisible = visible);
 
     private async Task RefreshAfterInjuryChangeAsync()
     {

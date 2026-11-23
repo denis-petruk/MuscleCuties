@@ -89,13 +89,13 @@ public static class FoodSearchResultFilter
 
     private static bool MatchesTokens(string name, IReadOnlyCollection<string> tokens)
     {
-        var normalized = FoodSearchTextNormalizer.NormalizeSearchText(name);
+        var normalized = FoodCatalogRankingRule.NormalizeSearchText(name);
         return tokens.All(token => normalized.Contains(token, StringComparison.OrdinalIgnoreCase));
     }
 
     private static int RankName(string name, IReadOnlyList<string> tokens)
     {
-        var normalizedName = FoodSearchTextNormalizer.NormalizeSearchText(name);
+        var normalizedName = FoodCatalogRankingRule.NormalizeSearchText(name);
         var normalizedQuery = string.Join(" ", tokens);
 
         if (normalizedName == normalizedQuery)
@@ -115,7 +115,7 @@ public static class FoodSearchResultFilter
 
     private static int WholeFoodRank(string name, IReadOnlyList<string> tokens)
     {
-        var normalizedName = FoodSearchTextNormalizer.NormalizeSearchText(name);
+        var normalizedName = FoodCatalogRankingRule.NormalizeSearchText(name);
         if (tokens.Count == 0)
             return 4;
 
@@ -161,7 +161,7 @@ public static class FoodSearchResultFilter
 
     private static int SearchFieldRank(string searchableText, IReadOnlyList<string> tokens)
     {
-        var normalized = FoodSearchTextNormalizer.NormalizeSearchText(searchableText);
+        var normalized = FoodCatalogRankingRule.NormalizeSearchText(searchableText);
         return tokens.All(token => normalized.Contains(token, StringComparison.OrdinalIgnoreCase))
             ? 0
             : 1;
@@ -208,9 +208,9 @@ public static class FoodSearchResultFilter
             "|",
             "branded",
             name,
-            FoodSearchTextNormalizer.NormalizeSearchText(food.BrandName ?? string.Empty),
-            FoodSearchTextNormalizer.NormalizeSearchText(food.BrandOwner ?? string.Empty),
-            FoodSearchTextNormalizer.NormalizeSearchText(food.GtinUpc ?? string.Empty));
+            FoodCatalogRankingRule.NormalizeSearchText(food.BrandName ?? string.Empty),
+            FoodCatalogRankingRule.NormalizeSearchText(food.BrandOwner ?? string.Empty),
+            FoodCatalogRankingRule.NormalizeSearchText(food.GtinUpc ?? string.Empty));
     }
 
     private static string BuildPrimarySearchableText(FoodItem food)
@@ -241,9 +241,9 @@ public static class FoodSearchResultFilter
             "|",
             "branded",
             name,
-            FoodSearchTextNormalizer.NormalizeSearchText(result.BrandName ?? string.Empty),
-            FoodSearchTextNormalizer.NormalizeSearchText(result.BrandOwner ?? string.Empty),
-            FoodSearchTextNormalizer.NormalizeSearchText(result.GtinUpc ?? string.Empty));
+            FoodCatalogRankingRule.NormalizeSearchText(result.BrandName ?? string.Empty),
+            FoodCatalogRankingRule.NormalizeSearchText(result.BrandOwner ?? string.Empty),
+            FoodCatalogRankingRule.NormalizeSearchText(result.GtinUpc ?? string.Empty));
     }
 
     private static string BuildPrimarySearchableText(FdcFoodSearchResult result)
@@ -278,16 +278,16 @@ public static class FoodSearchResultFilter
 
     private static List<string> Tokenize(string query)
     {
-        return FoodSearchTextNormalizer.NormalizeSearchText(query)
+        return FoodCatalogRankingRule.NormalizeSearchText(query)
             .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Where(token => token.Length > 1)
-            .Where(token => !FoodSearchTextNormalizer.StopWords.Contains(token))
+            .Where(token => !FoodCatalogRankingRule.StopWords.Contains(token))
             .Distinct(StringComparer.OrdinalIgnoreCase)
             .ToList();
     }
 
     private static string NormalizeName(string name)
     {
-        return FoodSearchTextNormalizer.NormalizeSearchText(name);
+        return FoodCatalogRankingRule.NormalizeSearchText(name);
     }
 }

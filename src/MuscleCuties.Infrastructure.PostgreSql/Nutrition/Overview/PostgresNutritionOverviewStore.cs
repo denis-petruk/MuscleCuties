@@ -669,7 +669,7 @@ public sealed class PostgresNutritionOverviewStore(
         var seed = date.DayNumber;
 
         var breakfastTask = BuildDayMealPlanItemAsync(
-            "Breakfast",
+            MealPlanDefaults.BreakfastMealName,
             breakfastPreference,
             totalCalories * shares.Breakfast,
             totalProtein * shares.Breakfast,
@@ -681,7 +681,7 @@ public sealed class PostgresNutritionOverviewStore(
             cancellationToken);
 
         var lunchTask = BuildDayMealPlanItemAsync(
-            "Lunch",
+            MealPlanDefaults.LunchMealName,
             breakfastPreference,
             totalCalories * shares.Lunch,
             totalProtein * shares.Lunch,

@@ -26,7 +26,6 @@ public partial class FoodLogViewModel
     private const double DefaultQuickAddServingsCount = 1.0;
     private const string DefaultQuickAddServingUnit = "serving";
     private static string DefaultQuickAddTitle => UiTextCatalog.Get("Nutrition_QuickAdd_DefaultName");
-    private const int BarcodeCameraCaptureTimeoutSeconds = 20;
     private const string BarcodeStatusEnterDigitsKey = "Nutrition_Barcode_StatusEnterDigits";
     private const string BarcodeStatusSearchingCatalogKey = "Nutrition_Barcode_StatusSearchingCatalog";
     private const string BarcodeStatusFoundInCatalogFormatKey = "Nutrition_Barcode_StatusFoundInCatalogFormat";
@@ -49,8 +48,6 @@ public partial class FoodLogViewModel
     private const string FoodStatusUsdaResultsKey = "Nutrition_FoodLog_StatusUsdaResults";
     private const string FoodStatusUsdaNoResultsKey = "Nutrition_FoodLog_StatusUsdaNoResults";
     private const string FoodStatusUsdaUnavailableKey = "Nutrition_FoodLog_StatusUsdaUnavailable";
-    private static readonly TimeSpan BarcodeCameraCaptureTimeout =
-        TimeSpan.FromSeconds(BarcodeCameraCaptureTimeoutSeconds);
 
     private CancellationTokenSource? _foodSearchCancellation;
     private CancellationTokenSource? _barcodeCameraCancellation;
@@ -350,24 +347,22 @@ public partial class FoodLogViewModel
         var sessionRevision = ++_barcodeScannerSessionRevision;
         using var cts = new CancellationTokenSource();
         _barcodeCameraCancellation = cts;
-        var captureTimedOut = false;
 
         try
         {
-            var captureTask = _barcodeHardwareService.CaptureBarcodeAsync(cts.Token);
-            var completed = await Task.WhenAny(captureTask, Task.Delay(BarcodeCameraCaptureTimeout, cts.Token))
-                .ConfigureAwait(true);
-            if (!ReferenceEquals(completed, captureTask) && !captureTask.IsCompleted)
+            var attempt = await BarcodeCameraCapture.CaptureAsync(_barcodeHardwareService, cts);
+            if (attempt.Failed || attempt.Capture is null)
             {
-                captureTimedOut = true;
-                cts.Cancel();
+                if (sessionRevision == _barcodeScannerSessionRevision)
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
+                return;
             }
 
-            var capture = await captureTask;
+            var capture = attempt.Capture;
             if (sessionRevision != _barcodeScannerSessionRevision || !IsBarcodeScannerVisible || !IsEditModalVisible)
                 return;
 
-            if (captureTimedOut)
+            if (attempt.TimedOut)
             {
                 BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusNoCodeDetectedKey);
                 return;
@@ -392,11 +387,6 @@ public partial class FoodLogViewModel
                     BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
                     break;
             }
-        }
-        catch (Exception)
-        {
-            if (sessionRevision == _barcodeScannerSessionRevision)
-                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
         }
         finally
         {

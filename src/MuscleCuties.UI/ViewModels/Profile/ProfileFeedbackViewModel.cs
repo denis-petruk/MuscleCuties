@@ -1,11 +1,12 @@
 using System.Diagnostics;
-using System.Net.Mail;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using MuscleCuties.Core.Models.Enums.Profile;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Profile.Feedback;
+using MuscleCuties.UI.Services.Auth;
+using MuscleCuties.UI.Services.Navigation;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
@@ -13,6 +14,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
 {
     private readonly Func<Task> _navigateBackAsync;
     private readonly IProfileFeedbackUseCase _useCase;
+    private readonly IAccountPasswordValidator _passwordValidator;
     [ObservableProperty] private string _adjustmentText = string.Empty;
     private ProfileFeedbackAttachmentDto? _attachment;
     [ObservableProperty] private string _attachmentName = string.Empty;
@@ -30,9 +32,11 @@ public partial class ProfileFeedbackViewModel : ObservableObject
 
     public ProfileFeedbackViewModel(
         IProfileFeedbackUseCase useCase,
+        IAccountPasswordValidator passwordValidator,
         Func<Task> navigateBackAsync)
     {
         _useCase = useCase;
+        _passwordValidator = passwordValidator;
         _navigateBackAsync = navigateBackAsync;
         BackCommand = new AsyncRelayCommand(BackAsync);
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);
@@ -109,16 +113,8 @@ public partial class ProfileFeedbackViewModel : ObservableObject
 
     private async Task BackAsync()
     {
-        if (HasUnsavedDraft && Shell.Current is { } shell)
-        {
-            var discard = await shell.DisplayAlertAsync(
-                UiTextCatalog.Get("Profile_UnsavedChanges_Title"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_Message"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_Discard"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_KeepEditing"));
-            if (!discard)
-                return;
-        }
+        if (!await UnsavedChangesPrompt.ConfirmDiscardAsync(HasUnsavedDraft))
+            return;
 
         await _navigateBackAsync();
     }
@@ -169,7 +165,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
             return;
         }
 
-        if (IncludeContactEmail && !IsValidEmail(ContactEmail))
+        if (IncludeContactEmail && !_passwordValidator.IsValidContactEmail(ContactEmail))
         {
             IsStatusError = true;
             StatusMessage = UiTextCatalog.Get("Profile_Feedback_InvalidEmail");
@@ -223,16 +219,6 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         await Clipboard.Default.SetTextAsync(string.Join(Environment.NewLine, lines));
         IsStatusError = false;
         StatusMessage = UiTextCatalog.Get("Profile_Feedback_Copied");
-    }
-
-    private static bool IsValidEmail(string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
-            return false;
-        var trimmed = value.Trim();
-        return MailAddress.TryCreate(trimmed, out var parsed) &&
-               string.Equals(parsed.Address, trimmed, StringComparison.OrdinalIgnoreCase) &&
-               trimmed.Contains('.', StringComparison.Ordinal);
     }
 
     partial void OnFeedbackTextChanged(string value)

@@ -12,6 +12,7 @@ using MuscleCuties.UI.Services.Units;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
+using MuscleCuties.UI.Services.Navigation;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
@@ -130,16 +131,8 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
 
     private async Task BackAsync()
     {
-        if (HasUnsavedChanges && Shell.Current is { } shell)
-        {
-            var discard = await shell.DisplayAlertAsync(
-                UiTextCatalog.Get("Profile_UnsavedChanges_Title"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_Message"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_Discard"),
-                UiTextCatalog.Get("Profile_UnsavedChanges_KeepEditing"));
-            if (!discard)
-                return;
-        }
+        if (!await UnsavedChangesPrompt.ConfirmDiscardAsync(HasUnsavedChanges))
+            return;
 
         await _navigateBackAsync();
     }

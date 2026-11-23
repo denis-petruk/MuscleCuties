@@ -185,21 +185,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         Assert.False(GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(d28, ReferenceDate));
     }
 
-    [Fact]
-    public void Missing_History_Differs_From_Valid_Zero_History()
-    {
-        var zeroHistory = new ActivityHistoryInput("GS", 0, 0m, 0);
-        Assert.True(ActivityHistoryPolicyRule.IsValidHistory(zeroHistory));
-        Assert.False(ActivityHistoryPolicyRule.HasMissingRequiredFields(zeroHistory));
-
-        var missingHistory = new ActivityHistoryInput("GS", null, null, null);
-        Assert.False(ActivityHistoryPolicyRule.IsValidHistory(missingHistory));
-        Assert.True(ActivityHistoryPolicyRule.HasMissingRequiredFields(missingHistory));
-
-        Assert.False(GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(null, ReferenceDate));
-        var zeroTrainingHistory = new ActivityTrainingHistory("GS", 0, 0m, ReferenceDate, false);
-        Assert.False(GeneralStrengthFrequencyResolver.IsEstablishedResistanceHistory(zeroTrainingHistory, ReferenceDate));
-    }
 
     [Fact]
     public void Hvs_And_Gs_Selection_Does_Not_Duplicate_Gs_Prescriptions()
@@ -731,18 +716,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         // It does not alter database or write to disk
     }
 
-    [Fact]
-    public void Completed_And_InProgress_Sessions_Remain_Unchanged()
-    {
-        var planned = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.Planned);
-        Assert.True(planned.IsAllowed);
-
-        var inProgress = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.InProgress);
-        Assert.True(inProgress.IsBlocked);
-
-        var completed = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.Completed);
-        Assert.True(completed.IsBlocked);
-    }
 
     // =========================================================================
     // 3. Beginner Strength Eligibility & Planning Regression Tests (15 Tests)

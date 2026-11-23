@@ -333,7 +333,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         try
         {
             var response = await _overviewUseCase.GetOverviewAsync(
-                new NutritionOverviewRequest(date, "Savoury"));
+                new NutritionOverviewRequest(date));
             if (version != Volatile.Read(ref _dateLoadVersion) || date != SelectedDate)
                 return;
 

@@ -331,6 +331,7 @@ public static class MauiProgram
 
         services.AddTransient<ProfileFeedbackViewModel>(sp => new ProfileFeedbackViewModel(
             sp.GetRequiredService<IProfileFeedbackUseCase>(),
+            sp.GetRequiredService<IAccountPasswordValidator>(),
             () => NavigateToAsync("//ProfilePage")));
 
         services.AddSingleton<IAppPreloadService, AppPreloadCoordinator>();

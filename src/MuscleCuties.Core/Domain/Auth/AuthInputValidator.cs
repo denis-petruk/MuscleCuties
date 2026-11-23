@@ -81,6 +81,21 @@ public static class AuthInputValidator
         return true;
     }
 
+    /// <summary>
+    /// Contact addresses typed for support: a complete address with a dotted host, not a display-name form.
+    /// The feedback screen used to carry its own copy of this rule.
+    /// </summary>
+    public static bool IsValidContactEmail(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return false;
+
+        var trimmed = email.Trim();
+        return System.Net.Mail.MailAddress.TryCreate(trimmed, out var parsed) &&
+               string.Equals(parsed.Address, trimmed, StringComparison.OrdinalIgnoreCase) &&
+               trimmed.Contains('.', StringComparison.Ordinal);
+    }
+
     // Enforces 8+ non-whitespace characters with at least one lowercase, uppercase, digit, and symbol.
     public static bool IsStrongPassword(string? password)
     {

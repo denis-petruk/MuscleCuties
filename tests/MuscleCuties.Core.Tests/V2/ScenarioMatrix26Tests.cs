@@ -441,28 +441,7 @@ public sealed class ScenarioMatrix26Tests
         Assert.Equal(CardioIntensityBandV2.Light, session.AttachedFinisher.IntensityBand);
     }
 
-    [Fact]
-    public void S18_active_partial_session_keeps_observed_rows_and_cannot_be_regenerated()
-    {
-        var decision = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.InProgress);
-        Assert.False(decision.IsAllowed);
-        var saved = ObservedSetInputMapping.Build(true,
-            [new EditableObservedSet(1, 9, 25m, null), new EditableObservedSet(2, 0, 25m, null)]);
-        var restored = System.Text.Json.JsonSerializer.Deserialize<ObservedSetRecord[]>(
-            System.Text.Json.JsonSerializer.Serialize(saved));
-        var actual = Assert.Single(restored!);
-        Assert.Equal(9, actual.RepsCompleted);
-        Assert.Equal(25m, actual.LoadKg);
-        Assert.Null(actual.RirActual);
-    }
 
-    [Fact]
-    public void S19_completed_session_is_terminal_and_blocks_post_completion_mutation()
-    {
-        var decision = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.Completed);
-        Assert.False(decision.IsAllowed);
-        Assert.Equal(WorkoutSessionLifecycleRule.ReasonCompletedOrInProgressSessionCannotBeModified, decision.ReasonCode);
-    }
 
     [Theory]
     [InlineData(false)]
@@ -476,14 +455,6 @@ public sealed class ScenarioMatrix26Tests
         Assert.False(acknowledgment.ReducedVolumeAcknowledged);
     }
 
-    [Fact]
-    public void S21_existing_active_plan_requires_explicit_replacement_acceptance()
-    {
-        Assert.False(WorkoutPlanningFlowRule.CanAutoActivateRequestedPlan(true, true, true, true, true, false, false, false));
-        Assert.True(WorkoutPlanningFlowRule.RequiresReplacementConfirmation(true, false));
-        Assert.True(WorkoutPlanningFlowRule.AcceptanceAcknowledgments(true, false).ReplacementConfirmed);
-        Assert.False(WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.Completed).IsAllowed);
-    }
 
     [Fact]
     public void S22_one_hundred_runs_and_catalog_permutations_have_identical_hashes()

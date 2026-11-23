@@ -6,6 +6,7 @@ public interface IAccountPasswordValidator
 {
     bool TryValidateConfirmation(string? password, string? confirmation, out string errorMessage);
     bool IsValidEmail(string? email);
+    bool IsValidContactEmail(string? email);
 }
 
 public sealed class AccountPasswordValidator : IAccountPasswordValidator
@@ -18,5 +19,10 @@ public sealed class AccountPasswordValidator : IAccountPasswordValidator
     public bool IsValidEmail(string? email)
     {
         return AuthInputValidator.IsValidEmail(email);
+    }
+
+    public bool IsValidContactEmail(string? email)
+    {
+        return MuscleCuties.Core.Domain.Auth.AuthInputValidator.IsValidContactEmail(email);
     }
 }

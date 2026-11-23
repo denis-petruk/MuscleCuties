@@ -61,7 +61,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
     public async Task<NutritionOverviewResponse> GetOverviewAsync(
         Guid userId,
         DateOnly date,
-        string breakfastPreference = "Savoury",
+        string breakfastPreference = MealPlanDefaults.BreakfastPreference,
         CancellationToken cancellationToken = default)
     {
         if (userId == Guid.Empty || !NutritionLogRule.IsSupportedDate(date))
@@ -76,7 +76,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
 
     public async Task<NutritionTargetMacrosDto> GetPlanTargetsAsync(
         Guid userId,
-        string breakfastPreference = "Savoury",
+        string breakfastPreference = MealPlanDefaults.BreakfastPreference,
         CancellationToken cancellationToken = default)
     {
         if (userId == Guid.Empty)
@@ -89,7 +89,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
     public Task<IReadOnlyList<DayMealPlanItemDto>> GetDayMealPlanAsync(
         Guid userId,
         DateOnly date,
-        string breakfastPreference = "Savoury",
+        string breakfastPreference = MealPlanDefaults.BreakfastPreference,
         CancellationToken cancellationToken = default)
     {
         if (userId == Guid.Empty || !NutritionLogRule.IsSupportedDate(date))
@@ -100,7 +100,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
     public Task<DayMealPlanItemDto> RefreshDayMealAsync(
         Guid userId,
         DayMealPlanItemDto item,
-        string breakfastPreference = "Savoury",
+        string breakfastPreference = MealPlanDefaults.BreakfastPreference,
         CancellationToken cancellationToken = default)
     {
         if (userId == Guid.Empty || item is null)
@@ -111,7 +111,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
     public Task<IReadOnlyList<MealSuggestionDto>> GetMealSuggestionsAsync(
         Guid userId,
         string mealType,
-        string breakfastPreference = "Savoury",
+        string breakfastPreference = MealPlanDefaults.BreakfastPreference,
         IReadOnlySet<string>? excludeConceptNames = null,
         CancellationToken cancellationToken = default)
     {
