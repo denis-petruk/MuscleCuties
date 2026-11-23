@@ -25,6 +25,7 @@
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/IPhotoCacheAccountLifecycle.cs" Link="Mobile/IPhotoCacheAccountLifecycle.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Formatting/DisplayFormat.cs" Link="Mobile/DisplayFormat.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Localization/LocalizedFormat.cs" Link="Mobile/LocalizedFormat.cs" />
+    <Compile Include="../../src/MuscleCuties.UI/ViewModels/Auth/ResendCountdownCoordinator.cs" Link="Mobile/ResendCountdownCoordinator.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Models/UI/Quiz/SelectableQuizAnswer.cs" Link="Mobile/SelectableQuizAnswer.cs" />
     <Compile Include="../../src/MuscleCuties.UI/Services/Profile/AppPageLoadGate.cs" Link="Mobile/AppPageLoadGate.cs" />
     <Compile Include="../../src/MuscleCuties.UI/ViewModels/Common/IPageLoadAware.cs" Link="Mobile/IPageLoadAware.cs" />

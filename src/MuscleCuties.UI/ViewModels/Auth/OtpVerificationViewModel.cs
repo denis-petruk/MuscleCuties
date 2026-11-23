@@ -44,12 +44,13 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
             CountdownSeconds = sec;
             CanResend = canResend;
             ResendButtonText = text;
-        }, _timeProvider);
+        }, UiTextCatalog.Get(ResendCodeKey), seconds => UiTextCatalog.Format("Auth_Otp_ResendInFormat", seconds),
+            _timeProvider);
 
         VerifyCommand = new AsyncRelayCommand(VerifyAsync, () => CanVerify);
         ResendCodeCommand = new AsyncRelayCommand(ResendCodeAsync, () => CanResendNow);
         GoBackCommand = new AsyncRelayCommand(GoBackAsync, () => !IsBusy);
-        StartCountdown(60);
+        _countdownCoordinator.StartCountdown(60);
     }
 
     public string Email => _session.Email;
@@ -138,7 +139,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
             if (result.Expired)
             {
                 IsSessionExpired = true;
-                StopCountdown();
+                _countdownCoordinator.StopCountdown();
                 ErrorMessage = "Ui_Auth_Error_SessionExpired";
                 return;
             }
@@ -152,13 +153,13 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
             if (!_otp.ConfirmSession(_session.SessionId))
             {
                 IsSessionExpired = true;
-                StopCountdown();
+                _countdownCoordinator.StopCountdown();
                 ErrorMessage = "Ui_Auth_Error_SessionExpired";
                 return;
             }
 
             _completed = true;
-            StopCountdown();
+            _countdownCoordinator.StopCountdown();
             _otp.HandOffSession(_session.SessionId);
             await _navigateToProfileSetupAsync();
         }
@@ -216,7 +217,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
 
             OtpCode = string.Empty;
             InfoMessage = "Ui_Auth_Info_CodeSent";
-            StartCountdown(result.ResendCooldownSeconds > 0 ? result.ResendCooldownSeconds : 60);
+            _countdownCoordinator.StartCountdown(result.ResendCooldownSeconds > 0 ? result.ResendCooldownSeconds : 60);
         }
         catch (OperationCanceledException) when (_disposed)
         {
@@ -243,20 +244,12 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
     private async Task GoBackAsync()
     {
         _disposed = true;
-        StopCountdown();
+        _countdownCoordinator.StopCountdown();
         _requestCts?.Cancel();
         if (!_completed)
             _otp.CancelSession(_session.SessionId);
         await _navigateBackAsync();
     }
 
-    private void StartCountdown(int seconds)
-    {
-        _countdownCoordinator.StartCountdown(seconds);
-    }
 
-    private void StopCountdown()
-    {
-        _countdownCoordinator.StopCountdown();
-    }
 }

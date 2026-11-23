@@ -1,20 +1,28 @@
-
 namespace MuscleCuties.UI.ViewModels.Auth;
 
 /// <summary>
 ///     Reusable coordinator for OTP and password recovery resend countdowns using TimeProvider.
+///     The caller supplies the two pieces of button copy so the countdown itself stays free of
+///     localization and can be exercised without the UI catalog.
 /// </summary>
 public sealed class ResendCountdownCoordinator : IDisposable
 {
-    private static string ResendCodeText => UiTextCatalog.Get("Auth_Otp_ResendCode");
+    private readonly Func<int, string> _formatCountdown;
     private readonly Action<int, bool, string> _onStateChanged;
+    private readonly string _readyText;
     private readonly TimeProvider _timeProvider;
     private bool _disposed;
     private CancellationTokenSource? _timerCts;
 
-    public ResendCountdownCoordinator(Action<int, bool, string> onStateChanged, TimeProvider? timeProvider = null)
+    public ResendCountdownCoordinator(
+        Action<int, bool, string> onStateChanged,
+        string readyText,
+        Func<int, string> formatCountdown,
+        TimeProvider? timeProvider = null)
     {
         _onStateChanged = onStateChanged ?? throw new ArgumentNullException(nameof(onStateChanged));
+        _readyText = readyText ?? throw new ArgumentNullException(nameof(readyText));
+        _formatCountdown = formatCountdown ?? throw new ArgumentNullException(nameof(formatCountdown));
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
@@ -31,9 +39,7 @@ public sealed class ResendCountdownCoordinator : IDisposable
 
         var initialSeconds = Math.Max(0, seconds);
         var canResend = initialSeconds == 0;
-        var buttonText = canResend
-            ? ResendCodeText
-            : UiTextCatalog.Format("Auth_Otp_ResendInFormat", initialSeconds);
+        var buttonText = canResend ? _readyText : _formatCountdown(initialSeconds);
         _onStateChanged(initialSeconds, canResend, buttonText);
 
         if (canResend) return;
@@ -41,6 +47,13 @@ public sealed class ResendCountdownCoordinator : IDisposable
         _timerCts = new CancellationTokenSource();
         var timer = _timerCts;
         _ = RunCountdownAsync(timer, initialSeconds, _timeProvider.GetTimestamp());
+    }
+
+    public void StopCountdown()
+    {
+        _timerCts?.Cancel();
+        _timerCts?.Dispose();
+        _timerCts = null;
     }
 
     private async Task RunCountdownAsync(CancellationTokenSource timer, int seconds, long startedAt)
@@ -56,9 +69,7 @@ public sealed class ResendCountdownCoordinator : IDisposable
                 var remaining = Math.Max(0, (int)Math.Ceiling(
                     seconds - _timeProvider.GetElapsedTime(startedAt).TotalSeconds));
                 var canResend = remaining == 0;
-                var buttonText = remaining > 0
-                    ? UiTextCatalog.Format("Auth_Otp_ResendInFormat", remaining)
-                    : ResendCodeText;
+                var buttonText = remaining > 0 ? _formatCountdown(remaining) : _readyText;
                 _onStateChanged(remaining, canResend, buttonText);
 
                 if (canResend)
@@ -68,12 +79,5 @@ public sealed class ResendCountdownCoordinator : IDisposable
         catch (OperationCanceledException)
         {
         }
-    }
-
-    public void StopCountdown()
-    {
-        _timerCts?.Cancel();
-        _timerCts?.Dispose();
-        _timerCts = null;
     }
 }

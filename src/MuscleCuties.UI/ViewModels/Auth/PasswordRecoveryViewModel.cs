@@ -52,7 +52,9 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
             CountdownSeconds = seconds;
             CanResend = canResend;
             ResendButtonText = text;
-        }, timeProvider);
+        }, MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Auth_PasswordRecovery_ResendCode"),
+            seconds => MuscleCuties.UI.Services.Localization.UiTextCatalog.Format("Auth_Otp_ResendInFormat", seconds),
+            timeProvider);
 
         StartRecoveryCommand = new AsyncRelayCommand(StartRecoveryAsync, () => !IsBusy);
         VerifyCodeCommand = new AsyncRelayCommand(VerifyCodeAsync, () => !IsBusy);
@@ -164,7 +166,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
             Email = result.Email ?? string.Empty;
             MaskedEmail = result.MaskedEmail ?? Email;
             Step = PasswordRecoveryStep.EnterCode;
-            StartCountdown(result.ResendCooldownSeconds > 0 ? result.ResendCooldownSeconds : 60);
+            _countdownCoordinator.StartCountdown(result.ResendCooldownSeconds > 0 ? result.ResendCooldownSeconds : 60);
         }
         catch (Exception ex)
         {
@@ -206,7 +208,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
             }
 
             VerificationToken = result.VerificationToken;
-            StopCountdown();
+            _countdownCoordinator.StopCountdown();
             Step = PasswordRecoveryStep.SetNewPassword;
         }
         catch (Exception ex)
@@ -240,7 +242,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
             if (!string.IsNullOrWhiteSpace(result.ChallengeId)) ChallengeId = result.ChallengeId;
 
             InfoMessage = "Ui_Auth_Info_CodeSent";
-            StartCountdown(result.ResendCooldownSeconds > 0 ? result.ResendCooldownSeconds : 60);
+            _countdownCoordinator.StartCountdown(result.ResendCooldownSeconds > 0 ? result.ResendCooldownSeconds : 60);
         }
         catch (Exception ex)
         {
@@ -301,7 +303,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
 
     private async Task GoBackAsync()
     {
-        StopCountdown();
+        _countdownCoordinator.StopCountdown();
         _recoveryService.ClearSession(Email);
 
         if (Step == PasswordRecoveryStep.EnterCode)
@@ -316,13 +318,5 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         await _navigateBackAsync();
     }
 
-    private void StartCountdown(int seconds)
-    {
-        _countdownCoordinator.StartCountdown(seconds);
-    }
 
-    private void StopCountdown()
-    {
-        _countdownCoordinator.StopCountdown();
-    }
 }
