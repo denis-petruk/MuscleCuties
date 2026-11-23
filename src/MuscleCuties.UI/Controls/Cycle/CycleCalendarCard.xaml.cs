@@ -1,30 +1,21 @@
 using System.ComponentModel;
+using MuscleCuties.UI.Controls.Shared;
 using MuscleCuties.UI.ViewModels.Cycle;
 
 namespace MuscleCuties.UI.Controls.Cycle;
 
 public partial class CycleCalendarCard : ContentView
 {
+    private readonly ViewModelSubscription<CycleViewModel> _subscription;
+
     public CycleCalendarCard()
     {
         InitializeComponent();
-        BindingContextChanged += OnCardBindingContextChanged;
+        _subscription = ViewModelSubscriptionBinding.BindToControl<CycleViewModel>(this,
+            OnViewModelPropertyChanged);
+        BindingContextChanged += (_, _) => QueueScrollToSelectedDay();
         Loaded += OnCardLoaded;
     }
-
-    private void OnCardBindingContextChanged(object? sender, EventArgs e)
-    {
-        if (_observedViewModel is not null)
-            _observedViewModel.PropertyChanged -= OnViewModelPropertyChanged;
-
-        _observedViewModel = BindingContext as CycleViewModel;
-        if (_observedViewModel is not null)
-            _observedViewModel.PropertyChanged += OnViewModelPropertyChanged;
-
-        QueueScrollToSelectedDay();
-    }
-
-    private CycleViewModel? _observedViewModel;
 
     private void OnCardLoaded(object? sender, EventArgs e) => QueueScrollToSelectedDay();
 
@@ -41,11 +32,11 @@ public partial class CycleCalendarCard : ContentView
 
     private async Task ScrollToSelectedDayAsync()
     {
-        if (_observedViewModel is null || MonthStripDaysLayout.Children.Count == 0)
+        if (_subscription.Current is not { } viewModel || MonthStripDaysLayout.Children.Count == 0)
             return;
 
-        var selectedDate = _observedViewModel.SelectedDate.Date;
-        var selectedIndex = _observedViewModel.CalendarStripDays.ToList()
+        var selectedDate = viewModel.SelectedDate.Date;
+        var selectedIndex = viewModel.CalendarStripDays.ToList()
             .FindIndex(day => day.Date?.Date == selectedDate);
         if (selectedIndex < 0 || selectedIndex >= MonthStripDaysLayout.Children.Count)
             return;

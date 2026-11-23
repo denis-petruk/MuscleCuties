@@ -1467,7 +1467,7 @@ public class UiCleanlinessAndReachabilityTests
     }
 
     [Fact]
-    public void Daily_check_in_and_injury_log_controls_delegate_subscription_to_the_shared_helper()
+    public void Controls_that_track_a_bound_view_model_share_the_subscription_helper()
     {
         var sharedRoot = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Shared");
         var binding = File.ReadAllText(Path.Combine(sharedRoot, "ViewModelSubscriptionBinding.cs"));
@@ -1480,7 +1480,12 @@ public class UiCleanlinessAndReachabilityTests
         var content = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogContent.xaml.cs"));
         var modal = File.ReadAllText(Path.Combine(injuryRoot, "InjuryLogModal.xaml.cs"));
 
-        foreach (var control in new[] { checkIn, content, modal })
+        var calendarCard = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Cycle",
+            "CycleCalendarCard.xaml.cs"));
+        var loadingOverlay = File.ReadAllText(Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "Controls", "Shared",
+            "PageLoadingOverlay.xaml.cs"));
+
+        foreach (var control in new[] { checkIn, content, modal, calendarCard, loadingOverlay })
         {
             Assert.DoesNotContain("override void OnHandlerChanged", control, StringComparison.Ordinal);
             Assert.DoesNotContain("override void OnBindingContextChanged", control, StringComparison.Ordinal);
