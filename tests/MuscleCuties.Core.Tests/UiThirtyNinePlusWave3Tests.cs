@@ -5,30 +5,13 @@ namespace MuscleCuties.Core.Tests;
 
 public sealed class UiThirtyNinePlusWave3Tests
 {
-    private static string RepoRoot()
-    {
-        var current = AppContext.BaseDirectory;
-        while (!string.IsNullOrEmpty(current))
-        {
-            if (File.Exists(Path.Combine(current, "MuscleCuties.sln")) ||
-                Directory.Exists(Path.Combine(current, ".git")))
-                return current;
-            current = Directory.GetParent(current)?.FullName;
-        }
-
-        throw new InvalidOperationException($"Could not locate repository root from '{AppContext.BaseDirectory}'.");
-    }
-
-    private static string ReadUi(params string[] parts) =>
-        File.ReadAllText(Path.Combine(RepoRoot(), "src", "MuscleCuties.UI", Path.Combine(parts)));
-
     [Fact]
     public void WorkoutPage_never_traps_session_overlay_handles_toggle_errors_and_fixes_preview_grid()
     {
-        var pageCs = ReadUi("Pages", "Workout", "WorkoutPage.xaml.cs");
-        var page = ReadUi("Pages", "Workout", "WorkoutPage.xaml");
-        var vm = ReadUi("ViewModels", "Workout", "WorkoutViewModel.cs");
-        var featured = ReadUi("Controls", "Workout", "FeaturedWorkoutCard.xaml");
+        var pageCs = UiSourceFixture.ReadUi("Pages", "Workout", "WorkoutPage.xaml.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Workout", "WorkoutPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Workout", "WorkoutViewModel.cs");
+        var featured = UiSourceFixture.ReadUi("Controls", "Workout", "FeaturedWorkoutCard.xaml");
 
         // P0: SessionActivitiesOverlay must never be disabled during load (keeps close/backdrop usable).
         Assert.DoesNotContain("SessionActivitiesOverlay.IsEnabled = false;", pageCs, StringComparison.Ordinal);
@@ -47,9 +30,9 @@ public sealed class UiThirtyNinePlusWave3Tests
     [Fact]
     public void WorkoutSessionPage_scopes_retry_to_initial_load_fixes_voiceover_and_adds_rir_help()
     {
-        var page = ReadUi("Pages", "Workout", "WorkoutSessionPage.xaml");
-        var vm = ReadUi("ViewModels", "Workout", "WorkoutSessionViewModel.cs");
-        var swap = ReadUi("Controls", "Workout", "WorkoutSwapPanel.xaml");
+        var page = UiSourceFixture.ReadUi("Pages", "Workout", "WorkoutSessionPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Workout", "WorkoutSessionViewModel.cs");
+        var swap = UiSourceFixture.ReadUi("Controls", "Workout", "WorkoutSwapPanel.xaml");
 
         // P0: Retry button only appears on initial load error, never wiping unsaved sets on save errors.
         Assert.Contains("_isInitialLoadError", vm, StringComparison.Ordinal);
@@ -69,9 +52,9 @@ public sealed class UiThirtyNinePlusWave3Tests
     [Fact]
     public void WorkoutHistoryPage_retries_initial_load_errors_validates_rpe_and_exposes_show_all_months()
     {
-        var page = ReadUi("Pages", "Workout", "WorkoutHistoryPage.xaml");
-        var pageCs = ReadUi("Pages", "Workout", "WorkoutHistoryPage.xaml.cs");
-        var vm = ReadUi("ViewModels", "Workout", "WorkoutHistoryViewModel.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Workout", "WorkoutHistoryPage.xaml");
+        var pageCs = UiSourceFixture.ReadUi("Pages", "Workout", "WorkoutHistoryPage.xaml.cs");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Workout", "WorkoutHistoryViewModel.cs");
 
         // P0: Unified RetryCommand works when Sessions.Count == 0 (unlike LoadNextPageCommand).
         Assert.Contains("RetryCommand", page, StringComparison.Ordinal);
@@ -85,8 +68,8 @@ public sealed class UiThirtyNinePlusWave3Tests
     [Fact]
     public void StrengthPlanGenerationPage_notifies_prerequisite_recovery_and_reports_all_gaps_together()
     {
-        var page = ReadUi("Pages", "Workout", "StrengthPlanGenerationPage.xaml");
-        var vm = ReadUi("ViewModels", "Workout", "StrengthPlanGenerationViewModel.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Workout", "StrengthPlanGenerationPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Workout", "StrengthPlanGenerationViewModel.cs");
 
         // P0 safety invariant: NeedsPrerequisiteRecovery MUST notify PropertyChanged and gaps must be collected together.
         Assert.Contains("nameof(NeedsPrerequisiteRecovery)", vm, StringComparison.Ordinal);
@@ -103,13 +86,13 @@ public sealed class UiThirtyNinePlusWave3Tests
     [Fact]
     public void Nutrition_fixes_double_macro_prefix_inverted_log_hint_suggestion_dead_end_and_balance_a11y()
     {
-        var vm = ReadUi("ViewModels", "Nutrition", "NutritionViewModel.cs");
-        var editor = ReadUi("Controls", "Nutrition", "MealEditorModal.xaml");
-        var suggestion = ReadUi("Controls", "Nutrition", "MealSuggestionModal.xaml");
-        var breakdown = ReadUi("Controls", "Nutrition", "NutritionBreakdownModal.xaml");
-        var balance = ReadUi("Controls", "Nutrition", "NutritionBalanceCard.xaml");
-        var page = ReadUi("Pages", "Nutrition", "NutritionPage.xaml");
-        var pageCs = ReadUi("Pages", "Nutrition", "NutritionPage.xaml.cs");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Nutrition", "NutritionViewModel.cs");
+        var editor = UiSourceFixture.ReadUi("Controls", "Nutrition", "MealEditorModal.xaml");
+        var suggestion = UiSourceFixture.ReadUi("Controls", "Nutrition", "MealSuggestionModal.xaml");
+        var breakdown = UiSourceFixture.ReadUi("Controls", "Nutrition", "NutritionBreakdownModal.xaml");
+        var balance = UiSourceFixture.ReadUi("Controls", "Nutrition", "NutritionBalanceCard.xaml");
+        var page = UiSourceFixture.ReadUi("Pages", "Nutrition", "NutritionPage.xaml");
+        var pageCs = UiSourceFixture.ReadUi("Pages", "Nutrition", "NutritionPage.xaml.cs");
 
         // P1: No double "P P 25 g" / "Б P 25 г" macro prefix.
         Assert.DoesNotContain("$\"P {DisplayFormat.Grams", vm, StringComparison.Ordinal);
@@ -124,7 +107,7 @@ public sealed class UiThirtyNinePlusWave3Tests
         // Breakdown modal announces errors and offers Retry.
         Assert.Contains("ScreenReaderStatusAnnouncementBehavior", breakdown, StringComparison.Ordinal);
         // Balance card announces RemainingCaloriesText & Level2 heading, and ViewModel notifies it on load.
-        var notifications = ReadUi("ViewModels", "Nutrition", "NutritionViewModel.Notifications.cs");
+        var notifications = UiSourceFixture.ReadUi("ViewModels", "Nutrition", "NutritionViewModel.Notifications.cs");
         Assert.Contains("RemainingCaloriesText", balance, StringComparison.Ordinal);
         Assert.Contains("nameof(RemainingCaloriesText)", notifications, StringComparison.Ordinal);
         Assert.Contains("SemanticProperties.HeadingLevel=\"Level2\"", balance, StringComparison.Ordinal);
@@ -137,11 +120,11 @@ public sealed class UiThirtyNinePlusWave3Tests
     [Fact]
     public void FoodLogPage_exposes_add_food_entry_confirms_deletes_and_fixes_hydration_voiceover()
     {
-        var page = ReadUi("Pages", "Nutrition", "FoodLogPage.xaml");
-        var pageCs = ReadUi("Pages", "Nutrition", "FoodLogPage.xaml.cs");
-        var vm = ReadUi("ViewModels", "Nutrition", "FoodLogViewModel.cs");
-        var hydration = ReadUi("Controls", "Nutrition", "HydrationLogView.xaml");
-        var quickRow = ReadUi("Controls", "Nutrition", "QuickFoodItemRow.xaml");
+        var page = UiSourceFixture.ReadUi("Pages", "Nutrition", "FoodLogPage.xaml");
+        var pageCs = UiSourceFixture.ReadUi("Pages", "Nutrition", "FoodLogPage.xaml.cs");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Nutrition", "FoodLogViewModel.cs");
+        var hydration = UiSourceFixture.ReadUi("Controls", "Nutrition", "HydrationLogView.xaml");
+        var quickRow = UiSourceFixture.ReadUi("Controls", "Nutrition", "QuickFoodItemRow.xaml");
 
         // P0: OpenAddFoodCommand is reachable on FoodLogPage.
         Assert.Contains("OpenAddFoodCommand", page, StringComparison.Ordinal);

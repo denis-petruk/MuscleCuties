@@ -4,32 +4,15 @@ namespace MuscleCuties.Core.Tests;
 
 public sealed class UiThirtyNinePlusWave4Tests
 {
-    private static string RepoRoot()
-    {
-        var current = AppContext.BaseDirectory;
-        while (!string.IsNullOrEmpty(current))
-        {
-            if (File.Exists(Path.Combine(current, "MuscleCuties.sln")) ||
-                Directory.Exists(Path.Combine(current, ".git")))
-                return current;
-            current = Directory.GetParent(current)?.FullName;
-        }
-
-        throw new InvalidOperationException($"Could not locate repository root from '{AppContext.BaseDirectory}'.");
-    }
-
-    private static string ReadUi(params string[] parts) =>
-        File.ReadAllText(Path.Combine(RepoRoot(), "src", "MuscleCuties.UI", Path.Combine(parts)));
-
     [Fact]
     public void ProfilePage_guards_logout_adds_card_tap_targets_and_upgrades_crop_modal()
     {
-        var page = ReadUi("Pages", "Profile", "ProfilePage.xaml");
-        var details = ReadUi("Controls", "Profile", "ProfileDetailsContent.xaml");
-        var crop = ReadUi("Controls", "Profile", "ProfileImageCropModal.xaml");
-        var cropCs = ReadUi("Controls", "Profile", "ProfileImageCropModal.xaml.cs");
-        var vm = ReadUi("ViewModels", "Profile", "ProfileViewModel.cs");
-        var ru = ReadUi("Services", "Localization", "RussianUiText.NutritionProfileAuth.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Profile", "ProfilePage.xaml");
+        var details = UiSourceFixture.ReadUi("Controls", "Profile", "ProfileDetailsContent.xaml");
+        var crop = UiSourceFixture.ReadUi("Controls", "Profile", "ProfileImageCropModal.xaml");
+        var cropCs = UiSourceFixture.ReadUi("Controls", "Profile", "ProfileImageCropModal.xaml.cs");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Profile", "ProfileViewModel.cs");
+        var ru = UiSourceFixture.ReadUi("Services", "Localization", "RussianUiText.NutritionProfileAuth.cs");
 
         // Logout guarded by IsBusy + AccountActionError; ScreenReaderStatusAnnouncementBehavior on error.
         Assert.Contains("AccountActionError", vm, StringComparison.Ordinal);
@@ -45,8 +28,8 @@ public sealed class UiThirtyNinePlusWave4Tests
     [Fact]
     public void ProfilePersonalInfoPage_hides_tab_bar_uses_page_loading_overlay_and_guards_unsaved_back()
     {
-        var page = ReadUi("Pages", "Profile", "ProfilePersonalInfoPage.xaml");
-        var vm = ReadUi("ViewModels", "Profile", "ProfilePersonalInfoViewModel.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Profile", "ProfilePersonalInfoPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Profile", "ProfilePersonalInfoViewModel.cs");
 
         // P0: Tab bar hidden so pinned Save footer is never occluded.
         Assert.Contains("Shell.TabBarIsVisible=\"False\"", page, StringComparison.Ordinal);
@@ -63,9 +46,9 @@ public sealed class UiThirtyNinePlusWave4Tests
     [Fact]
     public void ProfileWorkoutPreferencesPage_hides_tab_bar_collects_all_gaps_and_uses_cards()
     {
-        var page = ReadUi("Pages", "Profile", "ProfileWorkoutPreferencesPage.xaml");
-        var choices = ReadUi("Controls", "Profile", "ProfileWorkoutPreferencesChoices.xaml");
-        var vm = ReadUi("ViewModels", "Profile", "ProfileWorkoutPreferencesViewModel.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Profile", "ProfileWorkoutPreferencesPage.xaml");
+        var choices = UiSourceFixture.ReadUi("Controls", "Profile", "ProfileWorkoutPreferencesChoices.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Profile", "ProfileWorkoutPreferencesViewModel.cs");
 
         // P0: Tab bar hidden so pinned Save footer is never occluded.
         Assert.Contains("Shell.TabBarIsVisible=\"False\"", page, StringComparison.Ordinal);
@@ -80,8 +63,8 @@ public sealed class UiThirtyNinePlusWave4Tests
     [Fact]
     public void ProfileNutritionSettingsPage_hides_tab_bar_validates_bounds_and_stops_keystroke_macro_wipe()
     {
-        var page = ReadUi("Pages", "Profile", "ProfileNutritionSettingsPage.xaml");
-        var vm = ReadUi("ViewModels", "Profile", "ProfileNutritionSettingsViewModel.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Profile", "ProfileNutritionSettingsPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Profile", "ProfileNutritionSettingsViewModel.cs");
 
         // P0: Tab bar hidden + PageLoadingOverlay + ScreenReaderStatusAnnouncementBehavior.
         Assert.Contains("Shell.TabBarIsVisible=\"False\"", page, StringComparison.Ordinal);
@@ -97,8 +80,8 @@ public sealed class UiThirtyNinePlusWave4Tests
     [Fact]
     public void ProfileUnitsDisplayPage_hides_tab_bar_notifies_profile_refresh_and_guards_save()
     {
-        var page = ReadUi("Pages", "Profile", "ProfileUnitsDisplayPage.xaml");
-        var vm = ReadUi("ViewModels", "Profile", "ProfileUnitsDisplayViewModel.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Profile", "ProfileUnitsDisplayPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Profile", "ProfileUnitsDisplayViewModel.cs");
 
         // P0: Tab bar hidden + IProfileRefreshNotifier invalidates Today/Profile on save.
         Assert.Contains("Shell.TabBarIsVisible=\"False\"", page, StringComparison.Ordinal);
@@ -114,9 +97,9 @@ public sealed class UiThirtyNinePlusWave4Tests
     [Fact]
     public void ProfilePrivacyPage_confirms_health_disconnect_fixes_async_void_back_and_announces_status()
     {
-        var page = ReadUi("Pages", "Profile", "ProfilePrivacyPage.xaml");
-        var pageCs = ReadUi("Pages", "Profile", "ProfilePrivacyPage.xaml.cs");
-        var vm = ReadUi("ViewModels", "Profile", "ProfileHealthSyncViewModel.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Profile", "ProfilePrivacyPage.xaml");
+        var pageCs = UiSourceFixture.ReadUi("Pages", "Profile", "ProfilePrivacyPage.xaml.cs");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Profile", "ProfileHealthSyncViewModel.cs");
 
         Assert.Contains("ScreenReaderStatusAnnouncementBehavior", page, StringComparison.Ordinal);
         Assert.Contains("StateBusyInline", page, StringComparison.Ordinal);
@@ -129,8 +112,8 @@ public sealed class UiThirtyNinePlusWave4Tests
     [Fact]
     public void ProfileFeedbackPage_validates_contact_email_animates_expanders_and_adds_copy_fallback()
     {
-        var page = ReadUi("Pages", "Profile", "ProfileFeedbackPage.xaml");
-        var vm = ReadUi("ViewModels", "Profile", "ProfileFeedbackViewModel.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Profile", "ProfileFeedbackPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Profile", "ProfileFeedbackViewModel.cs");
 
         Assert.Contains("ScreenReaderStatusAnnouncementBehavior", page, StringComparison.Ordinal);
         Assert.Contains("StateBusyInline", page, StringComparison.Ordinal);
@@ -144,9 +127,9 @@ public sealed class UiThirtyNinePlusWave4Tests
     [Fact]
     public void PhotoJourneyVaultPage_confirms_delete_extracts_comparison_modal_and_fixes_privacy_reveal()
     {
-        var page = ReadUi("Pages", "Profile", "PhotoJourneyVaultPage.xaml");
-        var vm = ReadUi("ViewModels", "Profile", "PhotoJourneyVaultViewModel.cs");
-        var comparisonPath = Path.Combine(RepoRoot(), "src", "MuscleCuties.UI", "Controls", "Profile", "PhotoComparisonModal.xaml");
+        var page = UiSourceFixture.ReadUi("Pages", "Profile", "PhotoJourneyVaultPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Profile", "PhotoJourneyVaultViewModel.cs");
+        var comparisonPath = Path.Combine(UiSourceFixture.RepositoryRoot(), "src", "MuscleCuties.UI", "Controls", "Profile", "PhotoComparisonModal.xaml");
 
         Assert.True(File.Exists(comparisonPath), "PhotoComparisonModal.xaml should be extracted as an AnimatedModalView.");
         var comparison = File.ReadAllText(comparisonPath);

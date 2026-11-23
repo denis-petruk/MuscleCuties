@@ -5,28 +5,11 @@ namespace MuscleCuties.Core.Tests;
 
 public sealed class UiThirtyNinePlusWave1Tests
 {
-    private static string RepoRoot()
-    {
-        var current = AppContext.BaseDirectory;
-        while (!string.IsNullOrEmpty(current))
-        {
-            if (File.Exists(Path.Combine(current, "MuscleCuties.sln")) ||
-                Directory.Exists(Path.Combine(current, ".git")))
-                return current;
-            current = Directory.GetParent(current)?.FullName;
-        }
-
-        throw new InvalidOperationException($"Could not locate repository root from '{AppContext.BaseDirectory}'.");
-    }
-
-    private static string ReadUi(params string[] parts) =>
-        File.ReadAllText(Path.Combine(RepoRoot(), "src", "MuscleCuties.UI", Path.Combine(parts)));
-
     [Fact]
     public void AppStartupPage_allows_reset_on_any_startup_error_and_announces_status()
     {
-        var xaml = ReadUi("Pages", "Startup", "AppStartupPage.xaml");
-        var cs = ReadUi("Pages", "Startup", "AppStartupPage.xaml.cs");
+        var xaml = UiSourceFixture.ReadUi("Pages", "Startup", "AppStartupPage.xaml");
+        var cs = UiSourceFixture.ReadUi("Pages", "Startup", "AppStartupPage.xaml.cs");
 
         Assert.Contains("Style=\"{StaticResource StateBusyPage}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("SemanticProperties.HeadingLevel=\"Level1\"", xaml, StringComparison.Ordinal);
@@ -40,9 +23,9 @@ public sealed class UiThirtyNinePlusWave1Tests
     [Fact]
     public void LoginPage_validates_blank_fields_announces_status_and_locks_inputs_when_busy()
     {
-        var xaml = ReadUi("Pages", "Auth", "LoginPage.xaml");
-        var cs = ReadUi("Pages", "Auth", "LoginPage.xaml.cs");
-        var vm = ReadUi("ViewModels", "Auth", "LoginViewModel.cs");
+        var xaml = UiSourceFixture.ReadUi("Pages", "Auth", "LoginPage.xaml");
+        var cs = UiSourceFixture.ReadUi("Pages", "Auth", "LoginPage.xaml.cs");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Auth", "LoginViewModel.cs");
 
         Assert.Contains("Placeholder=\"{loc:LocalizedText Auth_EmailOrUsernamePlaceholder}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("ScreenReaderStatusAnnouncementBehavior", xaml, StringComparison.Ordinal);
@@ -58,9 +41,9 @@ public sealed class UiThirtyNinePlusWave1Tests
     [Fact]
     public void RegisterPage_shows_username_rules_reports_field_errors_and_clears_on_edit()
     {
-        var xaml = ReadUi("Pages", "Auth", "RegisterPage.xaml");
-        var cs = ReadUi("Pages", "Auth", "RegisterPage.xaml.cs");
-        var vm = ReadUi("ViewModels", "Auth", "RegisterViewModel.cs");
+        var xaml = UiSourceFixture.ReadUi("Pages", "Auth", "RegisterPage.xaml");
+        var cs = UiSourceFixture.ReadUi("Pages", "Auth", "RegisterPage.xaml.cs");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Auth", "RegisterViewModel.cs");
 
         Assert.Contains("Auth_Register_UsernameRequirements", xaml, StringComparison.Ordinal);
         Assert.Contains("IsSpellCheckEnabled=\"False\"", xaml, StringComparison.Ordinal);
@@ -77,9 +60,9 @@ public sealed class UiThirtyNinePlusWave1Tests
     [Fact]
     public void OtpVerificationPage_keeps_context_visible_at_accessibility_sizes_and_stacks_actions()
     {
-        var xaml = ReadUi("Pages", "Auth", "OtpVerificationPage.xaml");
-        var cs = ReadUi("Pages", "Auth", "OtpVerificationPage.xaml.cs");
-        var vm = ReadUi("ViewModels", "Auth", "OtpVerificationViewModel.cs");
+        var xaml = UiSourceFixture.ReadUi("Pages", "Auth", "OtpVerificationPage.xaml");
+        var cs = UiSourceFixture.ReadUi("Pages", "Auth", "OtpVerificationPage.xaml.cs");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Auth", "OtpVerificationViewModel.cs");
 
         Assert.Contains("ShowBack=\"True\"", xaml, StringComparison.Ordinal);
         Assert.DoesNotContain("Subtitle=\"{loc:LocalizedText Auth_Otp_WeSentA6DigitConfirmation}", xaml, StringComparison.Ordinal);
@@ -95,9 +78,9 @@ public sealed class UiThirtyNinePlusWave1Tests
     [Fact]
     public void PasswordRecoveryPage_shows_step_progress_password_toggles_and_clean_reset_handoff()
     {
-        var xaml = ReadUi("Pages", "Auth", "PasswordRecoveryPage.xaml");
-        var vm = ReadUi("ViewModels", "Auth", "PasswordRecoveryViewModel.cs");
-        var mauiProgram = ReadUi("MauiProgram.cs");
+        var xaml = UiSourceFixture.ReadUi("Pages", "Auth", "PasswordRecoveryPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Auth", "PasswordRecoveryViewModel.cs");
+        var mauiProgram = UiSourceFixture.ReadUi("MauiProgram.cs");
 
         Assert.Contains("PageHeader.EyebrowContent", xaml, StringComparison.Ordinal);
         Assert.Contains("StepProgressText", xaml, StringComparison.Ordinal);
@@ -114,9 +97,9 @@ public sealed class UiThirtyNinePlusWave1Tests
     [Fact]
     public void ProfileSetupPage_shows_height_error_in_imperial_and_uses_shared_choice_cells()
     {
-        var xaml = ReadUi("Pages", "Onboarding", "ProfileSetupPage.xaml");
-        var cs = ReadUi("Pages", "Onboarding", "ProfileSetupPage.xaml.cs");
-        var vm = ReadUi("ViewModels", "Profile", "ProfileSetupViewModel.cs");
+        var xaml = UiSourceFixture.ReadUi("Pages", "Onboarding", "ProfileSetupPage.xaml");
+        var cs = UiSourceFixture.ReadUi("Pages", "Onboarding", "ProfileSetupPage.xaml.cs");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Profile", "ProfileSetupViewModel.cs");
 
         Assert.DoesNotContain("ChoiceSelectedSurfaceLight", xaml, StringComparison.Ordinal);
         Assert.Contains("ChoiceCellCompact", xaml, StringComparison.Ordinal);
@@ -132,8 +115,8 @@ public sealed class UiThirtyNinePlusWave1Tests
     [Fact]
     public void QuizPage_preserves_voiceover_selected_state_distinguishes_multiselect_and_adds_phase_help()
     {
-        var xaml = ReadUi("Pages", "Onboarding", "QuizPage.xaml");
-        var vm = ReadUi("ViewModels", "Quiz", "QuizViewModel.cs");
+        var xaml = UiSourceFixture.ReadUi("Pages", "Onboarding", "QuizPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Quiz", "QuizViewModel.cs");
 
         Assert.DoesNotContain("SemanticProperties.Hint=\"{loc:LocalizedText Common_NotSelected}\"", xaml, StringComparison.Ordinal);
         Assert.Contains("SelectionCheckbox", xaml, StringComparison.Ordinal);

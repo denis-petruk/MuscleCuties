@@ -5,38 +5,21 @@ namespace MuscleCuties.Core.Tests;
 
 public sealed class UiThirtyNinePlusWave2Tests
 {
-    private static string RepoRoot()
-    {
-        var current = AppContext.BaseDirectory;
-        while (!string.IsNullOrEmpty(current))
-        {
-            if (File.Exists(Path.Combine(current, "MuscleCuties.sln")) ||
-                Directory.Exists(Path.Combine(current, ".git")))
-                return current;
-            current = Directory.GetParent(current)?.FullName;
-        }
-
-        throw new InvalidOperationException($"Could not locate repository root from '{AppContext.BaseDirectory}'.");
-    }
-
-    private static string ReadUi(params string[] parts) =>
-        File.ReadAllText(Path.Combine(RepoRoot(), "src", "MuscleCuties.UI", Path.Combine(parts)));
-
     [Fact]
     public void PageLoadingOverlay_respects_explicit_null_RetryCommand_for_non_retryable_errors()
     {
-        var cs = ReadUi("Controls", "Shared", "PageLoadingOverlay.xaml.cs");
+        var cs = UiSourceFixture.ReadUi("Controls", "Shared", "PageLoadingOverlay.xaml.cs");
         Assert.Contains("IsSet(RetryCommandProperty)", cs, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Dashboard_fixes_imperial_weight_bug_voiceover_nutrition_contrast_and_deferred_order()
     {
-        var page = ReadUi("Pages", "Dashboard", "DashboardPage.xaml");
-        var pageCs = ReadUi("Pages", "Dashboard", "DashboardPage.xaml.cs");
-        var trendsVm = ReadUi("ViewModels", "Dashboard", "DashboardViewModel.Trends.cs");
-        var nutritionCard = ReadUi("Controls", "Dashboard", "DashboardNutritionCard.xaml");
-        var readinessCard = ReadUi("Controls", "Dashboard", "ReadinessRecoveryCard.xaml");
+        var page = UiSourceFixture.ReadUi("Pages", "Dashboard", "DashboardPage.xaml");
+        var pageCs = UiSourceFixture.ReadUi("Pages", "Dashboard", "DashboardPage.xaml.cs");
+        var trendsVm = UiSourceFixture.ReadUi("ViewModels", "Dashboard", "DashboardViewModel.Trends.cs");
+        var nutritionCard = UiSourceFixture.ReadUi("Controls", "Dashboard", "DashboardNutritionCard.xaml");
+        var readinessCard = UiSourceFixture.ReadUi("Controls", "Dashboard", "ReadinessRecoveryCard.xaml");
 
         // Deferred card load order matches visual reading order: Workout before Phase.
         var workoutIdx = pageCs.IndexOf("WorkoutCardLazy.LoadIfNeededAsync", StringComparison.Ordinal);
@@ -66,9 +49,9 @@ public sealed class UiThirtyNinePlusWave2Tests
     [Fact]
     public void DailyCheckIn_hides_form_when_completed_keeps_scale_anchors_and_announces_errors()
     {
-        var content = ReadUi("Controls", "Dashboard", "DailyCheckInContent.xaml");
-        var modal = ReadUi("Controls", "Dashboard", "DailyCheckInModal.xaml");
-        var cs = ReadUi("Controls", "Dashboard", "DailyCheckInContent.xaml.cs");
+        var content = UiSourceFixture.ReadUi("Controls", "Dashboard", "DailyCheckInContent.xaml");
+        var modal = UiSourceFixture.ReadUi("Controls", "Dashboard", "DailyCheckInModal.xaml");
+        var cs = UiSourceFixture.ReadUi("Controls", "Dashboard", "DailyCheckInContent.xaml.cs");
 
         Assert.Contains("IsCompleted, Converter={StaticResource InvertedBoolConverter}", content, StringComparison.Ordinal);
         Assert.DoesNotContain("HideAtAccessibilitySize=\"True\"", content, StringComparison.Ordinal);
@@ -81,12 +64,12 @@ public sealed class UiThirtyNinePlusWave2Tests
     [Fact]
     public void Cycle_fixes_calendar_weekday_headers_dark_warning_contrast_and_load_error_recovery()
     {
-        var grid = ReadUi("Controls", "Cycle", "CycleMonthGrid.cs");
-        var warning = ReadUi("Controls", "Cycle", "CycleWarningPopup.xaml");
-        var page = ReadUi("Pages", "Cycle", "CyclePage.xaml");
-        var vm = ReadUi("ViewModels", "Cycle", "CycleViewModel.cs");
-        var quickLog = ReadUi("Controls", "Cycle", "CycleQuickLogBottomSheet.xaml");
-        var summary = ReadUi("Controls", "Cycle", "CyclePhaseSummarySheet.xaml");
+        var grid = UiSourceFixture.ReadUi("Controls", "Cycle", "CycleMonthGrid.cs");
+        var warning = UiSourceFixture.ReadUi("Controls", "Cycle", "CycleWarningPopup.xaml");
+        var page = UiSourceFixture.ReadUi("Pages", "Cycle", "CyclePage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "Cycle", "CycleViewModel.cs");
+        var quickLog = UiSourceFixture.ReadUi("Controls", "Cycle", "CycleQuickLogBottomSheet.xaml");
+        var summary = UiSourceFixture.ReadUi("Controls", "Cycle", "CyclePhaseSummarySheet.xaml");
 
         // Month grid renders weekday headers + DayOfWeek leading offset + selected VoiceOver hint.
         Assert.Contains("DayOfWeek", grid, StringComparison.Ordinal);
@@ -114,8 +97,8 @@ public sealed class UiThirtyNinePlusWave2Tests
     [Fact]
     public void CyclePhaseDetailPage_renders_point_body_text_and_expands_safety_warnings_by_default()
     {
-        var page = ReadUi("Pages", "Cycle", "CyclePhaseDetailPage.xaml");
-        var vm = ReadUi("ViewModels", "CyclePhaseDetailViewModel.cs");
+        var page = UiSourceFixture.ReadUi("Pages", "Cycle", "CyclePhaseDetailPage.xaml");
+        var vm = UiSourceFixture.ReadUi("ViewModels", "CyclePhaseDetailViewModel.cs");
 
         // Point.Text is rendered in Workouts, Why, Watch, and Nutrition (4 occurrences).
         Assert.True(Regex.Matches(page, @"Binding Text,\s*Converter=\{StaticResource LocalizedStringConverter\}").Count >= 4,
@@ -128,8 +111,8 @@ public sealed class UiThirtyNinePlusWave2Tests
     [Fact]
     public void InjuryLogModal_hugs_empty_content_and_exposes_plan_refresh_retry_and_save_hint()
     {
-        var modal = ReadUi("Controls", "Injury", "InjuryLogModal.xaml");
-        var content = ReadUi("Controls", "Injury", "InjuryLogContent.xaml");
+        var modal = UiSourceFixture.ReadUi("Controls", "Injury", "InjuryLogModal.xaml");
+        var content = UiSourceFixture.ReadUi("Controls", "Injury", "InjuryLogContent.xaml");
 
         Assert.DoesNotContain("MinimumHeightRequest=\"{StaticResource ModalSheetMaximumHeight}\"", modal, StringComparison.Ordinal);
         Assert.Contains("SaveInjuryPrerequisiteHint", modal, StringComparison.Ordinal);

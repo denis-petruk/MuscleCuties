@@ -243,7 +243,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     .Select(tag => new WorkoutActivitySummaryDto(
                         tag,
                         BuildSectionTitle(tag),
-                        exList.Count(e => ClassifyExerciseTag(e, day.WorkoutType, exercisesById) == tag)))
+                        exList.Count(e => ClassifyExerciseTag(e, day.WorkoutType, exercisesById.GetValueOrDefault(e.ExerciseId)) == tag)))
                     .ToArray();
                 return new WorkoutDayExercisePreview(ToStableWorkoutIntId(day.Id), names, tags);
             }).ToArray();
@@ -2030,7 +2030,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             return [RestTag];
 
         var tags = exercises
-            .Select(e => ClassifyExerciseTag(e, day.WorkoutType, exercisesById))
+            .Select(e => ClassifyExerciseTag(e, day.WorkoutType, exercisesById.GetValueOrDefault(e.ExerciseId)))
             .Distinct(StringComparer.Ordinal)
             .ToList();
         if (tags.Count == 0)
@@ -2045,12 +2045,6 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
 
         return tags;
     }
-
-    private static string ClassifyExerciseTag(
-        WorkoutDayExerciseRecord exercise,
-        string workoutType,
-        IReadOnlyDictionary<int, Exercise> exercisesById) =>
-        ClassifyExerciseTag(exercise, workoutType, exercisesById.GetValueOrDefault(exercise.ExerciseId));
 
     private static string ClassifyExerciseTag(
         WorkoutDayExerciseRecord exercise,

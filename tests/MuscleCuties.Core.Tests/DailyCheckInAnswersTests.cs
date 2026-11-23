@@ -112,7 +112,7 @@ public sealed class DailyCheckInAnswersTests
         var page = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.UI", "Controls", "Profile",
             "ProfileWorkoutPreferencesChoices.xaml"));
         var cloud = File.ReadAllText(Path.Combine(root, "src", "MuscleCuties.Infrastructure", "Cloud",
-            "CloudAccountAndProfileStores.cs"));
+            "CloudProfileWorkoutPreferencesStore.cs"));
 
         Assert.Contains("GluteFocus", viewModel, StringComparison.Ordinal);
         Assert.Contains("GluteFocus", page, StringComparison.Ordinal);
