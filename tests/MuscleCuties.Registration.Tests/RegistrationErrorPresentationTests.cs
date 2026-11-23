@@ -65,7 +65,8 @@ public sealed class RegistrationErrorPresentationTests
         var apiClient = new MuscleCutiesBackendApiClient(
             httpClient, new EmptyTokenStore(), null!, new VersionedCloudAuthorityGate());
         var pending = new PendingRegistrationService();
-        var registration = new AccountRegistrationUseCase(new CloudAccountRegistrationGateway(pending, apiClient));
+        var registration = new AccountRegistrationUseCase(new CloudAccountRegistrationGateway(
+            pending, apiClient, new CloudEmailChallengeGateway(pending, apiClient)));
         var request = new StartAccountRegistrationRequest(
             SyntheticEmail, SyntheticUsername, SyntheticPassword, SyntheticPassword,
             new RegistrationPrivacyConsent(PrivacyNotice.CurrentVersion, true, DateTimeOffset.UtcNow));
