@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Account.Authentication;
@@ -8,7 +9,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
 public sealed class PostgresAccountPasswordResetStore(PostgresDbContext dbContext, TimeProvider timeProvider)
     : IAccountPasswordResetStore
 {
-    private const int PasswordRecoveryPurpose = 2;
+    private const int PasswordRecoveryPurpose = EmailReceiptLifetimePolicy.PasswordRecoveryPurpose;
     private const string PasswordRecoveryPurposeName = "PasswordRecovery";
 
     public async Task<PasswordResetStatus> ResetAsync(

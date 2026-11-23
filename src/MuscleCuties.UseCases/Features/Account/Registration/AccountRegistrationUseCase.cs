@@ -15,14 +15,14 @@ public sealed class AccountRegistrationUseCase(IAccountRegistrationGateway gatew
             !privacyConsent.Accepted || privacyConsent.NoticeVersion != PrivacyNotice.CurrentVersion)
             return new StartAccountRegistrationResult(AccountRegistrationStatus.PrivacyConsentRequired,
                 "Review and accept the privacy notice before creating an account.");
-        var email = request.Email?.Trim() ?? string.Empty;
+        var email = AuthInputValidator.NormalizeEmail(request.Email);
         if (!AuthInputValidator.IsValidEmail(email))
             return new StartAccountRegistrationResult(AccountRegistrationStatus.InvalidEmail,
                 "Enter a valid email address.");
 
         if (await gateway.EmailExistsAsync(email, cancellationToken).ConfigureAwait(false))
             return new StartAccountRegistrationResult(AccountRegistrationStatus.ExistingEmail,
-                ExistingEmail: email.ToLowerInvariant());
+                ExistingEmail: email);
 
         cancellationToken.ThrowIfCancellationRequested();
         var username = request.Username?.Trim() ?? string.Empty;

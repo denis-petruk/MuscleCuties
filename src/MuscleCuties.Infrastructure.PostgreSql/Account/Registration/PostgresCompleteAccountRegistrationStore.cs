@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
+using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Onboarding;
 using MuscleCuties.Core.Models.Enums.Cycle;
@@ -38,7 +39,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
     private const int HomeEquipmentChoiceValue = 2;
     private const int BodyweightEquipmentChoiceValue = 3;
     private const int DefaultNutritionActivityDaysPerWeek = 3;
-    private const int RegistrationEmailChallengePurpose = 1;
+    private const int RegistrationEmailChallengePurpose = EmailReceiptLifetimePolicy.RegistrationPurpose;
     private const int MaximumPrivacyNoticeVersionCharacters = 64;
     private const int UnknownCycleLength = 0;
     private static readonly DateOnly MinimumSupportedCycleDate = new(1970, 1, 1);

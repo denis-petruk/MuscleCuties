@@ -7,6 +7,7 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
+using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Nutrition.Planning;
 using MuscleCuties.Core.Services.Workout;
@@ -46,9 +47,10 @@ public sealed record CloudProfileWriteResponse(int? Version);
 
 public sealed class CloudAccountRegistrationGateway(
     IPendingRegistrationService pending,
-    IMuscleCutiesBackendApiClient apiClient) : IAccountRegistrationGateway
+    IMuscleCutiesBackendApiClient apiClient,
+    CloudEmailChallengeGateway challenges) : IAccountRegistrationGateway
 {
-    private const int RegistrationChallengePurpose = 1;
+    private const int RegistrationChallengePurpose = EmailReceiptLifetimePolicy.RegistrationPurpose;
     private const string ChallengeSendFailedMessage =
         "We couldn't send a verification code. Wait a moment, then tap Create account again.";
     private const string ChallengeRateLimitedMessage =
@@ -82,11 +84,9 @@ public sealed class CloudAccountRegistrationGateway(
     {
         var registration = pending.StartEmailRegistration(email, username, password, null,
             privacyConsent?.NoticeVersion, privacyConsent?.AcceptedAtUtc);
-        var response = await apiClient.SendMutationAsync<object, CloudEmailChallengeStart>(
-            HttpMethod.Post,
-            "/api/v1/email-challenges/start",
-            new { email, purpose = RegistrationChallengePurpose, privacyConsent },
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        var response = await challenges.StartChallengeAsync(
+                email, RegistrationChallengePurpose, privacyConsent, cancellationToken)
+            .ConfigureAwait(false);
         if (response.Status != BackendApiStatus.Success ||
             !Guid.TryParse(response.Data?.ChallengeId, out _))
         {
@@ -117,15 +117,47 @@ public sealed class CloudAccountRegistrationGateway(
     public void HandOffAttempt(Guid attemptId) => _activeAttempts.TryRemove(attemptId, out _);
 }
 
-public sealed class CloudRegistrationOtpGateway(
+/// <summary>
+///     Owns the three email-challenge calls every account flow shares (start, resend, verify): the endpoint
+///     paths and request shapes live here, while each caller keeps its own response handling and copy. The
+///     registration OTP session state it also implements stays specific to registration.
+/// </summary>
+public sealed class CloudEmailChallengeGateway(
     IPendingRegistrationService pending,
     IMuscleCutiesBackendApiClient apiClient) : IRegistrationOtpGateway
 {
-    private const int RegistrationChallengePurpose = 1;
-    private const int VerificationCodeLength = 6;
+    private const int RegistrationChallengePurpose = EmailReceiptLifetimePolicy.RegistrationPurpose;
+    private const string StartRoute = "/api/v1/email-challenges/start";
+    private const string ResendRoute = "/api/v1/email-challenges/resend";
+    private const string VerifyRoute = "/api/v1/email-challenges/verify";
     private readonly ConcurrentDictionary<Guid, OtpSessionState> _sessions = new();
 
     private sealed record OtpSessionState(PendingRegistrationData Registration, string? VerificationToken = null);
+
+    internal Task<BackendApiResponse<CloudEmailChallengeStart>> StartChallengeAsync(
+        string normalizedEmail, int purpose, RegistrationPrivacyConsent? privacyConsent,
+        CancellationToken cancellationToken) =>
+        apiClient.SendMutationAsync<object, CloudEmailChallengeStart>(
+            HttpMethod.Post,
+            StartRoute,
+            new { email = normalizedEmail, purpose, privacyConsent },
+            cancellationToken: cancellationToken);
+
+    internal Task<BackendApiResponse<CloudEmailChallengeStart>> ResendChallengeAsync(
+        string challengeId, string normalizedEmail, int purpose, CancellationToken cancellationToken) =>
+        apiClient.SendMutationAsync<object, CloudEmailChallengeStart>(
+            HttpMethod.Post,
+            ResendRoute,
+            new { challengeId, email = normalizedEmail, purpose },
+            cancellationToken: cancellationToken);
+
+    internal Task<BackendApiResponse<CloudEmailChallengeVerification>> VerifyChallengeAsync(
+        string challengeId, string normalizedEmail, string code, int purpose, CancellationToken cancellationToken) =>
+        apiClient.SendMutationAsync<object, CloudEmailChallengeVerification>(
+            HttpMethod.Post,
+            VerifyRoute,
+            new { challengeId, email = normalizedEmail, code, purpose },
+            cancellationToken: cancellationToken);
 
     public RegistrationOtpSession OpenSession()
     {
@@ -141,25 +173,17 @@ public sealed class CloudRegistrationOtpGateway(
 
     public async Task<VerifyRegistrationOtpResult> VerifyAsync(Guid sessionId, string code, CancellationToken cancellationToken)
     {
-        if (string.IsNullOrWhiteSpace(code) || code.Length != VerificationCodeLength ||
-            !code.All(static digit => digit is >= '0' and <= '9'))
-            return new VerifyRegistrationOtpResult(false, false, "Please enter a valid verification code.");
+        if (!AuthInputValidator.TryValidateOtpCode(code, out var normalizedCode, out _))
+            return new VerifyRegistrationOtpResult(false, false, AuthInputValidator.OtpCodeRequirementsMessage);
 
         if (!_sessions.TryGetValue(sessionId, out var session) ||
             !ReferenceEquals(pending.CurrentRegistration, session.Registration))
             return new VerifyRegistrationOtpResult(false, true, "Verification session expired. Please restart registration.");
 
-        var response = await apiClient.SendMutationAsync<object, CloudEmailChallengeVerification>(
-            HttpMethod.Post,
-            "/api/v1/email-challenges/verify",
-            new
-            {
-                challengeId = session.Registration.ChallengeId,
-                email = session.Registration.Email,
-                code,
-                purpose = RegistrationChallengePurpose
-            },
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        var response = await VerifyChallengeAsync(
+                session.Registration.ChallengeId!, session.Registration.Email, normalizedCode,
+                RegistrationChallengePurpose, cancellationToken)
+            .ConfigureAwait(false);
 
         var token = response.Data?.VerificationToken;
         if (response.Status != BackendApiStatus.Success || response.Data?.Verified != true ||
@@ -193,16 +217,10 @@ public sealed class CloudRegistrationOtpGateway(
             return new ResendRegistrationOtpResult(false, true,
                 ErrorMessage: "Verification session expired. Please restart registration.");
 
-        var response = await apiClient.SendMutationAsync<object, CloudEmailChallengeStart>(
-            HttpMethod.Post,
-            "/api/v1/email-challenges/resend",
-            new
-            {
-                challengeId = session.Registration.ChallengeId,
-                email = session.Registration.Email,
-                purpose = RegistrationChallengePurpose
-            },
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        var response = await ResendChallengeAsync(
+                session.Registration.ChallengeId!, session.Registration.Email,
+                RegistrationChallengePurpose, cancellationToken)
+            .ConfigureAwait(false);
         if (response.Status != BackendApiStatus.Success ||
             !Guid.TryParse(response.Data?.ChallengeId, out _))
             return new ResendRegistrationOtpResult(false, false,
@@ -221,30 +239,28 @@ public sealed class CloudRegistrationOtpGateway(
 }
 
 public sealed class CloudAccountRecoveryStore(
-    IMuscleCutiesBackendApiClient apiClient) : IAccountRecoveryStore
+    IMuscleCutiesBackendApiClient apiClient,
+    CloudEmailChallengeGateway challenges) : IAccountRecoveryStore
 {
-    private const int PasswordRecoveryChallengePurpose = 2;
+    private const int PasswordRecoveryChallengePurpose = EmailReceiptLifetimePolicy.PasswordRecoveryPurpose;
     private readonly ConcurrentDictionary<string, string> _challengeByEmail = new(StringComparer.OrdinalIgnoreCase);
 
     public async Task<AccountRecoveryStartResult> StartAsync(string emailOrUsername, CancellationToken cancellationToken)
     {
-        var email = emailOrUsername?.Trim().ToLowerInvariant() ?? string.Empty;
+        var email = AuthInputValidator.NormalizeEmail(emailOrUsername);
         if (!AuthInputValidator.IsValidEmail(email))
             return new AccountRecoveryStartResult(false, null, null, null, 0,
                 "Enter the email address for your account.");
 
-        var response = await apiClient.SendMutationAsync<object, CloudEmailChallengeStart>(
-            HttpMethod.Post,
-            "/api/v1/email-challenges/start",
-            new { email, purpose = PasswordRecoveryChallengePurpose },
-            idempotencyKey: null,
-            cancellationToken).ConfigureAwait(false);
+        var response = await challenges.StartChallengeAsync(
+                email, PasswordRecoveryChallengePurpose, null, cancellationToken)
+            .ConfigureAwait(false);
 
         if (response.Status == BackendApiStatus.Success &&
             Guid.TryParse(response.Data?.ChallengeId, out _))
         {
             _challengeByEmail[email] = response.Data.ChallengeId!;
-            return new AccountRecoveryStartResult(true, response.Data.ChallengeId, email, email,
+            return new AccountRecoveryStartResult(true, response.Data.ChallengeId, email, MaskEmail(email),
                 response.Data.ResendCooldownSeconds);
         }
 
@@ -255,34 +271,29 @@ public sealed class CloudAccountRecoveryStore(
     public async Task<AccountRecoveryStartResult> ResendAsync(
         string challengeId, string email, CancellationToken cancellationToken)
     {
-        var normalizedEmail = email?.Trim().ToLowerInvariant() ?? string.Empty;
+        var normalizedEmail = AuthInputValidator.NormalizeEmail(email);
         if (!Guid.TryParse(challengeId, out _) || !AuthInputValidator.IsValidEmail(normalizedEmail))
             return new AccountRecoveryStartResult(false, null, normalizedEmail, null, 0,
                 "Recovery session expired. Please restart password recovery.");
 
-        var response = await apiClient.SendMutationAsync<object, CloudEmailChallengeStart>(
-            HttpMethod.Post,
-            "/api/v1/email-challenges/resend",
-            new { challengeId, email = normalizedEmail, purpose = PasswordRecoveryChallengePurpose },
-            cancellationToken: cancellationToken).ConfigureAwait(false);
+        var response = await challenges.ResendChallengeAsync(
+                challengeId, normalizedEmail, PasswordRecoveryChallengePurpose, cancellationToken)
+            .ConfigureAwait(false);
         if (response.Status != BackendApiStatus.Success ||
             !Guid.TryParse(response.Data?.ChallengeId, out _))
             return new AccountRecoveryStartResult(false, null, normalizedEmail, null, 0,
                 response.ErrorCode ?? "Could not resend recovery code.");
 
         _challengeByEmail[normalizedEmail] = response.Data.ChallengeId!;
-        return new AccountRecoveryStartResult(true, response.Data.ChallengeId, normalizedEmail, normalizedEmail,
-            response.Data.ResendCooldownSeconds);
+        return new AccountRecoveryStartResult(true, response.Data.ChallengeId, normalizedEmail,
+            MaskEmail(normalizedEmail), response.Data.ResendCooldownSeconds);
     }
 
     public async Task<AccountRecoveryVerifyResult> VerifyAsync(string challengeId, string email, string code, CancellationToken cancellationToken)
     {
-        var response = await apiClient.SendMutationAsync<object, CloudEmailChallengeVerification>(
-            HttpMethod.Post,
-            "/api/v1/email-challenges/verify",
-            new { challengeId, email, code, purpose = PasswordRecoveryChallengePurpose },
-            idempotencyKey: null,
-            cancellationToken).ConfigureAwait(false);
+        var response = await challenges.VerifyChallengeAsync(
+                challengeId, email, code, PasswordRecoveryChallengePurpose, cancellationToken)
+            .ConfigureAwait(false);
 
         if (response.Status == BackendApiStatus.Success && response.Data?.Verified == true &&
             !string.IsNullOrWhiteSpace(response.Data.VerificationToken))
@@ -314,6 +325,16 @@ public sealed class CloudAccountRecoveryStore(
     {
         if (email is not null)
             _challengeByEmail.TryRemove(email, out _);
+    }
+
+    // The recovery screen says where the code went. Keep the domain and one local-part character so the
+    // address stays recognisable without printing the whole mailbox; the full address never leaves the flow.
+    private static string MaskEmail(string normalizedEmail)
+    {
+        var at = normalizedEmail.IndexOf('@');
+        return at <= 0 || at == normalizedEmail.Length - 1
+            ? normalizedEmail
+            : $"{normalizedEmail[0]}***{normalizedEmail[at..]}";
     }
 }
 

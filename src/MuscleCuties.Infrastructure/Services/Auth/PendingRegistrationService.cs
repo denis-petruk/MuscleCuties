@@ -1,3 +1,4 @@
+using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.Core.Models.Enums.Users;
 
 namespace MuscleCuties.Core.Services.Auth;
@@ -59,7 +60,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         {
             _stagedProfile = null;
             _currentRegistration = new PendingRegistrationData(
-                email.Trim().ToLowerInvariant(),
+                AuthInputValidator.NormalizeEmail(email),
                 username.Trim(),
                 password,
                 UserCredentialType.Password,
@@ -85,7 +86,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         {
             _stagedProfile = null;
             _currentRegistration = new PendingRegistrationData(
-                email.Trim().ToLowerInvariant(),
+                AuthInputValidator.NormalizeEmail(email),
                 username.Trim(),
                 null,
                 UserCredentialType.Apple,

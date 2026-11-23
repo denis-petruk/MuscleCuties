@@ -54,8 +54,8 @@ public sealed class SignedEmailReceiptTokenIssuer(
     string audience,
     TimeProvider timeProvider) : IEmailReceiptTokenIssuer
 {
-    private const int RegistrationPurpose = 1;
-    private const int PasswordRecoveryPurpose = 2;
+    private const int RegistrationPurpose = EmailReceiptLifetimePolicy.RegistrationPurpose;
+    private const int PasswordRecoveryPurpose = EmailReceiptLifetimePolicy.PasswordRecoveryPurpose;
     private const int MinimumRsaKeyBits = 2_048;
     private const long AllowedIssueTimeFutureSeconds = 60;
 

@@ -12,8 +12,8 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
 
 public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
 {
-    private const int RegistrationPurpose = 1;
-    private const int PasswordRecoveryPurpose = 2;
+    private const int RegistrationPurpose = EmailReceiptLifetimePolicy.RegistrationPurpose;
+    private const int PasswordRecoveryPurpose = EmailReceiptLifetimePolicy.PasswordRecoveryPurpose;
     private const int OtpCodeDigits = 6;
     private const int MaximumOtpCodeValueExclusive = 1_000_000;
     private const int CodeLifetimeMinutes = 10;
@@ -23,8 +23,6 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
     private const int MaximumChallengesGloballyPerHour = 1_000;
     private const int ChallengeRetentionDaysAfterCreation = 2;
     private const int ChallengeRateLimitAdvisoryLockKey = 30_304;
-    private const string RegistrationPurposeName = "Registration";
-    private const string PasswordRecoveryPurposeName = "PasswordRecovery";
     private readonly PostgresDbContext dbContext;
     private readonly IEmailChallengeDelivery delivery;
     private readonly IEmailReceiptTokenIssuer receiptIssuer;

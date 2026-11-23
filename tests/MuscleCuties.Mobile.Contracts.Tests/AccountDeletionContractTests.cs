@@ -233,8 +233,6 @@ public sealed class AccountDeletionContractTests
     {
         public bool LoggedOut { get; private set; }
         public Task<User?> LoginAsync(string emailOrUsername, string password) => Task.FromResult<User?>(null);
-        public Task<bool> EmailExistsAsync(string email) => Task.FromResult(false);
-        public Task<bool> UsernameExistsAsync(string username) => Task.FromResult(false);
         public Task<User?> SignInWithAppleAsync(AppleSignInResult account) => Task.FromResult<User?>(null);
         public Task<AppleSignInOutcome> HandleAppleSignInAsync(AppleSignInResult account) => Task.FromResult(new AppleSignInOutcome(false, false, null, false));
         public Task<User?> SignInWithExternalProviderAsync(PlatformSignInResult account) => Task.FromResult<User?>(null);

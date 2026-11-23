@@ -44,8 +44,6 @@ public static class WorkoutPlanningCompositionExtensions
         services.AddScoped<IWorkoutSessionActionUseCase, WorkoutSessionActionUseCase>();
 
         // Account & Onboarding Lifecycle services
-        services.AddSingleton<IAccountLoginScheduler, AccountLoginScheduler>();
-        services.AddSingleton<IAccountLookupScheduler, AccountLookupScheduler>();
         services.AddSingleton<IPlatformAccountSignInAdapter>(sp =>
             new PlatformAccountSignInAdapter(sp.GetService<IPlatformSignInService>()));
         services.AddSingleton<IAccountPasswordValidator, AccountPasswordValidator>();
@@ -53,9 +51,10 @@ public static class WorkoutPlanningCompositionExtensions
         services.AddSingleton<IAccountSignInUseCase, AccountSignInUseCase>();
         services.AddSingleton<IAccountRecoveryStore, CloudAccountRecoveryStore>();
         services.AddSingleton<IAccountRecoveryUseCase, AccountRecoveryUseCase>();
+        services.AddSingleton<CloudEmailChallengeGateway>();
         services.AddSingleton<IAccountRegistrationGateway, CloudAccountRegistrationGateway>();
         services.AddSingleton<IAccountRegistrationUseCase, AccountRegistrationUseCase>();
-        services.AddSingleton<IRegistrationOtpGateway, CloudRegistrationOtpGateway>();
+        services.AddSingleton<IRegistrationOtpGateway>(sp => sp.GetRequiredService<CloudEmailChallengeGateway>());
         services.AddSingleton<IRegistrationOtpUseCase, RegistrationOtpUseCase>();
 
         return services;

@@ -110,7 +110,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         if (string.IsNullOrEmpty(value))
             return;
 
-        var digitsOnly = new string(value.Where(char.IsDigit).Take(6).ToArray());
+        var digitsOnly = _passwordValidator.SanitizeTypedOtpCode(value);
         if (!string.Equals(digitsOnly, value, StringComparison.Ordinal))
             OtpCode = digitsOnly;
     }
@@ -184,8 +184,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
     {
         if (IsBusy) return;
 
-        var cleanCode = OtpCode.Trim().Replace(" ", "", StringComparison.Ordinal);
-        if (cleanCode.Length != 6 || !cleanCode.All(char.IsDigit))
+        if (!_passwordValidator.TryValidateOtpCode(OtpCode, out var cleanCode))
         {
             ErrorMessage = "Ui_Auth_Error_InvalidCode";
             return;

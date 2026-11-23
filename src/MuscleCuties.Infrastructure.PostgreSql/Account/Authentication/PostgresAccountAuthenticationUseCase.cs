@@ -4,6 +4,7 @@ using System.Text;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
+using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
@@ -86,7 +87,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             request.EmailOrUsername.Length > MaximumLoginIdentifierCharacters || string.IsNullOrEmpty(request.Password))
             return new SessionOperationResult(SessionOperationStatus.InvalidCredentials);
 
-        var normalizedIdentifier = request.EmailOrUsername.Trim().ToLowerInvariant();
+        var normalizedIdentifier = AuthInputValidator.NormalizeEmail(request.EmailOrUsername);
         if (!await passwordLoginLimiter.ReserveAsync(normalizedIdentifier, trustedSourceAddress, cancellationToken)
                 .ConfigureAwait(false))
             return new SessionOperationResult(SessionOperationStatus.InvalidCredentials);
@@ -183,7 +184,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         {
             // Existing password accounts keep their credentials and gain the Apple identity when
             // Apple verifies the same email address. This is the only automatic account link.
-            var normalizedEmail = identity.Email.Trim().ToLowerInvariant();
+            var normalizedEmail = AuthInputValidator.NormalizeEmail(identity.Email);
             user = await dbContext.Users.SingleOrDefaultAsync(
                 candidate => candidate.NormalizedEmail == normalizedEmail && candidate.AppleUserId == null,
                 cancellationToken).ConfigureAwait(false);
@@ -196,7 +197,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
 
         if (user is null)
         {
-            var requestedEmail = identity.Email?.Trim().ToLowerInvariant();
+            var requestedEmail = AuthInputValidator.NormalizeEmail(identity.Email);
             if (!string.IsNullOrWhiteSpace(requestedEmail) &&
                 await dbContext.Users.AsNoTracking().AnyAsync(
                     candidate => candidate.NormalizedEmail == requestedEmail, cancellationToken)
@@ -274,7 +275,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
     private UserRecord CreateAppleAccount(AppleVerifiedIdentity identity, DateTime now)
     {
         var subjectHash = Hash(identity.AppleUserId)[..GeneratedUsernameSuffixCharacters];
-        var email = identity.Email?.Trim().ToLowerInvariant();
+        var email = AuthInputValidator.NormalizeEmail(identity.Email);
         if (string.IsNullOrWhiteSpace(email))
             email = $"apple-{subjectHash}@appleid.invalid";
 
@@ -431,7 +432,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         if (userId == Guid.Empty ||
             string.IsNullOrWhiteSpace(currentPassword) ||
             string.IsNullOrWhiteSpace(newPassword) ||
-            !MuscleCuties.Core.Domain.Auth.AuthInputValidator.IsStrongPassword(newPassword) ||
+            !AuthInputValidator.IsStrongPassword(newPassword) ||
             string.Equals(currentPassword, newPassword, StringComparison.Ordinal))
             return PasswordChangeStatus.InvalidRequest;
 
@@ -478,7 +479,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
     public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(email)) return Task.FromResult(false);
-        var normalized = email.Trim().ToLowerInvariant();
+        var normalized = AuthInputValidator.NormalizeEmail(email);
         return dbContext.Users.AsNoTracking().AnyAsync(u => u.NormalizedEmail == normalized, cancellationToken);
     }
 

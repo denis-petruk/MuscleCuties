@@ -19,7 +19,7 @@ public sealed class CompleteAccountRegistrationUseCase(
         ArgumentNullException.ThrowIfNull(request);
         cancellationToken.ThrowIfCancellationRequested();
 
-        var email = request.Email?.Trim() ?? string.Empty;
+        var email = AuthInputValidator.NormalizeEmail(request.Email);
         if (!AuthInputValidator.IsValidEmail(email))
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidEmail);
 
@@ -38,9 +38,8 @@ public sealed class CompleteAccountRegistrationUseCase(
             verifiedReceipt.ExpiresAt <= timeProvider.GetUtcNow())
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.InvalidEmailVerification);
 
-        var normalizedEmail = AuthInputValidator.NormalizeEmail(email);
         var pendingConsent = await store.GetPendingPrivacyConsentAsync(
-            verifiedReceipt.Id, request.EmailChallengeId, normalizedEmail, cancellationToken).ConfigureAwait(false);
+            verifiedReceipt.Id, request.EmailChallengeId, email, cancellationToken).ConfigureAwait(false);
         if (!IsValidPrivacyConsent(request.PrivacyConsent) || pendingConsent is null ||
             request.PrivacyConsent!.NoticeVersion != pendingConsent.NoticeVersion)
             return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.PrivacyConsentRequired);
@@ -94,7 +93,7 @@ public sealed class CompleteAccountRegistrationUseCase(
         var passwordHash = passwordHasher.HashPassword(request.Password);
         return await store.CreateAccountAsync(
             request,
-            normalizedEmail,
+            email,
             username.ToLowerInvariant(),
             passwordHash,
             verifiedReceipt.Id,

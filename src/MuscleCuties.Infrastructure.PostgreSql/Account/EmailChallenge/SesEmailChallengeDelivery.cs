@@ -2,6 +2,7 @@ using Amazon.Runtime;
 using Amazon.SimpleEmailV2;
 using Amazon.SimpleEmailV2.Model;
 using Microsoft.Extensions.Logging;
+using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.UseCases.Features.Account.EmailChallenge;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
@@ -32,8 +33,8 @@ public sealed class SesEmailChallengeDelivery(
     string? configurationSetName = null,
     ILogger<SesEmailChallengeDelivery>? logger = null) : IEmailChallengeDelivery
 {
-    private const int RegistrationPurpose = 1;
-    private const int PasswordRecoveryPurpose = 2;
+    private const int RegistrationPurpose = EmailReceiptLifetimePolicy.RegistrationPurpose;
+    private const int PasswordRecoveryPurpose = EmailReceiptLifetimePolicy.PasswordRecoveryPurpose;
     private const int RequiredCodeLength = 6;
     private const string Utf8 = "UTF-8";
 

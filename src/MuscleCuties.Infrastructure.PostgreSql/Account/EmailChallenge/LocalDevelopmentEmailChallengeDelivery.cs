@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.UseCases.Features.Account.EmailChallenge;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
@@ -10,8 +11,8 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
 /// </summary>
 public sealed class LocalDevelopmentEmailChallengeDelivery : IEmailChallengeDelivery
 {
-    private const int RegistrationPurpose = 1;
-    private const int PasswordRecoveryPurpose = 2;
+    private const int RegistrationPurpose = EmailReceiptLifetimePolicy.RegistrationPurpose;
+    private const int PasswordRecoveryPurpose = EmailReceiptLifetimePolicy.PasswordRecoveryPurpose;
 
     // Development-only hand-off for automated journeys: the code a local backend just generated for
     // this address. It exists only while this Development delivery is registered; nothing persists
@@ -26,7 +27,7 @@ public sealed class LocalDevelopmentEmailChallengeDelivery : IEmailChallengeDeli
     }
 
     private static string Key(string normalizedEmail, int purpose) =>
-        $"{purpose}:{normalizedEmail.Trim().ToLowerInvariant()}";
+        $"{purpose}:{AuthInputValidator.NormalizeEmail(normalizedEmail)}";
 
     public Task<bool> SendAsync(
         string normalizedEmail, string code, int purpose, CancellationToken cancellationToken)

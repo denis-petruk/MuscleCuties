@@ -29,18 +29,6 @@ public sealed class CloudAuthService(
         return null;
     }
 
-    public async Task<bool> EmailExistsAsync(string email)
-    {
-        var response = await apiClient.GetAsync<bool>($"/api/v1/auth/email-exists?email={Uri.EscapeDataString(email)}").ConfigureAwait(false);
-        return response.Status == BackendApiStatus.Success && response.Data;
-    }
-
-    public async Task<bool> UsernameExistsAsync(string username)
-    {
-        var response = await apiClient.GetAsync<bool>($"/api/v1/auth/username-exists?username={Uri.EscapeDataString(username)}").ConfigureAwait(false);
-        return response.Status == BackendApiStatus.Success && response.Data;
-    }
-
     public async Task<User?> SignInWithAppleAsync(AppleSignInResult appleAccount)
     {
         var outcome = await HandleAppleSignInAsync(appleAccount).ConfigureAwait(false);

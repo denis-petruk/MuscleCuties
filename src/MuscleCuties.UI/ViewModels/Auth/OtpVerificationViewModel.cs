@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UI.Services.Localization;
 using MuscleCuties.UseCases.Features.Account.Otp.Contracts;
 
@@ -16,6 +17,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
     private readonly Func<Task> _navigateBackAsync;
     private readonly Func<Task> _navigateToProfileSetupAsync;
     private readonly IRegistrationOtpUseCase _otp;
+    private readonly IAccountPasswordValidator _inputValidator;
     private readonly RegistrationOtpSession _session;
     private readonly TimeProvider _timeProvider;
     [ObservableProperty] private bool _canResend;
@@ -34,11 +36,13 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
 
     public OtpVerificationViewModel(
         IRegistrationOtpUseCase otp,
+        IAccountPasswordValidator inputValidator,
         Func<Task> navigateToProfileSetupAsync,
         Func<Task> navigateBackAsync,
         TimeProvider? timeProvider = null)
     {
         _otp = otp ?? throw new ArgumentNullException(nameof(otp));
+        _inputValidator = inputValidator ?? throw new ArgumentNullException(nameof(inputValidator));
         _session = otp.OpenSession();
         _navigateToProfileSetupAsync = navigateToProfileSetupAsync;
         _navigateBackAsync = navigateBackAsync;
@@ -79,7 +83,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         if (string.IsNullOrEmpty(value))
             return;
 
-        var digitsOnly = new string(value.Where(char.IsDigit).Take(6).ToArray());
+        var digitsOnly = _inputValidator.SanitizeTypedOtpCode(value);
         if (!string.Equals(digitsOnly, value, StringComparison.Ordinal))
             OtpCode = digitsOnly;
     }
@@ -120,8 +124,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
             return;
         }
 
-        var cleanCode = OtpCode.Trim().Replace(" ", "", StringComparison.Ordinal);
-        if (cleanCode.Length != 6 || !cleanCode.All(char.IsDigit))
+        if (!_inputValidator.TryValidateOtpCode(OtpCode, out var cleanCode))
         {
             ErrorMessage = "Ui_Auth_Error_InvalidVerificationCode";
             return;

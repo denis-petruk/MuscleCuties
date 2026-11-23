@@ -129,6 +129,7 @@ public static class MauiProgram
 
         services.AddTransient<OtpVerificationViewModel>(sp => new OtpVerificationViewModel(
             sp.GetRequiredService<IRegistrationOtpUseCase>(),
+            sp.GetRequiredService<IAccountPasswordValidator>(),
             () => NavigateAuthenticatedAsync($"//{nameof(ProfileSetupPage)}"),
             () => NavigateToAsync("..")));
 

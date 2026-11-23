@@ -132,7 +132,7 @@ public partial class LoginViewModel : ObservableObject
                 return;
             }
 
-            await NavigateForAccountAsync(result.IsOnboardingComplete);
+            await ActivateAndNavigateAsync(result.IsOnboardingComplete);
         }
         catch (Exception ex)
         {
@@ -157,7 +157,7 @@ public partial class LoginViewModel : ObservableObject
             await PlatformSignInCoordinator.ExecuteAsync(
                 _platformSignIn,
                 _signIn,
-                NavigateForAccountAsync,
+                ActivateAndNavigateAsync,
                 msg => ErrorMessage = msg,
                 nameof(LoginViewModel));
         }
@@ -165,11 +165,6 @@ public partial class LoginViewModel : ObservableObject
         {
             IsBusy = false;
         }
-    }
-
-    private Task NavigateForAccountAsync(bool isOnboardingComplete)
-    {
-        return ActivateAndNavigateAsync(isOnboardingComplete);
     }
 
     private async Task ActivateAndNavigateAsync(bool isOnboardingComplete)

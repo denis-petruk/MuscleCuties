@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using MuscleCuties.Contracts.Account;
+using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
@@ -97,7 +98,7 @@ public static class ApiApplication
     private const string TrustedProxiesSettingName = "Authentication:TrustedProxies";
     private const int TrustedProxyForwardLimit = 1;
     private const int MinimumSigningKeyBytes = 32;
-    private const int PasswordRecoveryEmailReceiptPurpose = 2;
+    private const int PasswordRecoveryEmailReceiptPurpose = EmailReceiptLifetimePolicy.PasswordRecoveryPurpose;
     private const string ApiVersion = "v1";
     private const string RequestIdHeader = "X-Request-Id";
     private const string SessionRoute = "/api/v1/session";
@@ -386,7 +387,8 @@ public static class ApiApplication
             }
 
             // A local, disposable backend has no AWS identity; log the code so registration stays
-            // testable end to end in Development. Every other environment keeps the relay-only path.
+            // testable end to end in Development. An environment without a sender address falls back
+            // to the first-party relay rather than silently accepting codes it cannot deliver.
             if (builder.Environment.IsDevelopment())
                 return new LocalDevelopmentEmailChallengeDelivery();
 

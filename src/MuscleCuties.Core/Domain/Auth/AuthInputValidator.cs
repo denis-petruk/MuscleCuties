@@ -21,6 +21,12 @@ public static class AuthInputValidator
         return code?.Trim().Replace(" ", "", StringComparison.Ordinal) ?? string.Empty;
     }
 
+    // Keeps only digits and caps the value at the six code positions while the user types.
+    public static string SanitizeTypedOtpCode(string? value)
+    {
+        return value is null ? string.Empty : new string(value.Where(char.IsDigit).Take(6).ToArray());
+    }
+
     public static bool IsValidOtpCode(string? code)
     {
         var cleanCode = NormalizeOtpCode(code);
