@@ -11,22 +11,8 @@ namespace MuscleCuties.UI.ViewModels.Nutrition;
 
 public partial class NutritionViewModel
 {
-    private const int BarcodeCameraCaptureTimeoutSeconds = 20;
-    private const string BarcodeStatusEnterDigitsKey = "Nutrition_Barcode_StatusEnterDigits";
-    private const string BarcodeStatusSearchingCatalogKey = "Nutrition_Barcode_StatusSearchingCatalog";
-    private const string BarcodeStatusFoundInCatalogFormatKey = "Nutrition_Barcode_StatusFoundInCatalogFormat";
-    private const string BarcodeStatusNotFoundFormatKey = "Nutrition_Barcode_StatusNotFoundFormat";
-    private const string BarcodeStatusIncompleteNutritionKey = "Nutrition_Barcode_StatusIncompleteNutrition";
-    private const string BarcodeStatusInvalidFormatKey = "Nutrition_Barcode_StatusInvalidFormat";
-    private const string BarcodeStatusPermissionDeniedKey = "Nutrition_Barcode_StatusPermissionDenied";
-    private const string BarcodeStatusCameraUnavailableKey = "Nutrition_Barcode_StatusCameraUnavailable";
-    private const string BarcodeStatusUnsupportedSymbologyKey = "Nutrition_Barcode_StatusUnsupportedSymbology";
-    private const string BarcodeStatusNoCodeDetectedKey = "Nutrition_Barcode_StatusNoCodeDetected";
-    private const string BarcodeStatusScanCancelledKey = "Nutrition_Barcode_StatusScanCancelled";
-    private const string BarcodeStatusLookupUnavailableKey = "Nutrition_Barcode_StatusLookupUnavailable";
-    private const string BarcodeStatusLookupFailedKey = "Nutrition_Barcode_StatusLookupFailed";
     private static readonly TimeSpan BarcodeCameraCaptureTimeout =
-        TimeSpan.FromSeconds(BarcodeCameraCaptureTimeoutSeconds);
+        TimeSpan.FromSeconds(BarcodeScanRule.CameraCaptureTimeoutSeconds);
 
     private readonly ILookupBarcodeUseCase? _barcodeUseCase;
     private readonly IBarcodeScannerHardwareService? _barcodeHardwareService;
@@ -45,7 +31,7 @@ public partial class NutritionViewModel
 
         if (_barcodeHardwareService is null)
         {
-            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
+            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.CameraUnavailableKey);
             return;
         }
 
@@ -74,7 +60,7 @@ public partial class NutritionViewModel
 
             if (captureTimedOut)
             {
-                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusNoCodeDetectedKey);
+                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.NoCodeDetectedKey);
                 return;
             }
 
@@ -85,23 +71,23 @@ public partial class NutritionViewModel
                     await LookupBarcodeInternalAsync(capture.BarcodeText.Trim(), capture.Symbology, sessionRevision);
                     break;
                 case BarcodeCaptureOutcome.PermissionDenied:
-                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusPermissionDeniedKey);
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.PermissionDeniedKey);
                     break;
                 case BarcodeCaptureOutcome.UnsupportedSymbology:
-                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusUnsupportedSymbologyKey);
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.UnsupportedSymbologyKey);
                     break;
                 case BarcodeCaptureOutcome.Cancelled:
-                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusScanCancelledKey);
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.ScanCancelledKey);
                     break;
                 default:
-                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.CameraUnavailableKey);
                     break;
             }
         }
         catch (Exception)
         {
             if (sessionRevision == _barcodeScannerSessionRevision)
-                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusCameraUnavailableKey);
+                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.CameraUnavailableKey);
         }
         finally
         {
@@ -127,19 +113,19 @@ public partial class NutritionViewModel
 
         if (_barcodeUseCase is null)
         {
-            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusLookupUnavailableKey);
+            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.LookupUnavailableKey);
             return;
         }
 
         var rawInput = string.IsNullOrWhiteSpace(barcodeString) ? BarcodeInputText : barcodeString;
         if (string.IsNullOrWhiteSpace(rawInput))
         {
-            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusEnterDigitsKey);
+            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.EnterDigitsKey);
             return;
         }
 
         IsProcessingBarcode = true;
-        BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusSearchingCatalogKey);
+        BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.SearchingCatalogKey);
 
         try
         {
@@ -150,30 +136,31 @@ public partial class NutritionViewModel
                 !IsMealEditorVisible)
                 return;
 
-            if (!result.IsValidBarcode)
+            switch (result.State)
             {
-                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusInvalidFormatKey);
-                return;
+                case BarcodeScanState.EnterDigits:
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.EnterDigitsKey);
+                    return;
+                case BarcodeScanState.InvalidFormat:
+                    BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.InvalidFormatKey);
+                    return;
+                case BarcodeScanState.NotFound:
+                    BarcodeScanStatus = UiTextCatalog.Format(
+                        BarcodeStatusText.NotFoundFormatKey, result.NormalizedBarcode);
+                    return;
             }
 
-            if (!result.IsFound || result.FoodItem is null)
-            {
-                BarcodeScanStatus = UiTextCatalog.Format(
-                    BarcodeStatusNotFoundFormatKey, result.NormalizedBarcode);
-                return;
-            }
-
-            var food = result.FoodItem;
+            var food = result.FoodItem!;
             if (food.Calories is null || food.Protein is null || food.Carbs is null || food.Fats is null)
             {
-                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusIncompleteNutritionKey);
+                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.IncompleteNutritionKey);
                 return;
             }
 
             FoodSearchResults = [];
             SelectFoodResult(CreateFoodSearchResultItem(food));
             AddFoodMessage = UiTextCatalog.Format(
-                BarcodeStatusFoundInCatalogFormatKey, food.Name,
+                BarcodeStatusText.FoundInCatalogFormatKey, food.Name,
                 Math.Round(food.Calories.Value));
         }
         catch (BarcodeLookupUnavailableException)
@@ -199,7 +186,7 @@ public partial class NutritionViewModel
         catch
         {
             if (expectedSessionRevision == _barcodeScannerSessionRevision && IsBarcodeSourceVisible)
-                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusLookupFailedKey);
+                BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.LookupFailedKey);
         }
         finally
         {
@@ -210,7 +197,7 @@ public partial class NutritionViewModel
     private void ReportUnavailableLookup(int expectedSessionRevision)
     {
         if (expectedSessionRevision == _barcodeScannerSessionRevision && IsBarcodeSourceVisible)
-            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusLookupUnavailableKey);
+            BarcodeScanStatus = UiTextCatalog.Get(BarcodeStatusText.LookupUnavailableKey);
     }
 
     private void CancelBarcodeCameraCapture()

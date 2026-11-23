@@ -5,12 +5,20 @@ using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 
 namespace MuscleCuties.UI.Services.Nutrition;
 
-public sealed record BarcodeLookupResultView(
-    bool IsFound,
-    bool IsValidBarcode,
+/// <summary>Presentation-owned state for a barcode scan; the decision itself belongs to <see cref="BarcodeScanRule"/>.</summary>
+public enum BarcodeScanState
+{
+    EnterDigits,
+    LookupUnavailable,
+    InvalidFormat,
+    NotFound,
+    Found
+}
+
+public sealed record BarcodeScanResultView(
+    BarcodeScanState State,
     string NormalizedBarcode,
-    FoodCatalogItem? FoodItem,
-    string? ErrorMessage);
+    FoodCatalogItem? FoodItem);
 
 public static partial class NutritionPresentationMapper
 {
@@ -19,18 +27,26 @@ public static partial class NutritionPresentationMapper
             item.ServingSizeUnit, item.ServingOptionsJson, item.SourceSummary, item.NutritionSummary,
             item.IsCustom, item.FoodKey);
 
-    public static async Task<BarcodeLookupResultView> LookupBarcodeAsync(
+    public static async Task<BarcodeScanResultView> LookupBarcodeAsync(
         ILookupBarcodeUseCase useCase,
         string barcodeText,
         BarcodeSymbology symbology)
     {
         var result = await useCase.ExecuteAsync(
-            new BarcodeLookupRequest(barcodeText, (BarcodeSymbologyDto)symbology));
-        return new BarcodeLookupResultView(
-            result.IsFound,
-            result.IsValidBarcode,
-            result.NormalizedBarcode,
-            result.FoodItem is null ? null : FromCatalogItem(result.FoodItem),
-            result.ErrorMessage);
+            new BarcodeLookupRequest(barcodeText, (BarcodeSymbologyDto)symbology)).ConfigureAwait(false);
+
+        var decision = BarcodeScanRule.Decide(barcodeText, result);
+
+        return new BarcodeScanResultView(
+            decision.Outcome switch
+            {
+                BarcodeScanOutcome.EnterDigits => BarcodeScanState.EnterDigits,
+                BarcodeScanOutcome.LookupUnavailable => BarcodeScanState.LookupUnavailable,
+                BarcodeScanOutcome.InvalidFormat => BarcodeScanState.InvalidFormat,
+                BarcodeScanOutcome.NotFound => BarcodeScanState.NotFound,
+                _ => BarcodeScanState.Found
+            },
+            decision.NormalizedBarcode,
+            decision.FoodItem is null ? null : FromCatalogItem(decision.FoodItem));
     }
 }
