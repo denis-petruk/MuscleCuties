@@ -1414,4 +1414,19 @@ public class UiCleanlinessAndReachabilityTests
 
         throw new InvalidOperationException($"Could not locate repository root starting from '{AppContext.BaseDirectory}'.");
     }
+
+    [Fact]
+    public void Short_weekday_labels_have_one_resource_key_mapping()
+    {
+        var workoutViewModels = Path.Combine(RepoRoot, "src", "MuscleCuties.UI", "ViewModels", "Workout");
+        var mapper = File.ReadAllText(Path.Combine(workoutViewModels, "StrengthPlanGenerationDisplayMapper.cs"));
+        var sessionDisplay = File.ReadAllText(Path.Combine(workoutViewModels, "StrengthPlanSessionDisplay.cs"));
+
+        Assert.Equal(1, Regex.Matches(mapper, "\"Workout_Generation_DayMonday\"").Count);
+        Assert.DoesNotContain("\"Workout_Generation_DayMonday\"", sessionDisplay, StringComparison.Ordinal);
+        Assert.Contains("UiTextCatalog.Get(WeekdayLabelKey(weekday))", mapper, StringComparison.Ordinal);
+        Assert.Contains("StrengthPlanGenerationDisplayMapper.WeekdayLabelKey(weekday)", sessionDisplay,
+            StringComparison.Ordinal);
+    }
+
 }

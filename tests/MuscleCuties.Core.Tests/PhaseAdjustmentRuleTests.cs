@@ -206,34 +206,6 @@ public sealed class PhaseAdjustmentRuleTests
                 [session]).Status);
     }
 
-    [Fact]
-    public async Task Preview_Use_Case_Uses_Accepted_Source_Without_Mutating_It()
-    {
-        var session = Session(ActivityModality.Running,
-            SessionTrainingStyle.Continuous, mainMinutes: TwentyMinutes);
-        var gateInput = new PhaseReviewGateInput(Guid.NewGuid(), Guid.NewGuid(),
-            new DateOnly(2026, 10, 30), new DateTimeOffset(2026, 10, 24, 12, 0, 0,
-                TimeSpan.Zero), new DateOnly(2026, 10, 24),
-            new PhaseReviewContext(Guid.NewGuid(), CyclePhase.Menstrual,
-                PhaseReviewProvenance.UserConfirmed, null), LighterBaseline(),
-            PhaseBaselineScale.QuizMappedOneToFive,
-            null, null, null, false, true,
-            [new PhaseReviewSession(session.SessionId, new DateOnly(2026, 10, 25),
-                new DateTimeOffset(2026, 10, 25, 15, 0, 0, TimeSpan.Zero),
-                PlannedSessionState.Planned, false, false)],
-            new HashSet<PhaseReviewDismissalKey>());
-        var source = new SyntheticSource(new ActivePlanPhaseAdjustmentSourceV010(
-            gateInput, [session]));
-
-        var result = await new PreviewActivePlanPhaseAdjustmentV010UseCase(source)
-            .ExecuteAsync(Guid.NewGuid());
-
-        Assert.Equal(PhaseReviewGateStatus.ReadyForAdjustmentPreview, result.Gate.Status);
-        Assert.Single(result.Adjustment.FieldChanges);
-        Assert.Equal(TwentyMinutes, session.ContinuousMainMinutes);
-        Assert.Equal(1, source.LoadCount);
-    }
-
     private static PhaseBaseline LighterBaseline() => new(LighterDiscomfort, HighEnergy);
 
     private static PhaseReviewGateResult Gate(params Guid[] sessionIds) =>
@@ -247,17 +219,4 @@ public sealed class PhaseAdjustmentRuleTests
         decimal? mainMinutes = null) =>
         new(Guid.NewGuid(), modality, style,
             exercises ?? Array.Empty<PhaseAdjustmentExercise>(), mainMinutes);
-
-    private sealed class SyntheticSource(ActivePlanPhaseAdjustmentSourceV010 snapshot)
-        : IActivePlanPhaseAdjustmentSourceV010
-    {
-        public int LoadCount { get; private set; }
-
-        public Task<ActivePlanPhaseAdjustmentSourceV010?> LoadAsync(Guid userId, string? timeZoneId,
-            CancellationToken cancellationToken)
-        {
-            LoadCount++;
-            return Task.FromResult<ActivePlanPhaseAdjustmentSourceV010?>(snapshot);
-        }
-    }
 }

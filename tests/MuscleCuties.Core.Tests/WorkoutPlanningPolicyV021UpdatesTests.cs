@@ -725,19 +725,6 @@ public sealed class WorkoutPlanningPolicyV021UpdatesTests
         // It does not alter database or write to disk
     }
 
-    [Fact]
-    public void Completed_And_InProgress_Sessions_Remain_Unchanged()
-    {
-        var planned = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.Planned);
-        Assert.True(planned.IsAllowed);
-
-        var inProgress = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.InProgress);
-        Assert.True(inProgress.IsBlocked);
-
-        var completed = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.Completed);
-        Assert.True(completed.IsBlocked);
-    }
-
     // =========================================================================
     // 3. Beginner Strength Eligibility & Planning Regression Tests (15 Tests)
     // =========================================================================

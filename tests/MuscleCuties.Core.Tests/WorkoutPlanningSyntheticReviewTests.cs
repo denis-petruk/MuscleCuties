@@ -385,28 +385,6 @@ public sealed class WorkoutPlanningSyntheticReviewTests
         Assert.DoesNotContain(ActivitySafetyAnswersRule.ClimbingInstructionMissing, missing);
     }
 
-    [Fact]
-    public void IndependentAnswersPersistence_ModifyingAnswersDoesNotMutatePreferencesVersion()
-    {
-        var initialVersions = new PlanningInputVersions(
-            Preferences: InitialVersion,
-            ActivePlan: InitialVersion,
-            Answers: InitialVersion,
-            Injuries: InitialVersion,
-            Experience: InitialVersion,
-            Catalog: CatalogV1Hash,
-            Policy: PolicyV1Hash,
-            TimeZone: InitialVersion);
-
-        var updatedAnswersVersions = initialVersions with
-        {
-            Answers = IncrementedVersion
-        };
-
-        Assert.Equal(initialVersions.Preferences, updatedAnswersVersions.Preferences);
-        Assert.NotEqual(initialVersions.Answers, updatedAnswersVersions.Answers);
-    }
-
     // =========================================================================
     // 3. Safe/Unsafe Answer Transitions and Automatic Plan Updates
     // =========================================================================
@@ -432,27 +410,6 @@ public sealed class WorkoutPlanningSyntheticReviewTests
         Assert.Equal(IncrementedVersion, updatedRequest.ExpectedVersion);
         Assert.Null(initialRequest.ActivityEligibilityEvidence[0].WantsContinuousSwimming);
         Assert.True(updatedRequest.ActivityEligibilityEvidence[0].WantsContinuousSwimming);
-    }
-
-    [Fact]
-    public void UnsafeAnswerTransition_AlteringActivitySelection_InvalidatesPreviousFingerprint()
-    {
-        var initialVersions = new PlanningInputVersions(
-            Preferences: InitialVersion,
-            ActivePlan: InitialVersion,
-            Answers: InitialVersion,
-            Injuries: InitialVersion,
-            Experience: InitialVersion,
-            Catalog: CatalogV1Hash,
-            Policy: PolicyV1Hash,
-            TimeZone: InitialVersion);
-
-        var mutatedAnswersVersions = initialVersions with
-        {
-            Answers = IncrementedVersion
-        };
-
-        Assert.NotEqual(initialVersions.Answers, mutatedAnswersVersions.Answers);
     }
 
     [Fact]
@@ -981,51 +938,6 @@ public sealed class WorkoutPlanningSyntheticReviewTests
     // =========================================================================
     // 9. Stale Snapshots and Transactional/Idempotent Apply
     // =========================================================================
-
-    [Fact]
-    public void ProposalSnapshot_RejectedWhenAccountTimeZoneVersionIsStale()
-    {
-        var originalVersions = new PlanningInputVersions(
-            Preferences: InitialVersion,
-            ActivePlan: InitialVersion,
-            Answers: InitialVersion,
-            Injuries: InitialVersion,
-            Experience: InitialVersion,
-            Catalog: CatalogV1Hash,
-            Policy: PolicyV1Hash,
-            TimeZone: InitialVersion);
-
-        var staleTimeZoneState = originalVersions with
-        {
-            TimeZone = IncrementedVersion
-        };
-
-        var isMatch = originalVersions.TimeZone == staleTimeZoneState.TimeZone;
-        Assert.False(isMatch);
-    }
-
-    [Fact]
-    public void ProposalSnapshot_RejectedWhenAnyInputVersionMutates()
-    {
-        var baseline = new PlanningInputVersions(
-            Preferences: InitialVersion,
-            ActivePlan: InitialVersion,
-            Answers: InitialVersion,
-            Injuries: InitialVersion,
-            Experience: InitialVersion,
-            Catalog: CatalogV1Hash,
-            Policy: PolicyV1Hash,
-            TimeZone: InitialVersion);
-
-        Assert.NotEqual(baseline, baseline with { Preferences = IncrementedVersion });
-        Assert.NotEqual(baseline, baseline with { ActivePlan = IncrementedVersion });
-        Assert.NotEqual(baseline, baseline with { Answers = IncrementedVersion });
-        Assert.NotEqual(baseline, baseline with { Injuries = IncrementedVersion });
-        Assert.NotEqual(baseline, baseline with { Experience = IncrementedVersion });
-        Assert.NotEqual(baseline, baseline with { Catalog = CatalogV2Hash });
-        Assert.NotEqual(baseline, baseline with { Policy = PolicyV2Hash });
-        Assert.NotEqual(baseline, baseline with { TimeZone = IncrementedVersion });
-    }
 
     [Fact]
     public void IdempotentProposalAcceptance_ReturnsExistingPlanAndRevisionWithoutDuplication()

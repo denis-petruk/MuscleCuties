@@ -1,16 +1,5 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
-/// <summary>Versions captured when a proposal is generated and compared atomically at acceptance.</summary>
-public sealed record PlanningInputVersions(
-    long Preferences,
-    long ActivePlan,
-    long Answers,
-    long Injuries,
-    long Experience,
-    string Catalog,
-    string Policy,
-    long TimeZone);
-
 public sealed record PlanningLease(Guid LeaseId, long Fence, DateTimeOffset ExpiresAtUtc);
 
 public static class PlanningLifecycleRule

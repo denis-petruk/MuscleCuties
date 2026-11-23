@@ -9,7 +9,7 @@ public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
     {
         var title = LocalizedFormat.Format("Workout_Generation_SessionDayTitleFormat",
             session.PlannedWeekday is { } weekday
-                ? UiTextCatalog.Get(WeekdayLabelKey(weekday))
+                ? UiTextCatalog.Get(StrengthPlanGenerationDisplayMapper.WeekdayLabelKey(weekday))
                 : LocalizedFormat.Format("Workout_Generation_SessionTitleFormat",
                     session.SessionIndex.ToString(CultureInfo.CurrentCulture)));
         var duration = session.EstimatedMinutes is { } minutes
@@ -69,17 +69,5 @@ public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
         StrengthMovementSlotDto.Trunk => "Workout_Generation_MovementTrunkOmitted",
         StrengthMovementSlotDto.GoalSpecificAccessory => "Workout_Generation_MovementAccessoryOmitted",
         _ => "Workout_Generation_MovementUnavailable"
-    };
-
-    private static string WeekdayLabelKey(DayOfWeek weekday) => weekday switch
-    {
-        DayOfWeek.Monday => "Workout_Generation_DayMonday",
-        DayOfWeek.Tuesday => "Workout_Generation_DayTuesday",
-        DayOfWeek.Wednesday => "Workout_Generation_DayWednesday",
-        DayOfWeek.Thursday => "Workout_Generation_DayThursday",
-        DayOfWeek.Friday => "Workout_Generation_DayFriday",
-        DayOfWeek.Saturday => "Workout_Generation_DaySaturday",
-        DayOfWeek.Sunday => "Workout_Generation_DaySunday",
-        _ => "Workout_Generation_UnknownDay"
     };
 }

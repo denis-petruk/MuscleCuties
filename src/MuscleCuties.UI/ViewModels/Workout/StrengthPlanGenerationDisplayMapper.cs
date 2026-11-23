@@ -159,7 +159,10 @@ internal static class StrengthPlanGenerationDisplayMapper
         _ => "Workout_Generation_UnknownDay"
     });
 
-    public static string ShortWeekdayLabel(DayOfWeek weekday) => UiTextCatalog.Get(weekday switch
+    public static string ShortWeekdayLabel(DayOfWeek weekday) => UiTextCatalog.Get(WeekdayLabelKey(weekday));
+
+    /// <summary>The one short weekday resource key set; session titles and day chips both read it.</summary>
+    public static string WeekdayLabelKey(DayOfWeek weekday) => weekday switch
     {
         DayOfWeek.Monday => "Workout_Generation_DayMonday",
         DayOfWeek.Tuesday => "Workout_Generation_DayTuesday",
@@ -169,7 +172,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         DayOfWeek.Saturday => "Workout_Generation_DaySaturday",
         DayOfWeek.Sunday => "Workout_Generation_DaySunday",
         _ => "Workout_Generation_UnknownDay"
-    });
+    };
 
     public static string ScheduleReasonMessage(string reasonCode) => UiTextCatalog.Get(reasonCode switch
     {

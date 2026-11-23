@@ -21,54 +21,6 @@ internal static class CatalogAuditFixture
     public static IReadOnlyDictionary<int, IReadOnlyList<CatalogMuscleRow>> Contributions => (IReadOnlyDictionary<int, IReadOnlyList<CatalogMuscleRow>>)ContributionRows.Value;
     public static IReadOnlySet<int> SlotCandidates => SlotCandidateIds.Value;
 
-    public static IReadOnlyList<CatalogExerciseRecord> Records => Definitions.Keys
-        .OrderBy(id => id)
-        .Select(id => Record(id))
-        .ToArray();
-
-
-
-    public static CatalogExerciseRecord Record(int exerciseId) => new(
-        exerciseId,
-        Reviews.ContainsKey(exerciseId),
-        VerifiedFields(exerciseId),
-        InheritedFields(exerciseId));
-
-    /// <summary>Fields the reviewed snapshot explicitly covers.</summary>
-    public static IReadOnlySet<CatalogMetadataField> VerifiedFields(int exerciseId)
-    {
-        if (!Reviews.ContainsKey(exerciseId))
-            return new HashSet<CatalogMetadataField>();
-
-        return new HashSet<CatalogMetadataField>
-        {
-            CatalogMetadataField.Identity,
-            CatalogMetadataField.MovementPattern,
-            CatalogMetadataField.Equipment,
-            CatalogMetadataField.SetupTime,
-            CatalogMetadataField.SecondsPerRep,
-            CatalogMetadataField.Contraindications,
-            CatalogMetadataField.SupportedExperiences,
-            CatalogMetadataField.ExperienceConditions,
-            CatalogMetadataField.DemandTags,
-            CatalogMetadataField.RestrictionAssessment,
-            CatalogMetadataField.TimingMethods,
-            CatalogMetadataField.Substitutions
-        };
-    }
-
-    /// <summary>Fields that exist only in the canonical seed and are not part of the review.</summary>
-    public static IReadOnlySet<CatalogMetadataField> InheritedFields(int exerciseId)
-    {
-        var fields = new HashSet<CatalogMetadataField>();
-        if (Definitions.ContainsKey(exerciseId))
-            fields.Add(CatalogMetadataField.UnilateralTime);
-        if (Contributions.TryGetValue(exerciseId, out var rows) && rows.Count > 0)
-            fields.Add(CatalogMetadataField.MuscleContribution);
-        return fields;
-    }
-
-
 
     public sealed record DefinitionRow(
         int Id,

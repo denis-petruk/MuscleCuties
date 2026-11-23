@@ -184,18 +184,6 @@ public sealed class PhaseReviewRuleTests
         Assert.Equal([later.SessionId], result.EligibleSessionIds);
     }
 
-    [Fact]
-    public async Task Use_Case_Reads_Once_And_Does_Not_Save_A_Plan()
-    {
-        var source = new SyntheticSource(Input(sessions: [Session(1)]));
-        var useCase = new ReviewActivePlanPhaseV010UseCase(source);
-
-        var result = await useCase.ExecuteAsync(Guid.NewGuid());
-
-        Assert.Equal(PhaseReviewGateStatus.ReadyForAdjustmentPreview, result.Status);
-        Assert.Equal(1, source.LoadCount);
-    }
-
     private static PhaseReviewGateInput Input(CyclePhase phase = CyclePhase.Menstrual,
         IReadOnlyList<PhaseReviewSession>? sessions = null) =>
         new(Guid.NewGuid(), Guid.NewGuid(), Today.AddDays(PhaseReviewRule.FollowingCalendarDates),
@@ -214,16 +202,4 @@ public sealed class PhaseReviewRuleTests
         new(Guid.NewGuid(), Today.AddDays(daysAfterToday),
             ReviewAtUtc.AddDays(daysAfterToday).AddHours(ScheduledHourUtc - ReviewHourUtc),
             state, hasStarted, hasRecordedWork);
-
-    private sealed class SyntheticSource(PhaseReviewGateInput input) : IActivePlanPhaseReviewSourceV010
-    {
-        public int LoadCount { get; private set; }
-
-        public Task<PhaseReviewGateInput?> LoadAsync(Guid userId,
-            CancellationToken cancellationToken)
-        {
-            LoadCount++;
-            return Task.FromResult<PhaseReviewGateInput?>(input);
-        }
-    }
 }

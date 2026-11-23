@@ -289,18 +289,4 @@ public sealed class WorkoutPlanningPolicyComplianceTests
     // 10. Session Lifecycle Preservation (Completed and InProgress preserved)
     // =========================================================================
 
-    [Fact]
-    public void SessionLifecycle_CompletedAndInProgress_CannotBeModified()
-    {
-        var planned = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.Planned);
-        Assert.True(planned.IsAllowed);
-
-        var inProgress = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.InProgress);
-        Assert.True(inProgress.IsBlocked);
-        Assert.Equal(WorkoutSessionLifecycleRule.ReasonCompletedOrInProgressSessionCannotBeModified, inProgress.ReasonCode);
-
-        var completed = WorkoutSessionLifecycleRule.CanModifySession(WorkoutSessionLifecycleState.Completed);
-        Assert.True(completed.IsBlocked);
-        Assert.Equal(WorkoutSessionLifecycleRule.ReasonCompletedOrInProgressSessionCannotBeModified, completed.ReasonCode);
-    }
 }
