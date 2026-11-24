@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Text.Json;
 
 namespace MuscleCuties.Core.Services.Auth;
@@ -17,17 +18,17 @@ public static class ReceiptJsonHelper
         return seen.Count == expected.Length;
     }
 
-    public static bool TryGetNonemptyString(JsonElement element, string name, out string value)
+    public static bool TryGetNonemptyString(JsonElement element, string name, [NotNullWhen(true)] out string? value)
     {
-        value = string.Empty;
+        value = null;
         if (!element.TryGetProperty(name, out var property) || property.ValueKind != JsonValueKind.String)
             return false;
 
-        value = property.GetString() ?? string.Empty;
+        value = property.GetString();
         return !string.IsNullOrWhiteSpace(value);
     }
 
-    public static bool TryString(JsonElement element, string name, out string value)
+    public static bool TryString(JsonElement element, string name, out string? value)
     {
         return TryGetNonemptyString(element, name, out value);
     }

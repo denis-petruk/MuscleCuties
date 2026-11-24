@@ -1,3 +1,4 @@
+using MuscleCuties.Core.Services.Auth;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using MuscleCuties.Core.Domain.Auth;
@@ -48,8 +49,8 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
             using var headerDocument = JsonDocument.Parse(Decode(segments[0]));
             var header = headerDocument.RootElement;
             if (!HasExactFields(header, "alg", "kid", "typ") ||
-                !IsString(header, "alg", "RS256") || !IsString(header, "typ", "JWT") ||
-                !TryReadString(header, "kid", out var keyId) ||
+                !ReceiptJsonHelper.IsString(header, "alg", "RS256") || !ReceiptJsonHelper.IsString(header, "typ", "JWT") ||
+                !ReceiptJsonHelper.TryGetNonemptyString(header, "kid", out var keyId) ||
                 !publicKeysById.TryGetValue(keyId, out var publicKeyPem))
                 return false;
 
@@ -65,12 +66,13 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
             using var claimsDocument = JsonDocument.Parse(Decode(segments[1]));
             var claims = claimsDocument.RootElement;
             if (!HasExactFields(claims, "iss", "aud", "email", "purpose", "challengeId", "iat", "exp", "jti") ||
-                !IsString(claims, "iss", issuer) || !IsString(claims, "aud", audience) ||
-                !IsString(claims, "email", AuthInputValidator.NormalizeEmail(email)) ||
-                !IsString(claims, "challengeId", challengeId) ||
-                !TryReadInt64(claims, "purpose", out var purpose) || purpose != expectedPurpose ||
-                !TryReadInt64(claims, "iat", out var issuedAt) || !TryReadInt64(claims, "exp", out var expiresAt) ||
-                !TryReadString(claims, "jti", out var receiptId))
+                !ReceiptJsonHelper.IsString(claims, "iss", issuer) || !ReceiptJsonHelper.IsString(claims, "aud", audience) ||
+                !ReceiptJsonHelper.IsString(claims, "email", AuthInputValidator.NormalizeEmail(email)) ||
+                !ReceiptJsonHelper.IsString(claims, "challengeId", challengeId) ||
+                !ReceiptJsonHelper.TryGetInt64(claims, "purpose", out var purpose) || purpose != expectedPurpose ||
+                !ReceiptJsonHelper.TryGetInt64(claims, "iat", out var issuedAt) ||
+                !ReceiptJsonHelper.TryGetInt64(claims, "exp", out var expiresAt) ||
+                !ReceiptJsonHelper.TryGetNonemptyString(claims, "jti", out var receiptId))
                 return false;
 
             var now = timeProvider.GetUtcNow().ToUnixTimeSeconds();
@@ -100,25 +102,6 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
                 return false;
 
         return seen.Count == expectedFields.Length;
-    }
-
-    private static bool IsString(JsonElement element, string name, string expected) =>
-        TryReadString(element, name, out var actual) && string.Equals(actual, expected, StringComparison.Ordinal);
-
-    private static bool TryReadString(JsonElement element, string name, [NotNullWhen(true)] out string? value)
-    {
-        value = null;
-        if (!element.TryGetProperty(name, out var property) || property.ValueKind != JsonValueKind.String)
-            return false;
-        value = property.GetString();
-        return !string.IsNullOrWhiteSpace(value);
-    }
-
-    private static bool TryReadInt64(JsonElement element, string name, out long value)
-    {
-        value = 0;
-        return element.TryGetProperty(name, out var property) && property.ValueKind == JsonValueKind.Number &&
-               property.TryGetInt64(out value);
     }
 
     private static byte[] Decode(string segment)
