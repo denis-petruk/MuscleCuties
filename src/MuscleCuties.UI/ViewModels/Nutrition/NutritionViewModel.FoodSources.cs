@@ -17,7 +17,7 @@ public partial class NutritionViewModel
         if (IsBusy)
             return;
 
-        CancelBarcodeCameraCapture();
+        BarcodeScan.Cancel();
         _editingIngredient = null;
         SelectedFoodResult = null;
         SelectedFoodSource = source;
@@ -42,7 +42,7 @@ public partial class NutritionViewModel
 
     private void ResetFoodSource()
     {
-        CancelBarcodeCameraCapture();
+        BarcodeScan.Cancel();
         SelectedFoodSource = MealFoodSource.Search;
         UpdateFoodSourceTabs(MealFoodSource.Search);
         BarcodeInputText = string.Empty;

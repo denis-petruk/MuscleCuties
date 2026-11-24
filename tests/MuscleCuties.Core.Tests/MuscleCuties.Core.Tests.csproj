@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <Using Include="Xunit" />
+    <Using Include="MuscleCuties.UI.Models.UI.Nutrition" />
   </ItemGroup>
 
   <ItemGroup>
@@ -26,6 +27,11 @@
     <Compile Include="..\..\src\MuscleCuties.UI\Models\UI\Workout\ExerciseSetInputItem.cs" Link="ExerciseSetInputItem.cs" />
     <Using Include="System.Globalization" />
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Auth\OtpCodeRules.cs" Link="OtpCodeRules.cs" />
+    <Compile Include="..\..\src\MuscleCuties.UI\Services\Profile\AppPageLoadGate.cs" Link="AppPageLoadGate.cs" />
+    <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Common\IPageLoadAware.cs" Link="IPageLoadAware.cs" />
+    <Compile Include="..\..\src\MuscleCuties.UI\Models\UI\Nutrition\BarcodeScanTypes.cs" Link="BarcodeScanTypes.cs" />
+    <Compile Include="..\..\src\MuscleCuties.UI\Services\Nutrition\IBarcodeScannerHardwareService.cs" Link="IBarcodeScannerHardwareService.cs" />
+    <Compile Include="..\..\src\MuscleCuties.UI\Services\Nutrition\BarcodeScanCoordinator.cs" Link="BarcodeScanCoordinator.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Workout\WorkoutAccountCalendarClient.cs" Link="WorkoutAccountCalendarClient.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Dashboard\DailyCheckInViewModel.cs" Link="DailyCheckInViewModel.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Workout\WorkoutListFilterRule.cs" Link="WorkoutListFilterRule.cs" />
