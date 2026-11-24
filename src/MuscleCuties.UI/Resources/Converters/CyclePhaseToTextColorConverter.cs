@@ -1,7 +1,5 @@
 using Microsoft.Maui.Controls;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
-using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
-using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 
 namespace MuscleCuties.UI.Resources.Converters;
 
@@ -17,29 +15,15 @@ public class CyclePhaseToTextColorConverter : IValueConverter
 
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
-        var isDark = AppThemeResources.IsDark;
         var phase = value is CyclePhase p ? (CyclePhase?)p : null;
-        var key = (phase, isDark);
+        var key = (phase, AppThemeResources.IsDark);
 
         if (_cache.TryGetValue(key, out var cached))
             return cached;
 
-        var color = phase switch
-        {
-            CyclePhase.Menstrual => AppThemeResources.GetColor(
-                "CyclePhaseMenstrualTextLight",
-                "CyclePhaseMenstrualTextDark"),
-            CyclePhase.Follicular => AppThemeResources.GetColor(
-                "CyclePhaseFollicularTextLight",
-                "CyclePhaseFollicularTextDark"),
-            CyclePhase.Ovulatory => AppThemeResources.GetColor(
-                "CyclePhaseOvulatoryTextLight",
-                "CyclePhaseOvulatoryTextDark"),
-            CyclePhase.Luteal => AppThemeResources.GetColor(
-                "CyclePhaseLutealTextLight",
-                "CyclePhaseLutealTextDark"),
-            _ => AppThemeResources.GetColor("TextPrimary", "TextPrimaryDark")
-        };
+        var color = phase is { } known
+            ? AppThemeResources.GetCyclePhaseColor(known, textTone: true)
+            : AppThemeResources.GetColor("TextPrimary", "TextPrimaryDark");
 
         _cache[key] = color;
         return color;

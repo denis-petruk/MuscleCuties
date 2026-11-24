@@ -1,4 +1,5 @@
 using Microsoft.Maui.Controls;
+using CyclePhaseDto = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 
 namespace MuscleCuties.UI.Resources.Styles;
 
@@ -36,6 +37,25 @@ public static class AppThemeResources
     {
         var key = theme == AppTheme.Dark ? darkKey : lightKey;
         return GetColor(key, fallback);
+    }
+
+    /// <summary>
+    /// The one cycle-phase theme mapping: background tone by default, "Text" tone for foreground use.
+    /// Both cycle converters used to carry their own copy of this switch.
+    /// </summary>
+    public static Color GetCyclePhaseColor(CyclePhaseDto phase, bool textTone = false)
+    {
+        var suffix = textTone ? "Text" : string.Empty;
+        var (lightKey, darkKey) = phase switch
+        {
+            CyclePhaseDto.Menstrual => ($"CyclePhaseMenstrual{suffix}Light", $"CyclePhaseMenstrual{suffix}Dark"),
+            CyclePhaseDto.Follicular => ($"CyclePhaseFollicular{suffix}Light", $"CyclePhaseFollicular{suffix}Dark"),
+            CyclePhaseDto.Ovulatory => ($"CyclePhaseOvulatory{suffix}Light", $"CyclePhaseOvulatory{suffix}Dark"),
+            CyclePhaseDto.Luteal => ($"CyclePhaseLuteal{suffix}Light", $"CyclePhaseLuteal{suffix}Dark"),
+            _ => textTone ? ("TextPrimary", "TextPrimaryDark") : ("Transparent", "Transparent")
+        };
+
+        return GetColor(lightKey, darkKey);
     }
 
     public static Color GetColor(string key, Color? fallback = null)
