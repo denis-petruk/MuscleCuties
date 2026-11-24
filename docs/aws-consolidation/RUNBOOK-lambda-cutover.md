@@ -1,3 +1,10 @@
+> **STATUS 2026-11-24 — NEVER EXECUTED. This runbook is history, not instructions.**
+> It describes a cutover to `musclecuties-staging-backend-api` that was never performed: the only live function in
+> 028417007003 / us-east-2 is `musclecuties-backend-api`, and that phantom staging name was retired from the template
+> on 2026-11-24. The package key it cites under `migrations/lambda/` does still exist, 17,232,584 bytes in
+> `musclecuties-staging-release-artifacts-028417007003`; nothing consumes it today. Do not run these commands as
+> instructions; see private-docs/STATUS.md (current state) instead.
+
 # Lambda cutover runbook — `musclecuties-backend-api` → `musclecuties-staging-backend-api`
 
 Account `028417007003`, region `us-east-2`. Decision record: ADR-0006 (create, don't import).
