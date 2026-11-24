@@ -867,6 +867,10 @@ public static partial class UiTextCatalog
         English["Profile_Privacy_ChoicesBody"] = "Delete your account and local data from Profile.";
         English["Profile_Privacy_ReadPolicy"] = "Read privacy policy";
         English["Profile_Privacy_OpenPolicyDescription"] = "Open the full privacy policy";
+        English["Profile_Privacy_TermsUnavailableTitle"] = "Terms of use unavailable";
+        English["Profile_Privacy_TermsUnavailableMessage"] = "The terms of use could not be opened. Please try again later.";
+        English["Profile_Privacy_ReadTerms"] = "Read terms of use";
+        English["Profile_Privacy_OpenTermsDescription"] = "Open the full terms of use";
         English["Profile_Privacy_DisclaimerTitle"] = "Not clinically approved";
         English["Profile_Privacy_DisclaimerBody"] = "MuscleCuties is not a medical service or a substitute for professional care. Its guidance has not been clinically reviewed. Talk with a qualified professional about training, your cycle, injuries, or pain.";
         English["Profile_Privacy_DisclaimerPlanBody"] = "Strength training and a workout plan still apply, including when you report an injury.";

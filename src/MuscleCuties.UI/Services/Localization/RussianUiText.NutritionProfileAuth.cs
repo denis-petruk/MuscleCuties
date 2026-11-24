@@ -867,6 +867,10 @@ internal static partial class RussianUiText
         Values["Profile_Privacy_ChoicesBody"] = "Удалить аккаунт и локальные данные можно в профиле.";
         Values["Profile_Privacy_ReadPolicy"] = "Читать политику конфиденциальности";
         Values["Profile_Privacy_OpenPolicyDescription"] = "Открыть полную политику конфиденциальности";
+        Values["Profile_Privacy_TermsUnavailableTitle"] = "Условия недоступны";
+        Values["Profile_Privacy_TermsUnavailableMessage"] = "Не удалось открыть условия использования. Повторите попытку позже.";
+        Values["Profile_Privacy_ReadTerms"] = "Читать условия использования";
+        Values["Profile_Privacy_OpenTermsDescription"] = "Открыть полные условия использования";
         Values["Profile_Privacy_DisclaimerTitle"] = "Не одобрено клинически";
         Values["Profile_Privacy_DisclaimerBody"] = "MuscleCuties не является медицинской услугой или заменой профессиональной помощи. Рекомендации не проверены клинически. Обсудите тренировки, цикл, травмы и боль с квалифицированным специалистом.";
         Values["Profile_Privacy_DisclaimerPlanBody"] = "Силовые тренировки и план применяются, в том числе при травме.";

@@ -8,6 +8,7 @@ namespace MuscleCuties.UI.Pages.Profile;
 public partial class ProfilePrivacyPage : ContentPage
 {
     public const string PrivacyPolicyUrl = "https://musclecuties.app/privacy";
+    public const string TermsOfUseUrl = "https://musclecuties.app/terms";
 
     public ICommand BackCommand { get; }
     public ProfileHealthSyncViewModel HealthSync { get; }
@@ -49,10 +50,25 @@ public partial class ProfilePrivacyPage : ContentPage
     private async void OnPrivacyPolicyClicked(object? sender, EventArgs e) =>
         await OpenPrivacyPolicyAsync();
 
-    public static async Task OpenPrivacyPolicyAsync()
+    private async void OnTermsOfUseClicked(object? sender, EventArgs e) =>
+        await OpenTermsOfUseAsync();
+
+    public static Task OpenPrivacyPolicyAsync() =>
+        OpenPolicyAsync(
+            PrivacyPolicyUrl,
+            "Profile_Privacy_UnavailableTitle",
+            "Profile_Privacy_UnavailableMessage");
+
+    public static Task OpenTermsOfUseAsync() =>
+        OpenPolicyAsync(
+            TermsOfUseUrl,
+            "Profile_Privacy_TermsUnavailableTitle",
+            "Profile_Privacy_TermsUnavailableMessage");
+
+    private static async Task OpenPolicyAsync(string url, string unavailableTitleKey, string unavailableMessageKey)
     {
         var isRussian = LocalizationService.ActiveLanguage == LocalizationService.RussianLanguageCode;
-        if (Uri.TryCreate(PrivacyPolicyUrl, UriKind.Absolute, out var uri) &&
+        if (Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
             uri.Scheme == Uri.UriSchemeHttps && string.IsNullOrEmpty(uri.UserInfo))
         {
             try
@@ -69,8 +85,8 @@ public partial class ProfilePrivacyPage : ContentPage
 
         if (Shell.Current is { } shell)
             await shell.DisplayAlertAsync(
-                UiTextCatalog.Get("Profile_Privacy_UnavailableTitle"),
-                UiTextCatalog.Get("Profile_Privacy_UnavailableMessage"),
+                UiTextCatalog.Get(unavailableTitleKey),
+                UiTextCatalog.Get(unavailableMessageKey),
                 UiTextCatalog.Get("Profile_Privacy_Ok"));
     }
 }

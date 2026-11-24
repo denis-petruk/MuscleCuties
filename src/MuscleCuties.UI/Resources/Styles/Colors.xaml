@@ -44,7 +44,6 @@
     <Color x:Key="ChoiceSelectedSurfaceDark">#603447</Color>
     <Color x:Key="ChoiceSelectedStrokeLight">#A6446D</Color>
     <Color x:Key="ChoiceSelectedStrokeDark">#F0B8CF</Color>
-    <Color x:Key="ActivitySelectedSurfaceLight">#FBE3ED</Color>
     <Color x:Key="ActivitySelectedStrokeLight">#8F2F59</Color>
     <Color x:Key="ActivityUnselectedStrokeLight">#A58492</Color>
     <Color x:Key="ActivitySelectedSubtitleLight">#3D2C34</Color>
@@ -64,23 +63,11 @@
 
     <Color x:Key="White">#FFFFFF</Color>
     <Color x:Key="Black">#000000</Color>
-    <Color x:Key="DeepMauve">#5B4650</Color>
-    <Color x:Key="ShadowColor">#2B1D24</Color>
     <Color x:Key="ModalScrim">#802B1D24</Color>
     <Color x:Key="PrimaryLightOverlay">#26C85A87</Color>
     <Color x:Key="WhiteOverlaySubtle">#22FFFFFF</Color>
     <Color x:Key="LightInkOverlay">#332B1D24</Color>
 
-    <Color x:Key="Gray100">#FFF8FB</Color>
-    <Color x:Key="Gray200">#F8EEF4</Color>
-    <Color x:Key="Gray300">#F0D8E2</Color>
-    <Color x:Key="Gray400">#D7B8C5</Color>
-    <Color x:Key="Gray500">#AE8D9B</Color>
-    <Color x:Key="Gray600">#8B6C79</Color>
-    <Color x:Key="Gray700">#725763</Color>
-    <Color x:Key="Gray800">#5A424C</Color>
-    <Color x:Key="Gray900">#4C3942</Color>
-    <Color x:Key="Gray950">#2B1D24</Color>
 
     <Color x:Key="ErrorLight">#A72E27</Color>
     <Color x:Key="ErrorDark">#F08B8B</Color>
@@ -159,6 +146,7 @@
     <Color x:Key="CarbsDark">#F1C46E</Color>
     <Color x:Key="FatsLight">#6F8E4E</Color>
     <Color x:Key="FatsDark">#9DB878</Color>
+    <Color x:Key="ShadowColor">#2B1D24</Color>
     <SolidColorBrush x:Key="ShadowBrush" Color="{StaticResource ShadowColor}" />
 
     <Color x:Key="PhaseThemeMenstrualBackgroundDark">#482B33</Color>
@@ -199,10 +187,8 @@
     <Color x:Key="WorkoutRestTextLight">#5F5A50</Color>
     <Color x:Key="WorkoutStrengthTextLight">#8D3A5F</Color>
     <Color x:Key="WorkoutStrengthTextDark">#D98AAF</Color>
-    <Color x:Key="DashboardAccentPink">#C45A86</Color>
     <Color x:Key="DashboardRingTrackDark">#42424B</Color>
     <Color x:Key="DashboardRingTrackLight">#E9E5E8</Color>
-    <Color x:Key="DashboardReadinessBlue">#5586B5</Color>
     <Color x:Key="DashboardChartTrackDark">#505060</Color>
     <Color x:Key="DashboardChartTrackLight">#DDDDE3</Color>
     <Color x:Key="DashboardPhaseCardTextLight">#8B4E68</Color>
@@ -234,7 +220,6 @@
     <Color x:Key="BorderNeutralDark">#AE8D9B</Color>
     <Color x:Key="BorderStrongDark">#8B6C79</Color>
     <Color x:Key="AccentSurfaceMutedLight">#F8DFF1</Color>
-    <Color x:Key="AccentSurfaceMutedDark">#5A424C</Color>
     <Color x:Key="AccentSurfaceDeepDark">#4C3942</Color>
     <Color x:Key="TextTertiaryLight">#82606D</Color>
     <Color x:Key="TextTertiaryDark">#B99AA6</Color>

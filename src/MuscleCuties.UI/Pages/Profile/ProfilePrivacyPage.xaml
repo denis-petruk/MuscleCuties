@@ -108,6 +108,11 @@
                                 Clicked="OnPrivacyPolicyClicked"
                                 HorizontalOptions="Fill"
                                 SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_OpenPolicyDescription}" />
+                        <Button Text="{loc:LocalizedText Profile_Privacy_ReadTerms}"
+                                Style="{StaticResource ButtonSecondary}"
+                                Clicked="OnTermsOfUseClicked"
+                                HorizontalOptions="Fill"
+                                SemanticProperties.Description="{loc:LocalizedText Profile_Privacy_OpenTermsDescription}" />
                     </VerticalStackLayout>
                 </Border>
 
