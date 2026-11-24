@@ -92,13 +92,16 @@ public sealed class SesEmailChallengeDeliveryTests
     public async Task SendAsync_WhenPasswordRecoveryPurpose_SendsExpectedSesRequest()
     {
         var transport = new CapturingSesTransport();
-        var delivery = new SesEmailChallengeDelivery(transport, ValidFromAddress);
+        var delivery = new SesEmailChallengeDelivery(
+            transport,
+            ValidFromAddress,
+            configurationSetName: "musclecuties-email-challenges");
 
         var result = await delivery.SendAsync(ValidEmail, ValidCode, PasswordRecoveryPurpose, CancellationToken.None);
 
         Assert.True(result);
         var request = Assert.IsType<SendEmailRequest>(transport.CapturedRequest);
-        Assert.Null(request.ConfigurationSetName);
+        Assert.Equal("musclecuties-email-challenges", request.ConfigurationSetName);
 
         var simple = Assert.IsType<Message>(request.Content.Simple);
         Assert.Contains("Password Reset", simple.Subject.Data);
@@ -106,6 +109,23 @@ public sealed class SesEmailChallengeDeliveryTests
         Assert.Contains(ValidCode, simple.Body.Text.Data);
         Assert.Contains(ValidCode, simple.Body.Html.Data);
         Assert.Contains("Reset Your Password", simple.Body.Html.Data);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData(null)]
+    public async Task SendAsync_WhenConfigurationSetIsNotConfigured_OmitsIt(string? configurationSetName)
+    {
+        // An environment may omit the configuration set entirely; the send must still go out and must
+        // not carry an empty configuration set name, which SES would reject as unknown.
+        var transport = new CapturingSesTransport();
+        var delivery = new SesEmailChallengeDelivery(transport, ValidFromAddress, configurationSetName);
+
+        var result = await delivery.SendAsync(ValidEmail, ValidCode, RegistrationPurpose, CancellationToken.None);
+
+        Assert.True(result);
+        Assert.Null(Assert.IsType<SendEmailRequest>(transport.CapturedRequest).ConfigurationSetName);
     }
 
     [Fact]
