@@ -49,12 +49,4 @@ public sealed class ReceiptJsonHelperTests
         Assert.Equal(expected, ReceiptJsonHelper.TryGetInt64(Parse(json), "iat", out var value));
         Assert.Equal(expectedValue, value);
     }
-
-    [Fact]
-    public void IntClaimsStayInt32()
-    {
-        Assert.True(ReceiptJsonHelper.TryGetInt(Parse("""{"purpose":3}"""), "purpose", out var value));
-        Assert.Equal(3, value);
-        Assert.False(ReceiptJsonHelper.TryGetInt(Parse("""{"purpose":3000000000}"""), "purpose", out _));
-    }
 }

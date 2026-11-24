@@ -28,23 +28,10 @@ public static class ReceiptJsonHelper
         return !string.IsNullOrWhiteSpace(value);
     }
 
-    public static bool TryString(JsonElement element, string name, out string? value)
-    {
-        return TryGetNonemptyString(element, name, out value);
-    }
-
     public static bool IsString(JsonElement element, string name, string expected)
     {
         return TryGetNonemptyString(element, name, out var value) &&
                string.Equals(value, expected, StringComparison.Ordinal);
-    }
-
-    public static bool TryGetInt(JsonElement element, string name, out int value)
-    {
-        value = 0;
-        return element.TryGetProperty(name, out var property) &&
-               property.ValueKind == JsonValueKind.Number &&
-               property.TryGetInt32(out value);
     }
 
     public static bool TryGetInt64(JsonElement element, string name, out long value)
@@ -53,10 +40,5 @@ public static class ReceiptJsonHelper
         return element.TryGetProperty(name, out var property) &&
                property.ValueKind == JsonValueKind.Number &&
                property.TryGetInt64(out value);
-    }
-
-    public static bool TryInteger(JsonElement element, string name, out long value)
-    {
-        return TryGetInt64(element, name, out value);
     }
 }
