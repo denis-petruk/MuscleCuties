@@ -1,0 +1,190 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  MuscleCuties transactional email plane: the SES v2 configuration set every registration
+  and password-recovery code is sent through, its SNS event destination, and the
+  account-level bounce/complaint suppression settings. No secret is described here.
+
+# ---------------------------------------------------------------------------------------
+# No secret is needed by this plane. Sending is authorized by the Lambda execution role
+# (BackendApiSesSendPolicy in identity.yaml), the from address is a verified domain
+# identity, and only the SES service principal may publish to the topic.
+#
+# FAITHFULNESS RECORD — compared 2026-11-24 against account 028417007003 / us-east-2:
+#   - configuration set musclecuties-email-challenges: SendingEnabled true,
+#     ReputationMetricsEnabled true, no delivery options, no suppression options and no
+#     tracking options. Exactly those properties are declared; the optional ones live does
+#     not set are deliberately absent rather than invented.
+#   - event destination ses-events-sns on that set: Enabled true, matching events
+#     BOUNCE, COMPLAINT, DELIVERY, REJECT, SEND, SNS destination the topic below.
+#   - topic musclecuties-ses-events: standard (FIFO is not supported by SES), no display
+#     name, policy allowing ses.amazonaws.com to sns:Publish with
+#     StringEquals AWS:SourceAccount (confused-deputy guard, no wildcard principal).
+#   - account-level suppression: SuppressedReasons [BOUNCE, COMPLAINT].
+#
+# NOT ADOPTED: these resources already exist live and no stack describes them yet. This
+# template describes the same names and values so a fresh environment reproduces them; it
+# does not claim the live ones belong to a stack. Adoption is a separate stack-import
+# step, documented in private-docs/STATUS.md, and it is not performed by deploying this
+# file.
+# ---------------------------------------------------------------------------------------
+
+Parameters:
+  ConfigurationSetName:
+    Type: String
+    Default: musclecuties-email-challenges
+    Description: Configuration set named in Ses__ConfigurationSetName on the API function.
+
+  EventDestinationName:
+    Type: String
+    Default: ses-events-sns
+
+  TopicName:
+    Type: String
+    Default: musclecuties-ses-events
+
+Resources:
+  SesEventsTopic:
+    Type: AWS::SNS::Topic
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      TopicName: !Ref TopicName
+
+  # Service-principal publish grant. AWS:SourceAccount pins the grant to this account, so a
+  # topic name collision in another account cannot be used to publish into it.
+  SesEventsTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref SesEventsTopic
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowSesToPublishDeliveryEvents
+            Effect: Allow
+            Principal:
+              Service: ses.amazonaws.com
+            Action: sns:Publish
+            Resource: !Ref SesEventsTopic
+            Condition:
+              StringEquals:
+                AWS:SourceAccount: !Ref AWS::AccountId
+
+  EmailConfigurationSet:
+    Type: AWS::SES::ConfigurationSet
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Name: !Ref ConfigurationSetName
+      SendingOptions:
+        SendingEnabled: true
+      ReputationOptions:
+        ReputationMetricsEnabled: true
+
+  EmailEventDestination:
+    Type: AWS::SES::ConfigurationSetEventDestination
+    Properties:
+      ConfigurationSetName: !Ref EmailConfigurationSet
+      EventDestination:
+        Name: !Ref EventDestinationName
+        Enabled: true
+        MatchingEventTypes:
+          - BOUNCE
+          - COMPLAINT
+          - DELIVERY
+          - REJECT
+          - SEND
+        SnsDestination:
+          TopicARN: !Ref SesEventsTopic
+
+  # Account-level suppression has no native CloudFormation resource; it is set through
+  # UpdateAccountSuppressionAttributes, so it is described with a custom resource instead of
+  # being left as console-only configuration. The handler is idempotent, writes the same
+  # values SES already holds, and never logs or returns an address.
+  AccountSuppressionFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Sub "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+      Policies:
+        - PolicyName: ApplyAccountSuppressionList
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - ses:PutAccountSuppressionAttributes
+                  - ses:GetAccount
+                Resource: "*"
+
+  AccountSuppressionFunction:
+    Type: AWS::Lambda::Function
+    Properties:
+      Runtime: python3.12
+      Handler: index.handler
+      Timeout: 60
+      MemorySize: 128
+      Role: !GetAtt AccountSuppressionFunctionRole.Arn
+      Code:
+        ZipFile: |
+          import json
+          import urllib.request
+
+          import boto3
+
+          ses = boto3.client("sesv2")
+          PHYSICAL_ID = "account-suppression-list"
+
+
+          def respond(event, status, data, reason):
+              body = json.dumps({
+                  "Status": status,
+                  "Reason": reason,
+                  "PhysicalResourceId": PHYSICAL_ID,
+                  "StackId": event["StackId"],
+                  "RequestId": event["RequestId"],
+                  "LogicalResourceId": event["LogicalResourceId"],
+                  "Data": data,
+              }).encode("utf-8")
+              request = urllib.request.Request(
+                  event["ResponseURL"], data=body, method="PUT",
+                  headers={"Content-Type": ""})
+              urllib.request.urlopen(request, timeout=30).read()
+
+
+          def handler(event, context):
+              reasons = event["ResourceProperties"].get("SuppressedReasons") or ["BOUNCE", "COMPLAINT"]
+              try:
+                  if event["RequestType"] in ("Create", "Update"):
+                      ses.put_account_suppression_attributes(SuppressedReasons=reasons)
+                  # Delete is deliberately a no-op: removing this stack must not silently
+                  # re-enable sending to addresses that bounced or complained.
+                  respond(event, "SUCCESS", {"SuppressedReasons": ",".join(reasons)}, "applied")
+              except Exception as exc:  # noqa: BLE001 - the reason must reach CloudFormation
+                  respond(event, "FAILED", {}, type(exc).__name__)
+
+  AccountSuppressionAttributes:
+    Type: AWS::CloudFormation::CustomResource
+    Properties:
+      ServiceToken: !GetAtt AccountSuppressionFunction.Arn
+      SuppressedReasons:
+        - BOUNCE
+        - COMPLAINT
+
+Outputs:
+  ConfigurationSetName:
+    Value: !Ref EmailConfigurationSet
+    Export:
+      Name: !Sub "${AWS::StackName}-ConfigurationSetName"
+
+  SesEventsTopicArn:
+    Value: !Ref SesEventsTopic
+    Export:
+      Name: !Sub "${AWS::StackName}-SesEventsTopicArn"
