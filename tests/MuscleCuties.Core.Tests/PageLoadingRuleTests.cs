@@ -52,6 +52,39 @@ public sealed class PageLoadingRuleTests
         Assert.True(gate.IsLoading(isBusy: true), "a failed refresh leaves nothing on screen to keep");
     }
 
+    /// <summary>
+    /// Four profile pages each carried the same action-footer pair: an inline busy indicator and a status label with
+    /// its screen-reader announcement and its error/accent trigger. They now render the one shared footer.
+    /// </summary>
+    [Theory]
+    [InlineData("ProfileFeedbackPage.xaml")]
+    [InlineData("ProfileUnitsDisplayPage.xaml")]
+    [InlineData("ProfileNutritionSettingsPage.xaml")]
+    [InlineData("ProfilePersonalInfoPage.xaml")]
+    public void ProfileFootersRenderThroughTheSharedStatusFooter(string page)
+    {
+        var xaml = UiSourceFixture.ReadUi("Pages", "Profile", page);
+
+        Assert.Contains("<sharedControls:StatusFooter", xaml);
+        Assert.DoesNotContain("DataTrigger TargetType=\"Label\" Binding=\"{Binding IsStatusError}\"", xaml);
+    }
+
+    [Fact]
+    public void StatusFooterKeepsTheBusyIndicatorAndTheAnnouncedStatusLabel()
+    {
+        var xaml = UiSourceFixture.ReadUi("Controls", "Shared", "StatusFooter.xaml");
+
+        Assert.Contains("{StaticResource StateBusyInline}", xaml);
+        Assert.Contains("IsRunning=\"{Binding IsBusy}\"", xaml);
+        Assert.Contains("IsVisible=\"{Binding IsBusy}\"", xaml);
+        Assert.Contains("Text=\"{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}\"", xaml);
+        Assert.Contains("IsVisible=\"{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}\"", xaml);
+        Assert.Contains("<shared:ScreenReaderStatusAnnouncementBehavior", xaml);
+        Assert.Contains("{StaticResource ErrorLabel}", xaml);
+        Assert.Contains("Binding=\"{Binding IsStatusError}\" Value=\"False\"", xaml);
+        Assert.Contains("{StaticResource AccentLabel}", xaml);
+    }
+
     private sealed class FakePage : IPageLoadAware
     {
         public bool IsPageLoading => false;

@@ -11,12 +11,19 @@ public static class FoodServingOptionHelper
         FoodPortionCatalog catalog,
         IRecipePortionUseCase portionUseCase)
     {
-        var options = ReadOptions(food.ServingOptionsJson, catalog.GramUnit);
+        // FoodServingOptions owns the one dedupe rule: cleaned labels, and rows that repeat the same grams in the same
+        // unit collapse into one. This picker adds only its own display rule - it lists rows measured in the catalog's
+        // gram unit and nothing else.
+        var options = new List<StoredServingOption>();
+
+        foreach (var stored in FoodServingOptions.ReadOptions(food.ServingOptionsJson)
+                     .Where(option => string.Equals(option.Unit, catalog.GramUnit, StringComparison.OrdinalIgnoreCase)))
+            FoodServingOptions.AddDistinctOption(options, stored);
 
         if (food.ServingSize is { } servingSize && float.IsFinite(servingSize) && servingSize > 0f &&
             portionUseCase.ConvertMassToGrams(servingSize, food.ServingSizeUnit) is
                 { Succeeded: true, Grams: { } servingGrams })
-            AddDistinctOption(options, new FoodServingOptionItem
+            FoodServingOptions.AddDistinctOption(options, new StoredServingOption
             {
                 Label = "serving",
                 Unit = "serving",
@@ -25,7 +32,7 @@ public static class FoodServingOptionHelper
             });
 
         foreach (var option in catalog.StandardOptions)
-            AddDistinctOption(options, new FoodServingOptionItem
+            FoodServingOptions.AddDistinctOption(options, new StoredServingOption
             {
                 Label = option.Label,
                 Unit = option.Unit,
@@ -33,25 +40,7 @@ public static class FoodServingOptionHelper
                 Source = "Standard"
             });
 
-        return options;
-    }
-
-    private static List<FoodServingOptionItem> ReadOptions(string? json, string gramUnit)
-    {
-        // Stored serving options are read by FoodServingOptions; this helper keeps only its own display rule on
-        // top - a portion picker shows rows measured in the catalog's gram unit and nothing else.
-        IReadOnlyList<StoredServingOption> stored;
-        try
-        {
-            stored = FoodServingOptions.ReadOptions(json);
-        }
-        catch
-        {
-            return [];
-        }
-
-        return stored
-            .Where(option => string.Equals(option.Unit, gramUnit, StringComparison.OrdinalIgnoreCase))
+        return options
             .Select(option => new FoodServingOptionItem
             {
                 Label = option.Label,
@@ -61,17 +50,4 @@ public static class FoodServingOptionHelper
             })
             .ToList();
     }
-
-    private static void AddDistinctOption(List<FoodServingOptionItem> options, FoodServingOptionItem option)
-    {
-        if (!float.IsFinite(option.Grams) || option.Grams <= 0f ||
-            string.IsNullOrWhiteSpace(option.Label))
-            return;
-
-        if (options.Any(o => string.Equals(o.Label, option.Label, StringComparison.OrdinalIgnoreCase)))
-            return;
-
-        options.Add(option);
-    }
-
 }

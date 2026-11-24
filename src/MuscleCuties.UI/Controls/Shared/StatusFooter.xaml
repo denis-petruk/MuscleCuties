@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ContentView
+    x:Class="MuscleCuties.UI.Controls.Shared.StatusFooter"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:shared="clr-namespace:MuscleCuties.UI.Controls.Shared">
+
+    <!--
+        The footer state pair every action footer shows: an inline indicator while a save runs and the status line
+        that reports the outcome. The label announces itself to the screen reader and turns from the error style to
+        the accent style once the message is informational rather than a failure.
+    -->
+    <VerticalStackLayout Spacing="{StaticResource UiSpaceTight}">
+        <ActivityIndicator Style="{StaticResource StateBusyInline}"
+                           IsRunning="{Binding IsBusy}"
+                           IsVisible="{Binding IsBusy}" />
+        <Label Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
+               Style="{StaticResource ErrorLabel}"
+               LineBreakMode="WordWrap"
+               IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}">
+            <Label.Behaviors>
+                <shared:ScreenReaderStatusAnnouncementBehavior />
+            </Label.Behaviors>
+            <Label.Triggers>
+                <DataTrigger TargetType="Label" Binding="{Binding IsStatusError}" Value="False">
+                    <Setter Property="Style" Value="{StaticResource AccentLabel}" />
+                </DataTrigger>
+            </Label.Triggers>
+        </Label>
+    </VerticalStackLayout>
+</ContentView>

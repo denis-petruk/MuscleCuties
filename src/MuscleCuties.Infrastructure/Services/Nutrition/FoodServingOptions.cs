@@ -52,7 +52,10 @@ public static partial class FoodServingOptions
     public static IReadOnlyList<FoodServingOption> BuildOptions(float? servingSize, string? servingSizeUnit,
         string? servingOptionsJson)
     {
-        var options = ReadOptions(servingOptionsJson).ToList();
+        var options = new List<FoodServingOption>();
+
+        foreach (var stored in ReadOptions(servingOptionsJson))
+            AddDistinctOption(options, stored);
 
         if (servingSize is > NoGrams && float.IsFinite(servingSize.Value) &&
             TryConvertToGrams(servingSize.Value, servingSizeUnit, out var servingGrams))
@@ -193,7 +196,7 @@ public static partial class FoodServingOptions
         return false;
     }
 
-    private static void AddDistinctOption(List<FoodServingOption> options, FoodServingOption option)
+    public static void AddDistinctOption(List<FoodServingOption> options, FoodServingOption option)
     {
         if (!float.IsFinite(option.Grams) || option.Grams <= NoGrams || string.IsNullOrWhiteSpace(option.Label))
             return;

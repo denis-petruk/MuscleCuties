@@ -608,23 +608,7 @@
     </ScrollView>
     <VerticalStackLayout Grid.Row="2" Padding="{DynamicResource PresentationActionFooterPadding}" Spacing="{StaticResource UiSpaceTight}" MaximumWidthRequest="{StaticResource PageContentMaxWidth}" HorizontalOptions="Fill"
                          BackgroundColor="{AppThemeBinding Light={StaticResource PageBackground}, Dark={StaticResource PageBackgroundDark}}">
-        <ActivityIndicator Style="{StaticResource StateBusyInline}"
-                           IsRunning="{Binding IsBusy}"
-                           IsVisible="{Binding IsBusy}" />
-        <Label
-            Text="{Binding StatusMessage, Converter={StaticResource LocalizedStringConverter}}"
-            Style="{StaticResource ErrorLabel}"
-            LineBreakMode="WordWrap"
-            IsVisible="{Binding StatusMessage, Converter={StaticResource StringToBoolConverter}}">
-            <Label.Behaviors>
-                <sharedControls:ScreenReaderStatusAnnouncementBehavior />
-            </Label.Behaviors>
-            <Label.Triggers>
-                <DataTrigger TargetType="Label" Binding="{Binding IsStatusError}" Value="False">
-                    <Setter Property="Style" Value="{StaticResource AccentLabel}" />
-                </DataTrigger>
-            </Label.Triggers>
-        </Label>
+        <sharedControls:StatusFooter />
         <Button
             Style="{StaticResource ButtonPrimary}"
             Text="{loc:LocalizedText Profile_NutritionSettings_SaveNutritionSettings}"

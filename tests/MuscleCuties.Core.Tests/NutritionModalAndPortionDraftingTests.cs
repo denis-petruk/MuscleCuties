@@ -240,6 +240,42 @@ public sealed class NutritionModalAndPortionDraftingTests
         Assert.Equal(new[] { "oz", "g" }, options.Select(option => option.Label));
     }
 
+    /// <summary>
+    /// The UI helper carried its own AddDistinctOption with a different rule (raw label only). Both callers now
+    /// run the one dedupe the infrastructure helper owns.
+    /// </summary>
+    [Fact]
+    public void ServingOptionDedupeHasOneImplementation()
+    {
+        var helper = File.ReadAllText(Path.Combine(UiRoot, "Models", "UI", "Nutrition", "FoodServingOptionHelper.cs"));
+        Assert.DoesNotContain("private static void AddDistinctOption", helper);
+        Assert.Contains("FoodServingOptions.AddDistinctOption", helper);
+
+        var shared = File.ReadAllText(
+            Path.Combine(RepositoryRoot, "src", "MuscleCuties.Infrastructure", "Services", "Nutrition", "FoodServingOptions.cs"));
+        Assert.Contains("public static void AddDistinctOption", shared);
+    }
+
+    [Fact]
+    public void SharedDedupeCleansLabelsAndCollapsesTheSameGramsInTheSameUnit()
+    {
+        const string json = """
+            [{"label":"  large   egg ","unit":"g","grams":50,"source":"FDC"},
+             {"label":"large egg","unit":"g","grams":50.004,"source":"FDC"},
+             {"label":"cup","unit":"cup","grams":50.004,"source":"FDC"}]
+            """;
+
+        var options = FoodServingOptions.BuildOptions(servingSize: null, servingSizeUnit: null, servingOptionsJson: json);
+        var stored = options.Where(option => option.Source == "FDC").ToList();
+
+        Assert.Equal(2, stored.Count);
+        Assert.Equal("large egg", stored[0].Label);
+        Assert.Equal("cup", stored[1].Label);
+
+        Assert.Contains(options, option => option.Label == "g" && option.Unit == "g");
+        Assert.Contains(options, option => option.Label == "oz" && option.Unit == "oz");
+    }
+
     [Fact]
     public void SharedServingOptionParseTreatsMissingOrMalformedJsonAsEmpty()
     {
