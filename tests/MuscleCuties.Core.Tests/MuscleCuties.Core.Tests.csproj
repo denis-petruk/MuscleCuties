@@ -25,6 +25,7 @@
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Localization\LocalizedFormat.cs" Link="LocalizedFormat.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\Models\UI\Workout\ExerciseSetInputItem.cs" Link="ExerciseSetInputItem.cs" />
     <Using Include="System.Globalization" />
+    <Compile Include="..\..\src\MuscleCuties.UI\Services\Auth\OtpCodeRules.cs" Link="OtpCodeRules.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Workout\WorkoutAccountCalendarClient.cs" Link="WorkoutAccountCalendarClient.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Dashboard\DailyCheckInViewModel.cs" Link="DailyCheckInViewModel.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Workout\WorkoutListFilterRule.cs" Link="WorkoutListFilterRule.cs" />

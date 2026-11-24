@@ -109,7 +109,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         if (string.IsNullOrEmpty(value))
             return;
 
-        var digitsOnly = new string(value.Where(char.IsDigit).Take(6).ToArray());
+        var digitsOnly = OtpCodeRules.DigitsOnly(value);
         if (!string.Equals(digitsOnly, value, StringComparison.Ordinal))
             OtpCode = digitsOnly;
     }

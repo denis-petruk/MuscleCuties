@@ -1,3 +1,4 @@
+using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UseCases.Features.Account.Otp.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Auth;
@@ -76,7 +77,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         if (string.IsNullOrEmpty(value))
             return;
 
-        var digitsOnly = new string(value.Where(char.IsDigit).Take(6).ToArray());
+        var digitsOnly = OtpCodeRules.DigitsOnly(value);
         if (!string.Equals(digitsOnly, value, StringComparison.Ordinal))
             OtpCode = digitsOnly;
     }
