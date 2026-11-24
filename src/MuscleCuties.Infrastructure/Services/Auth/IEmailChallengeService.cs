@@ -8,14 +8,3 @@ public enum EmailChallengePurpose
     PasswordRecovery = 2
 }
 
-public sealed record EmailChallengeStartResult(
-    bool Succeeded,
-    string? ChallengeId,
-    int ResendCooldownSeconds,
-    string? ErrorMessage = null);
-
-public sealed record EmailChallengeVerifyResult(
-    bool Succeeded,
-    string? VerificationToken,
-    string? ErrorMessage = null);
-

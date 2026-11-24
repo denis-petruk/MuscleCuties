@@ -2,7 +2,6 @@ using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.Core.Services.Notifications;
-using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Infrastructure.Account.SignIn;
 using MuscleCuties.Infrastructure.Cloud;
 using MuscleCuties.UI.Services.Auth;

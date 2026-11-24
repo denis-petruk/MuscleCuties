@@ -6,7 +6,6 @@ using MuscleCuties.Core.Services.Nutrition.Planning;
 using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Core.Services.Quiz;
 using MuscleCuties.Core.Services.Workout;
-using MuscleCuties.Core.Services.Workout.Planning;
 using MuscleCuties.Infrastructure.Cloud;
 using MuscleCuties.UI.Services.Configuration;
 using MuscleCuties.Infrastructure.Cycle.Overview;
