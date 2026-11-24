@@ -357,12 +357,12 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
         IsInjuryModalVisible = false;
     }
 
-    private async Task RefreshAfterInjuryChangeAsync()
-    {
-        HasActiveInjuries = InjuryLogVm.HasActiveInjuries;
-        Invalidate();
-        await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
-    }
+    private Task RefreshAfterInjuryChangeAsync() =>
+        _loadGate.RefreshAfterInjuryChangeAsync(
+            InjuryLogVm.HasActiveInjuries,
+            hasActiveInjuries => HasActiveInjuries = hasActiveInjuries,
+            LoadDataCoreAsync,
+            this);
 
     private async Task RefreshAsync()
     {

@@ -93,6 +93,22 @@ internal sealed class AppPageLoadGate : IDisposable
         }
     }
 
+    /// <summary>
+    /// The single injury-change refresh path: publish the state the injury log now reports, mark the
+    /// page stale, then reload it once, forced. Both the dashboard and the train page ran their own
+    /// copy of this sequence.
+    /// </summary>
+    public Task RefreshAfterInjuryChangeAsync(
+        bool hasActiveInjuries,
+        Action<bool> applyHasActiveInjuries,
+        Func<Task> loadAsync,
+        IPageLoadAware page)
+    {
+        applyHasActiveInjuries(hasActiveInjuries);
+        MarkStale();
+        return RunAsync(loadAsync, page, true);
+    }
+
     public void InvalidateAndReloadIfToday(DateOnly changedDate, Func<Task> loadAsync, IPageLoadAware page)
     {
         MarkStale();

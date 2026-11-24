@@ -547,12 +547,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
-    private async Task RefreshAfterInjuryChangeAsync()
-    {
-        HasActiveInjuries = InjuryLogVm.HasActiveInjuries;
-        Invalidate();
-        await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
-    }
+    private Task RefreshAfterInjuryChangeAsync() =>
+        _loadGate.RefreshAfterInjuryChangeAsync(
+            InjuryLogVm.HasActiveInjuries,
+            hasActiveInjuries => HasActiveInjuries = hasActiveInjuries,
+            LoadDataCoreAsync,
+            this);
 
     public void RefreshThemeColors(bool useDarkTheme)
     {
