@@ -66,7 +66,7 @@ public sealed class AppAccountPurgeService : IAppAccountPurgeService
                     if (appleSignIn is null)
                         return Failed(AccountDeletionAppleAuthorizationMessage);
 
-                    AppleSignInResult? credential;
+                    PlatformSignInResult? credential;
                     try
                     {
                         credential = await appleSignIn.SignInAsync(ct).ConfigureAwait(false);

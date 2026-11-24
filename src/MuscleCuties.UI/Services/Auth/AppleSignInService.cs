@@ -16,7 +16,7 @@ public sealed class AppleSignInService(
     public string LoginButtonText => "Log In with Apple";
     public string RegisterButtonText => "Sign in with Apple";
 
-    public async Task<AppleSignInResult?> SignInAsync(CancellationToken cancellationToken = default)
+    public async Task<PlatformSignInResult?> SignInAsync(CancellationToken cancellationToken = default)
     {
 #if IOS || MACCATALYST
         if (_activeController is not null)
@@ -41,7 +41,7 @@ public sealed class AppleSignInService(
         rawNonce = nonceResponse.Data.Nonce;
         nonceChallengeId = nonceResponse.Data.ChallengeId;
 
-        var completion = new TaskCompletionSource<AppleSignInResult?>(
+        var completion = new TaskCompletionSource<PlatformSignInResult?>(
             TaskCreationOptions.RunContinuationsAsynchronously);
 
         if (cancellationToken.CanBeCanceled)
@@ -91,20 +91,9 @@ public sealed class AppleSignInService(
 #endif
     }
 
-    public async Task<PlatformSignInResult?> SignInWithProviderAsync(CancellationToken cancellationToken = default)
+    public Task<PlatformSignInResult?> SignInWithProviderAsync(CancellationToken cancellationToken = default)
     {
-        var appleAccount = await SignInAsync(cancellationToken).ConfigureAwait(false);
-        return appleAccount is null
-            ? null
-            : new PlatformSignInResult(
-                "apple",
-                appleAccount.UserIdentifier,
-                appleAccount.Email,
-                appleAccount.FullName,
-                appleAccount.IdentityToken,
-                appleAccount.Nonce,
-                appleAccount.NonceChallengeId,
-                appleAccount.AuthorizationCode);
+        return SignInAsync(cancellationToken);
     }
 #if IOS || MACCATALYST
     private ASAuthorizationController? _activeController;
@@ -114,7 +103,7 @@ public sealed class AppleSignInService(
 
 #if IOS || MACCATALYST
     private void StartAppleSignIn(
-        TaskCompletionSource<AppleSignInResult?> completion,
+        TaskCompletionSource<PlatformSignInResult?> completion,
         string? rawNonce,
         string? nonceChallengeId)
     {
@@ -161,7 +150,7 @@ public sealed class AppleSignInService(
     }
 
     private sealed class AppleAuthorizationDelegate(
-        TaskCompletionSource<AppleSignInResult?> completion,
+        TaskCompletionSource<PlatformSignInResult?> completion,
         Action clearActiveSession,
         string? rawNonce,
         string? nonceChallengeId) : ASAuthorizationControllerDelegate
@@ -192,7 +181,8 @@ public sealed class AppleSignInService(
                     authorizationCode = System.Text.Encoding.UTF8.GetString(credential.AuthorizationCode.ToArray());
                 }
 
-                completion.TrySetResult(new AppleSignInResult(
+                completion.TrySetResult(new PlatformSignInResult(
+                    "apple",
                     credential.User,
                     credential.Email,
                     BuildFullName(credential.FullName),
