@@ -66,14 +66,15 @@ Parameters:
 #
 # ACCEPT-AND-RECONCILE — three bounded gaps, none of which can be closed by editing this
 # file:
-#   1. DBInstanceIdentifier is musclecuties-staging-postgres; live is still
-#      musclecuties-staging-db. That rename is Phase 1c (snapshot restore -> cutover).
-#      Import this stack only after the rename, otherwise the identifier does not match.
+#   1. CLOSED 2026-11-24. The live instance is musclecuties-staging-db, and this template
+#      now derives musclecuties-${Environment}-db, so the identifier in the file matches live.
+#      The earlier note ("live is still -postgres, rename in Phase 1c") described work that
+#      never happened; no rename is pending.
 #   2. Tags: this file declares the five baseline tags, but the live instance currently has
 #      an empty TagList. Import does not apply properties, so the stack would import
 #      DRIFTED. Reconcile first with:
 #        aws rds add-tags-to-resource \
-#          --resource-name arn:aws:rds:us-east-2:028417007003:db:musclecuties-staging-postgres \
+#          --resource-name arn:aws:rds:us-east-2:028417007003:db:musclecuties-staging-db \
 #          --tags Key=Project,Value=MuscleCuties Key=Environment,Value=staging \
 #                 Key=Owner,Value=deniska.petruk@icloud.com  # (see stack tags for the full set)
 #      CopyTagsToSnapshot is already true, so the Phase 1c restore carries tags from the
@@ -96,7 +97,7 @@ Resources:
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
-      DBInstanceIdentifier: !Sub "musclecuties-${Environment}-postgres"
+      DBInstanceIdentifier: !Sub "musclecuties-${Environment}-db"
       DBInstanceClass: !Ref DbInstanceClass
       Engine: postgres
       EngineVersion: "17.5"

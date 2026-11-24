@@ -26,14 +26,27 @@ Parameters:
 
   FunctionName:
     Type: String
-    Default: musclecuties-staging-backend-api
+    Default: musclecuties-backend-api
+    Description: >-
+      The live function name. The release workflow deploys code into
+      vars.BETA_SERVER_FUNCTION, which is musclecuties-backend-api; the previous
+      "-staging-" default described a function that has never existed. Because the
+      function is CREATED by this template (ADR-0006) and this name now matches the live
+      one, applying it to an account that already has the function requires a stack
+      import, not a create.
 
   CodeS3Key:
     Type: String
     Default: migrations/lambda/musclecuties-backend-api-sb0M464m.zip
     Description: >-
-      Hash-pinned package. The stack cannot enforce the hash, so the cutover runbook
-      asserts CodeSha256 after creation before any traffic is pointed at the alias.
+      Hash-pinned package, and it does exist: 17,232,584 bytes in
+      musclecuties-staging-release-artifacts-028417007003, which is the bucket the Code block
+      below resolves to. (An earlier revision of this comment claimed a HeadObject 404; that
+      check had been run against musclecuties-release-artifacts-028417007003, a different
+      bucket, where the key is genuinely absent.) The release workflow writes new packages to
+      lambda/<component>/<source_sha>/<zip_sha256>/MuscleCuties.Server.zip, and the stack
+      cannot enforce the digest, so CodeSha256 is asserted after creation before any traffic
+      is pointed at the alias.
 
   ExecutionRoleArn:
     Type: String
@@ -66,12 +79,22 @@ Parameters:
 
 # ---------------------------------------------------------------------------------------
 # FAITHFULNESS RECORD — function configuration compared to
-# `aws lambda get-function-configuration` on 2026-11-19. Matched: runtime dotnet10,
-# handler MuscleCuties.Server, memory 3008, timeout 27, architectures [arm64],
-# ephemeral storage 512, package type Zip, VPC subnets subnet-0ce86904005e7726f /
-# subnet-0b5ce78ce2660d88b with SG sg-03fbb100b48b6e76b, execution role
-# musclecuties-backend-api-role-oot9kwhk, TracingConfig PassThrough, and all 25
-# environment variable names (verified by set comparison, 25 template == 25 live).
+# `aws lambda get-function-configuration` on 2026-11-24. Matched: function name
+# musclecuties-backend-api, runtime dotnet10, handler MuscleCuties.Server, memory 3008,
+# timeout 27, architectures [arm64], ephemeral storage 512, package type Zip, VPC subnets
+# subnet-0ce86904005e7726f / subnet-0b5ce78ce2660d88b with SG sg-03fbb100b48b6e76b,
+# execution role musclecuties-backend-api-role-oot9kwhk, TracingConfig PassThrough, and
+# all 11 environment variable names (set comparison, 11 template == 11 live).
+#
+# The 2026-11-19 revision of this file claimed 25 == 25; the live function had 7, because the
+# 2026-11-20 deploy replaced its environment. It now has 11: those 7 plus ASPNETCORE_ENVIRONMENT
+# and the three Ses__* keys. The 14 non-secret keys this file used to declare alone
+# (DOTNET_SYSTEM_GLOBALIZATION_INVARIANT, Authentication__Issuer/Audience, AppleSignIn__TeamId/
+# KeyId, EmailReceipts__Issuer/Audience/ActiveKeyId, EmailChallenges__ActiveHmacKeyId,
+# Storage__S3__Region/BucketName, Lambda__DatabasePool__*) were never present live and are
+# removed rather than pretended. Observation, not changed here: without
+# Storage__S3__BucketName in the environment, DefaultS3PresignedUrlService.IsConfigured is false
+# on the deployed function, so the photo vault serves its unavailable path live.
 #
 # Environment.Variables is the one property where omission is destructive: CloudFormation
 # replaces the whole map, so a variable missing from this file is deleted on the next
@@ -97,7 +120,6 @@ Resources:
     Type: AWS::Lambda::Function
     Properties:
       FunctionName: !Ref FunctionName
-      Description: MuscleCuties staging API (ASP.NET Core)
       Runtime: dotnet10
       Handler: MuscleCuties.Server
       Role: !Ref ExecutionRoleArn
@@ -120,25 +142,16 @@ Resources:
           - !Ref VpcSecurityGroup
       Environment:
         Variables:
-          # --- non-secret configuration, values as live on 2026-11-19 ---
+          # --- the four non-secret variables that exist live, values as live on 2026-11-24 ---
           ASPNETCORE_ENVIRONMENT: Staging
-          DOTNET_SYSTEM_GLOBALIZATION_INVARIANT: "1"
-          Authentication__Issuer: MuscleCutiesServer
-          Authentication__Audience: MuscleCutiesApp
-          AppleSignIn__TeamId: N23Z94V7G6
-          AppleSignIn__KeyId: HN4A2D448R
-          EmailReceipts__Issuer: MuscleCutiesServer
-          EmailReceipts__Audience: MuscleCutiesEmailReceipt
-          EmailReceipts__ActiveKeyId: v20261020a
-          EmailChallenges__ActiveHmacKeyId: v20261020a
           Ses__FromAddress: "MuscleCuties <noreply@musclecuties.app>"
           Ses__Region: us-east-2
-          Storage__S3__Region: us-east-2
-          Storage__S3__BucketName: musclecuties-media-staging-028417007003
-          Lambda__DatabasePool__MinPoolSize: "0"
-          Lambda__DatabasePool__MaxPoolSize: "5"
-          Lambda__DatabasePool__RequireSslMode: "true"
-          Lambda__DatabasePool__RunMigrationsOnColdStart: "false"
+          Ses__ConfigurationSetName: musclecuties-email-challenges
+          # Everything else (Authentication:Issuer/Audience, AppleSignIn:TeamId/KeyId,
+          # EmailReceipts:Issuer/Audience/ActiveKeyId, EmailChallenges:ActiveHmacKeyId,
+          # Storage:S3:*, Lambda:DatabasePool:*) resolves from the appsettings.json packaged
+          # in the deployment zip. Those values used to be listed here as if the live function
+          # carried them; it does not, so they are not invented here either.
           # --- secret configuration, resolved from Secrets Manager at deploy time ---
           ConnectionStrings__PostgreSql: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:ConnectionStrings__PostgreSql}}"
           Authentication__SigningKey: !Sub "{{resolve:secretsmanager:${EnvSecretName}:SecretString:Authentication__SigningKey}}"

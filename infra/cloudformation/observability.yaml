@@ -20,11 +20,17 @@ Parameters:
 
   ApiFunctionName:
     Type: String
-    Default: musclecuties-staging-backend-api
+    Default: musclecuties-backend-api
+    Description: >-
+      The live API function. The previous "-staging-" default pointed the alarm at a
+      function that has never existed, so alarm state would have been INSUFFICIENT_DATA.
 
   DbInstanceIdentifier:
     Type: String
-    Default: musclecuties-staging-postgres
+    Default: musclecuties-staging-db
+    Description: >-
+      The live RDS instance. The previous "-postgres" default named an instance that does
+      not exist in this account, so every DB alarm below would have been INSUFFICIENT_DATA.
 
   NotificationEmail:
     Type: String
