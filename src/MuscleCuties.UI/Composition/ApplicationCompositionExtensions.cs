@@ -54,7 +54,6 @@ public static class ApplicationCompositionExtensions
         services.AddScoped<ICalorieCalculator, CalorieCalculator>();
         services.AddScoped<INutritionPlanner, NutritionPlanner>();
         services.AddScoped<ICyclePhaseCalculator, CyclePhaseCalculator>();
-        services.AddScoped<ICyclePredictionPlanner, CyclePredictionPlanner>();
 
         services.AddScoped<CloudDailyCheckInStore>();
         services.AddSingleton<IDailyCheckInStore, ScopedCloudDailyCheckInStore>();
