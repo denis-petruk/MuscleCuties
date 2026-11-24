@@ -1,12 +1,11 @@
-using System.Text.Json;
+using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes;
+using StoredServingOption = MuscleCuties.Core.Services.Nutrition.FoodServingOption;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
 public static class FoodServingOptionHelper
 {
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
-
     public static List<FoodServingOptionItem> BuildServingOptionItems(
         FoodSearchResultItem food,
         FoodPortionCatalog catalog,
@@ -39,21 +38,28 @@ public static class FoodServingOptionHelper
 
     private static List<FoodServingOptionItem> ReadOptions(string? json, string gramUnit)
     {
-        if (string.IsNullOrWhiteSpace(json))
-            return [];
-
+        // Stored serving options are read by FoodServingOptions; this helper keeps only its own display rule on
+        // top - a portion picker shows rows measured in the catalog's gram unit and nothing else.
+        IReadOnlyList<StoredServingOption> stored;
         try
         {
-            return JsonSerializer.Deserialize<List<FoodServingOptionItem>>(json, JsonOptions)?
-                .Where(o => !string.IsNullOrWhiteSpace(o.Label) &&
-                            float.IsFinite(o.Grams) && o.Grams > 0f &&
-                            string.Equals(o.Unit, gramUnit, StringComparison.OrdinalIgnoreCase))
-                .ToList() ?? [];
+            stored = FoodServingOptions.ReadOptions(json);
         }
         catch
         {
             return [];
         }
+
+        return stored
+            .Where(option => string.Equals(option.Unit, gramUnit, StringComparison.OrdinalIgnoreCase))
+            .Select(option => new FoodServingOptionItem
+            {
+                Label = option.Label,
+                Unit = option.Unit,
+                Grams = option.Grams,
+                Source = option.Source
+            })
+            .ToList();
     }
 
     private static void AddDistinctOption(List<FoodServingOptionItem> options, FoodServingOptionItem option)

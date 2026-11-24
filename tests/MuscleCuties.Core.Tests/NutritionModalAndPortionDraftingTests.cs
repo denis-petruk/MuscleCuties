@@ -1,6 +1,7 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using MuscleCuties.Core.Services.Nutrition;
 using Xunit;
 
 namespace MuscleCuties.Core.Tests;
@@ -207,6 +208,47 @@ public sealed class NutritionModalAndPortionDraftingTests
         var rounded = Math.Round(value, 4);
         return rounded.ToString("0.####", CultureInfo.InvariantCulture);
     }
+
+    #region Serving option parsing (one implementation)
+
+    /// <summary>
+    /// The mobile helper and the infrastructure helper both turned stored serving options into rows. The helper now
+    /// reads through <see cref="FoodServingOptions.ReadOptions"/> and keeps only its own unit filter on top.
+    /// </summary>
+    [Fact]
+    public void ServingOptionHelperReadsStoredOptionsThroughTheSharedParse()
+    {
+        var source = File.ReadAllText(
+            Path.Combine(UiRoot, "Models", "UI", "Nutrition", "FoodServingOptionHelper.cs"));
+
+        Assert.Contains("FoodServingOptions.ReadOptions", source);
+        Assert.DoesNotContain("JsonSerializer.Deserialize", source);
+    }
+
+    [Fact]
+    public void SharedServingOptionParseKeepsEveryUnitAndDropsUnusableRows()
+    {
+        const string json = """
+            [{"label":"oz","unit":"oz","grams":28.35,"source":"Standard"},
+             {"label":"g","unit":"g","grams":1,"source":"Standard"},
+             {"label":"   ","unit":"g","grams":5,"source":"Standard"},
+             {"label":"zero","unit":"g","grams":0,"source":"Standard"}]
+            """;
+
+        var options = FoodServingOptions.ReadOptions(json);
+
+        Assert.Equal(new[] { "oz", "g" }, options.Select(option => option.Label));
+    }
+
+    [Fact]
+    public void SharedServingOptionParseTreatsMissingOrMalformedJsonAsEmpty()
+    {
+        Assert.Empty(FoodServingOptions.ReadOptions(null));
+        Assert.Empty(FoodServingOptions.ReadOptions("  "));
+        Assert.Empty(FoodServingOptions.ReadOptions("{not json"));
+    }
+
+    #endregion
 
     private static string FindRepositoryRoot()
     {
