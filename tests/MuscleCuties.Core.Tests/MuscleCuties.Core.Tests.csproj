@@ -32,6 +32,7 @@
     <Compile Include="..\..\src\MuscleCuties.UI\Models\UI\Nutrition\BarcodeScanTypes.cs" Link="BarcodeScanTypes.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Nutrition\IBarcodeScannerHardwareService.cs" Link="IBarcodeScannerHardwareService.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Nutrition\BarcodeScanCoordinator.cs" Link="BarcodeScanCoordinator.cs" />
+    <Compile Include="..\..\src\MuscleCuties.UI\Infrastructure\Network\HttpRetryPolicy.cs" Link="HttpRetryPolicy.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\Services\Workout\WorkoutAccountCalendarClient.cs" Link="WorkoutAccountCalendarClient.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Dashboard\DailyCheckInViewModel.cs" Link="DailyCheckInViewModel.cs" />
     <Compile Include="..\..\src\MuscleCuties.UI\ViewModels\Workout\WorkoutListFilterRule.cs" Link="WorkoutListFilterRule.cs" />

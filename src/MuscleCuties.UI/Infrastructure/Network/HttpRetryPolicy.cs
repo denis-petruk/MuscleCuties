@@ -1,5 +1,8 @@
+using System.IO;
 using System.Net;
 using System.Net.Http;
+using System.Net.Http.Json;
+using System.Text.Json.Serialization.Metadata;
 
 namespace MuscleCuties.UI.Infrastructure.Network;
 
@@ -35,6 +38,101 @@ internal static class HttpRetryPolicy
             return ClampDelay(date - DateTimeOffset.UtcNow, fallback, max);
 
         return fallback;
+    }
+
+    /// <summary>
+    /// The shared GET-and-read-JSON path the remote catalogue clients used to copy: 400/404 and any
+    /// other failure yield default, timeouts and exceptions are reported through the caller's logging.
+    /// </summary>
+    public static async Task<T?> SendAndReadJsonAsync<T>(
+        HttpClient httpClient,
+        Func<HttpRequestMessage> createRequest,
+        JsonTypeInfo<T> jsonTypeInfo,
+        TimeSpan defaultRateLimitDelay,
+        TimeSpan maxRateLimitDelay,
+        CancellationToken cancellationToken,
+        Action<HttpStatusCode>? onUnexpectedStatus = null,
+        Action? onTimeout = null,
+        Action<Exception>? onFailure = null)
+    {
+        ArgumentNullException.ThrowIfNull(jsonTypeInfo);
+
+        try
+        {
+            using var response = await SendWithRetryAsync(httpClient, createRequest,
+                defaultRateLimitDelay, maxRateLimitDelay, cancellationToken).ConfigureAwait(false);
+            if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound)
+                return default;
+
+            if (!response.IsSuccessStatusCode)
+            {
+                onUnexpectedStatus?.Invoke(response.StatusCode);
+                return default;
+            }
+
+            return await response.Content.ReadFromJsonAsync(jsonTypeInfo, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            onTimeout?.Invoke();
+            return default;
+        }
+        catch (Exception exception)
+        {
+            onFailure?.Invoke(exception);
+            return default;
+        }
+    }
+
+    /// <summary>
+    /// The shared media download both exercise clients carried byte for byte: buffered into a memory
+    /// stream so the caller owns a seekable copy, with the same status/timeout/exception reporting.
+    /// </summary>
+    public static async Task<Stream?> DownloadStreamAsync(
+        HttpClient httpClient,
+        Uri uri,
+        TimeSpan defaultRateLimitDelay,
+        TimeSpan maxRateLimitDelay,
+        CancellationToken cancellationToken,
+        Action<HttpStatusCode>? onUnexpectedStatus = null,
+        Action? onTimeout = null,
+        Action<Exception>? onFailure = null)
+    {
+        ArgumentNullException.ThrowIfNull(uri);
+
+        try
+        {
+            var response = await SendWithRetryAsync(httpClient,
+                () => new HttpRequestMessage(HttpMethod.Get, uri),
+                defaultRateLimitDelay, maxRateLimitDelay, cancellationToken).ConfigureAwait(false);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                onUnexpectedStatus?.Invoke(response.StatusCode);
+                response.Dispose();
+                return null;
+            }
+
+            var memoryStream = new MemoryStream();
+            await using (var contentStream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false))
+            {
+                await contentStream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
+            }
+
+            response.Dispose();
+            memoryStream.Position = 0;
+            return memoryStream;
+        }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            onTimeout?.Invoke();
+            return null;
+        }
+        catch (Exception exception)
+        {
+            onFailure?.Invoke(exception);
+            return null;
+        }
     }
 
     public static async Task<HttpResponseMessage> SendWithRetryAsync(

@@ -71,83 +71,48 @@ public sealed partial class WgerApiClient : IWgerApiClient
         }).ToList();
     }
 
-    public async Task<Stream?> DownloadMediaStreamAsync(Uri mediaUri, CancellationToken ct = default)
-    {
-        if (!CanSendRequest() || mediaUri is null)
-            return null;
+    public Task<Stream?> DownloadMediaStreamAsync(Uri mediaUri, CancellationToken ct = default) =>
+        !CanSendRequest() || mediaUri is null
+            ? Task.FromResult<Stream?>(null)
+            : HttpRetryPolicy.DownloadStreamAsync(_httpClient, mediaUri,
+                DefaultRateLimitDelay, MaxRateLimitDelay, ct,
+                status =>
+                {
+                    if (_logger is not null)
+                        LogWgerStatus(_logger, status);
+                },
+                () =>
+                {
+                    if (_logger is not null)
+                        LogWgerTimeout(_logger);
+                },
+                exception =>
+                {
+                    if (_logger is not null && _logger.IsEnabled(LogLevel.Information))
+                        LogWgerFailed(_logger, nameof(Exception), exception);
+                });
 
-        try
-        {
-            var response = await HttpRetryPolicy.SendWithRetryAsync(_httpClient,
-                () => new HttpRequestMessage(HttpMethod.Get, mediaUri),
-                DefaultRateLimitDelay, MaxRateLimitDelay, ct).ConfigureAwait(false);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                if (_logger is not null)
-                    LogWgerStatus(_logger, response.StatusCode);
-                response.Dispose();
-                return null;
-            }
-
-            var memoryStream = new MemoryStream();
-            await using (var contentStream = await response.Content.ReadAsStreamAsync(ct).ConfigureAwait(false))
-            {
-                await contentStream.CopyToAsync(memoryStream, ct).ConfigureAwait(false);
-            }
-
-            response.Dispose();
-            memoryStream.Position = 0;
-            return memoryStream;
-        }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-        {
-            if (_logger is not null)
-                LogWgerTimeout(_logger);
-            return null;
-        }
-        catch (Exception ex)
-        {
-            if (_logger is not null && _logger.IsEnabled(LogLevel.Information))
-                LogWgerFailed(_logger, nameof(Exception), ex);
-            return null;
-        }
-    }
-
-    private async Task<T?> SendAndReadAsync<T>(
+    private Task<T?> SendAndReadAsync<T>(
         Func<HttpRequestMessage> createRequest,
         JsonTypeInfo<T> jsonTypeInfo,
-        CancellationToken ct)
-    {
-        try
-        {
-            using var response = await HttpRetryPolicy.SendWithRetryAsync(_httpClient, createRequest,
-                DefaultRateLimitDelay, MaxRateLimitDelay, ct).ConfigureAwait(false);
-            if (response.StatusCode is HttpStatusCode.BadRequest or HttpStatusCode.NotFound)
-                return default;
-
-            if (!response.IsSuccessStatusCode)
+        CancellationToken ct) =>
+        HttpRetryPolicy.SendAndReadJsonAsync(_httpClient, createRequest, jsonTypeInfo,
+            DefaultRateLimitDelay, MaxRateLimitDelay, ct,
+            status =>
             {
                 if (_logger is not null)
-                    LogWgerStatus(_logger, response.StatusCode);
-                return default;
-            }
-
-            return await response.Content.ReadFromJsonAsync(jsonTypeInfo, ct).ConfigureAwait(false);
-        }
-        catch (OperationCanceledException) when (!ct.IsCancellationRequested)
-        {
-            if (_logger is not null)
-                LogWgerTimeout(_logger);
-            return default;
-        }
-        catch (Exception ex)
-        {
-            if (_logger is not null && _logger.IsEnabled(LogLevel.Information))
-                LogWgerFailed(_logger, nameof(Exception), ex);
-            return default;
-        }
-    }
+                    LogWgerStatus(_logger, status);
+            },
+            () =>
+            {
+                if (_logger is not null)
+                    LogWgerTimeout(_logger);
+            },
+            exception =>
+            {
+                if (_logger is not null && _logger.IsEnabled(LogLevel.Information))
+                    LogWgerFailed(_logger, nameof(Exception), exception);
+            });
 
     private bool CanSendRequest() =>
         HttpRetryPolicy.CanSendRequest(NetworkRetryHelper.HasInternetAccess,
