@@ -28,17 +28,6 @@ public abstract class FdcFoodItemBase
     [JsonPropertyName("packageWeight")] public string? PackageWeight { get; set; }
 }
 
-public class FdcFoodSearchResult : FdcFoodItemBase
-{
-    [JsonPropertyName("foodNutrients")] public List<FdcSearchNutrient> FoodNutrients { get; set; } = [];
-}
-
-public class FdcSearchNutrient
-{
-    [JsonPropertyName("nutrientId")] public int NutrientId { get; set; }
-
-    [JsonPropertyName("value")] public float? Value { get; set; }
-}
 
 public class FdcFoodDetail : FdcFoodItemBase
 {

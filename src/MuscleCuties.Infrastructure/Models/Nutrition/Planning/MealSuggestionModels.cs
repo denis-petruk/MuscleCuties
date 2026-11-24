@@ -24,12 +24,6 @@ public sealed record SlotIngredientEntry(
     float PortionShare,
     bool Required);
 
-public sealed record PortionSolution(
-    MealComponent CarbComponent,
-    MealComponent ProteinComponent,
-    MealComponent VitaminComponent,
-    MealComponent? SauceComponent,
-    MacroNutrients Total);
 
 public sealed record SpiceBlendOption(
     string Name,

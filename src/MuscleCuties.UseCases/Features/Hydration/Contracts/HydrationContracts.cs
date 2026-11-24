@@ -9,7 +9,3 @@ public sealed record UpdateWaterPresetInputDto(Guid AccountId, Guid PresetId, st
 public sealed record DeleteWaterPresetInputDto(Guid AccountId, Guid PresetId, Guid OperationId, string? ExpectedVersion);
 public sealed record ReorderWaterPresetsInputDto(Guid AccountId, IReadOnlyList<Guid> OrderedIds, Guid OperationId, string? ExpectedVersion);
 
-public enum WaterReminderPermissionDto { Unknown, Denied, Granted }
-public sealed record WaterReminderSettingsOutputDto(
-    bool OptedIn, IReadOnlyList<TimeOnly> LocalTimes, TimeOnly? QuietStart, TimeOnly? QuietEnd,
-    WaterReminderPermissionDto Permission, bool CanRequestScheduling);

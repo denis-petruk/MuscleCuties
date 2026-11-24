@@ -75,26 +75,4 @@ public static class MuscleAccountingTaxonomy
         string.Equals(muscleGroup, UpperBackGroup, StringComparison.OrdinalIgnoreCase);
 }
 
-public sealed record CatalogExerciseContributionAudit(
-    int ExerciseId,
-    string Name,
-    bool Reviewed,
-    MovementPattern Pattern,
-    IReadOnlyList<CatalogMuscleRow> Rows,
-    int DirectCount,
-    int IndirectCount,
-    bool HasUniqueMaximum,
-    IReadOnlyList<string> MaximumGroups,
-    IReadOnlyList<string> DuplicateGroups,
-    IReadOnlyList<string> CollapsedBackGroups)
-{
-    /// <summary>Direct contribution rows are preserved; primary classification stays separate.</summary>
-    public IReadOnlyList<MuscleAccountingTarget> DirectTargets => Rows
-        .Where(row => row.Fraction >= 1.0m)
-        .Select(row => MuscleAccountingTaxonomy.Map(row.MuscleGroup, Pattern))
-        .OfType<MuscleAccountingTarget>()
-        .Distinct()
-        .OrderBy(target => target)
-        .ToArray();
-}
 
