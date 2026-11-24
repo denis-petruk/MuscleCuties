@@ -189,7 +189,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     public AsyncRelayCommand LoadDataCommand { get; }
 
-    public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
+    public bool IsPageLoading => _loadGate.IsLoading(IsBusy);
 
     public void Dispose()
     {

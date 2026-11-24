@@ -132,7 +132,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
             UiTextCatalog.Get("Profile_Details_ReportAnIssueOrSuggestA"));
 
     public AsyncRelayCommand LoadDataCommand { get; }
-    public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
+    public bool IsPageLoading => _loadGate.IsLoading(IsBusy);
     public bool IsAccountActionBusy => IsBusy && _loadGate.HasLoaded;
 
     public void Dispose()

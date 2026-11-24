@@ -411,7 +411,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public AsyncRelayCommand<MealItem> SaveMealAsTemplateCommand { get; }
 
     public AsyncRelayCommand LoadDataCommand { get; }
-    public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
+    public bool IsPageLoading => _loadGate.IsLoading(IsBusy);
 
     public void Invalidate()
     {

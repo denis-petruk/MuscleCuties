@@ -66,7 +66,7 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
     public RelayCommand CloseComparisonCommand { get; }
     public AsyncRelayCommand NavigateBackCommand { get; }
 
-    public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
+    public bool IsPageLoading => _loadGate.IsLoading(IsBusy);
 
     public AsyncRelayCommand LoadDataCommand { get; }
 

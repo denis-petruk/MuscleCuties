@@ -1,3 +1,4 @@
+using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 
@@ -40,7 +41,7 @@ public partial class ProfileUnitsDisplayViewModel : ObservableObject, IPageLoadA
         SelectImperialUnitsCommand = new RelayCommand(() => UseMetricSystem = false);
     }
 
-    public bool IsPageLoading => IsBusy && !_hasLoadedOnce;
+    public bool IsPageLoading => AppPageLoadGate.IsLoading(IsBusy, _hasLoadedOnce);
     public bool HasUnsavedChanges => _hasLoadedOnce && UseMetricSystem != _initialUseMetricSystem;
     public bool CanSave => !IsBusy;
     public string UnitSystemText => UiTextCatalog.Get(UseMetricSystem ? "Common_Unit_Metric" : "Common_Unit_Imperial");

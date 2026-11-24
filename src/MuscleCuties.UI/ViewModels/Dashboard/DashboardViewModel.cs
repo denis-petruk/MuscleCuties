@@ -456,7 +456,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     }
 
     public AsyncRelayCommand LoadDataCommand { get; }
-    public bool IsPageLoading => IsBusy && !_loadGate.HasLoaded;
+    public bool IsPageLoading => _loadGate.IsLoading(IsBusy);
 
     /// <summary>
     /// The classified copy for the last failed load, or null before a failure. The shared overlay

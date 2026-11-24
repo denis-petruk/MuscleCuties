@@ -19,6 +19,22 @@ internal sealed class AppPageLoadGate : IDisposable
 
     public bool HasLoaded { get; private set; }
 
+    /// <summary>
+    /// The one definition of "this page is still on its first load": the full-page indicator belongs
+    /// to a busy page that has never completed a load. Eight view models computed this from their own
+    /// busy flag plus either this gate's <see cref="HasLoaded"/> or a local flag, so the rule lived in
+    /// eight places; a refresh after a successful load must never blank what is already on screen.
+    /// </summary>
+    public static bool IsLoading(bool isBusy, bool hasLoaded)
+    {
+        return isBusy && !hasLoaded;
+    }
+
+    public bool IsLoading(bool isBusy)
+    {
+        return IsLoading(isBusy, HasLoaded);
+    }
+
     public void Dispose()
     {
         _semaphore.Dispose();

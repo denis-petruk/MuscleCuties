@@ -1,5 +1,6 @@
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UI.Models.UI.Common;
+using MuscleCuties.UI.Services.Profile;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 
@@ -84,7 +85,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         SelectedWeightGoalPaceOption = WeightGoalPaceOptions.First(option => option.Value == WeightGoalPace);
     }
 
-    public bool IsPageLoading => IsBusy && !_hasLoadedOnce;
+    public bool IsPageLoading => AppPageLoadGate.IsLoading(IsBusy, _hasLoadedOnce);
     public bool HasUnsavedChanges =>
         _hasLoadedOnce && !string.Equals(BuildSnapshot(), _initialSnapshot, StringComparison.Ordinal);
 
