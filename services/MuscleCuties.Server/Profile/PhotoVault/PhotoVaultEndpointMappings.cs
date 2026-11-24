@@ -19,7 +19,7 @@ public static class PhotoVaultEndpointMappings
             [FromServices] ServerPhotoVaultUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -44,7 +44,7 @@ public static class PhotoVaultEndpointMappings
             [FromServices] ServerPhotoVaultUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -70,7 +70,7 @@ public static class PhotoVaultEndpointMappings
             [FromQuery] int? offset,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var safeLimit = limit.GetValueOrDefault(50);
@@ -87,7 +87,7 @@ public static class PhotoVaultEndpointMappings
             [FromServices] ServerPhotoVaultUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var download = await useCase.GetPhotoDownloadUrlAsync(userId, photoId, cancellationToken)
@@ -102,7 +102,7 @@ public static class PhotoVaultEndpointMappings
             [FromServices] ServerPhotoVaultUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var deleted = await useCase.DeletePhotoAsync(userId, photoId, cancellationToken)
@@ -114,11 +114,4 @@ public static class PhotoVaultEndpointMappings
         return endpoints;
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId)
-    {
-        var subject = principal.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                      principal.FindFirstValue("sub");
-
-        return Guid.TryParse(subject, out userId) && userId != Guid.Empty;
-    }
 }

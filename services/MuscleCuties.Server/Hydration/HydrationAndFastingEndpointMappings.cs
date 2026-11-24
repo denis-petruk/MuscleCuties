@@ -18,8 +18,7 @@ public sealed class HttpContextBodyMeasurementSession(IHttpContextAccessor httpC
         get
         {
             var principal = httpContextAccessor.HttpContext?.User;
-            var sub = principal?.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal?.FindFirstValue("sub");
-            return Guid.TryParse(sub, out var id) ? id : Guid.Empty;
+            return principal is not null && ApiApplication.TryGetUserId(principal, out var id) ? id : Guid.Empty;
         }
     }
 
@@ -37,7 +36,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] GetWaterPresetsUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return Results.Ok(await useCase.ExecuteAsync(new GetWaterPresetsInputDto(userId), cancellationToken).ConfigureAwait(false));
         });
 
@@ -46,7 +45,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] InitializeWaterPresetsUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return Results.Ok(await useCase.ExecuteAsync(new InitializeWaterPresetsInputDto(userId), cancellationToken).ConfigureAwait(false));
         });
 
@@ -56,7 +55,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] CreateWaterPresetUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ExecuteAsync(
                 new CreateWaterPresetInputDto(userId, body.Label, body.Millilitres, body.OperationId, body.ExpectedVersion),
                 cancellationToken)).ConfigureAwait(false);
@@ -69,7 +68,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] UpdateWaterPresetUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ExecuteAsync(
                 new UpdateWaterPresetInputDto(userId, presetId, body.Label, body.Millilitres, body.OperationId, body.ExpectedVersion),
                 cancellationToken)).ConfigureAwait(false);
@@ -83,7 +82,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] DeleteWaterPresetUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ExecuteAsync(
                 new DeleteWaterPresetInputDto(userId, presetId, operationId, expectedVersion),
                 cancellationToken)).ConfigureAwait(false);
@@ -95,7 +94,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] ReorderWaterPresetsUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ExecuteAsync(
                 new ReorderWaterPresetsInputDto(userId, body.OrderedIds, body.OperationId, body.ExpectedVersion),
                 cancellationToken)).ConfigureAwait(false);
@@ -107,7 +106,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] GetWaterIntakeUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ExecuteAsync(new GetWaterIntakeInputDto(userId, date),
                 cancellationToken)).ConfigureAwait(false);
         });
@@ -118,7 +117,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] ChangeWaterIntakeUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ExecuteAsync(
                 new ChangeWaterIntakeInputDto(userId, body.Date, body.ExpectedVersion, body.OperationId, body.EntryId, body.Kind, body.Millilitres),
                 cancellationToken)).ConfigureAwait(false);
@@ -129,7 +128,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] GetWaterReminderConfigurationUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return Results.Ok(await useCase.ExecuteAsync(new GetWaterReminderConfigurationInputDto(userId), cancellationToken).ConfigureAwait(false));
         });
 
@@ -139,7 +138,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] SaveWaterReminderConfigurationUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ExecuteAsync(
                 new SaveWaterReminderConfigurationInputDto(userId, body.ExpectedVersion, body.OptedIn, body.LocalTimes, body.QuietStart, body.QuietEnd, body.OperationId),
                 cancellationToken)).ConfigureAwait(false);
@@ -154,7 +153,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] ReadBodyMeasurementHistoryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out _)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out _)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ExecuteAsync(new BodyMeasurementHistoryInputDto(from, through), cancellationToken)).ConfigureAwait(false);
         });
 
@@ -164,7 +163,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] CreateBodyMeasurementUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out _)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out _)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ExecuteAsync(input, cancellationToken)).ConfigureAwait(false);
         });
 
@@ -175,7 +174,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] CorrectBodyMeasurementUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out _)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out _)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ExecuteAsync(input with { Id = id }, cancellationToken)).ConfigureAwait(false);
         });
 
@@ -187,7 +186,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] DeleteBodyMeasurementUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out _)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out _)) return Results.Unauthorized();
             try
             {
                 await useCase.ExecuteAsync(new DeleteBodyMeasurementInputDto(id, commandId, expectedVersion), cancellationToken).ConfigureAwait(false);
@@ -206,7 +205,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] FastingSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return Results.Ok(await useCase.GetStateAsync(userId, clockUncertain ?? false, cancellationToken).ConfigureAwait(false));
         });
 
@@ -216,7 +215,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] FastingSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.StartAsync(
                 new StartFastingSessionInputDto(
                     userId,
@@ -238,7 +237,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] FastingSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.PauseAsync(
                 new TransitionFastingSessionInputDto(userId, sessionId, body.CommandId, body.ExpectedVersion, body.TransitionAtUtc),
                 cancellationToken)).ConfigureAwait(false);
@@ -251,7 +250,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] FastingSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.ResumeAsync(
                 new TransitionFastingSessionInputDto(userId, sessionId, body.CommandId, body.ExpectedVersion, body.TransitionAtUtc, body.EligibilityResponse, body.IsProfilePregnant),
                 cancellationToken)).ConfigureAwait(false);
@@ -264,7 +263,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] FastingSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.EndAsync(
                 new TransitionFastingSessionInputDto(userId, sessionId, body.CommandId, body.ExpectedVersion, body.TransitionAtUtc),
                 cancellationToken)).ConfigureAwait(false);
@@ -277,7 +276,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] FastingSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.CorrectTimesAsync(
                 new CorrectFastingSessionInputDto(userId, sessionId, body.CommandId, body.ExpectedVersion, body.CorrectedStartedAtUtc, body.CorrectedEndedAtUtc, body.CorrectedAtUtc),
                 cancellationToken)).ConfigureAwait(false);
@@ -290,7 +289,7 @@ public static class HydrationAndFastingEndpointMappings
             [FromServices] FastingSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return await ExecuteSafeAsync(() => useCase.UpdatePlannedEndAsync(
                 new UpdateFastingPlannedEndInputDto(userId, sessionId, body.CommandId, body.ExpectedVersion, body.PlannedEndAtUtc, body.EnablePlannedEndReminder),
                 cancellationToken)).ConfigureAwait(false);
@@ -319,11 +318,6 @@ public static class HydrationAndFastingEndpointMappings
         }
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId)
-    {
-        var subject = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub");
-        return Guid.TryParse(subject, out userId) && userId != Guid.Empty;
-    }
 
     public sealed record CreateWaterPresetBody(string Label, double Millilitres, Guid OperationId, string? ExpectedVersion);
     public sealed record UpdateWaterPresetBody(string Label, double Millilitres, Guid OperationId, string? ExpectedVersion);

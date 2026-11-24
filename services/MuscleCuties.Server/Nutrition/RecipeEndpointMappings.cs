@@ -23,7 +23,7 @@ public static class RecipeEndpointMappings
             [FromServices] IGetRecipesAndTemplatesUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var result = await useCase.ExecuteAsync(userId, mealType, cancellationToken).ConfigureAwait(false);
@@ -52,7 +52,7 @@ public static class RecipeEndpointMappings
             [FromServices] ICreateRecipeUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -73,7 +73,7 @@ public static class RecipeEndpointMappings
             [FromServices] ICreateRecipeUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -105,7 +105,7 @@ public static class RecipeEndpointMappings
             [FromServices] IPreviewRecipePortionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -132,7 +132,7 @@ public static class RecipeEndpointMappings
             [FromServices] PostgresRecipeStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var result = await store.GetRecipeByIdAsync(userId, id, cancellationToken).ConfigureAwait(false);
@@ -145,7 +145,7 @@ public static class RecipeEndpointMappings
             [FromServices] PostgresRecipeStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             await store.DeleteRecipeAsync(userId, id, cancellationToken).ConfigureAwait(false);
@@ -158,7 +158,7 @@ public static class RecipeEndpointMappings
             [FromServices] ISaveMealTemplateUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -179,7 +179,7 @@ public static class RecipeEndpointMappings
             [FromServices] ISaveMealTemplateUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -203,7 +203,7 @@ public static class RecipeEndpointMappings
             [FromServices] PostgresRecipeStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var result = await store.GetMealTemplateByIdAsync(userId, id, cancellationToken).ConfigureAwait(false);
@@ -216,7 +216,7 @@ public static class RecipeEndpointMappings
             [FromServices] PostgresRecipeStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             await store.DeleteMealTemplateAsync(userId, id, cancellationToken).ConfigureAwait(false);
@@ -226,10 +226,4 @@ public static class RecipeEndpointMappings
         return endpoints;
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId)
-    {
-        var subject = principal.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                      ?? principal.FindFirst("sub")?.Value;
-        return Guid.TryParse(subject, out userId);
-    }
 }

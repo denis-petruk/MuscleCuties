@@ -1,5 +1,6 @@
 using System.IO.Compression;
 using System.Net;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Json;
 using Amazon;
@@ -970,8 +971,19 @@ public static class ApiApplication
         _ => Results.Unauthorized()
     };
 
+    /// <summary>
+    /// Single reading of the caller's subject. Thirteen endpoint-mapping classes carried their own copy, and two
+    /// inlined it again; every one of them parsed the NameIdentifier claim with "sub" as the fallback and treated an
+    /// empty GUID as unauthenticated. Endpoints call this instead.
+    /// </summary>
+    public static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId)
+    {
+        var subject = principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub");
+        return Guid.TryParse(subject, out userId) && userId != Guid.Empty;
+    }
+
     private static bool TryGetAuthenticatedUserId(HttpContext context, out Guid userId) =>
-        Guid.TryParse(context.User.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
+        TryGetUserId(context.User, out userId);
 
     private static IResult MapProfileWrite(ServerProfileWriteResult result) => result.Status switch
     {

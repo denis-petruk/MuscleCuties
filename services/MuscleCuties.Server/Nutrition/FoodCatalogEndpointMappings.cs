@@ -4,7 +4,6 @@ using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
 using MuscleCuties.UseCases.Features.Nutrition.CustomFoods.Contracts;
-using System.Security.Claims;
 
 namespace MuscleCuties.Server.Nutrition;
 
@@ -24,7 +23,7 @@ public static class FoodCatalogEndpointMappings
             IFoodCatalogSearchUseCase search,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var ownerUserId))
+            if (!ApiApplication.TryGetUserId(context.User, out var ownerUserId))
                 return Results.Forbid();
             var response = await search.SearchAsync(new FoodCatalogSearchRequest(
                 query,
@@ -38,7 +37,7 @@ public static class FoodCatalogEndpointMappings
             ILookupBarcodeUseCase lookup,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var ownerUserId))
+            if (!ApiApplication.TryGetUserId(context.User, out var ownerUserId))
                 return Results.Forbid();
             var response = await lookup.ExecuteAsync(request, ownerUserId, cancellationToken).ConfigureAwait(false);
             return response.IsValidBarcode && response.FoodItem is not null
@@ -51,7 +50,7 @@ public static class FoodCatalogEndpointMappings
             ICreateCustomFoodUseCase create,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var ownerUserId))
+            if (!ApiApplication.TryGetUserId(context.User, out var ownerUserId))
                 return Results.Forbid();
             try
             {
@@ -66,6 +65,4 @@ public static class FoodCatalogEndpointMappings
         return endpoints;
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 }

@@ -18,7 +18,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromQuery] DateOnly? startDate,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var effectiveStart = startDate ?? DateOnly.FromDateTime(DateTime.UtcNow);
@@ -35,7 +35,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromServices] PostgresWorkoutPlanAndSessionStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             // Beta 1.0.0 gates rescheduling to 1.1. The deployed route fails closed instead of
@@ -67,7 +67,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromServices] PostgresWorkoutPlanAndSessionStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try
             {
                 await store.SetSessionOptionalAsync(userId, request, cancellationToken).ConfigureAwait(false);
@@ -84,7 +84,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromServices] PostgresWorkoutPlanAndSessionStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try
             {
                 await store.SetExerciseOptionalAsync(userId, request, cancellationToken).ConfigureAwait(false);
@@ -101,7 +101,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromServices] PostgresWorkoutPlanAndSessionStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -125,7 +125,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromServices] PostgresWorkoutPlanAndSessionStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try
             {
                 await store.SplitSupersetAsync(userId, request, cancellationToken).ConfigureAwait(false);
@@ -142,7 +142,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromServices] PostgresWorkoutPlanAndSessionStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -166,7 +166,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromServices] PostgresWorkoutPlanAndSessionStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var candidates = await store.GetSwapCandidatesAsync(userId, workoutDayExerciseId, cancellationToken)
@@ -180,7 +180,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromServices] PostgresWorkoutPlanAndSessionStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -204,7 +204,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromServices] PostgresWorkoutPlanAndSessionStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -229,7 +229,7 @@ public static class WorkoutPlanAndSessionEndpointMappings
             [FromServices] PostgresWorkoutPlanAndSessionStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -250,6 +250,4 @@ public static class WorkoutPlanAndSessionEndpointMappings
         return endpoints;
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 }

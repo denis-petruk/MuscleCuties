@@ -14,7 +14,7 @@ public static class WorkoutProgressEndpointMappings
         endpoints.MapGet(ProgressRoute, async (ClaimsPrincipal principal, IWorkoutProgressStore store,
             CancellationToken cancellationToken) =>
         {
-            if (!Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub"), out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
             return Results.Ok(await store.ReadAsync(userId, cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
@@ -22,7 +22,7 @@ public static class WorkoutProgressEndpointMappings
         endpoints.MapPut(ForegroundTimeZoneRoute, async (WorkoutForegroundTimeZoneRequest request,
             ClaimsPrincipal principal, IWorkoutProgressStore store, CancellationToken cancellationToken) =>
         {
-            if (!Guid.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier) ?? principal.FindFirstValue("sub"), out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
             var result = await store.AcceptForegroundTimeZoneAsync(userId, request, cancellationToken).ConfigureAwait(false);
             return result.Status == ReadyStatus ? Results.Ok(result) : Results.Conflict(result);

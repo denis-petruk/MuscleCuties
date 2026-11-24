@@ -20,7 +20,7 @@ public static class CheckInAndInjuryEndpointMappings
             [FromServices] CheckInAndInjuryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
             try
             {
@@ -37,7 +37,7 @@ public static class CheckInAndInjuryEndpointMappings
             [FromServices] CheckInAndInjuryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
             try
             {
@@ -85,7 +85,7 @@ public static class CheckInAndInjuryEndpointMappings
             [FromServices] CheckInAndInjuryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
             return await useCase.DeleteCheckInAsync(userId, id, cancellationToken).ConfigureAwait(false)
                 ? Results.NoContent()
@@ -99,7 +99,7 @@ public static class CheckInAndInjuryEndpointMappings
             [FromServices] CheckInAndInjuryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
             return Results.Ok(await useCase.LoadInjuriesAsync(userId, activeOnly ?? false, cancellationToken).ConfigureAwait(false));
         });
@@ -109,7 +109,7 @@ public static class CheckInAndInjuryEndpointMappings
             [FromServices] CheckInAndInjuryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
             try
             {
@@ -168,7 +168,7 @@ public static class CheckInAndInjuryEndpointMappings
             [FromServices] CheckInAndInjuryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
             return await useCase.DeleteInjuryAsync(userId, id, cancellationToken).ConfigureAwait(false)
                 ? Results.NoContent()
@@ -178,8 +178,6 @@ public static class CheckInAndInjuryEndpointMappings
         return endpoints;
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 
     public sealed record SaveDailyCheckInBody(
         Guid Id,

@@ -319,6 +319,45 @@ public sealed class RegistrationAuthenticationRouteTests
         }
     }
 
+    [Fact]
+    public void TryGetUserIdReadsTheNameIdentifierClaimFirst()
+    {
+        var userId = Guid.NewGuid();
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(new[]
+        {
+            new Claim(ClaimTypes.NameIdentifier, userId.ToString()),
+            new Claim("sub", Guid.NewGuid().ToString())
+        }, "synthetic"));
+
+        Assert.True(ApiApplication.TryGetUserId(principal, out var resolved));
+        Assert.Equal(userId, resolved);
+    }
+
+    [Fact]
+    public void TryGetUserIdFallsBackToTheSubjectClaim()
+    {
+        var userId = Guid.NewGuid();
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+            new[] { new Claim("sub", userId.ToString()) }, "synthetic"));
+
+        Assert.True(ApiApplication.TryGetUserId(principal, out var resolved));
+        Assert.Equal(userId, resolved);
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("not-a-guid")]
+    [InlineData("00000000-0000-0000-0000-000000000000")]
+    public void TryGetUserIdRejectsAMissingInvalidOrEmptySubject(string subject)
+    {
+        var principal = new ClaimsPrincipal(new ClaimsIdentity(
+            string.IsNullOrEmpty(subject) ? Array.Empty<Claim>() : new[] { new Claim("sub", subject) },
+            "synthetic"));
+
+        Assert.False(ApiApplication.TryGetUserId(principal, out var resolved));
+        Assert.Equal(Guid.Empty, resolved);
+    }
+
     private sealed class RegistrationSpy : ICompleteAccountRegistrationUseCase
     {
         public CompleteAccountRegistrationStatus Status { get; set; } = CompleteAccountRegistrationStatus.Created;

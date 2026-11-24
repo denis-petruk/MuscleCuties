@@ -19,7 +19,7 @@ public static class DashboardOverviewEndpointMappings
             [FromQuery] string? timeZoneId,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var today = date ?? DateOnly.FromDateTime(DateTime.UtcNow);
@@ -36,7 +36,7 @@ public static class DashboardOverviewEndpointMappings
             [FromQuery] DateOnly? today,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var utcNow = DateTime.UtcNow;
@@ -59,11 +59,4 @@ public static class DashboardOverviewEndpointMappings
         return endpoints;
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId)
-    {
-        var subject = principal.FindFirstValue(ClaimTypes.NameIdentifier) ??
-                      principal.FindFirstValue("sub");
-
-        return Guid.TryParse(subject, out userId) && userId != Guid.Empty;
-    }
 }

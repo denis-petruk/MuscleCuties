@@ -33,16 +33,16 @@ internal static class PostgresTestEnvironment
         string.Equals(Environment.GetEnvironmentVariable(MarkerVariable), "1", StringComparison.Ordinal);
 
     public const string SkipReason =
-        "PostgreSQL integration fixtures are not configured. Run " +
-        "`./scripts/prepare-integration-postgres.sh`, source `.env.integration`, and rerun. " +
-        "See docs/INTEGRATION_POSTGRES.md.";
+        "PostgreSQL integration fixtures are not configured. Source the repository .env " +
+        "(set -a; . ./.env; set +a) so MC_INTEGRATION_POSTGRES=1 and the MC_*_POSTGRES connection " +
+        "variables are exported, confirm a local PostgreSQL server accepts connections, then rerun.";
 
     public static string RequireConnection(string variable)
     {
         var value = Environment.GetEnvironmentVariable(variable);
         if (!string.IsNullOrWhiteSpace(value)) return value;
         throw new InvalidOperationException(
-            $"{variable} is not set. Run `./scripts/prepare-integration-postgres.sh`, source " +
-            "`.env.integration`, and rerun. See docs/INTEGRATION_POSTGRES.md.");
+            $"{variable} is not set. Source the repository .env (set -a; . ./.env; set +a) so " +
+            "MC_INTEGRATION_POSTGRES=1 and the MC_*_POSTGRES connection variables are exported, then rerun.");
     }
 }

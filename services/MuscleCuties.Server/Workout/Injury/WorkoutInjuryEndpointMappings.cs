@@ -17,7 +17,7 @@ public static class WorkoutInjuryEndpointMappings
             [FromServices] ServerWorkoutInjuryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var impact = await useCase.GetImpactAsync(userId, cancellationToken).ConfigureAwait(false);
@@ -30,7 +30,7 @@ public static class WorkoutInjuryEndpointMappings
             [FromServices] ServerWorkoutInjuryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var check = await useCase.CheckContraindicationAsync(userId, exerciseDefinitionId, cancellationToken)
@@ -44,7 +44,7 @@ public static class WorkoutInjuryEndpointMappings
             [FromServices] ServerWorkoutInjuryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var candidates = await useCase.GetSafeSwapCandidatesAsync(userId, exerciseDefinitionId, cancellationToken)
@@ -58,7 +58,7 @@ public static class WorkoutInjuryEndpointMappings
             [FromServices] ServerWorkoutInjuryUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -88,6 +88,4 @@ public static class WorkoutInjuryEndpointMappings
         return endpoints;
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 }

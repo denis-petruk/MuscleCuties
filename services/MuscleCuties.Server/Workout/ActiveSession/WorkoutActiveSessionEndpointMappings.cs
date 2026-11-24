@@ -17,7 +17,7 @@ public static class WorkoutActiveSessionEndpointMappings
         group.MapGet("/planned/{workoutDayId:int}/history", async (int workoutDayId, ClaimsPrincipal principal,
             [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try { return Results.Ok(await useCase.GetPlannedSessionHistoryAsync(userId, workoutDayId, cancellationToken).ConfigureAwait(false)); }
             catch (InvalidOperationException) { return Results.Conflict(); }
         });
@@ -25,7 +25,7 @@ public static class WorkoutActiveSessionEndpointMappings
         group.MapGet("/planned/{workoutDayId:int}", async (int workoutDayId, ClaimsPrincipal principal,
             [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             var snapshot = await useCase.GetPlannedSessionAsync(userId, workoutDayId, cancellationToken).ConfigureAwait(false);
             return snapshot is null ? Results.NotFound() : Results.Ok(snapshot);
         });
@@ -33,7 +33,7 @@ public static class WorkoutActiveSessionEndpointMappings
         group.MapPost("/{sessionId:guid}/timing/resume", async (Guid sessionId, TimingResumeBody body,
             HttpContext context, [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(context.User, out var userId)) return Results.Unauthorized();
             try
             {
                 var result = await useCase.ResumeTimingAsync(userId, new ResumeWorkoutTimingCommand(
@@ -52,7 +52,7 @@ public static class WorkoutActiveSessionEndpointMappings
         group.MapPost("/{sessionId:guid}/timing/checkpoint", async (Guid sessionId, TimingCheckpointBody body,
             HttpContext context, [FromServices] WorkoutActiveSessionUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(context.User, out var userId)) return Results.Unauthorized();
             try
             {
                 var result = await useCase.CheckpointTimingAsync(userId, new CheckpointWorkoutTimingCommand(
@@ -75,7 +75,7 @@ public static class WorkoutActiveSessionEndpointMappings
             [FromServices] WorkoutActiveSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
             var snapshot = await useCase.GetSessionAsync(userId, sessionId, cancellationToken).ConfigureAwait(false);
             return snapshot is null ? Results.NotFound() : Results.Ok(snapshot);
@@ -87,7 +87,7 @@ public static class WorkoutActiveSessionEndpointMappings
             [FromServices] WorkoutActiveSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId))
+            if (!ApiApplication.TryGetUserId(context.User, out var userId))
                 return Results.Unauthorized();
             var idempotencyKey = IdempotencyKeyResolver.Resolve(context, body.IdempotencyKey);
             try
@@ -142,7 +142,7 @@ public static class WorkoutActiveSessionEndpointMappings
             [FromServices] WorkoutActiveSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId))
+            if (!ApiApplication.TryGetUserId(context.User, out var userId))
                 return Results.Unauthorized();
             var idempotencyKey = IdempotencyKeyResolver.Resolve(context, body.IdempotencyKey);
             try
@@ -174,7 +174,7 @@ public static class WorkoutActiveSessionEndpointMappings
             [FromServices] WorkoutActiveSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId))
+            if (!ApiApplication.TryGetUserId(context.User, out var userId))
                 return Results.Unauthorized();
             var idempotencyKey = IdempotencyKeyResolver.Resolve(context, body.IdempotencyKey);
             try
@@ -214,7 +214,7 @@ public static class WorkoutActiveSessionEndpointMappings
             [FromServices] WorkoutActiveSessionUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId))
+            if (!ApiApplication.TryGetUserId(context.User, out var userId))
                 return Results.Unauthorized();
             var idempotencyKey = IdempotencyKeyResolver.Resolve(context, body.IdempotencyKey);
             try
@@ -242,8 +242,6 @@ public static class WorkoutActiveSessionEndpointMappings
         return endpoints;
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 
     public sealed record StartWorkoutSessionBody(
         string? IdempotencyKey,

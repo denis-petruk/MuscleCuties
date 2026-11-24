@@ -1,4 +1,3 @@
-using System.Security.Claims;
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
@@ -24,7 +23,7 @@ public static class NutritionBatchAndCopyEndpointMappings
             [FromServices] NutritionBatchAndCopyUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId))
+            if (!ApiApplication.TryGetUserId(context.User, out var userId))
                 return Results.Unauthorized();
             try
             {
@@ -66,7 +65,7 @@ public static class NutritionBatchAndCopyEndpointMappings
             [FromServices] NutritionBatchAndCopyUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId))
+            if (!ApiApplication.TryGetUserId(context.User, out var userId))
                 return Results.Unauthorized();
             try
             {
@@ -108,7 +107,7 @@ public static class NutritionBatchAndCopyEndpointMappings
             [FromServices] NutritionCopyPreviewUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId))
+            if (!ApiApplication.TryGetUserId(context.User, out var userId))
                 return Results.Unauthorized();
             try
             {
@@ -128,7 +127,7 @@ public static class NutritionBatchAndCopyEndpointMappings
             [FromServices] NutritionCopyPreviewUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId))
+            if (!ApiApplication.TryGetUserId(context.User, out var userId))
                 return Results.Unauthorized();
             try
             {
@@ -161,7 +160,7 @@ public static class NutritionBatchAndCopyEndpointMappings
             TimeProvider timeProvider,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(context.User, out var userId))
+            if (!ApiApplication.TryGetUserId(context.User, out var userId))
                 return Results.Unauthorized();
             try
             {
@@ -272,6 +271,4 @@ public static class NutritionBatchAndCopyEndpointMappings
             LegacyTimestampUnspecified: true);
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 }

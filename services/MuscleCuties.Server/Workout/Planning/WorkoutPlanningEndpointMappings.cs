@@ -42,14 +42,14 @@ public static class WorkoutPlanningEndpointMappings
         endpoints.MapGet("/api/v1/workouts/plan/style-offer", async (ClaimsPrincipal principal,
             [FromServices] IStrengthStyleOfferStore store, CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return Results.Ok(new StrengthStyleOfferResponse(await store.GetCurrentAsync(userId, cancellationToken).ConfigureAwait(false)));
         }).RequireAuthorization();
 
         endpoints.MapPost("/api/v1/workouts/plan/style-offer/{offerId:guid}/dismiss", async (Guid offerId,
             ClaimsPrincipal principal, [FromServices] IStrengthStyleOfferStore store, CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return Results.Ok(new StrengthStyleOfferDismissResult(await store.DismissAsync(userId, offerId, cancellationToken).ConfigureAwait(false)));
         }).RequireAuthorization();
         endpoints.MapGet(CatalogRoute, async (
@@ -63,7 +63,7 @@ public static class WorkoutPlanningEndpointMappings
                 [FromServices] GetReviewedExerciseExclusionCatalogV020UseCase catalog,
                 CancellationToken cancellationToken) =>
             {
-                if (!TryGetUserId(principal, out _))
+                if (!ApiApplication.TryGetUserId(principal, out _))
                     return Results.Unauthorized();
                 return Results.Ok(await catalog.ExecuteAsync(cancellationToken).ConfigureAwait(false));
             })
@@ -74,7 +74,7 @@ public static class WorkoutPlanningEndpointMappings
                 [FromServices] WorkoutPendingRevisionJobHandler handler,
                 CancellationToken cancellationToken) =>
             {
-                if (!TryGetUserId(principal, out var userId))
+                if (!ApiApplication.TryGetUserId(principal, out var userId))
                     return Results.Unauthorized();
                 var outcome = await handler.ExecuteAsync(userId, cancellationToken).ConfigureAwait(false);
                 return Results.Ok(new WorkoutReconciliationResponse(outcome.ToString()));
@@ -87,7 +87,7 @@ public static class WorkoutPlanningEndpointMappings
                 [FromServices] IWorkoutPlanningApplicationService planningService,
                 CancellationToken cancellationToken) =>
             {
-                if (!TryGetUserId(principal, out var ownerUserId))
+                if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
                     return Results.Unauthorized();
                 var result = await planningService.PreviewPlanAsync(ownerUserId, request, cancellationToken)
                     .ConfigureAwait(false);
@@ -103,7 +103,7 @@ public static class WorkoutPlanningEndpointMappings
                 [FromServices] IWorkoutPlanningApplicationService planningService,
                 CancellationToken cancellationToken) =>
             {
-                if (!TryGetUserId(principal, out var ownerUserId))
+                if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
                     return Results.Unauthorized();
 
                 if (request.DraftPreferences is null)
@@ -137,7 +137,7 @@ public static class WorkoutPlanningEndpointMappings
                 [FromServices] IWorkoutPlanningApplicationService planningService,
                 CancellationToken cancellationToken) =>
             {
-                if (!TryGetUserId(principal, out var ownerUserId))
+                if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
                     return Results.Unauthorized();
 
                 if (request.ProposalId != proposalId)
@@ -159,7 +159,7 @@ public static class WorkoutPlanningEndpointMappings
         endpoints.MapGet("/api/v1/workouts/plan/lease/active", async (ClaimsPrincipal principal,
             [FromServices] IStrengthPlanProposalStoreV020 store, CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return Results.Ok(await store.GetActivePreviewAsync(userId, cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
 
@@ -167,7 +167,7 @@ public static class WorkoutPlanningEndpointMappings
                 string action, PlanningLeaseRequest request, ClaimsPrincipal principal,
                 [FromServices] IStrengthPlanProposalStoreV020 store, CancellationToken cancellationToken) =>
             {
-                if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+                if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
                 var result = action switch
                 {
                     LeaseActionRenew => await store.RenewAsync(userId, request, cancellationToken).ConfigureAwait(false),
@@ -181,21 +181,21 @@ public static class WorkoutPlanningEndpointMappings
         endpoints.MapPost(HiitCaptureChallengeRoute, async (ClaimsPrincipal principal,
             [FromServices] IHiitEvidenceCaptureStore store, CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return Results.Ok(await store.IssueAsync(userId, cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
 
         endpoints.MapGet(AnswersRoute, async (ClaimsPrincipal principal,
             [FromServices] IStrengthPlanProposalStoreV020 store, CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             return Results.Ok(await store.ReadAnswersAsync(userId, cancellationToken).ConfigureAwait(false));
         }).RequireAuthorization();
 
         endpoints.MapPut(AnswersRoute, async (SaveActivityAnswersRequest request,
             ClaimsPrincipal principal, [FromServices] IStrengthPlanProposalStoreV020 store, CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try { return Results.Ok(await store.SaveAnswersAsync(userId, request, cancellationToken).ConfigureAwait(false)); }
             catch (WorkoutPreviewAlreadyOpenException exception)
             { return Results.Conflict(new { code = ErrorCodeWorkoutPreviewOpen, message = exception.Message }); }
@@ -208,7 +208,5 @@ public static class WorkoutPlanningEndpointMappings
         return endpoints;
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 }
 

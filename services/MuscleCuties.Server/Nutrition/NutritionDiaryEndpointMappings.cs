@@ -24,7 +24,7 @@ public static class NutritionDiaryEndpointMappings
             NutritionDiaryUseCase diary,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var ownerUserId))
+            if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
                 return Results.Unauthorized();
             try
             {
@@ -48,7 +48,7 @@ public static class NutritionDiaryEndpointMappings
             NutritionDiaryUseCase diary,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var ownerUserId))
+            if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
                 return Results.Unauthorized();
             var entry = await diary.GetSnapshotEntryByIdAsync(ownerUserId, itemId, cancellationToken).ConfigureAwait(false);
             return entry is null ? Results.NotFound() : Results.Ok(entry);
@@ -61,7 +61,7 @@ public static class NutritionDiaryEndpointMappings
             NutritionDiaryUseCase diary,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var ownerUserId))
+            if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
                 return Results.Unauthorized();
             var response = await diary.GetHistoryAsync(
                 ownerUserId,
@@ -78,7 +78,7 @@ public static class NutritionDiaryEndpointMappings
             INutritionDiaryCommandEventStore eventStore,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var ownerUserId))
+            if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
                 return Results.Unauthorized();
             try
             {
@@ -101,7 +101,7 @@ public static class NutritionDiaryEndpointMappings
             NutritionDiaryUseCase diary,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var ownerUserId))
+            if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
                 return Results.Unauthorized();
             try
             {
@@ -124,7 +124,7 @@ public static class NutritionDiaryEndpointMappings
             NutritionDiaryUseCase diary,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var ownerUserId))
+            if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
                 return Results.Unauthorized();
             await diary.UpdateMetadataAsync(ownerUserId, request, cancellationToken).ConfigureAwait(false);
             return Results.NoContent();
@@ -137,7 +137,7 @@ public static class NutritionDiaryEndpointMappings
             NutritionDiaryUseCase diary,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var ownerUserId))
+            if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
                 return Results.Unauthorized();
             try
             {
@@ -171,8 +171,6 @@ public static class NutritionDiaryEndpointMappings
         return endpoints;
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 
     public sealed record SaveNutritionDiaryEntryResponse(string Identity);
 }

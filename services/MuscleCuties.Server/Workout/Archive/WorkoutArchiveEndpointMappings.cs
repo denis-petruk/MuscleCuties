@@ -24,7 +24,7 @@ public static class WorkoutArchiveEndpointMappings
             [FromQuery] int? offset,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var safeLimit = limit.GetValueOrDefault(50);
@@ -39,7 +39,7 @@ public static class WorkoutArchiveEndpointMappings
             [FromServices] ServerWorkoutArchiveUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var months = await useCase.GetAvailableHistoryMonthsAsync(userId, cancellationToken)
@@ -56,7 +56,7 @@ public static class WorkoutArchiveEndpointMappings
             [FromQuery] int? offset,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var safeLimit = limit.GetValueOrDefault(100);
@@ -78,7 +78,7 @@ public static class WorkoutArchiveEndpointMappings
             [FromServices] ServerWorkoutArchiveUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var count = await useCase.GetTotalSessionsCountAsync(userId, cancellationToken)
@@ -93,7 +93,7 @@ public static class WorkoutArchiveEndpointMappings
             [FromServices] ServerWorkoutArchiveUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -114,7 +114,7 @@ public static class WorkoutArchiveEndpointMappings
             [FromServices] ServerWorkoutArchiveUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var detail = await useCase.GetWorkoutSessionDetailAsync(userId, sessionId, cancellationToken)
@@ -129,7 +129,7 @@ public static class WorkoutArchiveEndpointMappings
             [FromServices] ServerWorkoutArchiveUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -152,7 +152,7 @@ public static class WorkoutArchiveEndpointMappings
             [FromServices] ServerWorkoutArchiveUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             try
@@ -173,7 +173,7 @@ public static class WorkoutArchiveEndpointMappings
             [FromServices] ServerWorkoutArchiveUseCase useCase,
             CancellationToken cancellationToken) =>
         {
-            if (!TryGetUserId(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             var records = await useCase.GetPersonalRecordsAsync(userId, cancellationToken)
@@ -182,6 +182,4 @@ public static class WorkoutArchiveEndpointMappings
         });
     }
 
-    private static bool TryGetUserId(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 }
