@@ -17,7 +17,7 @@ public static class PhaseLogEndpointMappings
             [FromServices] ISaveCyclePhaseLogUseCase useCase,
             CancellationToken cancellationToken)
         {
-            if (!TryUser(principal, out var userId))
+            if (!ApiApplication.TryGetUserId(principal, out var userId))
                 return Results.Unauthorized();
 
             if (!TryParsePhase(body.Phase, out var phase))
@@ -55,8 +55,6 @@ public static class PhaseLogEndpointMappings
         return endpoints;
     }
 
-    private static bool TryUser(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 
     private static bool TryParsePhase(string? value, out CyclePhaseDto phase)
     {

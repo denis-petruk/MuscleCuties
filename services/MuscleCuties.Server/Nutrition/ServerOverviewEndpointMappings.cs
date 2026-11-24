@@ -17,7 +17,7 @@ public static class ServerOverviewEndpointMappings
         nutrition.MapGet("/targets", async (DateOnly date, ClaimsPrincipal principal,
             [FromServices] ServerNutritionTargetProjectionUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryUser(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try { return Results.Ok(await useCase.LoadAsync(userId, date, cancellationToken).ConfigureAwait(false)); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
         });
@@ -25,7 +25,7 @@ public static class ServerOverviewEndpointMappings
         nutrition.MapGet("/overview", async (DateOnly date, string? breakfastPreference, ClaimsPrincipal principal,
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryUser(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try { return Results.Ok(await useCase.GetOverviewAsync(userId, date, breakfastPreference ?? "Savoury", cancellationToken).ConfigureAwait(false)); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
         });
@@ -33,7 +33,7 @@ public static class ServerOverviewEndpointMappings
         nutrition.MapGet("/meal-plan", async (DateOnly date, string? breakfastPreference, ClaimsPrincipal principal,
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryUser(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try { return Results.Ok(await useCase.GetDayMealPlanAsync(userId, date, breakfastPreference ?? "Savoury", cancellationToken).ConfigureAwait(false)); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
         });
@@ -41,7 +41,7 @@ public static class ServerOverviewEndpointMappings
         nutrition.MapPost("/meal-plan/refresh", async ([FromBody] DayMealPlanItemDto item, string? breakfastPreference, ClaimsPrincipal principal,
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryUser(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try { return Results.Ok(await useCase.RefreshDayMealAsync(userId, item, breakfastPreference ?? "Savoury", cancellationToken).ConfigureAwait(false)); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
         });
@@ -49,7 +49,7 @@ public static class ServerOverviewEndpointMappings
         nutrition.MapGet("/suggestions", async (string mealType, string? breakfastPreference, ClaimsPrincipal principal,
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryUser(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try { return Results.Ok(await useCase.GetMealSuggestionsAsync(userId, mealType, breakfastPreference ?? "Savoury", null, cancellationToken).ConfigureAwait(false)); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
         });
@@ -57,7 +57,7 @@ public static class ServerOverviewEndpointMappings
         nutrition.MapPost("/meals", async ([FromBody] LogMealRequest request, ClaimsPrincipal principal,
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryUser(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try
             {
                 await useCase.LogMealAsync(userId, request, cancellationToken).ConfigureAwait(false);
@@ -72,7 +72,7 @@ public static class ServerOverviewEndpointMappings
         nutrition.MapPut("/meals/{mealId:int}", async (int mealId, [FromBody] UpdateMealRequest request, ClaimsPrincipal principal,
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryUser(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try
             {
                 var normalized = request with { MealId = mealId };
@@ -92,7 +92,7 @@ public static class ServerOverviewEndpointMappings
         nutrition.MapGet("/meals/{mealId:int}/ingredients", async (int mealId, ClaimsPrincipal principal,
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryUser(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try
             {
                 var ingredients = await useCase.GetMealIngredientsAsync(userId, mealId, cancellationToken).ConfigureAwait(false);
@@ -107,7 +107,7 @@ public static class ServerOverviewEndpointMappings
         nutrition.MapPost("/custom-foods", async ([FromBody] CreateCustomFoodRequest request, ClaimsPrincipal principal,
             [FromServices] ServerNutritionOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryUser(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try
             {
                 var result = await useCase.CreateCustomFoodAsync(userId, request, cancellationToken).ConfigureAwait(false);
@@ -123,7 +123,7 @@ public static class ServerOverviewEndpointMappings
         cycle.MapGet("/overview", async (DateOnly from, DateOnly through, DateOnly today, ClaimsPrincipal principal,
             [FromServices] ServerCycleOverviewUseCase useCase, CancellationToken cancellationToken) =>
         {
-            if (!TryUser(principal, out var userId)) return Results.Unauthorized();
+            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
             try { return Results.Ok(await useCase.LoadAsync(userId, from, through, today, cancellationToken).ConfigureAwait(false)); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
         });
@@ -131,6 +131,4 @@ public static class ServerOverviewEndpointMappings
         return endpoints;
     }
 
-    private static bool TryUser(ClaimsPrincipal principal, out Guid userId) =>
-        Guid.TryParse(principal.FindFirst("sub")?.Value, out userId) && userId != Guid.Empty;
 }
