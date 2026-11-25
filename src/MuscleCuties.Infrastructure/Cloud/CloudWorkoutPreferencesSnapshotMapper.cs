@@ -8,8 +8,10 @@ using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
+/// <summary>Turns the stored preference strings into the shapes the pages bind, and back.</summary>
 internal static class CloudWorkoutPreferencesSnapshotMapper
 {
+    /// <summary>The stored preferences in the shape the page reads, with the list columns parsed.</summary>
     public static WorkoutPreferencesDto ToPreferences(ServerProfileSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
@@ -67,6 +69,7 @@ internal static class CloudWorkoutPreferencesSnapshotMapper
             snapshot.EquipmentCapabilities?.HasBands);
     }
 
+    /// <summary>The weekday list from its stored form, ignoring anything that is not a weekday number.</summary>
     private static int[] ParseAvailableWeekdays(string? json)
     {
         try
@@ -94,6 +97,7 @@ internal static class CloudWorkoutPreferencesSnapshotMapper
         }
     }
 
+    /// <summary>The activity-to-session-length map from its stored form.</summary>
     private static Dictionary<int, int> ParseActivityDurations(string? json)
     {
         try
@@ -116,6 +120,7 @@ internal static class CloudWorkoutPreferencesSnapshotMapper
         }
     }
 
+    /// <summary>The activity-to-frequency map from its stored form, ignoring malformed pairs.</summary>
     private static Dictionary<int, int> ParseActivityFrequencies(string? json)
     {
         try

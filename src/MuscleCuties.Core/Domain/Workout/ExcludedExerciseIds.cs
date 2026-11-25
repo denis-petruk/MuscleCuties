@@ -9,6 +9,7 @@ namespace MuscleCuties.Core.Domain.Workout;
 /// </summary>
 public static class ExcludedExerciseIds
 {
+    /// <summary>Reads the stored exclusion list, returning an empty set for missing or malformed JSON rather than throwing.</summary>
     public static HashSet<int> Parse(string? json)
     {
         try

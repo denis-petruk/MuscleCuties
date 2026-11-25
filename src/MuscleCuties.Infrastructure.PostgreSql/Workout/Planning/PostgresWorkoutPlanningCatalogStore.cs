@@ -2,8 +2,10 @@ using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>The planning catalog as the planner reads it: exercises, slots, archetypes, budgets and thresholds.</summary>
 public sealed class PostgresWorkoutPlanningCatalogStore(PostgresDbContext database) : IWorkoutPlanningCatalogStore
 {
+    /// <summary>The user's exercise preferences.</summary>
     public async Task<IReadOnlyList<WorkoutExercisePreference>> GetUserExercisePreferencesAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
@@ -20,6 +22,7 @@ public sealed class PostgresWorkoutPlanningCatalogStore(PostgresDbContext databa
             .ToListAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>The whole catalog in one read, together with the fingerprint that identifies the version it came from.</summary>
     public async Task<WorkoutPlanningCatalogResponse> GetCatalogAsync(CancellationToken cancellationToken = default)
     {
         var exercises = await database.Exercises.AsNoTracking()

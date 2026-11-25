@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>One food logged for a day, with the nutrients for the amount eaten.</summary>
 public sealed class DailyFoodEntry
 {
     public const double MinimumPositivePortion = 0d;
@@ -9,6 +10,7 @@ public sealed class DailyFoodEntry
     public const int MinimumBatchItems = 1;
     private const int DstFallbackShiftMinutes = 60;
 
+    /// <summary>Takes the nutrient figures for one logged amount, clamping them at zero.</summary>
     private DailyFoodEntry(double calories, double protein, double carbs, double fat)
     {
         Calories = calories;
@@ -17,11 +19,16 @@ public sealed class DailyFoodEntry
         Fat = fat;
     }
 
+    /// <summary>Energy the serving contributes.</summary>
     public double Calories { get; }
+    /// <summary>Protein grams the serving contributes.</summary>
     public double Protein { get; }
+    /// <summary>Carbohydrate grams the serving contributes.</summary>
     public double Carbs { get; }
+    /// <summary>Fat grams the serving contributes.</summary>
     public double Fat { get; }
 
+    /// <summary>Builds a diary entry from a meal, a serving and its nutrients.</summary>
     public static DailyFoodEntry Create(MealType mealType, string name, double servingSize,
         string servingUnit, double servingsCount, double calories, double protein,
         double carbs, double fat)
@@ -36,6 +43,7 @@ public sealed class DailyFoodEntry
         return new DailyFoodEntry(calories, protein, carbs, fat);
     }
 
+    /// <summary>Refuses a batch with an empty list or a negative quantity, before anything is written.</summary>
     public static void ValidateBatch(IReadOnlyList<DailyFoodEntry> entries)
     {
         ArgumentNullException.ThrowIfNull(entries);
@@ -56,9 +64,11 @@ public sealed class DailyFoodEntry
             throw new ArgumentException("Food totals exceed supported values.", nameof(entries));
     }
 
+    /// <summary>Moves a source timestamp onto the target day while keeping its local time of day.</summary>
     public static DateTime CopyTimestamp(DateOnly targetDate, DateTime sourceTimestamp) =>
         targetDate.ToDateTime(TimeOnly.FromDateTime(sourceTimestamp));
 
+    /// <summary>Chooses the local time a meal was eaten, falling back to now when none was given.</summary>
     public static DateTime ResolveConsumptionLocalTimestamp(
         DateOnly localDate,
         TimeOnly requestedLocalTime,
@@ -80,6 +90,7 @@ public sealed class DailyFoodEntry
         return DateTime.SpecifyKind(unspecifiedLocal, DateTimeKind.Local);
     }
 
+    /// <summary>Orders timeline items by local time, keeping the given order for ties.</summary>
     public static IReadOnlyList<T> SortTimeline<T>(
         IEnumerable<T> entries,
         Func<T, DateTime> timestampSelector,
@@ -98,16 +109,19 @@ public sealed class DailyFoodEntry
             .ToArray();
     }
 
+    /// <summary>Refuses a copy onto its own date, which would duplicate the day.</summary>
     public static void RequireDifferentDates(DateOnly sourceDate, DateOnly targetDate)
     {
         _ = DiaryCopyDates.Create(sourceDate, targetDate);
     }
 
+    /// <summary>Refuses an unknown meal type rather than filing the food under a default.</summary>
     public static void RequireMealType(MealType mealType)
     {
         if (!Enum.IsDefined(mealType))
             throw new ArgumentOutOfRangeException(nameof(mealType));
     }
 
+    /// <summary>True when a nutrient value is finite and not negative.</summary>
     private static bool ValidNutrient(double value) => double.IsFinite(value) && value >= MinimumNutritionValue;
 }

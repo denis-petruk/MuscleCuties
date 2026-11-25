@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>Whether the day's check-in produced a usable score.</summary>
 public enum CheckInScoreStatus
 {
     Available,
@@ -10,6 +11,7 @@ public enum CheckInScoreStatus
     Incomplete
 }
 
+/// <summary>The band the score falls in, which is what the screen shows instead of the raw number.</summary>
 public enum CheckInScoreBand
 {
     FeelingReady,
@@ -17,6 +19,7 @@ public enum CheckInScoreBand
     ConsiderEasierDay
 }
 
+/// <summary>The part of the plan a low score puts up for review.</summary>
 public enum PlanningReviewSection
 {
     ReadinessScoreDisplay,
@@ -35,6 +38,7 @@ public sealed record PlanningReviewApproval(
     IReadOnlySet<PlanningReviewSection> CoveredSections,
     string? ReviewedTrainingPolicyVersion = null);
 
+/// <summary>Her answers for the day, as the score is computed from.</summary>
 public sealed record TodayCheckInObservation(
     DateOnly LocalDate,
     string TimeZoneId,
@@ -45,6 +49,7 @@ public sealed record TodayCheckInObservation(
     decimal? Soreness,
     decimal? Stress);
 
+/// <summary>The score with its band and the sections it flags for review.</summary>
 public sealed record CheckInScoreResult(
     CheckInScoreStatus Status,
     decimal? RawScore,
@@ -74,6 +79,7 @@ public static class TodayCheckInScoreRule
     /// compared in memory against the release approval; it is not persisted.
     /// </summary>
     public const string RulesetVersion = "MC-CHECKIN-SCORE-0.4";
+    /// <summary>Whether the check-in score is shown in the app.</summary>
     public static bool ScoreDisplayEnabled => true;
     public const int ReadinessScaleMinimum = 1;
     public const int ReadinessScaleMaximum = 5;
@@ -90,6 +96,7 @@ public static class TodayCheckInScoreRule
     /// <summary>Scale shares carried by energy: the energy term itself plus the share stress may lower.</summary>
     public const int EnergyScaleShares = 2;
 
+    /// <summary>Scores today's check-in, or reports why it cannot be scored.</summary>
     public static CheckInScoreResult Evaluate(
         TodayCheckInObservation? observation,
         DateTimeOffset nowUtc,
@@ -141,6 +148,7 @@ public static class TodayCheckInScoreRule
         return new CheckInScoreResult(CheckInScoreStatus.Available, rawScore, band, observation);
     }
 
+    /// <summary>Keeps the original weighting available, so a change in scoring can be compared against it.</summary>
     internal static decimal CalculatePrototype(decimal sleepQuality, decimal energy, decimal? stress)
     {
         var energyShare = energy - ReadinessScaleMinimum;
@@ -152,10 +160,12 @@ public static class TodayCheckInScoreRule
             energyShare * (EnergyScaleShares - 1) + stressLimitedEnergyShare) / ScoreDenominator;
     }
 
+    /// <summary>True when the value sits on the score's scale.</summary>
     private static bool IsValidScaleValue(decimal value) =>
         value >= TodayCheckInScoreRule.ReadinessScaleMinimum &&
         value <= TodayCheckInScoreRule.ReadinessScaleMaximum && value == decimal.Truncate(value);
 
+    /// <summary>A score result carrying the status and the check-in it refers to.</summary>
     private static CheckInScoreResult Unavailable(CheckInScoreStatus status, TodayCheckInObservation? observation) =>
         new(status, null, null, observation);
 }

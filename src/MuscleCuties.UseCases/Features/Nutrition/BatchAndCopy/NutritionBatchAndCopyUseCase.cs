@@ -3,12 +3,14 @@ using MuscleCuties.UseCases.Features.Nutrition.Diary;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
 
+/// <summary>Saves a batch, copies a day and quick-adds, each under the day's lock.</summary>
 public sealed class NutritionBatchAndCopyUseCase(
     INutritionBatchAndCopyStore store,
     INutritionBatchAndCopyChangeNotifier? changeNotifier = null)
 {
     private const int MaximumIdempotencyKeyLength = 128;
 
+    /// <summary>Saves a batch of diary changes as one request.</summary>
     public async Task<BatchSaveNutritionDiaryResponse> BatchSaveAsync(
         Guid userId,
         BatchSaveNutritionDiaryRequest request,
@@ -51,6 +53,7 @@ public sealed class NutritionBatchAndCopyUseCase(
         return response;
     }
 
+    /// <summary>Copies a day's or meal's entries to another day.</summary>
     public async Task<CopyNutritionDiaryResponse> CopyAsync(
         Guid userId,
         CopyNutritionDiaryRequest request,
@@ -68,6 +71,7 @@ public sealed class NutritionBatchAndCopyUseCase(
         return response;
     }
 
+    /// <summary>Adds a quick-add entry to the diary.</summary>
     public async Task<QuickAddNutritionDiaryResponse> QuickAddAsync(
         Guid userId,
         QuickAddNutritionDiaryRequest request,
@@ -94,6 +98,7 @@ public sealed class NutritionBatchAndCopyUseCase(
         return response;
     }
 
+    /// <summary>Refuses a write with no owner, no command key or entries that belong to another account.</summary>
     private static void ValidateOwnerAndKey(Guid userId, string idempotencyKey)
     {
         if (userId == Guid.Empty)

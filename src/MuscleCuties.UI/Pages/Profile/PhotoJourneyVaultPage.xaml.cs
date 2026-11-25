@@ -2,6 +2,9 @@ using MuscleCuties.UI.ViewModels.Profile;
 
 namespace MuscleCuties.UI.Pages.Profile;
 
+/// <summary>
+///     Photo journey vault: progress photos, side-by-side comparison, and visibility controls.
+/// </summary>
 public partial class PhotoJourneyVaultPage : ContentPage
 {
     public const int PhotoUnavailableOverlayRow = 2;
@@ -11,11 +14,13 @@ public partial class PhotoJourneyVaultPage : ContentPage
     private readonly PhotoJourneyVaultViewModel _viewModel;
     private bool _isAddingPhoto;
 
+    /// <summary>Initializes the page and its view model.</summary>
     public PhotoJourneyVaultPage(PhotoJourneyVaultViewModel vm)
     {
         _viewModel = this.InitializeAndBind(InitializeComponent, vm);
     }
 
+    /// <summary>Starts the vault when navigated to.</summary>
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
@@ -28,12 +33,14 @@ public partial class PhotoJourneyVaultPage : ContentPage
         });
     }
 
+    /// <summary>Releases the page when navigated away from.</summary>
     protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
     {
         _viewModel.ResetPrivacy();
         base.OnNavigatedFrom(args);
     }
 
+    /// <summary>Closes the open sheet before leaving the page.</summary>
     protected override bool OnBackButtonPressed()
     {
         if (_viewModel.IsComparisonOpen)
@@ -45,6 +52,7 @@ public partial class PhotoJourneyVaultPage : ContentPage
         return base.OnBackButtonPressed();
     }
 
+    /// <summary>Adds a progress photo, guarding against a second tap while the first is still running.</summary>
     private async void OnAddPhotoClicked(object? sender, EventArgs e)
     {
         if (_isAddingPhoto)

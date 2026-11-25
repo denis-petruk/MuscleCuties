@@ -3,6 +3,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>What one reviewed-catalog import wrote, so the run can be reported.</summary>
 public sealed record ReviewedCatalogImportDryRunV020(
     string ExerciseReviewVersion,
     string CatalogSnapshot,
@@ -16,6 +17,7 @@ public sealed record ReviewedCatalogImportDryRunV020(
     int AutomaticSubstitutionsEnabled,
     IReadOnlyList<string> Issues)
 {
+    /// <summary>True when the manifest can be imported.</summary>
     public bool CanImport => Issues.Count == 0;
 }
 
@@ -47,6 +49,7 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
         return path;
     }
 
+    /// <summary>Reports what the import would change without writing it.</summary>
     public async Task<ReviewedCatalogImportDryRunV020> DryRunAsync(string manifestPath,
         CancellationToken cancellationToken = default)
     {
@@ -58,6 +61,7 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
         return InspectSnapshot(document.RootElement, definitions);
     }
 
+    /// <summary>Applies the manifest import.</summary>
     public async Task<ReviewedCatalogImportDryRunV020> ApplyAsync(string manifestPath,
         CancellationToken cancellationToken = default) =>
         await context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -101,6 +105,7 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
             return result;
         });
 
+    /// <summary>Reads the manifest and reports the drift it finds.</summary>
     public static ReviewedCatalogImportDryRunV020 InspectSnapshot(JsonElement root,
         IReadOnlyList<WorkoutExerciseDefinition> definitions)
     {
@@ -228,6 +233,7 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
             issues.Distinct(StringComparer.Ordinal).OrderBy(issue => issue, StringComparer.Ordinal).ToArray());
     }
 
+    /// <summary>Whether every value in a stored enum array is a member of the enum, which is how an unreviewed or renamed tag is caught at import.</summary>
     private static bool ValidEnumArray<TEnum>(JsonElement entry, string property, bool allowEmpty)
         where TEnum : struct, Enum
     {
@@ -236,6 +242,7 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
             Enum.TryParse<TEnum>(value.GetString(), false, out var parsed) && Enum.IsDefined(parsed));
     }
 
+    /// <summary>The evidence JSON stored for one catalog exercise.</summary>
     private static string EvidenceJson(JsonElement root, JsonElement exercise,
         IReadOnlyDictionary<int, int> databaseIdBySourceId) => JsonSerializer.Serialize(new
     {
@@ -262,9 +269,11 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
         exercise
     });
 
+    /// <summary>The named string property, or nothing when it is missing.</summary>
     private static string String(JsonElement value, string property) =>
         value.GetProperty(property).GetString() ?? string.Empty;
 
+    /// <summary>Reads the reviewed catalog JSON, failing the import rather than importing a partial document.</summary>
     private static async Task<JsonDocument> ReadManifestAsync(string path, CancellationToken cancellationToken)
     {
         var bytes = await File.ReadAllBytesAsync(path, cancellationToken).ConfigureAwait(false);

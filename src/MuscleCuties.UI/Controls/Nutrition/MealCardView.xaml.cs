@@ -2,8 +2,12 @@ using System.Windows.Input;
 
 namespace MuscleCuties.UI.Controls.Nutrition;
 
+/// <summary>
+///     Logged-meal card: macros, tap-to-open breakdown, edit, and save-as-template actions.
+/// </summary>
 public partial class MealCardView : ContentView
 {
+    /// <summary>Initializes the card declared in its XAML.</summary>
     public MealCardView()
     {
         InitializeComponent();
@@ -129,6 +133,7 @@ public partial class MealCardView : ContentView
         set => SetValue(HasContentProperty, value);
     }
 
+    /// <summary>True when no content is set on the card.</summary>
     public bool IsEmpty => !HasContent;
 
     public bool ShowEdit
@@ -185,8 +190,12 @@ public partial class MealCardView : ContentView
         set => SetValue(BelowContentProperty, value);
     }
 
+    /// <summary>True when the card shows an edit or template action.</summary>
     public bool HasActions => ShowEdit || ShowTemplate;
+    /// <summary>True when the card has a target-share line.</summary>
     public bool HasTargetShare => !string.IsNullOrWhiteSpace(TargetShareText);
+    /// <summary>True when the card has a meal name.</summary>
     public bool HasMealName => !string.IsNullOrWhiteSpace(MealName);
+    /// <summary>True when the card has ingredients text.</summary>
     public bool HasIngredients => !string.IsNullOrWhiteSpace(IngredientsText);
 }

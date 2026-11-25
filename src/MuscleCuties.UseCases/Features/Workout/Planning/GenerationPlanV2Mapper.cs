@@ -14,6 +14,7 @@ public static class GenerationPlanV2Mapper
     private const string ActivityFrequencyLimitedByAvailableWeekdaysCode =
         "ActivityFrequencyLimitedByAvailableWeekdays";
 
+    /// <summary>Normalises a canonical plan's preview, so both the mapping and the canonical paths render the same shape.</summary>
     public static StrengthPlanPreviewResponseV020 ForCanonicalUse(StrengthPlanPreviewResponseV020 preview)
     {
         if (preview.Status != "Feasible") return preview;
@@ -141,6 +142,7 @@ public static class GenerationPlanV2Mapper
         };
     }
 
+    /// <summary>Maps a generated plan onto the stored plan shape.</summary>
     public static GenerationPlanV2 ToPlan(WorkoutGenerationResultV2 generation,
         StrengthPlanPreviewSourceV020 source)
     {
@@ -177,6 +179,7 @@ public static class GenerationPlanV2Mapper
         };
     }
 
+    /// <summary>The preview sessions a stored plan produces.</summary>
     public static IReadOnlyList<StrengthPlanPreviewSessionV020> ToStrengthSessions(GenerationPlanV2 plan) =>
         plan.Sessions.Where(session => session.Exercises.Count > 0).Select(session =>
             new StrengthPlanPreviewSessionV020("MC-V2", plan.PolicyVersion, session.SessionIndex,
@@ -192,9 +195,11 @@ public static class GenerationPlanV2Mapper
                         exercise.MaxRepetitions, exercise.TargetRir, exercise.RestSeconds, [])).ToArray(),
                 [], new Dictionary<string, string>(), session.Weekday)).ToArray();
 
+    /// <summary>The key a slot is matched by across plans, so a regenerated plan keeps its identity.</summary>
     private static string LogicalSlotKey(string pattern) => LogicalSlot(pattern) is { } slot &&
         slot != StrengthMovementSlotDto.GoalSpecificAccessory ? slot.ToString() : pattern;
 
+    /// <summary>The movement slot a pattern belongs to.</summary>
     private static StrengthMovementSlotDto LogicalSlot(string pattern) => pattern switch
     {
         nameof(MovementPattern.SquatPattern) or nameof(MovementPattern.Lunge) => StrengthMovementSlotDto.KneeDominant,

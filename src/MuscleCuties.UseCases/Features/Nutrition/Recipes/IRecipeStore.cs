@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Recipes;
 
+/// <summary>The recipe and template persistence.</summary>
 public interface IRecipeStore
 {
     Task<RecipeDetailsDto> SaveRecipeAsync(RecipeDetailsDto recipe, CancellationToken cancellationToken = default);

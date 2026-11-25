@@ -11,12 +11,15 @@ public sealed class WorkoutRescheduleRejectedException : InvalidOperationExcepti
     public const string SessionAlreadyStartedCode = "WorkoutRescheduleSessionAlreadyStarted";
     public const string ScheduleUnknownCode = "WorkoutRescheduleScheduleUnknown";
 
+    /// <summary>Reports that the reschedule was refused, carrying the reason codes.</summary>
     public WorkoutRescheduleRejectedException(string reasonCode) : this([reasonCode])
     {
     }
 
+    /// <summary>Carries the reasons a reschedule was refused, so the API can return them with the conflict.</summary>
     public WorkoutRescheduleRejectedException(IReadOnlyList<string> reasonCodes)
         : base(Prefix + string.Join(',', reasonCodes)) => ReasonCodes = reasonCodes;
 
+    /// <summary>The reasons the reschedule was refused.</summary>
     public IReadOnlyList<string> ReasonCodes { get; }
 }

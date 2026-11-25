@@ -12,6 +12,7 @@ public sealed class PostgresExternalFoodImportStore(PostgresDbContext dbContext)
     private const decimal ReferenceGrams = 100m;
     private const string ReferenceUnit = "g";
 
+    /// <summary>Imports external catalog foods for the user.</summary>
     public async Task<IReadOnlyList<FoodCatalogCandidate>> ImportAsync(
         Guid ownerUserId,
         IReadOnlyList<ExternalFoodItem> items,

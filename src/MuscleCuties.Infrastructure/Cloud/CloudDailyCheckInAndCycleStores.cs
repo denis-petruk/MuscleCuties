@@ -21,6 +21,7 @@ using MuscleCuties.Core.Domain.Workout;
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
+/// <summary>The daily check-in through the backend: whether today is already answered, and the answer itself.</summary>
 public sealed class CloudDailyCheckInStore(
     IMuscleCutiesBackendApiClient apiClient,
     MuscleCuties.Core.Services.Health.IHealthSyncService? healthSync = null,
@@ -33,6 +34,7 @@ public sealed class CloudDailyCheckInStore(
     private const string UnknownScoreText = "—";
     private readonly TimeProvider timeProvider = clock ?? TimeProvider.System;
 
+    /// <summary>Today's check-in state, so the sheet can close itself instead of asking the same questions twice.</summary>
     public async Task<DailyCheckInStatusResponse> GetStatusAsync(DailyCheckInStatusRequest request, CancellationToken ct)
     {
         var response = await apiClient.GetAsync<DailyCheckInRecord[]>(
@@ -53,6 +55,7 @@ public sealed class CloudDailyCheckInStore(
             readiness.Band ?? readiness.Status, readiness);
     }
 
+    /// <summary>Submits the day's answers once and returns what the readiness calculation made of them.</summary>
     public async Task<SubmitDailyCheckInResponse> SubmitAsync(SubmitDailyCheckInRequest request, CancellationToken ct)
     {
         if (request.EnergyLevel is < 1 or > 5 || request.PlanningSleepQuality is not (>= 1 and <= 5) ||
@@ -131,6 +134,7 @@ public sealed class CloudDailyCheckInStore(
 
 }
 
+/// <summary>Injuries through the backend: how they restrict training, and the writes that add, clear or remove one.</summary>
 public sealed class CloudWorkoutInjuryStore(
     IMuscleCutiesBackendApiClient apiClient) : IWorkoutInjuryStore
 {
@@ -141,12 +145,14 @@ public sealed class CloudWorkoutInjuryStore(
     private readonly Dictionary<int, InjuryObservationRecord> _recordByIntId = [];
     private readonly object _identityLock = new();
 
+    /// <summary>How the logged injuries restrict today's training, which is what withholds an unsafe session.</summary>
     public async Task<WorkoutInjuryImpactDto> GetImpactAsync(CancellationToken ct = default)
     {
         var response = await apiClient.GetAsync<WorkoutInjuryImpactDto>(InjuryImpactRoute, ct).ConfigureAwait(false);
         return CloudStoreResponse.RequireData(response, "workout injury impact");
     }
 
+    /// <summary>Every logged injury.</summary>
     public async Task<IReadOnlyList<WorkoutInjuryLogDto>> GetAllInjuriesAsync(CancellationToken ct = default)
     {
         var response = await apiClient.GetAsync<InjuryObservationRecord[]>(InjuriesRoute, ct).ConfigureAwait(false);
@@ -178,6 +184,7 @@ public sealed class CloudWorkoutInjuryStore(
         return list;
     }
 
+    /// <summary>Saves one injury report and refreshes the cached copies the summary reads.</summary>
     public async Task SaveInjuryAsync(SaveWorkoutInjuryInput input, CancellationToken ct = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -219,6 +226,7 @@ public sealed class CloudWorkoutInjuryStore(
         CacheRecord(saved);
     }
 
+    /// <summary>Marks an injury as healed without deleting its history, and refreshes the plan afterwards.</summary>
     public async Task ClearInjuryAsync(int injuryId, CancellationToken ct = default)
     {
         var existing = await RequireRecordAsync(injuryId, ct).ConfigureAwait(false);
@@ -245,6 +253,7 @@ public sealed class CloudWorkoutInjuryStore(
         CacheRecord(updated);
     }
 
+    /// <summary>Removes an injury report outright and refreshes the plan afterwards.</summary>
     public async Task DeleteInjuryAsync(int injuryId, CancellationToken ct = default)
     {
         var existing = await RequireRecordAsync(injuryId, ct).ConfigureAwait(false);
@@ -258,6 +267,8 @@ public sealed class CloudWorkoutInjuryStore(
         }
     }
 
+    /// <summary>Asks for a plan refresh after an injury changed, because a restriction that is no longer true must not keep</summary>
+    /// withholding sessions.</summary>
     public async Task RefreshPlanAfterInjuryChangeAsync(CancellationToken ct = default)
     {
         var response = await apiClient.SendMutationAsync<object, WorkoutReconciliationResponse>(
@@ -268,6 +279,7 @@ public sealed class CloudWorkoutInjuryStore(
         CloudStoreResponse.RequireData(response, "refresh workout plan after injury change");
     }
 
+    /// <summary>The stored record behind an injury, or nothing when it has gone.</summary>
     private async Task<InjuryObservationRecord?> TryResolveRecordAsync(int injuryId, CancellationToken ct)
     {
         lock (_identityLock)
@@ -283,10 +295,12 @@ public sealed class CloudWorkoutInjuryStore(
         }
     }
 
+    /// <summary>Loads the injury record or refuses because it is unknown.</summary>
     private async Task<InjuryObservationRecord> RequireRecordAsync(int injuryId, CancellationToken ct) =>
         await TryResolveRecordAsync(injuryId, ct).ConfigureAwait(false)
         ?? throw new KeyNotFoundException($"Injury {injuryId} was not found.");
 
+    /// <summary>Keeps the saved record in the local cache and returns its identity, so the page can address it afterwards.</summary>
     private int CacheRecord(InjuryObservationRecord record)
     {
         lock (_identityLock)
@@ -309,6 +323,7 @@ public sealed class CloudWorkoutInjuryStore(
 
 }
 
+/// <summary>The cycle day log through the backend: the day's phase, flow, symptoms and note.</summary>
 public sealed class CloudCycleDailyLogStore(
     IMuscleCutiesBackendApiClient apiClient) : ICycleDailyLogStore
 {
@@ -321,6 +336,7 @@ public sealed class CloudCycleDailyLogStore(
     private const int CycleLookbackDays = 60;
     private const int GuidByteCount = 16;
 
+    /// <summary>One day's log, or nothing when that day was never logged.</summary>
     public async Task<CycleDailyLogSnapshot?> LoadAsync(DateTime date, CancellationToken cancellationToken)
     {
         var dateOnly = DateOnly.FromDateTime(date);
@@ -370,6 +386,8 @@ public sealed class CloudCycleDailyLogStore(
             daySymptoms);
     }
 
+    /// <summary>Writes a day's log with a deterministic request id, so a retried save is the same operation; a phase that</summary>
+    /// breaks the cycle order is refused with the phase that would have been accepted.</summary>
     public async Task<bool> SaveAsync(CycleDailyLogRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -480,6 +498,7 @@ public sealed class CloudCycleDailyLogStore(
         return true;
     }
 
+    /// <summary>The phase a save should record, which is the requested one or the day's existing phase when none was sent.</summary>
     private static CyclePhaseDto? ResolveTargetPhase(CycleDailyLogRequest request)
     {
         if (request.PhaseOverride.HasValue && request.PhaseOverride.Value != CyclePhaseDto.Unknown)
@@ -492,6 +511,7 @@ public sealed class CloudCycleDailyLogStore(
         return null;
     }
 
+    /// <summary>The suggested phase a refused save carries, so the page can offer it instead of only reporting the refusal.</summary>
     internal static bool TryParseSuggestedPhase(string? errorCode, out CyclePhaseDto suggestedPhase)
     {
         suggestedPhase = default;
@@ -504,6 +524,8 @@ public sealed class CloudCycleDailyLogStore(
         return true;
     }
 
+    /// <summary>Turns the server's order-error code into the order exception the use case expects, rather than a generic</summary>
+    /// failure.</summary>
     internal static void ThrowPhaseOrderOrConflict(string? errorCode)
     {
         if (TryParseSuggestedPhase(errorCode, out var suggestedPhase))
@@ -512,12 +534,14 @@ public sealed class CloudCycleDailyLogStore(
         throw new InvalidOperationException("Cycle phase update conflicted with existing cycle records.");
     }
 
+    /// <summary>A stable id derived from a key, which is how the same logical write keeps one identity across retries.</summary>
     private static Guid DeterministicGuid(string key)
     {
         var hash = SHA256.HashData(Encoding.UTF8.GetBytes(key));
         return new Guid(hash.AsSpan(0, GuidByteCount));
     }
 
+    /// <summary>Throws unless the phase log really was stored, so a silently refused write cannot look like success.</summary>
     internal static void RequireSavedPhaseLog(BackendApiResponse<CloudPhaseLogSaveResponse> response)
     {
         var saved = CloudStoreResponse.RequireData(response, "save cycle phase");
@@ -526,14 +550,17 @@ public sealed class CloudCycleDailyLogStore(
     }
 }
 
+/// <summary>The phase write's outcome as the server reports it, including which phase it would have accepted.</summary>
 internal sealed record CloudPhaseLogSaveResponse(string? Outcome);
 
+/// <summary>Edits to a single logged phase, kept apart from the day log because they change history rather than today.</summary>
 public sealed class CloudCyclePhaseEditStore(
     IMuscleCutiesBackendApiClient apiClient) : ICyclePhaseEditStore
 {
     private const string CyclePhasesRoute = "/api/v1/cycle/history/phases";
     private const string SavedOutcome = "Saved";
 
+    /// <summary>Saves one phase correction and reports the outcome, including an order conflict with its suggestion.</summary>
     public async Task<CyclePhaseEditResult> SaveAsync(CyclePhaseEditRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);

@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Profile.PhotoVault.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Profile.PhotoVault;
 
+/// <summary>The server's photo vault read.</summary>
 public sealed class ServerPhotoVaultUseCase(IServerPhotoVaultStore store)
 {
     private const long MinimumFileSizeBytes = 1;
@@ -17,6 +18,7 @@ public sealed class ServerPhotoVaultUseCase(IServerPhotoVaultStore store)
         "image/webp"
     };
 
+    /// <summary>Issues a presigned upload URL for a new photo.</summary>
     public Task<PhotoUploadIssueResponse> RequestUploadUrlAsync(
         Guid userId,
         PhotoUploadUrlRequest request,
@@ -42,6 +44,7 @@ public sealed class ServerPhotoVaultUseCase(IServerPhotoVaultStore store)
         return store.RequestUploadUrlAsync(userId, request, cancellationToken);
     }
 
+    /// <summary>Stores the metadata of an uploaded photo.</summary>
     public Task<CommitPhotoMetadataResponse> CommitPhotoMetadataAsync(
         Guid userId,
         CommitPhotoMetadataRequest request,
@@ -61,6 +64,7 @@ public sealed class ServerPhotoVaultUseCase(IServerPhotoVaultStore store)
         return store.CommitPhotoMetadataAsync(userId, request, cancellationToken);
     }
 
+    /// <summary>The user's photo history.</summary>
     public Task<PhotoHistoryResponse> GetPhotoHistoryAsync(
         Guid userId,
         int limit,
@@ -76,6 +80,7 @@ public sealed class ServerPhotoVaultUseCase(IServerPhotoVaultStore store)
         return store.GetPhotoHistoryAsync(userId, safeLimit, safeOffset, cancellationToken);
     }
 
+    /// <summary>A download URL for one saved photo.</summary>
     public Task<PhotoDownloadUrlResponse?> GetPhotoDownloadUrlAsync(
         Guid userId,
         Guid photoId,
@@ -90,6 +95,7 @@ public sealed class ServerPhotoVaultUseCase(IServerPhotoVaultStore store)
         return store.GetPhotoDownloadUrlAsync(userId, photoId, cancellationToken);
     }
 
+    /// <summary>Deletes one photo, reporting whether it existed.</summary>
     public Task<bool> DeletePhotoAsync(
         Guid userId,
         Guid photoId,

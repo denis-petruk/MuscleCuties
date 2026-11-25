@@ -10,6 +10,7 @@ internal static class StrengthPlanPreviewMapperV020
     public const string MixedActivityScheduleIncompleteCode = "MixedActivityScheduleIncomplete";
     public const string NoSafeStrengthContentRemainingCode = "NoSafeStrengthContentRemaining";
 
+    /// <summary>The preview choices a request carries.</summary>
     public static StrengthPlanPreviewChoices ToChoices(StrengthPlanPreviewRequestV020 request) => new(
         WorkoutActivityContractMapper.ToCore(request.Activity),
         request.LocalDate,
@@ -28,6 +29,7 @@ internal static class StrengthPlanPreviewMapperV020
         request.AvailableWeekdays,
         request.AllowMovementOmissionsForDuration);
 
+    /// <summary>The preview data a loaded source carries.</summary>
     public static StrengthPlanPreviewData ToData(StrengthPlanPreviewSourceV020 source) => new(
         source.Goal,
         source.Equipment,
@@ -61,6 +63,7 @@ internal static class StrengthPlanPreviewMapperV020
         EquipmentCapabilities = source.DraftEquipmentCapabilities ?? source.SavedAnswers?.EquipmentCapabilities
     };
 
+    /// <summary>Maps a preview result onto its response.</summary>
     public static StrengthPlanPreviewResponseV020 ToResponse(StrengthPlanPreviewResult result) => new(
         StrengthPlanPreviewRule.PolicyId,
         StrengthPlanPreviewRule.Version,
@@ -106,6 +109,7 @@ internal static class StrengthPlanPreviewMapperV020
         MinimumRequiredSessionMinutes = result.MinimumRequiredSessionMinutes
     };
 
+    /// <summary>Maps the mixed schedule onto its response.</summary>
     public static MixedActivityScheduleV020 ToMixedSchedule(MixedActivityWeekScheduleResult result) => new(
         WorkoutSessionOrderingRule.Assign(result.Sessions).Select(session => new MixedActivityScheduleSessionV020(
             (int)session.Activity,
@@ -129,6 +133,7 @@ internal static class StrengthPlanPreviewMapperV020
             ToOccurrencePrescription(activity.Prescription))).ToArray(),
         result.InputReasons);
 
+    /// <summary>The prescription output for one occurrence.</summary>
     private static ActivitySessionPrescriptionOutputV020? ToOccurrencePrescription(
         ActivitySessionPrescription? prescription) => prescription is null ? null : new(
         (int)prescription.Activity, prescription.Purpose.ToString(), prescription.Modality.ToString(),
@@ -139,6 +144,7 @@ internal static class StrengthPlanPreviewMapperV020
         prescription.IntervalRecoveryCount, prescription.IntervalRecoverySeconds,
         prescription.RequiresUserConfirmation, prescription.Reasons);
 
+    /// <summary>Adds the mixed schedule to the preview response.</summary>
     public static StrengthPlanPreviewResponseV020 AttachMixedSchedule(
         StrengthPlanPreviewResponseV020 response,
         MixedActivityWeekScheduleResult schedule,

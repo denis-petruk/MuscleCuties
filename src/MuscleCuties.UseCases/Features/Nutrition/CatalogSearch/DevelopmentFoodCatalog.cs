@@ -37,6 +37,7 @@ public static class DevelopmentFoodCatalog
             .ToList();
     }
 
+    /// <summary>Builds one development catalog entry from its nutrition values.</summary>
     private static FoodCatalogCandidate Build(int index, string name, float calories, float protein, float carbs, float fats) =>
         new(FirstSyntheticId + index, name, calories, protein, carbs, fats,
             IsCustom: false, FdcId: null, DataType: null, BrandName: null, BrandOwner: null,

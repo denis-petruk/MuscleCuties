@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Hydration copy: water amounts, presets and reminder wording.</summary>
 public static partial class UiTextCatalog
 {
+    /// <summary>Registers the hydration strings.</summary>
     static partial void RegisterHydrationStrings()
     {
         English["Nutrition_Hydration_Entry"] = "Entry {0} · {1:N0} ml";

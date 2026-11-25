@@ -1,20 +1,32 @@
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
+/// <summary>One micronutrient row: intake, goal, and the glyph chosen for the nutrient.</summary>
 public class DailyMicronutrientItem
 {
+    /// <summary>Group the nutrient is listed under (vitamins, minerals, fibre).</summary>
     public string Group { get; set; } = string.Empty;
+    /// <summary>Nutrient name, which also selects its glyph.</summary>
     public string Name { get; set; } = string.Empty;
+    /// <summary>Unit the amount and goal are expressed in.</summary>
     public string Unit { get; set; } = string.Empty;
+    /// <summary>Intake so far today, in <c>Unit</c>.</summary>
     public float Amount { get; set; }
+    /// <summary>Daily target; zero means no target is set, which the row shows instead of an empty bar.</summary>
     public float Goal { get; set; }
 
+    /// <summary>Fraction of the goal met, clamped so an overshoot does not overflow the bar.</summary>
     public float Progress => Goal <= 0f ? 0f : Math.Clamp(Amount / Goal, 0f, 1f);
+    /// <summary>True once intake reaches a positive goal.</summary>
     public bool IsGoalHit => Goal > 0f && Amount >= Goal;
+    /// <summary>Intake with its unit, formatted by the shared formatter.</summary>
     public string AmountText => DisplayFormat.Micronutrient(Amount, Unit);
+    /// <summary>The goal as the right-hand half of the "amount / goal" pair.</summary>
     public string GoalText => $"/ {DisplayFormat.Micronutrient(Goal, Unit)}";
+    /// <summary>Percentage of the goal, or the no-target wording when none is set.</summary>
     public string ProgressText => Goal <= 0f ? "No target" : $"{Progress * 100f:N0}%";
 
+    /// <summary>Glyph for the nutrient, falling back to its group and then to a generic food marker.</summary>
     public string IconGlyph => Name switch
     {
         "Fiber" => "LeafThree24",
@@ -32,6 +44,7 @@ public class DailyMicronutrientItem
         _ => "Food24"
     };
 
+    /// <summary>Path data for the nutrient's outline, drawn where a glyph font is not used.</summary>
     public string IconPathData => Name switch
     {
         "Fiber" => "M12 21V9M12 13c-4 0-7-3-7-7 4 0 7 3 7 7ZM12 17c4 0 7-3 7-7-4 0-7 3-7 7",

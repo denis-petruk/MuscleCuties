@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Auth;
 
+/// <summary>Takes the field limits the validator enforces, so the caller cannot quietly use looser ones.</summary>
 public static class AuthInputValidator
 {
     public const string PasswordRequirementsMessage =
@@ -11,22 +12,26 @@ public static class AuthInputValidator
     public const string OtpCodeRequirementsMessage =
         "Please enter a valid 6-digit verification code.";
 
+    /// <summary>Trims and case-folds the address to its stored form, so one account cannot be created twice.</summary>
     public static string NormalizeEmail(string? email)
     {
         return email?.Trim().ToLowerInvariant() ?? string.Empty;
     }
 
+    /// <summary>Strips the spaces people type into a code, so a pasted code still verifies.</summary>
     public static string NormalizeOtpCode(string? code)
     {
         return code?.Trim().Replace(" ", "", StringComparison.Ordinal) ?? string.Empty;
     }
 
+    /// <summary>Whether the code is the expected length and digits only.</summary>
     public static bool IsValidOtpCode(string? code)
     {
         var cleanCode = NormalizeOtpCode(code);
         return cleanCode.Length == 6 && cleanCode.All(static digit => digit is >= '0' and <= '9');
     }
 
+    /// <summary>Validates and normalises the code in one step, answering false without throwing.</summary>
     public static bool TryValidateOtpCode(string? code, out string normalizedCode, out string errorMessage)
     {
         normalizedCode = NormalizeOtpCode(code);
@@ -41,6 +46,7 @@ public static class AuthInputValidator
     }
 
     // Validates username format: 3-30 characters, alphanumeric, underscores, hyphens, periods.
+    /// <summary>Whether the username meets the stored length and character limits.</summary>
     public static bool IsValidUsername(string? username)
     {
         var value = username?.Trim();
@@ -53,6 +59,7 @@ public static class AuthInputValidator
         return value.All(c => char.IsLetterOrDigit(c) || c is '_' or '-' or '.');
     }
 
+    /// <summary>Whether the address is well formed enough to deliver a code to.</summary>
     public static bool IsValidEmail(string? email)
     {
         var value = email?.Trim();
@@ -82,6 +89,7 @@ public static class AuthInputValidator
     }
 
     // Enforces 8+ non-whitespace characters with at least one lowercase, uppercase, digit, and symbol.
+    /// <summary>Whether the password meets the strength policy, so a weak one is refused before hashing.</summary>
     public static bool IsStrongPassword(string? password)
     {
         if (string.IsNullOrEmpty(password) || password.Length < 8 || password.Any(char.IsWhiteSpace))
@@ -93,6 +101,7 @@ public static class AuthInputValidator
                password.Any(character => !char.IsLetterOrDigit(character));
     }
 
+    /// <summary>Checks that the repeated password matches and reports why it does not.</summary>
     public static bool TryValidatePasswordConfirmation(
         string? password,
         string? confirmPassword,

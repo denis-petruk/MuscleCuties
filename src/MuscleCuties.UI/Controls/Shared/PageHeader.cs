@@ -68,12 +68,14 @@ public class PageHeader : ContentView
     private ContentView? _titleIconHost;
     private bool _builtWithBack;
 
+    /// <summary>Builds the header once and keeps its text, status and action in step with what the page binds.</summary>
     public PageHeader()
     {
         _backProxy = new Command(() => BackCommand?.Execute(null));
         Build();
     }
 
+    /// <summary>Caps the title once attached and drops the cap when detached.</summary>
     protected override void OnHandlerChanged()
     {
         base.OnHandlerChanged();
@@ -178,6 +180,7 @@ public class PageHeader : ContentView
         set => SetValue(TitleIconProperty, value);
     }
 
+    /// <summary>Assembles the header from its parts: back button, title, status line and action.</summary>
     private void Build()
     {
         _titleCapSubscription?.Dispose();
@@ -322,6 +325,7 @@ public class PageHeader : ContentView
         ApplyBackCommand();
     }
 
+    /// <summary>The back button, whose command comes from the page and whose icon from the theme.</summary>
     private ImageButton CreateBackButton()
     {
         var back = new ImageButton
@@ -343,6 +347,7 @@ public class PageHeader : ContentView
         return back;
     }
 
+    /// <summary>Applies the title's size cap, which keeps a long title from overflowing the header.</summary>
     private void ApplyTitleCap()
     {
         _titleCapSubscription?.Dispose();
@@ -351,6 +356,7 @@ public class PageHeader : ContentView
             AttachTitleCap(_titleLabel);
     }
 
+    /// <summary>Hooks a freshly built title label to that cap.</summary>
     private void AttachTitleCap(Label title)
     {
         _titleCapSubscription = TitleMaxFontSize > 0
@@ -358,6 +364,7 @@ public class PageHeader : ContentView
             : CappedTextSize.Attach(title, "UiFontSize27", "PresentationAccessibilityTitleMaxFontSize");
     }
 
+    /// <summary>Puts the bound title and subtitle into the labels.</summary>
     private void ApplyText()
     {
         if (_titleLabel is null)
@@ -375,6 +382,8 @@ public class PageHeader : ContentView
             && !string.IsNullOrWhiteSpace(Subtitle);
     }
 
+    /// <summary>Shows the status line only when there is something to say, so an empty row does not take the header's</summary>
+    /// height.</summary>
     private void ApplyStatus()
     {
         if (_statusHost is null)
@@ -399,12 +408,14 @@ public class PageHeader : ContentView
                 && !string.IsNullOrWhiteSpace(Subtitle);
     }
 
+    /// <summary>Shows the back button only when the page actually supplied a way back.</summary>
     private void ApplyBackCommand()
     {
         if (_backButton is not null)
             _backButton.Command = _backProxy;
     }
 
+    /// <summary>Shows the header action only when the page supplied one.</summary>
     private void ApplyAction()
     {
         if (_actionHost is null)

@@ -2,12 +2,14 @@
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
+/// <summary>The unit choices through the backend.</summary>
 public sealed class CloudProfileUnitsStore(
     IMuscleCutiesBackendApiClient apiClient) : IProfileUnitsStore
 {
     private const string ProfileUnitsRoute = "/api/v1/profile/units";
     private const int FallbackInitialVersion = 1;
 
+    /// <summary>The unit choices in force, or nothing before they have been saved.</summary>
     public async Task<DisplayUnits?> LoadCurrentAsync(CancellationToken cancellationToken = default)
     {
         var response = await apiClient.GetAsync<ServerProfileUnitsSnapshot>(ProfileUnitsRoute, cancellationToken).ConfigureAwait(false);
@@ -24,6 +26,7 @@ public sealed class CloudProfileUnitsStore(
             units.EnergyUnit);
     }
 
+    /// <summary>Saves the unit preference after snapshotting the profile.</summary>
     public async Task<bool> SaveCurrentWithSnapshotAsync(
         DisplayUnits settings,
         string snapshotReason,

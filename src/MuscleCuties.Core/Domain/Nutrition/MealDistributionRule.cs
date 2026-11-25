@@ -4,14 +4,17 @@ using MuscleCuties.Core.Models.Nutrition.Planning;
 
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>How the day's calories and protein split across meals.</summary>
 public readonly record struct MealDistributionShare(
     float Breakfast,
     float Lunch,
     float Dinner,
     float Snack)
 {
+    /// <summary>The calories the three main meals take, which excludes snacks.</summary>
     public float MainMealTotal => Breakfast + Lunch + Dinner;
 
+    /// <summary>The protein share of one meal, so protein is spread rather than spent at breakfast.</summary>
     public float GetProteinShare(MealType mealType)
     {
         if (!float.IsFinite(MainMealTotal) || MainMealTotal <= 0)
@@ -26,8 +29,10 @@ public readonly record struct MealDistributionShare(
     }
 }
 
+/// <summary>Derives the meal shares from her breakfast preference, so the split is explainable.</summary>
 public static class MealDistributionRule
 {
+    /// <summary>The shares her breakfast preference implies, normalised to sum to one.</summary>
     public static MealDistributionShare GetShares(BreakfastPreference preference)
     {
         return preference switch
@@ -37,6 +42,7 @@ public static class MealDistributionRule
         };
     }
 
+    /// <summary>Splits a daily calorie budget across the day's meals.</summary>
     public static CalorieBudget Distribute(
         float totalCalories,
         MacroNutrients? macroPreference = null,
@@ -66,6 +72,7 @@ public static class MealDistributionRule
             shares.MainMealTotal, shares.Snack, macros, allocations);
     }
 
+    /// <summary>Whether the macros allow a split at all, since a zero-calorie day has no shares.</summary>
     private static bool IsValid(MacroNutrients? macros)
     {
         return macros is { } value &&
@@ -75,6 +82,7 @@ public static class MealDistributionRule
                float.IsFinite(value.Fats) && value.Fats is >= 0 and <= 1000;
     }
 
+    /// <summary>Turns one meal's share of the budget into its calorie allocation.</summary>
     private static MealCalorieAllocation Allocate(MealType type, float share,
         float proteinShare, float calories, MacroNutrients macros)
     {
@@ -86,6 +94,7 @@ public static class MealDistributionRule
                 RoundTo(macros.Fats * share, 1f)));
     }
 
+    /// <summary>Rounds to the nearest step, so shown values never imply false precision.</summary>
     private static float RoundTo(float value, float nearest)
     {
         return MathF.Round(value / nearest) * nearest;

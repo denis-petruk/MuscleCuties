@@ -12,6 +12,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
     private const string AcceptedStatus = "Accepted";
     private static readonly JsonSerializerOptions JsonOptions = WorkoutPlanningJson.Create();
 
+    /// <summary>Brings the plan back in step with the rules and the catalogs, reporting what it changed.</summary>
     public async Task<WorkoutReconciliationOutcome> ReconcileAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         if (userId == Guid.Empty) throw new ArgumentException("An account is required.", nameof(userId));
@@ -28,6 +29,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
     }
 
     // Caller owns the tenant transaction and account lock.
+    /// <summary>The same reconciliation inside the caller's transaction, so an apply and its reconcile commit together.</summary>
     internal async Task<WorkoutReconciliationOutcome> ReconcileInCurrentTransactionAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         var state = await context.WorkoutAccountPlanningStates.SingleOrDefaultAsync(row => row.UserId == userId,
@@ -231,11 +233,13 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         return WorkoutReconciliationOutcome.Completed;
     }
 
+    /// <summary>A slot the reconciler can restore exactly, identified by the day and slot it came from.</summary>
     private sealed record ExactRestoration(DayOfWeek Weekday, string Template, string Version, int SessionIndex,
         string Slot, int ExerciseId, int TargetExerciseId, int Sets, int Reps, int TargetSets, int TargetReps, bool OriginallyOptional,
         IReadOnlyDictionary<DateOnly, Guid> OriginsByDate,
         IReadOnlyList<Guid> EpisodeIds, IReadOnlyList<InjuryRestorationEpisode> Episodes);
 
+    /// <summary>True when the conservative restoration was already applied.</summary>
     private async Task<bool> ConservativeRestorationAlreadyAppliedAsync(Guid userId, Guid planId, DateOnly start,
         IReadOnlyCollection<ExactRestoration> restorations, CancellationToken ct)
     {
@@ -263,6 +267,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
 
     // No lineage transfer is needed only when both old and proposed prescriptions
     // are proven unrelated to every explicitly cleared episode.
+    /// <summary>True when the plan provably needs no restoration.</summary>
     private async Task<bool> ProveNoRestorationNeededAsync(Guid userId, Guid planId, DateOnly start,
         StrengthPlanPreviewResponseV020 preview, StrengthPlanPreviewSourceV020 source, CancellationToken ct)
     {
@@ -319,6 +324,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
 
     // Only exact, fully linked original prescriptions are admitted here. Alternatives
     // and ambiguous lineage stay pending until their reviewed mapping is available.
+    /// <summary>The exact restoration mapping, when one can be applied.</summary>
     private async Task<List<ExactRestoration>?> PrepareExactRestorationAsync(Guid userId, Guid planId, DateOnly start,
         StrengthPlanPreviewResponseV020 preview, StrengthPlanPreviewSourceV020 source,
         List<WorkoutInjuryOmittedSlotRecord> deferredOmissions, CancellationToken ct)
@@ -498,6 +504,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
             { OriginsByDate = group.SelectMany(item => item.OriginsByDate).ToDictionary(pair => pair.Key, pair => pair.Value) }).ToList();
     }
 
+    /// <summary>Moves the deferred omissions onto the new plan.</summary>
     private async Task<bool> TransferDeferredOmissionsAsync(Guid userId, Guid planId,
         IReadOnlyCollection<WorkoutInjuryOmittedSlotRecord> omitted, CancellationToken ct)
     {
@@ -542,6 +549,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         return true;
     }
 
+    /// <summary>Applies the replacements that are already active.</summary>
     private async Task<bool> ApplyActiveReplacementsAsync(Guid userId, Guid planId,
         AutomaticInjuryProvenance.Evidence evidence, CancellationToken ct)
     {
@@ -638,6 +646,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         return true;
     }
 
+    /// <summary>Applies the exact restoration mapping.</summary>
     private async Task<bool> ApplyExactRestorationAsync(Guid userId, Guid planId, IReadOnlyCollection<ExactRestoration> mapping,
         CancellationToken ct)
     {
@@ -701,6 +710,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         return true;
     }
 
+    /// <summary>True when the draft preferences match the saved source.</summary>
     private static bool MatchesAppliedPreferences(WorkoutPreferencesDto draft, StrengthPlanPreviewSourceV020 source,
         Equipment equipment) => draft.ActivityTypes.ToHashSet().SetEquals(source.SelectedActivityTypes!) &&
         draft.AvailableWeekdays.Select(day => (DayOfWeek)day).ToHashSet().SetEquals(source.AvailableWeekdays!) &&
@@ -710,16 +720,20 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         Enum.TryParse<Equipment>(draft.EquipmentLevel, true, out var draftEquipment) && draftEquipment == equipment &&
         MatchesEquipmentCapabilities(draft, source.SavedAnswers?.EquipmentCapabilities);
 
+    /// <summary>True when the draft's equipment matches the saved capabilities.</summary>
     private static bool MatchesEquipmentCapabilities(WorkoutPreferencesDto draft, EquipmentCapabilities? saved) =>
         (draft.HasSliders ?? false) == (saved?.HasSliders ?? false) &&
         (draft.HasConfirmedBandAnchor ?? false) == (saved?.HasConfirmedBandAnchor ?? false) &&
         (draft.HasDumbbells ?? true) == (saved?.HasDumbbells ?? true) &&
         (draft.HasBands ?? true) == (saved?.HasBands ?? true);
 
+    /// <summary>True when two dictionaries hold the same entries.</summary>
     private static bool EqualEntries(IReadOnlyDictionary<int, int> left, IReadOnlyDictionary<int, int> right) =>
         left.Count == right.Count && left.All(pair => right.TryGetValue(pair.Key, out var value) && value == pair.Value);
 
+    /// <summary>The catalog evidence the applied plan was built from, so a reconcile can tell whether it still holds.</summary>
     private sealed record AppliedCatalogEvidence(string? SourceCatalogFingerprint);
+    /// <summary>The input the applied plan recorded, compared against the current one to decide if a rebuild is due.</summary>
     private sealed record AppliedInput(StrengthPlanPreviewRequestV020 Request);
 
 }

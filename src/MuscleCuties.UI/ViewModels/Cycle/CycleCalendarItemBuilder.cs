@@ -8,6 +8,9 @@ using MuscleCuties.UseCases.Features.Cycle.Overview;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
 
+/// <summary>
+///     Turns the loaded cycle days into the calendar strip's items.
+/// </summary>
 public static class CycleCalendarItemBuilder
 {
     private const int DaysInWeek = 7;
@@ -15,6 +18,7 @@ public static class CycleCalendarItemBuilder
     private const int SundayOffsetDays = -6;
     private const int MaxStaleCyclesMultiplier = 3;
 
+    /// <summary>The strip's day items around the anchor date.</summary>
     public static ObservableCollection<CycleDayItem> BuildCalendarStrip(
         IReadOnlyList<CycleDayItem> allMonthDays,
         DateTime anchorDate,
@@ -40,6 +44,7 @@ public static class CycleCalendarItemBuilder
         return strip;
     }
 
+    /// <summary>One strip day, reusing the existing item when there is one.</summary>
     public static CycleDayItem BuildStripDayItem(
         DateTime date,
         CycleDayItem? existingDay,
@@ -91,6 +96,7 @@ public static class CycleCalendarItemBuilder
         };
     }
 
+    /// <summary>One calendar day item for the date.</summary>
     public static CycleDayItem CreateCalendarDayItem(
         DateTime date,
         CyclePredictionSummary prediction,
@@ -184,6 +190,7 @@ public static class CycleCalendarItemBuilder
         };
     }
 
+    /// <summary>The stroke colour for a calendar day.</summary>
     public static Color ResolveDayStrokeColor(
         CyclePhase phase,
         bool isToday,
@@ -199,6 +206,8 @@ public static class CycleCalendarItemBuilder
             : AppThemeResources.GetRequired<Color>("Transparent");
     }
 
+    /// <summary>A day cell's fill; today's is drawn from the phase's own ink so it stands out whatever phase it falls</summary>
+    /// in.</summary>
     public static Color GetDayBackground(CyclePhase phase, bool isToday, bool useDarkTheme)
     {
         if (isToday) return GetPhaseTextColor(phase, useDarkTheme);
@@ -206,11 +215,14 @@ public static class CycleCalendarItemBuilder
         return GetPhaseBackgroundColor(phase, useDarkTheme);
     }
 
+    /// <summary>The fill that stands for a phase, taken from the shared palette so the grid and the legend cannot</summary>
+    /// disagree.</summary>
     public static Color GetPhaseBackgroundColor(CyclePhase phase, bool useDarkTheme)
     {
         return PhaseThemePalette.GetPhaseBackgroundColor(phase, useDarkTheme, default);
     }
 
+    /// <summary>The fill for a day with no logged phase, with today given its own surface so it is still findable.</summary>
     public static Color GetNeutralDayBackground(bool isToday, bool useDarkTheme)
     {
         return isToday
@@ -218,19 +230,24 @@ public static class CycleCalendarItemBuilder
             : AppThemeResources.GetColor(useDarkTheme ? "SurfaceSunkenDark" : "CycleNeutralSurfaceLight", default);
     }
 
+    /// <summary>The number colour on a neutral fill, chosen to stay readable against it in either theme.</summary>
     public static Color GetNeutralDayTextColor(bool useDarkTheme)
     {
         return AppThemeResources.GetColor(useDarkTheme ? "TextPrimaryDark" : "CycleNeutralTextLight", default);
     }
 
+    /// <summary>The number colour on the selected cell.</summary>
     public static Color GetSelectedDayTextColor(bool useDarkTheme)
     {
         return AppThemeResources.GetColor(useDarkTheme ? "TextPrimaryDark" : "TextPrimary", default);
     }
 
+    /// <summary>The text colour used on today's cell.</summary>
     public static Color GetTodayDayTextColor(bool useDarkTheme) =>
         GetTodayDayTextColor(isNeutral: false, useDarkTheme);
 
+    /// <summary>Today's number colour: a neutral today sits on a dark surface while a phased today in dark mode sits on a</summary>
+    /// bright pastel, so the ink is chosen from the background rather than the theme alone.</summary>
     public static Color GetTodayDayTextColor(bool isNeutral, bool useDarkTheme)
     {
         // Neutral Today sits on CycleNeutralTodaySurface (#1F2937) in both themes; phased Today in Dark
@@ -240,11 +257,14 @@ public static class CycleCalendarItemBuilder
             : AppThemeResources.GetColor("ContrastInk", default);
     }
 
+    /// <summary>The outline that marks a day the prediction produced, never the fill, so a guess cannot look like a log.</summary>
     public static Color GetPredictedDayStrokeColor(CyclePhase phase, bool useDarkTheme)
     {
         return PhaseThemePalette.GetPredictedDayStrokeColor(phase, useDarkTheme);
     }
 
+    /// <summary>The ink on a phase-filled cell, falling back to the theme's primary text when the phase has no colour of</summary>
+    /// its own.</summary>
     public static Color GetPhaseTextColor(CyclePhase phase, bool useDarkTheme)
     {
         return PhaseThemePalette.GetPhaseTextColor(phase, useDarkTheme,

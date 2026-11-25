@@ -6,6 +6,7 @@ public sealed class PostgresPhotoCleanupDispatchCursor(NpgsqlDataSource dataSour
 {
     private const long DispatchAdvisoryLockKey = 70620261018025412;
 
+    /// <summary>Takes the dispatch lease, so only one dispatcher walks the accounts at a time.</summary>
     public async Task<DispatchCursorLease> AcquireAsync(CancellationToken cancellationToken = default)
     {
         var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -24,8 +25,10 @@ public sealed class PostgresPhotoCleanupDispatchCursor(NpgsqlDataSource dataSour
         }
     }
 
+    /// <summary>The lease and cursor a dispatch pass holds; disposing it releases both.</summary>
     public sealed class DispatchCursorLease(NpgsqlDataSource dataSource, NpgsqlConnection lockConnection) : IAsyncDisposable
     {
+        /// <summary>The owner the next pass starts after, or nothing when it should start from the beginning.</summary>
         public async Task<Guid?> LoadAsync(CancellationToken cancellationToken = default)
         {
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -34,6 +37,7 @@ public sealed class PostgresPhotoCleanupDispatchCursor(NpgsqlDataSource dataSour
             return value is Guid ownerId ? ownerId : null;
         }
 
+        /// <summary>Stores where the pass reached, so the next one resumes without rescanning.</summary>
         public async Task SaveAsync(Guid? afterOwnerId, CancellationToken cancellationToken = default)
         {
             await using var connection = await dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -44,6 +48,7 @@ public sealed class PostgresPhotoCleanupDispatchCursor(NpgsqlDataSource dataSour
                 throw new InvalidOperationException("Photo cleanup dispatch cursor state is not initialized.");
         }
 
+        /// <summary>Releases the advisory lock connection.</summary>
         public ValueTask DisposeAsync() => lockConnection.DisposeAsync();
     }
 }

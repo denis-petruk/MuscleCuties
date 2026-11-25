@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Nutrition, profile, account and sign-in copy.</summary>
 public static partial class UiTextCatalog
 {
+    /// <summary>Registers the nutrition, profile and auth strings.</summary>
     static partial void RegisterNutritionProfileAuthStrings()
     {
         English["Ui_Common_Error_ConnectionRetry"] = "Something went wrong. Check your connection and try again.";

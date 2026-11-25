@@ -75,7 +75,12 @@ async Task HandleAsync(ILambdaContext _)
 
 await LambdaBootstrapBuilder.Create(HandleAsync).Build().RunAsync();
 
+/// <summary>
+///     Supplies the reconciler with one short-lived context per account, so a reconciliation pass never
+///     shares tracked state between tenants.
+/// </summary>
 sealed class TenantContextFactory(DbContextOptions<PostgresDbContext> options) : IDbContextFactory<PostgresDbContext>
 {
+    /// <summary>Creates a fresh context for one account's reconciliation pass.</summary>
     public PostgresDbContext CreateDbContext() => new(options);
 }

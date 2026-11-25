@@ -3,6 +3,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>The weekly strength frequency the policy allows for her tier.</summary>
 public sealed record GeneralStrengthFrequencyPolicy(
     int PolicySessionsPerWeek,
     int TargetSessionsPerWeek,
@@ -27,6 +28,7 @@ public static class GeneralStrengthFrequencyResolver
     public const decimal MinimumAverageSessionsPerWeekForEstablished = 2.0m;
     public const int MaximumDaysSinceLastSessionForCurrentEstablished = 28; // < 28 days
 
+    /// <summary>True when the history shows enough resistance training to count as established.</summary>
     public static bool IsEstablishedResistanceHistory(
         int? weeksConsistent,
         decimal? avgSessionsLast4Weeks,
@@ -40,6 +42,7 @@ public static class GeneralStrengthFrequencyResolver
                daysSinceLastSession.Value < MaximumDaysSinceLastSessionForCurrentEstablished;
     }
 
+    /// <summary>True when the sessions and weeks show established resistance training.</summary>
     public static bool IsEstablishedResistanceHistory(
         ActivityTrainingHistory? history,
         DateOnly localDate)
@@ -60,6 +63,7 @@ public static class GeneralStrengthFrequencyResolver
             daysSinceLast);
     }
 
+    /// <summary>How many weekdays the user can train on.</summary>
     public static int ResolveAvailableWeekdaysCount(
         IReadOnlyCollection<DayOfWeek>? availableWeekdays,
         int? generalDaysPerWeek = null)
@@ -77,6 +81,7 @@ public static class GeneralStrengthFrequencyResolver
         return distinctCount;
     }
 
+    /// <summary>The strength frequency policy the profile's history and availability imply.</summary>
     public static GeneralStrengthFrequencyPolicy Resolve(
         int availableWeekdaysCount,
         bool isEstablishedResistanceHistory,

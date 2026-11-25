@@ -10,7 +10,9 @@ public interface IWaterPresetInitializationStore : IWaterPresetStore
     Task<bool> TryInitializeAsync(WaterPresetCatalog defaults, CancellationToken cancellationToken);
 }
 
+/// <summary>One stored intake day with the operations that produced it.</summary>
 public sealed record StoredWaterIntakeDay(WaterIntakeDay Day, string? Version);
+/// <summary>The intake persistence, storing operations rather than a running total.</summary>
 public interface IWaterIntakeStore
 {
     // PostgreSQL authority. Fence both account and date; an absent day returns an empty ledger and null version.
@@ -20,7 +22,9 @@ public interface IWaterIntakeStore
     Task<StoredWaterIntakeDay?> TryReplaceAsync(WaterIntakeDay day, string? expectedVersion, CancellationToken cancellationToken);
 }
 
+/// <summary>The stored reminder settings with the operations behind them.</summary>
 public sealed record StoredWaterReminderConfiguration(WaterReminderConfiguration Configuration, string? Version);
+/// <summary>The reminder persistence.</summary>
 public interface IWaterReminderConfigurationStore
 {
     // First-party PostgreSQL, account fenced. Absent configuration is disabled with null version.

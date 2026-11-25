@@ -3,6 +3,7 @@ using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 
 namespace MuscleCuties.UI.Services.Notifications;
 
+/// <summary>Schedules the morning check-in reminder, but only when today's check-in is still open.</summary>
 public sealed class DailyCheckInNotificationService : IDailyCheckInNotificationService
 {
     private const int CheckInReminderId = 9001;
@@ -11,6 +12,7 @@ public sealed class DailyCheckInNotificationService : IDailyCheckInNotificationS
     private readonly ILocalNotificationService _notifications;
     private readonly IDailyCheckInStore _checkInStore;
 
+    /// <summary>Takes the notification service and the check-in store.</summary>
     public DailyCheckInNotificationService(
         ILocalNotificationService notifications,
         IDailyCheckInStore checkInStore)
@@ -19,6 +21,7 @@ public sealed class DailyCheckInNotificationService : IDailyCheckInNotificationS
         _checkInStore = checkInStore;
     }
 
+    /// <summary>Asks the check-in store whether today is done, then schedules for 8 a.m. today or tomorrow.</summary>
     public async Task ScheduleCheckInReminderAsync(int userId)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);

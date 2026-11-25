@@ -11,16 +11,23 @@ public sealed class SyntheticHealthDataProvider : IHealthDataProvider, IHealthAu
 {
     public const string EnvironmentVariable = "MC_SYNTHETIC_HEALTH";
 
+    /// <summary>True only when the simulator was launched with the synthetic-health variable, so the</summary>
+    /// fixture cannot switch itself on in a normal run.</summary>
     public static bool IsRequested =>
         string.Equals(Environment.GetEnvironmentVariable(EnvironmentVariable), "1", StringComparison.Ordinal);
 
+    /// <summary>The data source this provider stands in for.</summary>
     public HealthDataSource Source => HealthDataSource.AppleHealth;
+    /// <summary>Identifies the fixture in the UI, so a synthetic reading is never mistaken for real data.</summary>
     public string DisplayName => "Synthetic test data";
 
+    /// <summary>Always available, because the data is synthetic.</summary>
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default) => Task.FromResult(true);
 
+    /// <summary>Reports authorization granted, because the data is synthetic.</summary>
     public Task<bool> RequestReadAuthorizationAsync(CancellationToken cancellationToken = default) => Task.FromResult(true);
 
+    /// <summary>Returns fixed, obviously fake values so screens can be walked without a health store.</summary>
     public Task<HealthWeeklySummary?> ReadWeeklySummaryAsync(DateTime today, CancellationToken cancellationToken = default)
     {
         // Fixed, obviously fake values: 9,400 average steps, 8,100 yesterday, 6.2 h last night.

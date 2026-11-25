@@ -25,6 +25,8 @@ public enum ApiFailureAction
 /// </summary>
 public sealed class ApiFailureNotice
 {
+    /// <summary>Resolves the message and the reference line once, so a screen renders the failure</summary>
+    /// without re-deriving the text or re-reading the server reference.</summary>
     public ApiFailureNotice(string messageKey, ApiFailureAction action, string? requestId)
     {
         MessageKey = messageKey;
@@ -36,14 +38,19 @@ public sealed class ApiFailureNotice
             : UiTextCatalog.Format(ApiFailurePresenter.ReferenceFormatKey, RequestId);
     }
 
+    /// <summary>The text key of the notice's message.</summary>
     public string MessageKey { get; }
 
+    /// <summary>The notice's message, already localized.</summary>
     public string MessageText { get; }
 
+    /// <summary>The action the user can take.</summary>
     public ApiFailureAction Action { get; }
 
+    /// <summary>The request id the failure was reported with.</summary>
     public string? RequestId { get; }
 
+    /// <summary>The reference line shown with the failure.</summary>
     public string ReferenceText { get; }
 
     /// <summary>True when repeating the same request is allowed for this outcome.</summary>
@@ -90,6 +97,7 @@ public static class ApiFailurePresenter
     private const string PlanningProfileInvalidCode = "planningProfileInvalid";
     private const string SafetyAnswersRequiredCode = "safetyAnswersRequired";
 
+    /// <summary>The notice for a failed API response.</summary>
     public static ApiFailureNotice FromResponse<TResponse>(
         BackendApiResponse<TResponse> response,
         string fallbackKey) =>
@@ -120,6 +128,8 @@ public static class ApiFailurePresenter
                 : new ApiFailureNotice(fallbackKey, ApiFailureAction.None, response.RequestId)
         };
 
+    /// <summary>Classifies a thrown exception by type, then by the status it carries. An unrecognised</summary>
+    /// exception is treated as retryable, because the request may simply not have reached the server.</summary>
     public static ApiFailureNotice FromException(Exception exception, string fallbackKey)
     {
         ArgumentNullException.ThrowIfNull(exception);
@@ -161,6 +171,8 @@ public static class ApiFailurePresenter
         return new ApiFailureNotice(fallbackKey, ApiFailureAction.Retry, null);
     }
 
+    /// <summary>Planning failures carry a status and an error code but not always a status code, so a</summary>
+    /// server error without one is classified as 500.</summary>
     private static ApiFailureNotice FromPlanningFailure(PlanningRequestFailedException failure, string fallbackKey)
     {
         if (failure.Status == BackendApiStatus.OfflineRejected)
@@ -174,6 +186,8 @@ public static class ApiFailurePresenter
         return FromAnsweredStatus(status, failure.ErrorCode, failure.RequestId, fallbackKey);
     }
 
+    /// <summary>Same classification for cloud-transport failures, which report the answered status</summary>
+    /// separately from the transport status.</summary>
     private static ApiFailureNotice FromCloudFailure(CloudRequestFailedException failure, string fallbackKey)
     {
         if (failure.Status == BackendApiStatus.OfflineRejected)
@@ -187,6 +201,7 @@ public static class ApiFailurePresenter
         return FromAnsweredStatus(status, failure.ErrorCode, failure.RequestId, fallbackKey);
     }
 
+    /// <summary>The notice for a status the server answered with.</summary>
     private static ApiFailureNotice FromAnsweredStatus(
         HttpStatusCode? status,
         string? errorCode,
@@ -221,6 +236,7 @@ public static class ApiFailurePresenter
         return new ApiFailureNotice(fallbackKey, ApiFailureAction.Retry, requestId);
     }
 
+    /// <summary>The notice for an HTTP status.</summary>
     private static ApiFailureNotice FromStatusCode(
         HttpStatusCode? status,
         string? errorCode,

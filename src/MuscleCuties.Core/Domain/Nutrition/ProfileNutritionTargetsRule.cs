@@ -4,15 +4,19 @@ using MuscleCuties.Core.Models.Nutrition.Planning;
 
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>The macro targets in grams, with the per-kilogram minimum they must respect.</summary>
 public sealed record NutritionMacroTargets(float Protein, float Carbs, float Fats, float Fiber);
 
+/// <summary>The calorie target and the phase adjustment included in it.</summary>
 public sealed record NutritionCaloriesTargets(float Calories, float Fiber);
 
+/// <summary>Builds the profile's targets, keeping her own entries unless they fall outside the safe range.</summary>
 public static class ProfileNutritionTargetsRule
 {
     public const float MinimumUserEnteredCalories = 1200f;
     public const float MaximumUserEnteredTargetValue = 5000f;
 
+    /// <summary>Whether a target she typed is plausible, so an implausible one is refused instead of stored.</summary>
     public static bool IsValidUserEnteredTarget(string key, float value)
     {
         if (!float.IsFinite(value) || value < 0f || value > MaximumUserEnteredTargetValue)
@@ -31,6 +35,7 @@ public static class ProfileNutritionTargetsRule
             nameof(ProfileNutritionGoals.Zinc) or nameof(ProfileNutritionGoals.Potassium);
     }
 
+    /// <summary>Re-splits protein, carbs and fat when the user overrides one of them.</summary>
     public static NutritionMacroTargets? RebalanceMacros(
         ProfileNutritionGoals calculated, UserGoal goal, CyclePhase phase,
         float weight, float calories)
@@ -54,6 +59,7 @@ public static class ProfileNutritionTargetsRule
             RoundToNearest(fats, 1f), FiberTarget(calories, phase));
     }
 
+    /// <summary>Calculates a calorie target from the profile's measurements and goal.</summary>
     public static NutritionCaloriesTargets? CalculateCalories(
         float protein, float carbs, float fats, CyclePhase phase)
     {
@@ -66,6 +72,7 @@ public static class ProfileNutritionTargetsRule
             : new NutritionCaloriesTargets(calories, FiberTarget(calories, phase));
     }
 
+    /// <summary>The protein, carb and fat split the goal implies.</summary>
     private static (float Protein, float Carbs, float Fats) MacroRatios(
         ProfileNutritionGoals goals, UserGoal goal)
     {
@@ -93,6 +100,7 @@ public static class ProfileNutritionTargetsRule
         };
     }
 
+    /// <summary>The protein floor per kilogram for her goal, which a lower entry may not go under.</summary>
     private static float MinimumProteinPerKg(UserGoal goal)
     {
         return goal switch
@@ -104,12 +112,14 @@ public static class ProfileNutritionTargetsRule
         };
     }
 
+    /// <summary>The fibre target the calories and phase imply.</summary>
     private static float FiberTarget(float calories, CyclePhase phase)
     {
         return RoundToNearest(MathF.Max(25f, calories / 1000f * 14f) +
                               (phase is CyclePhase.Luteal ? 3f : 0f), 1f);
     }
 
+    /// <summary>Rounds to the nearest step, so targets read as practical numbers.</summary>
     private static float RoundToNearest(float value, float nearest)
     {
         return nearest <= 0f ? value : MathF.Round(value / nearest) * nearest;

@@ -1,7 +1,10 @@
 namespace MuscleCuties.Core.Domain.Hydration;
 
+/// <summary>Whether water is added or removed, which decides the sign applied.</summary>
 public enum WaterIntakeChangeKind { Add, Correct, Undo }
+/// <summary>One intake change, idempotent on its command key.</summary>
 public sealed record WaterIntakeChange(Guid OperationId, Guid EntryId, WaterIntakeChangeKind Kind, int Millilitres);
+/// <summary>One intake entry, with the amount and when it was logged.</summary>
 public sealed record WaterIntakeEntry(Guid Id, int Millilitres, bool Undone);
 
 /// <summary>Immutable account/day ledger. Legacy totals remain a separate, untouched baseline.</summary>
@@ -11,6 +14,7 @@ public sealed class WaterIntakeDay
     public const int MaximumEntries = 1024;
     public const int MaximumOperations = 4096;
 
+    /// <summary>Rebuilds a day's water log from its entries and recorded operations.</summary>
     private WaterIntakeDay(Guid accountId, DateOnly date, int legacyMillilitres,
         WaterIntakeEntry[] entries, WaterIntakeChange[] operations)
     {
@@ -22,13 +26,20 @@ public sealed class WaterIntakeDay
         TotalMillilitres = checked((int)(legacyMillilitres + entries.Where(e => !e.Undone).Sum(e => (long)e.Millilitres)));
     }
 
+    /// <summary>Account that owns the day.</summary>
     public Guid AccountId { get; }
+    /// <summary>Local day the log belongs to.</summary>
     public DateOnly Date { get; }
+    /// <summary>Millilitres recorded before portions were tracked, kept for migration.</summary>
     public int LegacyMillilitres { get; }
+    /// <summary>Millilitres drunk today, the legacy amount included.</summary>
     public int TotalMillilitres { get; }
+    /// <summary>Portion entries logged for the day.</summary>
     public IReadOnlyList<WaterIntakeEntry> Entries { get; }
+    /// <summary>Durable operations applied to the day, in order.</summary>
     public IReadOnlyList<WaterIntakeChange> Operations { get; }
 
+    /// <summary>Rehydrates a day from storage after checking the account and a non-negative total.</summary>
     public static WaterIntakeDay Restore(Guid accountId, DateOnly date, int legacyMillilitres,
         IEnumerable<WaterIntakeEntry> entries, IEnumerable<WaterIntakeChange> operations)
     {
@@ -47,6 +58,7 @@ public sealed class WaterIntakeDay
         return new WaterIntakeDay(accountId, date, legacyMillilitres, items, receipts);
     }
 
+    /// <summary>Applies a change and returns the new day, refusing one that would take the total below zero.</summary>
     public WaterIntakeDay Apply(WaterIntakeChange change)
     {
         ArgumentNullException.ThrowIfNull(change);
@@ -77,6 +89,7 @@ public sealed class WaterIntakeDay
         return Restore(AccountId, Date, LegacyMillilitres, updated, Operations.Append(change));
     }
 
+    /// <summary>Refuses an empty command key or a non-positive amount, which would make the day unreplayable.</summary>
     private static void ValidateChange(WaterIntakeChange change)
     {
         if (change.OperationId == Guid.Empty || change.EntryId == Guid.Empty)

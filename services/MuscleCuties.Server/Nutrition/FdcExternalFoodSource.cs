@@ -30,6 +30,8 @@ public sealed class FdcExternalFoodSource : IExternalFoodSource
     private readonly string? _apiKey;
     private readonly ILogger<FdcExternalFoodSource>? _logger;
 
+    /// <summary>Takes the HTTP client and optional key; without a key the source reports itself unavailable rather than calling</summary>
+    /// an endpoint that would reject it.</summary>
     public FdcExternalFoodSource(HttpClient httpClient, string? apiKey, ILogger<FdcExternalFoodSource>? logger = null)
     {
         _httpClient = httpClient;
@@ -38,8 +40,10 @@ public sealed class FdcExternalFoodSource : IExternalFoodSource
         _httpClient.BaseAddress ??= BaseUri;
     }
 
+    /// <summary>True when an API key is present, meaning the external catalog can be queried.</summary>
     public bool IsConfigured => _apiKey is not null;
 
+    /// <summary>Searches the external food catalog by generic query, returning nothing when the source is unconfigured.</summary>
     public async Task<IReadOnlyList<ExternalFoodItem>> SearchAsync(
         string genericQuery,
         CancellationToken cancellationToken = default)
@@ -132,6 +136,8 @@ public sealed class FdcExternalFoodSource : IExternalFoodSource
         return items;
     }
 
+    /// <summary>Reads the nutrient numbers a food result carries, keyed by nutrient id, so the caller can pick the ones it</summary>
+    /// maps instead of depending on array order.</summary>
     private static Dictionary<int, float?> ReadNutrients(JsonElement food)
     {
         var values = new Dictionary<int, float?>();

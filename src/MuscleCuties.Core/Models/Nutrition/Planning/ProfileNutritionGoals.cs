@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Models.Nutrition.Planning;
 
+/// <summary>The goals she set, where a null field means she did not override the computed one.</summary>
 public sealed record ProfileNutritionGoals(
     float? Calories,
     float? Protein,
@@ -31,6 +32,7 @@ public sealed record ProfileNutritionGoals(
     private const float DefaultZinc = 8f;
     private const float DefaultPotassium = 2600f;
 
+    /// <summary>Whether she overrode anything at all.</summary>
     public bool HasAnyValue =>
         Calories is > 0f ||
         Protein is > 0f ||
@@ -50,6 +52,7 @@ public sealed record ProfileNutritionGoals(
         Zinc is > 0f ||
         Potassium is > 0f;
 
+    /// <summary>Goals with every macro unset.</summary>
     public static ProfileNutritionGoals Empty { get; } = new(
         null,
         null,
@@ -69,6 +72,7 @@ public sealed record ProfileNutritionGoals(
         null,
         null);
 
+    /// <summary>The goals a stored plan implies, used when she has set none.</summary>
     public static ProfileNutritionGoals FromPlan(NutritionPlan plan)
     {
         return FromCalculated(
@@ -80,6 +84,7 @@ public sealed record ProfileNutritionGoals(
             plan.WaterLiters);
     }
 
+    /// <summary>Goals built from a calculated target.</summary>
     public static ProfileNutritionGoals FromCalculated(
         float calories,
         float protein,
@@ -108,11 +113,13 @@ public sealed record ProfileNutritionGoals(
             DefaultPotassium);
     }
 
+    /// <summary>The goals with the computed values filling her unset fields, so a caller always has a figure.</summary>
     public ProfileNutritionGoals WithFallbacks(NutritionPlan plan)
     {
         return WithFallbacks(FromPlan(plan));
     }
 
+    /// <summary>The goals with the computed values filling her unset fields, so a caller always has a figure.</summary>
     public ProfileNutritionGoals WithFallbacks(ProfileNutritionGoals fallback)
     {
         return new ProfileNutritionGoals(
@@ -135,6 +142,7 @@ public sealed record ProfileNutritionGoals(
             UseValue(Potassium, fallback.Potassium));
     }
 
+    /// <summary>Only the fields she actually set, so a computed value is never stored as her choice.</summary>
     public ProfileNutritionGoals OnlyOverridesFrom(ProfileNutritionGoals calculated)
     {
         return new ProfileNutritionGoals(
@@ -157,6 +165,7 @@ public sealed record ProfileNutritionGoals(
             OverrideOrNull(Potassium, calculated.Potassium));
     }
 
+    /// <summary>The value to store for a field, keeping her entry when it is plausible.</summary>
     private static float UseValue(float? value, float? fallback)
     {
         if (value is > 0f && float.IsFinite(value.Value))
@@ -165,6 +174,7 @@ public sealed record ProfileNutritionGoals(
         return fallback is > 0f && float.IsFinite(fallback.Value) ? fallback.Value : 0f;
     }
 
+    /// <summary>Her override for a field, or null when she did not set one.</summary>
     private static float? OverrideOrNull(float? value, float? calculated)
     {
         if (value is not > 0f || !float.IsFinite(value.Value))

@@ -5,11 +5,15 @@ using MuscleCuties.Core.Services.Health;
 
 namespace MuscleCuties.UI.Platforms.iOS;
 
+/// <summary>HealthKit reader limited to the agreed signals: steps, sleep stages, active energy, resting heart</summary>
+/// rate and HRV. Nothing else is requested, and nothing is written back.</summary>
 public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthorizationProvider, IHealthDataProviderDiagnostics, IDisposable
 {
     private readonly HKHealthStore? _store;
     private bool _disposed;
 
+    /// <summary>Opens the health store only when the device has Health data, so the provider can exist on a</summary>
+    /// device without it.</summary>
     public AppleHealthDataProvider()
     {
         if (HKHealthStore.IsHealthDataAvailable)
@@ -18,19 +22,26 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
         }
     }
 
+    /// <summary>The data source this provider reads.</summary>
     public HealthDataSource Source => HealthDataSource.AppleHealth;
 
+    /// <summary>Name shown wherever the source is described.</summary>
     public string DisplayName => "Apple Health";
 
+    /// <summary>Explains why syncing is not offered when HealthKit is missing.</summary>
     public string UnavailableMessage => "Apple Health is unavailable on this device.";
 
+    /// <summary>Explains an empty read: usually a permission that was never granted rather than a lack of data.</summary>
     public string EmptyDataMessage => "No health data was available from Apple Health. Check permissions in Health settings and try again.";
 
+    /// <summary>True when HealthKit exists on this device.</summary>
     public Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default)
     {
         return Task.FromResult(HKHealthStore.IsHealthDataAvailable);
     }
 
+    /// <summary>Requests read access to exactly the five signal types and reports whether it was granted. The</summary>
+    /// prompt is raised on the main thread, which HealthKit requires.</summary>
     public async Task<bool> RequestReadAuthorizationAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -81,6 +92,8 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
     internal const int CompletedStepDays = 7;
     internal const int MinimumStepDays = 4;
 
+    /// <summary>Builds the weekly summary from completed days only: a partial today never lowers an average, and a</summary>
+    /// day with no samples counts as missing rather than zero.</summary>
     public async Task<HealthWeeklySummary?> ReadWeeklySummaryAsync(DateTime today, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -219,6 +232,7 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
             averageSleep3dHours);
     }
 
+    /// <summary>The summed quantity of the samples the predicate matches.</summary>
     private Task<double?> QuerySumAsync(
         HKQuantityType? quantityType,
         NSPredicate predicate,
@@ -280,6 +294,7 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
         return tcs.Task;
     }
 
+    /// <summary>The samples the predicate matches.</summary>
     private Task<HKSample[]?> QuerySamplesAsync(
         HKSampleType? sampleType,
         NSPredicate predicate,
@@ -326,6 +341,7 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
         return tcs.Task;
     }
 
+    /// <summary>The most recent quantity the predicate matches.</summary>
     private Task<double?> QueryMostRecentQuantityAsync(
         HKQuantityType? quantityType,
         NSPredicate predicate,
@@ -394,6 +410,9 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
         return tcs.Task;
     }
 
+    /// <summary>Sums the asleep intervals that overlap the window, so a night spanning midnight is counted once</summary>
+    /// and only its overlapping part. Reports whether any real sleep sample existed, which distinguishes</summary>
+    /// "no sleep recorded" from "zero hours asleep".</summary>
     private static double CalculateAsleepHours(HKSample[]? samples, DateTime windowStart, DateTime windowEnd, out bool hasAnyAsleepSamples)
     {
         hasAnyAsleepSamples = false;
@@ -459,6 +478,8 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
         return double.IsNaN(hours) || double.IsInfinity(hours) ? 0.0 : hours;
     }
 
+    /// <summary>True for the asleep categories, including the core, deep and REM stages. In-bed and awake samples</summary>
+    /// are deliberately not sleep.</summary>
     private static bool IsAsleepValue(nint value)
     {
         return value == (nint)HKCategoryValueSleepAnalysis.Asleep ||
@@ -467,12 +488,15 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
                value == (nint)HKCategoryValueSleepAnalysis.AsleepREM;
     }
 
+    /// <summary>Converts a local date for a HealthKit predicate.</summary>
     private static NSDate ToNSDate(DateTime dateTime)
     {
         var utc = ToUtcDateTime(dateTime);
         return (NSDate)utc;
     }
 
+    /// <summary>Treats an unspecified kind as local and returns UTC, which is the only form the interval maths is</summary>
+    /// valid in.</summary>
     private static DateTime ToUtcDateTime(DateTime dateTime)
     {
         return dateTime.Kind == DateTimeKind.Utc
@@ -480,11 +504,13 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
             : DateTime.SpecifyKind(dateTime, DateTimeKind.Local).ToUniversalTime();
     }
 
+    /// <summary>A HealthKit timestamp as UTC.</summary>
     private static DateTime ToDateTimeUtc(NSDate nsDate)
     {
         return ((DateTime)nsDate).ToUniversalTime();
     }
 
+    /// <summary>Releases the health store.</summary>
     public void Dispose()
     {
         if (_disposed)

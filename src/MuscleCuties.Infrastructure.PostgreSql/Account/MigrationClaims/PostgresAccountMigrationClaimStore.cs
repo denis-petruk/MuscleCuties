@@ -2,9 +2,11 @@ using MuscleCuties.UseCases.Features.Account.MigrationClaims;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.MigrationClaims;
 
+/// <summary>Stores the claim that links a pre-existing account to a new one, once per source account.</summary>
 public sealed class PostgresAccountMigrationClaimStore(PostgresDbContext dbContext, TimeProvider timeProvider)
     : IAccountMigrationClaimStore
 {
+    /// <summary>Stores a new migration claim and returns its secret.</summary>
     public async Task<string> CreateAsync(
         Guid destinationUserId,
         string installationKeyHash,
@@ -31,6 +33,7 @@ public sealed class PostgresAccountMigrationClaimStore(PostgresDbContext dbConte
         return id.ToString("D");
     }
 
+    /// <summary>Redeems a claim inside one transaction.</summary>
     public async Task<MigrationClaimOutcome> RedeemAsync(
         Guid destinationUserId,
         string claimId,
@@ -47,6 +50,7 @@ public sealed class PostgresAccountMigrationClaimStore(PostgresDbContext dbConte
             .ConfigureAwait(false);
     }
 
+    /// <summary>Performs the redemption inside one transaction.</summary>
     private async Task<MigrationClaimOutcome> RedeemTransactionalAsync(
         Guid destinationUserId,
         Guid parsedClaimId,
@@ -127,6 +131,7 @@ public sealed class PostgresAccountMigrationClaimStore(PostgresDbContext dbConte
         }
     }
 
+    /// <summary>Looks up the mapping the claim points at.</summary>
     private Task<SourceAccountMappingRecord?> FindByClaimAsync(
         Guid destinationUserId,
         Guid claimId,

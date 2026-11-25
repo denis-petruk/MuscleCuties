@@ -3,6 +3,8 @@ using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>Food search: paged results over the catalog, a debounce so typing does not fire a request per</summary>
+/// keystroke, and a version so a late page cannot overwrite a newer query.</summary>
 public partial class NutritionViewModel
 {
     private const int FoodSearchPageSize = 15;
@@ -14,6 +16,7 @@ public partial class NutritionViewModel
     private int _foodSearchVersion;
     [ObservableProperty] private bool _isSearchingFood;
 
+    /// <summary>Runs the first page for the current query, ignoring a request the page cannot make.</summary>
     private async Task SearchFoodAsync()
     {
         if (!CanSearchFood())
@@ -44,6 +47,7 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Appends the next page of results to the ones already shown.</summary>
     private async Task BrowseMoreFoodsAsync()
     {
         if (!CanBrowseMoreFoodResults())
@@ -69,6 +73,8 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Loads one page and applies it only when it belongs to the current query version, so fast typing cannot</summary>
+    /// leave older results on screen.</summary>
     private async Task LoadFoodSearchPageAsync(string query, int pageNumber, bool replaceResults, int version)
     {
         var response = await _searchUseCase.SearchAsync(
@@ -100,6 +106,7 @@ public partial class NutritionViewModel
         BrowseMoreFoodsCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Retires the results in flight, so anything still loading is discarded when it arrives.</summary>
     private void InvalidateFoodSearch()
     {
         _foodSearchVersion++;
@@ -108,6 +115,7 @@ public partial class NutritionViewModel
         ResetFoodSearchPaging();
     }
 
+    /// <summary>Returns paging to the first page, so a new query cannot start on the old query's page number.</summary>
     private void ResetFoodSearchPaging()
     {
         _activeFoodSearchQuery = string.Empty;
@@ -135,6 +143,7 @@ public partial class NutritionViewModel
         _ = DebouncedSearchAsync(cancellation.Token);
     }
 
+    /// <summary>Waits out the debounce before searching, abandoning the request when the user has typed again.</summary>
     private async Task DebouncedSearchAsync(CancellationToken cancellationToken)
     {
         try
@@ -152,11 +161,13 @@ public partial class NutritionViewModel
         await SearchFoodCommand.ExecuteAsync(null);
     }
 
+    /// <summary>Search runs only with a non-blank query and while the page is idle.</summary>
     private bool CanSearchFood()
     {
         return !IsBusy && !string.IsNullOrWhiteSpace(SearchQuery);
     }
 
+    /// <summary>More results can be loaded only while a page is not already loading and the catalog says there are more.</summary>
     private bool CanBrowseMoreFoodResults()
     {
         return !IsBusy &&

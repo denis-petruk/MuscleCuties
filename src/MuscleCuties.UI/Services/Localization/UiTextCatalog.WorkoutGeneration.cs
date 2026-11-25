@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Plan-generation copy: activity names, day labels, split and duration wording.</summary>
 public static partial class UiTextCatalog
 {
+    /// <summary>Registers the workout generation strings.</summary>
     static partial void RegisterWorkoutGenerationStrings()
     {
         English["Workout_Generation_DurationOmissionNotice"] = "Some movements were omitted to fit your selected session time.";

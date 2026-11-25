@@ -9,6 +9,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
 
+/// <summary>Daily check-ins and injuries: the write that records today's answers and the rules that turn them into planning restrictions.</summary>
 public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, TimeProvider timeProvider)
     : ICheckInAndInjuryStore
 {
@@ -17,6 +18,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
     private const string ClearedStatus = "Cleared";
     private const int NoReportedPain = 0;
 
+    /// <summary>Loads the check-ins inside a date range.</summary>
     public async Task<IReadOnlyList<DailyCheckInRecord>> LoadCheckInsAsync(
         Guid userId,
         DateOnly from,
@@ -40,6 +42,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             return (IReadOnlyList<DailyCheckInRecord>)rows;
         }).ConfigureAwait(false);
 
+    /// <summary>Saves the day's check-in, replacing the existing one.</summary>
     public async Task<DailyCheckInRecord> SaveCheckInAsync(
         SaveDailyCheckInRequest request,
         CancellationToken cancellationToken) =>
@@ -195,6 +198,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             return MapCheckIn(row);
         }).ConfigureAwait(false);
 
+    /// <summary>Deletes the day's check-in.</summary>
     public async Task<bool> DeleteCheckInAsync(
         Guid userId,
         Guid checkInId,
@@ -226,6 +230,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             return true;
         }).ConfigureAwait(false);
 
+    /// <summary>Loads the user's injuries.</summary>
     public async Task<IReadOnlyList<InjuryObservationRecord>> LoadInjuriesAsync(
         Guid userId,
         bool activeOnly,
@@ -251,6 +256,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             return (IReadOnlyList<InjuryObservationRecord>)rows;
         }).ConfigureAwait(false);
 
+    /// <summary>Saves an injury and links the prescriptions it affects.</summary>
     public async Task<InjuryObservationRecord> SaveInjuryAsync(
         SaveInjuryObservationRequest request,
         CancellationToken cancellationToken) =>
@@ -348,6 +354,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             return MapInjury(row);
         }).ConfigureAwait(false);
 
+    /// <summary>Deletes an injury.</summary>
     public async Task<bool> DeleteInjuryAsync(
         Guid userId,
         Guid injuryId,
@@ -382,6 +389,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             return true;
         }).ConfigureAwait(false);
 
+    /// <summary>Drops any cached planning preview, because a new check-in makes the previous preview wrong.</summary>
     private async Task InvalidatePlanningPreviewsAsync(Guid userId, CancellationToken cancellationToken)
     {
         var proposals = await dbContext.WorkoutPlanProposalsV02
@@ -397,6 +405,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         }
     }
 
+    /// <summary>Flags the account so the next plan build runs with the new safety input, instead of leaving the old plan in force.</summary>
     private async Task MarkSafetyRegenerationPendingAsync(Guid userId, CancellationToken cancellationToken)
     {
         if (!await dbContext.WorkoutPlans.AnyAsync(plan => plan.UserId == userId && plan.IsActive, cancellationToken)
@@ -408,6 +417,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         state.SafetyRegenerationPending = true;
     }
 
+    /// <summary>Marks the future strength work the injury rules out.</summary>
     private async Task SuppressFutureStrengthForInjuryAsync(Guid userId, Guid injuryId, Guid? episodeId,
         CancellationToken cancellationToken)
     {
@@ -497,6 +507,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             .ConfigureAwait(false);
     }
 
+    /// <summary>Links the prescriptions the injury is known to affect.</summary>
     private async Task LinkKnownAffectedPrescriptionsAsync(Guid userId, Guid planId,
         IReadOnlyList<WorkoutDayRecord> suppressedDays, CancellationToken cancellationToken)
     {
@@ -565,6 +576,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         }
     }
 
+    /// <summary>The exercises already omitted for a weekday, so a second injury report does not omit the same slot twice.</summary>
     private static HashSet<(DayOfWeek Weekday, int ExerciseId)> ReadUnambiguousOriginals(string? json)
     {
         var result = new HashSet<(DayOfWeek, int)>();
@@ -614,6 +626,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         return result;
     }
 
+    /// <summary>Today in the account's own zone, falling back to UTC when the account has none, which is what dates a check-in.</summary>
     private async Task<DateOnly> AccountLocalDateAsync(Guid userId, CancellationToken cancellationToken)
     {
         var zoneId = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
@@ -635,6 +648,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
         }
     }
 
+    /// <summary>Maps a stored readiness row onto a check-in record.</summary>
     private static DailyCheckInRecord MapCheckIn(DailyReadinessLogRecord row) =>
         new(
             row.Id,
@@ -661,6 +675,7 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             row.PlanningRevision,
             row.PlanningFatigue);
 
+    /// <summary>Maps a stored injury row onto an injury record.</summary>
     private static InjuryObservationRecord MapInjury(WorkoutInjuryLogRecord row) =>
         new(
             row.Id,
@@ -678,16 +693,19 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 ? new DateTimeOffset(DateTime.SpecifyKind(reported, DateTimeKind.Utc)).AddHours(
                     MuscleCuties.Core.Domain.Workout.Planning.V2.WorkoutPolicyV2.PainReassessmentHours) : null);
 
+    /// <summary>The cycle phase for its stored value, or unknown.</summary>
     private static CyclePhase TryParsePhase(string? phase) =>
         Enum.TryParse<CyclePhase>(phase, ignoreCase: true, out var parsed) && Enum.IsDefined(parsed)
             ? parsed
             : CyclePhase.Unknown;
 
+    /// <summary>Takes a row lock on the record id to serialize writes.</summary>
     private Task<int> LockRecordIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"SELECT pg_advisory_xact_lock(hashtextextended({id.ToString("D")}, 0))",
             cancellationToken);
 
+    /// <summary>True when the update failed because the id already exists.</summary>
     private static bool IsUniqueIdCollision(DbUpdateException exception) =>
         exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 }

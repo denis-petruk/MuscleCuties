@@ -5,6 +5,7 @@ using MuscleCuties.UseCases.Features.Account.EmailChallenge;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
 
+/// <summary>Starts and verifies email challenges, enforcing expiry, resend spacing and the attempt limit.</summary>
 public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
 {
     private const int RegistrationPurpose = 1;
@@ -27,6 +28,7 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
     private readonly IReadOnlyDictionary<string, byte[]> hmacKeysById;
     private readonly string activeHmacKeyId;
 
+    /// <summary>Takes the stores, delivery and signing services the challenge flow uses.</summary>
     public PostgresEmailChallengeUseCase(
         PostgresDbContext dbContext,
         IEmailChallengeDelivery delivery,
@@ -47,6 +49,7 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
             throw new InvalidOperationException("Email challenge HMAC keys must be configured with IDs and at least 32 UTF-8 bytes each.");
     }
 
+    /// <summary>Creates a challenge and sends its code, superseding any earlier open challenge for the same purpose.</summary>
     public Task<EmailChallengeOperationResult> StartAsync(StartEmailChallengeRequest request, CancellationToken cancellationToken)
     {
         if (request is null || !TryGetChallengeInputs(request.Email, request.Purpose, out var normalizedEmail))
@@ -56,6 +59,7 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
         return CreateAndSendAsync(normalizedEmail, request.Purpose, request.PrivacyConsent, cancellationToken);
     }
 
+    /// <summary>Resends a challenge code when the cooldown allows it.</summary>
     public async Task<EmailChallengeOperationResult> ResendAsync(
         ResendEmailChallengeRequest request,
         CancellationToken cancellationToken)
@@ -97,6 +101,7 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
         return CreateStartResult(newChallengeId);
     }
 
+    /// <summary>Prepares the resend, creating a new code when one is needed.</summary>
     private async Task<(EmailChallengeStatus Status, Guid ChallengeId, string? Code)> PrepareResendAsync(
         string normalizedEmail,
         int purpose,
@@ -158,6 +163,7 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
         return (EmailChallengeStatus.Succeeded, newChallengeId, code);
     }
 
+    /// <summary>Verifies a challenge code and returns the receipt.</summary>
     public async Task<EmailChallengeOperationResult> VerifyAsync(
         VerifyEmailChallengeRequest request,
         CancellationToken cancellationToken)
@@ -173,6 +179,7 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
             .ConfigureAwait(false);
     }
 
+    /// <summary>Verifies the code inside one transaction.</summary>
     private async Task<EmailChallengeOperationResult> VerifyTransactionalAsync(
         int purpose,
         string normalizedEmail,
@@ -223,6 +230,7 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
             VerificationToken: token, ReceiptExpiresInSeconds: checked((int)(expiresAt - now).TotalSeconds));
     }
 
+    /// <summary>Creates a challenge and sends its code.</summary>
     private async Task<EmailChallengeOperationResult> CreateAndSendAsync(
         string normalizedEmail, int purpose, MuscleCuties.Contracts.Account.RegistrationPrivacyConsent? privacyConsent, CancellationToken cancellationToken)
     {
@@ -278,11 +286,13 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
         return CreateStartResult(challengeId);
     }
 
+    /// <summary>True when the consent carries the versions the server requires.</summary>
     private bool IsValidPrivacyConsent(
         MuscleCuties.Contracts.Account.RegistrationPrivacyConsent? consent) =>
         consent is not null && consent.Accepted &&
         consent.NoticeVersion == MuscleCuties.Contracts.Account.PrivacyNotice.CurrentVersion;
 
+    /// <summary>Reports whether the email or address is over its rate limit.</summary>
     private async Task<EmailChallengeStatus> CheckRateLimitsAsync(
         string normalizedEmail, DateTime nowUtc, CancellationToken cancellationToken)
     {
@@ -298,15 +308,18 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
             : EmailChallengeStatus.Succeeded;
     }
 
+    /// <summary>Deletes challenges that have expired.</summary>
     private Task<int> CleanupExpiredChallengesAsync(DateTime nowUtc, CancellationToken cancellationToken) =>
         dbContext.EmailChallengeSessions
             .Where(item => item.CreatedAtUtc < nowUtc.AddDays(-ChallengeRetentionDaysAfterCreation))
             .ExecuteDeleteAsync(cancellationToken);
 
+    /// <summary>Takes the rate-limit advisory lock for the email.</summary>
     private Task<int> AcquireRateLimitLockAsync(CancellationToken cancellationToken) =>
         dbContext.Database.ExecuteSqlInterpolatedAsync(
             $"SELECT pg_advisory_xact_lock({ChallengeRateLimitAdvisoryLockKey})", cancellationToken);
 
+    /// <summary>Marks the previous challenge superseded, so an older code stops working when a new one is issued.</summary>
     private async Task MarkSupersededAsync(Guid challengeId, CancellationToken cancellationToken)
     {
         var now = timeProvider.GetUtcNow().UtcDateTime;
@@ -315,12 +328,14 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
             .ConfigureAwait(false);
     }
 
+    /// <summary>Builds the challenge id and code; only the keyed hash of the code is persisted.</summary>
     private (Guid ChallengeId, string Code) CreateChallenge(string email, int purpose, DateTime nowUtc)
     {
         var value = RandomNumberGenerator.GetInt32(0, MaximumOtpCodeValueExclusive);
         return (Guid.CreateVersion7(), value.ToString($"D{OtpCodeDigits}", CultureInfo.InvariantCulture));
     }
 
+    /// <summary>The keyed hash of a code, computed with the key named by the challenge so a rotation still verifies.</summary>
     private string ComputeCodeMac(string keyId, string normalizedEmail, int purpose, Guid challengeId, string code)
     {
         using var hmac = new HMACSHA256(hmacKeysById[keyId]);
@@ -328,10 +343,12 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
         return Convert.ToHexString(hmac.ComputeHash(payload)).ToLowerInvariant();
     }
 
+    /// <summary>The result a started challenge returns.</summary>
     private EmailChallengeOperationResult CreateStartResult(Guid challengeId) =>
         new(EmailChallengeStatus.Succeeded, challengeId.ToString("D"), ResendCooldownSeconds,
             checked((int)TimeSpan.FromMinutes(CodeLifetimeMinutes).TotalSeconds));
 
+    /// <summary>Parses the request's address and purpose, answering false rather than throwing on a malformed body.</summary>
     private static bool TryGetChallengeInputs(string? email, int purpose, out string normalizedEmail)
     {
         normalizedEmail = AuthInputValidator.NormalizeEmail(email);

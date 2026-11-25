@@ -19,6 +19,7 @@ namespace MuscleCuties.Infrastructure.Cloud;
 /// </summary>
 public sealed class CloudRequestFailedException : InvalidOperationException
 {
+    /// <summary>Reports a request the backend failed.</summary>
     public CloudRequestFailedException(
         string operation,
         BackendApiStatus status,
@@ -38,8 +39,10 @@ public sealed class CloudRequestFailedException : InvalidOperationException
     /// <summary>The store operation that failed, for example <c>dashboard overview</c>.</summary>
     public string Operation { get; }
 
+    /// <summary>Status the backend returned.</summary>
     public BackendApiStatus Status { get; }
 
+    /// <summary>Error code the backend returned, when it sent one.</summary>
     public string? ErrorCode { get; }
 
     /// <summary>The status the server answered with, when the request reached it.</summary>

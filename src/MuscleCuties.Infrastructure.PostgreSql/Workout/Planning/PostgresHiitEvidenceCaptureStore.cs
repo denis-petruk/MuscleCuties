@@ -2,8 +2,10 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>HIIT evidence challenges: issuing one for a capture and consuming it exactly once.</summary>
 public sealed class PostgresHiitEvidenceCaptureStore(PostgresDbContext context, TimeProvider clock) : IHiitEvidenceCaptureStore
 {
+    /// <summary>Issues a challenge for today, or returns the open one so the client never holds two.</summary>
     public async Task<HiitEvidenceCaptureChallengeDto> IssueAsync(Guid userId, CancellationToken cancellationToken)
     {
         if (userId == Guid.Empty) throw new ArgumentException("An account is required.", nameof(userId));
@@ -30,6 +32,7 @@ public sealed class PostgresHiitEvidenceCaptureStore(PostgresDbContext context, 
     }
 
     // Caller must hold the account lock and commit this change atomically with the captured answers.
+    /// <summary>Consumes a challenge once, returning nothing when it is expired, already used or answered with a different payload.</summary>
     internal async Task<HiitEvidenceCaptureStamp?> ConsumeInCurrentTransactionAsync(Guid userId, Guid challengeId, CancellationToken cancellationToken)
     {
         var state = await context.WorkoutAccountPlanningStates.SingleAsync(row => row.UserId == userId, cancellationToken).ConfigureAwait(false);
@@ -45,6 +48,7 @@ public sealed class PostgresHiitEvidenceCaptureStore(PostgresDbContext context, 
         return new HiitEvidenceCaptureStamp(challenge.IssuedLocalDate, challenge.TimeZoneVersion);
     }
 
+    /// <summary>The local date a challenge is issued under, from the account's zone.</summary>
     private static DateOnly LocalDate(string? zoneId, DateTimeOffset now)
     {
         if (string.IsNullOrWhiteSpace(zoneId)) throw new InvalidOperationException("Establish the account timezone first.");

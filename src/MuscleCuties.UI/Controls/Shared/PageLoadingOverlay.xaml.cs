@@ -4,6 +4,8 @@ using MuscleCuties.UI.ViewModels.Common;
 
 namespace MuscleCuties.UI.Controls.Shared;
 
+/// <summary>The full-page overlay: a spinner while a page loads and an error surface with its retry when the load</summary>
+/// fails.</summary>
 public partial class PageLoadingOverlay : ContentView
 {
     public static readonly BindableProperty BackCommandProperty = BindableProperty.Create(
@@ -32,6 +34,7 @@ public partial class PageLoadingOverlay : ContentView
         set => SetValue(BackCommandProperty, value);
     }
 
+    /// <summary>True when the overlay has a back command.</summary>
     public bool HasBackCommand => BackCommand is not null;
 
     public string? MessageText
@@ -57,12 +60,14 @@ public partial class PageLoadingOverlay : ContentView
             ? RetryCommand
             : (BindingContext as IPageLoadAware)?.LoadDataCommand;
 
+    /// <summary>True when the overlay can retry.</summary>
     public bool HasRetryCommand => EffectiveRetryCommand is not null;
 
     private const string DefaultErrorMessageKey = "Dashboard_Shared_CouldNotLoadData";
 
     private readonly ViewModelSubscription<INotifyPropertyChanged> _subscription;
 
+    /// <summary>Initializes the overlay and follows its view model's loading state.</summary>
     public PageLoadingOverlay()
     {
         InitializeComponent();
@@ -76,12 +81,15 @@ public partial class PageLoadingOverlay : ContentView
         UpdateVisibility();
     }
 
+    /// <summary>Shows or hides the overlay when the load state changes.</summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs args)
     {
         if (args.PropertyName is nameof(IPageLoadAware.IsPageLoading) or nameof(IPageLoadAware.IsLoadError))
             UpdateVisibility();
     }
 
+    /// <summary>Republishes the error surface after its content changed, so the overlay can size it to the retry it now</summary>
+    /// holds.</summary>
     private void NotifyErrorSurfaceChanged()
     {
         OnPropertyChanged(nameof(ErrorMessage));
@@ -89,6 +97,7 @@ public partial class PageLoadingOverlay : ContentView
         OnPropertyChanged(nameof(HasRetryCommand));
     }
 
+    /// <summary>Chooses between the spinner, the error surface and nothing, from the page's own load state.</summary>
     private void UpdateVisibility()
     {
         if (MainThread.IsMainThread)
@@ -100,6 +109,7 @@ public partial class PageLoadingOverlay : ContentView
         MainThread.BeginInvokeOnMainThread(ApplyVisibility);
     }
 
+    /// <summary>Applies that choice to the overlay with a fade, so the overlay does not flicker on a fast load.</summary>
     private void ApplyVisibility()
     {
         var isVisible = BindingContext is IPageLoadAware page && (page.IsPageLoading || page.IsLoadError);

@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>The ten regions coverage is checked across, so no region is trained by accident only.</summary>
 public enum PrimaryMuscleRegion
 {
     Chest,
@@ -16,6 +17,7 @@ public enum PrimaryMuscleRegion
     Trunk
 }
 
+/// <summary>Which regions the week trains and the gap codes for those it misses.</summary>
 public sealed record PrimaryRegionCoverageResult(
     IReadOnlyDictionary<PrimaryMuscleRegion, decimal> WeeklyExposures,
     IReadOnlyList<PrimaryMuscleRegion> BelowMinimum,
@@ -74,11 +76,15 @@ public static class TenRegionMuscleCoverageRule
         ["HipThrust"] = [PrimaryMuscleRegion.Quadriceps, PrimaryMuscleRegion.Hamstrings]
     };
 
+    /// <summary>The ten muscle regions the coverage rule checks.</summary>
     public static IReadOnlyList<PrimaryMuscleRegion> Regions => AllRegions;
 
+    /// <summary>The stable code for a region the week does not train.</summary>
     public static string GapCode(PrimaryMuscleRegion region) => $"{CoverageBelowMinimumPrefix}_{region}";
+    /// <summary>The code used when the preferred work misses the region, which reads differently from an outright gap.</summary>
     public static string PreferredGapCode(PrimaryMuscleRegion region) => $"{CoverageBelowPreferredPrefix}_{region}";
 
+    /// <summary>Checks which of the ten regions the week's exercises cover.</summary>
     public static PrimaryRegionCoverageResult Evaluate(
         IEnumerable<IReadOnlyCollection<string>?>? sessionMuscleGroups,
         int scheduledStrengthDays)
@@ -180,6 +186,7 @@ public static class TenRegionMuscleCoverageRule
             advisories);
     }
 
+    /// <summary>Whether an exercise trains the region directly rather than as a supporting muscle.</summary>
     private static bool MatchesDirect(PrimaryMuscleRegion region, string name)
     {
         if (string.Equals(name, "synthetic-muscle", StringComparison.OrdinalIgnoreCase))

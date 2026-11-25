@@ -6,6 +6,9 @@ using MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
+/// <summary>
+///     Nutrition settings state: dietary preferences, per-meal targets, and unsaved-change tracking.
+/// </summary>
 public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPageLoadAware
 {
     private const float MinCaloriesKcal = 800f;
@@ -62,6 +65,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
     [ObservableProperty] private WeightGoalPace _weightGoalPace;
     [ObservableProperty] private string _zincGoal = string.Empty;
 
+    /// <summary>Takes the settings use case and the navigation callbacks.</summary>
     public ProfileNutritionSettingsViewModel(
         IProfileNutritionSettingsUseCase useCase,
         IProfileRefreshNotifier refreshNotifier,
@@ -85,17 +89,24 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         SelectedWeightGoalPaceOption = WeightGoalPaceOptions.First(option => option.Value == WeightGoalPace);
     }
 
+    /// <summary>The first-load indicator, so saving or recalculating does not blank a page that is already on screen.</summary>
     public bool IsPageLoading => AppPageLoadGate.IsLoading(IsBusy, _hasLoadedOnce);
+    /// <summary>Compares a snapshot of the editable state with the one loaded, so changing a value and changing it back</summary>
+    /// correctly reads as no change.</summary>
     public bool HasUnsavedChanges =>
         _hasLoadedOnce && !string.Equals(BuildSnapshot(), _initialSnapshot, StringComparison.Ordinal);
 
+    /// <summary>The settings snapshot used to detect changes.</summary>
     private string BuildSnapshot() =>
         $"{Goal}|{WeightGoalPace}|{BuildDietaryTags()}|{CaloriesGoal}|{ProteinGoal}|{CarbsGoal}|{FatsGoal}|{FiberGoal}|{WaterGoal}|{IronGoal}|{VitaminB12Goal}|{VitaminCGoal}|{VitaminDGoal}|{VitaminAGoal}|{VitaminB6Goal}|{FolateGoal}|{CalciumGoal}|{MagnesiumGoal}|{ZincGoal}|{PotassiumGoal}";
 
+    /// <summary>Leaves the page, asking first when there are unsaved changes.</summary>
     private async Task BackAsync() =>
         await ProfileNavigationGuard.TryNavigateBackAsync(HasUnsavedChanges, ProfileDiscardPrompt.ConfirmAsync,
             _navigateBackAsync);
 
+    /// <summary>After the calorie field is left, rebalances the macros to match — but only for a value inside the accepted</summary>
+    /// range, and never while the targets are being filled in programmatically, which would loop.</summary>
     public void CommitCaloriesEdit()
     {
         if (!_isSyncingTargets && ParseOptionalGoal(CaloriesGoal) is { } calories &&
@@ -103,11 +114,13 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
             RebalanceMacrosFromCalories(calories);
     }
 
+    /// <summary>After a macro field is left, recomputes the calories those macros add up to.</summary>
     public void CommitMacroEdit()
     {
         RecalculateCaloriesFromMacros();
     }
 
+    /// <summary>Restores the targets the plan calculates for this profile, discarding the user's own numbers.</summary>
     private void ResetToCalculated()
     {
         if (_loadedProfile is null)
@@ -117,6 +130,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         IsStatusError = false;
     }
 
+    /// <summary>The goal options.</summary>
     public IReadOnlyList<SelectionOption<UserGoal>> GoalOptions { get; } =
     [
         new(UserGoal.FatLoss, "Fat Loss"),
@@ -125,28 +139,42 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         new(UserGoal.MaintainHealth, "Maintain Health")
     ];
 
+    /// <summary>The weight pace options.</summary>
     public IReadOnlyList<SelectionOption<WeightGoalPace>> WeightGoalPaceOptions { get; } =
     [
         new(WeightGoalPace.Steady, "Steady"),
         new(WeightGoalPace.Aggressive, "Aggressive")
     ];
 
+    /// <summary>Weight-goal pace is only meaningful for fat loss and strength, so the choice is hidden for other goals.</summary>
     public bool IsGoalPaceVisible => Goal is UserGoal.FatLoss or UserGoal.Strength;
 
+    /// <summary>The micronutrient toggle names the action it will take.</summary>
     public string AdvancedSettingsButtonText => AreAdvancedSettingsVisible
         ? "Profile_Nutrition_HideMicronutrients"
         : "Profile_Nutrition_ShowMicronutrients";
 
+    /// <summary>Returns to the profile.</summary>
     public AsyncRelayCommand BackCommand { get; }
+    /// <summary>Loads the settings.</summary>
     public AsyncRelayCommand LoadDataCommand { get; }
+    /// <summary>Saves the settings.</summary>
     public AsyncRelayCommand SaveCommand { get; }
+    /// <summary>Resets the targets to the calculated values.</summary>
     public RelayCommand ResetToCalculatedCommand { get; }
+    /// <summary>Shows or hides the advanced settings.</summary>
     public RelayCommand ToggleAdvancedSettingsCommand { get; }
+    /// <summary>Toggles the vegetarian filter.</summary>
     public RelayCommand ToggleVegetarianCommand { get; }
+    /// <summary>Toggles the vegan filter.</summary>
     public RelayCommand ToggleVeganCommand { get; }
+    /// <summary>Toggles the gluten-free filter.</summary>
     public RelayCommand ToggleGlutenFreeCommand { get; }
+    /// <summary>Toggles the lactose-free filter.</summary>
     public RelayCommand ToggleLactoseFreeCommand { get; }
 
+    /// <summary>Loads the profile and its saved goals, and keeps the loaded state as the baseline the unsaved-changes flag</summary>
+    /// compares against.</summary>
     private async Task LoadDataAsync()
     {
         IsBusy = true;
@@ -201,6 +229,8 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         }
     }
 
+    /// <summary>Validates the form and saves it; the validation failures become the page's error list rather than a generic</summary>
+    /// failure.</summary>
     private async Task SaveAsync()
     {
         if (IsBusy)
@@ -259,6 +289,8 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         }
     }
 
+    /// <summary>Per-field range errors, reported only for fields the user actually filled in, so an empty optional target</summary>
+    /// is not an error.</summary>
     private List<string> CollectValidationErrors(NutritionGoalsDto goals)
     {
         var errors = new List<string>();
@@ -281,6 +313,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         return errors;
     }
 
+    /// <summary>Turns the stored comma-separated tags into the four switches.</summary>
     private void ApplyDietaryTags(string tags)
     {
         IsVegetarian = HasTag(tags, DietaryTag.Vegetarian);
@@ -289,6 +322,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         IsLactoseFree = HasTag(tags, DietaryTag.LactoseFree);
     }
 
+    /// <summary>The switches back in the stored form, so a round trip does not reorder or duplicate a tag.</summary>
     private string BuildDietaryTags()
     {
         var tags = new List<string>();
@@ -305,12 +339,19 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         return string.Join(",", tags);
     }
 
+    /// <summary>Flips the vegetarian filter.</summary>
     private void ToggleVegetarian() => IsVegetarian = !IsVegetarian;
+    /// <summary>Flips the vegan filter.</summary>
     private void ToggleVegan() => IsVegan = !IsVegan;
+    /// <summary>Flips the gluten-free filter.</summary>
     private void ToggleGlutenFree() => IsGlutenFree = !IsGlutenFree;
+    /// <summary>Flips the lactose-free filter.</summary>
     private void ToggleLactoseFree() => IsLactoseFree = !IsLactoseFree;
+    /// <summary>Flips the advanced settings visibility.</summary>
     private void ToggleAdvancedSettings() => AreAdvancedSettingsVisible = !AreAdvancedSettingsVisible;
 
+    /// <summary>Writes goals into the fields behind a guard, so the field-change handlers do not re-derive the numbers they</summary>
+    /// are being given.</summary>
     private void ApplyGoals(NutritionGoalsDto goals)
     {
         _isSyncingTargets = true;
@@ -340,11 +381,14 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         }
     }
 
+    /// <summary>The goal, its pace and the dietary tags as one selection; pace falls back to steady when the goal does not</summary>
+    /// use one, so the saved value is never left over from a previous goal.</summary>
     private NutritionSettingsSelectionDto CurrentSelection()
     {
         return new(Goal, IsGoalPaceVisible ? WeightGoalPace : WeightGoalPace.Steady, BuildDietaryTags());
     }
 
+    /// <summary>The targets the use case calculates for the current selection, or empty before a profile is loaded.</summary>
     private NutritionGoalsDto CreateCalculatedGoals()
     {
         return _loadedProfile is null
@@ -352,6 +396,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
             : _useCase.CalculateGoals(_loadedProfile, CurrentSelection());
     }
 
+    /// <summary>Recalculates the targets after the goal or the tags change, skipped while a programmatic update is running.</summary>
     private void RefreshCalculatedTargets()
     {
         if (_loadedProfile is null || _isSyncingTargets)
@@ -360,6 +405,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         ApplyGoals(CreateCalculatedGoals());
     }
 
+    /// <summary>Redistributes the three macros to fit a calorie value, keeping their proportions instead of scaling one.</summary>
     private void RebalanceMacrosFromCalories(float calories)
     {
         if (_isSyncingTargets || _loadedProfile is null)
@@ -382,6 +428,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         }
     }
 
+    /// <summary>The inverse direction: adds the macros' calories up, which needs all three to be present.</summary>
     private void RecalculateCaloriesFromMacros()
     {
         if (_isSyncingTargets || _loadedProfile is null ||
@@ -405,6 +452,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         }
     }
 
+    /// <summary>The form as the goals it will save, with blank optional fields staying unset rather than zero.</summary>
     private NutritionGoalsDto BuildGoals()
     {
         return new NutritionGoalsDto(
@@ -427,12 +475,14 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
             ParseOptionalGoal(PotassiumGoal));
     }
 
+    /// <summary>Whether the stored tag list contains one tag, compared case-insensitively and ignoring padding.</summary>
     private static bool HasTag(string tags, DietaryTag tag)
     {
         return tags.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .Any(value => string.Equals(value, tag.ToString(), StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>A goal value, where an empty field means the target is not set.</summary>
     private static float? ParseOptionalGoal(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -446,11 +496,13 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
             : null;
     }
 
+    /// <summary>A goal value as the field's text, showing that it is unset rather than a zero the user never entered.</summary>
     private static string FormatGoal(float? value)
     {
         return value is > 0f ? value.Value.ToString("0.##", CultureInfo.CurrentCulture) : string.Empty;
     }
 
+    /// <summary>Recalculates the targets when the goal changes.</summary>
     partial void OnGoalChanged(UserGoal value)
     {
         var selected = GoalOptions.FirstOrDefault(option => option.Value == value);
@@ -464,6 +516,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         RefreshCalculatedTargets();
     }
 
+    /// <summary>Recalculates the targets when the pace changes.</summary>
     partial void OnWeightGoalPaceChanged(WeightGoalPace value)
     {
         var selected = WeightGoalPaceOptions.FirstOrDefault(option => option.Value == value);
@@ -473,12 +526,14 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         RefreshCalculatedTargets();
     }
 
+    /// <summary>Keeps the goal selection in step with the chosen option.</summary>
     partial void OnSelectedGoalOptionChanged(SelectionOption<UserGoal>? value)
     {
         if (value is not null && Goal != value.Value)
             Goal = value.Value;
     }
 
+    /// <summary>Keeps the pace selection in step with the chosen option.</summary>
     partial void OnSelectedWeightGoalPaceOptionChanged(SelectionOption<WeightGoalPace>? value)
     {
         if (value is not null && WeightGoalPace != value.Value)

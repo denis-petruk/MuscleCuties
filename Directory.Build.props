@@ -6,6 +6,13 @@
         <NoWarn>$(NoWarn);NU1202;NU1701</NoWarn>
     </PropertyGroup>
 
+    <!-- Developer tooling lives in .tool/ (outside Git): no project may compile, copy or package it. -->
+    <ItemGroup>
+        <Compile Remove="$(MSBuildThisFileDirectory).tool/**" />
+        <None Remove="$(MSBuildThisFileDirectory).tool/**" />
+        <Content Remove="$(MSBuildThisFileDirectory).tool/**" />
+    </ItemGroup>
+
     <!-- Release artifacts must not carry debug symbols or source paths into the IPA. -->
     <PropertyGroup Condition="'$(Configuration)' == 'Release'">
         <DebugType>None</DebugType>

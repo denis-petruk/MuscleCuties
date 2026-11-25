@@ -1,10 +1,13 @@
+// Barcode scanning and catalog lookup.
+// Second half of NutritionViewModel; see its declaration for the full contract.
+
 using MuscleCuties.UI.Models.UI.Nutrition;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
-using MuscleCuties.UseCases.Features.Nutrition.Barcode.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>Barcode entry for the food finder: the typed code and the camera scan, both resolving to a catalog food.</summary>
 public partial class NutritionViewModel
 {
     private readonly ILookupBarcodeUseCase? _barcodeUseCase;
@@ -15,46 +18,33 @@ public partial class NutritionViewModel
     [ObservableProperty] private string _barcodeScanStatus = string.Empty;
     [ObservableProperty] private bool _isProcessingBarcode;
 
+    /// <summary>The scan coordinator, created on first use so a page that never scans never touches the camera.</summary>
     private BarcodeScanCoordinator BarcodeScan =>
         _barcodeScan ??= new BarcodeScanCoordinator(_barcodeHardwareService);
 
+    /// <summary>True when the scanner sheet is open.</summary>
     private bool IsBarcodeScannerOpen => IsBarcodeSourceVisible && IsMealEditorVisible;
 
+    /// <summary>Starts the camera scan.</summary>
     [RelayCommand]
     private async Task ScanBarcodeWithCameraAsync()
     {
         if (IsBusy || IsProcessingBarcode || !IsBarcodeScannerOpen)
             return;
 
-        if (!BarcodeScan.HasCamera)
+        var scan = await BarcodeScan.ScanAsync(() => IsBarcodeScannerOpen);
+        if (scan.BarcodeText is { } barcodeText)
         {
-            BarcodeScanStatus = UiTextCatalog.Get(BarcodeScanCoordinator.StatusCameraUnavailableKey);
-            return;
-        }
-
-        var sessionRevision = BarcodeScan.BeginSession();
-        var attempt = await BarcodeScan.CaptureAsync(sessionRevision);
-        if (!BarcodeScan.IsCurrent(sessionRevision) || !IsBarcodeScannerOpen)
-            return;
-
-        if (attempt.TimedOut)
-        {
-            BarcodeScanStatus = BarcodeScanCoordinator.TimeoutStatusText;
-            return;
-        }
-
-        var capture = attempt.Capture;
-        if (BarcodeScanCoordinator.HasUsableBarcode(capture.BarcodeText, capture.Outcome))
-        {
-            var barcodeText = capture.BarcodeText!.Trim();
             BarcodeInputText = barcodeText;
-            await LookupBarcodeInternalAsync(barcodeText, capture.Symbology, sessionRevision);
+            await LookupBarcodeInternalAsync(barcodeText, scan.Symbology, scan.Revision);
             return;
         }
 
-        BarcodeScanStatus = BarcodeScanCoordinator.StatusTextFor(capture.Outcome);
+        if (scan.StatusText is { } statusText)
+            BarcodeScanStatus = statusText;
     }
 
+    /// <summary>Looks up the scanned barcode.</summary>
     [RelayCommand]
     private async Task LookupBarcodeAsync(string? barcodeString)
     {
@@ -62,6 +52,7 @@ public partial class NutritionViewModel
         await LookupBarcodeInternalAsync(barcodeString, BarcodeSymbology.Auto, sessionRevision);
     }
 
+    /// <summary>Looks the barcode up and shows the food it finds.</summary>
     private async Task LookupBarcodeInternalAsync(
         string? barcodeString,
         BarcodeSymbology symbology,
@@ -70,42 +61,24 @@ public partial class NutritionViewModel
         if (IsBusy || IsProcessingBarcode || !IsBarcodeScannerOpen)
             return;
 
-        if (_barcodeUseCase is null)
-        {
-            BarcodeScanStatus = UiTextCatalog.Get(BarcodeScanCoordinator.StatusLookupUnavailableKey);
+        var attempt = await BarcodeScan.LookupAsync(
+            _barcodeUseCase,
+            barcodeString,
+            BarcodeInputText,
+            symbology,
+            expectedSessionRevision,
+            () => IsBarcodeScannerOpen,
+            NutritionPresentationMapper.FromCatalogItem,
+            setProcessing: isProcessing => IsProcessingBarcode = isProcessing,
+            setStatus: statusText => BarcodeScanStatus = statusText);
+
+        if (attempt.Food is not { } food)
             return;
-        }
 
-        IsProcessingBarcode = true;
-        BarcodeScanStatus = UiTextCatalog.Get(BarcodeScanCoordinator.StatusSearchingCatalogKey);
-
-        try
-        {
-            var attempt = await BarcodeScan.LookupAsync(
-                _barcodeUseCase,
-                barcodeString,
-                BarcodeInputText,
-                symbology,
-                expectedSessionRevision,
-                () => IsBarcodeScannerOpen,
-                NutritionPresentationMapper.FromCatalogItem);
-
-            if (attempt.Food is { } food)
-            {
-                FoodSearchResults = [];
-                SelectFoodResult(CreateFoodSearchResultItem(food));
-                AddFoodMessage = UiTextCatalog.Format(
-                    BarcodeScanCoordinator.StatusFoundInCatalogFormatKey, food.Name,
-                    Math.Round(food.Calories!.Value));
-            }
-            else if (attempt.StatusText is { } statusText)
-            {
-                BarcodeScanStatus = statusText;
-            }
-        }
-        finally
-        {
-            IsProcessingBarcode = false;
-        }
+        FoodSearchResults = [];
+        SelectFoodResult(CreateFoodSearchResultItem(food));
+        AddFoodMessage = UiTextCatalog.Format(
+            BarcodeScanCoordinator.StatusFoundInCatalogFormatKey, food.Name,
+            Math.Round(food.Calories!.Value));
     }
 }

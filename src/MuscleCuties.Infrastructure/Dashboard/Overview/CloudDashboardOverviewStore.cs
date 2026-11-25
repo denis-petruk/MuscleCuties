@@ -9,6 +9,7 @@ using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
 namespace MuscleCuties.Infrastructure.Dashboard.Overview;
 
+/// <summary>The dashboard's one read through the backend, plus the calendar it shares the payload with.</summary>
 public sealed class CloudDashboardOverviewStore(
     MobileJourneyCloudGateway cloudGateway,
     IHealthSyncService? healthSync = null,
@@ -16,6 +17,7 @@ public sealed class CloudDashboardOverviewStore(
 {
     private const int DefaultWorkoutDaysPerWeek = 3;
 
+    /// <summary>The dashboard figures for today.</summary>
     public async Task<DashboardOverviewResponse> LoadAsync(DashboardOverviewRequest request, CancellationToken ct)
     {
         var cloud = await cloudGateway.GetDashboardOverviewAsync(request.Today, request.TimeZoneId, ct).ConfigureAwait(false);
@@ -32,6 +34,7 @@ public sealed class CloudDashboardOverviewStore(
                 : $"Cloud dashboard overview failed: {cloud.Status} ({cloud.ErrorCode ?? "unknown"}).");
     }
 
+    /// <summary>The calendar strip around a date.</summary>
     public async Task<DashboardCalendarResponse> LoadCalendarAsync(DashboardCalendarRequest request, CancellationToken ct)
     {
         var cloud = await cloudGateway.GetDashboardCalendarAsync(request.Year, request.Month, request.Today, ct).ConfigureAwait(false);
@@ -40,6 +43,7 @@ public sealed class CloudDashboardOverviewStore(
         return CloudStoreResponse.RequireData(cloud, "dashboard calendar");
     }
 
+    /// <summary>Adds the device's energy figures to the dashboard answer when health sync is on and permissioned.</summary>
     private async Task<DashboardOverviewResponse> EnrichWithHealthKitIfNeededAsync(DashboardOverviewResponse response)
     {
         if (!response.NeedsDailyCheckIn || healthSync is null || scopeFactory is null)

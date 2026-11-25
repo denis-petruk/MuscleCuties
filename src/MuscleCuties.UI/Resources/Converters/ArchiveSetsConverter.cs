@@ -4,6 +4,8 @@ namespace MuscleCuties.UI.Resources.Converters;
 /// <summary>Renders a set count with Russian plural forms instead of `1 sets` (D26).</summary>
 public sealed class ArchiveSetsConverter : IValueConverter
 {
+    /// <summary>Set count with the correct plural form, including the 11 to 14 exception; zero reads as "not</summary>
+    /// recorded".</summary>
     public object Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         if (value is not int count || count <= 0)
@@ -18,6 +20,7 @@ public sealed class ArchiveSetsConverter : IValueConverter
         return UiTextCatalog.Format(key, count);
     }
 
+    /// <summary>Rejects the back conversion; the value only formats for display.</summary>
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();
 }

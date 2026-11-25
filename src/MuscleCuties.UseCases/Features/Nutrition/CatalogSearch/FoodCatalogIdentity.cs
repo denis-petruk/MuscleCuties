@@ -6,6 +6,7 @@ namespace MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 /// <summary>Produces a stable source-qualified identity while preserving the legacy integer field.</summary>
 public static class FoodCatalogIdentity
 {
+    /// <summary>Builds the stable key a food is matched by, so the catalog and her foods cannot collide.</summary>
     public static string ToKey(FoodCatalogCandidate candidate)
     {
         ArgumentNullException.ThrowIfNull(candidate);

@@ -3,6 +3,7 @@ using MuscleCuties.Core.Models.Workout.Planning;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>How large an adjustment a cycle phase justifies.</summary>
 public enum PhaseAdjustmentTier
 {
     Unavailable,
@@ -11,6 +12,7 @@ public enum PhaseAdjustmentTier
     EasierDay
 }
 
+/// <summary>Whether a preview applies, is unavailable, or has nothing to change.</summary>
 public enum PhaseAdjustmentPreviewStatus
 {
     Unavailable,
@@ -18,12 +20,14 @@ public enum PhaseAdjustmentPreviewStatus
     ChangesOrChoicesAvailable
 }
 
+/// <summary>Which prescription field an adjustment changes.</summary>
 public enum PhaseAdjustmentField
 {
     ExerciseSets,
     ContinuousMainMinutes
 }
 
+/// <summary>The choice she may take for one field.</summary>
 public enum PhaseAdjustmentChoice
 {
     KeepCurrentSession,
@@ -32,6 +36,7 @@ public enum PhaseAdjustmentChoice
     SelectEligibleGentleTemplate
 }
 
+/// <summary>One exercise affected by an adjustment, with the change proposed for it.</summary>
 public sealed record PhaseAdjustmentExercise(
     Guid PrescriptionId,
     int ExerciseId,
@@ -53,11 +58,13 @@ public sealed record PhaseAdjustmentSession(
     bool IsSkipped = false,
     string? SelectedReplacementTemplateId = null);
 
+/// <summary>An alternative template offered as part of an adjustment.</summary>
 public sealed record PhaseAdjustmentTemplateOption(
     PhaseAdjustmentChoice Choice,
     string TemplateId,
     string? DisplayName = null);
 
+/// <summary>One field's change, from its current value to the proposed one.</summary>
 public sealed record PhaseAdjustmentFieldChange(
     Guid SessionId,
     Guid? PrescriptionId,
@@ -66,10 +73,12 @@ public sealed record PhaseAdjustmentFieldChange(
     decimal AcceptedValue,
     decimal ProposedValue);
 
+/// <summary>The choices available for one session.</summary>
 public sealed record PhaseAdjustmentSessionChoices(
     Guid SessionId,
     IReadOnlyList<PhaseAdjustmentChoice> Choices);
 
+/// <summary>The full preview: every change with the tiers behind it.</summary>
 public sealed record PhaseAdjustmentPreview(
     string PolicyVersion,
     PhaseAdjustmentTier Tier,
@@ -78,11 +87,13 @@ public sealed record PhaseAdjustmentPreview(
     IReadOnlyList<PhaseAdjustmentSessionChoices> SessionChoices,
     bool RequiresStrengthDurationRecalculation);
 
+/// <summary>The choice she selected for a field.</summary>
 public sealed record PhaseAdjustmentChoiceSelection(
     Guid SessionId,
     PhaseAdjustmentChoice Choice,
     string? ExistingTemplateId = null);
 
+/// <summary>Whether an adjustment was applied, and why not when it was refused.</summary>
 public enum PhaseAdjustmentApplicationStatus
 {
     InvalidInput,
@@ -90,6 +101,7 @@ public enum PhaseAdjustmentApplicationStatus
     Applied
 }
 
+/// <summary>The applied adjustment with the plan state it produced.</summary>
 public sealed record PhaseAdjustmentApplication(
     PhaseAdjustmentApplicationStatus Status,
     IReadOnlyList<PhaseAdjustmentSession> Sessions,
@@ -120,6 +132,7 @@ public static class PhaseAdjustmentRule
     private const int MissingItemIndex = -1;
     private const decimal NoContinuousMainMinutes = 0m;
     private const decimal MinimumContinuousMainMinutes = NoContinuousMainMinutes;
+    /// <summary>Chooses how far the phase adjustment may go for the baseline.</summary>
     public static PhaseAdjustmentTier SelectTier(PhaseBaseline? baseline,
         PhaseBaselineScale scale)
     {
@@ -142,6 +155,7 @@ public static class PhaseAdjustmentRule
             : PhaseAdjustmentTier.Unavailable;
     }
 
+    /// <summary>Builds the adjustment preview the review shows before applying.</summary>
     public static PhaseAdjustmentPreview Preview(PhaseReviewGateResult? gate,
         PhaseBaseline? baseline, PhaseBaselineScale scale,
         IReadOnlyList<PhaseAdjustmentSession>? acceptedSessions)
@@ -374,6 +388,7 @@ public static class PhaseAdjustmentRule
             Array.AsReadOnly(result), preview.RequiresStrengthDurationRecalculation, null);
     }
 
+    /// <summary>A preview carrying the tier, its note and the committee's reason.</summary>
     private static PhaseAdjustmentPreview Result(PhaseAdjustmentTier tier,
         List<PhaseAdjustmentFieldChange> changes,
         List<PhaseAdjustmentSessionChoices> choices) =>
@@ -384,6 +399,7 @@ public static class PhaseAdjustmentRule
             Array.AsReadOnly(changes.ToArray()), Array.AsReadOnly(choices.ToArray()),
             changes.Any(change => change.Field == PhaseAdjustmentField.ExerciseSets));
 
+    /// <summary>The application record a tier and volume factor produce.</summary>
     private static PhaseAdjustmentApplication Application(
         PhaseAdjustmentApplicationStatus status,
         IReadOnlyList<PhaseAdjustmentSession> sessions,
@@ -392,11 +408,13 @@ public static class PhaseAdjustmentRule
         new(status, Array.AsReadOnly(sessions.ToArray()),
             requiresStrengthDurationRecalculation, limitationCode);
 
+    /// <summary>True when the modality allows a continuous cardio session.</summary>
     private static bool SupportsContinuousCardio(ActivityModality modality) =>
         modality is ActivityModality.Walking or ActivityModality.Running or
             ActivityModality.Cycling or ActivityModality.Rowing or
             ActivityModality.Elliptical or ActivityModality.Swimming;
 
+    /// <summary>Choices with the existing-session alternative marked.</summary>
     private static ReadOnlyCollection<PhaseAdjustmentChoice> ChoicesWithExistingAlternative(
         PhaseAdjustmentSession session,
         PhaseAdjustmentChoice alternativeChoice)

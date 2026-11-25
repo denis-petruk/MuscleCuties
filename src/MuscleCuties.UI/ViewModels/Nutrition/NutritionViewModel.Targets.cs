@@ -1,6 +1,10 @@
+// Per-meal calorie target shares.
+// Second half of NutritionViewModel; see its declaration for the full contract.
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>Applies the plan's calorie and macro targets, including the per-meal split the editor's shares depend</summary>
+/// on.</summary>
 public partial class NutritionViewModel
 {
     private const float NoTargetAdjustment = 0f;
@@ -25,6 +29,8 @@ public partial class NutritionViewModel
     [ObservableProperty] private string _activityAdjustmentText = string.Empty;
     [ObservableProperty] private float _activityAdjustmentCalories;
 
+    /// <summary>Sets the targets from a breakdown; a missing breakdown leaves the current targets in place rather than</summary>
+    /// clearing them to zero.</summary>
     private void ApplyTargetBreakdown(NutritionTargetBreakdown? breakdown)
     {
         HasStartingEnergy = breakdown?.StartingEnergyCalories is { } starting && float.IsFinite(starting);
@@ -60,8 +66,10 @@ public partial class NutritionViewModel
         HasUnavailableBreakdown = breakdown is null || breakdown.Source == UnavailableSource;
     }
 
+    /// <summary>The calories line for a value.</summary>
     private static string FormatCalories(float value) => DisplayFormat.Calories(value);
 
+    /// <summary>The calories line with an explicit sign.</summary>
     private static string FormatSignedCalories(float value) =>
         value > NoTargetAdjustment ? $"+{FormatCalories(value)}" : FormatCalories(value);
 }

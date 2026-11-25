@@ -54,5 +54,6 @@ public sealed record DailyCheckInAnswers(
             SleepQuality, Soreness, null, timeZoneId, Fatigue);
     }
 
+    /// <summary>True when the rating sits on the answer scale.</summary>
     private static bool IsRating(int? value) => value is >= MinimumRating and <= MaximumRating;
 }

@@ -2,6 +2,9 @@ using System.Windows.Input;
 
 namespace MuscleCuties.UI.Controls.Workout;
 
+/// <summary>
+///     One planned or optional session row on the workout session page.
+/// </summary>
 public partial class WorkoutActivityCard : ContentView
 {
     public static readonly BindableProperty OpenCommandProperty =
@@ -16,6 +19,7 @@ public partial class WorkoutActivityCard : ContentView
     public static readonly BindableProperty ToggleEasierAlternativeCommandProperty =
         BindableProperty.Create(nameof(ToggleEasierAlternativeCommand), typeof(ICommand), typeof(WorkoutActivityCard));
 
+    /// <summary>Initializes the card declared in its XAML.</summary>
     public WorkoutActivityCard()
     {
         InitializeComponent();

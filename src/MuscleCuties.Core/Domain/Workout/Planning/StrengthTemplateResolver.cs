@@ -3,11 +3,13 @@ using MuscleCuties.Core.Models.Enums.Users;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>One exercise the resolver may choose from.</summary>
 public sealed record StrengthExerciseCatalogEntry(
     string Name,
     ReviewedExerciseCandidate Candidate,
     IReadOnlyList<string> MetadataGaps);
 
+/// <summary>Everything the resolver chooses from: the template, her equipment and her history.</summary>
 public sealed record StrengthTemplateSelectionInput(
     StrengthTemplateDefinition Template,
     WorkoutActivityType Activity,
@@ -28,8 +30,10 @@ public sealed record StrengthTemplateSelectionInput(
     IReadOnlyDictionary<int, ExerciseEvidenceRanking>? EvidenceRankingByExerciseId = null,
     bool GluteFocus = false);
 
+/// <summary>Whether a slot was filled, omitted as optional, or could not be filled.</summary>
 public enum StrengthSlotResolutionOutcome { Selected, OptionalOmission, NoSafeCandidate, MissingReviewData }
 
+/// <summary>The exercise chosen for one slot, with its dissection from the alternatives.</summary>
 public sealed record StrengthSlotSelection(
     string SlotId,
     StrengthTemplateSlotId MovementSlot,
@@ -47,10 +51,13 @@ public sealed record StrengthSlotSelection(
     int? RestSeconds,
     IReadOnlyList<string> LimitationCodes)
 {
+    /// <summary>Repetitions the slot starts at, before progression.</summary>
     public int? InitialRepetitionTarget => MinimumRepetitions;
+    /// <summary>How the slot resolved, defaulting to selected so a filled slot carries no extra flag.</summary>
     public StrengthSlotResolutionOutcome Outcome { get; init; } = StrengthSlotResolutionOutcome.Selected;
 }
 
+/// <summary>The sets and reps a filled slot prescribes.</summary>
 public sealed record StrengthSlotPrescription(
     int? Sets,
     int? MinimumRepetitions,
@@ -58,6 +65,7 @@ public sealed record StrengthSlotPrescription(
     int? RepetitionsInReserve,
     int? RestSeconds);
 
+/// <summary>The resolved template with every slot's outcome, so an omission is explainable.</summary>
 public sealed record StrengthTemplateResolution(
     string TemplateId,
     string TemplateVersion,
@@ -81,6 +89,7 @@ public static class StrengthTemplateResolver
     private const string DuplicateCatalogExerciseId = "DuplicateCatalogExerciseId";
     private static readonly string[] TemplateSlotReviewMissingCodes = [TemplateSlotReviewMissingCode];
 
+    /// <summary>Fills a strength template's slots with catalog exercises.</summary>
     public static StrengthTemplateResolution Resolve(
         StrengthTemplateSelectionInput? input,
         int maximumWorkingExercises)
@@ -244,9 +253,11 @@ public static class StrengthTemplateResolver
             Array.AsReadOnly(unresolved.Distinct(StringComparer.Ordinal).ToArray()));
     }
 
+    /// <summary>A resolution that could not fill the template, with the reason.</summary>
     private static StrengthTemplateResolution Failure(string reason) =>
         new(string.Empty, StrengthTemplateCatalog.Version, "Invalid", [], [reason]);
 
+    /// <summary>Whether any exercise repeats, which would double its weekly volume.</summary>
     private static bool HasDuplicateExerciseIds(IReadOnlyList<StrengthExerciseCatalogEntry> catalog)
     {
         var seen = new HashSet<int>();
@@ -256,11 +267,13 @@ public static class StrengthTemplateResolver
         return false;
     }
 
+    /// <summary>A slot left empty because no eligible exercise was available.</summary>
     private static StrengthSlotSelection Unselected(StrengthTemplateSlot slot,
         WorkoutActivityType activity, string reason) =>
         new(slot.SlotId, slot.MovementSlot, false, RoleFor(slot, activity), IsHeavyMain(slot, activity),
             null, null, null, PrescriptionRule(activity, slot), null, null, null, null, null, [reason]);
 
+    /// <summary>The prescription role a template slot plays.</summary>
     private static StrengthPrescriptionRole RoleFor(StrengthTemplateSlot slot,
         WorkoutActivityType activity) => activity switch
     {
@@ -269,12 +282,15 @@ public static class StrengthTemplateResolver
         _ => slot.GeneralRole
     };
 
+    /// <summary>True when the slot is a heavy main lift for the activity.</summary>
     private static bool IsHeavyMain(StrengthTemplateSlot slot, WorkoutActivityType activity) =>
         activity == WorkoutActivityType.StrengthHighIntensity && slot.IsHeavyMainInHighIntensity;
 
+    /// <summary>Name of the rule that prescribes this slot.</summary>
     private static string PrescriptionRule(WorkoutActivityType activity, StrengthTemplateSlot slot) =>
         $"{StrengthPlanPreviewRule.PolicyId}:{StrengthPlanPreviewRule.Version}:{activity}:{slot.SlotId}";
 
+    /// <summary>The prescription a slot carries for the chosen exercise.</summary>
     private static StrengthSlotPrescription SlotPrescription(
         ActivitySessionPrescription activityPrescription, StrengthTemplateSlot slot,
         WorkoutActivityType activity)
@@ -310,6 +326,7 @@ public static class StrengthTemplateResolver
         };
     }
 
+    /// <summary>How well the exercise matches the slot's evidence.</summary>
     private static int GetEvidenceScore(
         StrengthExerciseCatalogEntry entry,
         StrengthTemplateSlot slot,
@@ -334,6 +351,7 @@ public static class StrengthTemplateResolver
     private static bool IsGluteFocusPattern(MovementPattern pattern) =>
         pattern is MovementPattern.HipThrust or MovementPattern.HipAbduction;
 
+    /// <summary>Why the exercise was chosen for the slot.</summary>
     private static string SelectionReason(StrengthExerciseCatalogEntry entry,
         HashSet<int> preferredIds, StrengthTemplateSelectionInput input,
         StrengthTemplateSlot slot, IReadOnlyDictionary<int, int> goalPriorities)

@@ -6,10 +6,12 @@ using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.Server.Workout.ActiveSession;
 
+/// <summary>The active-session routes: starting, logging sets, timing and finishing a workout.</summary>
 public static class WorkoutActiveSessionEndpointMappings
 {
     private const string SessionsRoute = "/api/v1/workouts/sessions";
 
+    /// <summary>Registers the active-session endpoints.</summary>
     public static IEndpointRouteBuilder MapWorkoutActiveSessionEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(SessionsRoute).RequireAuthorization();
@@ -243,6 +245,7 @@ public static class WorkoutActiveSessionEndpointMappings
     }
 
 
+    /// <summary>The body that starts a session, naming the plan it follows and the operation id that makes a retry safe.</summary>
     public sealed record StartWorkoutSessionBody(
         string? IdempotencyKey,
         Guid SessionId,
@@ -252,10 +255,13 @@ public static class WorkoutActiveSessionEndpointMappings
         int? PlannedWorkoutDayId = null,
         WorkoutActivityDto? UnplannedActivity = null);
 
+    /// <summary>One logged set: its exercise, the reps and weight actually done, and the key that makes a re-send the same</summary>
+    /// set.</summary>
     public sealed record UpsertWorkoutSessionSetBody(
         string? IdempotencyKey,
         ActiveExerciseSetInput Set);
 
+    /// <summary>The body that closes a session, carrying the notes and the operation id.</summary>
     public sealed record FinishWorkoutSessionBody(
         string? IdempotencyKey,
         DateTime CompletedAtUtc,
@@ -265,7 +271,10 @@ public static class WorkoutActiveSessionEndpointMappings
         string? Notes = null,
         IReadOnlyList<ActiveExerciseSetInput>? FinalSets = null);
 
+    /// <summary>The body that abandons a session.</summary>
     public sealed record CancelWorkoutSessionBody(string? IdempotencyKey);
+    /// <summary>The body that resumes the session clock.</summary>
     public sealed record TimingResumeBody(string? IdempotencyKey);
+    /// <summary>A timing checkpoint: how long the interval has run and the key that keeps a retry from double counting it.</summary>
     public sealed record TimingCheckpointBody(string? IdempotencyKey, Guid IntervalId, int MeasuredSeconds, bool Pause);
 }

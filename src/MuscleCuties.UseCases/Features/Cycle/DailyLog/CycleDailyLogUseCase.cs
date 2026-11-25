@@ -3,13 +3,16 @@ using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Cycle.DailyLog;
 
+/// <summary>Records a day's log under the account's lock, keeping one row per day.</summary>
 public sealed class CycleDailyLogUseCase(ICycleDailyLogStore store) : ICycleDailyLogUseCase
 {
+    /// <summary>The stored log for that day, or null when she has not logged it.</summary>
     public Task<CycleDailyLogSnapshot?> LoadAsync(DateTime date, CancellationToken cancellationToken = default)
     {
         return store.LoadAsync(date.Date, cancellationToken);
     }
 
+    /// <summary>Stores the day's phase and flow, replacing that day's row so one day keeps one log.</summary>
     public Task<bool> SaveAsync(CycleDailyLogRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);

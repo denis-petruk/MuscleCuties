@@ -2,6 +2,7 @@ using System.Text;
 
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>The barcode symbology a code was read as, which decides the check it is validated by.</summary>
 public enum BarcodeFormat
 {
     Unknown = 0,
@@ -42,6 +43,7 @@ public sealed class Barcode : IEquatable<Barcode>
     private const char FiveChar = '5';
     private const char NineChar = '9';
 
+    /// <summary>Stores a parsed barcode together with the outcome of its validation.</summary>
     private Barcode(
         string rawValue,
         string normalizedValue,
@@ -56,16 +58,22 @@ public sealed class Barcode : IEquatable<Barcode>
         ErrorMessage = errorMessage;
     }
 
+    /// <summary>The characters exactly as the scanner reported them.</summary>
     public string RawValue { get; }
+    /// <summary>The value after the format's normalization rules.</summary>
     public string NormalizedValue { get; }
+    /// <summary>Symbology the barcode uses.</summary>
     public BarcodeFormat Format { get; }
+    /// <summary>True when the value satisfies its format's length and checksum rules.</summary>
     public bool IsValid { get; }
+    /// <summary>Why the value is not a valid barcode, or nothing when it is.</summary>
     public string? ErrorMessage { get; }
 
     /// <summary>Accept only an exact stored key; substring and case-folded matches are not product identity.</summary>
     public bool MatchesExactLookupValue(string? storedValue) =>
         storedValue is not null && GetExactLookupValues().Contains(storedValue, StringComparer.Ordinal);
 
+    /// <summary>The codes worth querying for this barcode, so a UPC is also looked up as its EAN form.</summary>
     public IReadOnlyList<string> GetExactLookupValues()
     {
         if (!IsValid)
@@ -81,6 +89,7 @@ public sealed class Barcode : IEquatable<Barcode>
             : [NormalizedValue, upcA, RawValue];
     }
 
+    /// <summary>Validates a scanned code against its symbology, falling back to a looser check when the format is unknown.</summary>
     public static Barcode Create(string? input, BarcodeFormat format = BarcodeFormat.Unknown)
     {
         if (string.IsNullOrWhiteSpace(input))
@@ -101,6 +110,7 @@ public sealed class Barcode : IEquatable<Barcode>
         };
     }
 
+    /// <summary>Infers the symbology from the digit count, so a scanner that omits the format still works.</summary>
     private static BarcodeFormat DetectFormat(string text)
     {
         if (IsAllDigits(text))
@@ -118,6 +128,7 @@ public sealed class Barcode : IEquatable<Barcode>
         return BarcodeFormat.Code128;
     }
 
+    /// <summary>Checks the EAN-13 check digit, refusing a misread code before it reaches the catalogue.</summary>
     private static Barcode ValidateEan13(string text)
     {
         if (!IsAllDigits(text) || text.Length != Ean13Length)
@@ -134,6 +145,7 @@ public sealed class Barcode : IEquatable<Barcode>
         return new Barcode(text, text, BarcodeFormat.Ean13, true);
     }
 
+    /// <summary>Checks the UPC-A check digit.</summary>
     private static Barcode ValidateUpcA(string text)
     {
         if (!IsAllDigits(text) || text.Length != UpcALength)
@@ -152,6 +164,7 @@ public sealed class Barcode : IEquatable<Barcode>
         return new Barcode(text, normalized, BarcodeFormat.UpcA, true);
     }
 
+    /// <summary>Checks the EAN-8 check digit.</summary>
     private static Barcode ValidateEan8(string text)
     {
         if (!IsAllDigits(text) || text.Length != Ean8Length)
@@ -168,6 +181,7 @@ public sealed class Barcode : IEquatable<Barcode>
         return new Barcode(text, text, BarcodeFormat.Ean8, true);
     }
 
+    /// <summary>Checks a UPC-E code and expands it to its UPC-A equivalent.</summary>
     private static Barcode ValidateUpcE(string text)
     {
         if (!IsAllDigits(text) || (text.Length != UpcECompressedLength && text.Length != UpcEFullLength))
@@ -195,6 +209,7 @@ public sealed class Barcode : IEquatable<Barcode>
         return new Barcode(text, normalizedGtin13, BarcodeFormat.UpcE, true);
     }
 
+    /// <summary>Accepts a Code 128 payload, which carries no check digit to verify here.</summary>
     private static Barcode ValidateCode128(string text)
     {
         if (text.Length < MinCode128Length || text.Length > MaxCode128Length)
@@ -211,6 +226,7 @@ public sealed class Barcode : IEquatable<Barcode>
         return new Barcode(text, text, BarcodeFormat.Code128, true);
     }
 
+    /// <summary>Accepts a code of a symbology this build does not verify, rather than refusing a valid scan.</summary>
     private static Barcode ValidateGenericOrFallback(string text)
     {
         if (IsAllDigits(text) && text.Length >= Ean8Length && text.Length <= Ean13Length)
@@ -219,6 +235,7 @@ public sealed class Barcode : IEquatable<Barcode>
         return ValidateCode128(text);
     }
 
+    /// <summary>Expands the six digits to the twelve-digit UPC-A form, or null when the pattern is invalid.</summary>
     public static string? ExpandUpcEToUpcA(string sixDigits, char numberSystem = ZeroChar)
     {
         if (sixDigits.Length != UpcECompressedLength || !IsAllDigits(sixDigits) ||
@@ -264,6 +281,7 @@ public sealed class Barcode : IEquatable<Barcode>
         return sb.ToString();
     }
 
+    /// <summary>The GS1 modulo-10 check digit, shared by every EAN and UPC form.</summary>
     public static int CalculateModulo10CheckDigit(string digits, int firstWeight, int secondWeight)
     {
         var sum = 0;
@@ -278,6 +296,7 @@ public sealed class Barcode : IEquatable<Barcode>
         return (ModuloDivisor - remainder) % ModuloDivisor;
     }
 
+    /// <summary>Whether the payload is digits only, which every verified form requires.</summary>
     private static bool IsAllDigits(string text)
     {
         if (string.IsNullOrEmpty(text))
@@ -292,6 +311,7 @@ public sealed class Barcode : IEquatable<Barcode>
         return true;
     }
 
+    /// <summary>Compares two barcodes by normalized value and format.</summary>
     public bool Equals(Barcode? other)
     {
         if (other is null) return false;
@@ -299,9 +319,12 @@ public sealed class Barcode : IEquatable<Barcode>
         return string.Equals(NormalizedValue, other.NormalizedValue, StringComparison.Ordinal);
     }
 
+    /// <summary>Compares against another barcode, treating any other type as unequal.</summary>
     public override bool Equals(object? obj) => Equals(obj as Barcode);
 
+    /// <summary>Hashes the normalized value so equal barcodes hash alike.</summary>
     public override int GetHashCode() => StringComparer.Ordinal.GetHashCode(NormalizedValue);
 
+    /// <summary>Renders the barcode as format:value, or the invalid raw text.</summary>
     public override string ToString() => IsValid ? $"{Format}:{NormalizedValue}" : $"Invalid({RawValue})";
 }

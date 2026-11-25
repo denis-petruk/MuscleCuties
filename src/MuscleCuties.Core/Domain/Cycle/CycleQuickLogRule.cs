@@ -3,6 +3,7 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 
 namespace MuscleCuties.Core.Domain.Cycle;
 
+/// <summary>What she logged for a day, which the decision is made from.</summary>
 public readonly record struct CycleQuickLogInput(
     DateTime Date,
     bool? IsPeriodStart,
@@ -12,15 +13,18 @@ public readonly record struct CycleQuickLogInput(
     CyclePhase? PhaseOverride,
     string? Note);
 
+/// <summary>What the quick log decided, including the phase it inferred.</summary>
 public readonly record struct CycleQuickLogDecision(
     CyclePhase Phase,
     bool WritePhaseLog,
     string? Note);
 
+/// <summary>Turns a quick log into a phase decision, refusing one that contradicts a recorded start.</summary>
 public static class CycleQuickLogRule
 {
     [SuppressMessage("Usage", "CA2208:Instantiate argument exceptions correctly",
         Justification = "Preserves ParamName property matching domain input DTO members.")]
+    /// <summary>Refuses a log with no date or a phase that cannot follow the recorded history.</summary>
     public static void Validate(CycleQuickLogInput input)
     {
         if (input.Date.Date < new DateTime(1970, 1, 1) ||
@@ -42,11 +46,13 @@ public static class CycleQuickLogRule
             throw new ArgumentException("Period start and end cannot be recorded for the same day.");
     }
 
+    /// <summary>Whether the phase has to be inferred from the flow, rather than taken from her choice.</summary>
     public static bool NeedsInferredPhase(CycleQuickLogInput input)
     {
         return input.IsPeriodStart != true && input.IsPeriodEnd != true && !input.PhaseOverride.HasValue;
     }
 
+    /// <summary>Resolves the day's phase, preferring what she chose over what the flow implies.</summary>
     public static CycleQuickLogDecision Resolve(CycleQuickLogInput input, CyclePhase inferredPhase)
     {
         Validate(input);

@@ -2,9 +2,11 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>The strength style offer for the current revision, and the dismissal that hides it.</summary>
 public sealed class PostgresStrengthStyleOfferStore(PostgresDbContext context) : IStrengthStyleOfferStore
 {
     // Called with the tenant transaction and account lock held, after automatic acceptance succeeds.
+    /// <summary>Records the strength style offer for a plan revision.</summary>
     public async Task CreateInCurrentTransactionAsync(Guid userId, Guid planId, Guid revisionId, int currentStyleId,
         IReadOnlyList<int> fittingStyleIds, CancellationToken cancellationToken)
     {
@@ -35,6 +37,7 @@ public sealed class PostgresStrengthStyleOfferStore(PostgresDbContext context) :
         }
     }
 
+    /// <summary>The offer currently shown to the user.</summary>
     public Task<StrengthStyleOfferDto?> GetCurrentAsync(Guid userId, CancellationToken cancellationToken) =>
         WithLockAsync(userId, async () =>
         {
@@ -43,6 +46,7 @@ public sealed class PostgresStrengthStyleOfferStore(PostgresDbContext context) :
                 row.CurrentStyleId, row.AlternativeStyleIds);
         }, cancellationToken);
 
+    /// <summary>Dismisses an offer.</summary>
     public Task<bool> DismissAsync(Guid userId, Guid offerId, CancellationToken cancellationToken) =>
         WithLockAsync(userId, async () =>
         {
@@ -53,6 +57,7 @@ public sealed class PostgresStrengthStyleOfferStore(PostgresDbContext context) :
             return true;
         }, cancellationToken);
 
+    /// <summary>The live offer for the account's current plan revision, or nothing when there is none or it was dismissed.</summary>
     private async Task<StrengthStyleOfferRecord?> CurrentAsync(Guid userId, CancellationToken cancellationToken)
     {
         var state = await context.WorkoutAccountPlanningStates.AsNoTracking().SingleOrDefaultAsync(row => row.UserId == userId,
@@ -67,6 +72,7 @@ public sealed class PostgresStrengthStyleOfferStore(PostgresDbContext context) :
             row.PlanId == planId && row.RevisionId == revisionId && row.DismissedAtUtc == null, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Runs a write under the account's planning lock, so an offer change cannot race a plan acceptance.</summary>
     private async Task<T> WithLockAsync<T>(Guid userId, Func<Task<T>> action, CancellationToken cancellationToken)
     {
         if (userId == Guid.Empty) throw new ArgumentException("An account is required.", nameof(userId));

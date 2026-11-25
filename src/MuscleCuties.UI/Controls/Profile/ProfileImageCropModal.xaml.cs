@@ -2,6 +2,9 @@ using System.Windows.Input;
 
 namespace MuscleCuties.UI.Controls.Profile;
 
+/// <summary>
+///     Crop step for a chosen profile photo; returns the stored path, or null when cancelled.
+/// </summary>
 public partial class ProfileImageCropModal : AnimatedModalView
 {
     private double _currentScale;
@@ -12,6 +15,7 @@ public partial class ProfileImageCropModal : AnimatedModalView
     private double _startScale;
     private TaskCompletionSource<string?>? _tcs;
 
+    /// <summary>Wires the crop surface's gestures, so the image can be moved and zoomed before it is cut.</summary>
     public ProfileImageCropModal()
     {
         _currentScale = AppThemeResources.GetDouble("UiScaleCropMinimum");
@@ -20,8 +24,10 @@ public partial class ProfileImageCropModal : AnimatedModalView
         BindingContext = this;
     }
 
+    /// <summary>The command that closes the crop modal without saving.</summary>
     public ICommand CancelCommand { get; }
 
+    /// <summary>Fits the crop sheet's height to its content.</summary>
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
@@ -30,6 +36,8 @@ public partial class ProfileImageCropModal : AnimatedModalView
             BottomSheetSizing.ApplyContentFit(SheetSurface, height);
     }
 
+    /// <summary>Opens the sheet on an image and completes with the cropped file's path, or nothing when the user backs</summary>
+    /// out.</summary>
     public Task<string?> ShowAsync(string imagePath)
     {
         if (!_hasContent)
@@ -46,6 +54,7 @@ public partial class ProfileImageCropModal : AnimatedModalView
         return _tcs.Task;
     }
 
+    /// <summary>Drags the image, then clamps it so no empty edge can appear inside the crop frame.</summary>
     private void OnPanUpdated(object? sender, PanUpdatedEventArgs e)
     {
         switch (e.StatusType)
@@ -62,6 +71,8 @@ public partial class ProfileImageCropModal : AnimatedModalView
         }
     }
 
+    /// <summary>Zooms about the pinch's own origin and clamps the result, so zooming cannot slide the image out of the</summary>
+    /// frame.</summary>
     private void OnPinchUpdated(object? sender, PinchGestureUpdatedEventArgs e)
     {
         switch (e.Status)
@@ -79,6 +90,8 @@ public partial class ProfileImageCropModal : AnimatedModalView
         }
     }
 
+    /// <summary>Cuts the visible frame to a file and completes the sheet with it; a failure ends the sheet with nothing rather</summary>
+    /// than a broken path.</summary>
     private async void OnUsePhotoTapped(object? sender, EventArgs e)
     {
         if (_isSaving)
@@ -112,17 +125,21 @@ public partial class ProfileImageCropModal : AnimatedModalView
         }
     }
 
+    /// <summary>Closes the sheet without a result, leaving the previous avatar untouched.</summary>
     private void OnCancelTapped(object? sender, EventArgs e)
     {
         _tcs?.TrySetResult(null);
         Hide();
     }
 
+    /// <summary>Hides the sheet and restores the image's starting transform, so the next photo does not open zoomed or</summary>
+    /// shifted.</summary>
     private void Hide()
     {
         IsOpen = false;
     }
 
+    /// <summary>Returns the image to its fitted position and scale.</summary>
     private void ResetTransforms()
     {
         _panX = AppThemeResources.GetDouble("UiMotionOffsetZero");
@@ -134,6 +151,7 @@ public partial class ProfileImageCropModal : AnimatedModalView
         CropImage.Scale = _currentScale;
     }
 
+    /// <summary>Keeps the image covering the frame: it can be moved only as far as its own edges allow.</summary>
     private void ClampTranslation()
     {
         var fallbackImageDimension = AppThemeResources.GetDouble("UiDimension260");

@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Diary;
 
+/// <summary>The diary persistence.</summary>
 public interface INutritionDiaryStore
 {
     Task<NutritionDiaryDay> GetDayAsync(Guid userId, DateOnly date, int pageSize, string? pageToken, CancellationToken cancellationToken);

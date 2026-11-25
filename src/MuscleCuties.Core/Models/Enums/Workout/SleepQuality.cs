@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Models.Enums.Workout;
 
+/// <summary>Her reported sleep quality, which contributes to the readiness score.</summary>
 public enum SleepQuality
 {
     VeryPoor = 1,

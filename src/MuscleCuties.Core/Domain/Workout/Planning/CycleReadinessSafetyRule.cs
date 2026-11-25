@@ -3,7 +3,9 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>A symptom severe enough to matter for training, with its date.</summary>
 public sealed record CycleSafetySymptom(DateOnly Date, string Type, int Severity);
+/// <summary>Whether the symptoms force a review instead of a load change.</summary>
 public sealed record CycleReadinessSafetyDecision(bool RequiresReview, bool RoutineSymptoms);
 
 /// <summary>Only comparable recorded evidence can establish an unchanged symptom or pain level.</summary>
@@ -12,6 +14,7 @@ public static class CycleReadinessSafetyRule
     private const int NoPain = 0;
     private const int MaximumPain = 10;
 
+    /// <summary>Decides whether the cycle phase allows today's planned session.</summary>
     public static CycleReadinessSafetyDecision Evaluate(DateOnly today, CyclePhase phase, bool phaseReliable,
         int? todayPain, int? previousPain, IReadOnlyList<CycleSafetySymptom> symptoms)
     {

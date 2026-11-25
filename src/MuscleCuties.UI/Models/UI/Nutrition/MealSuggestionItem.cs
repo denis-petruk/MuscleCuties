@@ -2,18 +2,30 @@ using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
+/// <summary>A generated meal: its components, macros, style, and the cooking directions assembled from those</summary>
+/// components.</summary>
 public class MealSuggestionItem
 {
+    /// <summary>Name of the generated dish.</summary>
     public string ConceptName { get; set; } = string.Empty;
+    /// <summary>One-line description of the dish.</summary>
     public string ConceptDescription { get; set; } = string.Empty;
+    /// <summary>Spice blends paired with the dish, the first of which appears in the directions.</summary>
     public IReadOnlyList<SpiceBlendDetail> SpiceBlends { get; set; } = [];
+    /// <summary>The foods in the dish, flat; the grouped view is derived from this list.</summary>
     public IReadOnlyList<MealSuggestionComponentItem> Components { get; set; } = [];
+    /// <summary>The same components grouped under the headings the card shows.</summary>
     public IReadOnlyList<MealSuggestionComponentGroup> ComponentGroups { get; set; } = [];
+    /// <summary>Totals for the whole dish.</summary>
     public NutritionMacros Macros { get; set; }
+    /// <summary>Planner score, used to order or compare suggestions; not shown to the person.</summary>
     public float Score { get; set; }
+    /// <summary>Shape of the dish, which selects its label, description and direction template.</summary>
     public MealStyle Style { get; set; }
+    /// <summary>Glyph for the dish, chosen from its style and components.</summary>
     public string IconGlyph { get; set; } = "Food24";
 
+    /// <summary>Outline path for the dish's glyph.</summary>
     public string IconPathData => IconGlyph switch
     {
         "BowlSalad24" => "M3 11h18c0 5-4 9-9 9s-9-4-9-9ZM7 11c0-3 2-5 5-5s5 2 5 5M12 3v3",
@@ -34,15 +46,20 @@ public class MealSuggestionItem
         _ => "M3 2v7c0 1.1.9 2 2 2h2c1.1 0 2-.9 2-2V2M6 2v20M15 2v8h4M19 2v20"
     };
 
+    /// <summary>Names of the paired spice blends.</summary>
     public IReadOnlyList<string> SpiceBlendNames => SpiceBlends.Select(s => s.Name).ToList();
 
+    /// <summary>Calorie total, formatted.</summary>
     public string CaloriesText => DisplayFormat.Calories(Macros.Calories);
+    /// <summary>Macro line for the dish.</summary>
     public string MacrosText => DisplayFormat.Macros(Macros.Protein, Macros.Carbs, Macros.Fats);
 
+    /// <summary>Spice blends joined for a single line; empty when the dish has none.</summary>
     public string SpiceBlendSummary => SpiceBlends.Count > 0
         ? string.Join(" | ", SpiceBlendNames)
         : string.Empty;
 
+    /// <summary>True when the suggestion has spice blends listed.</summary>
     public bool HasSpiceBlends => SpiceBlends.Count > 0;
 
     public string ComponentSummary
@@ -57,6 +74,7 @@ public class MealSuggestionItem
         }
     }
 
+    /// <summary>Localized name of the dish's style.</summary>
     public string StyleLabel => UiTextCatalog.Get(Style switch
     {
         MealStyle.Bowl => "Nutrition_MealStyle_Bowl",
@@ -66,6 +84,7 @@ public class MealSuggestionItem
         _ => "Nutrition_MealStyle_Plated"
     });
 
+    /// <summary>Localized explanation of what the style means.</summary>
     public string StyleDescription => UiTextCatalog.Get(Style switch
     {
         MealStyle.Bowl => "Nutrition_MealStyle_BowlDescription",
@@ -101,6 +120,7 @@ public class MealSuggestionItem
         }
     }
 
+    /// <summary>The steps for a bowl-style meal.</summary>
     private static List<string> BuildBowlDirections(
         string carb, string protein, string veg, string? sauce, string? spice)
     {
@@ -118,6 +138,7 @@ public class MealSuggestionItem
         return steps;
     }
 
+    /// <summary>The steps for a meal built from separate parts.</summary>
     private static List<string> BuildComplexDirections(
         string carb, string protein, string veg, string? sauce, string? spice)
     {
@@ -129,6 +150,7 @@ public class MealSuggestionItem
         return steps;
     }
 
+    /// <summary>The steps for a handheld meal.</summary>
     private static List<string> BuildHandheldDirections(
         string carb, string protein, string veg, string? sauce, string? spice)
     {
@@ -142,6 +164,7 @@ public class MealSuggestionItem
         return steps;
     }
 
+    /// <summary>The steps for a wrapped meal.</summary>
     private static List<string> BuildWrappedDirections(
         string carb, string protein, string veg, string? sauce, string? spice)
     {
@@ -154,6 +177,7 @@ public class MealSuggestionItem
         return steps;
     }
 
+    /// <summary>The steps for a plated meal.</summary>
     private static List<string> BuildPlatedDirections(
         string carb, string protein, string veg, string? sauce, string? spice)
     {
@@ -170,6 +194,8 @@ public class MealSuggestionItem
         return steps;
     }
 
+    /// <summary>Opening steps shared by the wrapped and handheld templates: season, then brown or cook the</summary>
+    /// protein.</summary>
     private static List<string> StartProteinSteps(string protein, string? spice, bool brown)
     {
         var steps = new List<string>();
@@ -182,33 +208,51 @@ public class MealSuggestionItem
     }
 }
 
+/// <summary>A spice blend paired with a dish, and whether the planner recommends it.</summary>
 public record SpiceBlendDetail(string Name, string Description, bool IsRecommended);
 
+/// <summary>A heading, its glyph, and the components listed under it.</summary>
 public record MealSuggestionComponentGroup(
     string Label,
     string IconGlyph,
     IReadOnlyList<MealSuggestionComponentItem> Items)
 {
+    /// <summary>Group weight and calories, summed over the components in it.</summary>
     public string TotalText => $"{DisplayFormat.GramsShort(Items.Sum(i => i.Grams))} · {DisplayFormat.Calories(Items.Sum(i => i.CaloriesForAmount))}";
 }
 
+/// <summary>One food in a suggestion, with both its per-100 g values and the values for its portion.</summary>
 public class MealSuggestionComponentItem
 {
+    /// <summary>Catalog identity of the component.</summary>
     public int FoodItemId { get; set; }
+    /// <summary>Component name as it appears in the dish.</summary>
     public string Name { get; set; } = string.Empty;
+    /// <summary>Role the food plays in the dish (carb, protein, vegetable, sauce).</summary>
     public ComponentType ComponentType { get; set; }
+    /// <summary>Finer role that decides how the food is served.</summary>
     public ComponentRole Role { get; set; }
+    /// <summary>Portion weight in the dish.</summary>
     public float Grams { get; set; }
+    /// <summary>True when the component is fixed to the component type's default and was not adjusted.</summary>
     public bool IsLocked { get; set; }
+    /// <summary>Calories per 100 g.</summary>
     public float Calories { get; set; }
+    /// <summary>Protein per 100 g.</summary>
     public float Protein { get; set; }
+    /// <summary>Carbohydrate per 100 g.</summary>
     public float Carbs { get; set; }
+    /// <summary>Fat per 100 g.</summary>
     public float Fats { get; set; }
+    /// <summary>Calories the portion contributes, which is what the dish total is built from.</summary>
     public float CaloriesForAmount { get; set; }
+    /// <summary>Preformatted macro line for the portion.</summary>
     public string NutritionForAmountText { get; set; } = string.Empty;
 
+    /// <summary>Component type as text, for callers that group or log rather than display.</summary>
     public string TypeLabel => ComponentType.ToString();
 
+    /// <summary>Localized role, which reads as how the food is served.</summary>
     public string RoleLabel => UiTextCatalog.Get(Role switch
     {
         ComponentRole.CarbBase => "Nutrition_ComponentRole_Base",
@@ -221,13 +265,17 @@ public class MealSuggestionComponentItem
         _ => "Nutrition_ComponentRole_Item"
     });
 
+    /// <summary>Portion weight with its short unit.</summary>
     public string PortionText => DisplayFormat.GramsShort(Grams);
 
+    /// <summary>Calories the portion contributes, formatted.</summary>
     public string CaloriesText => DisplayFormat.Calories(CaloriesForAmount);
 
+    /// <summary>Portion and its macros on one line.</summary>
     public string DetailText => $"{DisplayFormat.GramsShort(Grams)} · {NutritionForAmountText}";
 }
 
+/// <summary>One meal slot in the generated day plan, including why it has no suggestion when it has none.</summary>
 public sealed record DayMealPlanItem(
     MealType MealType,
     NutritionMealTarget Target,
@@ -237,6 +285,7 @@ public sealed record DayMealPlanItem(
     MealSuggestionItem? Suggestion,
     string ErrorMessage = "")
 {
+    /// <summary>Localized meal name.</summary>
     public string MealTypeLabel => UiTextCatalog.Get(MealType switch
     {
         MealType.Breakfast => "Nutrition_MealType_Breakfast",
@@ -246,6 +295,7 @@ public sealed record DayMealPlanItem(
         _ => "Nutrition_MealType_Snack"
     });
 
+    /// <summary>Outline glyph for the meal type.</summary>
     public string MealTypeIconPathData => MealType switch
     {
         MealType.Breakfast => "M17 18a5 5 0 0 0 0-10H5a5 5 0 0 0 0 10zM2 21h20M12 3v2",
@@ -256,15 +306,19 @@ public sealed record DayMealPlanItem(
         _ => "M12 2a10 10 0 0 0 0 20 10 10 0 0 0 0-20z"
     };
 
+    /// <summary>The slot's calorie target and its share of the day, for the slot header.</summary>
     public string TargetSummaryText =>
         UiTextCatalog.Format("Nutrition_DayPlan_TargetSummaryFormat",
             DisplayFormat.Calories(Target.Calories), TargetSharePercent);
 
+    /// <summary>Share of the daily target this slot represents, clamped to 0..100 and zero when no target is set.</summary>
     public int TargetSharePercent => !float.IsFinite(DailyCaloriesTarget) || DailyCaloriesTarget <= 0f ||
                                      !float.IsFinite(Target.Calories)
         ? 0
         : Math.Clamp((int)MathF.Round(Target.Calories / DailyCaloriesTarget * 100f), 0, 100);
 
+    /// <summary>Slot title: the suggested dish, or the reason there is none (already logged, target reached,</summary>
+    /// nothing suitable).</summary>
     public string MealTitle => Suggestion?.ConceptName ?? UiTextCatalog.Get(
         IsAlreadyLogged
             ? "Nutrition_DayPlan_AlreadyLogged"
@@ -272,6 +326,7 @@ public sealed record DayMealPlanItem(
                 ? "Nutrition_DayPlan_DailyTargetReached"
                 : "Nutrition_DayPlan_NoSuitableMeal");
 
+    /// <summary>Explains the slot's state, preferring the reason over an empty summary.</summary>
     public string MealSummaryText => IsAlreadyLogged
         ? UiTextCatalog.Get("Nutrition_DayPlan_AlreadyLoggedSummary")
         : IsRefreshing
@@ -283,8 +338,12 @@ public sealed record DayMealPlanItem(
                       ? UiTextCatalog.Get("Nutrition_DayPlan_NoMealMatched")
                       : ErrorMessage);
 
+    /// <summary>The suggested dish's macro line; empty when there is no suggestion.</summary>
     public string MacrosText => Suggestion?.MacrosText ?? string.Empty;
+    /// <summary>True when a suggestion is attached.</summary>
     public bool HasSuggestion => Suggestion is not null;
+    /// <summary>True when the suggestion can still be logged.</summary>
     public bool CanUseSuggestion => !IsAlreadyLogged && Suggestion is not null;
+    /// <summary>Another suggestion is worth asking for only while calories remain and nothing is already logged.</summary>
     public bool CanRefresh => !IsAlreadyLogged && !IsRefreshing && Target.Calories >= 50f;
 }

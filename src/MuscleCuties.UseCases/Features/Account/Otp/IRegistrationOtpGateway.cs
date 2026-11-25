@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Account.Otp.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Account.Otp;
 
+/// <summary>Delivers and verifies registration codes, so the use case owns no keys.</summary>
 public interface IRegistrationOtpGateway
 {
     RegistrationOtpSession OpenSession();

@@ -5,6 +5,7 @@ public static class WorkoutAccountCalendarRule
 {
     public const int InitialTimeZoneVersion = 0;
 
+    /// <summary>The account's local date for an instant.</summary>
     public static DateOnly LocalDate(DateTimeOffset instant, TimeZoneInfo timeZone) =>
         DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(instant, timeZone).DateTime);
 

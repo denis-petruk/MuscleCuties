@@ -3,8 +3,10 @@ using MuscleCuties.UseCases.Features.Hydration.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Hydration;
 
+/// <summary>Seeds the default presets once, leaving an existing catalogue untouched.</summary>
 public sealed class InitializeWaterPresetsUseCase(IWaterPresetInitializationStore store)
 {
+    /// <summary>Creates the account's default water presets when it has none.</summary>
     public async Task<WaterPresetCatalogOutputDto> ExecuteAsync(InitializeWaterPresetsInputDto input,
         CancellationToken cancellationToken = default)
     {

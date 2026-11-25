@@ -6,8 +6,10 @@ using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.Server.Workout.Session;
 
+/// <summary>The routes that read the current plan and its session detail.</summary>
 public static class WorkoutPlanAndSessionEndpointMappings
 {
+    /// <summary>Registers the plan and session endpoints.</summary>
     public static IEndpointRouteBuilder MapWorkoutPlanAndSessionEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup("/api/v1/workouts").RequireAuthorization();

@@ -13,6 +13,7 @@ public static class WorkoutActivityRequirements
     public const string ClimbingInstructionMissing = ActivitySafetyAnswersRule.ClimbingInstructionMissing;
     public const string YogaTypeMissing = ActivitySafetyAnswersRule.YogaTypeMissing;
 
+    /// <summary>The answers the selected activities still need.</summary>
     public static IReadOnlyList<string> Missing(IReadOnlyCollection<WorkoutActivityDto> selected,
         IReadOnlyCollection<ActivityEligibilityInputV020> evidence, DateOnly localDate)
     {

@@ -6,6 +6,7 @@ namespace MuscleCuties.Core.Domain.Workout.Planning;
 /// <summary>Whether a strength style may be offered as a new choice, and why not.</summary>
 public sealed record StrengthStyleChoiceEligibility(WorkoutActivityType Style, bool IsEligible, string? ReasonCode);
 
+/// <summary>Decides which templates her frequency and equipment allow.</summary>
 public static class StrengthTemplateEligibilityRule
 {
     // HVS Reason codes
@@ -47,6 +48,7 @@ public static class StrengthTemplateEligibilityRule
     public const int ShiForbiddenRir = 0;
     public const int ShiMaxSessionsPerWeek = 2;
 
+    /// <summary>Decides whether the high-volume strength template may be offered.</summary>
     public static PolicyEvaluationResult<bool> EvaluateHvsEligibility(
         bool isGsEstablished,
         bool isHvsEstablished,
@@ -102,6 +104,7 @@ public static class StrengthTemplateEligibilityRule
             PolicyRequirementCategory.DefaultPrescription);
     }
 
+    /// <summary>Decides whether the short high-intensity template may be offered.</summary>
     public static PolicyEvaluationResult<bool> EvaluateShiEligibility(
         bool isGsEstablished,
         bool isShiEstablished,

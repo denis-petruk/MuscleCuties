@@ -49,7 +49,7 @@ public sealed class ReviewedTemplateFloorDatabaseTests
                 'synthetic-reviewer', 'synthetic-evidence', {digest}, {SyntheticReviewDate})
             """);
         var initial = await ReviewedTemplateFloorSource.LoadAsync(db, CancellationToken.None);
-        var row = Xunit.Assert.Single(initial.Where(item => item.TemplateId == template));
+        var row = Xunit.Assert.Single(initial, item => item.TemplateId == template);
         Xunit.Assert.Equal(InitialMinimum, row.MinimumWorkingSets);
         var firstFingerprint = PlanningCatalogFingerprint.FromInputs([], [], [], initial);
         await db.Database.ExecuteSqlInterpolatedAsync($"""
@@ -58,7 +58,7 @@ public sealed class ReviewedTemplateFloorDatabaseTests
             """);
         var updated = await ReviewedTemplateFloorSource.LoadAsync(db, CancellationToken.None);
         Xunit.Assert.NotEqual(firstFingerprint, PlanningCatalogFingerprint.FromInputs([], [], [], updated));
-        Xunit.Assert.Equal(UpdatedMinimum, Xunit.Assert.Single(updated.Where(item => item.TemplateId == template)).MinimumWorkingSets);
+        Xunit.Assert.Equal(UpdatedMinimum, Xunit.Assert.Single(updated, item => item.TemplateId == template).MinimumWorkingSets);
         await db.Database.ExecuteSqlRawAsync("SET LOCAL ROLE musclecuties_app");
         var connection = (NpgsqlConnection)db.Database.GetDbConnection();
         await using var command = new NpgsqlCommand("""

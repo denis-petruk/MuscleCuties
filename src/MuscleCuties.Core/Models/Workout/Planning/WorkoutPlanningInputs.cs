@@ -3,8 +3,10 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Models.Workout.Planning;
 
+/// <summary>One active injury, which removes the exercises it contraindicates.</summary>
 public sealed record Injury(InjuryFlag Site, InjuryStatus Status, DateOnly Since);
 
+/// <summary>One day's inputs for readiness, with unset signals left absent rather than zero.</summary>
 public sealed record DailyInputs(
     DateOnly Date,
     double SleepHours,
@@ -21,6 +23,7 @@ public sealed record DailyInputs(
     SorenessLevel? Soreness = null,
     WorkoutLoad? PreviousDayLoad = null)
 {
+    /// <summary>Builds the daily inputs with values inside the ranges the rules accept.</summary>
     public static DailyInputs CreateSafe(
         DateOnly date,
         double sleepHours,
@@ -89,23 +92,27 @@ public sealed record DailyInputs(
     }
 }
 
+/// <summary>The computed readiness for a day, with the band it implies.</summary>
 public sealed record Readiness(
     int Score,
     ReadinessTier Tier,
     IReadOnlyDictionary<string, int> Breakdown);
 
+/// <summary>The per-phase baselines readiness compares against.</summary>
 public sealed record CyclePhaseBaselines(
     PhaseBaseline Menstrual,
     PhaseBaseline Follicular,
     PhaseBaseline Ovulatory,
     PhaseBaseline Luteal)
 {
+    /// <summary>The baselines used when she has no cycle data.</summary>
     public static CyclePhaseBaselines Default => new(
         new PhaseBaseline(3, 2),
         new PhaseBaseline(1, 4),
         new PhaseBaseline(2, 5),
         new PhaseBaseline(3, 3));
 
+    /// <summary>The baseline for one phase, falling back to the default for an unknown one.</summary>
     public PhaseBaseline ForPhase(CyclePhase phase)
     {
         return phase switch
@@ -119,4 +126,5 @@ public sealed record CyclePhaseBaselines(
     }
 }
 
+/// <summary>One phase's expected signals, which a deviation is scored against.</summary>
 public sealed record PhaseBaseline(int Pain, int Energy);

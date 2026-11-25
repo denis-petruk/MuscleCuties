@@ -7,6 +7,7 @@ namespace MuscleCuties.UI.ViewModels.Profile;
 /// </summary>
 public static class ProfileNavigationGuard
 {
+    /// <summary>Leaves the page, asking first when there are unsaved changes.</summary>
     public static async Task<bool> TryNavigateBackAsync(
         bool hasUnsavedChanges,
         Func<Task<bool>> confirmDiscardAsync,

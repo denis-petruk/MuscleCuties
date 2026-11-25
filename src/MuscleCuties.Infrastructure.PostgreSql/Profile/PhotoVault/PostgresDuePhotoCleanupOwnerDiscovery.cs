@@ -1,10 +1,12 @@
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
+/// <summary>Finds accounts with due cleanup rows, ordered so a cursor can resume where the last pass stopped.</summary>
 public sealed class PostgresDuePhotoCleanupOwnerDiscovery(NpgsqlDataSource dataSource) : IDuePhotoCleanupOwnerDiscovery
 {
     private const int MaximumOwnerLimit = 100;
 
+    /// <summary>The owners whose photos are due for cleanup.</summary>
     public async Task<IReadOnlyList<Guid>> DiscoverDueOwnersAsync(
         DateTime nowUtc,
         Guid? afterOwnerId,

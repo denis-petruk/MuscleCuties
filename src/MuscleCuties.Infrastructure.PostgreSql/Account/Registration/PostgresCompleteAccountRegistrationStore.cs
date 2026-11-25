@@ -13,6 +13,7 @@ using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 
+/// <summary>Completes a registration atomically: the account, its profile, its quiz answers and the seeded defaults are written in one transaction or not at all.</summary>
 public sealed class PostgresCompleteAccountRegistrationStore(
     PostgresDbContext dbContext,
     TimeProvider timeProvider) : ICompleteAccountRegistrationStore, ICompleteAccountOnboardingStore
@@ -34,6 +35,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
     private const int UnknownCycleLength = 0;
     private static readonly DateOnly MinimumSupportedCycleDate = new(1970, 1, 1);
 
+    /// <summary>The consent recorded for a pending registration.</summary>
     public async Task<RegistrationPrivacyConsent?> GetPendingPrivacyConsentAsync(
         string emailReceiptId,
         string challengeId,
@@ -54,6 +56,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
             : null;
     }
 
+    /// <summary>The quiz questions a new account answers.</summary>
     public async Task<IReadOnlyList<AccountRegistrationQuizQuestion>> LoadQuizQuestionsAsync(
         CancellationToken cancellationToken)
     {
@@ -77,6 +80,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
                 .ToArray())).ToArray();
     }
 
+    /// <summary>Creates the account from a completed registration.</summary>
     public async Task<CompleteAccountRegistrationResult> CreateAccountAsync(
         CompleteAccountRegistrationRequest request,
         string normalizedEmail,
@@ -299,6 +303,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Finishes onboarding by storing the profile and answers.</summary>
     public async Task<CompleteAccountOnboardingResult> CompleteOnboardingAsync(
         Guid userId,
         CompleteAccountOnboardingRequest request,
@@ -507,6 +512,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Projects the requested profile fields onto the stored record.</summary>
     private static UserProfileRecord? TryProjectProfile(
         ProfileSetupDraft profileDraft,
         IReadOnlyList<SelectedQuizAnswer> selectedAnswers,
@@ -593,6 +599,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         }
     }
 
+    /// <summary>Builds the phase baseline JSON from the stored cycle answers.</summary>
     private static string BuildPhaseBaselines(
         IReadOnlyDictionary<QuizQuestionType, SelectedQuizAnswer[]> byType)
     {
@@ -607,9 +614,11 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         return JsonSerializer.Serialize(baselines);
     }
 
+    /// <summary>UTC midnight of a local date.</summary>
     private static DateTime UtcMidnight(DateOnly date) =>
         DateTime.SpecifyKind(date.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
 
+    /// <summary>Maps the client's numeric equipment answer onto the enum, answering false for a value this build does not know.</summary>
     private static bool TryMapEquipment(int answer, out string equipment)
     {
         equipment = answer switch
@@ -622,6 +631,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         return !string.IsNullOrEmpty(equipment);
     }
 
+    /// <summary>Finds the unique-violation Postgres error inside a wrapped exception, which is how a duplicate account is turned into a validation answer.</summary>
     private static PostgresException? FindPostgresException(Exception exception)
     {
         for (Exception? current = exception; current is not null; current = current.InnerException)
@@ -630,6 +640,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         return null;
     }
 
+    /// <summary>Rolls the transaction back and returns the value.</summary>
     private static async Task<T> RollbackAndReturnAsync<T>(
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction,
         T result)
@@ -638,6 +649,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         return result;
     }
 
+    /// <summary>Rolls the transaction back.</summary>
     private static async Task RollbackAsync(
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction)
     {
@@ -651,6 +663,7 @@ public sealed class PostgresCompleteAccountRegistrationStore(
         }
     }
 
+    /// <summary>One chosen quiz option with its mapping, as read back before the profile is built.</summary>
     private sealed record SelectedQuizAnswer(
         QuizQuestionType QuestionType,
         int QuestionId,

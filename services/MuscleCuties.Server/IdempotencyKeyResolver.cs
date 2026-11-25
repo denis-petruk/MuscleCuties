@@ -8,6 +8,8 @@ public static class IdempotencyKeyResolver
     /// <summary>U-08: header sent by mobile clients released before the standard name was adopted.</summary>
     public const string LegacyHeaderName = "X-Idempotency-Key";
 
+    /// <summary>The operation key for a write: the body's own key when the client sent one, otherwise the request header, so</summary>
+    /// a retry with either is recognised as the same operation.</summary>
     public static string Resolve(HttpContext context, string? bodyKey)
     {
         foreach (var name in new[] { HeaderName, LegacyHeaderName })

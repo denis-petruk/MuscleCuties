@@ -2,13 +2,16 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>A fingerprint of the catalogs a plan was built from, so a catalog change can invalidate the plan rather than silently mispricing it.</summary>
 internal static class PlanningCatalogFingerprint
 {
     // The migration-owned function holds SHARE table locks until this transaction ends.
     // Catalog writers need not participate in an application-level advisory lock.
+    /// <summary>Locks the catalog rows so a preview cannot read a half-applied import.</summary>
     internal static Task LockCatalogAsync(PostgresDbContext context, CancellationToken cancellationToken) =>
         context.Database.ExecuteSqlRawAsync("SELECT app.lock_workout_planning_catalog()", cancellationToken);
 
+    /// <summary>Fingerprint of the catalog inputs and the reviewed floors.</summary>
     internal static string FromInputs(IEnumerable<WorkoutExerciseDefinition> definitions,
         IEnumerable<GoalTierWeight> weights, IEnumerable<UserExercisePreferenceRecord> preferences,
         IEnumerable<ReviewedTemplateFloorRow> floors) =>
@@ -37,6 +40,7 @@ internal static class PlanningCatalogFingerprint
                 { row.Id, row.OriginalExerciseId, row.PreferredExerciseId, row.CreatedAt }).ToArray()
         });
 
+    /// <summary>Fingerprint of the catalog as it currently stands for the user.</summary>
     internal static async Task<string> LoadAsync(PostgresDbContext context, Guid userId,
         CancellationToken cancellationToken)
     {

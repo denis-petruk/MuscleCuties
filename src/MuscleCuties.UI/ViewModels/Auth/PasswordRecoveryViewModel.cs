@@ -3,6 +3,8 @@ using MuscleCuties.UseCases.Features.Account.Recovery.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Auth;
 
+/// <summary>The recovery wizard's steps, numbered so the progress line and the visible panel agree on where the user</summary>
+/// is.</summary>
 public enum PasswordRecoveryStep
 {
     EnterIdentifier = 1,
@@ -11,6 +13,9 @@ public enum PasswordRecoveryStep
     Completed = 4
 }
 
+/// <summary>
+///     Password recovery state machine: request a code, verify it, then set a new password.
+/// </summary>
 public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
 {
     private readonly ResendCountdownCoordinator _countdownCoordinator;
@@ -36,6 +41,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
     [ObservableProperty] private PasswordRecoveryStep _step = PasswordRecoveryStep.EnterIdentifier;
     [ObservableProperty] private string _verificationToken = string.Empty;
 
+    /// <summary>Takes the recovery use case, the validator and the navigation callbacks.</summary>
     public PasswordRecoveryViewModel(
         IAccountRecoveryUseCase recoveryService,
         IAccountPasswordValidator passwordValidator,
@@ -63,17 +69,27 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         GoBackCommand = new AsyncRelayCommand(GoBackAsync, () => !IsBusy);
     }
 
+    /// <summary>Starts recovery for the entered identifier.</summary>
     public AsyncRelayCommand StartRecoveryCommand { get; }
+    /// <summary>Verifies the recovery code.</summary>
     public AsyncRelayCommand VerifyCodeCommand { get; }
+    /// <summary>Requests a new recovery code.</summary>
     public AsyncRelayCommand ResendCodeCommand { get; }
+    /// <summary>Sets the new password.</summary>
     public AsyncRelayCommand ResetPasswordCommand { get; }
+    /// <summary>Returns to the previous page.</summary>
     public AsyncRelayCommand GoBackCommand { get; }
 
+    /// <summary>True on the identifier step.</summary>
     public bool IsStep1 => Step == PasswordRecoveryStep.EnterIdentifier;
+    /// <summary>True on the code step.</summary>
     public bool IsStep2 => Step == PasswordRecoveryStep.EnterCode;
+    /// <summary>True on the new password step.</summary>
     public bool IsStep3 => Step == PasswordRecoveryStep.SetNewPassword;
+    /// <summary>True once the recovery is complete.</summary>
     public bool IsStep4 => Step == PasswordRecoveryStep.Completed;
 
+    /// <summary>The progress line names the current step by the same numbering the panels use.</summary>
     public string StepProgressText => MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
         "Auth_PasswordRecovery_StepFormat",
         Step switch
@@ -83,12 +99,14 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
             _ => 1
         });
 
+    /// <summary>Stops the resend countdown.</summary>
     public void Dispose()
     {
         _countdownCoordinator.Dispose();
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>Refreshes the step flags when the step changes.</summary>
     partial void OnStepChanged(PasswordRecoveryStep value)
     {
         OnPropertyChanged(nameof(IsStep1));
@@ -98,11 +116,13 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(StepProgressText));
     }
 
+    /// <summary>Clears the error when the identifier changes.</summary>
     partial void OnEmailOrUsernameChanged(string value)
     {
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Refreshes the state when the code changes.</summary>
     partial void OnOtpCodeChanged(string value)
     {
         ErrorMessage = string.Empty;
@@ -114,21 +134,25 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
             OtpCode = digitsOnly;
     }
 
+    /// <summary>Checks the new password as it is typed.</summary>
     partial void OnNewPasswordChanged(string value)
     {
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Checks the confirmation against the new password.</summary>
     partial void OnConfirmPasswordChanged(string value)
     {
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Refreshes the resend state when the countdown ends.</summary>
     partial void OnCanResendChanged(bool value)
     {
         ResendCodeCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Refreshes the command states when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         StartRecoveryCommand.NotifyCanExecuteChanged();
@@ -138,6 +162,8 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         GoBackCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Asks for a recovery code for the identifier entered and moves to the code step only when the request was</summary>
+    /// accepted.</summary>
     private async Task StartRecoveryAsync()
     {
         if (IsBusy) return;
@@ -179,6 +205,8 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Checks the recovery code and advances to the password step on success, leaving the user on the code step</summary>
+    /// with the reason when it is refused.</summary>
     private async Task VerifyCodeAsync()
     {
         if (IsBusy) return;
@@ -222,6 +250,7 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Sends a fresh code once the countdown allows it, restarting the countdown afterwards.</summary>
     private async Task ResendCodeAsync()
     {
         if (IsBusy || !CanResend) return;
@@ -255,6 +284,8 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Sets the new password with the verified session and finishes the wizard; a refusal keeps the session so the</summary>
+    /// user can try again without redoing the code.</summary>
     private async Task ResetPasswordAsync()
     {
         if (IsBusy) return;
@@ -301,6 +332,8 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Leaves recovery and clears the stored session for this account, so an abandoned reset cannot be resumed</summary>
+    /// later by someone else.</summary>
     private async Task GoBackAsync()
     {
         _countdownCoordinator.StopCountdown();

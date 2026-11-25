@@ -86,13 +86,18 @@ public static class TimedActivityProgress
     public static bool IsRestTag(string? tag) =>
         !string.IsNullOrWhiteSpace(tag) && tag.Equals(RestTag, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>What the timed surface shows for a given elapsed time: which phase it is in, how much is left,</summary>
+    /// and how far through it is. A duration-only activity reports no phase and no countdown.</summary>
     public sealed record State(
         string PhaseKey, int ElapsedSeconds, int? RemainingSeconds, int? TotalSeconds, double Progress)
     {
+        /// <summary>True when the activity has a named phase.</summary>
         public bool HasPhase => !string.IsNullOrEmpty(PhaseKey);
+        /// <summary>True when the phase has a countdown.</summary>
         public bool HasCountdown => RemainingSeconds.HasValue;
     }
 
+    /// <summary>The progress for the elapsed time against the phase minutes.</summary>
     public static State Describe(
         int elapsedSeconds, decimal? warmupMinutes, decimal? mainMinutes, decimal? cooldownMinutes)
     {
@@ -118,6 +123,7 @@ public static class TimedActivityProgress
         return new State(phase, elapsed, remaining, total > 0 ? total : null, progress);
     }
 
+    /// <summary>The minutes as whole seconds, when set.</summary>
     private static int? ToSeconds(decimal? minutes) =>
         minutes is { } value && value > 0 ? (int)Math.Round(value * 60m) : null;
 }

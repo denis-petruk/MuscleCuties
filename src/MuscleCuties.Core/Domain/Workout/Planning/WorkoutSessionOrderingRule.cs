@@ -11,6 +11,7 @@ public static class WorkoutSessionOrderingRule
     private const int CardioOrCompanionRank = 1;
     private const int RecoveryRank = 2;
 
+    /// <summary>Orders the day's sessions so strength work comes before companions.</summary>
     public static IReadOnlyList<MixedActivityScheduledSession> Assign(
         IReadOnlyList<MixedActivityScheduledSession> sessions)
     {
@@ -24,6 +25,7 @@ public static class WorkoutSessionOrderingRule
         }).ToArray();
     }
 
+    /// <summary>True when the sessions are in an order the day allows.</summary>
     public static bool IsValid(IReadOnlyCollection<MixedActivityScheduledSession> sessions) =>
         sessions.GroupBy(session => session.Day).All(day =>
             day.Select(session => session.DayOrder).OrderBy(order => order)
@@ -37,9 +39,11 @@ public static class WorkoutSessionOrderingRule
         ? StrengthRank
         : IsRecovery(activity) ? RecoveryRank : CardioOrCompanionRank;
 
+    /// <summary>True when the activity is a strength session.</summary>
     private static bool IsStrength(WorkoutActivityType activity) => activity is
         WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or WorkoutActivityType.StrengthHighIntensity;
 
+    /// <summary>True when the activity is recovery work.</summary>
     private static bool IsRecovery(WorkoutActivityType activity) => activity is
         WorkoutActivityType.Yoga or WorkoutActivityType.Mobility or WorkoutActivityType.GentleRecovery;
 }

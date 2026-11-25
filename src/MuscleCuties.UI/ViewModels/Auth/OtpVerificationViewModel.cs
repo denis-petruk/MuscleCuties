@@ -3,11 +3,15 @@ using MuscleCuties.UseCases.Features.Account.Otp.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Auth;
 
+/// <summary>
+///     One-time-code step: input rules, resend timing, and the verification result.
+/// </summary>
 public partial class OtpVerificationViewModel : ObservableObject, IDisposable
 {
     private const string SendingCodeKey = "Auth_Otp_SendingCode";
     private const string ResendCodeKey = "Auth_Otp_ResendCode";
 
+    /// <summary>The status line shown while a code is being sent.</summary>
     private static string SendingCodeStatus => UiTextCatalog.Get(SendingCodeKey);
     private readonly ResendCountdownCoordinator _countdownCoordinator;
     private readonly Func<Task> _navigateBackAsync;
@@ -29,6 +33,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
     private CancellationTokenSource? _requestCts;
     [ObservableProperty] private string _resendButtonText = UiTextCatalog.Get(ResendCodeKey);
 
+    /// <summary>Takes the OTP use case and the navigation callbacks.</summary>
     public OtpVerificationViewModel(
         IRegistrationOtpUseCase otp,
         Func<Task> navigateToProfileSetupAsync,
@@ -54,14 +59,22 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         _countdownCoordinator.StartCountdown(60);
     }
 
+    /// <summary>The email the code was sent to.</summary>
     public string Email => _session.Email;
+    /// <summary>True when the code can be submitted.</summary>
     public bool CanVerify => !IsBusy && !IsSessionExpired;
+    /// <summary>True when a new code can be requested now.</summary>
     public bool CanResendNow => CanResend && !IsBusy && !IsSessionExpired;
+    /// <summary>True when the resend countdown is shown.</summary>
     public bool ShowCountdownText => !CanResend && !IsSessionExpired;
+    /// <summary>Verifies the entered code.</summary>
     public AsyncRelayCommand VerifyCommand { get; }
+    /// <summary>Requests a new code.</summary>
     public AsyncRelayCommand ResendCodeCommand { get; }
+    /// <summary>Returns to the previous page.</summary>
     public AsyncRelayCommand GoBackCommand { get; }
 
+    /// <summary>Stops the resend countdown.</summary>
     public void Dispose()
     {
         _disposed = true;
@@ -71,6 +84,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>Refreshes the verify state when the code changes.</summary>
     partial void OnOtpCodeChanged(string value)
     {
         ErrorMessage = string.Empty;
@@ -82,6 +96,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
             OtpCode = digitsOnly;
     }
 
+    /// <summary>Refreshes the resend state when the countdown ends.</summary>
     partial void OnCanResendChanged(bool value)
     {
         OnPropertyChanged(nameof(CanResendNow));
@@ -89,6 +104,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         ResendCodeCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Refreshes the page state when the session expires.</summary>
     partial void OnIsSessionExpiredChanged(bool value)
     {
         OnPropertyChanged(nameof(CanVerify));
@@ -98,6 +114,7 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         ResendCodeCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Refreshes the command states when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(CanVerify));
@@ -107,6 +124,8 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         GoBackCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Checks the entered code once, and stops entirely once the page is closed or the code has already been</summary>
+    /// accepted, so a late tap cannot verify twice.</summary>
     private async Task VerifyAsync()
     {
         if (IsBusy || _disposed || _completed)
@@ -182,6 +201,8 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Sends a new code only when the countdown has expired, and starts the countdown again so the button cannot be</summary>
+    /// hammered.</summary>
     private async Task ResendCodeAsync()
     {
         if (IsBusy || !CanResend || _disposed || _completed)
@@ -242,6 +263,8 @@ public partial class OtpVerificationViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Abandons verification: marks the page disposed so pending answers are ignored, stops the countdown and</summary>
+    /// leaves.</summary>
     private async Task GoBackAsync()
     {
         _disposed = true;

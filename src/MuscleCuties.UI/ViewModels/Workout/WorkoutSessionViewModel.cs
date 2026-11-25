@@ -15,13 +15,18 @@ using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
+/// <summary>Which stage of an activity the session page is showing.</summary>
 public enum SessionScreen { ActivityIntro, ExerciseFlow, TimedActivity, ActivitySummary }
 
+/// <summary>How large a celebration a logged set earned, from none to a personal record.</summary>
 public enum CelebrationType { None, SmallCheckmark, MediumFirstTime, BigPR }
+/// <summary>The three answers to whether saved HIIT evidence still holds before a plan is built from it.</summary>
 public enum HiitConfirmationChoice { Cancel, Confirm, Update }
 
+/// <summary>One exercise in the progress strip: its position, its name and what state it is in.</summary>
 public sealed record SessionExerciseProgress(int Index, string Name, bool IsLogged, bool IsCurrent, bool IsSkipped)
 {
+    /// <summary>The strip item as spoken text, naming the position and the state rather than colour.</summary>
     public string AccessibilityText => UiTextCatalog.Format(
         "Workout_Session_ExerciseProgressAccessibilityFormat",
         Index + 1,
@@ -32,6 +37,8 @@ public sealed record SessionExerciseProgress(int Index, string Name, bool IsLogg
             : "Workout_Session_ExerciseStatePending"));
 }
 
+/// <summary>The session itself: the activity list, the exercise flow or the timed clock, logging and swapping, the</summary>
+/// rest timer, and completing or abandoning the session.</summary>
 public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 {
     private const int TimingCheckpointIntervalSeconds = 15;
@@ -49,6 +56,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private readonly HashSet<int> _skippedIds = [];
     // S-04: exercises the user reported as painful in this session (stopped, never made up for).
     private readonly HashSet<int> _painReportedIds = [];
+    /// <summary>True when the session has pain reports.</summary>
     [ObservableProperty] private bool _isPainReportVisible;
     public bool HasPainReports => _painReportedIds.Count > 0;
 
@@ -80,6 +88,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _cyclePhaseNote = string.Empty;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasDoseAdjustmentNote))]
     private string _doseAdjustmentNote = string.Empty;
+    /// <summary>True when a dose adjustment note is shown.</summary>
     public bool HasDoseAdjustmentNote => !string.IsNullOrWhiteSpace(DoseAdjustmentNote);
     [ObservableProperty] private string _dayTitle = "Workout";
 
@@ -150,9 +159,11 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _movementNoteText = string.Empty;
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasMovementNoteError))]
     private string _movementNoteErrorText = string.Empty;
+    /// <summary>True when saving the movement note failed.</summary>
     public bool HasMovementNoteError => !string.IsNullOrWhiteSpace(MovementNoteErrorText);
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasMovementNoteStatus))]
     private string _movementNoteStatusText = string.Empty;
+    /// <summary>True when a movement note status is shown.</summary>
     public bool HasMovementNoteStatus => !string.IsNullOrWhiteSpace(MovementNoteStatusText);
 
     private int _workoutDayId;
@@ -174,6 +185,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private bool _sessionCreated;
     private bool _appSuspended;
     private bool _hasLoadedSession;
+    /// <summary>A measured interval the server has not confirmed yet, replayed on the next checkpoint.</summary>
     private sealed record PendingTimingCheckpoint(Guid OperationId, Guid IntervalId, int MeasuredSeconds, bool Pause);
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(IsTimedActivityActive), nameof(CanPauseTimedActivity),
@@ -207,6 +219,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private CancellationTokenSource? _timedDisplayCancellation;
     private bool _abandonOutcomeUnknown;
 
+    /// <summary>Takes the session use cases and the navigation callbacks.</summary>
     public WorkoutSessionViewModel(
         IWorkoutSessionActionUseCase session,
         ICycleOverviewUseCase cycleOverview,
@@ -223,6 +236,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         _updateHiitAsync = updateHiitAsync;
     }
 
+    /// <summary>Releases the view model's subscriptions and timers.</summary>
     public void Dispose()
     {
         _timingLoopCancellation?.Cancel();
@@ -234,39 +248,67 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>The workout day the session belongs to.</summary>
     public int WorkoutDayId => _workoutDayId;
+    /// <summary>True on the activity intro screen.</summary>
     public bool IsActivityIntro => CurrentScreen == SessionScreen.ActivityIntro;
+    /// <summary>True on the exercise screen.</summary>
     public bool IsExerciseFlow => CurrentScreen == SessionScreen.ExerciseFlow;
+    /// <summary>True on the activity summary screen.</summary>
     public bool IsActivitySummary => CurrentScreen == SessionScreen.ActivitySummary;
+    /// <summary>True on the timed activity screen.</summary>
     public bool IsTimedActivityScreen => CurrentScreen == SessionScreen.TimedActivity;
+    /// <summary>True when a timed activity is running.</summary>
     public bool IsTimedActivityActive => IsTimedActivityScreen && _plannedSessionId.HasValue;
+    /// <summary>True when the timed activity can be paused.</summary>
     public bool CanPauseTimedActivity =>
         IsTimedActivityActive && !IsTimedActivityPaused && !IsBusy && _pendingCompletionAtUtc is null;
+    /// <summary>True when the timed activity can be resumed.</summary>
     public bool CanResumeTimedActivity =>
         IsTimedActivityActive && IsTimedActivityPaused && !IsBusy && _pendingCompletionAtUtc is null;
+    /// <summary>True when the timed activity has a phase.</summary>
     public bool HasTimedActivityPhase => !string.IsNullOrEmpty(TimedActivityPhaseKey);
+    /// <summary>True when a countdown is shown.</summary>
     public bool HasTimedActivityCountdown => !string.IsNullOrEmpty(TimedActivityRemainingText);
+    /// <summary>Distance is only offered on a timed activity that has one, so a walk shows it and a mobility flow does</summary>
+    /// not.</summary>
     public bool ShowsTimedActivityDistance => IsTimedActivityScreen && SelectedActivity is not null &&
         TimedActivityProgress.SupportsDistance(SelectedActivity.Tag);
+    /// <summary>True when a distance is shown for the timed activity.</summary>
     public bool HasTimedActivityDistance => !string.IsNullOrWhiteSpace(TimedActivityDistanceText);
+    /// <summary>True when the summary shows a distance.</summary>
     public bool HasSummaryDistance => !string.IsNullOrEmpty(SummaryDistanceText);
+    /// <summary>True when the summary belongs to a timed activity.</summary>
     public bool IsTimedActivitySummary => IsActivitySummary && SelectedActivity?.IsTimedActivity == true;
+    /// <summary>True when the session is a rest day.</summary>
     public bool IsRestDaySession => _isRestDay;
+    /// <summary>True when the start button is shown.</summary>
     public bool ShowStartButton => !_isRestDay;
+    /// <summary>True when an effort rating was given.</summary>
     public bool HasTimedActivityRpe => TimedActivityRpe.HasValue;
+    /// <summary>The effort normalised to the scale the server accepts, or null when the user left it unrated.</summary>
     public int? TimedActivityRpe => TimedActivityProgress.NormalizeRpe(TimedActivityRpeValue);
+    /// <summary>The effort as text, or the unrated wording.</summary>
     public string TimedActivityRpeText => TimedActivityRpe is { } rpe
         ? UiTextCatalog.Format("Workout_Session_TimedRpeValueFormat", rpe)
         : UiTextCatalog.Get("Workout_Session_TimedRpeUnrated");
+    /// <summary>The catalog key for the clock's state label, paused or running.</summary>
     public string TimedActivityStateKey => IsTimedActivityPaused
         ? "Workout_Session_TimedStatePaused"
         : "Workout_Session_TimedStateRunning";
+    /// <summary>True when the strength metrics are summarised.</summary>
     public bool ShowStrengthSummaryMetrics => SelectedActivity?.IsTimedActivity != true;
+    /// <summary>True when the planned session can be abandoned.</summary>
     public bool CanAbandonPlannedSession => _sessionCreated && _plannedSessionId.HasValue && !IsBusy && _pendingCompletionAtUtc is null;
+    /// <summary>True when the chosen activity can start.</summary>
     public bool CanStartActivity => !IsActivityUnsafe && !_isRestDay && SelectedActivity is not null;
+    /// <summary>True when no prescription is shown.</summary>
     public bool HasNoActivityPrescription => string.IsNullOrEmpty(ActivityPrescriptionText);
+    /// <summary>True when the screen accepts input.</summary>
     public bool CanInteract => !IsBusy;
 
+    /// <summary>Marks an exercise optional or required again, dropping its sets when it becomes optional. Ignored once the</summary>
+    /// exercise is logged, because the log already records what was done.</summary>
     public async Task SaveOptionalExerciseAsync(WorkoutExerciseItem item)
     {
         if (item is null || item.WorkoutDayExerciseId <= 0) return;
@@ -293,34 +335,54 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     private bool _isInitialLoadError;
 
+    /// <summary>True when the session has an error.</summary>
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
+    /// <summary>True when the failed load can be retried.</summary>
     public bool CanRetryLoad => HasError && _isInitialLoadError;
+    /// <summary>True when the error has a reference.</summary>
     public bool HasErrorReference => HasError && !string.IsNullOrEmpty(ErrorReference);
     // The page is pushed before the session is fetched. Without this gate the empty state
     // renders for one frame and then disappears once the activities arrive.
+    /// <summary>True when the day has no activities.</summary>
     public bool HasNoActivities => _hasLoadedSession && !IsBusy && !HasError && ActivityCards.Count == 0;
+    /// <summary>True when the day has activities to choose from.</summary>
     public bool HasActivityChoices => _hasLoadedSession && !IsBusy && !HasError && ActivityCards.Count > 0;
+    /// <summary>True when swap candidates are loaded.</summary>
     public bool HasSwapCandidates => SwapCandidates.Count > 0;
+    /// <summary>True when the swap failed.</summary>
     public bool HasSwapError => !string.IsNullOrEmpty(SwapErrorText);
+    /// <summary>True when the swap panel can be dismissed.</summary>
     public bool CanDismissSwap => !SwapNeedsReload;
+    /// <summary>A swap can be confirmed with a chosen candidate, or by reloading when the recorded alternative no longer</summary>
+    /// applies.</summary>
     public bool CanConfirmSwap => !IsBusy && !IsSwapLoading && (SwapNeedsReload || SwapCandidates.Any(c => c.IsSelected));
+    /// <summary>True when the confirm hint is shown.</summary>
     public bool ShowSwapConfirmHint => HasSwapCandidates && !CanConfirmSwap && !IsSwapLoading;
+    /// <summary>Explains what the swap is still waiting for, empty once it can be confirmed.</summary>
     public string SwapConfirmHint => ShowSwapConfirmHint ? UiTextCatalog.Get("Workout_Swap_SelectCandidateHint") : string.Empty;
+    /// <summary>The confirm button reads as a reload when the exercise has to be fetched again rather than exchanged.</summary>
     public string SwapConfirmText => SwapNeedsReload
         ? UiTextCatalog.Get("Workout_Swap_ReloadExercise")
         : UiTextCatalog.Get("Workout_Swap_ConfirmSwap");
+    /// <summary>True when no swap candidate was found.</summary>
     public bool ShowNoSwapCandidates => !IsSwapLoading && !HasSwapCandidates && !HasSwapError;
+    /// <summary>True when a celebration is shown.</summary>
     public bool HasCelebration => Celebration != CelebrationType.None;
+    /// <summary>Where the current exercise sits in its activity, counted from one.</summary>
     public string ExercisePositionText => UiTextCatalog.Format(
         "Workout_Session_ExercisePositionFormat", CurrentExerciseIndex + 1, TotalExercisesInActivity);
+    /// <summary>Show or hide wording for the tips toggle.</summary>
     public string TipsButtonText => UiTextCatalog.Get(
         IsTipsExpanded ? "Workout_Session_TipsHide" : "Workout_Session_TipsShow");
+    /// <summary>The remaining rest as a clock.</summary>
     public string RestTimerDisplay => DisplayFormat.Timer(RestTimerRemainingSeconds);
 
+    /// <summary>The remaining rest as a 0–1 fraction for the ring; without a running timer there is no progress to draw.</summary>
     public double RestTimerProgress => RestTimerTotalSeconds > 0
         ? Math.Clamp((double)RestTimerRemainingSeconds / RestTimerTotalSeconds, 0, 1)
         : 0;
 
+    /// <summary>Starts the rest countdown.</summary>
     [RelayCommand]
     public void StartRestTimer(int seconds)
     {
@@ -337,12 +399,14 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         _ = CountRestTimerAsync(version, context, cancellation.Token);
     }
 
+    /// <summary>Pauses the rest countdown.</summary>
     [RelayCommand]
     public void PauseRestTimer()
     {
         IsRestTimerRunning = false;
     }
 
+    /// <summary>Resumes the rest countdown.</summary>
     [RelayCommand]
     public void ResumeRestTimer()
     {
@@ -350,6 +414,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             IsRestTimerRunning = true;
     }
 
+    /// <summary>Adds seconds to the rest countdown.</summary>
     [RelayCommand]
     public void AddRestTimerSeconds(int seconds)
     {
@@ -360,6 +425,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(RestTimerProgress));
     }
 
+    /// <summary>Stops the rest countdown.</summary>
     [RelayCommand]
     public void StopRestTimer()
     {
@@ -373,6 +439,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         RestTimerTotalSeconds = 0;
     }
 
+    /// <summary>Counts the rest down and reports each tick.</summary>
     private async Task CountRestTimerAsync(int version, SynchronizationContext? context,
         CancellationToken cancellationToken)
     {
@@ -388,6 +455,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         catch (OperationCanceledException) { }
     }
 
+    /// <summary>Counts the rest down one second per tick and stops at zero, ignoring ticks from a timer that has been</summary>
+    /// replaced.</summary>
     private void AdvanceRestTimer(int version)
     {
         if (version != _restTimerVersion || !IsRestTimerRunning) return;
@@ -400,6 +469,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     }
 
     // Awaitable for callers and tests; the query setter can start it without async void.
+    /// <summary>Loads one session day. A running timed session is checkpointed first, and the load is refused when that</summary>
+    /// checkpoint cannot be confirmed, so measured time is never lost silently.</summary>
     public async Task LoadSession(int workoutDayId, string? activityTag = null)
     {
         if (_plannedSessionId.HasValue && !await SuspendTimingAsync())
@@ -582,13 +653,14 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Retries loading the session.</summary>
     [RelayCommand]
     private Task RetryLoadAsync()
     {
         return IsBusy ? Task.CompletedTask : LoadSession(_workoutDayId);
     }
 
-    [RelayCommand]
+    /// <summary>Chooses the activity to train and returns the page to that activity's introduction.</summary>
     private void SelectActivity(WorkoutActivitySectionItem? activity)
     {
         if (IsBusy || activity is null || !ActivityCards.Contains(activity)) return;
@@ -600,6 +672,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         CurrentScreen = SessionScreen.ActivityIntro;
     }
 
+    /// <summary>Rebuilds the introduction's preview names and its prescription from the chosen activity.</summary>
     private void RefreshActivityIntro()
     {
         if (SelectedActivity is null) return;
@@ -624,12 +697,14 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         ActivityPrescriptionText = prescription;
     }
 
+    /// <summary>Shows a failure's message and its reference code, which is what support needs to trace it.</summary>
     private void ApplyFailure(ApiFailureNotice notice)
     {
         ErrorText = notice.MessageKey;
         ErrorReference = notice.ReferenceText;
     }
 
+    /// <summary>The prescription as labelled lines, skipping every value the plan did not set.</summary>
     private static string FormatPrescription(ActivitySessionPrescriptionOutputV020? prescription)
     {
         if (prescription is null) return string.Empty;
@@ -659,6 +734,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         return string.Join(Environment.NewLine, lines);
     }
 
+    /// <summary>Starts the chosen activity.</summary>
     [RelayCommand]
     private async Task StartActivityAsync()
     {
@@ -741,6 +817,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     private const string StartFailedTextKey = "Workout_Session_StartFailed";
 
+    /// <summary>The text key explaining why the activity cannot start.</summary>
     private static string StartRefusalTextKey(string code) => code switch
     {
         WorkoutSessionStartBlockCode.PlannedWorkoutUnavailable => "Workout_Session_StartUnavailable",
@@ -753,6 +830,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         _ => StartFailedTextKey
     };
 
+    /// <summary>Asks whether the saved HIIT answers still hold before a plan is built from them; does nothing when either</summary>
+    /// half of that conversation is unavailable.</summary>
     private async Task ConfirmHiitHistoryAsync()
     {
         try
@@ -795,6 +874,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Moves to the next exercise.</summary>
     [RelayCommand]
     private async Task NextExerciseAsync()
     {
@@ -840,12 +920,14 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Moves to the previous exercise.</summary>
     [RelayCommand]
     private void PreviousExercise()
     {
         if (CanChangeExercise() && CurrentExerciseIndex > 0) SetCurrentExercise(CurrentExerciseIndex - 1);
     }
 
+    /// <summary>Jumps to the exercise at the index.</summary>
     [RelayCommand]
     private void JumpToExercise(int index)
     {
@@ -868,6 +950,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         IsPainReportVisible = true;
     }
 
+    /// <summary>Swaps the exercise the user reported pain on.</summary>
     [RelayCommand]
     private async Task PainSwapAsync()
     {
@@ -876,6 +959,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         await OpenSwapPanelCoreAsync();
     }
 
+    /// <summary>Stops the exercise the user reported pain on.</summary>
     [RelayCommand]
     private void PainStopExercise()
     {
@@ -883,6 +967,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         SkipExercise();
     }
 
+    /// <summary>Cancels the pain report.</summary>
     [RelayCommand]
     private void CancelPainReport()
     {
@@ -891,6 +976,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         IsPainReportVisible = false;
     }
 
+    /// <summary>Skips the current exercise.</summary>
     [RelayCommand]
     private void SkipExercise()
     {
@@ -902,23 +988,27 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         AdvanceExercise();
     }
 
+    /// <summary>Shows or hides the exercise tips.</summary>
     [RelayCommand]
     private void ToggleTips()
     {
         IsTipsExpanded = !IsTipsExpanded;
     }
 
+    /// <summary>Hides the celebration.</summary>
     [RelayCommand]
     private void DismissCelebration()
     {
         Celebration = CelebrationType.None;
     }
 
+    /// <summary>Exercises can only be changed inside the exercise flow, with no swap waiting to be resolved.</summary>
     private bool CanChangeExercise()
     {
         return !IsBusy && IsExerciseFlow && !IsSwapPanelVisible && !SwapNeedsReload;
     }
 
+    /// <summary>Moves the flow to one exercise and collapses the previous one's tips.</summary>
     private void SetCurrentExercise(int index)
     {
         CurrentExerciseIndex = index;
@@ -929,9 +1019,12 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         RefreshProgress();
     }
 
+    /// <summary>The distance entered for the timed activity.</summary>
     private decimal? ReadTimedActivityDistance() =>
         TryReadTimedActivityDistance(out var distanceKm) ? distanceKm : null;
 
+    /// <summary>Reads the entered distance; false means it was filled in but is unusable, which blocks the save instead of</summary>
+    /// discarding it.</summary>
     private bool TryReadTimedActivityDistance(out decimal? distanceKm)
     {
         distanceKm = null;
@@ -947,6 +1040,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         return true;
     }
 
+    /// <summary>Rebuilds the progress strip from the activity's exercises and the current position.</summary>
     private void RefreshProgress()
     {
         ExerciseProgress = new ObservableCollection<SessionExerciseProgress>(
@@ -956,6 +1050,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
                     _skippedIds.Contains(exercise.WorkoutDayExerciseId))));
     }
 
+    /// <summary>Moves to the next exercise, or to the summary after the last one.</summary>
     private void AdvanceExercise()
     {
         if (CurrentExerciseIndex + 1 < TotalExercisesInActivity)
@@ -977,6 +1072,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         ShowSummary();
     }
 
+    /// <summary>Ends the activity: stops both clocks and builds the summary from what was logged.</summary>
     private void ShowSummary()
     {
         _timingLoopCancellation?.Cancel();
@@ -1008,6 +1104,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         CurrentScreen = SessionScreen.ActivitySummary;
     }
 
+    /// <summary>Finishes the current activity.</summary>
     [RelayCommand]
     private async Task FinishActivityAsync()
     {
@@ -1027,6 +1124,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         await _navigateAsync("..");
     }
 
+    /// <summary>Finishes the timed activity and stores its metrics.</summary>
     [RelayCommand]
     private async Task FinishTimedActivityAsync()
     {
@@ -1064,6 +1162,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         ShowTimedActivitySummary(measuredSeconds, summaryRpe, summaryDistance);
     }
 
+    /// <summary>Summarises a timed activity, where volume does not apply and the duration is spelled in minutes once it</summary>
+    /// passes a minute.</summary>
     private void ShowTimedActivitySummary(int measuredSeconds, int? rpe, decimal? distanceKm)
     {
         SummaryTotalVolume = UiTextCatalog.Get("Workout_Session_NotApplicable");
@@ -1085,6 +1185,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         CurrentScreen = SessionScreen.ActivitySummary;
     }
 
+    /// <summary>Pauses the timed activity.</summary>
     [RelayCommand]
     private async Task PauseTimedActivityAsync()
     {
@@ -1101,6 +1202,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         finally { IsBusy = false; }
     }
 
+    /// <summary>Resumes the timed activity.</summary>
     [RelayCommand]
     private async Task ResumeTimedActivityAsync()
     {
@@ -1145,9 +1247,11 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         finally { IsBusy = false; }
     }
 
+    /// <summary>Active seconds so far: the part the server confirmed plus what the running clock has measured since.</summary>
     private int CurrentTimedElapsedSeconds =>
         _confirmedActiveSeconds + (int)_plannedSessionTimer.Elapsed.TotalSeconds;
 
+    /// <summary>Starts the one-second clock display, replacing any display already running.</summary>
     private void StartTimedActivityDisplay()
     {
         StopTimedActivityDisplay();
@@ -1157,6 +1261,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         _ = RunTimedActivityDisplayAsync(cancellation.Token);
     }
 
+    /// <summary>Stops and disposes the clock display.</summary>
     private void StopTimedActivityDisplay()
     {
         _timedDisplayCancellation?.Cancel();
@@ -1164,6 +1269,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         _timedDisplayCancellation = null;
     }
 
+    /// <summary>Redraws the timed activity clock once a second until cancelled.</summary>
     private async Task RunTimedActivityDisplayAsync(CancellationToken cancellationToken)
     {
         try
@@ -1175,6 +1281,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
     }
 
+    /// <summary>Recomputes the warm-up, main and cool-down phase, the time remaining and the progress ring.</summary>
     private void RefreshTimedActivityDisplay()
     {
         var prescription = SelectedActivity?.Prescription;
@@ -1186,6 +1293,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         TimedActivityProgressValue = state.Progress;
     }
 
+    /// <summary>Seconds as a clock, growing an hours field only when the value needs one.</summary>
     private static string FormatClock(int seconds)
     {
         var clamped = Math.Max(0, seconds);
@@ -1194,6 +1302,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             : $"{clamped / 60:00}:{clamped % 60:00}";
     }
 
+    /// <summary>Completes the session and records the finished sets.</summary>
     [RelayCommand]
     private async Task CompleteSessionAsync()
     {
@@ -1208,6 +1317,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             await _navigateAsync("..");
     }
 
+    /// <summary>Completes the session under a gate that refuses to run twice, so a double tap cannot post two</summary>
+    /// completions.</summary>
     private async Task<bool> CompletePlannedSessionAsync(int? timedActivitySeconds = null)
     {
         if (!await _completionGate.WaitAsync(NoCompletionWaitMilliseconds)) return false;
@@ -1215,6 +1326,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         finally { _completionGate.Release(); }
     }
 
+    /// <summary>Posts the completion, records the celebration and leaves the page; refuses while busy or without a</summary>
+    /// session to complete.</summary>
     private async Task<bool> CompletePlannedSessionCoreAsync(int? timedActivitySeconds = null)
     {
         if (IsBusy || _plannedSessionId is not { } sessionId) return false;
@@ -1292,6 +1405,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         finally { IsBusy = false; }
     }
 
+    /// <summary>Asks whether to abandon the planned session.</summary>
     [RelayCommand]
     public void AbandonPlannedSession()
     {
@@ -1306,6 +1420,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         IsAbandonConfirmationVisible = true;
     }
 
+    /// <summary>Keeps the planned session.</summary>
     [RelayCommand]
     public void CancelAbandonPlannedSession()
     {
@@ -1314,6 +1429,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         IsAbandonConfirmationVisible = false;
     }
 
+    /// <summary>Abandons the planned session.</summary>
     [RelayCommand]
     public async Task ConfirmAbandonPlannedSessionAsync()
     {
@@ -1361,6 +1477,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         finally { IsBusy = false; }
     }
 
+    /// <summary>Clears the clock, pending work and every overlay before leaving an abandoned session, so nothing keeps</summary>
+    /// running behind the page.</summary>
     private async Task SettleAbandonedSessionAsync()
     {
         // Every exit path clears the timer, pending work and overlays before one bounded return.
@@ -1390,6 +1508,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         await _navigateAsync("..");
     }
 
+    /// <summary>Closes the session and returns.</summary>
     [RelayCommand]
     private async Task FinishSessionAsync()
     {
@@ -1399,6 +1518,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         await _navigateAsync("..");
     }
 
+    /// <summary>Goes back one step in the session.</summary>
     [RelayCommand]
     private async Task BackAsync()
     {
@@ -1457,6 +1577,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         await _navigateAsync("..");
     }
 
+    /// <summary>Restarts the checkpoint loop for an existing session, under the timing gate so it cannot interleave with a</summary>
+    /// checkpoint.</summary>
     private async Task ResumeTimingAsync(Guid sessionId)
     {
         await _timingGate.WaitAsync();
@@ -1481,6 +1603,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         finally { _timingGate.Release(); }
     }
 
+    /// <summary>Sends the measured interval, replaying an earlier unconfirmed one first.</summary>
     private async Task CheckpointTimingAsync(bool pause)
     {
         await _timingGate.WaitAsync();
@@ -1496,6 +1619,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         finally { _timingGate.Release(); }
     }
 
+    /// <summary>Replays the unconfirmed interval; the pending value is only dropped once the server has acknowledged it.</summary>
     private async Task FlushPendingTimingCheckpointAsync(Guid sessionId)
     {
         if (_pendingTimingCheckpoint is not { } pending) return;
@@ -1518,6 +1642,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         if (pending.Pause) _plannedSessionTimer.Reset();
     }
 
+    /// <summary>Sends a checkpoint every fifteen seconds until cancelled.</summary>
     private async Task CheckpointTimingLoopAsync(CancellationToken cancellationToken)
     {
         try
@@ -1554,6 +1679,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested) { }
     }
 
+    /// <summary>Pauses and checkpoints the session; a false result means the checkpoint could not be confirmed, and the</summary>
+    /// caller must not navigate away on it.</summary>
     public async Task<bool> SuspendTimingAsync()
     {
         _timingLoopCancellation?.Cancel();
@@ -1580,6 +1707,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Suspends the running session when the app leaves the foreground, remembering which screen to come back</summary>
+    /// to.</summary>
     public async Task SuspendForAppBackgroundAsync()
     {
         _appSuspended = true;
@@ -1604,12 +1733,14 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         await suspend;
     }
 
+    /// <summary>Stops the session clock and the current activity's timer without finishing anything.</summary>
     private void PauseActivity()
     {
         _plannedSessionTimer.Stop();
         if (SelectedActivity is not null && _activityTimers.TryGetValue(SelectedActivity, out var timer)) timer.Stop();
     }
 
+    /// <summary>Opens the swap panel and loads the candidates.</summary>
     [RelayCommand]
     private Task OpenSwapPanelAsync()
     {
@@ -1617,6 +1748,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         return OpenSwapPanelCoreAsync();
     }
 
+    /// <summary>Opens the swap panel for a strength exercise and loads its alternatives, ignoring the request when the</summary>
+    /// exercise cannot be changed right now.</summary>
     private async Task OpenSwapPanelCoreAsync()
     {
         if (!CanChangeExercise() || CurrentExercise is not { UsesStrengthMetrics: true } exercise) return;
@@ -1651,6 +1784,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Selects a swap candidate.</summary>
     [RelayCommand]
     private void SelectSwapCandidate(ExerciseSwapOption? option)
     {
@@ -1661,6 +1795,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(SwapConfirmHint));
     }
 
+    /// <summary>Swaps the exercise for the chosen candidate.</summary>
     [RelayCommand]
     private async Task ConfirmSwapAsync()
     {
@@ -1707,6 +1842,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Closes the swap panel.</summary>
     [RelayCommand]
     private void CloseSwapPanel()
     {
@@ -1714,6 +1850,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         ResetSwapPanel();
     }
 
+    /// <summary>Opens the movement note for editing.</summary>
     [RelayCommand]
     public async Task OpenMovementNoteAsync()
     {
@@ -1739,6 +1876,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Saves the movement note.</summary>
     [RelayCommand]
     public async Task SaveMovementNoteAsync()
     {
@@ -1767,6 +1905,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Clears the movement note.</summary>
     [RelayCommand]
     public async Task ClearMovementNoteAsync()
     {
@@ -1774,6 +1913,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         await SaveMovementNoteAsync();
     }
 
+    /// <summary>Closes the movement note.</summary>
     [RelayCommand]
     public void CloseMovementNote()
     {
@@ -1782,6 +1922,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         MovementNoteStatusText = string.Empty;
     }
 
+    /// <summary>Closes the swap panel and clears its candidates, target, errors and notes.</summary>
     private void ResetSwapPanel()
     {
         ++_swapVersion;
@@ -1793,6 +1934,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         SwapErrorText = string.Empty;
     }
 
+    /// <summary>Rebuilds the activity cards around the same exercise objects, so selections, edits and elapsed time</summary>
+    /// survive the refresh.</summary>
     private void RefreshActivityCards()
     {
         // The shared card model has init-only summary fields. Rebuild only its wrapper,
@@ -1828,6 +1971,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }));
     }
 
+    /// <summary>Builds the activity list from the session detail and gives every exercise the action that splits its</summary>
+    /// superset.</summary>
     private IReadOnlyList<WorkoutActivitySectionItem> GetActivities(WorkoutSessionDetailDto detail)
     {
         var activities = WorkoutSessionPresentationMapper.MapActivities(detail);
@@ -1836,6 +1981,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         return activities;
     }
 
+    /// <summary>Splits a superset into its separate exercises, reporting why when the session is not in a state that</summary>
+    /// allows it.</summary>
     private async Task SplitSupersetAsync(WorkoutExerciseItem exercise)
     {
         if (_plannedSessionId is not { } sessionId || !_sessionCreated || !exercise.SupersetGroupId.HasValue)
@@ -1866,12 +2013,16 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>The note tying the session to the cycle. Reading the phase is what establishes that cycle context is</summary>
+    /// available at all; the wording is currently the same for every phase.</summary>
     private static string BuildPhaseNote(CyclePhase phase)
     {
         _ = phase;
         return "Workout_Session_CycleContextNote";
     }
 
+    /// <summary>Decides how big a celebration the logged set earned, by comparing its weight with the previous session's.</summary>
+    /// A first log with no history earns the first-time celebration rather than a record.</summary>
     private CelebrationType GetCelebration(WorkoutExerciseItem exercise, WorkoutExerciseLogDto log)
     {
         var previous = Regex.Match(exercise.PreviousText, @"(\d+(?:[.,]\d+)?)\s*kg", RegexOptions.IgnoreCase);
@@ -1889,6 +2040,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         return CelebrationType.SmallCheckmark;
     }
 
+    /// <summary>Checks the entered sets before saving, requiring reps on both sides of a unilateral exercise and a usable</summary>
+    /// weight wherever one was typed.</summary>
     private bool ValidateInputs(WorkoutExerciseItem exercise)
     {
         var capturedSets = exercise.Sets.Where(set => set.IsCapturedWorkingSet).ToArray();
@@ -1921,26 +2074,32 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
                 .ToArray(),
             exercise.LoggedWeightText);
 
+    /// <summary>True when a value was typed but cannot be read as a number.</summary>
     private static bool InvalidOptionalFloat(string value)
     {
         return !string.IsNullOrWhiteSpace(value) && ParseOptionalFloat(value) is null;
     }
 
+    /// <summary>True when a value was typed but is not a positive whole number.</summary>
     private static bool InvalidOptionalInt(string value)
     {
         return !string.IsNullOrWhiteSpace(value) && ParsePositiveInt(value) == 0;
     }
 
+    /// <summary>The value when it is a positive whole number, otherwise zero.</summary>
     private static int ParsePositiveInt(string? value)
     {
         return int.TryParse(value, out var parsed) && parsed > 0 ? parsed : 0;
     }
 
+    /// <summary>The parsed count when it is positive, otherwise null so an empty field stays empty.</summary>
     private static int? ParseOptionalInt(string? value)
     {
         return ParsePositiveInt(value) is > 0 and var parsed ? parsed : null;
     }
 
+    /// <summary>A finite non-negative number read in the user's culture first and invariant culture second; anything else is</summary>
+    /// null.</summary>
     private static float? ParseOptionalFloat(string? value)
     {
         const NumberStyles styles = NumberStyles.Float | NumberStyles.AllowThousands;
@@ -1951,6 +2110,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         return null;
     }
 
+    /// <summary>Minutes entered as seconds, never rounding down to zero.</summary>
     private static int? ParseDurationSeconds(string? value)
     {
         return ParseOptionalFloat(value) is > 0 and var minutes && minutes * 60d <= int.MaxValue
@@ -1958,6 +2118,7 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
             : null;
     }
 
+    /// <summary>A mm:ss pace as seconds, falling back to reading the value as minutes when it has no colon.</summary>
     private static int? ParsePace(string? value)
     {
         var parts = value?.Split(':', StringSplitOptions.TrimEntries);
@@ -1969,6 +2130,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
         return ParseDurationSeconds(value);
     }
 
+    /// <summary>The log to save: edited sets are sent as observed sets, and otherwise the entered weights are resolved by</summary>
+    /// the shared weight rule so both paths agree.</summary>
     private static WorkoutExerciseLogDto BuildLogInput(WorkoutExerciseItem item)
     {
         var editedSets = item.Sets.Where(set => set.WasEdited).ToList();

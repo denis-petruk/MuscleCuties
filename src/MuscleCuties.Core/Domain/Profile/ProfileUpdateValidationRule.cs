@@ -3,6 +3,7 @@ using MuscleCuties.Core.Domain.Onboarding;
 
 namespace MuscleCuties.Core.Domain.Profile;
 
+/// <summary>The fields of one profile update, which the rule checks.</summary>
 public sealed record ProfileUpdateObservation(
     DateOnly? DateOfBirth,
     bool SetDateOfBirth,
@@ -10,6 +11,7 @@ public sealed record ProfileUpdateObservation(
     decimal? WeightKg,
     int? CycleLength);
 
+/// <summary>Validates a profile update, naming every refused field rather than the first.</summary>
 public static class ProfileUpdateValidationRule
 {
     public const decimal MinimumHeightCm = 50m;
@@ -17,6 +19,7 @@ public static class ProfileUpdateValidationRule
     public const decimal MinimumWeightKg = 20m;
     public const decimal MaximumWeightKg = 400m;
 
+    /// <summary>True when height, weight and cycle length are each inside their accepted ranges.</summary>
     public static bool IsValidRequiredMeasurements(float heightCm, float weightKg, int cycleLength) =>
         IsValidHeight(heightCm) &&
         IsValidWeight(weightKg) &&
@@ -26,6 +29,7 @@ public static class ProfileUpdateValidationRule
     public static bool IsValidRequiredBodyMeasurements(float heightCm, float weightKg) =>
         IsValidHeight(heightCm) && IsValidWeight(weightKg);
 
+    /// <summary>Whether the update may be stored as submitted.</summary>
     public static bool IsValid(ProfileUpdateObservation? update, DateOnly today)
     {
         if (update is null)
@@ -45,14 +49,17 @@ public static class ProfileUpdateValidationRule
         return true;
     }
 
+    /// <summary>True when the height falls in the range the profile accepts.</summary>
     private static bool IsValidHeight(double heightCm) =>
         double.IsFinite(heightCm) && heightCm >= (double)MinimumHeightCm &&
         heightCm <= (double)MaximumHeightCm;
 
+    /// <summary>True when the weight falls in the range the profile accepts.</summary>
     private static bool IsValidWeight(double weightKg) =>
         double.IsFinite(weightKg) && weightKg >= (double)MinimumWeightKg &&
         weightKg <= (double)MaximumWeightKg;
 
+    /// <summary>True when the cycle length falls in the range the profile accepts.</summary>
     private static bool IsValidCycleLength(int cycleLength) =>
         cycleLength >= CycleLengthLimits.Minimum && cycleLength <= CycleLengthLimits.Maximum;
 }

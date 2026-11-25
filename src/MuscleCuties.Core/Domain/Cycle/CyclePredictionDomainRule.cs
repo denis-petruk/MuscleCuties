@@ -2,14 +2,17 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 
 namespace MuscleCuties.Core.Domain.Cycle;
 
+/// <summary>One recorded cycle start, the input the prediction replays.</summary>
 public sealed record CycleObservation(DateTime StartDate, DateTime? EndDate, int CycleLength);
 
+/// <summary>Predicts the next cycle from the recorded starts, refusing to guess from too few of them.</summary>
 public sealed class CyclePredictionDomainRule
 {
     private const int HistoryCyclesToUse = 6;
     private static readonly DateTime MinValidDate = new(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
     private static readonly DateTime MaxValidDate = new(2100, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
+    /// <summary>Builds the cycle prediction from the latest cycle, its history and the profile's cycle length.</summary>
     public static CyclePredictionEstimate CreatePrediction(
         CycleObservation? latestCycle,
         IReadOnlyCollection<CycleObservation>? history,
@@ -60,6 +63,7 @@ public sealed class CyclePredictionDomainRule
         }, manualPhaseLog, today);
     }
 
+    /// <summary>Overrides the projected phase with a manual phase log when that log is usable for today.</summary>
     private static CyclePredictionEstimate ApplyManualPhase(
         CyclePredictionEstimate prediction, CyclePhaseObservation? manualPhaseLog, DateTime today)
     {
@@ -92,6 +96,7 @@ public sealed class CyclePredictionDomainRule
         };
     }
 
+    /// <summary>Chooses the cycle length to predict from and names which source supplied it.</summary>
     private static (int CycleLength, string Source) PredictCycleLength(
         IReadOnlyCollection<CycleObservation>? history,
         int? profileCycleLength,
@@ -128,21 +133,25 @@ public sealed class CyclePredictionDomainRule
         return (CycleLengthLimits.Default, "default");
     }
 
+    /// <summary>Whether a length is inside the supported range, so one bad record cannot drive the prediction.</summary>
     private static bool IsUsableCycleLength(int cycleLength)
     {
         return cycleLength is >= CycleLengthLimits.Minimum and <= CycleLengthLimits.Maximum;
     }
 
+    /// <summary>Clamps a length into the supported range before it is averaged.</summary>
     private static int ClampCycleLength(int cycleLength)
     {
         return CyclePhaseRule.NormalizeCycleLength(cycleLength);
     }
 
+    /// <summary>Whether a date is inside the range the prediction may produce.</summary>
     private static bool IsValidDate(DateTime date)
     {
         return date >= MinValidDate && date <= MaxValidDate;
     }
 
+    /// <summary>Adds days with the range applied, so a long gap cannot overflow the calendar.</summary>
     private static DateTime SafeAddDays(DateTime date, double days)
     {
         try
@@ -159,6 +168,7 @@ public sealed class CyclePredictionDomainRule
         }
     }
 
+    /// <summary>The gaps between consecutive starts, which is what the prediction averages.</summary>
     private static IEnumerable<int> CalculateStartDateLengths(IEnumerable<CycleObservation> history, DateTime today)
     {
         var orderedCycles = history

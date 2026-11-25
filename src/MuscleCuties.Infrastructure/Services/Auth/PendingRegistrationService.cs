@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Users;
 
 namespace MuscleCuties.Core.Services.Auth;
 
+/// <summary>Keeps one registration in progress: the details, the challenge and the code step's outcome.</summary>
 public sealed class PendingRegistrationService : IPendingRegistrationService
 {
     private readonly object _syncRoot = new();
@@ -52,6 +53,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         }
     }
 
+    /// <summary>Starts an email registration and holds it until the code is verified.</summary>
     public PendingRegistrationData StartEmailRegistration(string email, string username, string password,
         string? challengeId, string? privacyNoticeVersion = null, DateTimeOffset? privacyConsentAcceptedAtUtc = null)
     {
@@ -79,6 +81,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         }
     }
 
+    /// <summary>Begins a registration from an Apple identity, where there is no password to stage.</summary>
     public void StartAppleRegistration(string appleUserId, string email, string username)
     {
         lock (_syncRoot)
@@ -96,6 +99,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         }
     }
 
+    /// <summary>Records the new challenge after a resend, so the old one can no longer confirm the registration.</summary>
     public void UpdateChallengeId(string challengeId)
     {
         if (string.IsNullOrWhiteSpace(challengeId))
@@ -115,6 +119,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         }
     }
 
+    /// <summary>Marks a challenge confirmed, which is what allows the account to be created.</summary>
     public void ConfirmChallenge(string challengeId, string verificationToken)
     {
         lock (_syncRoot)
@@ -139,6 +144,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         }
     }
 
+    /// <summary>Holds the profile answers until the account exists.</summary>
     public void StageProfile(StagedProfileData profile)
     {
         lock (_syncRoot)
@@ -147,6 +153,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         }
     }
 
+    /// <summary>Stages the answers only for the registration the caller owns, so a stale page cannot overwrite a newer one.</summary>
     public bool TryStageProfile(PendingRegistrationData expectedRegistration, StagedProfileData profile)
     {
         lock (_syncRoot)
@@ -161,6 +168,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
 
     // Compare the immutable snapshot under the same lock as the mutation. Even a
     // replacement with identical email/challenge values is a different session.
+    /// <summary>Attaches the new challenge id to a pending registration.</summary>
     public bool TryUpdateChallengeId(PendingRegistrationData expectedRegistration, string challengeId,
         out PendingRegistrationData? updatedRegistration)
     {
@@ -179,6 +187,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         }
     }
 
+    /// <summary>Confirms the challenge only when it matches the pending registration.</summary>
     public bool TryConfirmChallenge(PendingRegistrationData expectedRegistration, string verificationToken)
     {
         lock (_syncRoot)
@@ -194,6 +203,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         }
     }
 
+    /// <summary>Clears the pending registration only when it is the one the caller still holds.</summary>
     public bool TryClear(PendingRegistrationData expectedRegistration)
     {
         lock (_syncRoot)
@@ -206,6 +216,7 @@ public sealed class PendingRegistrationService : IPendingRegistrationService
         }
     }
 
+    /// <summary>Forgs the pending registration entirely.</summary>
     public void Clear()
     {
         lock (_syncRoot)

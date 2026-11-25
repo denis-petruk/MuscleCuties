@@ -11,11 +11,13 @@ public sealed class PostgresFoodCatalogStore(PostgresDbContext dbContext)
 {
     private const int MinimumSearchTokenLength = 2;
 
+    /// <summary>Searches the catalog for the query.</summary>
     public async Task<IReadOnlyList<FoodCatalogCandidate>> SearchCandidatesAsync(
         string query,
         CancellationToken cancellationToken = default) =>
         await SearchCandidatesAsync(query, null, cancellationToken).ConfigureAwait(false);
 
+    /// <summary>Searches the catalog with a result limit.</summary>
     public async Task<IReadOnlyList<FoodCatalogCandidate>> SearchCandidatesAsync(
         string query,
         Guid? ownerUserId,
@@ -84,11 +86,13 @@ public sealed class PostgresFoodCatalogStore(PostgresDbContext dbContext)
         return candidates;
     }
 
+    /// <summary>Looks up a catalog food by barcode.</summary>
     public async Task<FoodCatalogCandidate?> FindFoodByBarcodeAsync(
         IReadOnlyList<string> exactValues,
         CancellationToken cancellationToken = default) =>
         await FindFoodByBarcodeAsync(exactValues, null, cancellationToken).ConfigureAwait(false);
 
+    /// <summary>Looks up a food by barcode with its format.</summary>
     public async Task<FoodCatalogCandidate?> FindFoodByBarcodeAsync(
         IReadOnlyList<string> exactValues,
         Guid? ownerUserId,
@@ -138,6 +142,7 @@ public sealed class PostgresFoodCatalogStore(PostgresDbContext dbContext)
         return canonicalMatch is null ? null : ToCandidate(canonicalMatch);
     }
 
+    /// <summary>Maps a catalog row onto a search candidate.</summary>
     private static FoodCatalogCandidate ToCandidate(Models.Catalog.FoodItem food) => new(
         food.Id,
         FoodCatalogRankingRule.FormatFoodName(food.Name),
@@ -156,6 +161,7 @@ public sealed class PostgresFoodCatalogStore(PostgresDbContext dbContext)
         food.ServingSizeUnit,
         food.ServingOptionsJson);
 
+    /// <summary>Maps a user food row onto a search candidate.</summary>
     internal static FoodCatalogCandidate ToCandidate(Models.App.UserFoodItemRecord food) => new(
         LegacyCustomNumericId(food.Id),
         FoodCatalogRankingRule.FormatFoodName(food.Name),
@@ -175,12 +181,14 @@ public sealed class PostgresFoodCatalogStore(PostgresDbContext dbContext)
         food.ServingOptionsJson,
         food.Id);
 
+    /// <summary>A stable numeric id for a custom food, because clients that predate the GUID keys still need one.</summary>
     private static int LegacyCustomNumericId(Guid id)
     {
         var bytes = id.ToByteArray();
         return BitConverter.ToInt32(bytes, 0) ^ BitConverter.ToInt32(bytes, sizeof(int));
     }
 
+    /// <summary>Escapes the wildcards a LIKE search would otherwise treat as syntax.</summary>
     private static string EscapeLike(string value) => value
         .Replace("\\", "\\\\", StringComparison.Ordinal)
         .Replace("%", "\\%", StringComparison.Ordinal)

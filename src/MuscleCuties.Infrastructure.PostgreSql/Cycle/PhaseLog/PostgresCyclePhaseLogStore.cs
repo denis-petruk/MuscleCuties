@@ -21,6 +21,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
     private const long OwnerEditLockSalt = 741092;
     private const int MaximumNoteLength = 1000;
 
+    /// <summary>Saves one day's phase log, aligning the cycle it belongs to.</summary>
     public async Task<SaveCyclePhaseLogOutput> UpsertAsync(
         SaveCyclePhaseLogInput input,
         CancellationToken cancellationToken)
@@ -118,6 +119,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Finds the cycle a phase log belongs to, creating it when needed.</summary>
     private CycleLogRecord? AlignCycle(
         Guid ownerId,
         CyclePhase phase,
@@ -163,6 +165,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
         return inferredCycle;
     }
 
+    /// <summary>The cycle row a first phase log needs, created with the default length and no end.</summary>
     private CycleLogRecord NewCycle(Guid ownerId, DateOnly start, DateOnly? nextStart) => new()
     {
         Id = Guid.NewGuid(),
@@ -173,16 +176,22 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
         CreatedAt = timeProvider.GetUtcNow().UtcDateTime
     };
 
+    /// <summary>Takes the owner's edit lock so phase writes stay ordered.</summary>
     private Task<int> LockOwnerEditAsync(Guid ownerId, CancellationToken cancellationToken) =>
         db.Database.ExecuteSqlInterpolatedAsync(
             $"SELECT pg_advisory_xact_lock(hashtextextended({ownerId.ToString("D")}, {OwnerEditLockSalt}))",
             cancellationToken);
 
+    /// <summary>True when the date is inside the supported range.</summary>
     private static bool IsSupportedDate(DateOnly value) => value.Year >= MinimumSupportedYear && value.Year <= MaximumSupportedYear;
+    /// <summary>True when the value names a real phase.</summary>
     private static bool IsKnownPhase(CyclePhase value) => Enum.IsDefined(value) && value != CyclePhase.Unknown;
+    /// <summary>UTC midnight of a local date.</summary>
     private static DateTime UtcMidnight(DateOnly date) => DateTime.SpecifyKind(date.ToDateTime(TimeOnly.MinValue), DateTimeKind.Utc);
+    /// <summary>The result that reports invalid input.</summary>
     private static SaveCyclePhaseLogOutput Invalid() => new(SaveCyclePhaseLogOutcomeKind.InvalidInput);
 
+    /// <summary>A note trimmed and reduced to null when empty, so the column has one representation of "no note".</summary>
     private static string? NormalizeNote(string? note)
     {
         if (string.IsNullOrWhiteSpace(note))
@@ -191,6 +200,7 @@ public sealed class PostgresCyclePhaseLogStore(PostgresDbContext db, TimeProvide
         return trimmed.Length <= MaximumNoteLength ? trimmed : trimmed[..MaximumNoteLength];
     }
 
+    /// <summary>True when the write failed on a unique constraint.</summary>
     private static bool IsUniqueViolation(DbUpdateException exception) =>
         exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 }

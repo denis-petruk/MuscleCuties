@@ -21,6 +21,7 @@ public sealed class AdaptiveRow : Grid
     private int _appliedColumns;
     private int _appliedChildCount;
 
+    /// <summary>Builds the row and re-applies its arrangement whenever its width or the text size changes.</summary>
     public AdaptiveRow()
     {
         ColumnSpacing = AppThemeResources.GetDouble("UiSpaceTight");
@@ -34,6 +35,7 @@ public sealed class AdaptiveRow : Grid
         set => SetValue(ColumnsProperty, value);
     }
 
+    /// <summary>Re-applies the column count before measuring.</summary>
     protected override Size MeasureOverride(double widthConstraint, double heightConstraint)
     {
         // Text size can change while the page is alive, so the column count is re-checked on every
@@ -42,18 +44,22 @@ public sealed class AdaptiveRow : Grid
         return base.MeasureOverride(widthConstraint, heightConstraint);
     }
 
+    /// <summary>Re-applies the column count after a child is added.</summary>
     protected override void OnChildAdded(Element child)
     {
         base.OnChildAdded(child);
         ApplyLayout(force: false);
     }
 
+    /// <summary>Re-applies the column count after a child is removed.</summary>
     protected override void OnChildRemoved(Element child, int oldLogicalIndex)
     {
         base.OnChildRemoved(child, oldLogicalIndex);
         ApplyLayout(force: false);
     }
 
+    /// <summary>Swaps between the wide and narrow arrangement, skipping the work unless the size class changed or the caller</summary>
+    /// forces a re-apply.</summary>
     private void ApplyLayout(bool force)
     {
         var columns = Math.Max(1, AccessibilityDecoration.IsAccessibilityTextSize() ? 1 : Columns);

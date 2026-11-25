@@ -1,6 +1,7 @@
 namespace MuscleCuties.Core.Models.Enums.Workout;
 
 [Flags]
+/// <summary>A named set of equipment, so a common home setup is chosen in one step.</summary>
 public enum EquipmentSet
 {
     None = 0,

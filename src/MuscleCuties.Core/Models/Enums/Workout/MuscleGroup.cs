@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Models.Enums.Workout;
 
+/// <summary>The muscle groups volume is accounted across.</summary>
 public enum MuscleGroup
 {
     Chest,

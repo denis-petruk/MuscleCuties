@@ -2,6 +2,8 @@ using System.Text.RegularExpressions;
 
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Translation for text built at runtime: the English/russian map for seeded copy and the patterns</summary>
+/// that translate sentences with numbers in them.</summary>
 public static partial class UiTextCatalog
 {
     private static readonly Dictionary<string, string> RuntimeRussian = new(StringComparer.Ordinal)
@@ -1654,6 +1656,8 @@ public static partial class UiTextCatalog
         NewRuntimePattern("{0} · time zone unknown", "{0} · часовой пояс неизвестен")
     ];
 
+    /// <summary>Translates English text that was not authored as a key: exact match first, then a pattern for</summary>
+    /// sentences with values, then the two halves of a composite label. Untranslatable text is returned as is.</summary>
     public static string TranslateRuntimeText(string english)
     {
         if (string.IsNullOrEmpty(english) ||
@@ -1696,6 +1700,8 @@ public static partial class UiTextCatalog
         return english;
     }
 
+    /// <summary>Looks up a translation without side effects: the runtime map, then the authored key for that</summary>
+    /// English text. Returns false and the input when neither has it.</summary>
     private static bool TryResolveRuntimeValue(string english, out string russian)
     {
         if (RuntimeRussian.TryGetValue(english, out russian!))
@@ -1711,6 +1717,7 @@ public static partial class UiTextCatalog
         return false;
     }
 
+    /// <summary>Builds a matcher from a template with <c>{n}</c> holes, capturing any text in each hole.</summary>
     private static RuntimePattern NewRuntimePattern(string english, string russian)
     {
         var pieces = Regex.Split(english, @"\{\d+\}");
@@ -1718,6 +1725,7 @@ public static partial class UiTextCatalog
         return new RuntimePattern(new Regex(regex, RegexOptions.CultureInvariant), russian);
     }
 
+    /// <summary>Same, but each hole only matches a number, so a numeric sentence cannot swallow words.</summary>
     private static RuntimePattern NewNumericRuntimePattern(string english, string russian)
     {
         var pieces = Regex.Split(english, @"\{\d+\}");
@@ -1725,5 +1733,6 @@ public static partial class UiTextCatalog
         return new RuntimePattern(new Regex(regex, RegexOptions.CultureInvariant), russian);
     }
 
+    /// <summary>A runtime sentence pattern and the Russian template its captured values are formatted into.</summary>
     private sealed record RuntimePattern(Regex Matcher, string Russian);
 }

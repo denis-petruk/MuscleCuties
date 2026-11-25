@@ -2,13 +2,16 @@ using MuscleCuties.Core.Domain.Profile;
 
 namespace MuscleCuties.UseCases.Features.Profile.PhotoVault;
 
+/// <summary>Loads and adds photos, publishing an upload only after its bytes are verified.</summary>
 public sealed class PhotoVaultUseCase(IPhotoVaultStore store) : IPhotoVaultUseCase
 {
+    /// <summary>Her photos newest first, with the cursor for older ones.</summary>
     public Task<PhotoVaultLoadResult> LoadAsync(CancellationToken cancellationToken = default)
     {
         return store.LoadAsync(cancellationToken);
     }
 
+    /// <summary>Compares two saved photos and returns the change summary.</summary>
     public async Task<PhotoComparisonResult?> CompareAsync(int firstEntryId, int secondEntryId,
         CancellationToken cancellationToken = default)
     {
@@ -22,6 +25,7 @@ public sealed class PhotoVaultUseCase(IPhotoVaultStore store) : IPhotoVaultUseCa
             : null;
     }
 
+    /// <summary>Adds a photo to the vault after validating its bytes.</summary>
     public Task<bool> AddAsync(
         AddPhotoVaultEntryRequest request, CancellationToken cancellationToken = default)
     {
@@ -37,6 +41,7 @@ public sealed class PhotoVaultUseCase(IPhotoVaultStore store) : IPhotoVaultUseCa
         return store.AddAsync(normalized, cancellationToken);
     }
 
+    /// <summary>Removes the photo and its stored object, refusing one that is not hers.</summary>
     public Task<bool> DeleteAsync(int entryId, CancellationToken cancellationToken = default)
     {
         return entryId <= 0 ? Task.FromResult(false) : store.DeleteAsync(entryId, cancellationToken);

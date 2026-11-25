@@ -15,6 +15,8 @@ public partial class NutritionBreakdownPresenter : ObservableObject
     private readonly Action? _onClosed;
     private readonly Func<MealItem, Task>? _editMealAsync;
 
+    /// <summary>Takes the callback for the panel closing and the optional edit action, which decides whether the</summary>
+    /// edit affordance appears at all.</summary>
     public NutritionBreakdownPresenter(Action? onClosed = null, Func<MealItem, Task>? editMealAsync = null)
     {
         _onClosed = onClosed;
@@ -41,13 +43,19 @@ public partial class NutritionBreakdownPresenter : ObservableObject
     [ObservableProperty] private ObservableCollection<DailyMicronutrientItem> _micronutrients = [];
     [ObservableProperty] private MealItem? _selectedMeal;
 
+    /// <summary>True when the breakdown has an error to show.</summary>
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorText);
+    /// <summary>True when the breakdown has coverage text.</summary>
     public bool HasCoverageText => !string.IsNullOrWhiteSpace(CoverageText);
+    /// <summary>True when the shown meal can be edited.</summary>
     public bool CanEditMeal => SelectedMeal is not null && _editMealAsync is not null;
 
+    /// <summary>The command that closes the breakdown.</summary>
     public RelayCommand CloseCommand { get; }
+    /// <summary>The command that opens the shown meal for editing.</summary>
     public AsyncRelayCommand EditMealCommand { get; }
 
+    /// <summary>Opens the panel in its loading state, clearing any previous meal, error and coverage text.</summary>
     public void ShowLoading(string title)
     {
         Title = title;
@@ -59,6 +67,7 @@ public partial class NutritionBreakdownPresenter : ObservableObject
         OnPropertyChanged(nameof(CanEditMeal));
     }
 
+    /// <summary>Opens the panel showing a failure instead of a meal, with no edit affordance.</summary>
     public void ShowError(string title, string message)
     {
         Title = title;
@@ -73,6 +82,7 @@ public partial class NutritionBreakdownPresenter : ObservableObject
         OnPropertyChanged(nameof(CanEditMeal));
     }
 
+    /// <summary>Presents the breakdown for the given totals.</summary>
     public void Show(
         string title,
         NutritionMacros macros,
@@ -100,6 +110,7 @@ public partial class NutritionBreakdownPresenter : ObservableObject
         OnPropertyChanged(nameof(CanEditMeal));
     }
 
+    /// <summary>Empties the panel and hides it, leaving nothing of the previous meal behind.</summary>
     public void Clear()
     {
         IsVisible = false;
@@ -114,12 +125,15 @@ public partial class NutritionBreakdownPresenter : ObservableObject
         OnPropertyChanged(nameof(CanEditMeal));
     }
 
+    /// <summary>Hides the panel and reports the close, without changing what it holds.</summary>
     private void Close()
     {
         IsVisible = false;
         _onClosed?.Invoke();
     }
 
+    /// <summary>Hides the panel and hands the selected meal to the edit action, doing nothing when there is no meal</summary>
+    /// or no edit action.</summary>
     private async Task EditMealAsync()
     {
         if (SelectedMeal is not { } meal || _editMealAsync is null)
@@ -137,6 +151,8 @@ public partial class NutritionBreakdownPresenter : ObservableObject
         return fiber is null ? UiTextCatalog.Format("Nutrition_Breakdown_FiberFormat", 0d) : UiTextCatalog.Format("Nutrition_Breakdown_FiberFormat", fiber.Amount);
     }
 
+    /// <summary>The one-line micronutrient summary: how many targets were reached out of how many, or a message when</summary>
+    /// the day has no micronutrient data.</summary>
     public static string BuildNutrientSummary(IEnumerable<DailyMicronutrientItem> micronutrients)
     {
         var items = micronutrients.ToList();
@@ -147,6 +163,8 @@ public partial class NutritionBreakdownPresenter : ObservableObject
         return UiTextCatalog.Format("Nutrition_Breakdown_TargetsReachedFormat", complete, items.Count);
     }
 
+    /// <summary>The macro rows with their shares of the logged calories. Shares are of the logged total, not the</summary>
+    /// target, so they always add up to what was eaten.</summary>
     public static IEnumerable<MacroBreakdownItem> BuildMacroItems(NutritionMacros macros)
     {
         var proteinCalories = macros.ProteinCalories;
@@ -211,6 +229,7 @@ public partial class NutritionBreakdownPresenter : ObservableObject
         return string.IsNullOrEmpty(status) ? names : $"{status} {names}";
     }
 
+    /// <summary>The share of the calories a macro contributes.</summary>
     private static float CalculateMacroShare(float calories, float totalCalories) =>
         totalCalories <= 0f ? 0f : Math.Clamp(calories / totalCalories, 0f, 1f);
 }

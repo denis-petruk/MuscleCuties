@@ -3,6 +3,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>Everything the week schedule is decided from: activities, availability and the cycle phase.</summary>
 public sealed record MixedActivityWeekScheduleContext(
     IReadOnlyList<WorkoutActivityType>? SelectedActivities,
     IReadOnlyList<DayOfWeek>? AvailableWeekdays,
@@ -12,6 +13,7 @@ public sealed record MixedActivityWeekScheduleContext(
     WorkoutActivityType? HiitUnderlyingCardioActivity = null,
     WorkoutActivityType? ChosenStrengthActivity = null);
 
+/// <summary>How an activity ended up in the week: placed, omitted, or blocked for review.</summary>
 public enum MixedActivityScheduleDisposition
 {
     Scheduled,
@@ -21,6 +23,7 @@ public enum MixedActivityScheduleDisposition
     NotScheduled
 }
 
+/// <summary>One session the rule placed on a day.</summary>
 public sealed record MixedActivityScheduledSession(
     WorkoutActivityType Activity,
     DayOfWeek Day,
@@ -29,6 +32,7 @@ public sealed record MixedActivityScheduledSession(
     int? DayOrder = null,
     ActivitySessionPrescription? OccurrencePrescription = null);
 
+/// <summary>The per-activity decision with the reasons that produced it.</summary>
 public sealed record MixedActivityScheduleDecision(
     WorkoutActivityType Activity,
     MixedActivityScheduleDisposition Disposition,
@@ -42,11 +46,13 @@ public sealed record MixedActivityScheduleDecision(
     string? FallbackReasonCode = null,
     int? MaxSessionsPerWeek = null);
 
+/// <summary>The whole week: the placed sessions and the strength assignments they leave room for.</summary>
 public sealed record MixedActivityWeekScheduleResult(
     IReadOnlyList<MixedActivityScheduledSession> Sessions,
     IReadOnlyList<MixedActivityScheduleDecision> Activities,
     IReadOnlyList<string> InputReasons)
 {
+    /// <summary>The strength slots left free once the other activities took their days.</summary>
     public IReadOnlyList<StrengthScheduleAssignment>? StrengthAssignments { get; init; }
 }
 
@@ -142,6 +148,7 @@ public static class MixedActivityWeekScheduleRule
         WorkoutActivityType.Hiit
     ];
 
+    /// <summary>Places every activity and refuses the week when hard sessions cannot be spaced safely.</summary>
     public static MixedActivityWeekScheduleResult Evaluate(MixedActivityWeekScheduleContext? context)
     {
         if (context is null)
@@ -230,6 +237,7 @@ public static class MixedActivityWeekScheduleRule
             decisions.Select(decision => decision.ToDecision()).ToArray(), inputReasons);
     }
 
+    /// <summary>Applies deloads and optional-session removals to the week's occurrences.</summary>
     public static MixedActivityScheduledSession[] ApplyOccurrenceAdjustments(
         IEnumerable<MixedActivityScheduledSession> source,
         IReadOnlyDictionary<WorkoutActivityType, ActivitySessionPrescription?> originals)
@@ -258,6 +266,7 @@ public static class MixedActivityWeekScheduleRule
         return sessions;
     }
 
+    /// <summary>Sets the length of the week's cardio-only days.</summary>
     private static MixedActivityScheduledSession[] ApplyCardioOnlyDayDurations(
         MixedActivityScheduledSession[] sessions, IReadOnlyCollection<ActivityDecisionBuilder> decisions)
     {
@@ -270,6 +279,7 @@ public static class MixedActivityWeekScheduleRule
             : session).ToArray();
     }
 
+    /// <summary>Caps a cardio session at the length its activity allows.</summary>
     private static MixedActivityScheduledSession ApplyCardioDurationLimits(
         MixedActivityScheduledSession session, IReadOnlyList<MixedActivityScheduledSession> sessions,
         ActivityExperience experience)
@@ -301,13 +311,16 @@ public static class MixedActivityWeekScheduleRule
         return duration == session.DurationMinutes ? session : session with { DurationMinutes = duration };
     }
 
+    /// <summary>True when the activity is continuous cardio.</summary>
     private static bool IsContinuousCardio(WorkoutActivityType activity) => activity is
         WorkoutActivityType.Cycling or WorkoutActivityType.Running or WorkoutActivityType.Walking or
         WorkoutActivityType.Rowing or WorkoutActivityType.Elliptical or WorkoutActivityType.Swimming;
 
+    /// <summary>True when the activity is recovery work rather than training.</summary>
     private static bool IsRecoveryActivity(WorkoutActivityType activity) => activity is
         WorkoutActivityType.Yoga or WorkoutActivityType.Mobility or WorkoutActivityType.GentleRecovery;
 
+    /// <summary>Fills the decision builder for one selected activity.</summary>
     private static void PrepareActivity(ActivityDecisionBuilder decision,
         MixedActivityWeekScheduleContext context,
         HashSet<WorkoutActivityType> duplicateEvidenceActivities,
@@ -422,6 +435,7 @@ public static class MixedActivityWeekScheduleRule
             decision.AddReason(ActivityPrescriptionRule.HighVolumeConservativeStartCode);
     }
 
+    /// <summary>Reads the weekly frequency the user asked for, when they gave one.</summary>
     private static bool TryGetTargetFrequency(ActivityDecisionBuilder decision,
         MixedActivityWeekScheduleContext context, int policyFrequency)
     {
@@ -470,6 +484,7 @@ public static class MixedActivityWeekScheduleRule
         return true;
     }
 
+    /// <summary>The training evidence for an activity when exactly one record exists.</summary>
     private static ActivityPrescriptionContext? FindUniqueEvidence(
         IReadOnlyList<ActivityPrescriptionContext>? evidence,
         WorkoutActivityType activity)
@@ -484,6 +499,7 @@ public static class MixedActivityWeekScheduleRule
         return matchingEvidence.Length == OneSessionPerOccurrence ? matchingEvidence[0] : null;
     }
 
+    /// <summary>Strength frequency policy for the profile's strength history.</summary>
     private static GeneralStrengthFrequencyPolicy ResolveGeneralStrengthPolicy(
         ActivityPrescriptionContext? evidence, int availableDayCount)
     {
@@ -494,6 +510,7 @@ public static class MixedActivityWeekScheduleRule
             availableDayCount, evidence?.IsEstablishedResistanceHistory == true, profileLevel);
     }
 
+    /// <summary>Activities that carry more than one evidence record.</summary>
     private static HashSet<WorkoutActivityType> FindDuplicateEvidenceActivities(
         IReadOnlyList<ActivityPrescriptionContext>? evidence) =>
         evidence?
@@ -503,6 +520,7 @@ public static class MixedActivityWeekScheduleRule
             .Select(group => group.Key)
             .ToHashSet() ?? [];
 
+    /// <summary>Replaces the underlying cardio session with its HIIT prescription.</summary>
     private static void ApplyHiitReplacement(ActivityDecisionBuilder[] decisions,
         MixedActivityWeekScheduleContext context)
     {
@@ -543,6 +561,7 @@ public static class MixedActivityWeekScheduleRule
         underlying.AddReason(OneContinuousSessionReplacedByHiit);
     }
 
+    /// <summary>Writes the placed sessions onto their days, keeping hard sessions apart.</summary>
     private static void PlaceSessions(ActivityDecisionBuilder[] decisions, DayOfWeek[] availableDays)
     {
         ReduceTargetsToFitAvailability(decisions, availableDays.Length);
@@ -567,6 +586,7 @@ public static class MixedActivityWeekScheduleRule
             ScheduleActivity(decision, dayStates, availableDays);
     }
 
+    /// <summary>Lowers the weekly targets to the days she actually has, instead of over-scheduling.</summary>
     private static void ReduceTargetsToFitAvailability(ActivityDecisionBuilder[] decisions, int availableDayCount)
     {
         var candidates = decisions.Where(IsScheduleCandidate).ToArray();
@@ -602,9 +622,11 @@ public static class MixedActivityWeekScheduleRule
         ReduceTargets(softCandidates, remainingSlots);
     }
 
+    /// <summary>Sessions per week the decision targets.</summary>
     private static int GetTargetSessions(ActivityDecisionBuilder decision) =>
         decision.TargetSessionsPerWeek ?? NoSessionsScheduled;
 
+    /// <summary>Whether a session may share a day with strength work without breaking the spacing rule.</summary>
     private static bool CanBeStrengthCompanion(ActivityDecisionBuilder decision)
     {
         var activity = decision.EffectiveActivity ?? decision.Activity;
@@ -614,6 +636,7 @@ public static class MixedActivityWeekScheduleRule
         return activity is WorkoutActivityType.Cycling or WorkoutActivityType.Yoga;
     }
 
+    /// <summary>Cuts the targets in a fixed order, so the reduction is predictable between runs.</summary>
     private static void ReduceTargets(ActivityDecisionBuilder[] decisions, int availableSlots)
     {
         var requestedSlots = decisions.Sum(decision => decision.TargetSessionsPerWeek ?? NoSessionsScheduled);
@@ -634,11 +657,13 @@ public static class MixedActivityWeekScheduleRule
         }
     }
 
+    /// <summary>Fewest sessions the activity can be reduced to.</summary>
     private static int MinimumSessionsForReduction(ActivityDecisionBuilder decision) =>
         IsStrengthChoice(decision.EffectiveActivity ?? decision.Activity)
             ? GeneralStrengthFrequencyResolver.MinimumStrengthSessionsPerWeek
             : MinimumRequestedSessionsPerWeek;
 
+    /// <summary>Places the activity's sessions on the available weekdays.</summary>
     private static void ScheduleActivity(ActivityDecisionBuilder decision,
         IDictionary<DayOfWeek, ScheduledDayState> dayStates,
         DayOfWeek[] availableDays)
@@ -689,6 +714,7 @@ public static class MixedActivityWeekScheduleRule
             decision.AddReason(ActivityFrequencyLimitedByAvailableWeekdays);
     }
 
+    /// <summary>The gap between hard days measured around the week, so a Sunday/Monday pair counts as close.</summary>
     private static int MinimumCircularDistance(DayOfWeek day, IReadOnlyCollection<DayOfWeek> occupiedDays)
     {
         if (occupiedDays.Count == NoSessionsScheduled) return MissingDistance;
@@ -699,6 +725,7 @@ public static class MixedActivityWeekScheduleRule
         });
     }
 
+    /// <summary>Orders the available days and removes duplicates.</summary>
     private static DayOfWeek[] NormalizeDays(IReadOnlyList<DayOfWeek>? suppliedDays,
         List<string> reasons)
     {
@@ -721,9 +748,11 @@ public static class MixedActivityWeekScheduleRule
         return days;
     }
 
+    /// <summary>True when the decision still needs sessions scheduled.</summary>
     private static bool IsScheduleCandidate(ActivityDecisionBuilder decision) =>
         decision.IsEligible && decision.TargetSessionsPerWeek is not null;
 
+    /// <summary>True when the strength activity is dropped from the week.</summary>
     private static bool ShouldSkipStrengthActivity(ActivityDecisionBuilder decision,
         MixedActivityWeekScheduleContext context, IReadOnlyCollection<WorkoutActivityType> selectedActivities)
     {
@@ -752,10 +781,12 @@ public static class MixedActivityWeekScheduleRule
         return true;
     }
 
+    /// <summary>True when the activity is a strength choice.</summary>
     private static bool IsStrengthChoice(WorkoutActivityType activity) => activity is
         WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
         WorkoutActivityType.StrengthHighIntensity;
 
+    /// <summary>Whether the activity counts as hard for spacing.</summary>
     public static bool IsHardActivity(WorkoutActivityType activity, ActivitySessionPrescription? prescription = null)
     {
         if (activity is WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
@@ -771,6 +802,7 @@ public static class MixedActivityWeekScheduleRule
         return false;
     }
 
+    /// <summary>True when the activity may share a day with a strength session.</summary>
     public static bool IsSupportedSameDayStrengthCompanion(
         WorkoutActivityType firstActivity,
         bool firstIsHard,
@@ -779,6 +811,7 @@ public static class MixedActivityWeekScheduleRule
         (IsStrengthChoice(firstActivity) && firstIsHard && IsStrengthCompanion(secondActivity, secondIsHard)) ||
         (IsStrengthChoice(secondActivity) && secondIsHard && IsStrengthCompanion(firstActivity, firstIsHard));
 
+    /// <summary>True when both activities can run on the same day.</summary>
     private static bool CanShareDay(
         ScheduledDayState dayState,
         ActivityDecisionBuilder decision,
@@ -809,12 +842,15 @@ public static class MixedActivityWeekScheduleRule
                SameDayDemandAdjustmentRule.Adjust(decision.Prescription) is not null;
     }
 
+    /// <summary>True when the activity loads the body like a strength session.</summary>
     private static bool IsStrengthOrClimbing(WorkoutActivityType activity) =>
         IsStrengthChoice(activity) || activity == WorkoutActivityType.RockClimbing;
 
+    /// <summary>True when the activity counts as a companion to strength work.</summary>
     private static bool IsStrengthCompanion(WorkoutActivityType activity, bool isHard) =>
         !isHard && !IsStrengthChoice(activity) && activity != WorkoutActivityType.RestDay;
 
+    /// <summary>Why the activity cannot share a hard day.</summary>
     public static string GetHardDayConflictReason(WorkoutActivityType activity) => activity switch
     {
         WorkoutActivityType.GeneralStrength => "GS_HARD_DAY_CONFLICT",
@@ -826,14 +862,17 @@ public static class MixedActivityWeekScheduleRule
         _ => HardDayLimitReached
     };
 
+    /// <summary>The fixed order hard activities are placed in, so the schedule is stable.</summary>
     private static int HardActivityOrder(WorkoutActivityType activity)
     {
         var index = Array.IndexOf(HardActivityPriority, activity);
         return index == MissingHardPriorityIndex ? HardActivityPriority.Length : index;
     }
 
+    /// <summary>Stable ordering value for an activity.</summary>
     private static int ActivityOrder(WorkoutActivityType activity) => (int)activity;
 
+    /// <summary>Index of the day inside the training week.</summary>
     private static int DayIndex(DayOfWeek day) => day switch
     {
         DayOfWeek.Monday => MondayOrder,
@@ -846,13 +885,19 @@ public static class MixedActivityWeekScheduleRule
         _ => InvalidDayIndex
     };
 
+    /// <summary>One day's accumulated placements, used while the week is built.</summary>
     private sealed class ScheduledDayState
     {
+        /// <summary>Whether a hard session already sits on this day.</summary>
         public bool HasHardSession { get; private set; }
+        /// <summary>How many hard sessions the day holds, which the spacing rule limits.</summary>
         public int HardSessionCount { get; private set; }
+        /// <summary>Activities the decision covers.</summary>
         public HashSet<WorkoutActivityType> Activities { get; } = [];
+        /// <summary>The activity being placed on this day, absent for a rest day.</summary>
         public ActivityDecisionBuilder? Decision { get; private set; }
 
+        /// <summary>Records a placement and marks the day hard when the activity is.</summary>
         public void Add(ActivityDecisionBuilder decision, bool isHard)
         {
             Activities.Add(decision.EffectiveActivity ?? decision.Activity);
@@ -862,24 +907,39 @@ public static class MixedActivityWeekScheduleRule
         }
     }
 
+    /// <summary>Builds one activity's decision while the week is arranged.</summary>
     private sealed class ActivityDecisionBuilder(WorkoutActivityType activity)
     {
         private readonly List<string> _reasons = [];
 
+        /// <summary>Activity this decision is about.</summary>
         public WorkoutActivityType Activity { get; } = activity;
+        /// <summary>The status the decision carries once the prescription is known.</summary>
         public ActivityPrescriptionStatus? PrescriptionStatus { get; set; }
+        /// <summary>The prescription attached to the session, when one was resolved.</summary>
         public ActivitySessionPrescription? Prescription { get; set; }
+        /// <summary>The count the policy allows, which bounds her target.</summary>
         public int? PolicySessionsPerWeek { get; set; }
+        /// <summary>The count she asked for, which the week tries to place.</summary>
         public int? TargetSessionsPerWeek { get; set; }
+        /// <summary>The ceiling the week may not exceed, whatever she asked for.</summary>
         public int? MaxSessionsPerWeek { get; set; }
+        /// <summary>The minutes each session of this activity takes.</summary>
         public decimal DurationMinutes { get; set; }
+        /// <summary>The experience the activity's allowance was resolved at.</summary>
         public ActivityExperience? Experience { get; set; }
+        /// <summary>Whether the activity cleared eligibility at all.</summary>
         public bool IsEligible { get; set; }
+        /// <summary>The activity actually scheduled, after a fallback replaced it.</summary>
         public WorkoutActivityType? EffectiveActivity { get; set; }
+        /// <summary>The code explaining the fallback, so the substitution is visible to her.</summary>
         public string? FallbackReasonCode { get; set; }
+        /// <summary>Weekdays the activity's sessions are placed on.</summary>
         public List<DayOfWeek> ScheduledDays { get; } = [];
+        /// <summary>A disposition forced by a later rule, overriding the placement outcome.</summary>
         public MixedActivityScheduleDisposition? DispositionOverride { get; set; }
 
+        /// <summary>Marks the activity blocked with its reason, withholding it from the week.</summary>
         public void Block(string reason)
         {
             IsEligible = false;
@@ -887,6 +947,7 @@ public static class MixedActivityWeekScheduleRule
             AddReason(reason);
         }
 
+        /// <summary>Marks the activity omitted with its reason, for one that fits neither.</summary>
         public void Omit(string reason)
         {
             IsEligible = false;
@@ -894,16 +955,19 @@ public static class MixedActivityWeekScheduleRule
             AddReason(reason);
         }
 
+        /// <summary>Attaches one reason, keeping duplicates out.</summary>
         public void AddReason(string reason)
         {
             if (!_reasons.Contains(reason, StringComparer.Ordinal)) _reasons.Add(reason);
         }
 
+        /// <summary>Attaches several reasons at once.</summary>
         public void AddReasons(IEnumerable<string> reasons)
         {
             foreach (var reason in reasons) AddReason(reason);
         }
 
+        /// <summary>Freezes the builder into the decision the result carries.</summary>
         public MixedActivityScheduleDecision ToDecision()
         {
             var disposition = DispositionOverride ??

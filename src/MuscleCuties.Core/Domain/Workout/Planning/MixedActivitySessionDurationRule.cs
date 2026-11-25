@@ -2,13 +2,16 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>A duration she picked, with the activity it applies to.</summary>
 internal sealed record UserSelectedSessionDuration(int Minutes);
 
+/// <summary>Whether her stored duration could be read, and the value when it could.</summary>
 internal sealed record SessionDurationPreferenceReadResult(
     bool IsValid,
     UserSelectedSessionDuration? Preference,
     string? ReasonCode);
 
+/// <summary>The minute split each activity receives in a mixed week.</summary>
 internal sealed record MixedActivitySessionDurationResolution(
     bool IsResolved,
     decimal DurationMinutes,
@@ -31,6 +34,7 @@ internal static class MixedActivitySessionDurationRule
     private const int NoIntervals = 0;
     private const decimal NoDurationMinutes = decimal.Zero;
 
+    /// <summary>Reads the user's duration preference, reporting why it cannot be used.</summary>
     public static SessionDurationPreferenceReadResult ReadPreference(
         WorkoutActivityType activity,
         IReadOnlyDictionary<WorkoutActivityType, decimal>? savedDurations,
@@ -89,6 +93,7 @@ internal static class MixedActivitySessionDurationRule
         return new SessionDurationPreferenceReadResult(true, new UserSelectedSessionDuration(minutes), null);
     }
 
+    /// <summary>Puts the chosen duration into the prescription context.</summary>
     public static ActivityPrescriptionContext ApplyPreference(
         ActivityPrescriptionContext evidence,
         UserSelectedSessionDuration? preference) =>
@@ -96,6 +101,7 @@ internal static class MixedActivitySessionDurationRule
             ? evidence
             : evidence with { UserSelectedDurationMinutes = preference.Minutes };
 
+    /// <summary>Resolves the session length for a mixed-activity day.</summary>
     public static MixedActivitySessionDurationResolution Resolve(
         WorkoutActivityType activity,
         UserSelectedSessionDuration? userSelectedDuration,
@@ -111,6 +117,7 @@ internal static class MixedActivitySessionDurationRule
             : Unresolved(SessionDurationMissing);
     }
 
+    /// <summary>Resolves a day's length from the user's explicit preference.</summary>
     private static MixedActivitySessionDurationResolution ResolveUserPreferenceDuration(
         WorkoutActivityType activity,
         UserSelectedSessionDuration? userSelectedDuration,
@@ -133,6 +140,7 @@ internal static class MixedActivitySessionDurationRule
             SelectedDurationAppliedToPrescription, true);
     }
 
+    /// <summary>Reads the duration a prescription carries, when it has one.</summary>
     private static bool TryGetPrescribedDuration(
         ActivitySessionPrescription prescription,
         out decimal durationMinutes)
@@ -168,6 +176,7 @@ internal static class MixedActivitySessionDurationRule
         return durationMinutes > NoDurationMinutes;
     }
 
+    /// <summary>Whether an interval pair is complete, since half an interval cannot be prescribed.</summary>
     private static bool HasValidIntervalPair(int? count, decimal? seconds, bool required)
     {
         if (count is null && seconds is null)
@@ -175,9 +184,11 @@ internal static class MixedActivitySessionDurationRule
         return count is > NoIntervals && seconds is > NoDurationMinutes;
     }
 
+    /// <summary>A resolution that could not settle on a length, with the reason.</summary>
     private static MixedActivitySessionDurationResolution Unresolved(string reasonCode) =>
         new(false, NoDurationMinutes, reasonCode, false);
 
+    /// <summary>A preference read that failed, with the reason.</summary>
     private static SessionDurationPreferenceReadResult Invalid(string reasonCode) =>
         new(false, null, reasonCode);
 }

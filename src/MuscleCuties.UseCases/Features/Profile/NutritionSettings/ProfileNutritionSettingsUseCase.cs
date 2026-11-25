@@ -3,32 +3,38 @@ using MuscleCuties.Core.Models.Enums.Users;
 
 namespace MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 
+/// <summary>Reads and saves the nutrition settings against the profile version.</summary>
 public sealed class ProfileNutritionSettingsUseCase(IProfileNutritionSettingsStore store)
     : IProfileNutritionSettingsUseCase
 {
+    /// <summary>The settings with the version a save must send back, or null when no profile exists yet.</summary>
     public Task<NutritionSettingsProfileDto?> LoadAsync(CancellationToken cancellationToken = default)
     {
         return store.LoadAsync(cancellationToken);
     }
 
+    /// <summary>Calculates the nutrition goals for the profile.</summary>
     public NutritionGoalsDto CalculateGoals(
         NutritionSettingsProfileDto profile, NutritionSettingsSelectionDto selection)
     {
         return store.CalculateGoals(profile, Normalize(selection));
     }
 
+    /// <summary>Applies her edits onto the computed goals, so a field she did not touch keeps its value.</summary>
     public NutritionGoalsDto MergeGoals(NutritionGoalsDto saved, NutritionGoalsDto calculated)
     {
         return NutritionGoalsDtoMapper.ToDto(
             NutritionGoalsDtoMapper.ToDomain(saved).WithFallbacks(NutritionGoalsDtoMapper.ToDomain(calculated)));
     }
 
+    /// <summary>Whether she changed any target, which decides if the goals are stored as overrides.</summary>
     public bool HasOverrides(NutritionGoalsDto edited, NutritionGoalsDto calculated)
     {
         return NutritionGoalsDtoMapper.ToDomain(edited)
             .OnlyOverridesFrom(NutritionGoalsDtoMapper.ToDomain(calculated)).HasAnyValue;
     }
 
+    /// <summary>Re-splits the macros when the user overrides one.</summary>
     public NutritionMacroTargetsDto? RebalanceMacros(NutritionSettingsProfileDto profile,
         NutritionSettingsSelectionDto selection, float calories)
     {
@@ -41,6 +47,7 @@ public sealed class ProfileNutritionSettingsUseCase(IProfileNutritionSettingsSto
                 result.Protein, result.Carbs, result.Fats, result.Fiber);
     }
 
+    /// <summary>Calculates the calorie target for the profile.</summary>
     public NutritionCaloriesTargetsDto? CalculateCalories(NutritionSettingsProfileDto profile,
         float protein, float carbs, float fats)
     {
@@ -48,6 +55,7 @@ public sealed class ProfileNutritionSettingsUseCase(IProfileNutritionSettingsSto
         return result is null ? null : new NutritionCaloriesTargetsDto(result.Calories, result.Fiber);
     }
 
+    /// <summary>Saves the nutrition settings.</summary>
     public async Task<bool> SaveAsync(NutritionSettingsSaveDto request,
         CancellationToken cancellationToken = default)
     {
@@ -64,6 +72,7 @@ public sealed class ProfileNutritionSettingsUseCase(IProfileNutritionSettingsSto
         return await store.SaveAsync(selection, overrides, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Reduces the selection to the targets she actually set, so stale flags are dropped.</summary>
     private static NutritionSettingsSelectionDto Normalize(NutritionSettingsSelectionDto selection)
     {
         var goal = Enum.IsDefined(selection.Goal) ? selection.Goal : UserGoal.MaintainHealth;

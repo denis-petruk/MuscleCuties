@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Workout.Archive;
 
+/// <summary>The archive persistence.</summary>
 public interface IWorkoutArchiveStore
 {
     Task<IReadOnlyList<WorkoutArchiveSummaryDto>> GetWorkoutHistoryAsync(int limit, int offset,

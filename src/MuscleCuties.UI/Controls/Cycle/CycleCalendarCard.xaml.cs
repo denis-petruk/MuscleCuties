@@ -4,10 +4,14 @@ using MuscleCuties.UI.ViewModels.Cycle;
 
 namespace MuscleCuties.UI.Controls.Cycle;
 
+/// <summary>
+///     Weekly strip that selects a calendar day and shows which cycle phase that day falls in.
+/// </summary>
 public partial class CycleCalendarCard : ContentView
 {
     private readonly ViewModelSubscription<CycleViewModel> _subscription;
 
+    /// <summary>Wires the card to its view model and queues the initial scroll.</summary>
     public CycleCalendarCard()
     {
         InitializeComponent();
@@ -17,19 +21,24 @@ public partial class CycleCalendarCard : ContentView
         Loaded += OnCardLoaded;
     }
 
+    /// <summary>Queues a scroll to the selected day when the card loads.</summary>
     private void OnCardLoaded(object? sender, EventArgs e) => QueueScrollToSelectedDay();
 
+    /// <summary>Queues a scroll when the calendar strip's days change.</summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(CycleViewModel.CalendarStripDays))
             QueueScrollToSelectedDay();
     }
 
+    /// <summary>Defers the scroll to the selected day until the strip has laid out, so it scrolls to a cell that already has a</summary>
+    /// position rather than to zero.</summary>
     private void QueueScrollToSelectedDay()
     {
         Dispatcher.Dispatch(() => _ = ScrollToSelectedDayAsync());
     }
 
+    /// <summary>Scrolls the strip so the selected day is in view.</summary>
     private async Task ScrollToSelectedDayAsync()
     {
         if (_subscription.Current is not { } viewModel || MonthStripDaysLayout.Children.Count == 0)

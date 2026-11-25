@@ -13,6 +13,7 @@ internal static class DefaultUserProfileFactory
     private const string EmptyJsonArray = "[]";
     private const int InitialConcurrencyVersion = 1;
 
+    /// <summary>The profile a new account starts with: the id, the concurrency version and the empty JSON defaults the columns require.</summary>
     internal static UserProfileRecord CreateInitial(Guid userId, string? displayName, DateTime nowUtc) => new()
     {
         Id = Guid.CreateVersion7(),

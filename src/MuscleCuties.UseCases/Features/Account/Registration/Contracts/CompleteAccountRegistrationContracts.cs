@@ -9,6 +9,7 @@ using MuscleCuties.Contracts.Onboarding;
 
 namespace MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 
+/// <summary>The final registration step, called once the code is confirmed.</summary>
 public interface ICompleteAccountRegistrationUseCase
 {
     Task<CompleteAccountRegistrationResult> ExecuteAsync(

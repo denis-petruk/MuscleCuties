@@ -4,6 +4,7 @@ using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Profile.Overview;
 
+/// <summary>The profile tab's summary.</summary>
 public sealed record ProfileOverviewDto(
     string Email,
     DateTime? MemberSince,
@@ -26,13 +27,16 @@ public sealed record ProfileOverviewDto(
     int VaultPhotoCount,
     string LatestVaultPhotoPath);
 
+/// <summary>The rows the summary is built from.</summary>
 public sealed record ProfileOverviewSource(
     ProfileOverviewDto Overview,
     CyclePhase PredictedPhase,
     CyclePhase? StoredPhase);
 
+/// <summary>What a purge removed.</summary>
 public sealed record ProfilePurgeResult(bool Succeeded, bool AccountFound, string? FailureMessage = null);
 
+/// <summary>The profile overview.</summary>
 public interface IProfileOverviewUseCase
 {
     Task<ProfileOverviewDto> LoadAsync(CancellationToken cancellationToken = default);

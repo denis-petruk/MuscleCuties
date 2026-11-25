@@ -11,6 +11,7 @@ internal static class PostgresCycleReadinessReconciler
     private const int NoOptionalSets = 0;
     private const int SingleSetReduction = 1;
     // The caller owns the tenant transaction and workout account lock.
+    /// <summary>Flags the account so the readiness change is folded into the plan before the next session.</summary>
     public static async Task MarkPendingAsync(PostgresDbContext db, Guid userId, CancellationToken ct)
     {
         var state = await db.WorkoutAccountPlanningStates.SingleOrDefaultAsync(x => x.UserId == userId, ct).ConfigureAwait(false);
@@ -50,6 +51,7 @@ internal static class PostgresCycleReadinessReconciler
         }
     }
 
+    /// <summary>Applies any outstanding readiness change to the plan, answering whether anything was written.</summary>
     public static async Task<bool> ReconcileAsync(PostgresDbContext db, Guid userId, DateTimeOffset now, CancellationToken ct)
     {
         var state = await db.WorkoutAccountPlanningStates.SingleOrDefaultAsync(x => x.UserId == userId, ct).ConfigureAwait(false);
@@ -125,6 +127,8 @@ internal static class PostgresCycleReadinessReconciler
         return true;
     }
 
+    /// <summary>Whether an adjusted prescription is the same day with the same planned content, which is how an overlay that
+    /// changed nothing is recognised and skipped.</summary>
     public static bool MatchesBaseline(PlannedPrescriptionSnapshot baseline, PlannedPrescriptionSnapshot? adjusted)
     {
         if (adjusted is null || adjusted.DayId != baseline.DayId || adjusted.Name != baseline.Name ||

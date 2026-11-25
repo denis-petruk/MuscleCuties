@@ -6,6 +6,9 @@ using MuscleCuties.UseCases.Features.Account.SignIn.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Auth;
 
+/// <summary>
+///     Account creation state: field validation, the privacy consent, and the handoff to the code step.
+/// </summary>
 public partial class RegisterViewModel : ObservableObject, IDisposable
 {
     private readonly Func<Task> _navigateBackAsync;
@@ -32,6 +35,7 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
     private int _requestVersion;
     [ObservableProperty] private string _username = string.Empty;
 
+    /// <summary>Takes the registration use cases and the navigation callbacks.</summary>
     public RegisterViewModel(
         IAccountRegistrationUseCase registration,
         IAccountSignInUseCase signIn,
@@ -60,41 +64,55 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         GoToPrivacyPolicyCommand = new AsyncRelayCommand(GoToPrivacyPolicyAsync, () => !IsBusy);
     }
 
+    /// <summary>Registers the account.</summary>
     public AsyncRelayCommand RegisterCommand { get; }
+    /// <summary>Returns to the previous page.</summary>
     public AsyncRelayCommand GoBackCommand { get; }
+    /// <summary>Registers through the platform account.</summary>
     public AsyncRelayCommand SignInWithPlatformCommand { get; }
+    /// <summary>Opens the privacy policy.</summary>
     public AsyncRelayCommand GoToPrivacyPolicyCommand { get; }
+    /// <summary>Registers with Apple.</summary>
     public AsyncRelayCommand SignInWithAppleCommand => SignInWithPlatformCommand;
+    /// <summary>True when the platform can sign in.</summary>
     public bool IsPlatformSignInAvailable => _platformSignIn.IsAvailable;
+    /// <summary>True when Apple sign-in is available on this device.</summary>
     public bool IsAppleSignInAvailable => IsPlatformSignInAvailable;
+    /// <summary>The label for the platform registration button.</summary>
     public string PlatformRegisterButtonText => _platformSignIn.RegisterButtonText;
 
+    /// <summary>Clears the error when the email changes.</summary>
     partial void OnEmailChanged(string value)
     {
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Clears the error when the username changes.</summary>
     partial void OnUsernameChanged(string value)
     {
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Clears the error when the password changes.</summary>
     partial void OnPasswordChanged(string value)
     {
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Checks the confirmation against the password.</summary>
     partial void OnConfirmPasswordChanged(string value)
     {
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Refreshes registration when the consent changes.</summary>
     partial void OnHasAcceptedPrivacyNoticeChanged(bool value)
     {
         _privacyConsentAcceptedAtUtc = value ? DateTimeOffset.UtcNow : null;
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Refreshes the command states when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         RegisterCommand.NotifyCanExecuteChanged();
@@ -103,6 +121,7 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         GoToPrivacyPolicyCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Opens the privacy policy, which is what the consent the user is giving refers to.</summary>
     private async Task GoToPrivacyPolicyAsync()
     {
         if (_navigateToPrivacyPolicyAsync is not null)
@@ -111,6 +130,7 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Releases the view model's subscriptions.</summary>
     public void Dispose()
     {
         _disposed = true;
@@ -118,6 +138,8 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>Creates the account once — a second tap or an answer after the page closed is ignored — and carries the</summary>
+    /// registration attempt id so an abandoned attempt can be cancelled.</summary>
     private async Task RegisterAsync()
     {
         if (IsBusy || _disposed)
@@ -201,6 +223,8 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Abandons the request in flight: bumps the version so its answer is discarded and cancels the attempt this</summary>
+    /// page owns, so leaving the form does not leave a half-made account behind.</summary>
     public void CancelPendingRequest()
     {
         ++_requestVersion;
@@ -211,12 +235,16 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         _ownedAttemptId = null;
     }
 
+    /// <summary>Closes the page, releasing the pending request first so a late answer cannot act on a form the user has</summary>
+    /// left.</summary>
     private async Task GoBackAsync()
     {
         Dispose();
         await _navigateBackAsync();
     }
 
+    /// <summary>Hands an already-registered address to the login page with the typed email, clearing the passwords it can no</summary>
+    /// longer use.</summary>
     private async Task RedirectExistingAccountAsync(string email)
     {
         Password = string.Empty;
@@ -230,6 +258,7 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         await _navigateToExistingLoginAsync(email.Trim().ToLowerInvariant());
     }
 
+    /// <summary>The platform sign-in path from the register page, which may land on an existing account or a new one.</summary>
     private async Task SignInWithPlatformAsync()
     {
         if (IsBusy || _disposed)
@@ -258,6 +287,8 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Activates the new account's photo cache before navigating, so nothing from a previous account survives the</summary>
+    /// switch.</summary>
     private async Task ActivateAndNavigateAsync(bool isComplete)
     {
         if (_photoCacheAccountLifecycle is not null)

@@ -6,6 +6,7 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UseCases.Features.Profile.ServerProfile;
 
+/// <summary>Applies profile writes one at a time, refusing one based on an older version.</summary>
 public sealed class ServerProfileUseCase(
     IServerProfileDataStore store,
     GetReviewedExerciseExclusionCatalogV020UseCase exclusionCatalog,
@@ -15,15 +16,19 @@ public sealed class ServerProfileUseCase(
     private const int MaximumTargetKeyLength = 64;
     private readonly TimeProvider timeProvider = clock ?? TimeProvider.System;
 
+    /// <summary>Loads the user's server profile.</summary>
     public Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken) =>
         store.LoadAsync(userId, cancellationToken);
 
+    /// <summary>The user's profile change history.</summary>
     public Task<IReadOnlyList<ServerProfileHistoryEntry>> LoadHistoryAsync(Guid userId, CancellationToken cancellationToken) =>
         store.LoadHistoryAsync(userId, cancellationToken);
 
+    /// <summary>The user's stored quiz answers.</summary>
     public Task<IReadOnlyList<ServerQuizResponse>> LoadQuizResponsesAsync(Guid userId, CancellationToken cancellationToken) =>
         store.LoadQuizResponsesAsync(userId, cancellationToken);
 
+    /// <summary>Saves a profile update, reporting conflicts.</summary>
     public Task<ServerProfileWriteResult> UpdateProfileAsync(UpdateServerProfileRequest request, CancellationToken cancellationToken) =>
         request.ExpectedVersion <= 0 || request.UserId == Guid.Empty
             ? Invalid()
@@ -37,17 +42,20 @@ public sealed class ServerProfileUseCase(
                 ? Invalid()
             : store.UpdateProfileAsync(request, cancellationToken);
 
+    /// <summary>Corrects one stored quiz answer.</summary>
     public Task<ServerProfileWriteResult> CorrectQuizResponseAsync(CorrectServerQuizResponseRequest request, CancellationToken cancellationToken) =>
         request.ExpectedVersion <= 0 || request.UserId == Guid.Empty || request.QuestionId <= 0 || request.AnswerId <= 0
             ? Invalid()
             : store.CorrectQuizResponseAsync(request, cancellationToken);
 
+    /// <summary>Saves the nutrition preferences.</summary>
     public Task<ServerProfileWriteResult> UpdateNutritionPreferencesAsync(UpdateServerNutritionPreferencesRequest request, CancellationToken cancellationToken) =>
         request.ExpectedVersion <= 0 || request.UserId == Guid.Empty || string.IsNullOrWhiteSpace(request.Goal) ||
         string.IsNullOrWhiteSpace(request.WeightGoalPace) || request.DietaryTags is null
             ? Invalid()
             : store.UpdateNutritionPreferencesAsync(request, cancellationToken);
 
+    /// <summary>Saves the workout preferences after checking they are complete.</summary>
     public async Task<ServerProfileWriteResult> UpdateWorkoutPreferencesAsync(
         UpdateServerWorkoutPreferencesRequest request,
         CancellationToken cancellationToken)
@@ -71,6 +79,7 @@ public sealed class ServerProfileUseCase(
         return await store.UpdateWorkoutPreferencesAsync(request, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Stores the targets against the profile version, refusing a stale write.</summary>
     public Task<ServerProfileWriteResult> UpdateNutritionTargetsAsync(UpdateServerNutritionTargetsRequest request, CancellationToken cancellationToken)
     {
         if (request.UserId == Guid.Empty || request.ExpectedVersion <= 0 || request.Targets is null ||
@@ -83,6 +92,7 @@ public sealed class ServerProfileUseCase(
         return store.UpdateNutritionTargetsAsync(request, cancellationToken);
     }
 
+    /// <summary>A refused write reported as invalid input.</summary>
     private static Task<ServerProfileWriteResult> Invalid() =>
         Task.FromResult(new ServerProfileWriteResult(ServerProfileWriteStatus.InvalidRequest, null));
 }

@@ -10,6 +10,7 @@ public sealed record SaveCyclePhaseLogInput(
     FlowIntensityDto? FlowIntensity = null,
     string? Note = null);
 
+/// <summary>How saving a phase log ended, so the client can offer the right next step.</summary>
 public enum SaveCyclePhaseLogOutcomeKind
 {
     Saved,
@@ -23,6 +24,7 @@ public sealed record SaveCyclePhaseLogOutput(
     SaveCyclePhaseLogOutcomeKind Outcome,
     CyclePhaseDto? SuggestedPhase = null);
 
+/// <summary>Saves a day's phase log.</summary>
 public interface ISaveCyclePhaseLogUseCase
 {
     Task<SaveCyclePhaseLogOutput> ExecuteAsync(

@@ -1,6 +1,7 @@
 
 namespace MuscleCuties.UI.Models.UI.Workout;
 
+/// <summary>One chip in a filter or week row, identified by a stable tag rather than its label.</summary>
 public partial class FilterChipItem : ObservableObject
 {
     [ObservableProperty] private bool _isSelected;

@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Cycle.DailyLog;
 
+/// <summary>The persistence the daily cycle log needs.</summary>
 public interface ICycleDailyLogStore
 {
     Task<CycleDailyLogSnapshot?> LoadAsync(DateTime date, CancellationToken cancellationToken);

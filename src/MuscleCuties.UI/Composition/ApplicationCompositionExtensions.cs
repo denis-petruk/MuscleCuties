@@ -46,8 +46,12 @@ using INutritionChangeNotifier = MuscleCuties.Core.Services.Nutrition.INutrition
 
 namespace MuscleCuties.UI.Composition;
 
+/// <summary>Wires the domain services and use cases the screens call. Stores sit behind their ports, so a</summary>
+/// screen never sees the cloud client that backs it.</summary>
 public static class ApplicationCompositionExtensions
 {
+    /// <summary>Registers the app's ports and use cases; the catalogue search store is swapped for a loopback</summary>
+    /// variant when the app targets the local backend.</summary>
     public static IServiceCollection RegisterDomainAndApplicationServices(this IServiceCollection services)
     {
         services.AddScoped<ICalorieCalculator, CalorieCalculator>();

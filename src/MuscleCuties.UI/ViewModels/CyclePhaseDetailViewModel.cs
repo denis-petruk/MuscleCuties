@@ -6,6 +6,8 @@ using MuscleCuties.UI.Models.UI.Cycle;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
 
+/// <summary>The phase detail page: one phase's signals and points, read from the catalog rather than the network, so it</summary>
+/// opens instantly and works offline.</summary>
 public partial class CyclePhaseDetailViewModel : ObservableObject
 {
     private readonly Func<Task> _navigateBackAsync;
@@ -25,6 +27,7 @@ public partial class CyclePhaseDetailViewModel : ObservableObject
     private string _phaseImageSource = string.Empty;
     [ObservableProperty] private bool _phaseImageUsesAnimation;
 
+    /// <summary>True when the phase has an image.</summary>
     public bool HasPhaseImage => !string.IsNullOrWhiteSpace(PhaseImageSource);
     [ObservableProperty] private string _phaseName = "Cycle phase unknown";
     [ObservableProperty] private string _phaseWindow = "No phase estimate";
@@ -41,6 +44,7 @@ public partial class CyclePhaseDetailViewModel : ObservableObject
     [ObservableProperty] private string _workoutLead = string.Empty;
     [ObservableProperty] private ObservableCollection<CyclePhaseDetailPoint> _workoutPoints = new();
 
+    /// <summary>Takes the way back, because this page is only ever closed.</summary>
     public CyclePhaseDetailViewModel(Func<Task> navigateBackAsync)
     {
         _navigateBackAsync = navigateBackAsync;
@@ -49,25 +53,32 @@ public partial class CyclePhaseDetailViewModel : ObservableObject
         Load(CyclePhase.Unknown);
     }
 
+    /// <summary>Returns to the cycle page.</summary>
     public AsyncRelayCommand BackCommand { get; }
+    /// <summary>Toggles the phase watch.</summary>
     public RelayCommand ToggleWatchCommand { get; }
 
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in PhaseDetail XAML / view model contract.")]
+    /// <summary>The icon for the training section.</summary>
     public string TrainingIconGlyph => "Dumbbell24";
 
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in PhaseDetail XAML / view model contract.")]
+    /// <summary>The icon for the nutrition section.</summary>
     public string NutritionIconGlyph => "Food24";
 
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in PhaseDetail XAML / view model contract.")]
+    /// <summary>The icon for the recovery section.</summary>
     public string RecoveryIconGlyph => "WeatherMoon24";
 
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in PhaseDetail XAML / view model contract.")]
+    /// <summary>The icon for the section that says what to watch for.</summary>
     public string WatchIconGlyph => "AlertUrgent24";
 
+    /// <summary>Fills the page for the phase it was opened on.</summary>
     public void Load(CyclePhase phase)
     {
         var detail = CyclePhaseDetailCatalog.BuildDetail(phase);
@@ -92,6 +103,7 @@ public partial class CyclePhaseDetailViewModel : ObservableObject
         WatchPoints = BuildPointCollection(detail.WatchPoints);
     }
 
+    /// <summary>The points as a bindable collection.</summary>
     private static ObservableCollection<CyclePhaseDetailPoint> BuildPointCollection(
         IReadOnlyList<CyclePhaseDetailPoint> points)
     {
@@ -103,6 +115,7 @@ public partial class CyclePhaseDetailViewModel : ObservableObject
         }));
     }
 
+    /// <summary>Publishes the phase's signals so the badge rows follow the phase the page is showing.</summary>
     private void ApplySignalModel(CyclePhase phase)
     {
         var signal = CyclePhaseDetailCatalog.GetPhaseSignals(phase);

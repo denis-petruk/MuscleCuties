@@ -24,12 +24,14 @@ public static class CheckInObservationRule
     private const int MinimumPlanningScaleValue = 1;
     private const int MaximumPlanningScaleValue = 5;
 
+    /// <summary>True when the range is ordered and falls inside the span check-ins are kept for.</summary>
     public static bool IsSupportedRange(Guid userId, DateOnly from, DateOnly through) =>
         userId != Guid.Empty &&
         from >= MinimumSupportedDate &&
         through <= MaximumSupportedDate &&
         through >= from;
 
+    /// <summary>True when a check-in carries every score inside its allowed range.</summary>
     public static bool IsValid(
         Guid userId,
         Guid id,
@@ -59,6 +61,7 @@ public static class CheckInObservationRule
         IsWithin(soreness, MinimumSoreness, MaximumSoreness) &&
         IsWithin(previousDayLoad, MinimumPreviousDayLoad, MaximumPreviousDayLoad);
 
+    /// <summary>True when each planning input of a check-in is inside its allowed range.</summary>
     public static bool ArePlanningInputsValid(int? energy, int? sleepQuality, int? soreness, int? stress,
         string? timeZoneId, int? fatigue = null) =>
         ((energy is null && sleepQuality is null && soreness is null && stress is null && timeZoneId is null &&
@@ -89,9 +92,11 @@ public static class CheckInObservationRule
         }
     }
 
+    /// <summary>True when the value is unset or falls inside the inclusive range.</summary>
     private static bool IsWithin(decimal? value, decimal minimum, decimal maximum) =>
         value is null || value >= minimum && value <= maximum;
 
+    /// <summary>True when the value is unset or falls inside the inclusive range.</summary>
     private static bool IsWithin(int? value, int minimum, int maximum) =>
         value is null || value >= minimum && value <= maximum;
 }

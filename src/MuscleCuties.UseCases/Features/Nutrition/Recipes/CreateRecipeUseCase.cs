@@ -3,6 +3,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Recipes;
 
+/// <summary>Saving a recipe.</summary>
 public interface ICreateRecipeUseCase
 {
     Task<RecipeDetailsDto> PreviewAsync(CreateRecipeRequest request, CancellationToken cancellationToken = default);
@@ -14,22 +15,26 @@ public interface ICreateRecipeUseCase
         throw new NotSupportedException("Tenant-scoped recipe update requires an explicit use case implementation.");
 }
 
+/// <summary>Saves a recipe, refusing one with no name or no ingredients.</summary>
 public sealed class CreateRecipeUseCase : ICreateRecipeUseCase
 {
     private const int InitialConcurrencyVersion = 1;
     private readonly IRecipeStore _recipeStore;
 
+    /// <summary>Takes the recipe store, which is the only dependency this use case needs.</summary>
     public CreateRecipeUseCase(IRecipeStore recipeStore)
     {
         _recipeStore = recipeStore ?? throw new ArgumentNullException(nameof(recipeStore));
     }
 
+    /// <summary>Saves the recipe for the signed-in account and returns it as the screen shows it.</summary>
     public async Task<RecipeDetailsDto> ExecuteAsync(CreateRecipeRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return await _recipeStore.SaveRecipeAsync(BuildRecipe(request), cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Saves the recipe for the signed-in account and returns it as the screen shows it.</summary>
     public async Task<RecipeDetailsDto> ExecuteAsync(Guid userId, CreateRecipeRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -38,6 +43,7 @@ public sealed class CreateRecipeUseCase : ICreateRecipeUseCase
         return await _recipeStore.SaveRecipeAsync(userId, BuildRecipe(request), cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Replaces the stored recipe, refusing one that is not hers.</summary>
     public async Task<RecipeDetailsDto> UpdateAsync(UpdateRecipeRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -54,6 +60,7 @@ public sealed class CreateRecipeUseCase : ICreateRecipeUseCase
         return await _recipeStore.UpdateRecipeAsync(updated, request.ExpectedVersion, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Replaces the stored recipe, refusing one that is not hers.</summary>
     public async Task<RecipeDetailsDto> UpdateAsync(Guid userId, UpdateRecipeRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -72,12 +79,14 @@ public sealed class CreateRecipeUseCase : ICreateRecipeUseCase
         return await _recipeStore.UpdateRecipeAsync(userId, updated, request.ExpectedVersion, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Computes the recipe's totals without storing it, so the form can show them while she types.</summary>
     public Task<RecipeDetailsDto> PreviewAsync(CreateRecipeRequest request, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
         return Task.FromResult(BuildRecipe(request));
     }
 
+    /// <summary>Builds the recipe details the response carries.</summary>
     private static RecipeDetailsDto BuildRecipe(
         CreateRecipeRequest request,
         Guid? existingId = null,

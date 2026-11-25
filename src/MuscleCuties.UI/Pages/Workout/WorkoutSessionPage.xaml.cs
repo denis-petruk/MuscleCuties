@@ -6,6 +6,9 @@ using WorkoutViewModel = MuscleCuties.UI.ViewModels.Workout.WorkoutViewModel;
 
 namespace MuscleCuties.UI.Pages.Workout;
 
+/// <summary>
+///     Live session page: sets, reps, optional exercises, and completion.
+/// </summary>
 public partial class WorkoutSessionPage : ContentPage
 {
     private readonly INavigationContextService _navigationContext;
@@ -15,6 +18,7 @@ public partial class WorkoutSessionPage : ContentPage
     private int _workoutDayId;
     private string? _activityTag;
 
+    /// <summary>Initializes the page with its view models and navigation context.</summary>
     public WorkoutSessionPage(
         WorkoutSessionViewModel vm,
         INavigationContextService navigationContext,
@@ -26,6 +30,7 @@ public partial class WorkoutSessionPage : ContentPage
         BindingContext = _viewModel = vm;
     }
 
+    /// <summary>Reads the session it was opened for and loads it.</summary>
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
@@ -51,6 +56,7 @@ public partial class WorkoutSessionPage : ContentPage
         this.BeginPageLoad(() => _viewModel.LoadSession(_workoutDayId, activityTag));
     }
 
+    /// <summary>Saves the session timing before the page is left.</summary>
     protected override void OnNavigatingFrom(NavigatingFromEventArgs args)
     {
         _ = _viewModel.SuspendTimingAsync();
@@ -61,9 +67,11 @@ public partial class WorkoutSessionPage : ContentPage
         base.OnNavigatingFrom(args);
     }
 
+    /// <summary>Pauses the running timer while the page is away.</summary>
     private void OnWorkoutTimingSuspending(object? sender, EventArgs e) =>
         _ = _viewModel.SuspendForAppBackgroundAsync();
 
+    /// <summary>Applies the session changes the view model reports.</summary>
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(WorkoutSessionViewModel.CurrentExercise))
@@ -117,12 +125,16 @@ public partial class WorkoutSessionPage : ContentPage
         }
     }
 
+    /// <summary>Commits the effort slider's value once the drag ends, so the value is written once rather than on every</summary>
+    /// movement.</summary>
     private void OnEffortDragCompleted(object? sender, EventArgs e)
     {
         if (sender is Slider { BindingContext: WorkoutExerciseItem exercise } slider)
             exercise.CommitEffortSliderValue(slider.Value);
     }
 
+    /// <summary>Sends the optional-exercise change, skipping the call while busy or when the toggle matches what was</summary>
+    /// already recorded.</summary>
     private async void OnOptionalExerciseToggled(object? sender, ToggledEventArgs e)
     {
         if (sender is not Microsoft.Maui.Controls.Switch { BindingContext: WorkoutExerciseItem exercise }) return;
@@ -134,6 +146,7 @@ public partial class WorkoutSessionPage : ContentPage
         }
     }
 
+    /// <summary>Updates the session when the optional set count changes.</summary>
     private async void OnOptionalSetsChanged(object? sender, ValueChangedEventArgs e)
     {
         if (sender is not Stepper { BindingContext: WorkoutExerciseItem exercise }) return;
@@ -145,6 +158,7 @@ public partial class WorkoutSessionPage : ContentPage
         }
     }
 
+    /// <summary>Asks before leaving a running session.</summary>
     protected override bool OnBackButtonPressed()
     {
         _ = _viewModel.BackCommand.ExecuteAsync(null);

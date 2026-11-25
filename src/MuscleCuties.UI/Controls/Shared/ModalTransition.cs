@@ -1,8 +1,12 @@
 
 namespace MuscleCuties.UI.Controls.Shared;
 
+/// <summary>
+///     The one place sheet show and hide animations are defined.
+/// </summary>
 internal static class ModalTransition
 {
+    /// <summary>Slides and fades a sheet in, with the distance defaulting to the sheet's own height.</summary>
     internal static void PlayShow(ContentView modal, double? slideDistance = null)
     {
         modal.CancelAnimations();
@@ -61,6 +65,8 @@ internal static class ModalTransition
         });
     }
 
+    /// <summary>Slides and fades a sheet out and only then runs the caller's completion, which is the one safe moment to hide</summary>
+    /// or dispose what was animating.</summary>
     internal static void PlayHide(ContentView modal, Action? onComplete = null)
     {
         modal.CancelAnimations();
@@ -102,6 +108,7 @@ internal static class ModalTransition
         });
     }
 
+    /// <summary>The card surface that actually slides; a sheet without one transitions as a whole.</summary>
     internal static Border? FindCard(ContentView modal)
     {
         if (modal.Content is Layout container)

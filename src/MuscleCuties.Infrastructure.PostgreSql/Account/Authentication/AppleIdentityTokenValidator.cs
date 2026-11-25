@@ -2,8 +2,10 @@ using System.Text;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
 
+/// <summary>What a verified Apple identity token asserts: the subject, the email when Apple released one, and whether that email is private.</summary>
 public sealed record AppleVerifiedIdentity(string AppleUserId, string? Email);
 
+/// <summary>Why a token was rejected, kept as distinct values so the API can answer invalid-token separately from expired.
 public enum AppleIdentityValidationOutcome
 {
     Valid,
@@ -40,6 +42,7 @@ public sealed class AppleIdentityTokenValidator(
     private const long AllowedIssueTimeFutureSeconds = 60;
     private const string AppleIssuer = "https://appleid.apple.com";
 
+    /// <summary>Validates an Apple identity token and returns the subject it proves.</summary>
     public AppleIdentityValidationOutcome Validate(
         string? token,
         string? nonce,
@@ -104,9 +107,11 @@ public sealed class AppleIdentityTokenValidator(
         }
     }
 
+    /// <summary>SHA-256 hash of a value, hex encoded, so a token subject is stored without the raw value.</summary>
     public static string Hash(string value) =>
         Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
 
+    /// <summary>Reads a required string claim, answering false rather than throwing when the claim is missing or not a string.</summary>
     private static bool ReadString(JsonElement element, string name, out string value)
     {
         value = string.Empty;
@@ -116,6 +121,7 @@ public sealed class AppleIdentityTokenValidator(
         return value.Length > 0;
     }
 
+    /// <summary>Decodes a base64url segment of the token.</summary>
     private static byte[] Decode(string value) =>
         Convert.FromBase64String(value.Replace('-', '+').Replace('_', '/')
             .PadRight((value.Length + 3) / 4 * 4, '='));

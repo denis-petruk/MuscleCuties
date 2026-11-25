@@ -18,6 +18,7 @@ public sealed class OpenSourceIngredientCache(TimeProvider? timeProvider = null)
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
     private readonly ConcurrentDictionary<string, CacheEntry> _entries = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Returns a cached lookup result, so a repeated query does not hit the network again.</summary>
     public bool TryGet(string query, out ExternalFoodItem item)
     {
         var now = _timeProvider.GetUtcNow();
@@ -31,6 +32,7 @@ public sealed class OpenSourceIngredientCache(TimeProvider? timeProvider = null)
         return false;
     }
 
+    /// <summary>Stores a lookup result under its query for the cache's lifetime.</summary>
     public void Set(string query, ExternalFoodItem item)
     {
         if (_entries.Count >= MaxEntries && !_entries.ContainsKey(query))
@@ -39,6 +41,7 @@ public sealed class OpenSourceIngredientCache(TimeProvider? timeProvider = null)
         _entries[query] = new CacheEntry(item, _timeProvider.GetUtcNow().Add(EntryLifetime));
     }
 
+    /// <summary>A generated meal kept briefly, so repeated requests for the same day agree.</summary>
     private sealed record CacheEntry(ExternalFoodItem Item, DateTimeOffset ExpiresAtUtc);
 }
 
@@ -54,12 +57,14 @@ public sealed class OpenSourceMealGenerator(
     private static readonly TimeSpan LookupTimeout = TimeSpan.FromSeconds(5);
     private const int SuggestionsPerMealType = 3;
 
+    /// <summary>A slot of a generated meal with the ingredients chosen for it.</summary>
     private sealed record OpenSourceIngredientSlot(
         string DisplayName,
         string GenericQuery,
         float ReferenceGrams,
         bool IsOil = false);
 
+    /// <summary>The structure a generated meal is filled from.</summary>
     private sealed record OpenSourceMealBlueprint(
         string ConceptName,
         string Description,
@@ -245,6 +250,7 @@ public sealed class OpenSourceMealGenerator(
 
     private readonly OpenSourceIngredientCache _cache = cache ?? new OpenSourceIngredientCache();
 
+    /// <summary>Builds one meal suggestion for the slot.</summary>
     public async Task<MealSuggestionDto?> GenerateMealAsync(
         string mealType,
         string breakfastPreference,
@@ -275,6 +281,7 @@ public sealed class OpenSourceMealGenerator(
         return null;
     }
 
+    /// <summary>Builds the day's meal suggestions.</summary>
     public async Task<IReadOnlyList<MealSuggestionDto>> GenerateSuggestionsAsync(
         string mealType,
         string breakfastPreference,
@@ -301,6 +308,7 @@ public sealed class OpenSourceMealGenerator(
         return results.OfType<MealSuggestionDto>().ToList();
     }
 
+    /// <summary>Tries to build a suggestion from the slot's ingredients, or nothing.</summary>
     private async Task<MealSuggestionDto?> TryBuildSuggestionAsync(
         OpenSourceMealBlueprint blueprint,
         float targetCalories,
@@ -363,6 +371,7 @@ public sealed class OpenSourceMealGenerator(
             blueprint.Description);
     }
 
+    /// <summary>Resolves the ingredient profile for a slot, from the catalog or an external source.</summary>
     private async Task<(GeneratedMealIngredientProfile? Profile, bool FromExternalSource)> ResolveSlotAsync(
         OpenSourceIngredientSlot slot,
         CancellationToken cancellationToken)
@@ -398,6 +407,7 @@ public sealed class OpenSourceMealGenerator(
             : (null, false);
     }
 
+    /// <summary>Turns an external food into the generator's ingredient profile.</summary>
     private static GeneratedMealIngredientProfile ToProfile(OpenSourceIngredientSlot slot, ExternalFoodItem item) =>
         new(
             slot.DisplayName,
@@ -408,6 +418,7 @@ public sealed class OpenSourceMealGenerator(
             item.FatsPer100Grams,
             slot.IsOil);
 
+    /// <summary>Picks the candidate that best fits the slot, or null when none is close enough.</summary>
     private static ExternalFoodItem? SelectBestMatch(string query, IReadOnlyList<ExternalFoodItem> items)
     {
         if (items.Count == 0)
@@ -427,6 +438,7 @@ public sealed class OpenSourceMealGenerator(
             .FirstOrDefault();
     }
 
+    /// <summary>Scores how well a food fits a slot, so a poor fit is refused rather than substituted.</summary>
     private static int ScoreMatch(ExternalFoodItem item, string[] queryTokens)
     {
         var score = 0;
@@ -448,6 +460,7 @@ public sealed class OpenSourceMealGenerator(
         return score;
     }
 
+    /// <summary>The blueprint set for the requested meal, which bounds what the generator may choose.</summary>
     private static OpenSourceMealBlueprint[] GetBlueprints(string mealType, string breakfastPreference)
     {
         var isSweet = string.Equals(breakfastPreference, "Sweet", StringComparison.OrdinalIgnoreCase);
@@ -461,6 +474,7 @@ public sealed class OpenSourceMealGenerator(
         };
     }
 
+    /// <summary>Orders the meal blueprints so the most suitable comes first.</summary>
     private static IReadOnlyList<OpenSourceMealBlueprint> OrderBlueprints(
         OpenSourceMealBlueprint[] blueprints,
         string? excludeConceptName,

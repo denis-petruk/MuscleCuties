@@ -4,10 +4,12 @@ using MuscleCuties.UseCases.Features.Workout.Archive;
 
 namespace MuscleCuties.Server.Workout.Archive;
 
+/// <summary>The workout-archive routes.</summary>
 public static class WorkoutArchiveEndpointMappings
 {
     private const string HistoryRoute = "/api/v1/workouts/history";
 
+    /// <summary>Registers the archive endpoints.</summary>
     public static IEndpointRouteBuilder MapWorkoutArchiveEndpoints(this IEndpointRouteBuilder endpoints)
     {
         MapGroup(endpoints.MapGroup(HistoryRoute).RequireAuthorization());
@@ -15,6 +17,7 @@ public static class WorkoutArchiveEndpointMappings
         return endpoints;
     }
 
+    /// <summary>The archive routes themselves, kept separate so the same group can be mounted twice.</summary>
     private static void MapGroup(RouteGroupBuilder group)
     {
         group.MapGet("", async (

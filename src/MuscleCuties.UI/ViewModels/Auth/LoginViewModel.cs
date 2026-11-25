@@ -4,6 +4,9 @@ using MuscleCuties.UseCases.Features.Account.SignIn.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Auth;
 
+/// <summary>
+///     Sign-in state for the login page: credentials, validation, and the route taken after a successful sign-in.
+/// </summary>
 public partial class LoginViewModel : ObservableObject
 {
     private readonly IAccountLoginScheduler _loginScheduler;
@@ -20,6 +23,7 @@ public partial class LoginViewModel : ObservableObject
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private string _password = string.Empty;
 
+    /// <summary>Takes the sign-in use cases and the navigation callbacks.</summary>
     public LoginViewModel(
         IAccountSignInUseCase signIn,
         IAccountLoginScheduler loginScheduler,
@@ -43,27 +47,38 @@ public partial class LoginViewModel : ObservableObject
         SignInWithPlatformCommand = new AsyncRelayCommand(SignInWithPlatformAsync, () => !IsBusy);
     }
 
+    /// <summary>True when the platform can sign in.</summary>
     public bool IsPlatformSignInAvailable => _platformSignIn.IsAvailable;
+    /// <summary>True when Apple sign-in is available on this device.</summary>
     public bool IsAppleSignInAvailable => IsPlatformSignInAvailable;
+    /// <summary>The label for the platform sign-in button.</summary>
     public string PlatformLoginButtonText => _platformSignIn.LoginButtonText;
 
+    /// <summary>Signs in with the entered credentials.</summary>
     public AsyncRelayCommand LoginCommand { get; }
+    /// <summary>Opens the registration page.</summary>
     public AsyncRelayCommand GoToRegisterCommand { get; }
+    /// <summary>Opens the password recovery page.</summary>
     public AsyncRelayCommand GoToRecoveryCommand { get; }
+    /// <summary>Signs in through the platform account.</summary>
     public AsyncRelayCommand SignInWithPlatformCommand { get; }
+    /// <summary>Signs in with Apple.</summary>
     public AsyncRelayCommand SignInWithAppleCommand => SignInWithPlatformCommand;
 
+    /// <summary>Clears the error when the email changes.</summary>
     partial void OnEmailChanged(string value)
     {
         InfoMessage = string.Empty;
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Clears the error when the password changes.</summary>
     partial void OnPasswordChanged(string value)
     {
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Refreshes the command states when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         LoginCommand.NotifyCanExecuteChanged();
@@ -72,6 +87,8 @@ public partial class LoginViewModel : ObservableObject
         SignInWithPlatformCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Points the form at an account that already exists — clearing the password and any error — and explains in</summary>
+    /// the info line why the user was sent back here.</summary>
     public void PrepareForExistingAccount(string email)
     {
         Email = email;
@@ -80,6 +97,8 @@ public partial class LoginViewModel : ObservableObject
         InfoMessage = "Ui_Auth_Info_ExistingAccount";
     }
 
+    /// <summary>Same hand-off after a password reset, so the user signs in with the new password rather than a stale</summary>
+    /// one.</summary>
     public void PrepareForPasswordUpdated(string email)
     {
         Email = email;
@@ -88,6 +107,8 @@ public partial class LoginViewModel : ObservableObject
         InfoMessage = "Ui_Auth_Info_PasswordUpdated";
     }
 
+    /// <summary>Opens password recovery, or says it is unavailable when the page was given no route for it, so the action</summary>
+    /// never silently does nothing.</summary>
     private async Task HandleRecoveryNavigationAsync()
     {
         if (_navigateToRecoveryAsync is not null)
@@ -96,6 +117,8 @@ public partial class LoginViewModel : ObservableObject
             ErrorMessage = "Ui_Auth_Error_RecoveryUnavailable";
     }
 
+    /// <summary>Signs in once, refusing a second attempt while one is running, and turns the answer's outcome into a</summary>
+    /// navigation or an error on the page.</summary>
     private async Task LoginAsync()
     {
         if (IsBusy)
@@ -127,7 +150,7 @@ public partial class LoginViewModel : ObservableObject
                 return;
             }
 
-            await NavigateForAccountAsync(result.IsOnboardingComplete);
+            await ActivateAndNavigateAsync(result.IsOnboardingComplete);
         }
         catch (Exception ex)
         {
@@ -140,6 +163,7 @@ public partial class LoginViewModel : ObservableObject
         }
     }
 
+    /// <summary>The platform sign-in path, which can end in a new account that still has to finish onboarding.</summary>
     private async Task SignInWithPlatformAsync()
     {
         if (IsBusy)
@@ -152,7 +176,7 @@ public partial class LoginViewModel : ObservableObject
             await PlatformSignInCoordinator.ExecuteAsync(
                 _platformSignIn,
                 _signIn,
-                NavigateForAccountAsync,
+                ActivateAndNavigateAsync,
                 msg => ErrorMessage = msg,
                 nameof(LoginViewModel));
         }
@@ -162,11 +186,8 @@ public partial class LoginViewModel : ObservableObject
         }
     }
 
-    private Task NavigateForAccountAsync(bool isOnboardingComplete)
-    {
-        return ActivateAndNavigateAsync(isOnboardingComplete);
-    }
-
+    /// <summary>Activates the signed-in account's photo cache before navigating, so a previous account's cached images can</summary>
+    /// never be shown to this one.</summary>
     private async Task ActivateAndNavigateAsync(bool isOnboardingComplete)
     {
         if (_photoCacheAccountLifecycle is not null)

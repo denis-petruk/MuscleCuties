@@ -6,12 +6,14 @@ using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Account.Registration;
 
+/// <summary>Creates the account, its profile and its quiz answers in one transaction.</summary>
 public sealed class CompleteAccountRegistrationUseCase(
     ICompleteAccountRegistrationStore store,
     IRegistrationEmailReceiptVerifier emailReceiptVerifier,
     IRegistrationPasswordHasher passwordHasher,
     TimeProvider timeProvider) : ICompleteAccountRegistrationUseCase
 {
+    /// <summary>Creates the account from the registration body and its verified email.</summary>
     public async Task<CompleteAccountRegistrationResult> ExecuteAsync(
         CompleteAccountRegistrationRequest request,
         CancellationToken cancellationToken = default)
@@ -103,6 +105,7 @@ public sealed class CompleteAccountRegistrationUseCase(
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>True when the consent carries the versions the server currently requires.</summary>
     private static bool IsValidPrivacyConsent(RegistrationPrivacyConsent? consent) =>
         consent is { Accepted: true } && consent.NoticeVersion == PrivacyNotice.CurrentVersion;
 }

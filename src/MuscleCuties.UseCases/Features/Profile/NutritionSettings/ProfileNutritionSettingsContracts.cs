@@ -3,6 +3,7 @@ using MuscleCuties.Core.Models.Enums.Users;
 
 namespace MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 
+/// <summary>The nutrition settings as the page shows them.</summary>
 public sealed record NutritionSettingsProfileDto(
     DateTime DateOfBirth,
     float Height,
@@ -15,20 +16,25 @@ public sealed record NutritionSettingsProfileDto(
     NutritionGoalsDto SavedGoals,
     CyclePhase Phase);
 
+/// <summary>Which targets she chose to set herself.</summary>
 public sealed record NutritionSettingsSelectionDto(
     UserGoal Goal,
     WeightGoalPace WeightGoalPace,
     string DietaryTags);
 
+/// <summary>The targets she is saving.</summary>
 public sealed record NutritionSettingsSaveDto(
     NutritionSettingsProfileDto Profile,
     NutritionSettingsSelectionDto Selection,
     NutritionGoalsDto? EditedGoals);
 
+/// <summary>The macro targets in grams.</summary>
 public sealed record NutritionMacroTargetsDto(float Protein, float Carbs, float Fats, float Fiber);
 
+/// <summary>The calorie target and the phase adjustment applied to it.</summary>
 public sealed record NutritionCaloriesTargetsDto(float Calories, float Fiber);
 
+/// <summary>The nutrition-settings page.</summary>
 public interface IProfileNutritionSettingsUseCase
 {
     Task<NutritionSettingsProfileDto?> LoadAsync(CancellationToken cancellationToken = default);
@@ -45,6 +51,7 @@ public interface IProfileNutritionSettingsUseCase
     Task<bool> SaveAsync(NutritionSettingsSaveDto request, CancellationToken cancellationToken = default);
 }
 
+/// <summary>The goals as the client sends and receives them.</summary>
 public sealed record NutritionGoalsDto(
     float? Calories,
     float? Protein,
@@ -64,6 +71,7 @@ public sealed record NutritionGoalsDto(
     float? Zinc,
     float? Potassium)
 {
+    /// <summary>Goals with every value unset.</summary>
     public static NutritionGoalsDto Empty { get; } = new(
         null, null, null, null, null, null, null, null, null,
         null, null, null, null, null, null, null, null);

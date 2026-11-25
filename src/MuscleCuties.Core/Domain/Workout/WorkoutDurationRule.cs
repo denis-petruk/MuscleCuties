@@ -1,7 +1,9 @@
 namespace MuscleCuties.Core.Domain.Workout;
 
+/// <summary>The sets and reps of one exercise, which the minute estimate is computed from.</summary>
 public readonly record struct WorkoutExerciseDose(int Sets, int Reps);
 
+/// <summary>Estimates a session's minutes from its dose and rest, so the week's time budget is respected.</summary>
 public static class WorkoutDurationRule
 {
     private const int DefaultMinutes = 45;
@@ -9,6 +11,7 @@ public static class WorkoutDurationRule
     private const int WarmupSeconds = 12 * 60;
     private const int TransitionSeconds = 3 * 60;
 
+    /// <summary>Estimates the session length including the rest between sets.</summary>
     public static int EstimateStrengthMinutes(IReadOnlyList<WorkoutExerciseDose>? doses)
     {
         if (doses is null || doses.Count == 0 || doses.Count > 100)
@@ -31,6 +34,7 @@ public static class WorkoutDurationRule
         return Math.Clamp((int)Math.Ceiling(seconds / 60d), DefaultMinutes, MaximumMinutes);
     }
 
+    /// <summary>The rest a rep range implies, longer for heavier ranges.</summary>
     private static int RestSeconds(int reps)
     {
         return reps <= 8 ? 150 : reps <= 10 ? 120 : 90;

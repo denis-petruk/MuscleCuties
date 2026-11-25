@@ -6,6 +6,7 @@ namespace MuscleCuties.Infrastructure.Caching;
 /// </summary>
 public static class AccountScopedCacheClear
 {
+    /// <summary>Clears every cached snapshot that belongs to the account.</summary>
     public static async Task RunAsync(
         SemaphoreSlim gate,
         Action resetActiveAccount,

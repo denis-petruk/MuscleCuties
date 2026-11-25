@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Persistence;
 
+/// <summary>The codes a drift report uses, so a missing or extra column is identified by a stable name.</summary>
 public static class SchemaDriftCodes
 {
     public const string ModelTableMissing = "model_table_missing";
@@ -17,6 +18,7 @@ public static class SchemaDriftCodes
     public const string ModelFingerprintMismatch = "model_fingerprint_mismatch";
 }
 
+/// <summary>The drift a check found, empty when the live schema matches the model.</summary>
 public sealed record SchemaDriftReport(
     string ModelFingerprint,
     string? RecordedFingerprint,
@@ -25,6 +27,7 @@ public sealed record SchemaDriftReport(
     IReadOnlyList<string> FailureCodes,
     IReadOnlyList<string> Details)
 {
+    /// <summary>True when no drift or missing security object was found.</summary>
     public bool IsCompatible => FailureCodes.Count == 0;
 }
 
@@ -80,21 +83,27 @@ public static partial class PostgresSchemaDriftInspector
         WHERE singleton
         """;
 
+    /// <summary>The generated regex for a row-level security declaration.</summary>
     [GeneratedRegex(@"ALTER TABLE\s+(?<target>[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?)\s+ENABLE ROW LEVEL SECURITY;")]
     private static partial Regex RowLevelSecurityDeclaration();
 
+    /// <summary>The generated regex for a policy declaration.</summary>
     [GeneratedRegex(@"CREATE POLICY\s+(?<name>[A-Za-z0-9_]+)\s+ON\s+(?<target>[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?)")]
     private static partial Regex PolicyDeclaration();
 
+    /// <summary>The generated regex for a function declaration.</summary>
     [GeneratedRegex(@"CREATE OR REPLACE FUNCTION\s+(?<name>[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?)")]
     private static partial Regex FunctionDeclaration();
 
+    /// <summary>The generated regex for a function owner declaration.</summary>
     [GeneratedRegex(@"ALTER FUNCTION\s+(?<name>[A-Za-z0-9_]+(?:\.[A-Za-z0-9_]+)?)\s*\([^)]*\)\s+OWNER TO\s+(?<owner>[A-Za-z0-9_]+)")]
     private static partial Regex FunctionOwnerDeclaration();
 
+    /// <summary>The generated regex for a role declaration.</summary>
     [GeneratedRegex(@"CREATE ROLE\s+(?<name>[A-Za-z0-9_]+)")]
     private static partial Regex RoleDeclaration();
 
+    /// <summary>Compares the deployed model with the database schema.</summary>
     public static async Task<SchemaDriftReport> InspectAsync(
         PostgresDbContext context,
         CancellationToken cancellationToken = default)
@@ -253,6 +262,7 @@ public static partial class PostgresSchemaDriftInspector
             details);
     }
 
+    /// <summary>Runs a query that returns one column of names.</summary>
     private static async Task<HashSet<string>> QueryAsync(
         PostgresDbContext context,
         string sql,
@@ -260,6 +270,7 @@ public static partial class PostgresSchemaDriftInspector
         (await context.Database.SqlQueryRaw<string>(sql).ToListAsync(cancellationToken).ConfigureAwait(false))
         .ToHashSet(StringComparer.Ordinal);
 
+    /// <summary>Reads the owner of each matching database object.</summary>
     private static async Task<Dictionary<string, string>> QueryOwnerMapAsync(
         PostgresDbContext context,
         string sql,
@@ -279,6 +290,7 @@ public static partial class PostgresSchemaDriftInspector
         return owners;
     }
 
+    /// <summary>The fingerprint the database recorded at initialization.</summary>
     private static async Task<string?> TryReadRecordedFingerprintAsync(
         PostgresDbContext context,
         CancellationToken cancellationToken)

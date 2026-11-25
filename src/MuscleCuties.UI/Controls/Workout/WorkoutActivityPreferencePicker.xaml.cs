@@ -3,6 +3,9 @@ using System.Windows.Input;
 
 namespace MuscleCuties.UI.Controls.Workout;
 
+/// <summary>
+///     Reusable picker for the activity types a plan should include.
+/// </summary>
 public partial class WorkoutActivityPreferencePicker : ContentView
 {
     public static readonly BindableProperty ActivityGroupsProperty = BindableProperty.Create(
@@ -15,6 +18,7 @@ public partial class WorkoutActivityPreferencePicker : ContentView
         typeof(ICommand),
         typeof(WorkoutActivityPreferencePicker));
 
+    /// <summary>Initializes the picker declared in its XAML.</summary>
     public WorkoutActivityPreferencePicker()
     {
         InitializeComponent();

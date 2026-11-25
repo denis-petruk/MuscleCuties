@@ -4,8 +4,11 @@ using StoredServingOption = MuscleCuties.Core.Services.Nutrition.FoodServingOpti
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
+/// <summary>Builds the portion picker's options: the food's stored options, its own serving, and the standard</summary>
+/// portions, with the shared dedupe rule applied across all three.</summary>
 public static class FoodServingOptionHelper
 {
+    /// <summary>The serving options a food can be logged in.</summary>
     public static List<FoodServingOptionItem> BuildServingOptionItems(
         FoodSearchResultItem food,
         FoodPortionCatalog catalog,

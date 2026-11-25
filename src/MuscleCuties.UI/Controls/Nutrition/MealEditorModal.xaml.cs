@@ -3,8 +3,11 @@ using MuscleCuties.UI.ViewModels.Nutrition;
 
 namespace MuscleCuties.UI.Controls.Nutrition;
 
+/// <summary>The meal editor sheet: its search field switches the sheet between editing the meal and finding food to add to</summary>
+/// it.</summary>
 public partial class MealEditorModal : AnimatedModalView
 {
+    /// <summary>Initializes the modal declared in its XAML.</summary>
     public MealEditorModal()
     {
         InitializeComponent();
@@ -13,12 +16,11 @@ public partial class MealEditorModal : AnimatedModalView
         IngredientSearchGrid.PropertyChanged += OnIngredientSearchGridPropertyChanged;
     }
 
-    protected override void OnSizeAllocated(double width, double height)
-    {
-        base.OnSizeAllocated(width, height);
-        BottomSheetSizing.Apply(SheetSurface, height);
-    }
+    /// <summary>Sizes the sheet to fill its host.</summary>
+    protected override SheetSizing SheetSizingPolicy => SheetSizing.Fill;
 
+    /// <summary>Submitting the search field switches the sheet into search mode, so the keyboard's action does what the user</summary>
+    /// expects instead of closing.</summary>
     private void OnSearchSubmitted(object? sender, EventArgs e)
     {
         // The keyboard stays up on purpose: unfocusing here was how the picker hid its own results
@@ -40,8 +42,10 @@ public partial class MealEditorModal : AnimatedModalView
     /// </summary>
     private void OnSearchEntryFocused(object? sender, FocusEventArgs e) => SetSearchMode(true);
 
+    /// <summary>Leaves search mode when the search entry loses focus.</summary>
     private void OnSearchEntryUnfocused(object? sender, FocusEventArgs e) => SetSearchMode(false);
 
+    /// <summary>Refreshes the ingredient search grid when the view model reports a change.</summary>
     private void OnIngredientSearchGridPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(IsVisible) && !IngredientSearchGrid.IsVisible)
@@ -52,6 +56,7 @@ public partial class MealEditorModal : AnimatedModalView
         }
     }
 
+    /// <summary>Swaps the sheet between its meal and its search presentation, and keeps focus in the field the user is now in.</summary>
     private void SetSearchMode(bool active)
     {
         EditorHeaderRow.IsVisible = !active;

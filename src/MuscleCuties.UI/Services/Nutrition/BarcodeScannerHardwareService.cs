@@ -6,11 +6,14 @@ using Foundation;
 
 namespace MuscleCuties.UI.Services.Nutrition;
 
+/// <summary>Camera capture of barcodes. Only one capture may be live at a time, so starting a new one cancels</summary>
+/// the previous session.</summary>
 public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareService
 {
     private readonly object _captureGate = new();
     private CancellationTokenSource? _activeCaptureCts;
 
+    /// <summary>Whether camera access was already granted, without prompting.</summary>
     public async Task<bool> HasCameraPermissionAsync()
     {
         try
@@ -24,6 +27,7 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
         }
     }
 
+    /// <summary>Asks for camera access on the main thread and reports whether it was granted.</summary>
     public async Task<bool> RequestCameraPermissionAsync()
     {
         try
@@ -37,6 +41,7 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
         }
     }
 
+    /// <summary>Ends whatever capture is running and clears it, so a later start cannot be cancelled by it.</summary>
     public void CancelActiveCapture()
     {
         lock (_captureGate)
@@ -46,6 +51,8 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
         }
     }
 
+    /// <summary>Opens the camera for a single code and closes it again. The caller's token and the service's own</summary>
+    /// cancellation are linked, so either can end the session.</summary>
     public async Task<BarcodeCameraCaptureResult> CaptureBarcodeAsync(CancellationToken cancellationToken = default)
     {
         CancelActiveCapture();
@@ -88,6 +95,8 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
     }
 
 #if IOS
+    /// <summary>The iOS capture: a preview session that completes on the first metadata object and always stops the</summary>
+    /// session, including when the caller cancels.</summary>
     private static async Task<BarcodeCameraCaptureResult> CaptureOnIosCameraAsync(CancellationToken cancellationToken)
     {
         var tcs = new TaskCompletionSource<BarcodeCameraCaptureResult>(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -139,12 +148,14 @@ public sealed class BarcodeScannerHardwareService : IBarcodeScannerHardwareServi
         }
     }
 
+    /// <summary>Completes the capture exactly once and ignores the further frames the camera keeps delivering.</summary>
     private sealed class OneShotMetadataDelegate(
         AVCaptureSession session,
         TaskCompletionSource<BarcodeCameraCaptureResult> completion) : AVCaptureMetadataOutputObjectsDelegate
     {
         private int _completed;
 
+        /// <summary>Reads the first barcode the camera captured.</summary>
         public override void DidOutputMetadataObjects(
             AVCaptureMetadataOutput captureOutput,
             AVMetadataObject[] metadataObjects,

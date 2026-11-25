@@ -2,8 +2,10 @@ using MuscleCuties.UseCases.Features.Onboarding.Quiz;
 
 namespace MuscleCuties.UseCases.Features.Account.Registration;
 
+/// <summary>The quiz shown during registration, read from the shared catalog.</summary>
 public sealed class GetRegistrationQuizUseCase(ICompleteAccountRegistrationStore store)
 {
+    /// <summary>Returns the quiz questions a new account answers during registration.</summary>
     public async Task<IReadOnlyList<QuizQuestionDto>> ExecuteAsync(
         CancellationToken cancellationToken = default)
     {

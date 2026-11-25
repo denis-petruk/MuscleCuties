@@ -4,6 +4,8 @@ using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDt
 
 namespace MuscleCuties.UI.Models.UI.Cycle;
 
+/// <summary>File names for the four phase illustrations and their animations, and the phase to asset</summary>
+/// mapping every cycle surface uses, so no screen spells an asset path itself.</summary>
 public static class CyclePhaseAssets
 {
     public const string Menstrual = "phase_menstrual.png";
@@ -15,6 +17,8 @@ public static class CyclePhaseAssets
     public const string OvulatoryAnimation = "Animations/Cycle/phase_ovulatory_sun.json";
     public const string LutealAnimation = "Animations/Cycle/phase_luteal_moon.json";
 
+    /// <summary>The static illustration for a phase. An unknown phase falls back to the follicular art</summary>
+    /// instead of rendering nothing.</summary>
     public static string GetIconSource(CyclePhase phase)
     {
         return phase switch
@@ -27,6 +31,7 @@ public static class CyclePhaseAssets
         };
     }
 
+    /// <summary>The animation played for a phase, with the same follicular fallback.</summary>
     public static string GetVisualSource(CyclePhase phase)
     {
         return phase switch
@@ -39,6 +44,7 @@ public static class CyclePhaseAssets
         };
     }
 
+    /// <summary>Only the four known phases animate; anything else uses the static illustration.</summary>
     public static bool UsesAnimatedVisual(CyclePhase phase)
     {
         return phase is CyclePhase.Menstrual or CyclePhase.Follicular or CyclePhase.Ovulatory or CyclePhase.Luteal;

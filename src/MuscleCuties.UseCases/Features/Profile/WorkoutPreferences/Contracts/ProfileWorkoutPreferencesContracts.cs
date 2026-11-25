@@ -5,6 +5,7 @@ using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 
+/// <summary>The limits the workout preferences must satisfy before saving.</summary>
 public static class WorkoutPreferencesConstraints
 {
     public const int MinimumAvailableWeekdays = WorkoutPreferencesRule.MinimumDaysPerWeek;
@@ -18,11 +19,13 @@ public static class WorkoutPreferencesConstraints
     public const int DefaultActivitySessionDurationMinutes =
         WorkoutPreferencesRule.DefaultActivitySessionDurationMinutes;
 
+    /// <summary>The activities a new profile starts with.</summary>
     public static IReadOnlySet<WorkoutActivityDto> BuildDefaultActivitySelection() =>
         WorkoutActivityPreferences.BuildDefaultSelection()
             .Select(WorkoutActivityContractMapper.ToDto)
             .ToHashSet();
 
+    /// <summary>The selection with the required activities added.</summary>
     public static IReadOnlySet<WorkoutActivityDto> EnsureRequiredActivities(
         IEnumerable<WorkoutActivityDto> activities) =>
         WorkoutActivityPreferences.EnsureRequired(activities
@@ -31,53 +34,65 @@ public static class WorkoutPreferencesConstraints
             .Select(WorkoutActivityContractMapper.ToDto)
             .ToHashSet();
 
+    /// <summary>True when the activity needs a session length.</summary>
     public static bool ActivityRequiresSessionDuration(WorkoutActivityDto activityType) =>
         TryToCore(activityType, out var activity) &&
         WorkoutPreferencesRule.RequiresSessionDuration(activity);
 
+    /// <summary>True when the activity cannot use a default length.</summary>
     public static bool ActivityRequiresExplicitSessionDuration(WorkoutActivityDto activityType) =>
         TryToCore(activityType, out var activity) &&
         WorkoutPreferencesRule.RequiresExplicitSessionDuration(activity);
 
+    /// <summary>The length the activity assumes.</summary>
     public static int? DefaultSessionDurationMinutes(WorkoutActivityDto activityType) =>
         TryToCore(activityType, out var activity)
             ? WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity)
             : null;
 
+    /// <summary>The length the activity assumes, allowing for demanding yoga.</summary>
     public static int? DefaultSessionDurationMinutes(WorkoutActivityDto activityType, bool isDemandingYoga) =>
         TryToCore(activityType, out var activity)
             ? WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity, isDemandingYoga)
             : null;
 
+    /// <summary>The lengths the activity offers.</summary>
     public static IReadOnlyList<int> SessionDurationChoices(WorkoutActivityDto activityType) =>
         TryToCore(activityType, out var activity)
             ? WorkoutPreferencesRule.SessionDurationChoices(activity)
             : [];
 
+    /// <summary>The lengths the activity offers, allowing for demanding yoga.</summary>
     public static IReadOnlyList<int> SessionDurationChoices(WorkoutActivityDto activityType, bool isDemandingYoga) =>
         TryToCore(activityType, out var activity)
             ? WorkoutPreferencesRule.SessionDurationChoices(activity, isDemandingYoga)
             : [];
 
+    /// <summary>True when the length is one the activity offers.</summary>
     public static bool IsValidSessionDuration(WorkoutActivityDto activityType, int minutes) =>
         TryToCore(activityType, out var activity) &&
         WorkoutPreferencesRule.IsValidSessionDuration(activity, minutes);
 
+    /// <summary>True when the activity's weekly frequency must be chosen.</summary>
     public static bool ActivityRequiresExplicitWeeklyFrequency(WorkoutActivityDto activityType) =>
         TryToCore(activityType, out var activity) &&
         WorkoutPreferencesRule.RequiresExplicitWeeklyFrequency(activity);
 
+    /// <summary>The weekly frequencies the flow offers.</summary>
     public static IReadOnlyList<int> WeeklyFrequencyChoices() =>
         WorkoutPreferencesRule.WeeklyFrequencyChoices();
 
+    /// <summary>Sessions per week the activity assumes for the available weekdays.</summary>
     public static int? DefaultWeeklyFrequency(WorkoutActivityDto activityType, int availableWeekdays) =>
         TryToCore(activityType, out var activity)
             ? ActivityPreferenceDefaults.SessionsPerWeek(activity, availableWeekdays)
             : null;
 
+    /// <summary>True when the sessions per week is offered.</summary>
     public static bool IsValidRequestedWeeklyFrequency(int sessionsPerWeek) =>
         WorkoutPreferencesRule.IsValidRequestedWeeklyFrequency(sessionsPerWeek);
 
+    /// <summary>Maps a wire activity onto the core type, answering false for one the core cannot represent.</summary>
     private static bool TryToCore(WorkoutActivityDto activityType, out WorkoutActivityType activity)
     {
         if (Enum.IsDefined(activityType))
@@ -92,6 +107,7 @@ public static class WorkoutPreferencesConstraints
 
 }
 
+/// <summary>The workout preferences as the page shows them.</summary>
 public sealed record WorkoutPreferencesDto(
     IReadOnlyList<int> ActivityTypes,
     IReadOnlyList<int> AvailableWeekdays,
@@ -105,6 +121,7 @@ public sealed record WorkoutPreferencesDto(
     bool? HasDumbbells = null,
     bool? HasBands = null);
 
+/// <summary>The workout preferences page.</summary>
 public interface IProfileWorkoutPreferencesUseCase
 {
     Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken = default);

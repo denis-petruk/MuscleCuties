@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Health;
 
+/// <summary>Whether she is pregnant, which withholds load and certain planning paths entirely.</summary>
 public enum PregnancyStatus
 {
     Unknown = 0,
@@ -7,6 +8,7 @@ public enum PregnancyStatus
     Yes = 2
 }
 
+/// <summary>The contraception state, which the cycle projection may read.</summary>
 public enum ContraceptionStatus
 {
     Unknown = 0,
@@ -15,6 +17,7 @@ public enum ContraceptionStatus
     IrregularCycle = 3
 }
 
+/// <summary>The reproductive context as stored, kept separate from the cycle history it modifies.</summary>
 public sealed record ReproductiveContext(
     PregnancyStatus Pregnancy = PregnancyStatus.Unknown,
     ContraceptionStatus Contraception = ContraceptionStatus.Unknown)

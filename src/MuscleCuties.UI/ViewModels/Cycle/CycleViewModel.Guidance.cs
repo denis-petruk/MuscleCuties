@@ -1,3 +1,6 @@
+// Phase guidance copy and its loading and error states.
+// Second half of CycleViewModel; see its declaration for the full contract.
+
 using Microsoft.Maui.Graphics;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
@@ -7,20 +10,29 @@ using MuscleCuties.UI.Services.Dashboard;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
 
+/// <summary>The phase guidance half of the cycle page: the explorer's phase pills, the tips for the phase she is in and</summary>
+/// the summary sheet a phase opens.</summary>
 public partial class CycleViewModel
 {
+    /// <summary>The heading that frames the guidance as context about her phase rather than a diagnosis.</summary>
     private static string PhaseContextText =>
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Context");
+    /// <summary>The heading for the check-in prompt.</summary>
     private static string PhaseCheckInText =>
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_CheckIn");
+    /// <summary>The heading for the training tip.</summary>
     private static string PhaseTrainingText =>
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Training");
+    /// <summary>The heading for the nutrition tip.</summary>
     private static string PhaseNutritionText =>
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Nutrition");
+    /// <summary>The heading for the recovery tip.</summary>
     private static string PhaseRecoveryText =>
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_Recovery");
+    /// <summary>The note that phase timing varies between people, so the guidance is not read as a schedule.</summary>
     private static string PhaseTimingText =>
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_TimingVaries");
+    /// <summary>The explorer's one-line invitation to browse the phases.</summary>
     private static string PhaseExplorerTagline =>
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_ExplorerTagline");
     [ObservableProperty] private string _dailyCheerText = string.Empty;
@@ -33,10 +45,14 @@ public partial class CycleViewModel
     [ObservableProperty] private string _phaseVectorArtworkData = string.Empty;
     [ObservableProperty] private PhaseSummarySheetModel? _selectedPhaseSummary;
 
+    /// <summary>Opens the summary sheet for the phase whose pill was tapped.</summary>
     public RelayCommand<PhaseExplorerPillItem> SelectPhaseExplorerPillCommand { get; private set; } = null!;
+    /// <summary>Dismisses the summary sheet without leaving the page.</summary>
     public RelayCommand ClosePhaseSummarySheetCommand { get; private set; } = null!;
+    /// <summary>Goes on from the sheet to the full page for the phase it was describing.</summary>
     public IAsyncRelayCommand OpenSelectedPhaseDetailsCommand { get; private set; } = null!;
 
+    /// <summary>Wires the guidance commands and fills the section for the phase the page is on.</summary>
     private void InitializeGuidanceCommands()
     {
         SelectPhaseExplorerPillCommand = new RelayCommand<PhaseExplorerPillItem>(SelectPhaseExplorerPill);
@@ -46,6 +62,7 @@ public partial class CycleViewModel
         RefreshGuidanceContent(CurrentPhase, UseDarkTheme);
     }
 
+    /// <summary>Builds the sheet for a pill's phase and shows it, ignoring a tap that carried no pill.</summary>
     private void SelectPhaseExplorerPill(PhaseExplorerPillItem? item)
     {
         if (item is null) return;
@@ -53,11 +70,13 @@ public partial class CycleViewModel
         IsPhaseSummarySheetVisible = true;
     }
 
+    /// <summary>Hides the sheet.</summary>
     private void ClosePhaseSummarySheet()
     {
         IsPhaseSummarySheetVisible = false;
     }
 
+    /// <summary>Closes the sheet and opens the full phase page for the phase it was showing.</summary>
     private async Task OpenSelectedPhaseDetailsAsync()
     {
         if (SelectedPhaseSummary is null)
@@ -68,6 +87,8 @@ public partial class CycleViewModel
         await _openPhaseDetailsAsync(phase);
     }
 
+    /// <summary>Re-derives everything the section shows for a phase — snapshot, tips and pills — so a phase or theme change</summary>
+    /// is applied in one place.</summary>
     private void RefreshGuidanceContent(CyclePhase phase, bool useDarkTheme)
     {
         PhaseHormonalSnapshot = GetHormonalSnapshot(phase);
@@ -79,16 +100,20 @@ public partial class CycleViewModel
         PhaseExplorerPills = BuildPhaseExplorerPills(phase, useDarkTheme);
     }
 
+    /// <summary>The hormonal snapshot line shown for a phase.</summary>
     public static string GetHormonalSnapshot(CyclePhase phase)
     {
         return PhaseContextText;
     }
 
+    /// <summary>The energy badge shown beside the phase.</summary>
     public static string GetPhaseEnergyBadge(CyclePhase phase)
     {
         return MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Guidance_EnergyBadge");
     }
 
+    /// <summary>The artwork path for a phase, falling back to a neutral circle for an unknown one so the view never draws</summary>
+    /// nothing.</summary>
     public static string GetPhaseVectorPath(CyclePhase phase)
     {
         return phase switch
@@ -107,21 +132,25 @@ public partial class CycleViewModel
         };
     }
 
+    /// <summary>The check-in line for the phase.</summary>
     public static string GetDailyCheer(CyclePhase phase)
     {
         return PhaseCheckInText;
     }
 
+    /// <summary>The training tip for the phase.</summary>
     public static string GetTrainingMicroTip(CyclePhase phase)
     {
         return PhaseTrainingText;
     }
 
+    /// <summary>The nutrition tip for the phase.</summary>
     public static string GetNutritionMicroTip(CyclePhase phase)
     {
         return PhaseNutritionText;
     }
 
+    /// <summary>The phase pills shown in the explorer.</summary>
     private static ObservableCollection<PhaseExplorerPillItem> BuildPhaseExplorerPills(CyclePhase currentPhase,
         bool useDarkTheme)
     {
@@ -182,6 +211,8 @@ public partial class CycleViewModel
         };
     }
 
+    /// <summary>The summary sheet's content for a phase, with the phase she is actually in marked so the sheet is not read</summary>
+    /// as advice about a phase she is not in.</summary>
     public static PhaseSummarySheetModel BuildPhaseSummary(CyclePhase phase, bool useDarkTheme)
     {
         return phase switch

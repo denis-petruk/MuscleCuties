@@ -3,12 +3,14 @@ using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Account.Registration;
 
+/// <summary>What the gateway produced for a registration: the challenge or a refusal.</summary>
 public sealed record RegistrationChallengeOutcome(
     bool Started,
     bool ReplacedOrCancelled = false,
     string? ErrorMessage = null,
     Guid? AttemptId = null);
 
+/// <summary>The checks and the code step behind registration.</summary>
 public interface IAccountRegistrationGateway
 {
     Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken);

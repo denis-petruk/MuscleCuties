@@ -25,6 +25,8 @@ internal static class ProgressPhotoSanitizer
     private const float MinimumJpegQuality = 0.50f;
     private const float JpegQualityStep = 0.08f;
 
+    /// <summary>Re-encodes a picked photo as a bounded JPEG, so metadata such as location never leaves the device,</summary>
+    /// and an oversized or animated input is rejected instead of uploaded.</summary>
     public static async Task<byte[]> ToJpegAsync(Stream source, CancellationToken cancellationToken = default)
     {
 #if IOS
@@ -96,6 +98,8 @@ internal static class ProgressPhotoSanitizer
     }
 
 #if IOS
+    /// <summary>True for a still JPEG or PNG by its signature; an animated PNG is rejected rather than reduced to one</summary>
+    /// frame.</summary>
     private static bool IsSupportedStillImage(ReadOnlySpan<byte> bytes)
     {
         if (HasJpegSignature(bytes)) return true;
@@ -135,14 +139,18 @@ internal static class ProgressPhotoSanitizer
         return false;
     }
 
+    /// <summary>True when the bytes start with the JPEG marker.</summary>
     private static bool HasJpegSignature(ReadOnlySpan<byte> bytes) =>
         bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8 && bytes[2] == 0xFF;
 
+    /// <summary>True when the bytes contain the given ASCII text.</summary>
     private static bool ContainsAscii(ReadOnlySpan<byte> bytes, string value) =>
         bytes.IndexOf(System.Text.Encoding.ASCII.GetBytes(value)) >= 0;
 
+    /// <summary>True when the brand marks a still HEIF image.</summary>
     private static bool IsStillHeifBrand(string brand) => brand is "heic" or "heix" or "mif1" or "heif";
 
+    /// <summary>True when the brand marks a HEIF image sequence.</summary>
     private static bool IsHeifSequenceBrand(string brand) =>
         brand is "msf1" or "hevc" or "hevx" or "hevm" or "hevs" or "avcs";
 #endif

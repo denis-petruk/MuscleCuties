@@ -3,8 +3,10 @@ using MuscleCuties.UseCases.Features.Nutrition.CustomFoods.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
 
+/// <summary>Creates her own food, refusing values outside the allowed ranges.</summary>
 public sealed class CreateCustomFoodUseCase(ICreateCustomFoodStore store) : ICreateCustomFoodUseCase
 {
+    /// <summary>Creates a custom food from the request after validating it.</summary>
     public async Task<CustomFoodDto> ExecuteAsync(
         CreateCustomFoodRequest request,
         Guid ownerUserId,

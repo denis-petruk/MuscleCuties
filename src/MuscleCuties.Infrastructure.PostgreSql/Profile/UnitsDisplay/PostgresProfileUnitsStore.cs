@@ -4,6 +4,7 @@ using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.UnitsDisplay;
 
+/// <summary>The unit choices, stored on the profile row so one read returns them with the rest of the profile.</summary>
 public sealed class PostgresProfileUnitsStore(PostgresDbContext dbContext, TimeProvider timeProvider)
     : IServerProfileUnitsStore
 {
@@ -11,6 +12,7 @@ public sealed class PostgresProfileUnitsStore(PostgresDbContext dbContext, TimeP
     private const string MetricUnitSystem = "Metric";
     private const string ImperialUnitSystem = "Imperial";
 
+    /// <summary>Loads the stored unit preference.</summary>
     public async Task<ServerProfileUnitsSnapshot?> LoadAsync(
         Guid userId,
         CancellationToken cancellationToken)
@@ -23,6 +25,7 @@ public sealed class PostgresProfileUnitsStore(PostgresDbContext dbContext, TimeP
             .ConfigureAwait(false);
     }
 
+    /// <summary>Loads the preference inside one transaction.</summary>
     private async Task<ServerProfileUnitsSnapshot?> LoadTransactionalAsync(
         Guid userId,
         CancellationToken cancellationToken)
@@ -113,6 +116,7 @@ public sealed class PostgresProfileUnitsStore(PostgresDbContext dbContext, TimeP
             profile.ConcurrencyVersion);
     }
 
+    /// <summary>Saves the unit preference.</summary>
     public async Task<SaveServerProfileUnitsResult> SaveAsync(
         SaveServerProfileUnitsRequest request,
         CancellationToken cancellationToken)
@@ -125,6 +129,7 @@ public sealed class PostgresProfileUnitsStore(PostgresDbContext dbContext, TimeP
             .ConfigureAwait(false);
     }
 
+    /// <summary>Saves the preference inside one transaction.</summary>
     private async Task<SaveServerProfileUnitsResult> SaveTransactionalAsync(
         SaveServerProfileUnitsRequest request,
         CancellationToken cancellationToken)

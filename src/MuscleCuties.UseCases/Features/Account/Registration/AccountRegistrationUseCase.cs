@@ -3,9 +3,11 @@ using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Account.Registration;
 
+/// <summary>Registers an account: uniqueness checks first, then the code, then creation.</summary>
 public sealed class AccountRegistrationUseCase(IAccountRegistrationGateway gateway)
     : IAccountRegistrationUseCase
 {
+    /// <summary>Starts registration: reserves the email and username and sends the verification code.</summary>
     public async Task<StartAccountRegistrationResult> StartAsync(
         StartAccountRegistrationRequest request,
         CancellationToken cancellationToken = default)
@@ -50,11 +52,13 @@ public sealed class AccountRegistrationUseCase(IAccountRegistrationGateway gatew
                 challenge.ErrorMessage ?? "Could not send verification code. Please try again.");
     }
 
+    /// <summary>Drops the pending attempt, freeing the address for another registration.</summary>
     public void CancelAttempt(Guid attemptId)
     {
         gateway.CancelAttempt(attemptId);
     }
 
+    /// <summary>Stops owning the attempt so the code step can finish it, keeping the hashed password.</summary>
     public void HandOffAttempt(Guid attemptId)
     {
         gateway.HandOffAttempt(attemptId);

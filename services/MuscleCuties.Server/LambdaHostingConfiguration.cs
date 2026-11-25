@@ -2,6 +2,8 @@ using Npgsql;
 
 namespace MuscleCuties.Server;
 
+/// <summary>The connection-pool settings a Lambda needs when it talks to RDS through the proxy: a small pool, because every</summary>
+/// concurrent instance would otherwise open its own.</summary>
 public sealed record LambdaRdsProxyPoolOptions(
     int MinPoolSize,
     int MaxPoolSize,
@@ -25,9 +27,11 @@ public static class LambdaHostingConfiguration
     public const int DefaultConnectionTimeoutSeconds = 10;
     public const int DefaultCommandTimeoutSeconds = 20;
 
+    /// <summary>True when the process runs inside a Lambda execution environment.</summary>
     public static bool IsRunningInLambda() =>
         !string.IsNullOrWhiteSpace(Environment.GetEnvironmentVariable(LambdaFunctionNameEnvironmentVariable));
 
+    /// <summary>Reads those settings from configuration, falling back to values safe for a proxied database.</summary>
     public static LambdaRdsProxyPoolOptions ResolveOptions(IConfiguration configuration)
     {
         ArgumentNullException.ThrowIfNull(configuration);
@@ -69,6 +73,7 @@ public static class LambdaHostingConfiguration
             RunMigrationsOnColdStart: false);
     }
 
+    /// <summary>Rewrites a connection string with the bounded, TLS-verified pooling settings RDS Proxy requires.</summary>
     public static string BuildBoundedRdsProxyConnectionString(
         string baseConnectionString,
         LambdaRdsProxyPoolOptions options)

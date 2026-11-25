@@ -2,11 +2,13 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Persistence;
 
+/// <summary>Registers the PostgreSQL persistence: the context factory, the stores and their ports, in one place.</summary>
 public static class PostgreSqlServiceCollectionExtensions
 {
     private const int MaximumTransientRetryCount = 3;
     private static readonly TimeSpan MaximumRetryDelay = TimeSpan.FromSeconds(5);
 
+    /// <summary>Registers the PostgreSQL persistence services.</summary>
     public static IServiceCollection AddPostgreSqlPersistence(
         this IServiceCollection services,
         string connectionString)
@@ -43,6 +45,7 @@ public static class PostgreSqlServiceCollectionExtensions
     }
 }
 
+/// <summary>The command timeouts the server uses, declared once so a slow query fails consistently across stores.</summary>
 public static class PostgreSqlTimeoutDefaults
 {
     public const int ConnectionSeconds = 15;

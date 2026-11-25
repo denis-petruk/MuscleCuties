@@ -3,44 +3,42 @@ using MuscleCuties.UI.ViewModels.Nutrition;
 
 namespace MuscleCuties.UI.Pages.Nutrition;
 
+/// <summary>
+///     Daily food diary: the logged timeline, water, notes, and the edit sheet.
+/// </summary>
 public partial class FoodLogPage : ContentPage, IQueryAttributable
 {
     private readonly FoodLogViewModel _viewModel;
     private Guid? _pendingEntry;
-    private string? _pendingAddMeal;
-    private int? _pendingAddMinuteOfDay;
 
+    /// <summary>Initializes the page and its view model.</summary>
     public FoodLogPage(FoodLogViewModel viewModel)
     {
         _viewModel = this.InitializeAndBind(InitializeComponent, viewModel);
     }
 
+    /// <summary>Adjusts the layout when the page is resized.</summary>
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
         BottomSheetSizing.Apply(EditSheetSurface, height);
     }
 
+    /// <summary>Reads the entry the diary was opened for, so an edit request survives navigation into the page.</summary>
     public void ApplyQueryAttributes(IDictionary<string, object> query)
     {
         if (NutritionNavigation.TryReadEntryId(query, out var entryId))
             _pendingEntry = entryId;
-
-        // Sent by the Nutrition meal-entry sheet: which meal to add food to, and when.
-        // The page only carries the intent; the view model decides what it means.
-        if (NutritionNavigation.TryReadAddFoodIntent(query, out var mealName, out var minuteOfDay))
-        {
-            _pendingAddMeal = mealName;
-            _pendingAddMinuteOfDay = minuteOfDay;
-        }
     }
 
+    /// <summary>Stops the view model when the page goes away.</summary>
     protected override void OnDisappearing()
     {
         _viewModel.Deactivate();
         base.OnDisappearing();
     }
 
+    /// <summary>Reloads the log when navigated to.</summary>
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
@@ -51,19 +49,10 @@ public partial class FoodLogPage : ContentPage, IQueryAttributable
             {
                 _pendingEntry = null;
                 await _viewModel.OpenRecordAsync(id);
-            }
-
-            if (!string.IsNullOrWhiteSpace(_pendingAddMeal))
-            {
-                var mealIntent = _pendingAddMeal;
-                var timeIntent = _pendingAddMinuteOfDay;
-                _pendingAddMeal = null;
-                _pendingAddMinuteOfDay = null;
-                await _viewModel.OpenAddFoodIntentAsync(mealIntent, timeIntent);
-            }
-        });
+            }        });
     }
 
+    /// <summary>Closes the open sheet before leaving the page.</summary>
     protected override bool OnBackButtonPressed()
     {
         if (_viewModel.Breakdown.IsVisible)

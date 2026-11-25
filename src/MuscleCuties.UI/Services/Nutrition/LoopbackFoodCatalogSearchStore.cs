@@ -13,11 +13,13 @@ namespace MuscleCuties.UI.Services.Nutrition;
 /// </summary>
 public sealed class LoopbackFoodCatalogSearchStore(CloudFoodCatalogSearchStore inner) : IFoodCatalogSearchStore
 {
+    /// <summary>Searches the catalog without a user scope.</summary>
     public Task<IReadOnlyList<FoodCatalogCandidate>> SearchCandidatesAsync(
         string query,
         CancellationToken cancellationToken = default) =>
         SearchCandidatesAsync(query, null, cancellationToken);
 
+    /// <summary>Searches the catalog for the given user.</summary>
     public async Task<IReadOnlyList<FoodCatalogCandidate>> SearchCandidatesAsync(
         string query,
         Guid? ownerUserId,

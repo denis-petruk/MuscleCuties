@@ -11,6 +11,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Targets;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Dashboard;
 
+/// <summary>The dashboard's single read: today's figures assembled from the profile, readiness, cycle and nutrition rows.</summary>
 public sealed class PostgresDashboardOverviewStore(
     PostgresDbContext dbContext,
     IServerNutritionTargetProjectionStore targetStore,
@@ -29,6 +30,7 @@ public sealed class PostgresDashboardOverviewStore(
     private const double GridWeekDivisor = 7.0;
     private const float MillilitersPerLiter = 1000f;
 
+    /// <summary>Loads the dashboard overview for the day.</summary>
     public async Task<DashboardOverviewResponse> LoadOverviewAsync(
         Guid userId,
         DateOnly today,
@@ -409,6 +411,7 @@ public sealed class PostgresDashboardOverviewStore(
         return (weeklyNutrition, weeklyWeights, workoutProgress);
     }
 
+    /// <summary>Loads the dashboard calendar for a month.</summary>
     public async Task<DashboardCalendarResponse> LoadCalendarAsync(
         Guid userId,
         int year,
@@ -505,6 +508,7 @@ public sealed class PostgresDashboardOverviewStore(
             return new DashboardCalendarResponse(days);
         }).ConfigureAwait(false);
 
+    /// <summary>Counts the days the user logged nutrition without a break.</summary>
     private async Task<int> ComputeNutritionStreakAsync(
         Guid userId,
         DateOnly today,
@@ -548,6 +552,7 @@ public sealed class PostgresDashboardOverviewStore(
         return streak;
     }
 
+    /// <summary>Counts the days the user trained without a break.</summary>
     private async Task<int> ComputeWorkoutStreakAsync(
         Guid userId,
         DateOnly today,
@@ -675,6 +680,7 @@ public sealed class PostgresDashboardOverviewStore(
             [new DashboardWorkoutActivityDto("Recovery", "Rest & Mobility", 0)]);
     }
 
+    /// <summary>The greeting name, falling back to a neutral word when no name is stored so the header is never blank.</summary>
     private static string ResolveFirstName(string? name)
     {
         var trimmed = name?.Trim();

@@ -2,6 +2,7 @@
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
+/// <summary>The nutrition settings page's data through the backend.</summary>
 public sealed class CloudProfileNutritionSettingsStore(
     IMuscleCutiesBackendApiClient apiClient,
     INutritionPlanner? planner = null) : IProfileNutritionSettingsStore
@@ -11,6 +12,7 @@ public sealed class CloudProfileNutritionSettingsStore(
     private const string NutritionTargetsRoute = "/api/v1/profile/nutrition-targets";
     private const string CycleOverviewRoute = "/api/v1/cycle/overview";
 
+    /// <summary>The saved nutrition settings, or nothing before they have ever been saved.</summary>
     public async Task<NutritionSettingsProfileDto?> LoadAsync(CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
@@ -59,6 +61,7 @@ public sealed class CloudProfileNutritionSettingsStore(
             phase);
     }
 
+    /// <summary>Calculates the nutrition goals for the profile.</summary>
     public NutritionGoalsDto CalculateGoals(
         NutritionSettingsProfileDto profile, NutritionSettingsSelectionDto selection)
     {
@@ -83,6 +86,7 @@ public sealed class CloudProfileNutritionSettingsStore(
         return NutritionGoalsDtoMapper.ToDto(plan.Goals);
     }
 
+    /// <summary>Saves the nutrition settings.</summary>
     public async Task<bool> SaveAsync(
         NutritionSettingsSelectionDto selection, NutritionGoalsDto? goalOverrides, CancellationToken cancellationToken)
     {

@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Profile.Feedback;
 
+/// <summary>The attachment limits, so an oversized report is refused before it is sent.</summary>
 public static class ProfileFeedbackAttachmentPolicy
 {
     private const long MaxAttachmentBytes = 10 * 1024 * 1024;
@@ -9,6 +10,7 @@ public static class ProfileFeedbackAttachmentPolicy
         ".png", ".jpg", ".jpeg", ".heic", ".pdf", ".txt", ".log"
     };
 
+    /// <summary>Checks count, size and type of the attachments, so an oversized report is refused before sending.</summary>
     public static bool TryValidate(ProfileFeedbackAttachmentDto attachment, out string message)
     {
         if (string.IsNullOrWhiteSpace(attachment.FilePath))

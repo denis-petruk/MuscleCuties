@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Users;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>The experience planning uses, with the reason it was capped or accepted.</summary>
 public sealed record ProfileTrainingExperienceDecision(
     ActivityExperience ActivityHistoryExperience,
     ActivityExperience PrescriptionExperience,
@@ -71,6 +72,7 @@ public static class ProfileTrainingExperiencePlanningRule
     public const int StandardMaxConcurrentProgressionKnobs = 1;
     public const int AdvancedMaxConcurrentProgressionKnobs = 2;
 
+    /// <summary>Resolves the experience level the plan should use.</summary>
     public static ProfileTrainingExperienceDecision Resolve(
         ActivityExperience activityHistoryExperience,
         TrainingExperienceLevel? profileExperience,
@@ -212,16 +214,19 @@ public static class ProfileTrainingExperiencePlanningRule
             TrainingExperienceLevel.Intermediate);
     }
 
+    /// <summary>Falls back to a defined level when the profile's level is missing.</summary>
     private static TrainingExperienceLevel NormalizeProfileLevel(TrainingExperienceLevel? profileExperience) =>
         profileExperience is { } level && Enum.IsDefined(level)
             ? level
             : TrainingExperienceLevel.Unknown;
 
+    /// <summary>True when recent exposure is effectively none.</summary>
     private static bool HasNearZeroRecentExposure(ActivityTrainingHistory? history) =>
         history is not null &&
         (history.ConsistentParticipationWeeks is <= ZeroConsistentWeeks ||
          history.AverageSessionsPerWeekInRecentFourWeeks is < MinimumActiveAverageSessionsPerWeek);
 
+    /// <summary>True when the history justifies starting above beginner.</summary>
     private static bool IsStrongHistoryForBeginnerUpgrade(ActivityTrainingHistory? history) =>
         history is
         {
@@ -229,6 +234,7 @@ public static class ProfileTrainingExperiencePlanningRule
             AverageSessionsPerWeekInRecentFourWeeks: >= StrongBeginnerOverrideAverageSessionsPerWeek
         };
 
+    /// <summary>True when the history justifies the advanced modality.</summary>
     private static bool IsStrongHistoryForAdvancedModality(ActivityTrainingHistory? history) =>
         history is
         {
@@ -236,6 +242,7 @@ public static class ProfileTrainingExperiencePlanningRule
             AverageSessionsPerWeekInRecentFourWeeks: >= StrongIntermediateToAdvancedAverageSessionsPerWeek
         };
 
+    /// <summary>Assembles the decision with its level and the reason for it.</summary>
     private static ProfileTrainingExperienceDecision BuildDecision(
         ActivityExperience historyExperience,
         ActivityExperience prescriptionExperience,

@@ -9,10 +9,12 @@ using LegacyQuickAddResponse = MuscleCuties.UseCases.Features.Nutrition.Diary.Co
 
 namespace MuscleCuties.Server.Nutrition;
 
+/// <summary>The batch-save and copy-day routes, which are how a diary is written and duplicated.</summary>
 public static class NutritionBatchAndCopyEndpointMappings
 {
     private const string DiaryRoute = "/api/v1/nutrition/diary";
 
+    /// <summary>Registers the batch and copy endpoints.</summary>
     public static IEndpointRouteBuilder MapNutritionBatchAndCopyEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(DiaryRoute).RequireAuthorization();
@@ -199,14 +201,17 @@ public static class NutritionBatchAndCopyEndpointMappings
         return endpoints;
     }
 
+    /// <summary>True when the JSON body carries the named property, compared case-insensitively.</summary>
     private static bool HasProperty(JsonElement body, string propertyName) =>
         body.ValueKind == JsonValueKind.Object && body.EnumerateObject()
             .Any(property => string.Equals(property.Name, propertyName, StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>Deserializes a JSON body with web defaults and rejects an absent body.</summary>
     private static T Deserialize<T>(JsonElement body) =>
         body.Deserialize<T>(new JsonSerializerOptions(JsonSerializerDefaults.Web))
         ?? throw new ArgumentException("A request body is required.");
 
+    /// <summary>Turns the older batch body into the current request shape, so a client built before the change keeps working.</summary>
     private static BatchSaveNutritionDiaryRequest ConvertLegacyBatch(BatchSaveNutritionDiaryEntries request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -234,6 +239,7 @@ public static class NutritionBatchAndCopyEndpointMappings
                 entry.LoggedAtUtc)).ToArray());
     }
 
+    /// <summary>The same for the copy request.</summary>
     private static CopyNutritionDiaryRequest ConvertLegacyCopy(CopyNutritionDiary request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -246,6 +252,7 @@ public static class NutritionBatchAndCopyEndpointMappings
             request.MealType);
     }
 
+    /// <summary>Converts the superseded quick-add body into the current request shape.</summary>
     private static QuickAddNutritionDiaryRequest ConvertLegacyQuickAdd(
         QuickAddNutritionDiaryEntry request,
         DateTimeOffset currentUtcTime)

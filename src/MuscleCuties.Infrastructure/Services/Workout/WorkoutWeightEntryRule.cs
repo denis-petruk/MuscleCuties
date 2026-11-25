@@ -34,6 +34,7 @@ public static class WorkoutWeightEntryRule
         return ParseWeight(fallbackText);
     }
 
+    /// <summary>True when the entered weight is plausible for the exercise.</summary>
     public static bool IsAcceptable(double? weightKg) =>
         weightKg is { } value && double.IsFinite(value) && value >= MinimumWeightKg;
 
@@ -73,6 +74,7 @@ public static class WorkoutWeightEntryRule
         return null;
     }
 
+    /// <summary>The weights the entered sets recorded.</summary>
     private static List<double> ParseLoads(IEnumerable<WorkoutEnteredSet> sets) =>
         sets.Select(set => ParseWeight(set.WeightText))
             .Where(weight => weight.HasValue)

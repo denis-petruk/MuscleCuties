@@ -4,17 +4,20 @@ using MauiIcons.Fluent;
 
 namespace MuscleCuties.UI.Resources.Converters;
 
+/// <summary>Turns a stored glyph name into a tinted icon image, cached per glyph, colour key and theme.</summary>
 public sealed class StringToFluentIconImageSourceConverter : IValueConverter
 {
     // Cache key: (glyphName, parameterString, isDark)
     // Cleared on theme change by the static Application.RequestedThemeChanged handler below.
     private static readonly Dictionary<(string, string, bool), ImageSource> _cache = new();
 
+    /// <summary>Registers the icon images the converter resolves.</summary>
     static StringToFluentIconImageSourceConverter()
     {
         AppThemeResources.RegisterCacheClearer(_cache.Clear);
     }
 
+    /// <summary>Resolves the glyph and its tint and returns the rendered icon.</summary>
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         var glyphName = value as string ?? string.Empty;
@@ -33,6 +36,8 @@ public sealed class StringToFluentIconImageSourceConverter : IValueConverter
         return source;
     }
 
+    /// <summary>Parses the glyph name, falling back to a question mark and logging the unknown name so the gap</summary>
+    /// is visible during development.</summary>
     private static FluentIcons ResolveIcon(string glyphName)
     {
         if (!string.IsNullOrEmpty(glyphName) && Enum.TryParse<FluentIcons>(glyphName, out var parsedIcon))
@@ -44,11 +49,14 @@ public sealed class StringToFluentIconImageSourceConverter : IValueConverter
         return FluentIcons.QuestionCircle24;
     }
 
+    /// <summary>Not supported: an icon image cannot become a glyph name.</summary>
     public object ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture)
     {
         throw new NotSupportedException();
     }
 
+    /// <summary>Maps the tint parameter (contrast ink, accent, warning) to a theme colour; anything else uses the</summary>
+    /// theme's primary text colour.</summary>
     private static Color ResolveColor(string? key, bool isDark)
     {
         var resourceKey = isDark ? "TextPrimaryDark" : "TextPrimary";

@@ -28,6 +28,7 @@ public partial class TimeField : ContentView
         typeof(TimeField),
         string.Empty);
 
+    /// <summary>Initializes the time field declared in its XAML.</summary>
     public TimeField()
     {
         InitializeComponent();

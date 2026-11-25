@@ -3,12 +3,14 @@ using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 
+/// <summary>One ingredient inside a logged food, with the amount used.</summary>
 public sealed record LoggedIngredientDto(
     int FoodItemId,
     string Name,
     float Grams
 );
 
+/// <summary>One logged food with its nutrients for the amount eaten.</summary>
 public sealed record LoggedFoodItemDto(
     Guid Id,
     Guid DailyLogId,
@@ -28,9 +30,11 @@ public sealed record LoggedFoodItemDto(
     int? LoggedMealId = null
 )
 {
+    /// <summary>True when the entry is a meal made of ingredients.</summary>
     public bool IsGroupedMeal => Ingredients.Count > 0;
 }
 
+/// <summary>A day as the log screen shows it: its foods, its totals and its targets.</summary>
 public sealed record DailyNutritionLogSnapshot(
     Guid Id,
     DateOnly Date,
@@ -49,6 +53,7 @@ public sealed record DailyNutritionLogSnapshot(
     IReadOnlyList<LoggedFoodItemDto> Entries
 );
 
+/// <summary>A food remembered for quick adding, with the amount last used.</summary>
 public sealed record QuickFoodItemSnapshot(
     string Name,
     double ServingSize,
@@ -64,6 +69,7 @@ public sealed record QuickFoodItemSnapshot(
     IReadOnlyList<LoggedIngredientDto>? Ingredients = null
 );
 
+/// <summary>A food returned by the fast lookup, trimmed for the search list.</summary>
 public sealed record FastLookupFoodItemDto(
     string Name,
     double Calories,

@@ -2,6 +2,9 @@ using System.Windows.Input;
 
 namespace MuscleCuties.UI.Controls.Shared;
 
+/// <summary>
+///     Standard bottom-sheet header: title, subtitle, and close button.
+/// </summary>
 public partial class ModalSheetHeader : ContentView
 {
     public static readonly BindableProperty TitleProperty = BindableProperty.Create(
@@ -26,6 +29,7 @@ public partial class ModalSheetHeader : ContentView
     public static readonly BindableProperty CloseDescriptionProperty = BindableProperty.Create(
         nameof(CloseDescription), typeof(string), typeof(ModalSheetHeader), string.Empty);
 
+    /// <summary>Initializes the header declared in its XAML.</summary>
     public ModalSheetHeader() => InitializeComponent();
 
     public string Title
@@ -40,6 +44,7 @@ public partial class ModalSheetHeader : ContentView
         set => SetValue(SubtitleProperty, value);
     }
 
+    /// <summary>True when the header has a subtitle to show.</summary>
     public bool HasSubtitle => !string.IsNullOrWhiteSpace(Subtitle);
 
     public ICommand? BackCommand

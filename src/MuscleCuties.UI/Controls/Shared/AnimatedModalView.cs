@@ -8,6 +8,8 @@ using Microsoft.Maui.Accessibility;
 
 namespace MuscleCuties.UI.Controls.Shared;
 
+/// <summary>The base every sheet is built on: it shows and hides its surface with a transition, keeps focus and the</summary>
+/// screen reader inside itself while it is open, and gives its content the height the keyboard leaves.</summary>
 public class AnimatedModalView : ContentView
 {
     public static readonly BindableProperty IsOpenProperty =
@@ -28,6 +30,8 @@ public class AnimatedModalView : ContentView
     private bool _announcementDelivered;
     private Action<double>? _keyboardHandler;
 
+    /// <summary>Starts hidden — a sheet is only ever shown through its open state — and wires the load and unload hooks that</summary>
+    /// tie it to its page.</summary>
     public AnimatedModalView()
     {
         IsVisible = false;
@@ -53,17 +57,43 @@ public class AnimatedModalView : ContentView
         set => SetValue(RestoreFocusTargetProperty, value);
     }
 
+    /// <summary>
+    ///     The one place a sheet decides how tall it grows. Subclasses that simply fill or fit their
+    ///     content declare a policy here instead of each repeating the same size-allocated override.
+    /// </summary>
+    protected virtual SheetSizing SheetSizingPolicy => SheetSizing.None;
+
+    /// <summary>The hook a sheet uses to refresh its contents before every showing, including a reopen it did not ask</summary>
+    /// for itself.</summary>
     protected virtual void PrepareForOpen()
     {
     }
 
+    /// <summary>Completes an open transition once the sheet has a size.</summary>
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
         if (IsOpen)
             CompleteOpen(_transitionVersion);
+
+        // Sizing runs after the open transition so a sheet that focuses a field on open still measures
+        // the same viewport the subclass-owned override used to.
+        ApplySheetSizing(height);
     }
 
+    /// <summary>Applies the declared sizing policy to the sheet surface, if the sheet has one.</summary>
+    private void ApplySheetSizing(double viewportHeight)
+    {
+        if (SheetSizingPolicy == SheetSizing.None || SheetSurface() is not { } surface)
+            return;
+
+        if (SheetSizingPolicy == SheetSizing.ContentFit)
+            BottomSheetSizing.ApplyContentFit(surface, viewportHeight);
+        else
+            BottomSheetSizing.Apply(surface, viewportHeight);
+    }
+
+    /// <summary>Listens to the page the sheet was added to, so the page is released when it leaves the screen.</summary>
     private void HookPage(Page? page)
     {
         if (ReferenceEquals(_hookedPage, page))
@@ -77,6 +107,7 @@ public class AnimatedModalView : ContentView
         page.Disappearing += OnPageDisappearing;
     }
 
+    /// <summary>Detaches from a page, guarded so the same page is never detached twice.</summary>
     private void UnhookPage(Page? page)
     {
         if (page is not null)
@@ -88,17 +119,22 @@ public class AnimatedModalView : ContentView
             _hookedPage = null;
     }
 
+    /// <summary>Releases the page when the sheet is removed from the visual tree, so a torn-down sheet cannot hold the page</summary>
+    /// in its modal state.</summary>
     private void OnUnloaded(object? sender, EventArgs e)
     {
         ReleaseScope();
         UnhookPage(_hookedPage ?? _isolationPage ?? HostPage());
     }
 
+    /// <summary>Releases the page when it disappears underneath the sheet, so navigating away never leaves the page's controls</summary>
+    /// unreachable.</summary>
     private void OnPageDisappearing(object? sender, EventArgs e)
     {
         ReleaseScope();
     }
 
+    /// <summary>Hands the page back once nothing owns it any more.</summary>
     private void ReleaseScope()
     {
         var page = _isolationPage ?? _hookedPage ?? HostPage();
@@ -111,6 +147,7 @@ public class AnimatedModalView : ContentView
         }
     }
 
+    /// <summary>Attaches the sheet when it enters the tree: page isolation, keyboard tracking, focus and its own sizing.</summary>
     private void OnLoaded(object? sender, EventArgs e)
     {
         var page = HostPage();
@@ -190,6 +227,7 @@ public class AnimatedModalView : ContentView
         ModalKeyboardInset.Subscribe(_keyboardHandler);
     }
 
+    /// <summary>Stops following keyboard changes, so a closed sheet is not resized on every inset.</summary>
     private void DetachKeyboard()
     {
         if (_keyboardHandler is not null)
@@ -198,8 +236,10 @@ public class AnimatedModalView : ContentView
         ApplySheetHeight(0);
     }
 
+    /// <summary>Fits the sheet again when the keyboard inset changes.</summary>
     private void OnKeyboardInsetChanged(double inset) => ApplySheetHeight(inset);
 
+    /// <summary>Sizes the surface to the viewport minus the keyboard, so a focused field can never end up behind it.</summary>
     private void ApplySheetHeight(double keyboardInset)
     {
         var surface = SheetSurface();
@@ -265,6 +305,7 @@ public class AnimatedModalView : ContentView
         });
     }
 
+    /// <summary>The field inside the sheet that currently holds focus, if any.</summary>
     private static VisualElement? FindFocusedDescendant(IVisualTreeElement root)
     {
         foreach (var child in root.GetVisualChildren())
@@ -316,6 +357,8 @@ public class AnimatedModalView : ContentView
         return body;
     }
 
+    /// <summary>The vertical body the sheet scrolls, preferring a visible one so a hidden template is never padded instead of</summary>
+    /// the real content.</summary>
     private static ScrollView? FindScrollBody(IVisualTreeElement root)
     {
         // Prefer a visible vertical body. A sheet can contain horizontal rails (meal types) and
@@ -325,6 +368,7 @@ public class AnimatedModalView : ContentView
                ?? FindVerticalScrollBody(root, visibleOnly: false);
     }
 
+    /// <summary>The first vertical scroll view under a root, optionally only when it is visible.</summary>
     private static ScrollView? FindVerticalScrollBody(IVisualTreeElement root, bool visibleOnly)
     {
         foreach (var child in root.GetVisualChildren())
@@ -342,6 +386,8 @@ public class AnimatedModalView : ContentView
         return null;
     }
 
+    /// <summary>Whether a visible list is present, which decides whether the sheet scrolls itself or leaves that to the</summary>
+    /// list.</summary>
     private static bool HasVisibleItemsView(IVisualTreeElement root)
     {
         foreach (var child in root.GetVisualChildren())
@@ -356,6 +402,7 @@ public class AnimatedModalView : ContentView
         return false;
     }
 
+    /// <summary>The border that carries the sheet's surface style and therefore its height.</summary>
     private Border? SheetSurface()
     {
         var style = Application.Current?.Resources.TryGetValue("ModalSurface", out var resource) == true
@@ -367,6 +414,7 @@ public class AnimatedModalView : ContentView
             .FirstOrDefault(border => style is null || ReferenceEquals(border.Style, style));
     }
 
+    /// <summary>Runs the open or close transition for the new state.</summary>
     private static void OnIsOpenChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is not AnimatedModalView modal)
@@ -384,6 +432,8 @@ public class AnimatedModalView : ContentView
         }
     }
 
+    /// <summary>Runs the opening transition and schedules the focus and the announcement for after layout, because a</summary>
+    /// content-sized sheet is not measurable yet at this point.</summary>
     private void Open(long version)
     {
         PrepareForOpen();
@@ -406,6 +456,7 @@ public class AnimatedModalView : ContentView
         Dispatcher.Dispatch(() => CompleteOpen(version));
     }
 
+    /// <summary>Runs the closing transition, leaving the sheet hidden and its content no longer able to take touches.</summary>
     private void Close(long version)
     {
         InputTransparent = true;
@@ -434,6 +485,8 @@ public class AnimatedModalView : ContentView
         return IsOpen;
     }
 
+    /// <summary>Applies the focus and title announcement that need the final layout, ignoring a transition that a newer open or</summary>
+    /// close has already superseded.</summary>
     private void CompleteOpen(long version)
     {
         if (version != _transitionVersion || !IsOpen)
@@ -452,6 +505,7 @@ public class AnimatedModalView : ContentView
         first.Focus();
     }
 
+    /// <summary>Reads the sheet's title to the screen reader once per opening, so it does not repeat on every relayout.</summary>
     private void AnnounceTitleOnce()
     {
         if (_announcementDelivered)
@@ -476,6 +530,8 @@ public class AnimatedModalView : ContentView
         SemanticScreenReader.Default.Announce(title.Text!);
     }
 
+    /// <summary>Gives focus back to the control that had it before the sheet opened, so the page continues where the user left</summary>
+    /// it.</summary>
     private void RestoreFocus()
     {
         foreach (var focused in Descendants().Where(element => element.IsFocused).ToArray())
@@ -502,6 +558,7 @@ public class AnimatedModalView : ContentView
         return Descendants(content, this).FirstOrDefault(element => element.IsFocused);
     }
 
+    /// <summary>The page this sheet is hosted on.</summary>
     private ContentPage? HostPage()
     {
         for (Element? current = this; current is not null; current = current.Parent)
@@ -513,6 +570,7 @@ public class AnimatedModalView : ContentView
         return null;
     }
 
+    /// <summary>The first control in the sheet that can take focus, used when it opens without a direction.</summary>
     private VisualElement? FirstFocusableControl()
     {
         return Descendants()
@@ -522,6 +580,8 @@ public class AnimatedModalView : ContentView
                 && element.IsEnabled);
     }
 
+    /// <summary>Whether an element and every ancestor of it are visible, so the focus search skips the hidden templates a</summary>
+    /// sheet keeps for other states.</summary>
     private static bool IsVisibleInTree(VisualElement element)
     {
         for (Element? current = element; current is not null; current = current.Parent)
@@ -546,6 +606,7 @@ public class AnimatedModalView : ContentView
             yield return descendant;
     }
 
+    /// <summary>Every visual descendant except one subtree, so an ongoing search does not descend into itself.</summary>
     private static IEnumerable<VisualElement> Descendants(VisualElement root, VisualElement? excluded)
     {
         foreach (var child in EnumerateChildren(root))
@@ -559,7 +620,8 @@ public class AnimatedModalView : ContentView
         }
     }
 
-    private static IEnumerable<VisualElement> EnumerateChildren(VisualElement element)
+    /// <summary>The element's children, including the ones a plain visual-children walk misses for list views and pickers.</summary>
+    internal static IEnumerable<VisualElement> EnumerateChildren(VisualElement element)
     {
         switch (element)
         {
@@ -589,6 +651,7 @@ internal static class ModalAccessibilityScope
 {
     private static readonly ConditionalWeakTable<Page, Scope> Scopes = new();
 
+    /// <summary>Marks the page as owned by this sheet, so everything behind it is out of reach while it is open.</summary>
     internal static void Acquire(Page? page, VisualElement modal)
     {
         if (page is null || modal is null)
@@ -598,6 +661,7 @@ internal static class ModalAccessibilityScope
         scope.Acquire(modal);
     }
 
+    /// <summary>Gives the page back, optionally only when this sheet is still the one that owns it.</summary>
     internal static void Release(Page? page, VisualElement? modal = null)
     {
         if (page is null || !Scopes.TryGetValue(page, out var scope))
@@ -606,13 +670,17 @@ internal static class ModalAccessibilityScope
         scope.Release(modal);
     }
 
+    /// <summary>What one page remembers while sheets are open on it: what was disabled, what had focus, and how many sheets</summary>
+    /// are stacked on it.</summary>
     private sealed class Scope
     {
         private readonly List<VisualElement> _activeModals = new();
         private readonly List<(VisualElement Element, bool? Excluded)> _isolated = new();
 
+        /// <summary>How many modals are open right now.</summary>
         internal int Count => _activeModals.Count;
 
+        /// <summary>Counts a sheet in and, on the first one, records what the page looked like so it can be put back exactly.</summary>
         internal void Acquire(VisualElement modal)
         {
             if (_activeModals.Contains(modal))
@@ -622,6 +690,8 @@ internal static class ModalAccessibilityScope
             Reisolate();
         }
 
+        /// <summary>Counts a sheet out, restoring the page only when the last one closes and only for the sheet that actually owns</summary>
+        /// it.</summary>
         internal void Release(VisualElement? modal)
         {
             if (modal is not null)
@@ -649,6 +719,7 @@ internal static class ModalAccessibilityScope
                 Isolate(_activeModals[^1]);
         }
 
+        /// <summary>Makes everything on the page except the sheet unreachable to touch and to the screen reader.</summary>
         private void Isolate(VisualElement modal)
         {
             Element child = modal;
@@ -670,6 +741,7 @@ internal static class ModalAccessibilityScope
             }
         }
 
+        /// <summary>Puts the page back the way it was before the first sheet opened.</summary>
         private void Restore()
         {
             for (var index = _isolated.Count - 1; index >= 0; index--)
@@ -681,22 +753,8 @@ internal static class ModalAccessibilityScope
             _isolated.Clear();
         }
 
-        private static IEnumerable<VisualElement> EnumerateChildren(VisualElement element)
-        {
-            switch (element)
-            {
-                case IContentView { Content: VisualElement content }:
-                    yield return content;
-                    break;
-                case Layout layout:
-                    foreach (var child in layout.Children)
-                    {
-                        if (child is VisualElement visual)
-                            yield return visual;
-                    }
-
-                    break;
-            }
-        }
+        /// <summary>Enumerates the modal's child elements.</summary>
+        private static IEnumerable<VisualElement> EnumerateChildren(VisualElement element) =>
+            AnimatedModalView.EnumerateChildren(element);
     }
 }

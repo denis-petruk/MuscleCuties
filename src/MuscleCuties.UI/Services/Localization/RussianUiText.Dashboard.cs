@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Russian dashboard copy.</summary>
 internal static partial class RussianUiText
 {
+    /// <summary>Registers the Russian labels for the dashboard.</summary>
     static partial void RegisterDashboardStrings()
     {
         Values["Dashboard_Calendar_DayFriday"] = "МускулКьютис";

@@ -15,6 +15,7 @@ public static class BodyMeasurementCodes
     public const string Centimeters = "cm";
     public const string Inches = "in";
 
+    /// <summary>Reads a stored site code, rejecting codes the catalog does not know.</summary>
     public static BodyMeasurementSite ParseSite(string? code) => code switch
     {
         Waist => BodyMeasurementSite.Waist,
@@ -26,6 +27,7 @@ public static class BodyMeasurementCodes
         _ => throw new ArgumentOutOfRangeException(nameof(code), "Unknown measurement site.")
     };
 
+    /// <summary>Reads a stored side code, rejecting codes the catalog does not know.</summary>
     public static BodyMeasurementSide ParseSide(string? code) => code switch
     {
         NoSide => BodyMeasurementSide.None,
@@ -34,6 +36,7 @@ public static class BodyMeasurementCodes
         _ => throw new ArgumentOutOfRangeException(nameof(code), "Unknown measurement side.")
     };
 
+    /// <summary>Reads a stored unit code, rejecting codes the catalog does not know.</summary>
     public static BodyMeasurementUnit ParseUnit(string? code) => code switch
     {
         Centimeters => BodyMeasurementUnit.Centimeters,
@@ -41,6 +44,7 @@ public static class BodyMeasurementCodes
         _ => throw new ArgumentOutOfRangeException(nameof(code), "Unknown measurement unit.")
     };
 
+    /// <summary>Stable code stored for a measurement site.</summary>
     public static string SiteCode(BodyMeasurementSite site) => site switch
     {
         BodyMeasurementSite.Waist => Waist,
@@ -52,6 +56,7 @@ public static class BodyMeasurementCodes
         _ => throw new ArgumentOutOfRangeException(nameof(site))
     };
 
+    /// <summary>Stable code stored for a measurement side.</summary>
     public static string SideCode(BodyMeasurementSide side) => side switch
     {
         BodyMeasurementSide.None => NoSide,
@@ -60,6 +65,7 @@ public static class BodyMeasurementCodes
         _ => throw new ArgumentOutOfRangeException(nameof(side))
     };
 
+    /// <summary>Stable code stored for a measurement unit.</summary>
     public static string UnitCode(BodyMeasurementUnit unit) => unit switch
     {
         BodyMeasurementUnit.Centimeters => Centimeters,

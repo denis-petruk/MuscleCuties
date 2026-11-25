@@ -2,6 +2,7 @@
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
+/// <summary>The onboarding quiz through the backend: its questions, its answers and the account they create.</summary>
 public sealed class CloudOnboardingQuizStore(
     IPendingRegistrationService pending,
     MobileJourneyCloudGateway cloudGateway,
@@ -37,6 +38,7 @@ public sealed class CloudOnboardingQuizStore(
     private IReadOnlyList<QuizQuestionDto>? _rawServerQuestions;
     private IReadOnlyList<QuizQuestionDto>? _cachedClientQuestions;
 
+    /// <summary>Loads the onboarding quiz, optionally refreshed from the backend.</summary>
     public async Task<IReadOnlyList<QuizQuestionDto>> LoadQuestionsAsync(bool refresh,
         CancellationToken cancellationToken)
     {
@@ -53,6 +55,7 @@ public sealed class CloudOnboardingQuizStore(
         return _cachedClientQuestions;
     }
 
+    /// <summary>Saves the quiz answers.</summary>
     public async Task<QuizCommitResult> CommitAsync(
         IReadOnlyList<QuizSelectionDto> selections,
         CancellationToken cancellationToken)
@@ -175,6 +178,7 @@ public sealed class CloudOnboardingQuizStore(
             "Your registration session expired. Please start again.");
     }
 
+    /// <summary>Upgrades a stored legacy schedule question to its current form.</summary>
     private static IReadOnlyList<QuizQuestionDto> UpgradeLegacyScheduleQuestionIfNeeded(
         IReadOnlyList<QuizQuestionDto> serverQuestions)
     {
@@ -202,6 +206,7 @@ public sealed class CloudOnboardingQuizStore(
             .ToArray();
     }
 
+    /// <summary>Splits the collected answers into the selections the server stores and the profile values they imply.</summary>
     private static (IReadOnlyList<QuizSelectionDto> Selections, int WorkoutDaysPerWeek)
         NormalizeSelectionsForServerCatalog(
             IReadOnlyList<QuizSelectionDto> selections,
@@ -252,6 +257,7 @@ public sealed class CloudOnboardingQuizStore(
         return (normalized, clampedWorkoutDays);
     }
 
+    /// <summary>The message for a refused registration, chosen from the server's code so the user is told what to fix.</summary>
     private static string GetRegistrationFailureMessage(BackendApiStatus status, string? errorCode)
     {
         if (status == BackendApiStatus.OfflineRejected)

@@ -5,6 +5,7 @@ using MuscleCuties.UseCases.Features.Profile.PhotoVault.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
+/// <summary>The photo journal: entries by date, with the object keys the vault keeps in step with the bucket.</summary>
 public sealed class PostgresPhotoVaultStore(
     PostgresDbContext dbContext,
     IS3PresignedUrlService presignedUrlService,
@@ -24,6 +25,7 @@ public sealed class PostgresPhotoVaultStore(
     // Do not delete while a still-valid POST grant might create or replace bytes at this key.
     private static readonly TimeSpan UploadGrantClockSkewMargin = TimeSpan.FromMinutes(5);
 
+    /// <summary>Issues the upload URL and records the intent.</summary>
     public async Task<PhotoUploadIssueResponse> RequestUploadUrlAsync(
         Guid userId,
         PhotoUploadUrlRequest request,
@@ -87,6 +89,7 @@ public sealed class PostgresPhotoVaultStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Verifies the upload and stores its metadata.</summary>
     public async Task<CommitPhotoMetadataResponse> CommitPhotoMetadataAsync(
         Guid userId,
         CommitPhotoMetadataRequest request,
@@ -234,6 +237,7 @@ public sealed class PostgresPhotoVaultStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Inspects the object until S3 reports it available.</summary>
     private async Task<S3PhotoObjectInspection> InspectUntilAvailableAsync(
         PhotoUploadObjectContext context, DateTime expiresAtUtc, CancellationToken cancellationToken)
     {
@@ -252,6 +256,7 @@ public sealed class PostgresPhotoVaultStore(
         }
     }
 
+    /// <summary>The user's photo history.</summary>
     public async Task<PhotoHistoryResponse> GetPhotoHistoryAsync(
         Guid userId,
         int limit,
@@ -306,6 +311,7 @@ public sealed class PostgresPhotoVaultStore(
             return new PhotoHistoryResponse(photos, totalCount);
         }).ConfigureAwait(false);
 
+    /// <summary>A download URL for one photo.</summary>
     public async Task<PhotoDownloadUrlResponse?> GetPhotoDownloadUrlAsync(
         Guid userId,
         Guid photoId,
@@ -348,6 +354,7 @@ public sealed class PostgresPhotoVaultStore(
             return new PhotoDownloadUrlResponse(photo.Id, presignedUrl, expiresAtUtc);
         }).ConfigureAwait(false);
 
+    /// <summary>Deletes one photo.</summary>
     public async Task<bool> DeletePhotoAsync(
         Guid userId,
         Guid photoId,
@@ -416,6 +423,7 @@ public sealed class PostgresPhotoVaultStore(
             return true;
         }).ConfigureAwait(false);
 
+    /// <summary>The file extension the content type implies.</summary>
     private static string ResolveExtension(string contentType) => contentType.ToLowerInvariant().Trim() switch
     {
         "image/jpeg" or "image/jpg" => ".jpg",
@@ -426,6 +434,7 @@ public sealed class PostgresPhotoVaultStore(
         _ => ".jpg"
     };
 
+    /// <summary>Locks the photo rows a write depends on, so a concurrent delete cannot remove one mid-publication.</summary>
     private async Task LockVisiblePhotoRowsAsync(Guid userId, Guid[] photoIds, CancellationToken cancellationToken)
     {
         if (photoIds.Length == 0) return;

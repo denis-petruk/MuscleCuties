@@ -20,6 +20,8 @@ using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
 
 namespace MuscleCuties.UI;
 
+/// <summary>Owns the app's lifetime: creates the window and shell, runs startup routing once, and reacts to</summary>
+/// foreground, background and day changes.</summary>
 public partial class App : Application, IDisposable
 {
     private readonly IServiceProvider _services;
@@ -32,8 +34,11 @@ public partial class App : Application, IDisposable
     private DateTime _lastDashboardRefreshDate = DateTime.MinValue;
     private bool _isForeground;
     private CancellationTokenSource? _foregroundCancellation;
+    /// <summary>Raised when the app leaves the foreground, so a running workout timer can be checkpointed before</summary>
+    /// the process is suspended.</summary>
     internal event EventHandler? WorkoutTimingSuspending;
 
+    /// <summary>Builds the app, wiring the theme and session-loss handlers.</summary>
     public App(IServiceProvider services)
     {
         _services = services;
@@ -51,6 +56,8 @@ public partial class App : Application, IDisposable
     /// </summary>
     private void OnSessionLost(object? sender, EventArgs e) => _ = ReturnToSignInAsync();
 
+    /// <summary>Moves the app back to sign-in after the session was rejected, and re-arms the session signal so</summary>
+    /// the next rejection is handled again.</summary>
     private async Task ReturnToSignInAsync()
     {
         try
@@ -67,6 +74,7 @@ public partial class App : Application, IDisposable
         }
     }
 
+    /// <summary>Unhooks the session-loss handler and releases the foreground cancellation.</summary>
     public void Dispose()
     {
         if (_sessionLostSignal is not null)
@@ -77,6 +85,8 @@ public partial class App : Application, IDisposable
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>Publishes the effective theme to the workout palette, resolving the system default when the</summary>
+    /// requested theme is unspecified.</summary>
     private static void SyncActivityTheme(AppTheme? theme = null)
     {
         var resolved = theme ?? Current?.RequestedTheme ?? AppTheme.Unspecified;
@@ -86,6 +96,7 @@ public partial class App : Application, IDisposable
         WorkoutPresentationPalette.IsDarkTheme = resolved == AppTheme.Dark;
     }
 
+    /// <summary>Creates the window that hosts the shell.</summary>
     protected override Window CreateWindow(IActivationState? activationState)
     {
         var window = new Window(_services.GetRequiredService<AppShell>());
@@ -95,6 +106,7 @@ public partial class App : Application, IDisposable
         return window;
     }
 
+    /// <summary>First window: the app is foreground from now on, and startup routing begins exactly once.</summary>
     private void OnWindowCreated(object? sender, EventArgs e)
     {
         _isForeground = true;
@@ -102,6 +114,8 @@ public partial class App : Application, IDisposable
         BeginStartup();
     }
 
+    /// <summary>Starts startup routing once per launch. A page handed in later still receives the earlier</summary>
+    /// failure, so a retry affordance is never lost to a race.</summary>
     internal void BeginStartup(AppStartupPage? startupPage = null)
     {
         if (startupPage is not null)
@@ -117,6 +131,7 @@ public partial class App : Application, IDisposable
         _startupTask = InitializeAndRouteAsync();
     }
 
+    /// <summary>Waits for the failed attempt to finish, clears the failure, and starts routing again.</summary>
     internal async Task RetryStartupAsync()
     {
         if (_startupTask is { } previousStartup)
@@ -127,6 +142,8 @@ public partial class App : Application, IDisposable
         BeginStartup();
     }
 
+    /// <summary>Signs out, purges the local account state and photo cache, then retries startup. Cleanup errors are</summary>
+    /// logged rather than blocking the restart.</summary>
     internal async Task ResetAndRestartAsync()
     {
         try
@@ -152,12 +169,16 @@ public partial class App : Application, IDisposable
         await RetryStartupAsync();
     }
 
+    /// <summary>Forgets the startup page once it is gone, so a later failure is not reported to a disposed page.</summary>
     internal void DetachStartupPage(AppStartupPage startupPage)
     {
         if (ReferenceEquals(_startupPage, startupPage))
             _startupPage = null;
     }
 
+    /// <summary>The startup decision: clear stale keychain entries on a fresh install, read the account, then route</summary>
+    /// to setup, dashboard or sign-in. A stored session whose state cannot be read is a failed verification, not</summary>
+    /// a sign-out.</summary>
     private async Task InitializeAndRouteAsync()
     {
         var unlockingData = false;
@@ -250,6 +271,8 @@ public partial class App : Application, IDisposable
         }
     }
 
+    /// <summary>Activates the dashboard, waits for its first load so hidden-tab preloads do not compete with it,</summary>
+    /// then schedules notifications.</summary>
     private async Task NavigateToDashboardAsync(int userId)
     {
         await ActivateRootAsync(nameof(DashboardPage));
@@ -270,6 +293,9 @@ public partial class App : Application, IDisposable
 
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Exposed as an application navigation operation to page coordinators.")]
+    /// <summary>Switches the shell's root. Signing in clears the half-finished workout-preference draft and the</summary>
+    /// previous account's check-in state; any other root marks the session as verified and refreshes the</summary>
+    /// workout time zone while foregrounded.</summary>
     internal async Task ActivateRootAsync(string route)
     {
         if (route == "LoginPage")
@@ -295,6 +321,8 @@ public partial class App : Application, IDisposable
             _ = UpdateForegroundCalendarAsync();
     }
 
+    /// <summary>Waits briefly for the dashboard to become the current page, returning null instead of blocking</summary>
+    /// startup when it never does.</summary>
     internal static async Task<DashboardPage?> WaitForDashboardPageAsync()
     {
         for (var attempt = 0; attempt < 20; attempt++)
@@ -310,6 +338,8 @@ public partial class App : Application, IDisposable
         return null;
     }
 
+    /// <summary>Runs the cycle-phase and check-in reminders through the load scheduler, so they cannot overlap the</summary>
+    /// startup data reads.</summary>
     private async Task ScheduleNotificationsAsync(int userId)
     {
         try
@@ -326,6 +356,8 @@ public partial class App : Application, IDisposable
         }
     }
 
+    /// <summary>Back in the foreground: restarts the foreground cancellation token, refreshes the workout time</summary>
+    /// zone, and catches up if the date changed while the app was away.</summary>
     private void OnWindowResumed(object? sender, EventArgs e)
     {
         _isForeground = true;
@@ -335,6 +367,8 @@ public partial class App : Application, IDisposable
         _ = HandleDayChangeAsync();
     }
 
+    /// <summary>Leaving the foreground: cancels in-flight foreground work and tells a running workout to checkpoint</summary>
+    /// its timer before suspension.</summary>
     private void OnWindowStopped(object? sender, EventArgs e)
     {
         _isForeground = false;
@@ -342,6 +376,8 @@ public partial class App : Application, IDisposable
         WorkoutTimingSuspending?.Invoke(this, EventArgs.Empty);
     }
 
+    /// <summary>Sends the device time zone to the server, but only while foregrounded and signed in, so a</summary>
+    /// backgrounded app does not write.</summary>
     private async Task UpdateForegroundCalendarAsync()
     {
         try
@@ -359,6 +395,8 @@ public partial class App : Application, IDisposable
         }
     }
 
+    /// <summary>After midnight, invalidates and reloads the dashboard so the first screen of the day is not</summary>
+    /// yesterday's. Does nothing until the initial startup routing has completed.</summary>
     private async Task HandleDayChangeAsync()
     {
         if (_startupTask is not { IsCompleted: true })

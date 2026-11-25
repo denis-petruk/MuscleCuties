@@ -7,11 +7,13 @@ using MuscleCuties.UseCases.Features.Account.EmailChallenge;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
 
+/// <summary>Delivers a verification code through the first-party transport, keeping the code out of logs.</summary>
 public sealed class FirstPartyEmailChallengeDelivery(
     HttpClient httpClient,
     string? relayEndpoint,
     string? relayBearerToken) : IEmailChallengeDelivery
 {
+    /// <summary>Sends one code and answers whether the transport accepted it, without echoing the code.</summary>
     public async Task<bool> SendAsync(string normalizedEmail, string code, int purpose, CancellationToken cancellationToken)
     {
         if (!Uri.TryCreate(relayEndpoint, UriKind.Absolute, out var endpoint) || endpoint.Scheme != Uri.UriSchemeHttps ||
@@ -45,6 +47,7 @@ public sealed class FirstPartyEmailChallengeDelivery(
     }
 }
 
+/// <summary>Issues and verifies the signed receipt token a provider returns, so delivery can be proven later.</summary>
 public sealed class SignedEmailReceiptTokenIssuer(
     string keyId,
     string privateKeyPem,
@@ -57,6 +60,7 @@ public sealed class SignedEmailReceiptTokenIssuer(
     private const int MinimumRsaKeyBits = 2_048;
     private const long AllowedIssueTimeFutureSeconds = 60;
 
+    /// <summary>Signs a receipt for one address and purpose, with the expiry the verifier enforces.</summary>
     public string Issue(string normalizedEmail, int purpose, string challengeId, string receiptId, DateTimeOffset expiresAtUtc)
     {
         if (string.IsNullOrWhiteSpace(keyId) || string.IsNullOrWhiteSpace(issuer) || string.IsNullOrWhiteSpace(audience) ||
@@ -84,9 +88,11 @@ public sealed class SignedEmailReceiptTokenIssuer(
         return $"{unsignedToken}.{Encode(signature)}";
     }
 
+    /// <summary>True when the challenge request carries the values the check needs.</summary>
     private static bool AuthInputValidation(string email, int purpose, string challengeId, string receiptId) =>
         !string.IsNullOrWhiteSpace(email) && purpose is RegistrationPurpose or PasswordRecoveryPurpose && Guid.TryParse(challengeId, out _) &&
         !string.IsNullOrWhiteSpace(receiptId);
 
+    /// <summary>Base64url encoding without padding.</summary>
     private static string Encode(byte[] value) => Convert.ToBase64String(value).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 }

@@ -4,8 +4,10 @@ using MuscleCuties.UseCases.Features.Nutrition.CustomFoods.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Nutrition.CatalogSearch;
 
+/// <summary>Creates a food for one account, scoped so it never enters the shared catalog.</summary>
 public sealed class PostgresCreateCustomFoodStore(PostgresDbContext dbContext) : ICreateCustomFoodStore
 {
+    /// <summary>Stores a custom food.</summary>
     public async Task<CustomFoodRecord> CreateAsync(
         Guid ownerUserId,
         CustomFoodNutrition nutrition,
@@ -63,6 +65,7 @@ public sealed class PostgresCreateCustomFoodStore(PostgresDbContext dbContext) :
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Maps a stored user food onto a custom food record.</summary>
     private static CustomFoodRecord ToCustomFoodRecord(UserFoodItemRecord record) => new(
         record.Id,
         record.Name,

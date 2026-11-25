@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>How one strength style scores against her answers.</summary>
 public sealed record StrengthStyleEvaluation(
     WorkoutActivityType Activity,
     bool IsFeasible,
@@ -11,6 +12,7 @@ public sealed record StrengthStyleEvaluation(
     decimal RetentionRatio,
     StrengthPlanPreviewResult PreviewResult);
 
+/// <summary>The style the answers select, with the runner-up kept so the offer can explain itself.</summary>
 public sealed record StrengthStyleSelectionResult(
     WorkoutActivityType? ChosenStyle,
     IReadOnlyList<WorkoutActivityType> FittingUnreducedStyles,
@@ -44,11 +46,13 @@ public static class StrengthStyleSelectionRule
     public const int ZeroWorkingSets = 0;
     public const int SingleFittingStyleCount = 1;
 
+    /// <summary>True when the activity is a strength style.</summary>
     public static bool IsStrengthStyle(WorkoutActivityType activity) => activity is
         WorkoutActivityType.GeneralStrength or
         WorkoutActivityType.HighVolumeStrength or
         WorkoutActivityType.StrengthHighIntensity;
 
+    /// <summary>How demanding the strength style is.</summary>
     public static int GetDemandRank(WorkoutActivityType activity) => activity switch
     {
         WorkoutActivityType.GeneralStrength => GeneralStrengthDemandRank,
@@ -57,6 +61,7 @@ public static class StrengthStyleSelectionRule
         _ => int.MaxValue
     };
 
+    /// <summary>Chooses the strength style for the profile's experience and preferences.</summary>
     public static StrengthStyleSelectionResult Select(
         StrengthPlanPreviewChoices? choices,
         StrengthPlanPreviewData? data)

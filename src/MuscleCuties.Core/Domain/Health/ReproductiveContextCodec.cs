@@ -2,17 +2,20 @@ using System.Text.RegularExpressions;
 
 namespace MuscleCuties.Core.Domain.Health;
 
+/// <summary>Encodes the reproductive context for storage, so its values never appear in clear text.</summary>
 public static class ReproductiveContextCodec
 {
     private static readonly Regex PregnancyRegex = new(@"""Pregnancy""\s*:\s*(-?\d+)", RegexOptions.Compiled);
     private static readonly Regex ContraceptionRegex = new(@"""Contraception""\s*:\s*(-?\d+)", RegexOptions.Compiled);
 
+    /// <summary>The stored form of the context.</summary>
     public static string Serialize(ReproductiveContext context)
     {
         ArgumentNullException.ThrowIfNull(context);
         return $"{{\"Pregnancy\":{(int)context.Pregnancy},\"Contraception\":{(int)context.Contraception}}}";
     }
 
+    /// <summary>Reads the stored form, returning an empty context for a value it cannot read rather than throwing.</summary>
     public static ReproductiveContext Parse(string? raw)
     {
         if (string.IsNullOrWhiteSpace(raw))
@@ -48,9 +51,11 @@ public static class ReproductiveContextCodec
         }
     }
 
+    /// <summary>Reads the pregnancy value, treating an unknown one as not pregnant so no load is invented.</summary>
     private static PregnancyStatus ParsePregnancy(int value) => Enum.IsDefined(typeof(PregnancyStatus), value)
         ? (PregnancyStatus)value : PregnancyStatus.Unknown;
 
+    /// <summary>Reads the contraception value, treating an unknown one as unset.</summary>
     private static ContraceptionStatus ParseContraception(int value) => Enum.IsDefined(typeof(ContraceptionStatus), value)
         ? (ContraceptionStatus)value : ContraceptionStatus.Unknown;
 }

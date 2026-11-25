@@ -5,17 +5,20 @@ using MuscleCuties.UseCases.Features.Workout.Readiness.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Workout.Readiness;
 
+/// <summary>Scores readiness from the day's signals, returning a neutral score when evidence is missing.</summary>
 public sealed class EvaluateReadinessUseCase : IEvaluateReadinessUseCase
 {
     private const int HighTierThreshold = 75;
     private const int ModerateTierThreshold = 50;
     private readonly IReadinessEngine _readinessEngine;
 
+    /// <summary>Takes the readiness engine, which holds the scoring rules.</summary>
     public EvaluateReadinessUseCase(IReadinessEngine readinessEngine)
     {
         _readinessEngine = readinessEngine ?? throw new ArgumentNullException(nameof(readinessEngine));
     }
 
+    /// <summary>Scores the evidence the client sent, used when the device has no stored history.</summary>
     public EvaluateReadinessEvidenceResponse EvaluateEvidence(EvaluateReadinessEvidenceRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -47,6 +50,7 @@ public sealed class EvaluateReadinessUseCase : IEvaluateReadinessUseCase
             result.ReviewedPolicyVersion);
     }
 
+    /// <summary>Computes the day's readiness from the stored signals, returning a neutral score when they are missing.</summary>
     public ComputeReadinessResponse Compute(ComputeReadinessRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);

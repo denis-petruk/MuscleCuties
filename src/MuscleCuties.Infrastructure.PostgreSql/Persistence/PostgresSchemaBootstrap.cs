@@ -3,6 +3,7 @@ using System.Text;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Persistence;
 
+/// <summary>What a schema bootstrap did, so startup can log one line instead of a stream of statements.</summary>
 public sealed record SchemaBootstrapResult(
     bool CreatedFromModel,
     int SecurityStatementCount,
@@ -27,6 +28,7 @@ public static class PostgresSchemaBootstrap
 
     private const char StatementSeparator = ';';
 
+    /// <summary>Whether the target database is disposable, which is the guard that stops a bootstrap from creating schema on a shared database.</summary>
     public static bool IsDisposableTarget(string? connectionString)
     {
         if (string.IsNullOrWhiteSpace(connectionString)) return true;
@@ -43,6 +45,7 @@ public static class PostgresSchemaBootstrap
         }
     }
 
+    /// <summary>Initializes the schema and applies the security script.</summary>
     public static async Task<SchemaBootstrapResult> InitializeAsync(
         PostgresDbContext context,
         bool seed,
@@ -81,9 +84,11 @@ public static class PostgresSchemaBootstrap
             seedSummary);
     }
 
+    /// <summary>The security script the build embeds.</summary>
     public static Task<string> ReadSecurityScriptAsync(CancellationToken cancellationToken = default) =>
         ReadEmbeddedScriptAsync(SecurityScriptResourceName, cancellationToken);
 
+    /// <summary>Reads an embedded SQL script.</summary>
     private static async Task<string> ReadEmbeddedScriptAsync(
         string resourceName,
         CancellationToken cancellationToken)
@@ -135,6 +140,7 @@ public static class PostgresSchemaBootstrap
         return Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(builder.ToString())));
     }
 
+    /// <summary>Counts the statements in a script for reporting.</summary>
     private static int CountStatements(string sql) =>
         sql.Split(StatementSeparator).Length - 1;
 }

@@ -8,6 +8,7 @@ public static class PostgresCatalogSeedWriter
     private const int MinimumFdcIdentifier = 1;
     private const string FdcSeedCodePrefix = "fdc:";
 
+    /// <summary>The seed code for an FDC food, in the one form the catalog's check constraint accepts.</summary>
     public static string CreateFdcSeedCode(int fdcId)
     {
         if (fdcId < MinimumFdcIdentifier)
@@ -16,6 +17,7 @@ public static class PostgresCatalogSeedWriter
         return $"{FdcSeedCodePrefix}{fdcId.ToString(System.Globalization.CultureInfo.InvariantCulture)}";
     }
 
+    /// <summary>Inserts or updates one catalog row identified by its seed code.</summary>
     public static async Task<TEntity> UpsertBySeedCodeAsync<TEntity>(
         PostgresDbContext context,
         DbSet<TEntity> rows,

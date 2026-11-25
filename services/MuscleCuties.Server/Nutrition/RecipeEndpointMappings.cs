@@ -9,10 +9,12 @@ using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
 namespace MuscleCuties.Server.Nutrition;
 
+/// <summary>The recipe routes: saving a recipe and reading the saved ones.</summary>
 public static class RecipeEndpointMappings
 {
     private const string NutritionRoute = "/api/v1/nutrition";
 
+    /// <summary>Registers the recipe endpoints.</summary>
     public static IEndpointRouteBuilder MapRecipeEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(NutritionRoute).RequireAuthorization();

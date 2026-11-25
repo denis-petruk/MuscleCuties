@@ -8,6 +8,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Common;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 
+/// <summary>The session in progress: what was prescribed, what has been logged, and the timer state.</summary>
 public sealed class PostgresWorkoutActiveSessionStore(
     PostgresDbContext dbContext,
     PostgresIdempotencyExecutor idempotencyExecutor,
@@ -15,6 +16,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
 {
     private const int CompletedWorkoutPercent = 100;
     private const int MaximumPlannedSessionHistoryEntries = 20;
+    /// <summary>The planned session's history.</summary>
     public async Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(Guid userId,
         int workoutDayId, CancellationToken cancellationToken) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -36,6 +38,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return (IReadOnlyList<PlannedWorkoutSessionHistoryEntry>)result;
         }).ConfigureAwait(false);
+    /// <summary>The active session of a planned day.</summary>
     public async Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
@@ -55,17 +58,20 @@ public sealed class PostgresWorkoutActiveSessionStore(
     private const string UpsertSetCommandPrefix = "workout.session.set:";
     private const string FinishCommandPrefix = "workout.session.finish:";
 
+    /// <summary>Resumes the session's paused timing.</summary>
     public Task<ActiveWorkoutSessionSnapshot?> ResumeTimingAsync(Guid userId, ResumeWorkoutTimingCommand command,
         CancellationToken cancellationToken) => UpdateTimingAsync(userId, command.SessionId,
         IdempotencyCommandKey.Build(ResumeTimingCommandPrefix, command.IdempotencyKey),
         PostgresIdempotencyExecutor.ComputeRequestHash(new { command.SessionId }), null, cancellationToken);
 
+    /// <summary>Records progress of the running interval.</summary>
     public Task<ActiveWorkoutSessionSnapshot?> CheckpointTimingAsync(Guid userId, CheckpointWorkoutTimingCommand command,
         CancellationToken cancellationToken) => UpdateTimingAsync(userId, command.SessionId,
         IdempotencyCommandKey.Build(CheckpointTimingCommandPrefix, command.IdempotencyKey),
         PostgresIdempotencyExecutor.ComputeRequestHash(new { command.SessionId, command.IntervalId, command.MeasuredSeconds, command.Pause }),
         command, cancellationToken);
 
+    /// <summary>Applies a timing command once per key.</summary>
     private async Task<ActiveWorkoutSessionSnapshot?> UpdateTimingAsync(Guid userId, Guid sessionId, string commandKey,
         string requestHash, CheckpointWorkoutTimingCommand? checkpoint, CancellationToken cancellationToken)
     {
@@ -118,6 +124,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
     }
     private const string CancelCommandPrefix = "workout.session.cancel:";
 
+    /// <summary>Loads the active session.</summary>
     public async Task<ActiveWorkoutSessionSnapshot?> GetSessionAsync(
         Guid userId,
         Guid sessionId,
@@ -135,6 +142,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
             return snapshot;
         }).ConfigureAwait(false);
 
+    /// <summary>Starts a planned session.</summary>
     public async Task<ActiveWorkoutSessionSnapshot> StartSessionAsync(
         Guid userId,
         StartWorkoutSessionCommand command,
@@ -328,6 +336,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
             : execution.Response;
     }
 
+    /// <summary>Creates or updates one set.</summary>
     public async Task<ActiveWorkoutSessionSnapshot?> UpsertSetAsync(
         Guid userId,
         UpsertWorkoutSessionSetCommand command,
@@ -374,6 +383,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
             : execution.Response;
     }
 
+    /// <summary>Finishes the session and stores its totals.</summary>
     public async Task<ActiveWorkoutSessionSnapshot?> FinishSessionAsync(
         Guid userId,
         FinishWorkoutSessionCommand command,
@@ -483,6 +493,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
             : execution.Response;
     }
 
+    /// <summary>Cancels the session.</summary>
     public async Task<ActiveWorkoutSessionSnapshot?> CancelSessionAsync(
         Guid userId,
         CancelWorkoutSessionCommand command,
@@ -524,6 +535,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
             : execution.Response;
     }
 
+    /// <summary>Refuses the write when the activity is no longer safe.</summary>
     private static async Task RequireSafeSessionAsync(PostgresDbContext context, Guid userId,
         WorkoutSessionLogRecord session, CancellationToken cancellationToken)
     {
@@ -533,6 +545,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
             throw new WorkoutActivityNoLongerSafeException();
     }
 
+    /// <summary>Writes one set's values onto the session's exercise.</summary>
     private static async Task ApplySetUpsertAsync(
         PostgresDbContext context,
         Guid userId,
@@ -583,6 +596,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
         }
     }
 
+    /// <summary>Recalculates the session's volume from its sets.</summary>
     private static async Task RecalculateSessionVolumeAsync(
         PostgresDbContext context,
         Guid userId,
@@ -603,6 +617,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
         session.UpdatedAt = nowUtc;
     }
 
+    /// <summary>Loads the session snapshot the response returns.</summary>
     private static async Task<ActiveWorkoutSessionSnapshot?> LoadSessionSnapshotAsync(
         PostgresDbContext context,
         Guid userId,
@@ -658,6 +673,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
         };
     }
 
+    /// <summary>Takes the session row lock.</summary>
     private static Task<int> LockSessionAsync(
         PostgresDbContext context,
         Guid sessionId,
@@ -666,6 +682,7 @@ public sealed class PostgresWorkoutActiveSessionStore(
             $"SELECT pg_advisory_xact_lock(hashtextextended({sessionId.ToString("D")}, 0))",
             cancellationToken);
 
+    /// <summary>True when the write failed on a unique constraint.</summary>
     private static bool IsUniqueViolation(DbUpdateException exception) =>
         exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 }

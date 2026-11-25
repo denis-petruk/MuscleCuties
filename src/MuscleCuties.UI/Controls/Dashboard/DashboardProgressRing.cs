@@ -3,6 +3,9 @@ using Microsoft.Maui.Graphics;
 
 namespace MuscleCuties.UI.Controls.Dashboard;
 
+/// <summary>
+///     Circular progress ring drawn for a dashboard target.
+/// </summary>
 public sealed class DashboardProgressRing : GraphicsView, IDrawable
 {
     public static readonly BindableProperty ProgressProperty = BindableProperty.Create(
@@ -13,6 +16,7 @@ public sealed class DashboardProgressRing : GraphicsView, IDrawable
         nameof(RingColor), typeof(Color), typeof(DashboardProgressRing), AppThemeResources.GetColor("DashboardWeightAccent", default),
         propertyChanged: (view, _, _) => ((DashboardProgressRing)view).Invalidate());
 
+    /// <summary>Wires the ring to redraw itself whenever the value it shows changes, rather than on every frame.</summary>
     public DashboardProgressRing()
     {
         Drawable = this;
@@ -31,6 +35,8 @@ public sealed class DashboardProgressRing : GraphicsView, IDrawable
         set => SetValue(RingColorProperty, value);
     }
 
+    /// <summary>Draws the ring's track and its filled arc, clamped to a full circle so an overshoot cannot wrap past the</summary>
+    /// start.</summary>
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         var size = Math.Min(dirtyRect.Width, dirtyRect.Height);

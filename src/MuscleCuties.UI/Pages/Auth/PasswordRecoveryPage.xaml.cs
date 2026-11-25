@@ -3,11 +3,15 @@ using MuscleCuties.UI.ViewModels.Auth;
 
 namespace MuscleCuties.UI.Pages.Auth;
 
+/// <summary>
+///     Password recovery page: request a code, verify it, then set a new password.
+/// </summary>
 public partial class PasswordRecoveryPage : ContentPage
 {
     private readonly PasswordRecoveryViewModel _viewModel;
     private bool _isSubscribed;
 
+    /// <summary>Initializes the page and its view model.</summary>
     public PasswordRecoveryPage(PasswordRecoveryViewModel viewModel)
     {
         var started = Stopwatch.GetTimestamp();
@@ -16,6 +20,7 @@ public partial class PasswordRecoveryPage : ContentPage
         this.BindWithTiming(viewModel, started);
     }
 
+    /// <summary>Starts the view model's work when the page appears.</summary>
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -26,6 +31,7 @@ public partial class PasswordRecoveryPage : ContentPage
         }
     }
 
+    /// <summary>Follows the recovery step changes the view model reports.</summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(PasswordRecoveryViewModel.Step))
@@ -60,11 +66,13 @@ public partial class PasswordRecoveryPage : ContentPage
         });
     }
 
+    /// <summary>Moves to the confirmation field.</summary>
     private void OnNewPasswordCompleted(object? sender, EventArgs e)
     {
         ConfirmPasswordEntry.Focus();
     }
 
+    /// <summary>Reveals or re-hides the new password and updates the label.</summary>
     private void OnToggleNewPassword(object? sender, TappedEventArgs e)
     {
         if (_viewModel.IsBusy)
@@ -76,6 +84,7 @@ public partial class PasswordRecoveryPage : ContentPage
         SemanticProperties.SetDescription(NewPasswordReveal, NewPasswordReveal.Text);
     }
 
+    /// <summary>Reveals or re-hides the confirmation field and updates the label.</summary>
     private void OnToggleConfirmPassword(object? sender, TappedEventArgs e)
     {
         if (_viewModel.IsBusy)
@@ -87,6 +96,7 @@ public partial class PasswordRecoveryPage : ContentPage
         SemanticProperties.SetDescription(ConfirmPasswordReveal, ConfirmPasswordReveal.Text);
     }
 
+    /// <summary>Masks both password fields again when the page is left, so neither stays readable.</summary>
     private void ResetPasswordMasks()
     {
         NewPasswordEntry.IsPassword = true;
@@ -98,6 +108,7 @@ public partial class PasswordRecoveryPage : ContentPage
         SemanticProperties.SetDescription(ConfirmPasswordReveal, show);
     }
 
+    /// <summary>Pauses the view model when the page goes away.</summary>
     protected override void OnDisappearing()
     {
         ResetPasswordMasks();

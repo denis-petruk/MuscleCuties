@@ -14,6 +14,7 @@ public static class WorkoutEstimatedCyclePhaseRule
     public const int RequiredRecordedStarts = RequiredCompletedIntervals + 1;
     private const int FirstCycleDay = 1;
 
+    /// <summary>Estimates the cycle phase for a date from the last observed phase.</summary>
     public static CyclePhase Estimate(DateOnly targetDate, DateOnly observedThrough,
         IReadOnlyList<DateOnly>? recordedMenstrualStarts)
     {

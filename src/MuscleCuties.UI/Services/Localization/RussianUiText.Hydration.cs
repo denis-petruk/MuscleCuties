@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Russian copy for hydration.</summary>
 internal static partial class RussianUiText
 {
+    /// <summary>Registers the Russian labels for hydration.</summary>
     static partial void RegisterHydrationStrings()
     {
         Values["Nutrition_Hydration_Entry"] = "Запись {0} · {1:N0} мл";

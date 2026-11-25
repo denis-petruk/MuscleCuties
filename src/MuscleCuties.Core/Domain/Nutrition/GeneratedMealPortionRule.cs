@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Nutrition;
 
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>One ingredient's nutrients per 100 g, which portioning scales.</summary>
 public sealed record GeneratedMealIngredientProfile(
     string Name,
     float ReferenceGrams,
@@ -11,16 +12,19 @@ public sealed record GeneratedMealIngredientProfile(
     float FatsPer100Grams,
     bool IsOil = false);
 
+/// <summary>One ingredient with the grams chosen for it.</summary>
 public sealed record GeneratedMealIngredientPortion(
     GeneratedMealIngredientProfile Profile,
     float Grams,
     MacroNutrients Nutrients);
 
+/// <summary>Sizes a generated meal's ingredients to the calorie target, keeping whole portions where it can.</summary>
 public static class GeneratedMealPortionRule
 {
     private const float NutrientReferenceGrams = 100f;
     private const float MaximumOilCalorieShare = 0.2f;
 
+    /// <summary>Splits a generated meal's energy and macros across its ingredients.</summary>
     public static IReadOnlyList<GeneratedMealIngredientPortion> Calculate(
         IReadOnlyList<GeneratedMealIngredientProfile> ingredients,
         float targetCalories,
@@ -82,6 +86,7 @@ public static class GeneratedMealPortionRule
         }).Where(portion => portion.Grams > 0f).ToArray();
     }
 
+    /// <summary>True when a portion value is finite and inside its allowed range.</summary>
     private static bool IsValid(float value, bool positive) =>
         float.IsFinite(value) && (positive ? value > 0f : value >= 0f);
 }

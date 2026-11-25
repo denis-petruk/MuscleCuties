@@ -14,6 +14,7 @@ internal static class ExerciseSwapEligibilitySource
     private static readonly JsonSerializerOptions JsonOptions = WorkoutPlanningJson.Create();
 
     // Caller owns the tenant transaction.
+    /// <summary>Evaluates whether a swap is allowed for the user's plan.</summary>
     internal static async Task<ExerciseSwapEligibilityResult> EvaluateAsync(
         PostgresDbContext dbContext,
         Guid userId,
@@ -66,6 +67,7 @@ internal static class ExerciseSwapEligibilitySource
             acceptedRequest?.UnknownExperienceAssessmentCompleted == true));
     }
 
+    /// <summary>The accepted preview request the plan was built from.</summary>
     private static async Task<StrengthPlanPreviewRequestV020?> LoadAcceptedRequestAsync(
         PostgresDbContext dbContext, Guid userId, CancellationToken cancellationToken)
     {
@@ -93,5 +95,6 @@ internal static class ExerciseSwapEligibilitySource
         }
     }
 
+    /// <summary>The accepted plan's inputs, frozen so an eligibility decision can be re-checked against what it saw.</summary>
     private sealed record AcceptedInputSnapshot(StrengthPlanPreviewRequestV020? Request);
 }

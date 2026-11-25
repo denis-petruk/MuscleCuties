@@ -12,6 +12,7 @@ public static class FoodCatalogEndpointMappings
 {
     private const string CatalogRoute = "/api/v1/nutrition/catalog";
 
+    /// <summary>Registers the food-catalog search and detail endpoints.</summary>
     public static IEndpointRouteBuilder MapFoodCatalogEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(CatalogRoute).RequireAuthorization();

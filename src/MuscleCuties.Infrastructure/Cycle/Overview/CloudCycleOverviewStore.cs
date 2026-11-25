@@ -6,12 +6,14 @@ using MuscleCuties.Infrastructure.Cloud;
 
 namespace MuscleCuties.Infrastructure.Cycle.Overview;
 
+/// <summary>The cycle overview read through the backend.</summary>
 public sealed class CloudCycleOverviewStore(
     IMuscleCutiesBackendApiClient apiClient,
     MobileJourneyCloudGateway cloudGateway) : ICycleOverviewStore
 {
     private const string CycleOverviewRoute = "/api/v1/cycle/overview";
 
+    /// <summary>Loads the cycle overview for the range.</summary>
     public async Task<CycleOverviewSnapshot?> LoadAsync(
         DateTime rangeStart,
         DateTime rangeEnd,
@@ -66,6 +68,8 @@ public sealed class CloudCycleOverviewStore(
         return null;
     }
 
+    /// <summary>A server overview as the app's snapshot, with the prediction's own source kept so the page can say whether the</summary>
+    /// length is hers or a default.</summary>
     private static CycleOverviewSnapshot MapServerOverview(ServerCycleOverview overview)
     {
         var prediction = overview.Prediction;

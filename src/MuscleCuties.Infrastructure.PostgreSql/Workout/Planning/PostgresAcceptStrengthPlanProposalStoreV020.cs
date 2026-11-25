@@ -48,10 +48,12 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
     private const string PlanningDateChangedCode = "PlanningDateChanged";
     private const string NoEligibleWorkoutDayCode = "NoEligibleWorkoutDay";
 
+    /// <summary>Who accepted a proposal, which is recorded because an automatic acceptance must be distinguishable in support.</summary>
     internal enum AcceptanceOrigin { User, Automatic }
 
     private static readonly JsonSerializerOptions JsonOptions = WorkoutPlanningJson.Create();
 
+    /// <summary>Accepts a proposal and applies its plan.</summary>
     public async Task<AcceptStrengthPlanProposalResultV020> AcceptAsync(Guid userId,
         AcceptStrengthPlanProposalRequestV020 request, CancellationToken cancellationToken) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -70,6 +72,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         }).ConfigureAwait(false);
 
     // Caller owns the tenant transaction and account/catalog locks and commits the result.
+    /// <summary>Accepts the proposal inside the caller's transaction.</summary>
     internal async Task<AcceptStrengthPlanProposalResultV020> AcceptInCurrentTransactionAsync(Guid userId,
         AcceptStrengthPlanProposalRequestV020 request, AcceptanceOrigin origin, CancellationToken cancellationToken,
         bool injuryProvenanceValidated = false)
@@ -480,6 +483,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         return new AcceptStrengthPlanProposalResultV020(AcceptedStatus, plan.Id, revisionId, null);
     }
 
+    /// <summary>Reports whether an active session exists and whether its occurrence is proven.</summary>
     internal async Task<(bool Any, bool Proven)> InspectPromotionActiveSessionsAsync(Guid userId, Guid activePlanId,
         CancellationToken cancellationToken)
     {
@@ -511,6 +515,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             originalRows.Any(row => row.Id == exercise.Id && row.ExerciseId == exercise.ExerciseId)));
     }
 
+    /// <summary>The order a proven same-day promotion must keep.</summary>
     internal async Task<int?> FindProvenSameDayPromotionOrderAsync(Guid userId, Guid activePlanId,
         DateOnly today, IReadOnlyCollection<MixedActivityScheduleSessionV020> proposed,
         CancellationToken cancellationToken)
@@ -561,6 +566,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         return PromotionSameDayBoundaryRule.FindSuccessorOrder(existing, next);
     }
 
+    /// <summary>The next date the plan schedules.</summary>
     internal async Task<DateOnly?> FindNextScheduledDateAsync(Guid userId, Guid activePlanId,
         DateOnly today, bool completedToday, CancellationToken cancellationToken)
     {
@@ -577,6 +583,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 .OrderBy(day => day.Date).Select(day => day.Date).FirstOrDefaultAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Reads a stored snapshot, answering null on unreadable JSON so a corrupt row degrades instead of failing the request.</summary>
     private static T? Deserialize<T>(string json)
     {
         try
@@ -589,12 +596,14 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         }
     }
 
+    /// <summary>The Monday of the week a date falls in, which is the anchor the plan's weeks are numbered from.</summary>
     private static DateOnly MondayOf(DateOnly date)
     {
         var offset = ((int)date.DayOfWeek - MondayWeekOrderOffset + DaysPerWeek) % DaysPerWeek;
         return date.AddDays(-offset);
     }
 
+    /// <summary>The mixed schedule the proposal carries, when it has one.</summary>
     private static bool TryGetMixedSchedule(ProposalSnapshot proposal,
         IReadOnlySet<DayOfWeek> availableWeekdays,
         out MixedActivityScheduleSessionV020[] scheduleSessions)
@@ -649,10 +658,12 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             ((decision.ScheduledSessionsPerWeek > 0) == IsScheduledDisposition(decision.Disposition)));
     }
 
+    /// <summary>True when the proposal has an activity the plan cannot store.</summary>
     private static bool ContainsUnrepresentableOtherActivity(ProposalSnapshot proposal) =>
         proposal.MixedActivitySchedule?.Sessions?.Any(session => session is not null &&
             session.ActivityTypeId == (int)WorkoutActivityType.Other) == true;
 
+    /// <summary>The strength sessions the proposal carries, when they are valid.</summary>
     private static bool TryGetStrengthSessions(IReadOnlyList<StrengthPlanPreviewSessionV020> proposalSessions,
         IReadOnlyList<MixedActivityScheduleSessionV020> scheduleSessions,
         IReadOnlySet<DayOfWeek> availableWeekdays,
@@ -687,21 +698,26 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         return true;
     }
 
+    /// <summary>True when the disposition is one the store understands.</summary>
     private static bool IsValidDisposition(string disposition) =>
         Enum.TryParse<MixedActivityScheduleDisposition>(disposition, true, out var parsed) &&
         Enum.IsDefined(parsed);
 
+    /// <summary>True when the disposition means the occurrence is scheduled.</summary>
     private static bool IsScheduledDisposition(string disposition) =>
         Enum.TryParse<MixedActivityScheduleDisposition>(disposition, true, out var parsed) &&
         parsed is MixedActivityScheduleDisposition.Scheduled or MixedActivityScheduleDisposition.PartiallyScheduled;
 
+    /// <summary>True when the activity is a strength session.</summary>
     private static bool IsStrengthActivity(WorkoutActivityType activity) => activity is
         WorkoutActivityType.StrengthHighIntensity or WorkoutActivityType.HighVolumeStrength or
         WorkoutActivityType.GeneralStrength;
 
+    /// <summary>True when the activity can be stored as a workout day.</summary>
     private static bool IsPersistableActivity(WorkoutActivityType activity) =>
         Enum.IsDefined(activity) && activity is not WorkoutActivityType.RestDay and not WorkoutActivityType.Other;
 
+    /// <summary>The stored workout type for an activity.</summary>
     private static string ToWorkoutType(WorkoutActivityType activity) => activity switch
     {
         WorkoutActivityType.StrengthHighIntensity or WorkoutActivityType.HighVolumeStrength or
@@ -714,6 +730,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, "Unsupported scheduled activity.")
     };
 
+    /// <summary>The display name of an activity.</summary>
     private static string ActivityName(WorkoutActivityType activity) => activity switch
     {
         WorkoutActivityType.HighVolumeStrength => "High volume strength",
@@ -733,6 +750,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, "Unsupported scheduled activity.")
     };
 
+    /// <summary>The inputs a proposal was generated from, frozen for the fingerprint check.</summary>
     private sealed record ProposalInputSnapshot(
         StrengthPlanPreviewRequestV020 Request,
         int ProfileVersion,
@@ -741,6 +759,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         bool AutomaticOrigin = false,
         DateOnly? AutomaticStartDate = null);
 
+    /// <summary>The proposal's days as stored, replayed when it is accepted.</summary>
     private sealed record ProposalSnapshot(
         string PolicyId,
         string PolicyVersion,
@@ -761,6 +780,7 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
         string? SourceObservedHistoryFingerprint = null,
         long? SourceReadinessRevision = null);
 
+    /// <summary>The plan as accepted, which is what the revision row keeps.</summary>
     private sealed record AcceptedPlanSnapshot(
         ProposalSnapshot Proposal,
         IReadOnlyList<StrengthWeekdayAssignment> WeekdayAssignments,

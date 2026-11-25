@@ -7,6 +7,8 @@ using MuscleCuties.Infrastructure.Caching;
 
 namespace MuscleCuties.Infrastructure.Caching;
 
+/// <summary>The encrypted on-device cache: one key per account, and nothing readable across accounts even on a shared</summary>
+/// device.</summary>
 public sealed class EncryptedLocalSnapshotCacheService(
     string appDataDirectory,
     ISnapshotCacheKeyStore keyStore,
@@ -37,6 +39,7 @@ public sealed class EncryptedLocalSnapshotCacheService(
         : $"snapshot-cache_{environmentName.Trim().ToLowerInvariant()}";
     private Guid? _activeAccountId;
 
+    /// <summary>Switches the cache to an account, creating its key on first use and forgetting the previous account's.</summary>
     public async Task ActivateAccountAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
         if (accountId == Guid.Empty)
@@ -66,6 +69,7 @@ public sealed class EncryptedLocalSnapshotCacheService(
         }
     }
 
+    /// <summary>Stores the active workout snapshot, encrypted for the account.</summary>
     public Task SaveActiveWorkoutSnapshotAsync(
         Guid accountId,
         ActiveWorkoutSessionSnapshot snapshot,
@@ -82,11 +86,13 @@ public sealed class EncryptedLocalSnapshotCacheService(
             cancellationToken);
     }
 
+    /// <summary>Loads the active workout snapshot, when one is stored.</summary>
     public Task<CachedSnapshotEnvelope<ActiveWorkoutSessionSnapshot>?> LoadActiveWorkoutSnapshotAsync(
         Guid accountId,
         CancellationToken cancellationToken = default) =>
         LoadSnapshotCoreAsync<ActiveWorkoutSessionSnapshot>(accountId, ActiveWorkoutKind, cancellationToken);
 
+    /// <summary>Stores the cycle snapshot, encrypted for the account.</summary>
     public Task SaveCycleStateSnapshotAsync(
         Guid accountId,
         CycleStateSnapshot snapshot,
@@ -103,11 +109,13 @@ public sealed class EncryptedLocalSnapshotCacheService(
             cancellationToken);
     }
 
+    /// <summary>Loads the cycle snapshot, when one is stored.</summary>
     public Task<CachedSnapshotEnvelope<CycleStateSnapshot>?> LoadCycleStateSnapshotAsync(
         Guid accountId,
         CancellationToken cancellationToken = default) =>
         LoadSnapshotCoreAsync<CycleStateSnapshot>(accountId, CycleStateKind, cancellationToken);
 
+    /// <summary>Stores the nutrition targets, encrypted for the account.</summary>
     public Task SaveNutritionTargetsSnapshotAsync(
         Guid accountId,
         DailyNutritionTargetsSnapshot snapshot,
@@ -124,14 +132,17 @@ public sealed class EncryptedLocalSnapshotCacheService(
             cancellationToken);
     }
 
+    /// <summary>Loads the nutrition targets, when they are stored.</summary>
     public Task<CachedSnapshotEnvelope<DailyNutritionTargetsSnapshot>?> LoadNutritionTargetsSnapshotAsync(
         Guid accountId,
         CancellationToken cancellationToken = default) =>
         LoadSnapshotCoreAsync<DailyNutritionTargetsSnapshot>(accountId, NutritionTargetsKind, cancellationToken);
 
+    /// <summary>Removes every stored snapshot.</summary>
     public Task ClearAsync(CancellationToken cancellationToken = default) =>
         AccountScopedCacheClear.RunAsync(_gate, () => _activeAccountId = null, ClearCoreAsync, cancellationToken);
 
+    /// <summary>Writes one snapshot to its account-scoped file.</summary>
     private async Task SaveSnapshotCoreAsync<T>(
         Guid accountId,
         string snapshotKind,
@@ -194,6 +205,7 @@ public sealed class EncryptedLocalSnapshotCacheService(
         }
     }
 
+    /// <summary>Reads one snapshot from its file and validates it.</summary>
     private async Task<CachedSnapshotEnvelope<T>?> LoadSnapshotCoreAsync<T>(
         Guid accountId,
         string snapshotKind,
@@ -268,6 +280,7 @@ public sealed class EncryptedLocalSnapshotCacheService(
         }
     }
 
+    /// <summary>The account's encryption key, created once and kept in the platform's protected storage.</summary>
     private async Task<byte[]> GetOrCreateKeyAsync(CancellationToken cancellationToken)
     {
         var key = await keyStore.ReadAsync(cancellationToken).ConfigureAwait(false);
@@ -281,6 +294,7 @@ public sealed class EncryptedLocalSnapshotCacheService(
         return key;
     }
 
+    /// <summary>Drops the cached snapshots without touching the account's key, which is what a revoked session wants.</summary>
     private async Task ClearCoreAsync(CancellationToken cancellationToken)
     {
         await keyStore.RemoveAsync(cancellationToken).ConfigureAwait(false);
@@ -295,24 +309,32 @@ public sealed class EncryptedLocalSnapshotCacheService(
         }
     }
 
+    /// <summary>Refuses a cache access for an account the cache is not currently holding, which is the guard against showing</summary>
+    /// one account's data to another.</summary>
     private void EnsureActiveAccount(Guid accountId)
     {
         if (_activeAccountId != accountId)
             throw new UnauthorizedAccessException("The encrypted snapshot cache account changed.");
     }
 
+    /// <summary>Path of a snapshot file for an account and kind.</summary>
     private static string SnapshotPath(string directory, Guid accountId, string snapshotKind) =>
         Path.Combine(directory, $"{accountId:N}_{snapshotKind}{SnapshotFileExtension}");
 
+    /// <summary>Additional authenticated data that binds a snapshot to its account and environment.</summary>
     private static byte[] AssociatedData(Guid accountId, string snapshotKind, string environment) =>
         Encoding.ASCII.GetBytes($"{accountId:N}:{snapshotKind}:{environment}:v2");
 
+    /// <summary>Legacy authenticated data, read so older snapshots still decrypt.</summary>
     private static byte[] LegacyAssociatedData(Guid accountId, string snapshotKind) =>
         Encoding.ASCII.GetBytes($"{accountId:N}:{snapshotKind}:v1");
 
+    /// <summary>Releases the gate that serializes cache access.</summary>
     public void Dispose() => _gate.Dispose();
 }
 
+/// <summary>Decides whether a write may go to the cloud or has to wait, from the online state and the last known</summary>
+/// authority, so an offline edit is never silently lost or applied twice.</summary>
 public sealed class VersionedCloudAuthorityGate(
     CloudAuthorityMode initialMode = CloudAuthorityMode.ServerAuthoritativeCutover,
     bool initialNetworkOnline = true) : ICloudAuthorityGate
@@ -324,18 +346,24 @@ public sealed class VersionedCloudAuthorityGate(
     private int _mode = (int)initialMode;
     private int _isOnline = initialNetworkOnline ? 1 : 0;
 
+    /// <summary>Version of the cloud authority the cache serves.</summary>
     public int AuthorityVersion => CurrentAuthorityVersion;
 
+    /// <summary>Which authority the app is currently writing under.</summary>
     public CloudAuthorityMode CurrentMode => (CloudAuthorityMode)Volatile.Read(ref _mode);
 
+    /// <summary>Whether the device currently has a network, read atomically because it is set from a platform callback.</summary>
     public bool IsNetworkOnline => Volatile.Read(ref _isOnline) == 1;
 
+    /// <summary>Sets which side is allowed to author snapshots.</summary>
     public void SetAuthorityMode(CloudAuthorityMode mode) =>
         Volatile.Write(ref _mode, (int)mode);
 
+    /// <summary>Records whether the network is reachable.</summary>
     public void SetNetworkOnline(bool isOnline) =>
         Volatile.Write(ref _isOnline, isOnline ? 1 : 0);
 
+    /// <summary>Whether a cloud write may proceed now, or has to be held because the offline copy is the newer one.</summary>
     public OfflineWriteCheckResult EvaluateWriteAllowed(string operationName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operationName);
@@ -351,6 +379,7 @@ public sealed class VersionedCloudAuthorityGate(
         return new OfflineWriteCheckResult(Allowed: true, RejectionCode: null, UserFacingMessage: null);
     }
 
+    /// <summary>The same decision for a local SQL write, which is the path a queued edit takes.</summary>
     public OfflineWriteCheckResult EvaluateLocalSqliteWriteAllowed(string operationName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operationName);

@@ -5,8 +5,11 @@ using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDt
 
 namespace MuscleCuties.UI.Services.Dashboard;
 
+/// <summary>Theme-resolved colours for cycle surfaces, so the same phase reads consistently in light and</summary>
+/// dark and a missing resource degrades to the caller's fallback rather than to black.</summary>
 internal static class PhaseThemePalette
 {
+    /// <summary>Fill of a phase card or chip.</summary>
     public static Color GetPhaseBackgroundColor(CyclePhase phase, bool useDarkTheme, Color? fallback = null)
     {
         return phase switch
@@ -36,6 +39,7 @@ internal static class PhaseThemePalette
         };
     }
 
+    /// <summary>Text colour that stays readable on the phase fill.</summary>
     public static Color GetPhaseTextColor(CyclePhase phase, bool useDarkTheme, Color? fallback = null)
     {
         return phase switch
@@ -48,6 +52,7 @@ internal static class PhaseThemePalette
         };
     }
 
+    /// <summary>Separator colour between phase sections.</summary>
     public static Color GetPhaseDividerColor(CyclePhase phase, bool useDarkTheme)
     {
         return phase switch
@@ -60,6 +65,7 @@ internal static class PhaseThemePalette
         };
     }
 
+    /// <summary>Outline that marks a predicted calendar day, distinct from a recorded one.</summary>
     public static Color GetPredictedDayStrokeColor(CyclePhase phase, bool useDarkTheme)
     {
         return phase switch
@@ -72,31 +78,37 @@ internal static class PhaseThemePalette
         };
     }
 
+    /// <summary>Card fill for a day with no cycle history.</summary>
     public static Color GetNeutralCardBackgroundColor(bool useDarkTheme)
     {
         return GetThemeColor(useDarkTheme, "AccentSurface", "CardSurfaceDark", default);
     }
 
+    /// <summary>Text colour for a neutral, uncoloured day.</summary>
     public static Color GetNeutralCardTextColor(bool useDarkTheme)
     {
         return GetThemeColor(useDarkTheme, "TextHeadingLight", "TextPrimaryDark", default);
     }
 
+    /// <summary>Separator colour inside a neutral card.</summary>
     public static Color GetNeutralDividerColor(bool useDarkTheme)
     {
         return GetThemeColor(useDarkTheme, "InputStroke", "InputStrokeDark", default);
     }
 
+    /// <summary>Fill of the day the person selected in the calendar.</summary>
     public static Color GetSelectedDayBackgroundColor(bool useDarkTheme)
     {
         return GetThemeColor(useDarkTheme, "PhaseThemeSelectedDaySurfaceLight", "PhaseThemeSelectedDaySurfaceDark", default);
     }
 
+    /// <summary>Outline of the selected day, which must stay visible over every phase fill.</summary>
     public static Color GetSelectedDayStrokeColor(bool useDarkTheme)
     {
         return AppThemeResources.GetColor(useDarkTheme ? "ChoiceSelectedStrokeDark" : "ChoiceSelectedStrokeLight", default);
     }
 
+    /// <summary>Reads the light or dark resource for a surface, returning the fallback when it is missing.</summary>
     private static Color GetThemeColor(bool useDarkTheme, string lightKey, string darkKey, Color? fallback = null)
     {
         return AppThemeResources.GetColor(useDarkTheme ? darkKey : lightKey, fallback);

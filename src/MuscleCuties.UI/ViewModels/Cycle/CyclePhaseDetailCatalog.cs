@@ -5,15 +5,21 @@ using MuscleCuties.UI.Models.UI.Cycle;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
 
+/// <summary>
+///     Copy and structure behind the cycle phase detail page.
+/// </summary>
 public static class CyclePhaseDetailCatalog
 {
+    /// <summary>The catalog text for a phase signal key.</summary>
     private static string Signal(string key) =>
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get($"Cycle_PhaseDetail_Signal_{key}");
+    /// <summary>One detail row, assembled where the content is written instead of repeated as object initialisers.</summary>
     private static CyclePhaseDetailPoint Point(string title, string text, string iconGlyph)
     {
         return new CyclePhaseDetailPoint { Title = title, Text = text, IconGlyph = iconGlyph };
     }
 
+    /// <summary>The signals the detail page shows for a phase.</summary>
     public static PhaseSignals GetPhaseSignals(CyclePhase phase)
     {
         return phase switch
@@ -26,6 +32,7 @@ public static class CyclePhaseDetailCatalog
         };
     }
 
+    /// <summary>The icon glyph that stands for a phase.</summary>
     public static string GetPhaseIconGlyph(CyclePhase phase)
     {
         return phase switch
@@ -38,6 +45,7 @@ public static class CyclePhaseDetailCatalog
         };
     }
 
+    /// <summary>The artwork for a phase.</summary>
     public static string GetPhaseVisualSource(CyclePhase phase)
     {
         return phase switch
@@ -50,6 +58,7 @@ public static class CyclePhaseDetailCatalog
         };
     }
 
+    /// <summary>Everything the detail page renders for one phase, assembled in one pass so the page has nothing to fetch.</summary>
     public static CyclePhaseDetailContent BuildDetail(CyclePhase phase)
     {
         return phase switch
@@ -260,6 +269,8 @@ public static class CyclePhaseDetailCatalog
         };
     }
 
+    /// <summary>The signal set for a phase — what the body tends to do in it — kept together so the page can show them without a</summary>
+    /// second lookup.</summary>
     public sealed record PhaseSignals(
         double Training,
         double Nutrition,
@@ -268,6 +279,7 @@ public static class CyclePhaseDetailCatalog
         string NutritionText,
         string RecoveryText);
 
+    /// <summary>One phase's whole detail page as a single value: its signals, its points and the icons they use.</summary>
     public sealed record CyclePhaseDetailContent(
         string PhaseName,
         string PhaseWindow,

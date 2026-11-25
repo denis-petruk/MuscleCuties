@@ -23,9 +23,12 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
 
     [ObservableProperty] private bool _isAvailable;
     [ObservableProperty] private string _statusText = string.Empty;
+    /// <summary>True when an error is shown.</summary>
     [ObservableProperty] private string _errorText = string.Empty;
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
 
+    /// <summary>Takes the sync service and the account it belongs to; either may be absent, in which case the section</summary>
+    /// reports itself unavailable instead of failing.</summary>
     public ProfileHealthSyncViewModel(IHealthSyncService? healthSync, ICurrentProfileUserIdProvider? userIdProvider)
     {
         _healthSync = healthSync;
@@ -34,11 +37,16 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
         DisconnectCommand = new AsyncRelayCommand(DisconnectAsync, () => !IsBusy && IsConnected);
     }
 
+    /// <summary>Refreshes the error flag when the text changes.</summary>
     partial void OnErrorTextChanged(string value) => OnPropertyChanged(nameof(HasError));
 
+    /// <summary>Connects the health data source.</summary>
     public IAsyncRelayCommand ConnectCommand { get; }
+    /// <summary>Disconnects the health data source.</summary>
     public IAsyncRelayCommand DisconnectCommand { get; }
 
+    /// <summary>Reads the current connection state and the last sync status, so the section shows what the device</summary>
+    /// actually shares rather than what was last chosen here.</summary>
     public async Task RefreshAsync()
     {
         if (IsBusy)
@@ -78,6 +86,8 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
         }
     }
 
+    /// <summary>Asks the platform for read access and records the account it is enabled for, surfacing a refusal as the</summary>
+    /// section's error text.</summary>
     private async Task ConnectAsync()
     {
         if (_healthSync is null || _userIdProvider is null || IsBusy) return;
@@ -104,6 +114,8 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
         }
     }
 
+    /// <summary>Stops syncing for this account without revoking the device permission, which only the system settings can</summary>
+    /// do.</summary>
     private async Task DisconnectAsync()
     {
         if (_healthSync is null || _userIdProvider is null || IsBusy) return;
@@ -139,6 +151,7 @@ public partial class ProfileHealthSyncViewModel : ObservableObject
         }
     }
 
+    /// <summary>True when a cached health summary exists.</summary>
     private async Task<bool> HasCachedSummaryAsync(int userId) =>
         await _healthSync!.GetCachedWeeklySummaryAsync(userId) is not null;
 }

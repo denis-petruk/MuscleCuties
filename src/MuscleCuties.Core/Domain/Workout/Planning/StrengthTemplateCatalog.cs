@@ -4,12 +4,14 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>How a template divides the week between muscle groups.</summary>
 public enum StrengthTemplateSplit
 {
     FullBody,
     UpperLower
 }
 
+/// <summary>The stable slot identity inside a template, which exercise choices are stored against.</summary>
 public enum StrengthTemplateSlotId
 {
     KneeDominant,
@@ -20,6 +22,7 @@ public enum StrengthTemplateSlotId
     GoalSpecificAccessory
 }
 
+/// <summary>The role a slot plays in the session, which decides its volume and effort.</summary>
 public enum StrengthPrescriptionRole
 {
     Main,
@@ -38,6 +41,7 @@ public sealed record StrengthTemplateSlot(
     StrengthPrescriptionRole HighIntensityRole,
     bool IsHeavyMainInHighIntensity);
 
+/// <summary>One template: its split, its days and the slots each day fills.</summary>
 public sealed record StrengthTemplateDefinition(
     string TemplateId,
     string Version,
@@ -65,8 +69,10 @@ public static class StrengthTemplateCatalog
             MovementPattern.CalfRaise, MovementPattern.LateralRaise, MovementPattern.RearDelt,
             MovementPattern.ElbowFlexion, MovementPattern.ElbowExtension);
 
+    /// <summary>Every strength template the catalog defines.</summary>
     public static IReadOnlyList<StrengthTemplateDefinition> Templates { get; } = BuildTemplates();
 
+    /// <summary>The templates that fit a week with the given number of strength days.</summary>
     public static IReadOnlyList<StrengthTemplateDefinition> ForSchedule(int strengthDaysPerWeek) =>
         strengthDaysPerWeek switch
         {
@@ -86,6 +92,7 @@ public static class StrengthTemplateCatalog
         ForSchedule(strengthDaysPerWeek).Where(candidate => candidate.TemplateId != current.TemplateId &&
             candidate.SessionIndex == current.SessionIndex && candidate.Split == current.Split).ToArray();
 
+    /// <summary>Builds the fixed template set, so every plan is chosen from a known catalogue.</summary>
     private static ReadOnlyCollection<StrengthTemplateDefinition> BuildTemplates()
     {
         var templates = new List<StrengthTemplateDefinition>
@@ -120,6 +127,7 @@ public static class StrengthTemplateCatalog
         return Array.AsReadOnly(templates.ToArray());
     }
 
+    /// <summary>A full-body template for one session of the week.</summary>
     private static StrengthTemplateDefinition FullBody(string id, int sessionIndex,
         MovementPattern knee, MovementPattern hip, MovementPattern push, MovementPattern pull) =>
         Template(id, StrengthTemplateSplit.FullBody, sessionIndex,
@@ -133,6 +141,7 @@ public static class StrengthTemplateCatalog
                 AccessoryPatterns)
         ]);
 
+    /// <summary>An upper-body template for one session of the week.</summary>
     private static StrengthTemplateDefinition Upper(string id, int sessionIndex,
         MovementPattern push, MovementPattern pull) =>
         Template(id, StrengthTemplateSplit.UpperLower, sessionIndex,
@@ -144,6 +153,7 @@ public static class StrengthTemplateCatalog
                 AccessoryPatterns)
         ]);
 
+    /// <summary>A lower-body template for one session of the week.</summary>
     private static StrengthTemplateDefinition Lower(string id, int sessionIndex,
         MovementPattern knee, MovementPattern hip) =>
         Template(id, StrengthTemplateSplit.UpperLower, sessionIndex,
@@ -155,10 +165,12 @@ public static class StrengthTemplateCatalog
                 AccessoryPatterns)
         ]);
 
+    /// <summary>A template built from its slots and requirements.</summary>
     private static StrengthTemplateDefinition Template(string id, StrengthTemplateSplit split,
         int sessionIndex, IReadOnlyList<StrengthTemplateSlot> slots) =>
         new(id, Version, split, sessionIndex, Array.AsReadOnly(slots.ToArray()));
 
+    /// <summary>A slot the session must fill.</summary>
     private static StrengthTemplateSlot Required(string id, StrengthTemplateSlotId slot,
         IReadOnlySet<MovementPattern> patterns, IReadOnlySet<MovementPattern> preferredPatterns,
         bool heavyMain = false,
@@ -169,11 +181,13 @@ public static class StrengthTemplateCatalog
             highIntensityAccessory ? StrengthPrescriptionRole.Accessory : StrengthPrescriptionRole.Main,
             heavyMain);
 
+    /// <summary>A slot the session fills only when time allows.</summary>
     private static StrengthTemplateSlot Optional(string id, StrengthTemplateSlotId slot,
         IReadOnlySet<MovementPattern> patterns) =>
         new(id, slot, patterns, patterns, false, StrengthPrescriptionRole.Accessory,
             StrengthPrescriptionRole.Accessory, StrengthPrescriptionRole.Accessory, false);
 
+    /// <summary>A frozen set of the given movement patterns.</summary>
     private static FrozenSet<MovementPattern> Set(params MovementPattern[] patterns) =>
         patterns.ToFrozenSet();
 }

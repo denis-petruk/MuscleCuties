@@ -16,6 +16,7 @@ public static class GoalSpecificAccessoryPriorityRule
     private const int TierBScore = 2;
     private const int TierCScore = 1;
 
+    /// <summary>Ranks the accessory exercises the goal prefers.</summary>
     public static IReadOnlyDictionary<int, int> Resolve(
         UserGoal goal,
         IReadOnlyList<PlanningMuscleContribution>? muscleContributions,
@@ -56,6 +57,7 @@ public static class GoalSpecificAccessoryPriorityRule
         return scoreByExercise;
     }
 
+    /// <summary>Rank a priority tier contributes when ordering accessories.</summary>
     private static int ScoreFor(PriorityTier tier) => tier switch
     {
         PriorityTier.A => TierAScore,

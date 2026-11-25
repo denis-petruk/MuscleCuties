@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Overview;
 
+/// <summary>The overview's reads.</summary>
 public interface INutritionOverviewStore
 {
     Task<NutritionOverviewResponse> GetOverviewAsync(

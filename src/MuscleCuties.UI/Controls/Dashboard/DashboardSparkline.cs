@@ -4,6 +4,9 @@ using MuscleCuties.UI.Models.UI.Dashboard;
 
 namespace MuscleCuties.UI.Controls.Dashboard;
 
+/// <summary>
+///     Compact trend line drawn for a dashboard metric.
+/// </summary>
 public sealed class DashboardSparkline : GraphicsView, IDrawable
 {
     public static readonly BindableProperty PointsProperty = BindableProperty.Create(
@@ -14,6 +17,7 @@ public sealed class DashboardSparkline : GraphicsView, IDrawable
         nameof(IsWeight), typeof(bool), typeof(DashboardSparkline), false,
         propertyChanged: (view, _, _) => ((DashboardSparkline)view).Invalidate());
 
+    /// <summary>Wires the sparkline to redraw whenever its points or colours change.</summary>
     public DashboardSparkline()
     {
         Drawable = this;
@@ -33,6 +37,7 @@ public sealed class DashboardSparkline : GraphicsView, IDrawable
         set => SetValue(IsWeightProperty, value);
     }
 
+    /// <summary>Draws the week's points as one line, and nothing for fewer than two points, where a line would say nothing.</summary>
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         var points = Points;

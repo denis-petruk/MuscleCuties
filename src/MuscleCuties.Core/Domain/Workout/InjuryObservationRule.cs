@@ -26,6 +26,7 @@ public static class InjuryObservationRule
         clinicianAdvisedAvoid == true ||
         worsening is not (InjuryWorseningTrigger.NotAnswered or InjuryWorseningTrigger.None);
 
+    /// <summary>Maps a stored status onto its canonical form, answering false for one it does not recognise.</summary>
     public static bool TryNormalizeStatus(string? status, out string normalized)
     {
         normalized = string.Empty;
@@ -41,6 +42,7 @@ public static class InjuryObservationRule
         }
     }
 
+    /// <summary>Maps a stored trigger onto its canonical form, answering false for an unknown value.</summary>
     public static bool TryNormalizeWorseningTrigger(string? value, out InjuryWorseningTrigger normalized)
     {
         normalized = InjuryWorseningTrigger.NotAnswered;
@@ -53,6 +55,7 @@ public static class InjuryObservationRule
         return true;
     }
 
+    /// <summary>True when an injury record carries a known site, status, severity and date.</summary>
     public static bool IsValid(Guid userId, Guid id, int siteFlag, string? status, DateOnly since, int pain,
         DateOnly date, InjuryWorseningTrigger worsening, bool? clinicianAdvisedAvoid, out string normalizedStatus)
     {

@@ -3,8 +3,10 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>Detects pain that has returned, which is what pulls a session back to a safer dose.</summary>
 internal static class V2PainReturnSource
 {
+    /// <summary>The pain restrictions currently in force.</summary>
     internal static async Task<IReadOnlyList<PainRestrictionV2>> LoadAsync(PostgresDbContext db,
         Guid userId, IReadOnlyList<ObservedSetRecordV2> observed, CancellationToken ct)
     {

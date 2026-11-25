@@ -9,6 +9,7 @@ using MuscleCuties.Core.Services.ExerciseMedia;
 
 namespace MuscleCuties.UI.Infrastructure.Network;
 
+/// <summary>Read-only client for the wger exercise database, used for equipment and muscle artwork.</summary>
 public sealed partial class WgerApiClient : IWgerApiClient
 {
     private static readonly TimeSpan DefaultRateLimitDelay = TimeSpan.FromMilliseconds(500);
@@ -18,6 +19,7 @@ public sealed partial class WgerApiClient : IWgerApiClient
     private readonly HttpClient _httpClient;
     private readonly ILogger<WgerApiClient>? _logger;
 
+    /// <summary>Takes the configured client, defaulting its base address.</summary>
     public WgerApiClient(HttpClient httpClient, ILogger<WgerApiClient>? logger = null)
     {
         _httpClient = httpClient;
@@ -27,6 +29,7 @@ public sealed partial class WgerApiClient : IWgerApiClient
             _httpClient.BaseAddress = BaseUri;
     }
 
+    /// <summary>The exercise page the wger API returns.</summary>
     public async Task<IReadOnlyList<WgerExerciseInfo>> GetExercisesAsync(
         int limit = 50,
         int offset = 0,
@@ -47,6 +50,8 @@ public sealed partial class WgerApiClient : IWgerApiClient
         return response?.Results ?? [];
     }
 
+    /// <summary>The muscle diagrams wger publishes, paired with their identifiers so a session can highlight the</summary>
+    /// muscles it used.</summary>
     public async Task<IReadOnlyList<WgerMuscleSvgResult>> GetMuscleSvgsAsync(CancellationToken ct = default)
     {
         if (!CanSendRequest())
@@ -71,6 +76,7 @@ public sealed partial class WgerApiClient : IWgerApiClient
         }).ToList();
     }
 
+    /// <summary>Streams the media file behind the given URL.</summary>
     public Task<Stream?> DownloadMediaStreamAsync(Uri mediaUri, CancellationToken ct = default) =>
         !CanSendRequest() || mediaUri is null
             ? Task.FromResult<Stream?>(null)
@@ -92,6 +98,7 @@ public sealed partial class WgerApiClient : IWgerApiClient
                         LogWgerFailed(_logger, nameof(Exception), exception);
                 });
 
+    /// <summary>Sends the request and reads its JSON body.</summary>
     private Task<T?> SendAndReadAsync<T>(
         Func<HttpRequestMessage> createRequest,
         JsonTypeInfo<T> jsonTypeInfo,
@@ -114,20 +121,25 @@ public sealed partial class WgerApiClient : IWgerApiClient
                     LogWgerFailed(_logger, nameof(Exception), exception);
             });
 
+    /// <summary>True when the device is online enough to send.</summary>
     private bool CanSendRequest() =>
         HttpRetryPolicy.CanSendRequest(NetworkRetryHelper.HasInternetAccess,
             _logger is { } logger ? () => LogOfflineSkipped(logger) : null);
 
+    /// <summary>Logs the status the wger API returned.</summary>
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "Wger API returned {StatusCode}.")]
     private static partial void LogWgerStatus(ILogger logger, HttpStatusCode statusCode);
 
+    /// <summary>Logs that the wger request timed out.</summary>
     [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "Wger request timed out.")]
     private static partial void LogWgerTimeout(ILogger logger);
 
+    /// <summary>Logs the exception that broke the wger request.</summary>
     [LoggerMessage(EventId = 3, Level = LogLevel.Information,
         Message = "Wger request failed. Failure type: {ExceptionType}.")]
     private static partial void LogWgerFailed(ILogger logger, string exceptionType, Exception ex);
 
+    /// <summary>Logs that the request was skipped while offline.</summary>
     [LoggerMessage(EventId = 4, Level = LogLevel.Information,
         Message = "Wger request skipped because the device is offline.")]
     private static partial void LogOfflineSkipped(ILogger logger);
@@ -142,6 +154,7 @@ public sealed partial class WgerApiClient : IWgerApiClient
 [JsonSerializable(typeof(WgerImage))]
 [JsonSerializable(typeof(WgerMuscleSvgResult))]
 [JsonSerializable(typeof(List<WgerMuscleSvgResult>))]
+/// <summary>Source-generated JSON metadata for the wger payloads.</summary>
 internal sealed partial class WgerJsonContext : JsonSerializerContext
 {
 }

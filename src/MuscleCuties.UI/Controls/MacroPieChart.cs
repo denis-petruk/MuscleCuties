@@ -1,6 +1,7 @@
 
 namespace MuscleCuties.UI.Controls;
 
+/// <summary>A pie of the day's macros: each slice is a share of the total, drawn from the values bound to it.</summary>
 public class MacroPieChart : GraphicsView, IDrawable
 {
     private const float FullCircleDegrees = 360f;
@@ -71,6 +72,7 @@ public class MacroPieChart : GraphicsView, IDrawable
         default,
         propertyChanged: Redraw);
 
+    /// <summary>Makes the chart its own drawing surface and redraws on every value change.</summary>
     public MacroPieChart()
     {
         Drawable = this;
@@ -132,6 +134,8 @@ public class MacroPieChart : GraphicsView, IDrawable
         set => SetValue(InnerStrokeColorProperty, value);
     }
 
+    /// <summary>Draws one slice per macro, skipping a zero share so an empty macro leaves no sliver, and draws nothing at all</summary>
+    /// when every share is zero.</summary>
     public void Draw(ICanvas canvas, RectF dirtyRect)
     {
         var values = new[]
@@ -181,6 +185,8 @@ public class MacroPieChart : GraphicsView, IDrawable
         canvas.DrawEllipse(x + inset, y + inset, diameter - inset * 2f, diameter - inset * 2f);
     }
 
+    /// <summary>The wedge for one slice between two angles, closed back to the centre so it fills as a slice rather than an</summary>
+    /// arc.</summary>
     private static PathF BuildSlicePath(float centerX, float centerY, float radius, float startAngle, float sweep)
     {
         var path = new PathF();
@@ -202,6 +208,7 @@ public class MacroPieChart : GraphicsView, IDrawable
         return path;
     }
 
+    /// <summary>The point on the chart's circle at an angle in degrees, where zero points up.</summary>
     private static PointF PointOnCircle(float centerX, float centerY, float radius, float angleDegrees)
     {
         var radians = angleDegrees * Math.PI / 180d;
@@ -210,11 +217,13 @@ public class MacroPieChart : GraphicsView, IDrawable
             centerY + radius * (float)Math.Sin(radians));
     }
 
+    /// <summary>A value safe to draw with: negative and non-finite input become zero, so bad data cannot break the path.</summary>
     private static float NonNegativeFinite(float value)
     {
         return float.IsFinite(value) && value > 0f ? value : 0f;
     }
 
+    /// <summary>The change handler every bindable property shares: redraw when a drawn value actually changed.</summary>
     private static void Redraw(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is MacroPieChart chart)

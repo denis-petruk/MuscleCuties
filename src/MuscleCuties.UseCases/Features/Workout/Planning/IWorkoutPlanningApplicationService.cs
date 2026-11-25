@@ -43,6 +43,7 @@ public sealed class WorkoutPlanningApplicationService(
     private readonly IPlanningClockPort _clockPort = clockPort ?? new SystemPlanningClockPort();
     private readonly IPlanningSafetyPort _safetyPort = safetyPort ?? new DefaultPlanningSafetyPort();
 
+    /// <summary>Previews a strength plan for the user.</summary>
     public async Task<StrengthPlanPreviewResponseV020> PreviewPlanAsync(
         Guid userId,
         StrengthPlanPreviewRequestV020 request,
@@ -59,6 +60,7 @@ public sealed class WorkoutPlanningApplicationService(
             await previewUseCase.ExecuteAsync(userId, request, cancellationToken).ConfigureAwait(false));
     }
 
+    /// <summary>Creates a proposal from the preview.</summary>
     public Task<StrengthPlanProposalCreatedV020> CreateProposalAsync(
         Guid userId,
         StrengthPlanPreviewRequestV020 request,
@@ -73,6 +75,7 @@ public sealed class WorkoutPlanningApplicationService(
         return createProposalUseCase.ExecuteAsync(userId, request, cancellationToken);
     }
 
+    /// <summary>Accepts a proposal and applies the plan.</summary>
     public Task<AcceptStrengthPlanProposalResultV020> AcceptProposalAsync(
         Guid userId,
         AcceptStrengthPlanProposalRequestV020 request,
@@ -82,6 +85,7 @@ public sealed class WorkoutPlanningApplicationService(
         return acceptProposalUseCase.ExecuteAsync(userId, request, cancellationToken);
     }
 
+    /// <summary>The planning catalog.</summary>
     public Task<WorkoutPlanningCatalogResponse> GetCatalogAsync(
         CancellationToken cancellationToken = default)
     {

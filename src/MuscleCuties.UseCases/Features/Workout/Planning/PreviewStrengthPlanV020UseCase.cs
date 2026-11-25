@@ -8,6 +8,7 @@ namespace MuscleCuties.UseCases.Features.Workout.Planning;
 /// <summary>Loads trusted planning inputs and delegates all proposal decisions to Core.</summary>
 public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV020 source)
 {
+    /// <summary>Previews a strength plan from the user's inputs.</summary>
     public async Task<StrengthPlanPreviewResponseV020> ExecuteAsync(Guid userId,
         StrengthPlanPreviewRequestV020 request, CancellationToken cancellationToken = default)
     {
@@ -48,6 +49,7 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
         StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewSourceV020? sourceData,
         WorkoutActivityDto currentStyle) => EvaluateLoadedSourceCore(userId, request, sourceData, currentStyle);
 
+    /// <summary>Builds the preview from an already loaded source.</summary>
     private static StrengthPlanPreviewResponseV020 EvaluateLoadedSourceCore(Guid userId,
         StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewSourceV020? sourceData,
         WorkoutActivityDto? automaticStyle)

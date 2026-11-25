@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Models.Enums.Workout;
 
+/// <summary>The activities the app plans, each with its own prescription and safety rules.</summary>
 public enum WorkoutActivityType
 {
     StrengthHighIntensity,

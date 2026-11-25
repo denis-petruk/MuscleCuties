@@ -9,6 +9,7 @@ internal static class PostgresCanonicalRecoveryEvidence
     private const int UtcBoundaryAllowanceDays = 2;
     private const int RequiredRevision = 1;
 
+    /// <summary>The deload prescription the recorded recovery evidence implies.</summary>
     internal static async Task<DeloadPrescription> EvaluateAsync(PostgresDbContext context, Guid userId,
         Guid activePlanId, DateOnly today, TimeZoneInfo zone,
         IReadOnlyList<StrengthPlanPreviewSessionV020> previewSessions,

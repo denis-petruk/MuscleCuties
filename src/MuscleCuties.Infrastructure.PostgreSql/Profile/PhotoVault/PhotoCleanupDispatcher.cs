@@ -15,6 +15,7 @@ public sealed class PhotoCleanupDispatcher(
     private readonly SemaphoreSlim runLock = new(1, 1);
     private Guid? continuationOwnerId;
 
+    /// <summary>Claims the due photo objects and dispatches their cleanup.</summary>
     public async Task<PhotoCleanupDispatchResult> DispatchAsync(
         int pageSize,
         int maximumPages,
@@ -126,6 +127,7 @@ public interface IPhotoCleanupOwnerProcessorRunner
     Task<PhotoCleanupBatchResult> ProcessOwnerAsync(Guid ownerId, int batchSize, TimeSpan leaseDuration, CancellationToken cancellationToken);
 }
 
+/// <summary>What one dispatch pass did, so a scheduled run can report the counts it claimed and skipped.</summary>
 public sealed record PhotoCleanupDispatchResult(
     int Pages,
     int OwnersProcessed,

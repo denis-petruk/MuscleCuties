@@ -2,6 +2,7 @@ using System.Text.RegularExpressions;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>Whether the yoga session is demanding, which decides the load it counts as.</summary>
 public sealed record YogaClassificationResult(
     bool IsDemanding,
     bool IsInconsistent,
@@ -24,6 +25,7 @@ public static class YogaClassificationRule
         "intense"
     };
 
+    /// <summary>Detects demanding wording, so a hard class is not counted as restorative.</summary>
     public static bool ContainsDemandingIndicator(string? text)
     {
         if (string.IsNullOrWhiteSpace(text))
@@ -60,6 +62,7 @@ public static class YogaClassificationRule
         return false;
     }
 
+    /// <summary>Detects demanding wording, so a hard class is not counted as restorative.</summary>
     public static bool ContainsDemandingIndicator(IEnumerable<string>? tags)
     {
         if (tags is null)
@@ -74,6 +77,7 @@ public static class YogaClassificationRule
         return false;
     }
 
+    /// <summary>Classifies the yoga practice by how demanding it is.</summary>
     public static YogaClassificationResult Classify(
         bool? explicitClassification,
         string? activityName = null,

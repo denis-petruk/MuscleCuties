@@ -6,11 +6,13 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 
+/// <summary>Turns the day's readiness into the prescription the active session shows, which is the one place an overlay is applied.</summary>
 internal static class PostgresCycleReadinessPrescription
 {
     private const int RequiredWorkingSets = 1;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Applies the cycle readiness adjustment to a stored prescription.</summary>
     public static async Task<PlannedPrescriptionSnapshot> ApplyAsync(PostgresDbContext db,
         Guid userId, DateOnly localDate, string timeZoneId, DateTimeOffset nowUtc,
         PlannedPrescriptionSnapshot prescription, CancellationToken cancellationToken)

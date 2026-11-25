@@ -25,6 +25,7 @@ public sealed class SelectionCell : Border
         set => SetValue(IsSelectedProperty, value);
     }
 
+    /// <summary>Refreshes the selection visuals once the cell is attached.</summary>
     protected override void OnHandlerChanged()
     {
         base.OnHandlerChanged();

@@ -50,6 +50,7 @@ public static class GenericFoodQueryRule
         "whole", "wholegrain", "wild"
     };
 
+    /// <summary>Trims a free-text query to its search form, returning empty rather than null so callers need no null check.</summary>
     public static string NormalizeOrEmpty(string? query)
     {
         if (string.IsNullOrWhiteSpace(query) || query.Length > MaximumLength)

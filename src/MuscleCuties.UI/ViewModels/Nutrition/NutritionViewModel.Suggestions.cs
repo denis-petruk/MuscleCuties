@@ -1,9 +1,14 @@
+// Meal suggestions and the day-plan flow.
+// Second half of NutritionViewModel; see its declaration for the full contract.
+
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>Suggestion state for the nutrition page: the meal-idea sheet and the day plan it shares a surface with,</summary>
+/// plus the meal detail opened from a suggestion.</summary>
 public partial class NutritionViewModel
 {
     private static readonly string[] SuggestionIconPalette =
@@ -39,49 +44,74 @@ public partial class NutritionViewModel
     [ObservableProperty] private MealType _suggestionMealType = MealType.Lunch;
     [ObservableProperty] private string _suggestionTargetText = string.Empty;
 
+    /// <summary>True when suggestions are loaded.</summary>
     public bool HasMealSuggestions => MealSuggestions.Count > 0;
+    /// <summary>True when the day plan has meals.</summary>
     public bool HasDayPlanMeals => DayPlanMeals.Count > 0;
+    /// <summary>True when loading suggestions failed.</summary>
     public bool HasMealSuggestionError => !string.IsNullOrWhiteSpace(MealSuggestionError);
 
+    /// <summary>True when the search produced no suggestions.</summary>
     public bool HasNoMealSuggestions =>
         !IsDayPlanMode &&
         !IsLoadingSuggestions &&
         !HasMealSuggestionError &&
         MealSuggestions.Count == 0;
 
+    /// <summary>True when the day plan has no meals.</summary>
     public bool HasNoDayPlanMeals =>
         IsDayPlanMode &&
         !IsLoadingSuggestions &&
         !HasMealSuggestionError &&
         DayPlanMeals.Count == 0;
 
+    /// <summary>True when the day plan is shown.</summary>
     public bool ShowDayPlanMeals =>
         IsDayPlanMode && HasDayPlanMeals && !IsLoadingSuggestions && !HasMealSuggestionError;
 
+    /// <summary>True when suggestion results are shown.</summary>
     public bool ShowSuggestionResults => !IsDayPlanMode && HasMealSuggestions;
+    /// <summary>The sheet's heading, which names a full day plan or a single meal depending on the mode.</summary>
     public string SuggestionPageTitle => IsDayPlanMode ? "Today's meal plan" : "Meal ideas";
+    /// <summary>The loading line, worded for building a day or for finding one meal.</summary>
     public string LoadingSuggestionText => IsDayPlanMode ? "Building today's meal plan" : "Finding a good fit";
 
+    /// <summary>True when the suggestion is for breakfast.</summary>
     public bool IsBreakfastSuggestion => SuggestionMealType == MealType.Breakfast;
+    /// <summary>The breakfast preference is offered wherever a breakfast would be planned — a day plan always, a single</summary>
+    /// meal only when it is breakfast.</summary>
     public bool ShowBreakfastPreferenceToggle =>
         (!IsDayPlanMode && IsBreakfastSuggestion) || IsDayPlanMode;
 
+    /// <summary>The calorie allowance for the meal being suggested.</summary>
     public string SuggestionMealTypeCaloriesText => GetMealTypeCaloriesText(SuggestionMealType);
 
+    /// <summary>The allowance beside the breakfast choice.</summary>
     public string BreakfastCaloriesHint => GetMealTypeCaloriesText(MealType.Breakfast);
+    /// <summary>The allowance beside the lunch choice.</summary>
     public string LunchCaloriesHint => GetMealTypeCaloriesText(MealType.Lunch);
+    /// <summary>The allowance beside the dinner choice.</summary>
     public string DinnerCaloriesHint => GetMealTypeCaloriesText(MealType.Dinner);
+    /// <summary>The allowance beside the snack choice.</summary>
     public string SnackCaloriesHint => GetMealTypeCaloriesText(MealType.Snack);
 
+    /// <summary>The macros line of the shown meal.</summary>
     public string DetailMacrosText => SelectedMealDetail?.MacrosText ?? string.Empty;
+    /// <summary>The calories line of the shown meal.</summary>
     public string DetailCaloriesText => SelectedMealDetail?.CaloriesText ?? string.Empty;
+    /// <summary>The directions of the shown meal.</summary>
     public string DetailDirectionsText => SelectedMealDetail?.DirectionsText ?? string.Empty;
+    /// <summary>True when the shown meal lists spice blends.</summary>
     public bool DetailHasSpiceBlends => SelectedMealDetail?.HasSpiceBlends ?? false;
 
+    /// <summary>What is left of the day's allowance, floored at zero so an overshoot reads as none left rather than a</summary>
+    /// negative remainder.</summary>
     public float RemainingCalories => Math.Max(0, TargetCalories - ConsumedCalories);
+    /// <summary>The remainder as a whole number in the daily-remaining wording.</summary>
     public string RemainingCaloriesText =>
         UiTextCatalog.Format("Nutrition_RemainingTodayFormat", (int)RemainingCalories);
 
+    /// <summary>Consumed against target for the day, both rounded to whole calories.</summary>
     public string DailyProgressText =>
         UiTextCatalog.Format("Nutrition_DailyProgressFormat", (int)ConsumedCalories, (int)TargetCalories);
 
@@ -106,6 +136,7 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>The day's progress as a 0–1 fraction for the ring; without a target there is nothing to fill.</summary>
     public float ConsumedCaloriesFillPercent =>
         TargetCalories <= 0 ? 0 : Math.Clamp(ConsumedCalories / TargetCalories, 0f, 1f);
 
@@ -120,11 +151,13 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Opens the meal editor, which is where a suggestion is accepted into.</summary>
     private void OpenSuggestMeal()
     {
         OpenMealEntry();
     }
 
+    /// <summary>Leaves day-plan mode for a single meal of the chosen type and loads ideas for it.</summary>
     private void SelectSuggestionMealType(MealType mealType)
     {
         IsDayPlanMode = false;
@@ -134,6 +167,7 @@ public partial class NutritionViewModel
         _ = LoadSuggestionsAsync();
     }
 
+    /// <summary>Reloads the ideas, first refreshing a stale breakfast target when the surface being shown depends on it.</summary>
     private void RefreshSuggestions()
     {
         if (_breakfastTargetsNeedRefresh && (IsDayPlanMode || IsBreakfastSuggestion))
@@ -154,6 +188,8 @@ public partial class NutritionViewModel
         _ = LoadSuggestionsAsync(_shownConceptNames);
     }
 
+    /// <summary>Closes the sheet, invalidating any idea still loading, and reopens the meal editor when the sheet was</summary>
+    /// entered from it.</summary>
     private void CloseSuggestionModal()
     {
         var reopenMealEditor = _returnToMealEditorAfterSuggestion;
@@ -170,6 +206,7 @@ public partial class NutritionViewModel
             IsMealEditorVisible = true;
     }
 
+    /// <summary>Shows one suggestion's detail and publishes the fields the detail view binds to.</summary>
     private void OpenMealDetail(MealSuggestionItem? item)
     {
         if (item is null)
@@ -180,11 +217,14 @@ public partial class NutritionViewModel
         NotifyDetailProperties();
     }
 
+    /// <summary>Hides the detail, keeping the selection so reopening is instant.</summary>
     private void CloseMealDetail()
     {
         IsMealDetailVisible = false;
     }
 
+    /// <summary>Loads ideas, skipping the named concepts so a refresh offers something new, and ignoring a response that</summary>
+    /// arrives after the sheet has moved on.</summary>
     private async Task LoadSuggestionsAsync(IReadOnlySet<string>? excludeConceptNames = null)
     {
         if (_breakfastTargetsNeedRefresh && IsBreakfastSuggestion)
@@ -243,6 +283,7 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Gives each idea a different icon, cycling the palette only when there are more ideas than icons.</summary>
     private static void AssignDistinctSuggestionIcons(IReadOnlyList<MealSuggestionItem> suggestions)
     {
         var usedIcons = new HashSet<string>(StringComparer.Ordinal);
@@ -265,6 +306,7 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Adds a suggestion's components to the meal being edited, refusing one that has nothing to add.</summary>
     private void AcceptSuggestion(MealSuggestionItem? suggestion)
     {
         if (suggestion is null || suggestion.Components.Count == 0)
@@ -304,12 +346,14 @@ public partial class NutritionViewModel
         CloseSuggestionModal();
     }
 
+    /// <summary>Returns from an idea to the meal-type choice it came from.</summary>
     private void BackToMealTypePicker()
     {
         CloseSuggestionModal();
         OpenMealEntry();
     }
 
+    /// <summary>Replaces one meal of the day plan with a fresh proposal for the same slot.</summary>
     private void RefreshDayMeal(DayMealPlanItem? item)
     {
         if (item is null || !item.CanRefresh)
@@ -318,6 +362,8 @@ public partial class NutritionViewModel
         _ = RefreshDayMealAsync(item);
     }
 
+    /// <summary>Replaces one meal of the day plan with a fresh proposal for the same slot, keeping the rest of the plan</summary>
+    /// the user has already seen.</summary>
     private async Task RefreshDayMealAsync(DayMealPlanItem item)
     {
         var version = _suggestionLoadVersion;
@@ -369,6 +415,7 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Accepts a planned meal into the editor, so the user can adjust it before logging.</summary>
     private void UsePlannedMeal(DayMealPlanItem? item)
     {
         if (item?.Suggestion is null)
@@ -378,6 +425,8 @@ public partial class NutritionViewModel
         AcceptSuggestion(item.Suggestion);
     }
 
+    /// <summary>Builds today's meal plan, first refreshing a stale breakfast target because the plan's shares depend on</summary>
+    /// it, and ignoring a plan that arrives after the sheet has moved on.</summary>
     private async Task LoadDayPlanAsync()
     {
         if (_breakfastTargetsNeedRefresh)
@@ -431,6 +480,8 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>The meal the clock suggests: breakfast until mid-morning, lunch over midday, a snack in the afternoon and</summary>
+    /// dinner in the evening, defaulting to breakfast outside those hours.</summary>
     private static MealType GuessNextMealType()
     {
         var hour = DateTime.Now.Hour;
@@ -444,6 +495,7 @@ public partial class NutritionViewModel
         };
     }
 
+    /// <summary>The calorie allowance for one meal type, from the plan's distribution.</summary>
     private string GetMealTypeCaloriesText(MealType mealType)
     {
         var share = _mealDistribution;
@@ -459,6 +511,8 @@ public partial class NutritionViewModel
         return DisplayFormat.Calories(calories);
     }
 
+    /// <summary>A suggested meal as a list item, translating its name and components and falling back to mixed/carb-base</summary>
+    /// when a newer server sends a component kind this build does not know.</summary>
     private static MealSuggestionItem MapSuggestionDtoToItem(NutritionMealSuggestion dto)
     {
         var components = dto.Components.Select(c => new MealSuggestionComponentItem
@@ -518,6 +572,7 @@ public partial class NutritionViewModel
         };
     }
 
+    /// <summary>Raises the suggestion properties.</summary>
     private void NotifySuggestionProperties()
     {
         OnPropertyChanged(nameof(HasMealSuggestions));
@@ -541,6 +596,7 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(IsSweetBreakfast));
     }
 
+    /// <summary>Raises the meal detail properties.</summary>
     private void NotifyDetailProperties()
     {
         OnPropertyChanged(nameof(DetailMacrosText));

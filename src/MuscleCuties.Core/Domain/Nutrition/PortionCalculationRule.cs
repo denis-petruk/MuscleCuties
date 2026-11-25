@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>One food's contribution the portioning works from.</summary>
 public sealed record PortionObservation(
     float Calories,
     float Protein,
@@ -8,6 +9,7 @@ public sealed record PortionObservation(
     float ServingGrams = 0f
 );
 
+/// <summary>The portion the rule chose, with whether it hit the target exactly.</summary>
 public sealed record PortionResult(
     float ProteinGrams,
     float CarbGrams,
@@ -19,6 +21,7 @@ public sealed record PortionResult(
     float TotalFats
 );
 
+/// <summary>Sizes portions to the macro target, preferring whole servings and reporting the miss when none fits.</summary>
 public static class PortionCalculationRule
 {
     public const float MaxOilGrams = 14f; // Generated oil ceiling.
@@ -35,6 +38,7 @@ public static class PortionCalculationRule
     private const float MaxCarbGrams = 180f;
     private const float RelaxedMaxCarbGrams = 220f;
 
+    /// <summary>Solves the ingredient grams that hit the meal's macro targets, or nothing when they cannot be reached.</summary>
     public static PortionResult? Solve(
         float targetCalories,
         float targetProtein,
@@ -103,6 +107,7 @@ public static class PortionCalculationRule
         return best;
     }
 
+    /// <summary>The candidate portions tried in order, so a solution is found without an unbounded search.</summary>
     private static float[] GenerateRebalanceCandidates(float minimum, float maximum, float servingGrams)
     {
         var step = servingGrams > 0f
@@ -116,6 +121,7 @@ public static class PortionCalculationRule
         return candidates.ToArray();
     }
 
+    /// <summary>True when the target macros are finite and achievable.</summary>
     private static bool IsValidTarget(
         float targetCalories,
         float targetProtein,
@@ -134,6 +140,7 @@ public static class PortionCalculationRule
                carb.Carbs > 0f;
     }
 
+    /// <summary>Macros the vegetable component contributes at the chosen weight.</summary>
     private static PortionComponentMacros CalculateVegetablePortion(
         PortionObservation veg,
         int userGoal,
@@ -149,6 +156,7 @@ public static class PortionCalculationRule
             veg.Fats * vegGrams / 100f);
     }
 
+    /// <summary>Macros the carb component contributes at the chosen weight.</summary>
     private static PortionComponentMacros CalculateCarbPortion(
         PortionObservation carb,
         float targetCarbs,
@@ -170,6 +178,7 @@ public static class PortionCalculationRule
             carb.Fats * carbGrams / 100f);
     }
 
+    /// <summary>Protein weights the solver tries, from cheapest to dearest.</summary>
     private static float[] GenerateProteinCandidateGrams(
         PortionObservation protein,
         float rawProteinGrams)
@@ -200,6 +209,7 @@ public static class PortionCalculationRule
             : [downCandidate, upCandidate];
     }
 
+    /// <summary>Macros the sauce component contributes at the chosen weight.</summary>
     private static PortionComponentMacros CalculateSaucePortion(
         PortionObservation? sauce,
         float targetFats,
@@ -225,6 +235,7 @@ public static class PortionCalculationRule
             sauce.Fats * sauceGrams / 100f);
     }
 
+    /// <summary>Accepts a candidate whose macros land within tolerance of the target.</summary>
     private static PortionResult? EvaluateCandidateConvergence(
         float[] candidateGrams,
         PortionObservation protein,
@@ -283,6 +294,7 @@ public static class PortionCalculationRule
         return bestSolution;
     }
 
+    /// <summary>Snaps a gram target to a whole serving when one is close, so she measures something real.</summary>
     public static float SnapToServing(float targetGrams, float servingGrams)
     {
         if (servingGrams <= 0f)
@@ -292,6 +304,7 @@ public static class PortionCalculationRule
         return servings * servingGrams;
     }
 
+    /// <summary>One component's nutrient figures, which the search adjusts while keeping its ratios.</summary>
     private readonly record struct PortionComponentMacros(
         float Grams,
         float Calories,

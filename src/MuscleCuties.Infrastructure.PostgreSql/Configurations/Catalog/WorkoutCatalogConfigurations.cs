@@ -3,8 +3,11 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Configurations.Catalog;
 
+/// <summary>The exercise catalog: seed code and code are both unique because a seed can be re-run, and the names carry the
+/// lengths the app's search relies on.</summary>
 public sealed class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
 {
+    /// <summary>Maps the browsable exercise table: unique seed code and code, and the name and muscle columns sized for search.</summary>
     public void Configure(EntityTypeBuilder<Exercise> builder)
     {
         builder.ToTable("exercises", "catalog");
@@ -27,8 +30,10 @@ public sealed class ExerciseConfiguration : IEntityTypeConfiguration<Exercise>
     }
 }
 
+/// <summary>Muscle groups, unique by name so volume is reported under one label per group.</summary>
 public sealed class WorkoutMuscleGroupConfiguration : IEntityTypeConfiguration<WorkoutMuscleGroup>
 {
+    /// <summary>Maps muscle groups, unique by name so volume is reported under one label per group.</summary>
     public void Configure(EntityTypeBuilder<WorkoutMuscleGroup> builder)
     {
         builder.ToTable("workout_muscle_groups", "catalog");
@@ -41,8 +46,10 @@ public sealed class WorkoutMuscleGroupConfiguration : IEntityTypeConfiguration<W
     }
 }
 
+/// <summary>One weight per goal and muscle group, unique so a goal cannot weight a group twice.</summary>
 public sealed class GoalTierWeightConfiguration : IEntityTypeConfiguration<GoalTierWeight>
 {
+    /// <summary>Maps the per-goal weightings and restricts the group reference, so a seeded row cannot be orphaned.</summary>
     public void Configure(EntityTypeBuilder<GoalTierWeight> builder)
     {
         builder.ToTable("goal_tier_weights", "catalog");
@@ -58,8 +65,11 @@ public sealed class GoalTierWeightConfiguration : IEntityTypeConfiguration<GoalT
     }
 }
 
+/// <summary>The planning definition of an exercise. The reviewed <c>_v020</c> JSON columns and their flags record what was
+/// checked by hand, which is why they are stored as jsonb next to the booleans that say whether the review happened.</summary>
 public sealed class WorkoutExerciseDefinitionConfiguration : IEntityTypeConfiguration<WorkoutExerciseDefinition>
 {
+    /// <summary>Maps the planner's exercise definition, storing the reviewed v020 payloads as jsonb beside the flags that say whether the review happened.</summary>
     public void Configure(EntityTypeBuilder<WorkoutExerciseDefinition> builder)
     {
         builder.ToTable("workout_exercise_definitions", "catalog");
@@ -100,8 +110,11 @@ public sealed class WorkoutExerciseDefinitionConfiguration : IEntityTypeConfigur
     }
 }
 
+/// <summary>How an exercise's work is shared across muscle groups, unique per pair so the fractions always sum over one row
+/// per group.</summary>
 public sealed class ExerciseMuscleContributionConfiguration : IEntityTypeConfiguration<ExerciseMuscleContribution>
 {
+    /// <summary>Maps the contribution rows, unique per exercise and group so the shares are read one row at a time.</summary>
     public void Configure(EntityTypeBuilder<ExerciseMuscleContribution> builder)
     {
         builder.ToTable("exercise_muscle_contributions", "catalog");
@@ -118,8 +131,10 @@ public sealed class ExerciseMuscleContributionConfiguration : IEntityTypeConfigu
     }
 }
 
+/// <summary>Session shapes, with their slots restricted on delete so an archetype cannot lose its prescription silently.</summary>
 public sealed class SessionArchetypeConfiguration : IEntityTypeConfiguration<SessionArchetype>
 {
+    /// <summary>Maps session archetypes, unique by code, with their slots restricted on delete.</summary>
     public void Configure(EntityTypeBuilder<SessionArchetype> builder)
     {
         builder.ToTable("session_archetypes", "catalog");
@@ -136,8 +151,11 @@ public sealed class SessionArchetypeConfiguration : IEntityTypeConfiguration<Ses
     }
 }
 
+/// <summary>A slot inside an archetype: its order is unique within the archetype, and its set and rep ranges are the bounds the
+/// planner may pick inside.</summary>
 public sealed class SlotTemplateConfiguration : IEntityTypeConfiguration<SlotTemplate>
 {
+    /// <summary>Maps the slots of an archetype, unique in order within the archetype and restricted against the archetype and muscle it references.</summary>
     public void Configure(EntityTypeBuilder<SlotTemplate> builder)
     {
         builder.ToTable("slot_templates", "catalog");
@@ -163,8 +181,10 @@ public sealed class SlotTemplateConfiguration : IEntityTypeConfiguration<SlotTem
     }
 }
 
+/// <summary>The archetype sequence for a training frequency, unique per frequency so one week shape exists per day count.</summary>
 public sealed class WeekTemplateConfiguration : IEntityTypeConfiguration<WeekTemplate>
 {
+    /// <summary>Maps the week shapes, unique per training frequency so one shape exists per day count.</summary>
     public void Configure(EntityTypeBuilder<WeekTemplate> builder)
     {
         builder.ToTable("week_templates", "catalog");
@@ -178,8 +198,10 @@ public sealed class WeekTemplateConfiguration : IEntityTypeConfiguration<WeekTem
     }
 }
 
+/// <summary>The weekly fractional-set budget, unique per frequency and muscle group so a lookup returns one number.</summary>
 public sealed class VolumeBudgetRowConfiguration : IEntityTypeConfiguration<VolumeBudgetRow>
 {
+    /// <summary>Maps the weekly volume budget, unique per frequency and muscle group so a lookup returns one number.</summary>
     public void Configure(EntityTypeBuilder<VolumeBudgetRow> builder)
     {
         builder.ToTable("volume_budget_rows", "catalog");
@@ -195,8 +217,10 @@ public sealed class VolumeBudgetRowConfiguration : IEntityTypeConfiguration<Volu
     }
 }
 
+/// <summary>The planner's thresholds, unique per section and key so a setting has exactly one value.</summary>
 public sealed class WorkoutPlanningConfigEntryConfiguration : IEntityTypeConfiguration<WorkoutPlanningConfigEntry>
 {
+    /// <summary>Maps the planner settings, unique per section and key so a threshold has exactly one value.</summary>
     public void Configure(EntityTypeBuilder<WorkoutPlanningConfigEntry> builder)
     {
         builder.ToTable("workout_planning_config_entries", "catalog");
@@ -211,6 +235,7 @@ public sealed class WorkoutPlanningConfigEntryConfiguration : IEntityTypeConfigu
     }
 }
 
+/// <summary>The column lengths the catalog tables enforce. They are declared once here because the seed data and the configurations must agree on them.</summary>
 internal static class CatalogColumnLimits
 {
     public const int QuizQuestion = 250;

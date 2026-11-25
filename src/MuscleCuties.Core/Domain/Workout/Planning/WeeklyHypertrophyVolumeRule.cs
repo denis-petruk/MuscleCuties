@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>The major muscle groups weekly hypertrophy volume is judged across.</summary>
 public enum MajorMuscleGroup
 {
     Chest,
@@ -13,11 +14,13 @@ public enum MajorMuscleGroup
     Core
 }
 
+/// <summary>The sets one exercise contributes to a muscle group in the week.</summary>
 public sealed record PlannedExerciseSets(
     int ExerciseId,
     MajorMuscleGroup PrimaryMuscle,
     int Sets);
 
+/// <summary>Whether a muscle group sits under, inside or over its weekly range.</summary>
 public sealed record MuscleVolumeStatus(
     MajorMuscleGroup Muscle,
     int DirectSets,
@@ -27,6 +30,7 @@ public sealed record MuscleVolumeStatus(
     bool IsBelowMinimum,
     bool IsAboveMaximum);
 
+/// <summary>The week's per-muscle status with the groups that fall outside their range.</summary>
 public sealed record WeeklyHypertrophyVolumeResult(
     EffectiveExperienceTier Tier,
     IReadOnlyDictionary<MajorMuscleGroup, int> VolumeByMuscle,
@@ -34,6 +38,7 @@ public sealed record WeeklyHypertrophyVolumeResult(
     bool AllTargetedMusclesWithinBounds,
     IReadOnlyList<string> LimitationCodes);
 
+/// <summary>Judges the week's volume against the hypertrophy ranges, so a shortfall is named.</summary>
 public static class WeeklyHypertrophyVolumeRule
 {
     public const int Tier1MinimumDirectSets = Tier1TargetMinSets;
@@ -64,6 +69,7 @@ public static class WeeklyHypertrophyVolumeRule
     public const string VolumeExceedsTierMaximum = "WeeklyVolumeExceedsTierMaximum";
     public const string ExerciseSetsMustBePositive = "ExerciseSetsMustBePositive";
 
+    /// <summary>The weekly set range the tier should stay inside.</summary>
     public static (int Min, int Max) GetBounds(EffectiveExperienceTier tier) => tier switch
     {
         EffectiveExperienceTier.Tier1BeginnerOrNew => (Tier1MinimumDirectSets, Tier1MaximumDirectSets),
@@ -72,6 +78,7 @@ public static class WeeklyHypertrophyVolumeRule
         _ => (Tier1MinimumDirectSets, Tier1MaximumDirectSets)
     };
 
+    /// <summary>The target band and hard cap the tier may not exceed.</summary>
     public static (int TargetMin, int TargetMax, int HardCap) GetTierVolumeBounds(EffectiveExperienceTier tier) => tier switch
     {
         EffectiveExperienceTier.Tier1BeginnerOrNew => (Tier1TargetMinSets, Tier1TargetMaxSets, Tier1HardCapSets),
@@ -80,6 +87,7 @@ public static class WeeklyHypertrophyVolumeRule
         _ => (Tier1TargetMinSets, Tier1TargetMaxSets, Tier1HardCapSets)
     };
 
+    /// <summary>Weekly sets each muscle group receives from the selected exercises.</summary>
     public static IReadOnlyDictionary<MajorMuscleGroup, int> CalculateVolume(
         IEnumerable<PlannedExerciseSets>? exercises)
     {
@@ -101,6 +109,7 @@ public static class WeeklyHypertrophyVolumeRule
         return volume;
     }
 
+    /// <summary>Checks the week's volume against the tier's band and cap.</summary>
     public static WeeklyHypertrophyVolumeResult Evaluate(
         EffectiveExperienceTier tier,
         IEnumerable<PlannedExerciseSets>? exercises,

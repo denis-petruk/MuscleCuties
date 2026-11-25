@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Russian copy for body measurements.</summary>
 internal static partial class RussianUiText
 {
+    /// <summary>Registers the Russian labels for body measurements.</summary>
     static partial void RegisterBodyMeasurementStrings()
     {
         Values["Profile_Measurement_Title"] = "Замеры тела";

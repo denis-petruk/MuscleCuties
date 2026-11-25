@@ -1,17 +1,21 @@
 namespace MuscleCuties.Core.Domain.Dashboard;
 
+/// <summary>One day's observation in a trend, which the rule smooths.</summary>
 public sealed record DashboardTrendObservation(
     DateOnly Date,
     double? WeightKg,
     int? ReadinessScore);
 
+/// <summary>One point of the trend line the client draws.</summary>
 public sealed record DashboardTrendResultPoint(
     DateOnly Date,
     double? SmoothedWeightKg,
     int? ReadinessScore);
 
+/// <summary>Smooths a series into a trend, ignoring days with no observation instead of plotting zeros.</summary>
 public static class DashboardTrendRule
 {
+    /// <summary>Projects the observation history into dashboard trend points up to today.</summary>
     public static IReadOnlyList<DashboardTrendResultPoint> Build(
         IReadOnlyList<DashboardTrendObservation> history,
         DateOnly today)

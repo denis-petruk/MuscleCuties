@@ -2,8 +2,10 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 
 namespace MuscleCuties.Core.Services.Health;
 
+/// <summary>Turns today's active energy into the calorie adjustment, which is the only way health data moves a target.</summary>
 public static class HealthEnergyAdjustment
 {
+    /// <summary>Adjusts today's calorie target by the energy the device recorded.</summary>
     public static float CalculateDailyCalories(
         HealthWeeklySummary? summary,
         float weightKg,

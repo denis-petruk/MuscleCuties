@@ -11,6 +11,7 @@ public static class ExerciseMediaPaths
     public const string SvgFolder = "svg";
     public const string LottieFolder = "lottie";
 
+    /// <summary>A media path in the form the app compares paths by, so the same file is recognised however it was written.</summary>
     public static string Normalize(string path)
     {
         if (!Path.IsPathFullyQualified(path))
@@ -32,6 +33,7 @@ public static class ExerciseMediaPaths
         return resolved;
     }
 
+    /// <summary>Whether a path is a file on this device rather than a remote URL.</summary>
     public static bool IsLocalMedia(string? pathOrUri)
     {
         if (string.IsNullOrWhiteSpace(pathOrUri))
@@ -50,6 +52,7 @@ public static class ExerciseMediaPaths
         return Path.IsPathFullyQualified(trimmed);
     }
 
+    /// <summary>A local path as a file URI, which is what the image views need.</summary>
     public static string ToLocalFileUri(string localFilePath)
     {
         if (string.IsNullOrWhiteSpace(localFilePath))
@@ -60,6 +63,7 @@ public static class ExerciseMediaPaths
         return uri.AbsoluteUri;
     }
 
+    /// <summary>A safe file name, because exercise names reach the file system and may contain separators.</summary>
     public static string SanitizeFileName(string fileName)
     {
         if (string.IsNullOrWhiteSpace(fileName))

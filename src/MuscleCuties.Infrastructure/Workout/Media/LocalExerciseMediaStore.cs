@@ -12,30 +12,37 @@ public sealed class LocalExerciseMediaStore : IExerciseMediaStore
 {
     private readonly Action<string>? _protectPath;
 
+    /// <summary>Keeps downloaded exercise media under one directory, so a stale file can be replaced without touching the</summary>
+    /// rest.</summary>
     public LocalExerciseMediaStore(string rootDirectory, Action<string>? protectPath = null)
     {
         RootDirectory = ExerciseMediaPaths.Normalize(rootDirectory);
         _protectPath = protectPath;
     }
 
+    /// <summary>Directory the media files are stored under.</summary>
     public string RootDirectory { get; }
 
+    /// <summary>Stores an exercise's vector artwork and returns the path it was written to.</summary>
     public Task<string> SaveVectorSvgAsync(Stream sourceStream, string fileName, CancellationToken ct = default)
     {
         return SaveMediaAsync(sourceStream, ExerciseMediaPaths.SvgFolder, fileName, ".svg", ct);
     }
 
+    /// <summary>Stores an exercise's animated artwork and returns its path.</summary>
     public Task<string> SaveLottieJsonAsync(Stream sourceStream, string fileName, CancellationToken ct = default)
     {
         return SaveMediaAsync(sourceStream, ExerciseMediaPaths.LottieFolder, fileName, ".json", ct);
     }
 
+    /// <summary>Whether a media file is already on the device, which avoids downloading it twice.</summary>
     public bool Exists(string subfolder, string fileName)
     {
         var path = GetLocalFilePath(subfolder, fileName);
         return File.Exists(path);
     }
 
+    /// <summary>The full path a media file would have, inside the store's root.</summary>
     public string GetLocalFilePath(string subfolder, string fileName)
     {
         var sanitizedFolder = ExerciseMediaPaths.SanitizeFileName(subfolder);
@@ -50,6 +57,7 @@ public sealed class LocalExerciseMediaStore : IExerciseMediaStore
         return path;
     }
 
+    /// <summary>Deletes a media file, ignoring a path that is not inside the store.</summary>
     public Task<bool> DeleteMediaAsync(string localPath)
     {
         if (string.IsNullOrWhiteSpace(localPath) || !MediaPathSafety.IsWithinRoot(localPath, RootDirectory))
@@ -75,6 +83,7 @@ public sealed class LocalExerciseMediaStore : IExerciseMediaStore
         return Task.FromResult(false);
     }
 
+    /// <summary>Writes a media file and returns its path.</summary>
     private async Task<string> SaveMediaAsync(
         Stream source,
         string folder,

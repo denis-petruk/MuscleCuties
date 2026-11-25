@@ -1,15 +1,22 @@
+// Custom food entry that is not in the catalog.
+// Second half of NutritionViewModel; see its declaration for the full contract.
+
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>The custom-food form: a food the catalog does not hold, entered with its serving and macros.</summary>
 public partial class NutritionViewModel
 {
+    /// <summary>Switches the food finder between the catalog search and the custom-food form.</summary>
     private void ToggleCustomFoodPanel()
     {
         SelectFoodSource(IsCustomFoodPanelVisible ? MealFoodSource.Search : MealFoodSource.Custom);
     }
 
+    /// <summary>Saves a custom food and selects it as the ingredient, refusing a form whose name, serving or calories</summary>
+    /// cannot be read.</summary>
     private async Task CreateCustomFoodAsync()
     {
         if (!TryParseAmount(CustomFoodServingAmount, out var servingAmount) ||
@@ -68,6 +75,7 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Empties the form back to a hundred grams, which is the unit its numbers are entered against.</summary>
     private void ClearCustomFoodForm()
     {
         CustomFoodName = string.Empty;
@@ -84,6 +92,7 @@ public partial class NutritionViewModel
         SelectedCustomFoodServingUnit = "g";
     }
 
+    /// <summary>A macro value, where an empty field means none of that macro rather than an error.</summary>
     private static bool TryParseOptionalMacro(string value, out float amount)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -102,6 +111,7 @@ public partial class NutritionViewModel
         return float.IsFinite(amount) && amount >= 0f;
     }
 
+    /// <summary>A micronutrient value, where empty means unreported and is kept apart from zero.</summary>
     private static bool TryParseOptionalNutrient(string value, out float? amount)
     {
         amount = null;

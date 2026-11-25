@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>Whether an activity can be prescribed now, and the review reason when it cannot.</summary>
 public enum ActivityPrescriptionStatus
 {
     Eligible,
@@ -13,6 +14,7 @@ public enum ActivityPrescriptionStatus
     Unsupported
 }
 
+/// <summary>Everything the prescription depends on: her answers, the week's budget and the cycle phase.</summary>
 public sealed record ActivityPrescriptionContext(
     WorkoutActivityType Activity,
     ActivityExperience Experience,
@@ -36,6 +38,7 @@ public sealed record ActivityPrescriptionContext(
     string? ActivityName = null,
     IReadOnlyList<string>? ContentTags = null);
 
+/// <summary>What a prescribed session asks for: its frequency, minutes and any reduction.</summary>
 public sealed record ActivitySessionPrescription(
     WorkoutActivityType Activity,
     SessionPurpose Purpose,
@@ -58,6 +61,7 @@ public sealed record ActivitySessionPrescription(
     bool RequiresUserConfirmation,
     IReadOnlyList<string> Reasons);
 
+/// <summary>The prescription with the notes that explain how it was reached.</summary>
 public sealed record ActivityPrescriptionResult(
     ActivityPrescriptionStatus Status,
     IReadOnlyList<ActivitySessionPrescription> Sessions,
@@ -145,8 +149,10 @@ public static class ActivityPrescriptionRule
     private const int IntervalSecondsPerMinute = 60;
     private const int NoPrescriptionMinutes = 0;
 
+    /// <summary>The fixed HIIT session length every prescription uses.</summary>
     public static TimeSpan HiitSessionDuration => TimeSpan.FromSeconds(HiitTotalSeconds);
 
+    /// <summary>Dispatches to the activity's prescription rule, refusing an activity she has not cleared.</summary>
     public static ActivityPrescriptionResult Evaluate(ActivityPrescriptionContext? context)
     {
         if (context is null || !Enum.IsDefined(context.Activity) || !Enum.IsDefined(context.Experience) ||
@@ -188,6 +194,7 @@ public static class ActivityPrescriptionRule
         };
     }
 
+    /// <summary>Prescribes general strength: the weekly frequency and minutes her tier allows.</summary>
     private static ActivityPrescriptionResult GeneralStrength(ActivityPrescriptionContext context)
     {
         var isEstablishedExperience = context.Experience == ActivityExperience.Established;
@@ -214,6 +221,7 @@ public static class ActivityPrescriptionRule
             reasons: ["UseEligibleCatalogMovementsAndRestrictionMappings"]);
     }
 
+    /// <summary>Prescribes high-volume strength with more sets per session, capped by her availability.</summary>
     private static ActivityPrescriptionResult HighVolumeStrength(ActivityPrescriptionContext context)
     {
         var useConservativeStart = context.Experience != ActivityExperience.Established ||
@@ -237,11 +245,13 @@ public static class ActivityPrescriptionRule
                     "InitialDirectSetLimitTenPerPrimaryMusclePerWeek"]);
     }
 
+    /// <summary>Prescribes high-intensity strength with heavier effort and fewer reps.</summary>
     private static ActivityPrescriptionResult HighIntensityStrength(ActivityPrescriptionContext context)
     {
         return Result(ActivityPrescriptionStatus.Unsupported, HighIntensitySaferAlternativeReviewMissing);
     }
 
+    /// <summary>Prescribes continuous cardio in minutes, without intervals.</summary>
     private static ActivityPrescriptionResult ContinuousCardio(ActivityPrescriptionContext context)
     {
         var main = context.Experience == ActivityExperience.Established
@@ -258,6 +268,7 @@ public static class ActivityPrescriptionRule
                 : "ComfortableToModerateWithoutInventedPaceOrDistance"]);
     }
 
+    /// <summary>Prescribes swimming in minutes, treating it as continuous cardio.</summary>
     private static ActivityPrescriptionResult Swimming(ActivityPrescriptionContext context)
     {
         if (context.HasSwimmingFacilityAccess is not true || context.CanSwimIndependently is null)
@@ -289,6 +300,7 @@ public static class ActivityPrescriptionRule
                 : "OptionalThirtySecondsComfortableSwimmingThirtySecondsRest"]);
     }
 
+    /// <summary>Prescribes HIIT only when her evidence clears it, with its fixed session length.</summary>
     private static ActivityPrescriptionResult Hiit(ActivityPrescriptionContext context)
     {
         // Gate 80: HIIT is deferred for new active generation/selection in Workout Engine 2.0.
@@ -296,6 +308,7 @@ public static class ActivityPrescriptionRule
         return Result(ActivityPrescriptionStatus.Unsupported, HiitDeferredInWorkoutEngineV2);
     }
 
+    /// <summary>Prescribes climbing sessions in minutes, treating them as demanding.</summary>
     private static ActivityPrescriptionResult Climbing(ActivityPrescriptionContext context)
     {
         if (context.HasRopeClimbingCompetence is false)
@@ -320,6 +333,7 @@ public static class ActivityPrescriptionRule
             reasons: [context.ExistingBaselineMinutes is > 0 ? "RetainedExistingSchedule" : "FacilityVisitDuration"]);
     }
 
+    /// <summary>Prescribes yoga without reducing load, since it counts as restorative.</summary>
     private static ActivityPrescriptionResult Yoga(ActivityPrescriptionContext context)
     {
         var classification = YogaClassificationRule.Classify(
@@ -374,6 +388,7 @@ public static class ActivityPrescriptionRule
             reasons: ["UserOrCatalogSelectedDuration", "ClassifiedByActualContent"]);
     }
 
+    /// <summary>Prescribes the optional activity only when the remaining time allows it.</summary>
     private static ActivityPrescriptionResult OptionalDuration(ActivityPrescriptionContext context,
         int minimum, int maximum, SessionPurpose purpose, SessionTrainingStyle style, int? defaultMinutes = null)
     {
@@ -404,6 +419,7 @@ public static class ActivityPrescriptionRule
             reasons: ["UserOrCatalogSelectedDuration", "ClassifiedByActualContent"]);
     }
 
+    /// <summary>Maps an activity onto the modality its prescription uses.</summary>
     private static ActivityModality ToModality(WorkoutActivityType activity) => activity switch
     {
         WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
@@ -420,6 +436,7 @@ public static class ActivityPrescriptionRule
         _ => ActivityModality.Other
     };
 
+    /// <summary>A prescription carrying a session and the reason for it.</summary>
     private static ActivityPrescriptionResult Session(ActivityPrescriptionStatus status,
         ActivityPrescriptionContext context, SessionPurpose purpose, ActivityModality modality,
         IntendedIntensity intensity, SessionTrainingStyle style, int frequency,
@@ -434,6 +451,7 @@ public static class ActivityPrescriptionRule
             intervalWorkCount, intervalWorkSeconds, intervalRecoveryCount, intervalRecoverySeconds,
             requiresConfirmation, reasons ?? [])], reasons ?? []);
 
+    /// <summary>A prescription carrying only a status and reason, with no session.</summary>
     private static ActivityPrescriptionResult Result(ActivityPrescriptionStatus status, string reason) =>
         new(status, [], [reason]);
 }

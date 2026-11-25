@@ -54,6 +54,7 @@ public static class GeneratedMealIngredientCatalog
             ["Sea Salt"] = new("Sea Salt", 1f, 0f, 0f, 0f, 0f)
         };
 
+    /// <summary>The ingredients a generated meal may use, filtered to what she can eat.</summary>
     public static IReadOnlyList<GeneratedMealIngredientProfile> Resolve(IReadOnlyList<string> ingredientNames)
     {
         var profiles = new List<GeneratedMealIngredientProfile>(ingredientNames.Count);

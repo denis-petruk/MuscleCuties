@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Models.Enums.Workout;
 
+/// <summary>How sore she is, which can withhold work on the sore muscle group.</summary>
 public enum SorenessLevel
 {
     None = 0,

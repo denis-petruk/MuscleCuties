@@ -5,6 +5,8 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.Services.Workout;
 
+/// <summary>The activity list the workout-preferences screen offers, and the selection rules that keep a</summary>
+/// plan plausible: at least one activity, and at least one of them a strength activity.</summary>
 public static class WorkoutActivityOptionCatalog
 {
     private static readonly ActivityDefinition[] Definitions =
@@ -96,6 +98,8 @@ public static class WorkoutActivityOptionCatalog
             "activity_rest_day.png")
     ];
 
+    /// <summary>Builds the option list for the current selection, adding the required activities when the saved</summary>
+    /// set is empty so the screen never opens with nothing chosen.</summary>
     public static ObservableCollection<WorkoutActivityOptionItem> Build(
         IReadOnlySet<WorkoutActivityDto> selectedTypes)
     {
@@ -108,6 +112,7 @@ public static class WorkoutActivityOptionCatalog
             Definitions.Select(definition => ToOptionItem(definition, defaults)));
     }
 
+    /// <summary>Groups the options under their headings, in catalog order.</summary>
     public static IReadOnlyList<WorkoutActivityGroupSection> BuildGroups(
         IEnumerable<WorkoutActivityOptionItem> options)
     {
@@ -125,6 +130,8 @@ public static class WorkoutActivityOptionCatalog
             .ToList();
     }
 
+    /// <summary>Applies a tap, or refuses it with the reason: the last activity and the last strength activity</summary>
+    /// cannot be deselected, and an unavailable option cannot be newly selected.</summary>
     public static string ToggleSelection(
         IEnumerable<WorkoutActivityOptionItem> options,
         WorkoutActivityOptionItem item)
@@ -153,6 +160,7 @@ public static class WorkoutActivityOptionCatalog
         return string.Empty;
     }
 
+    /// <summary>The option item for a catalog activity.</summary>
     private static WorkoutActivityOptionItem ToOptionItem(
         ActivityDefinition definition,
         IReadOnlySet<WorkoutActivityDto> selectedTypes)
@@ -178,6 +186,7 @@ public static class WorkoutActivityOptionCatalog
         };
     }
 
+    /// <summary>English group heading, translated at render time on a Russian device.</summary>
     private static string GetGroupTitle(ActivityGroup group)
     {
         return group switch
@@ -192,6 +201,7 @@ public static class WorkoutActivityOptionCatalog
         };
     }
 
+    /// <summary>Stable tag the visual palette and grouping keys use; never display copy.</summary>
     private static string GetGroupTag(ActivityGroup group)
     {
         return group switch
@@ -206,6 +216,7 @@ public static class WorkoutActivityOptionCatalog
         };
     }
 
+    /// <summary>Glyph for a group heading.</summary>
     private static string GetGroupIconGlyph(string tag)
     {
         return tag switch
@@ -220,6 +231,7 @@ public static class WorkoutActivityOptionCatalog
         };
     }
 
+    /// <summary>One entry of the catalog: what the option selects, its copy, its group and its artwork.</summary>
     private sealed record ActivityDefinition(
         WorkoutActivityDto ActivityType,
         string Title,
@@ -229,6 +241,7 @@ public static class WorkoutActivityOptionCatalog
         string IconGlyph,
         string IconImage = "");
 
+    /// <summary>Headings the options are listed under.</summary>
     private enum ActivityGroup
     {
         Strength,

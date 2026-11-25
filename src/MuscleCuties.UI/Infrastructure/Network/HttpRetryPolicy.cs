@@ -16,6 +16,8 @@ internal static class HttpRetryPolicy
     public const int MaxRateLimitRetries = 2;
     public const int MaxServerErrorRetries = 1;
 
+    /// <summary>Gates a request on connectivity and reports the offline case through the caller's logger, so an</summary>
+    /// offline read is silent in the UI but still visible in diagnostics.</summary>
     public static bool CanSendRequest(Func<bool> hasInternetAccess, Action? logOffline = null)
     {
         ArgumentNullException.ThrowIfNull(hasInternetAccess);
@@ -26,6 +28,8 @@ internal static class HttpRetryPolicy
         return false;
     }
 
+    /// <summary>The wait a 429 asks for, taken from its Retry-After header and clamped; the fallback is used when</summary>
+    /// the server gives no usable value.</summary>
     public static TimeSpan GetRateLimitDelay(HttpResponseMessage response, TimeSpan fallback, TimeSpan max)
     {
         ArgumentNullException.ThrowIfNull(response);
@@ -102,14 +106,13 @@ internal static class HttpRetryPolicy
 
         try
         {
-            var response = await SendWithRetryAsync(httpClient,
+            using var response = await SendWithRetryAsync(httpClient,
                 () => new HttpRequestMessage(HttpMethod.Get, uri),
                 defaultRateLimitDelay, maxRateLimitDelay, cancellationToken).ConfigureAwait(false);
 
             if (!response.IsSuccessStatusCode)
             {
                 onUnexpectedStatus?.Invoke(response.StatusCode);
-                response.Dispose();
                 return null;
             }
 
@@ -119,7 +122,6 @@ internal static class HttpRetryPolicy
                 await contentStream.CopyToAsync(memoryStream, cancellationToken).ConfigureAwait(false);
             }
 
-            response.Dispose();
             memoryStream.Position = 0;
             return memoryStream;
         }
@@ -135,6 +137,7 @@ internal static class HttpRetryPolicy
         }
     }
 
+    /// <summary>Sends the request, retrying transient and rate-limited failures.</summary>
     public static async Task<HttpResponseMessage> SendWithRetryAsync(
         HttpClient httpClient,
         Func<HttpRequestMessage> createRequest,
@@ -177,6 +180,8 @@ internal static class HttpRetryPolicy
         }
     }
 
+    /// <summary>Keeps a server-requested delay between the fallback and the ceiling, so a hostile or mistaken</summary>
+    /// header cannot stall a request for minutes.</summary>
     private static TimeSpan ClampDelay(TimeSpan delay, TimeSpan fallback, TimeSpan max)
     {
         if (delay <= TimeSpan.Zero)

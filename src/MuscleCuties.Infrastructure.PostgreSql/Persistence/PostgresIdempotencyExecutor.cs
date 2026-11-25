@@ -1,8 +1,10 @@
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Persistence;
 
+/// <summary>The outcome of an idempotent command: the answer and whether this call produced it or replayed it.</summary>
 public sealed record IdempotencyExecution<TResponse>(TResponse Response, bool Replayed);
 
+/// <summary>Thrown when a command key is reused with different content, which is a client bug rather than a retry.</summary>
 public sealed class PostgresIdempotencyConflictException(string commandKey)
     : InvalidOperationException($"Idempotency key '{commandKey}' was already used with a different request.");
 
@@ -14,12 +16,14 @@ public sealed class PostgresIdempotencyExecutor
     private const string IdempotencyConstraint = "uq_command_idempotency_user_key";
     private readonly JsonSerializerOptions _jsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>The request's hash, compared on replay so the same key with different content is refused.</summary>
     public static string ComputeRequestHash<TRequest>(TRequest request)
     {
         var requestBytes = JsonSerializer.SerializeToUtf8Bytes(request);
         return Convert.ToHexString(SHA256.HashData(requestBytes)).ToLowerInvariant();
     }
 
+    /// <summary>Runs the operation once per key and replays the stored response afterwards.</summary>
     public async Task<IdempotencyExecution<TResponse>> ExecuteAsync<TResponse>(
         PostgresDbContext context,
         Guid userId,
@@ -90,6 +94,7 @@ public sealed class PostgresIdempotencyExecutor
         }, cancellationToken);
     }
 
+    /// <summary>Reads the response the first caller stored.</summary>
     private async Task<IdempotencyExecution<TResponse>> ReadWinnerAsync<TResponse>(
         PostgresDbContext context,
         Guid userId,
@@ -111,12 +116,14 @@ public sealed class PostgresIdempotencyExecutor
         return new IdempotencyExecution<TResponse>(response, true);
     }
 
+    /// <summary>Refuses a replay whose request hash differs from the recorded one.</summary>
     private static void EnsureMatchingRequest(CommandIdempotencyRecord entry, string requestHash, string commandKey)
     {
         if (!string.Equals(entry.RequestHash, requestHash, StringComparison.Ordinal))
             throw new PostgresIdempotencyConflictException(commandKey);
     }
 
+    /// <summary>The stored answer, deserialised as the caller's response type.</summary>
     private TResponse DeserializeResponse<TResponse>(CommandIdempotencyRecord entry)
     {
         if (entry.ResponseJson is null || entry.CompletedAt is null)
@@ -126,6 +133,7 @@ public sealed class PostgresIdempotencyExecutor
             ?? throw new InvalidOperationException("The persisted idempotency response could not be restored.");
     }
 
+    /// <summary>True when the insert lost the race on the idempotency key.</summary>
     private static bool IsIdempotencyUniqueViolation(DbUpdateException exception) =>
         exception.InnerException is PostgresException
         {

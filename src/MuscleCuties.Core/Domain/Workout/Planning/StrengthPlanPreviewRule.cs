@@ -3,6 +3,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>Whether a preview is feasible, infeasible, or needs her input.</summary>
 public enum StrengthPlanPreviewStatus
 {
     Feasible,
@@ -10,6 +11,7 @@ public enum StrengthPlanPreviewStatus
     InvalidInput
 }
 
+/// <summary>The choices she gave the preview, which decide what it may propose.</summary>
 public sealed record StrengthPlanPreviewChoices(
     WorkoutActivityType Activity,
     DateOnly LocalDate,
@@ -24,6 +26,7 @@ public sealed record StrengthPlanPreviewChoices(
     IReadOnlySet<DayOfWeek>? RequestedAvailableWeekdays = null,
     bool AllowMovementOmissionsForDuration = false);
 
+/// <summary>The equipment available to the preview, absent when she has not said.</summary>
 public sealed record EquipmentCapabilities(
     bool? HasSliders = null,
     bool? HasConfirmedBandAnchor = null,
@@ -50,13 +53,17 @@ public sealed record StrengthPlanPreviewData(
     IReadOnlyDictionary<string, IReadOnlySet<int>>? ReviewedAllowedExerciseIdsByTemplateSlot,
     IReadOnlyDictionary<string, string>? TemplateSlotReviewConditions)
 {
+    /// <summary>Her stated priority per exercise, which breaks ties between candidates.</summary>
     public IReadOnlyDictionary<int, int>? GoalPriorityByExerciseId { get; init; }
+    /// <summary>The evidence ranking per exercise, so a better-supported movement wins.</summary>
     public IReadOnlyDictionary<int, ExerciseEvidenceRanking>? EvidenceRankingByExerciseId { get; init; }
 
     /// <summary>True only when the user selected glute focus in their profile; selection then prefers
     /// glute-dominant movements inside a slot. Never inferred from goal, body type or history.</summary>
     public bool GluteFocus { get; init; }
+    /// <summary>The muscle groups each exercise trains, used to avoid coverage gaps.</summary>
     public IReadOnlyDictionary<int, IReadOnlySet<string>>? MuscleGroupsByExerciseId { get; init; }
+    /// <summary>The minimum sets each template must reach, so a plan is never under-dosed.</summary>
     public IReadOnlyDictionary<string, TemplateVolumeFloor>? TemplateVolumeFloors { get; init; }
     /// <summary>Server-derived activities an active injury blocks. Strength styles are never
     /// activity-restricted: their safety is enforced per exercise by contraindication filtering
@@ -65,9 +72,11 @@ public sealed record StrengthPlanPreviewData(
     /// <summary>Movement patterns blocked by recorded injury safety answers. Selecting an exercise
     /// with one of these patterns is a safety failure, exactly like a site contraindication.</summary>
     public IReadOnlySet<MovementPattern>? BlockedMovementPatterns { get; init; }
+    /// <summary>The equipment she has, absent when she has not said.</summary>
     public EquipmentCapabilities? EquipmentCapabilities { get; init; }
 }
 
+/// <summary>One session the preview proposes, with its exercises and volume.</summary>
 public sealed record StrengthPlanPreviewSession(
     string TemplateId,
     string TemplateVersion,
@@ -88,6 +97,7 @@ public sealed record StrengthExerciseReviewCondition(
     string? ExperienceConditions,
     string? ReviewConditions);
 
+/// <summary>The previewed plan with the notes that explain any reduction.</summary>
 public sealed record StrengthPlanPreviewResult(
     StrengthPlanPreviewStatus Status,
     ActivityExperience Experience,
@@ -158,11 +168,13 @@ public static class StrengthPlanPreviewRule
     private static readonly IReadOnlySet<int> EmptyIds = new HashSet<int>();
     private static readonly IReadOnlySet<MovementPattern> EmptyMovementPatterns = new HashSet<MovementPattern>();
 
+    /// <summary>Builds the strength plan preview from the profile and the choices.</summary>
     public static StrengthPlanPreviewResult Evaluate(
         StrengthPlanPreviewChoices? choices,
         StrengthPlanPreviewData? data) =>
         EvaluateWithFallback(choices, data);
 
+    /// <summary>Builds the preview without consulting stored plan state.</summary>
     public static StrengthPlanPreviewResult EvaluateDirect(
         StrengthPlanPreviewChoices? choices,
         StrengthPlanPreviewData? data)
@@ -536,6 +548,7 @@ public static class StrengthPlanPreviewRule
             MinimumRequiredSessionMinutes: minimumRequiredSessionMinutes);
     }
 
+    /// <summary>True when the choices carry the values the preview needs.</summary>
     private static bool ValidChoices(StrengthPlanPreviewChoices? choices) =>
         choices is not null && Enum.IsDefined(choices.Activity) &&
         (choices.Activity is WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
@@ -552,6 +565,7 @@ public static class StrengthPlanPreviewRule
         (choices.CooldownMinutes is null or >= NoMinutes) &&
         (choices.RequestedAvailableWeekdays is null || ValidWeekdays(choices.RequestedAvailableWeekdays));
 
+    /// <summary>True when the profile data the preview needs is present and plausible.</summary>
     private static bool ValidProfileData(StrengthPlanPreviewData data) =>
         Enum.IsDefined(data.Goal) && Enum.IsDefined(data.Equipment) &&
         (data.ProfileTrainingExperience is null || Enum.IsDefined(data.ProfileTrainingExperience.Value)) &&
@@ -580,13 +594,16 @@ public static class StrengthPlanPreviewRule
         data.TemplateSlotReviewConditions.All(pair => !string.IsNullOrWhiteSpace(pair.Key) &&
                                                        !string.IsNullOrWhiteSpace(pair.Value));
 
+    /// <summary>True when the chosen weekdays can host a plan.</summary>
     private static bool ValidWeekdays(IReadOnlySet<DayOfWeek>? weekdays) =>
         weekdays is { Count: >= MixedActivityWeekScheduleRule.MinimumAvailableWeekdays and
             <= WorkoutPreferencesRule.MaximumDaysPerWeek } && weekdays.All(Enum.IsDefined);
 
+    /// <summary>True when the length is one the activity allows.</summary>
     private static bool IsValidActivityDuration(WorkoutActivityType activity, int minutes) =>
         WorkoutPreferencesRule.IsValidSessionDuration(activity, minutes);
 
+    /// <summary>True when the identifier is a real catalog id.</summary>
     private static bool IsPositiveIdentifier(int value) => value >= FirstPositiveIdentifier;
 
     /// <summary>Coverage gaps outrank goal tier priorities so an under-hit muscle gets the accessory slot.</summary>
@@ -602,6 +619,7 @@ public static class StrengthPlanPreviewRule
         return merged;
     }
 
+    /// <summary>Adds the muscles a session works to the coverage tally.</summary>
     private static void AddSessionMuscles(
         IEnumerable<StrengthSlotSelection> slots,
         IReadOnlyDictionary<int, IReadOnlySet<string>>? muscleGroupsByExerciseId,
@@ -621,6 +639,7 @@ public static class StrengthPlanPreviewRule
             weeklySessionMuscles.Add(muscles);
     }
 
+    /// <summary>Sessions per week the plan schedules for the activity.</summary>
     private static int ScheduledSessionsPerWeekFor(
         WorkoutActivityType activity,
         StrengthPlanPreviewData data,
@@ -651,10 +670,12 @@ public static class StrengthPlanPreviewRule
 
     // Compatibility entry point for existing callers; selected styles must never be
     // silently replaced with an unselected style.
+    /// <summary>Builds the preview, falling back to the standard plan when the choices cannot be used.</summary>
     public static StrengthPlanPreviewResult EvaluateWithFallback(
         StrengthPlanPreviewChoices? choices,
         StrengthPlanPreviewData? data) => EvaluateDirect(choices, data);
 
+    /// <summary>Working exercises one session may prescribe for the activity.</summary>
     private static int MaximumWorkingExercises(WorkoutActivityType activity,
         StrengthTemplateDefinition template) => activity switch
     {
@@ -677,6 +698,7 @@ public static class StrengthPlanPreviewRule
             historyExperience, profileExperience, history, allowProfileFallbackWhenHistoryMissing: true));
     }
 
+    /// <summary>Experience level the eligibility rules should use for the activity.</summary>
     private static ActivityExperience EligibilityExperience(WorkoutActivityType activity,
         ProfileTrainingExperienceDecision decision) =>
         (activity is WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength) &&
@@ -722,6 +744,7 @@ public static class StrengthPlanPreviewRule
         return set;
     }
 
+    /// <summary>The equipment kinds a home dumbbell-and-band setup provides.</summary>
     private static HashSet<ExerciseEquipmentKind> BuildHomeDumbbellsBandsSet(EquipmentCapabilities? capabilities)
     {
         var set = new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Bodyweight };
@@ -732,6 +755,7 @@ public static class StrengthPlanPreviewRule
         return set;
     }
 
+    /// <summary>The equipment kinds available with no equipment at all.</summary>
     private static HashSet<ExerciseEquipmentKind> BuildBodyweightSet(EquipmentCapabilities? capabilities)
     {
         var set = new HashSet<ExerciseEquipmentKind> { ExerciseEquipmentKind.Bodyweight };
@@ -740,6 +764,7 @@ public static class StrengthPlanPreviewRule
         return set;
     }
 
+    /// <summary>Drops optional slots until the session fits the available time.</summary>
     private static decimal? EstimateAndTrimOptional(List<StrengthSlotSelection> selected,
         StrengthPlanPreviewData data, int availableMinutes, int warmupMinutes, int cooldownMinutes,
         TemplateVolumeFloor floor, bool allowMovementOmissions, string templateId,
@@ -822,6 +847,7 @@ public static class StrengthPlanPreviewRule
         return estimate is > NoMinutes && estimate <= availableMinutes ? estimate : null;
     }
 
+    /// <summary>Conditions the reviewer must check for each filled slot.</summary>
     private static Dictionary<string, string> SlotConditions(
         StrengthTemplateDefinition template, StrengthPlanPreviewData data) =>
         template.Slots.ToDictionary(slot => slot.SlotId,
@@ -829,6 +855,7 @@ public static class StrengthPlanPreviewRule
                 $"{template.TemplateId}|{slot.SlotId}") ?? MissingTemplateSlotReview,
             StringComparer.Ordinal);
 
+    /// <summary>Review conditions the plan's exercises carry.</summary>
     private static StrengthExerciseReviewCondition[] ExerciseReviewConditions(
         IReadOnlyList<StrengthTemplateDefinition> templates, StrengthPlanPreviewData data)
     {
@@ -850,9 +877,11 @@ public static class StrengthPlanPreviewRule
             .ToArray();
     }
 
+    /// <summary>Trims a text value and returns nothing when it is blank.</summary>
     private static string? TrimToNull(string? value) =>
         string.IsNullOrWhiteSpace(value) ? null : value.Trim();
 
+    /// <summary>A preview result that could not be built, with its status and reason.</summary>
     private static StrengthPlanPreviewResult Failure(StrengthPlanPreviewStatus status,
         ActivityExperience experience, params string[] reasons) =>
         new(status, experience, [], [.. reasons], [], []);

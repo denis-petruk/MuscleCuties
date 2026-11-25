@@ -18,6 +18,8 @@ using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>The nutrition tab: the day's totals and targets, the logged meals, and the meal editor with its food</summary>
+/// finder. Partial across files by surface; this one holds the shared state and the day load.</summary>
 public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDisposable
 {
     private readonly INutritionChangeNotifier? _changeNotifier;
@@ -74,9 +76,12 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         nameof(MealEditorTitle))]
     private MealFoodSource _selectedFoodSource = MealFoodSource.Search;
 
+    /// <summary>The tab for searching foods.</summary>
     public MealFoodSourceTab SearchFoodSourceTab { get; } =
         new(MealFoodSource.Search) { IsSelected = true };
+    /// <summary>The tab for scanning a barcode.</summary>
     public MealFoodSourceTab BarcodeFoodSourceTab { get; } = new(MealFoodSource.Barcode);
+    /// <summary>The tab for a custom food.</summary>
     public MealFoodSourceTab CustomFoodSourceTab { get; } = new(MealFoodSource.Custom);
 
     [ObservableProperty] private bool _isEditingMeal;
@@ -118,6 +123,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private float _targetFats;
     [ObservableProperty] private float _targetProtein;
 
+    /// <summary>Takes the use cases and callbacks the nutrition page reports to.</summary>
     public NutritionViewModel(
         INutritionOverviewUseCase overviewUseCase,
         IFoodCatalogSearchUseCase searchUseCase,
@@ -196,36 +202,52 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         MealIngredients.CollectionChanged += OnMealIngredientsCollectionChanged;
     }
 
+    /// <summary>How full the calorie ring is, from the shared progress formatter so every ring on the page agrees.</summary>
     public float CaloriesProgress =>
         MacroProgressFormatter.CalculateProgress(ConsumedCalories, TargetCalories);
 
+    /// <summary>Consumed calories with the card's own formatting, not the raw number the totals carry.</summary>
     public string CaloriesConsumed => MacroProgressFormatter.FormatCaloriesConsumed(ConsumedCalories);
+    /// <summary>The same value as a whole number, for the places that show it without a unit.</summary>
     public string ConsumedCaloriesText => DisplayFormat.WholeNumber(ConsumedCalories);
+    /// <summary>The day's calorie target formatted as the card's goal line.</summary>
     public string CaloriesGoal => MacroProgressFormatter.FormatCaloriesGoal(TargetCalories);
 
+    /// <summary>Protein eaten against its target, as the macro row reads it.</summary>
     public string ProteinText => MacroProgressFormatter.FormatGramsText(ConsumedProtein, TargetProtein);
+    /// <summary>Protein progress as a 0–1 fraction for the macro bar.</summary>
     public float ProteinProgress => MacroProgressFormatter.CalculateProgress(ConsumedProtein, TargetProtein);
 
+    /// <summary>Carbohydrate eaten against its target.</summary>
     public string CarbsText => MacroProgressFormatter.FormatGramsText(ConsumedCarbs, TargetCarbs);
+    /// <summary>Carbohydrate progress as a fraction.</summary>
     public float CarbsProgress => MacroProgressFormatter.CalculateProgress(ConsumedCarbs, TargetCarbs);
 
+    /// <summary>Fat eaten against its target.</summary>
     public string FatsText => MacroProgressFormatter.FormatGramsText(ConsumedFats, TargetFats);
+    /// <summary>Fat progress as a fraction.</summary>
     public float FatsProgress => MacroProgressFormatter.CalculateProgress(ConsumedFats, TargetFats);
 
+    /// <summary>The badge above the targets: the cycle phase when one is known, otherwise the neutral daily-targets</summary>
+    /// wording, because a targets card cannot be labelled with a phase it does not have.</summary>
     public string PhaseFocusBadgeText => CurrentPhase == CyclePhase.Unknown ||
                                         string.IsNullOrWhiteSpace(CurrentPhaseName)
         ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Nutrition_Breakdown_DailyTargets")
         : $"Phase focus · {CurrentPhaseName}";
 
+    /// <summary>The glyph matching the cycle phase shown beside the targets.</summary>
     public string CurrentPhaseIconGlyph =>
         MacroProgressFormatter.GetPhaseIconGlyph(NutritionPresentationMapper.ToPresentationCyclePhase(CurrentPhase));
 
+    /// <summary>The meals the day is split into.</summary>
     public IReadOnlyList<MealType> MealTypes { get; } = Enum.GetValues<MealType>();
 
+    /// <summary>The serving units a custom food can use.</summary>
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in Nutrition XAML / view model contract.")]
     public IReadOnlyList<string> CustomFoodServingUnits => _foodPortionCatalog.SupportedUnits;
 
+    /// <summary>True when the search returned foods.</summary>
     public bool HasFoodSearchResults => FoodSearchResults.Count > 0;
 
     /// <summary>
@@ -233,28 +255,39 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     /// claiming that a query returned no matches.
     /// </summary>
     public bool IsFoodSearchIdle => string.IsNullOrWhiteSpace(SearchQuery);
+    /// <summary>True when more foods can be loaded.</summary>
     public bool ShowBrowseMoreFoods => HasFoodSearchResults && HasMoreFoodResults;
+    /// <summary>True when the finder shows a message.</summary>
     public bool HasAddFoodMessage => !string.IsNullOrWhiteSpace(AddFoodMessage);
+    /// <summary>True when the meal has ingredients.</summary>
     public bool HasMealIngredients => MealIngredients.Count > 0;
 
+    /// <summary>True when the food finder is shown.</summary>
     public bool IsFoodFinderVisible =>
         IsFoodFinderExpanded ||
         SelectedFoodResult is not null ||
         IsCustomFoodPanelVisible;
 
+    /// <summary>True when the food finder is hidden.</summary>
     public bool IsFoodFinderCollapsed => !IsFoodFinderVisible;
 
+    /// <summary>True when the ingredient search is shown.</summary>
     public bool IsIngredientSearchVisible =>
         IsFoodFinderExpanded && SelectedFoodSource == MealFoodSource.Search &&
         SelectedFoodResult is null && !IsCustomFoodPanelVisible;
 
+    /// <summary>True when the barcode source is shown.</summary>
     public bool IsBarcodeSourceVisible =>
         IsFoodFinderExpanded && SelectedFoodSource == MealFoodSource.Barcode &&
         SelectedFoodResult is null;
 
+    /// <summary>True when a food is selected for editing.</summary>
     public bool IsSelectedFoodEditorVisible => SelectedFoodResult is not null;
+    /// <summary>Whether the ingredient button will add a food or replace the one being edited.</summary>
     public string IngredientActionText => _editingIngredient is null ? "Add ingredient" : "Update ingredient";
+    /// <summary>True when the breakfast preference is savoury.</summary>
     public bool IsSavouryBreakfast => BreakfastPreference == BreakfastPreference.Savoury;
+    /// <summary>True when the breakfast preference is sweet.</summary>
     public bool IsSweetBreakfast => BreakfastPreference == BreakfastPreference.Sweet;
 
     public string BreakfastTargetText
@@ -279,26 +312,41 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             : FormatMealTarget("Snack", _mealDistribution?.Snack);
     }
 
+    /// <summary>True when the day has meals.</summary>
     public bool HasMeals => Meals.Count > 0;
+    /// <summary>True when the day has no meals.</summary>
     public bool HasNoMeals => Meals.Count == 0;
 
+    /// <summary>True when breakfast is the selected meal.</summary>
     public bool IsBreakfastSelected => SelectedMealType == MealType.Breakfast;
+    /// <summary>True when lunch is the selected meal.</summary>
     public bool IsLunchSelected => SelectedMealType == MealType.Lunch;
+    /// <summary>True when dinner is the selected meal.</summary>
     public bool IsDinnerSelected => SelectedMealType == MealType.Dinner;
+    /// <summary>True when a snack is the selected meal.</summary>
     public bool IsSnackSelected => SelectedMealType == MealType.Snack;
 
+    /// <summary>The editor's heading, which names the step the user is in — scanning, custom food, portion, search, or the</summary>
+    /// meal itself.</summary>
     public string MealEditorTitle => IsBarcodeSourceVisible ? UiTextCatalog.Get("Nutrition_MealEditor_ScanBarcodeTitle")
         : IsCustomFoodPanelVisible ? "Custom food"
         : IsSelectedFoodEditorVisible ? "Portion"
         : IsIngredientSearchVisible ? "Add food"
         : IsEditingMeal ? "Edit meal" : "Log meal";
 
+    /// <summary>The draft meal's calories, summed over its ingredients.</summary>
     public string MealDraftCaloriesText => DisplayFormat.Calories(MealIngredients.Sum(i => i.CaloriesForAmount));
+    /// <summary>The draft meal's protein, summed over its ingredients.</summary>
     public string MealDraftProteinText => DisplayFormat.Grams(MealIngredients.Sum(i => i.ProteinForAmount));
+    /// <summary>The draft meal's carbohydrate, summed over its ingredients.</summary>
     public string MealDraftCarbsText => DisplayFormat.Grams(MealIngredients.Sum(i => i.CarbsForAmount));
+    /// <summary>The draft meal's fat, summed over its ingredients.</summary>
     public string MealDraftFatsText => DisplayFormat.Grams(MealIngredients.Sum(i => i.FatsForAmount));
 
+    /// <summary>The custom-food toggle names the action it will take: open the form or close it.</summary>
     public string CustomFoodToggleText => IsCustomFoodPanelVisible ? "Hide custom food" : "Create custom food";
+    /// <summary>The browse button says it is working while the next page loads, so a slow page cannot be tapped twice</summary>
+    /// unknowingly.</summary>
     public string BrowseMoreFoodsButtonText => IsBrowsingMoreFoods ? "Browsing..." : "Browse more";
 
     public string MealIngredientsTotalText
@@ -318,28 +366,40 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         }
     }
 
+    /// <summary>The save button says log or save, depending on whether the editor is creating a meal or changing one.</summary>
     public string LogMealButtonText => MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(IsEditingMeal ? "Nutrition_Meal_SaveButton" : "Nutrition_Meal_LogButton");
+    /// <summary>True when the meal context can be edited.</summary>
     public bool IsMealContextEditorVisible => !IsMealChoiceLocked && IsMealContextExpanded;
+    /// <summary>True when the meal context summary is shown.</summary>
     public bool IsMealContextSummaryVisible => IsMealChoiceLocked || !IsMealContextExpanded;
+    /// <summary>True when the meal context can change.</summary>
     public bool CanChangeMealContext => !IsMealChoiceLocked;
+    /// <summary>Which meal and when, in one line, for the collapsed context row.</summary>
     public string MealChoiceSummary =>
         $"{UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}")} · {DisplayFormat.Time(SelectedMealTime)}";
 
+    /// <summary>The chosen meal's name, from its catalog key.</summary>
     public string SelectedMealTypeText =>
         UiTextCatalog.Get($"Nutrition_MealType_{SelectedMealType}");
 
+    /// <summary>The date a meal is being logged or edited for: "today" unless an older meal is being edited.</summary>
     public string SelectedMealDateText =>
         IsEditingMeal && _editingMealDate.Date != DateTime.Today
             ? DisplayFormat.DayMonth(_editingMealDate)
             : UiTextCatalog.Get("Common_Today");
 
+    /// <summary>The chosen meal time as a clock.</summary>
     public string SelectedMealTimeText => DisplayFormat.Time(SelectedMealTime);
 
+    /// <summary>True when the food source tabs are shown.</summary>
     public bool IsFoodSourceTabsVisible =>
         IsFoodFinderExpanded && SelectedFoodResult is null && !IsCustomFoodPanelVisible;
 
+    /// <summary>The chosen food's name, or a prompt to choose one.</summary>
     public string SelectedFoodText => SelectedFoodResult?.Name ?? "No food selected";
+    /// <summary>Where the chosen food comes from, empty when it has no source to show.</summary>
     public string SelectedFoodSourceText => SelectedFoodResult?.SourceSummary ?? string.Empty;
+    /// <summary>True when a food source is chosen.</summary>
     public bool HasSelectedFoodSource => !string.IsNullOrWhiteSpace(SelectedFoodSourceText);
 
     public string SelectedFoodAmountText
@@ -367,62 +427,109 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     /// <summary>RM05: one presenter shared with the Daily Food Log; each caller supplies its own date's values.</summary>
     public NutritionBreakdownPresenter Breakdown { get; }
 
+    /// <summary>Reloads the day.</summary>
     public AsyncRelayCommand RefreshCommand { get; }
+    /// <summary>Shows or hides the meal editor.</summary>
     public RelayCommand ToggleMealEditorCommand { get; }
+    /// <summary>Shows or hides the meal context.</summary>
     public RelayCommand ToggleMealContextCommand { get; }
+    /// <summary>Opens the meal editor.</summary>
     public RelayCommand OpenMealEditorCommand { get; }
+    /// <summary>Selects a search result.</summary>
     public RelayCommand<FoodSearchResultItem> SelectFoodResultCommand { get; }
+    /// <summary>Searches the catalog.</summary>
     public AsyncRelayCommand SearchFoodCommand { get; }
+    /// <summary>Loads more search results.</summary>
     public AsyncRelayCommand BrowseMoreFoodsCommand { get; }
+    /// <summary>Adds the selected food to the meal.</summary>
     public RelayCommand AddIngredientCommand { get; }
+    /// <summary>Opens the food finder.</summary>
     public RelayCommand OpenFoodFinderCommand { get; }
+    /// <summary>Collapses the food finder.</summary>
     public RelayCommand CollapseFoodFinderCommand { get; }
+    /// <summary>Removes an ingredient.</summary>
     public RelayCommand<MealIngredientItem> RemoveIngredientCommand { get; }
+    /// <summary>Edits an ingredient.</summary>
     public RelayCommand<MealIngredientItem> EditIngredientCommand { get; }
+    /// <summary>Leaves the meal editor.</summary>
     public RelayCommand MealEditorBackCommand { get; }
+    /// <summary>Logs the meal.</summary>
     public AsyncRelayCommand LogMealCommand { get; }
+    /// <summary>Stores the breakfast preference.</summary>
     public AsyncRelayCommand<string> SetBreakfastPreferenceCommand { get; }
+    /// <summary>Shows or hides the custom food panel.</summary>
     public RelayCommand ToggleCustomFoodPanelCommand { get; }
+    /// <summary>Creates the custom food.</summary>
     public AsyncRelayCommand CreateCustomFoodCommand { get; }
+    /// <summary>Opens the micronutrients modal.</summary>
     public RelayCommand OpenMicronutrientsModalCommand { get; }
+    /// <summary>Closes the micronutrients modal.</summary>
     public RelayCommand CloseMicronutrientsModalCommand { get; }
+    /// <summary>Opens a meal's nutrition breakdown.</summary>
     public RelayCommand<MealItem> OpenMealBreakdownCommand { get; }
+    /// <summary>Opens a meal for editing.</summary>
     public AsyncRelayCommand<MealItem> EditMealCommand { get; }
+    /// <summary>Selects the meal being edited.</summary>
     public RelayCommand<MealType> SelectMealTypeCommand { get; }
+    /// <summary>Opens the meal suggestions.</summary>
     public RelayCommand OpenSuggestMealCommand { get; }
+    /// <summary>Closes the suggestions.</summary>
     public RelayCommand CloseSuggestionModalCommand { get; }
+    /// <summary>Regenerates the suggestions.</summary>
     public RelayCommand RefreshSuggestionsCommand { get; }
+    /// <summary>Accepts a suggestion as the meal.</summary>
     public RelayCommand<MealSuggestionItem> AcceptSuggestionCommand { get; }
+    /// <summary>Chooses the meal to suggest for.</summary>
     public RelayCommand<MealType> SelectSuggestionMealTypeCommand { get; }
+    /// <summary>Returns to the meal picker.</summary>
     public RelayCommand BackToMealTypePickerCommand { get; }
+    /// <summary>Regenerates a planned meal.</summary>
     public RelayCommand<DayMealPlanItem> RefreshDayMealCommand { get; }
+    /// <summary>Logs the planned meal.</summary>
     public RelayCommand<DayMealPlanItem> UsePlannedMealCommand { get; }
+    /// <summary>Opens a suggestion's detail.</summary>
     public RelayCommand<MealSuggestionItem> OpenMealDetailCommand { get; }
+    /// <summary>Closes the suggestion detail.</summary>
     public RelayCommand CloseMealDetailCommand { get; }
+    /// <summary>Opens the meal entry editor.</summary>
     public RelayCommand OpenMealEntryCommand { get; }
+    /// <summary>Closes the meal entry editor.</summary>
     public RelayCommand CloseMealEntryCommand { get; }
+    /// <summary>Selects the meal the entry logs to.</summary>
     public RelayCommand<MealType> SelectEntryMealTypeCommand { get; }
+    /// <summary>Starts a manually built meal.</summary>
     public AsyncRelayCommand StartManualMealCommand { get; }
+    /// <summary>Starts a meal from suggestions.</summary>
     public RelayCommand StartSuggestedMealCommand { get; }
+    /// <summary>Starts a meal from the day plan.</summary>
     public RelayCommand StartDayPlanCommand { get; }
+    /// <summary>Shows or hides the template picker.</summary>
     public RelayCommand ToggleTemplatePickerCommand { get; }
+    /// <summary>Logs a meal template.</summary>
     public AsyncRelayCommand<MealTemplate> LogMealTemplateCommand { get; }
+    /// <summary>Deletes a meal template.</summary>
     public AsyncRelayCommand<MealTemplate> DeleteMealTemplateCommand { get; }
+    /// <summary>Saves a meal as a template.</summary>
     public AsyncRelayCommand<MealItem> SaveMealAsTemplateCommand { get; }
 
+    /// <summary>Loads the day.</summary>
     public AsyncRelayCommand LoadDataCommand { get; }
+    /// <summary>The full-page indicator, shown on a busy page that has not finished a load yet.</summary>
     public bool IsPageLoading => _loadGate.IsLoading(IsBusy);
 
+    /// <summary>Marks the day stale so the next appearance reloads it.</summary>
     public void Invalidate()
     {
         _loadGate.MarkStale();
     }
 
+    /// <summary>Reloads the day through the load gate, forcing it past the freshness window.</summary>
     private Task RefreshAsync()
     {
         return _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
+    /// <summary>The day load: targets, meals, micronutrients and the cycle phase that colours the targets card.</summary>
     private async Task LoadDataCoreAsync()
     {
         IsBusy = true;
@@ -514,10 +621,12 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         }
     }
 
+    /// <summary>One meal's target calories, with a dash instead of a number when the plan gives that meal no share.</summary>
     private string FormatMealTarget(string mealName, float? share) => share is { } value
         ? $"{mealName} ({(int)(TargetCalories * value)} kcal)"
         : $"{mealName} (— kcal)";
 
+    /// <summary>Expands or collapses the meal-and-time row; collapsed it shows the summary instead.</summary>
     private void ToggleMealContext()
     {
         // A locked context (for example an existing meal or a fixed suggestion time) cannot be
@@ -528,6 +637,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         IsMealContextExpanded = !IsMealContextExpanded;
     }
 
+    /// <summary>Opens the editor or closes it, depending on where the user already is.</summary>
     private void ToggleMealEditor()
     {
         if (IsMealEditorVisible)
@@ -539,6 +649,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         OpenMealEditor();
     }
 
+    /// <summary>Opens the editor, dropping the previous edit's draft so an abandoned edit cannot be saved by accident.</summary>
     private void OpenMealEditor()
     {
         if (IsEditingMeal)
@@ -548,6 +659,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         PrepareMealEditor();
     }
 
+    /// <summary>Closes the editor and its food finder, unlocked, discarding the draft when it was an edit; ignored while a</summary>
+    /// write is in flight so the sheet cannot vanish mid-save.</summary>
     private void CloseMealEditor()
     {
         if (IsBusy)
@@ -561,6 +674,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
             ResetMealDraft();
     }
 
+    /// <summary>Resets the editor's transient state: an empty draft starts at the current time with the finder closed, a</summary>
+    /// draft carried in from another surface keeps its contents.</summary>
     private void PrepareMealEditor()
     {
         AddFoodMessage = string.Empty;
@@ -575,6 +690,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         IsFoodFinderExpanded = false;
     }
 
+    /// <summary>Opens the finder on catalog search with nothing selected, so the user always starts from the same place.</summary>
     private void OpenFoodFinder()
     {
         ResetFoodSource();
@@ -585,6 +701,7 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         AddFoodMessage = string.Empty;
     }
 
+    /// <summary>Closes the finder and throws away its query, results, paging and selection.</summary>
     private void CollapseFoodFinder()
     {
         ResetFoodSource();
@@ -599,6 +716,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         AddFoodMessage = string.Empty;
     }
 
+    /// <summary>Steps back one level — from a chosen food to the finder, then out of the editor — so back never skips the</summary>
+    /// level the user came from.</summary>
     private void GoBackInMealEditor()
     {
         if (IsBusy)
@@ -624,6 +743,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         CollapseFoodFinder();
     }
 
+    /// <summary>Starts the celebration burst, taking its artwork from the current cycle phase and bumping the token so the</summary>
+    /// view replays it even for the same phase.</summary>
     private void TriggerCelebration()
     {
         CelebrationIconSource = CyclePhaseAssets.GetVisualSource(
@@ -631,51 +752,41 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
         CelebrationToken++;
     }
 
+    /// <summary>Refreshes the phase guidance when the name changes.</summary>
     partial void OnCurrentPhaseNameChanged(string value)
     {
         OnPropertyChanged(nameof(PhaseFocusBadgeText));
     }
 
+    /// <summary>Refreshes the phase visuals when the phase changes.</summary>
     partial void OnCurrentPhaseChanged(CyclePhase value)
     {
         OnPropertyChanged(nameof(CurrentPhaseIconGlyph));
         OnPropertyChanged(nameof(PhaseFocusBadgeText));
     }
 
+    /// <summary>Refreshes the editor flags when the meal editor opens.</summary>
     partial void OnIsEditingMealChanged(bool value)
     {
         OnPropertyChanged(nameof(MealEditorTitle));
         OnPropertyChanged(nameof(LogMealButtonText));
     }
 
+    /// <summary>Reloads the day when the nutrition data changes.</summary>
     private void OnNutritionChanged(object? sender, NutritionChangedEventArgs e)
     {
         _loadGate.InvalidateAndReloadIfToday(e.Date, LoadDataCoreAsync, this);
     }
 
-    [RelayCommand]
-    public async Task NavigateToFoodLogAsync()
-    {
-        if (_navigateAsync is null)
-            return;
-
-        try
-        {
-            await _navigateAsync(NutritionNavigation.FoodLogRoute);
-        }
-        catch (Exception exception)
-        {
-            Trace.TraceError($"[Nutrition] Food log navigation failed: {exception.GetType().Name}");
-            ReportDiaryNavigationFailure();
-        }
-    }
 
     /// <summary>A dead entry point states so instead of leaving the page unchanged and silent.</summary>
     public void ReportDiaryNavigationFailure() =>
         ShowPageStatus(UiTextCatalog.Get("Ui_Nutrition_Error_LoadFoods"));
 
+    /// <summary>Releases the view model's subscriptions.</summary>
     public void Dispose()
     {
+        _barcodeScan?.Dispose();
         _loadGate.Dispose();
         GC.SuppressFinalize(this);
     }

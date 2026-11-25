@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>The recorded HIIT history that decides whether HIIT may be prescribed.</summary>
 public sealed record HiitEligibilityEvidence(
     bool ExplicitOptIn,
     WorkoutActivityType? UnderlyingCardioActivity,
@@ -31,12 +32,15 @@ public static class HiitEligibilityEvidenceRule
     public const string EvidenceNotEstablishedByRequiredEvidence =
         "HiitEligibilityNotEstablishedByRequiredEvidence";
 
+    /// <summary>Cardio activities that may carry the HIIT prescription.</summary>
     public static IReadOnlyList<WorkoutActivityType> SupportedUnderlyingCardioActivities =>
         SupportedUnderlyingActivities;
 
+    /// <summary>True when the activity may carry the HIIT prescription.</summary>
     public static bool IsSupportedUnderlyingCardioActivity(WorkoutActivityType? activity) =>
         activity is { } selectedActivity && SupportedUnderlyingActivities.Contains(selectedActivity);
 
+    /// <summary>Requires recorded HIIT evidence, so HIIT is never offered on assumption.</summary>
     public static bool IsEligible(HiitEligibilityEvidence? evidence)
     {
         if (evidence is null || !evidence.ExplicitOptIn ||

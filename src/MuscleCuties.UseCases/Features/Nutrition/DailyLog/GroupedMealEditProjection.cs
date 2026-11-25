@@ -10,6 +10,7 @@ public readonly record struct IngredientPortionEdit(int RowIndex, int FoodItemId
 /// </summary>
 public static class GroupedMealEditProjection
 {
+    /// <summary>The per-ingredient grams a grouped-meal edit should end with.</summary>
     public static float[] ResolveAmounts(
         IReadOnlyList<float> originalGrams,
         IReadOnlyList<int> originalFoodItemIds,

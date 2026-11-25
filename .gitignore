@@ -89,6 +89,7 @@ Thumbs.db
 .foundation-baselines/
 .scratch/
 .tools/
+.tool/
 *.orig
 *.rej
 *~

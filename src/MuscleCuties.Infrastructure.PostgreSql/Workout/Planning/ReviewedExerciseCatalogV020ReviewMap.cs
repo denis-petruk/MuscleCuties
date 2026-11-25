@@ -2,15 +2,18 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>The reviewed mapping for one slot: the exercises a reviewer approved for it.</summary>
 internal sealed record ReviewedExerciseSlotMapV020(
     IReadOnlyDictionary<string, IReadOnlySet<int>> AllowedIds,
     IReadOnlyDictionary<string, string> Conditions);
 
+/// <summary>The review map the importer and the planner both read, so an unreviewed slot is never prescribed.</summary>
 internal static class ReviewedExerciseCatalogV020ReviewMap
 {
     private const string ReviewResourceName =
         "MuscleCuties.Infrastructure.PostgreSql.Workout.Planning.ReviewData.ReviewedExerciseCatalogV020.json";
 
+    /// <summary>Maps the catalog slots onto the review map.</summary>
     public static ReviewedExerciseSlotMapV020 MapSlots(
         IReadOnlyList<WorkoutExerciseDefinition> definitions)
     {
@@ -72,6 +75,7 @@ internal static class ReviewedExerciseCatalogV020ReviewMap
         return new ReviewedExerciseSlotMapV020(allowed, conditions);
     }
 
+    /// <summary>An empty map for a catalog with no slots.</summary>
     private static ReviewedExerciseSlotMapV020 Empty() => new(
         new Dictionary<string, IReadOnlySet<int>>(),
         new Dictionary<string, string>());

@@ -3,8 +3,10 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Configurations.Catalog;
 
+/// <summary>Quiz questions, whose order index is unique because the quiz is presented in one fixed sequence.</summary>
 public sealed class QuizQuestionConfiguration : IEntityTypeConfiguration<QuizQuestion>
 {
+    /// <summary>Maps questions, with a unique order index because the quiz has one fixed sequence.</summary>
     public void Configure(EntityTypeBuilder<QuizQuestion> builder)
     {
         builder.ToTable("quiz_questions", "catalog");
@@ -20,8 +22,11 @@ public sealed class QuizQuestionConfiguration : IEntityTypeConfiguration<QuizQue
     }
 }
 
+/// <summary>Answer options. The alternate key <c>(id, question_id)</c> exists so a foreign key can enforce that an answer's
+/// question is the one it was chosen under, and order is unique within a question.</summary>
 public sealed class QuizAnswerConfiguration : IEntityTypeConfiguration<QuizAnswer>
 {
+    /// <summary>Maps options, unique in order within a question, plus the (id, question_id) alternate key the profile's answers reference.</summary>
     public void Configure(EntityTypeBuilder<QuizAnswer> builder)
     {
         builder.ToTable("quiz_answers", "catalog");

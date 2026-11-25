@@ -3,8 +3,11 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Configurations.Catalog;
 
+/// <summary>The shared food catalog table, whose check constraint ties an FDC seed code to its <c>fdc_id</c> so a row cannot
+/// claim an FDC identity the id does not back.</summary>
 public sealed class FoodItemConfiguration : IEntityTypeConfiguration<FoodItem>
 {
+    /// <summary>Maps the shared food catalog with the constraint that ties an FDC seed code to its id, and the indexes search and barcode lookup use.</summary>
     public void Configure(EntityTypeBuilder<FoodItem> builder)
     {
         builder.ToTable("food_items", "catalog", table => table.HasCheckConstraint(
@@ -52,8 +55,11 @@ public sealed class FoodItemConfiguration : IEntityTypeConfiguration<FoodItem>
     }
 }
 
+/// <summary>Shared meal templates, with their entries restricted rather than cascaded so deleting a template cannot silently
+/// drop catalog rows.</summary>
 public sealed class MealTemplateConfiguration : IEntityTypeConfiguration<MealTemplate>
 {
+    /// <summary>Maps shared meal templates, unique by seed code, with their entries restricted rather than cascaded.</summary>
     public void Configure(EntityTypeBuilder<MealTemplate> builder)
     {
         builder.ToTable("meal_templates", "catalog");
@@ -73,8 +79,10 @@ public sealed class MealTemplateConfiguration : IEntityTypeConfiguration<MealTem
     }
 }
 
+/// <summary>The foods inside a shared template; each entry points at one food in grams.</summary>
 public sealed class MealTemplateEntryConfiguration : IEntityTypeConfiguration<MealTemplateEntry>
 {
+    /// <summary>Maps the foods inside a shared template, each pointing at one catalog food in grams.</summary>
     public void Configure(EntityTypeBuilder<MealTemplateEntry> builder)
     {
         builder.ToTable("meal_template_entries", "catalog");

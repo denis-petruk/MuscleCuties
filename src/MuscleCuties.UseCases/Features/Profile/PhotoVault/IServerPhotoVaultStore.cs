@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Profile.PhotoVault.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Profile.PhotoVault;
 
+/// <summary>The server-side photo read.</summary>
 public interface IServerPhotoVaultStore
 {
     Task<PhotoUploadIssueResponse> RequestUploadUrlAsync(

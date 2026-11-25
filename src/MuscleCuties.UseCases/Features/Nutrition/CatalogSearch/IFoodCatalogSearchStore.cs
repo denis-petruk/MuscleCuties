@@ -2,6 +2,7 @@ using MuscleCuties.Core.Domain.Nutrition;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 
+/// <summary>The search query the catalog needs.</summary>
 public interface IFoodCatalogSearchStore
 {
     Task<IReadOnlyList<FoodCatalogCandidate>> SearchCandidatesAsync(

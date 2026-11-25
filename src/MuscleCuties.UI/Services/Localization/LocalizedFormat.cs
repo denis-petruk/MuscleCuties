@@ -6,6 +6,8 @@ namespace MuscleCuties.UI.Services.Localization;
 /// </summary>
 public static class LocalizedFormat
 {
+    /// <summary>Substitutes positional <c>{0}</c> placeholders one at a time instead of using composite formatting,</summary>
+    /// so a translated string with a reordered placeholder still produces the same text everywhere.</summary>
     public static string Format(string key, params string[] arguments)
     {
         var formatted = UiTextCatalog.Get(key);

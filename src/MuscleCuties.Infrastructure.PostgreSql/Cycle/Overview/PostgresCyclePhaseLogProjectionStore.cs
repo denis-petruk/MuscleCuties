@@ -6,6 +6,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Cycle.Overview;
 /// <summary>Reads owner-scoped cycle phase observations without normalizing unknown stored values away.</summary>
 public sealed class PostgresCyclePhaseLogProjectionStore(PostgresDbContext db) : IServerCyclePhaseLogProjectionStore
 {
+    /// <summary>Loads the phase logs the cycle overview projects from.</summary>
     public async Task<IReadOnlyList<ServerCyclePhaseLog>> LoadAsync(Guid userId, DateOnly from, DateOnly through,
         CancellationToken cancellationToken) =>
         await db.Database.CreateExecutionStrategy().ExecuteAsync<IReadOnlyList<ServerCyclePhaseLog>>(async () =>
@@ -22,6 +23,7 @@ public sealed class PostgresCyclePhaseLogProjectionStore(PostgresDbContext db) :
             return (IReadOnlyList<ServerCyclePhaseLog>)rows.Select(row => Map(row.Id, row.CycleLogId, row.Phase, row.FlowIntensity, row.LoggedAt, row.Note, row.CreatedAt)).ToArray();
         }).ConfigureAwait(false);
 
+    /// <summary>Maps a stored phase log onto the projection record.</summary>
     private static ServerCyclePhaseLog Map(Guid id, Guid? cycleId, string phaseValue, string? flowValue,
         DateTime loggedAt, string? note, DateTime createdAt)
     {

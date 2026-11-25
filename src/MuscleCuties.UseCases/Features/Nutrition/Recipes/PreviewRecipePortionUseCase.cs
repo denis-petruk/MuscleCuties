@@ -3,14 +3,17 @@ using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Recipes;
 
+/// <summary>Previewing a portion of a recipe.</summary>
 public interface IPreviewRecipePortionUseCase
 {
     Task<RecipePortionPreviewDto> ExecuteAsync(Guid userId, PreviewRecipePortionRequest request,
         CancellationToken cancellationToken = default);
 }
 
+/// <summary>Computes a portion's contribution from the stored recipe, refusing an unknown measure.</summary>
 public sealed class PreviewRecipePortionUseCase(IRecipeStore recipeStore) : IPreviewRecipePortionUseCase
 {
+    /// <summary>Previews one portion of a saved recipe.</summary>
     public async Task<RecipePortionPreviewDto> ExecuteAsync(Guid userId, PreviewRecipePortionRequest request,
         CancellationToken cancellationToken = default)
     {

@@ -2,12 +2,14 @@ using MuscleCuties.UseCases.Features.Account.Authentication;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
 
+/// <summary>The password reset on PostgreSQL: verify the recovery session, set the new hash and revoke every existing session in one transaction.</summary>
 public sealed class PostgresAccountPasswordResetStore(PostgresDbContext dbContext, TimeProvider timeProvider)
     : IAccountPasswordResetStore
 {
     private const int PasswordRecoveryPurpose = 2;
     private const string PasswordRecoveryPurposeName = "PasswordRecovery";
 
+    /// <summary>Resets the password with a verified recovery token.</summary>
     public async Task<PasswordResetStatus> ResetAsync(
         string normalizedEmail,
         string challengeId,
@@ -23,6 +25,7 @@ public sealed class PostgresAccountPasswordResetStore(PostgresDbContext dbContex
             .ConfigureAwait(false);
     }
 
+    /// <summary>Performs the reset inside one transaction.</summary>
     private async Task<PasswordResetStatus> ResetTransactionalAsync(
         string normalizedEmail,
         Guid parsedChallengeId,

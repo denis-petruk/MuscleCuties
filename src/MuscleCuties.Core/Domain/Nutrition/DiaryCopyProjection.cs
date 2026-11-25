@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>One food a day copy would write, with its amount and meal.</summary>
 public sealed record DiaryCopyFood(
     string Identity,
     string Name,
@@ -12,6 +13,7 @@ public sealed record DiaryCopyFood(
     decimal Fat,
     string? GroupIdentity = null);
 
+/// <summary>The totals the copy produces, so the preview can show the effect before committing.</summary>
 public sealed record DiaryCopyTotals(
     int Count,
     decimal Calories,
@@ -22,6 +24,7 @@ public sealed record DiaryCopyTotals(
 /// <summary>A read-only plan over two owner-scoped diary snapshots. Each grouped legacy food is one item.</summary>
 public sealed class DiaryCopyProjection
 {
+    /// <summary>Holds a copy preview built from both days' entries.</summary>
     private DiaryCopyProjection(
         IReadOnlyList<DiaryCopyFood> sourceItems,
         IReadOnlyList<DiaryCopyFood> existingTargetItems,
@@ -38,13 +41,20 @@ public sealed class DiaryCopyProjection
         ResultingTargetTotals = resultingTargetTotals;
     }
 
+    /// <summary>Entries on the day being copied from.</summary>
     public IReadOnlyList<DiaryCopyFood> SourceItems { get; }
+    /// <summary>Entries the target day already holds.</summary>
     public IReadOnlyList<DiaryCopyFood> ExistingTargetItems { get; }
+    /// <summary>Entries the target day holds once the copy is applied.</summary>
     public IReadOnlyList<DiaryCopyFood> ResultingTargetItems { get; }
+    /// <summary>Nutrition totals of the source day.</summary>
     public DiaryCopyTotals SourceTotals { get; }
+    /// <summary>Nutrition totals the target day already had.</summary>
     public DiaryCopyTotals ExistingTargetTotals { get; }
+    /// <summary>Nutrition totals the target day shows after the copy.</summary>
     public DiaryCopyTotals ResultingTargetTotals { get; }
 
+    /// <summary>Builds the preview by merging the source entries into the target day's meal.</summary>
     public static DiaryCopyProjection Create(
         IReadOnlyList<DiaryCopyFood> source,
         IReadOnlyList<DiaryCopyFood> target,
@@ -76,6 +86,7 @@ public sealed class DiaryCopyProjection
             Sum(resultingTarget));
     }
 
+    /// <summary>Refuses a projection with no foods or a non-positive amount.</summary>
     private static void ValidateFoods(IReadOnlyList<DiaryCopyFood> foods)
     {
         var identities = new HashSet<string>(StringComparer.Ordinal);
@@ -93,6 +104,7 @@ public sealed class DiaryCopyProjection
         }
     }
 
+    /// <summary>Adds the projected foods into the totals the preview shows.</summary>
     private static DiaryCopyTotals Sum(DiaryCopyFood[] foods)
     {
         try

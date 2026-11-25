@@ -6,6 +6,7 @@ namespace MuscleCuties.UI.Controls.Shared;
 /// </summary>
 public partial class StatusFooter : ContentView
 {
+    /// <summary>Initializes the footer declared in its XAML.</summary>
     public StatusFooter()
     {
         InitializeComponent();

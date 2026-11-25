@@ -21,6 +21,7 @@ public static class RequestTimingTelemetry
         "Request {Method} {RouteTemplate} {StatusCode} {ElapsedMilliseconds} cold={ColdStart} requestId={RequestId}";
     private static int handledRequestCount;
 
+    /// <summary>Times every request and records it, so a slow endpoint shows up without each endpoint instrumenting itself.</summary>
     public static IApplicationBuilder UseRequestTimingTelemetry(this IApplicationBuilder app)
     {
         ArgumentNullException.ThrowIfNull(app);

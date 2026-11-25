@@ -2,6 +2,9 @@ using SkiaSharp.Extended.UI.Controls;
 
 namespace MuscleCuties.UI.Controls.Shared;
 
+/// <summary>
+///     Phase illustration drawn from the current cycle phase's palette and shape.
+/// </summary>
 public class PhaseVisualView : ContentView
 {
     private const double FrameIntervalMilliseconds = 33;
@@ -23,6 +26,8 @@ public class PhaseVisualView : ContentView
     private DateTime _animationStartedAt;
     private IDispatcherTimer? _timer;
 
+    /// <summary>Builds the still image and the drawn layer on top of it, and ignores touches because the control is only ever</summary>
+    /// decoration.</summary>
     public PhaseVisualView()
     {
         InputTransparent = true;
@@ -70,18 +75,22 @@ public class PhaseVisualView : ContentView
         set => SetValue(SourceProperty, value);
     }
 
+    /// <summary>Refreshes the visual once the view is attached.</summary>
     protected override void OnHandlerChanged()
     {
         base.OnHandlerChanged();
         UpdateVisualSource();
     }
 
+    /// <summary>Refreshes the visual when its source changes.</summary>
     private static void OnSourceChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is PhaseVisualView view)
             view.UpdateVisualSource();
     }
 
+    /// <summary>Chooses what the control shows for a source: an animated drawing for the JSON artwork, the still image for</summary>
+    /// anything else, and nothing at all for an empty source.</summary>
     private void UpdateVisualSource()
     {
         var source = Source?.Trim() ?? string.Empty;
@@ -108,6 +117,8 @@ public class PhaseVisualView : ContentView
         }
     }
 
+    /// <summary>Starts the animation clock from now and runs one timer for the whole control, so the phase artwork keeps a</summary>
+    /// steady loop rather than restarting with each frame.</summary>
     private void StartAnimation()
     {
         _animationStartedAt = DateTime.UtcNow;
@@ -123,6 +134,7 @@ public class PhaseVisualView : ContentView
             _timer.Start();
     }
 
+    /// <summary>Stops and unhooks the timer, so a hidden control costs nothing.</summary>
     private void StopAnimation()
     {
         if (_timer is null)
@@ -133,6 +145,8 @@ public class PhaseVisualView : ContentView
         _timer = null;
     }
 
+    /// <summary>Advances the drawing by the elapsed time rather than a fixed step, and does nothing while the control is</summary>
+    /// invisible or detached.</summary>
     private void OnAnimationTick(object? sender, EventArgs e)
     {
         if (!_animationView.IsVisible || Handler is null)
@@ -146,16 +160,22 @@ public class PhaseVisualView : ContentView
         _animationView.Invalidate();
     }
 
+    /// <summary>The animated artwork is recognised by its file type, so a new phase needs no code to get one.</summary>
     private static bool IsAnimatedSource(string source)
     {
         return source.EndsWith(".json", StringComparison.OrdinalIgnoreCase);
     }
 
+    /// <summary>Draws the phase artwork procedurally from its source name, so the loop animates without shipping a video.</summary>
     private sealed class PhaseAnimationDrawable : IDrawable
     {
+        /// <summary>Which artwork the drawing renders.</summary>
         public string Source { get; set; } = string.Empty;
+        /// <summary>Where the loop is, from 0 to 1, set on each frame before the draw.</summary>
         public float Progress { get; set; }
 
+        /// <summary>Draws the artwork for the source, and nothing at all for a zero-sized canvas so a collapsed control cannot</summary>
+        /// throw.</summary>
         public void Draw(ICanvas canvas, RectF dirtyRect)
         {
             if (dirtyRect.Width <= 0 || dirtyRect.Height <= 0)
@@ -184,6 +204,7 @@ public class PhaseVisualView : ContentView
             canvas.RestoreState();
         }
 
+        /// <summary>The menstrual artwork: slow drops whose sway is driven by the loop progress.</summary>
         private static void DrawBloodDrops(ICanvas canvas, float progress)
         {
             var wave = MathF.Sin(progress * FullTurn);
@@ -210,6 +231,7 @@ public class PhaseVisualView : ContentView
                 Palette("PhaseVisualMenstrualStrokePrimary"));
         }
 
+        /// <summary>The ovulation artwork: a pulsing highlight.</summary>
         private static void DrawSun(ICanvas canvas, float progress)
         {
             var pulse = 0.5f + MathF.Sin(progress * FullTurn) * 0.5f;
@@ -241,6 +263,7 @@ public class PhaseVisualView : ContentView
             canvas.FillCircle(43f, 42f, 5f + pulse);
         }
 
+        /// <summary>The follicular artwork: a plant that grows and settles with the loop.</summary>
         private static void DrawPlant(ICanvas canvas, float progress)
         {
             var grow = 0.82f + MathF.Sin(progress * FullTurn) * 0.08f;
@@ -283,6 +306,7 @@ public class PhaseVisualView : ContentView
             canvas.FillCircle(50f + sway, stemTop + 4f, 3f);
         }
 
+        /// <summary>The luteal artwork: a moon whose star field brightens as the loop runs.</summary>
         private static void DrawMoon(ICanvas canvas, float progress)
         {
             var glow = 0.5f + MathF.Sin(progress * FullTurn) * 0.5f;
@@ -325,6 +349,7 @@ public class PhaseVisualView : ContentView
             DrawStar(canvas, 78f, 72f, 4f + glow * 0.8f);
         }
 
+        /// <summary>One drop, positioned by its top point so the callers place shapes rather than compute their centres.</summary>
         private static void DrawDrop(ICanvas canvas, PointF top, float size, Color fill, Color stroke)
         {
             var halfWidth = size * 0.44f;
@@ -351,6 +376,7 @@ public class PhaseVisualView : ContentView
             canvas.FillEllipse(centerX - halfWidth * 0.36f, top.Y + size * 0.35f, halfWidth * 0.26f, size * 0.26f);
         }
 
+        /// <summary>One star in the luteal night sky.</summary>
         private static void DrawStar(ICanvas canvas, float centerX, float centerY, float size)
         {
             canvas.StrokeColor = Palette("PhaseVisualAccent");
@@ -360,6 +386,7 @@ public class PhaseVisualView : ContentView
             canvas.DrawLine(centerX, centerY - size, centerX, centerY + size);
         }
 
+        /// <summary>One leaf on the follicular plant, drawn from its root towards its tip.</summary>
         private static void DrawLeaf(ICanvas canvas, PointF root, PointF tip, float width, Color fill, Color stroke)
         {
             var dx = tip.X - root.X;
@@ -386,6 +413,7 @@ public class PhaseVisualView : ContentView
             canvas.DrawPath(path);
         }
 
+        /// <summary>The point on a circle, so the artwork can place shapes by angle instead of by hand.</summary>
         private static PointF PointOnCircle(PointF center, float radius, float angleRadians)
         {
             return new PointF(
@@ -393,6 +421,8 @@ public class PhaseVisualView : ContentView
                 center.Y + radius * MathF.Sin(angleRadians));
         }
 
+        /// <summary>A colour from the theme's palette by resource key, so the artwork follows the app's colours instead of</summary>
+        /// hard-coding them.</summary>
         private static Color Palette(string key)
         {
             return AppThemeResources.GetColor(key);

@@ -2,9 +2,14 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
+/// <summary>
+///     Display projection for one generated session on the generation page.
+/// </summary>
 public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
     ObservableCollection<StrengthPlanSlotDisplay> Slots)
 {
+    /// <summary>Projects one preview session, preferring its weekday name and falling back to its position in the week,</summary>
+    /// and flags the session when movements were left out to fit the time available.</summary>
     public static StrengthPlanSessionDisplay From(StrengthPlanPreviewSessionV020 session, bool hasOmittedMovements = false)
     {
         var title = LocalizedFormat.Format("Workout_Generation_SessionDayTitleFormat",
@@ -40,6 +45,7 @@ public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
             new ObservableCollection<StrengthPlanSlotDisplay>(slots));
     }
 
+    /// <summary>The slot's reason as text: a catalog key if the server sent one, otherwise the sentence as it stands.</summary>
     private static string ResolveSlotRationale(string? selectionReason)
     {
         if (string.IsNullOrWhiteSpace(selectionReason))
@@ -60,6 +66,7 @@ public sealed record StrengthPlanSessionDisplay(string Title, string Duration,
             : string.Empty;
     }
 
+    /// <summary>The catalog key for an omitted movement.</summary>
     private static string OmittedMovementKey(StrengthMovementSlotDto movement) => movement switch
     {
         StrengthMovementSlotDto.KneeDominant => "Workout_Generation_MovementKneeOmitted",

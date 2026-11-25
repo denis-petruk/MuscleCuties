@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Workout.Archive;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Archive;
 
+/// <summary>The training archive: performed sessions and their sets, read by date range in the account's own zone.</summary>
 public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : IServerWorkoutArchiveStore
 {
     private const int PrimaryExerciseSummaryCount = 4;
@@ -14,6 +15,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
     private const string NoSetDetailsDetailKind = "noSetDetails";
     private const string RecordedWallTimePrecision = "recordedWallTime";
 
+    /// <summary>The user's workout history.</summary>
     public async Task<IReadOnlyList<WorkoutArchiveSummaryDto>> GetWorkoutHistoryAsync(
         Guid userId,
         int limit,
@@ -44,6 +46,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             return summaries;
         }).ConfigureAwait(false);
 
+    /// <summary>The workout history for a month.</summary>
     public async Task<IReadOnlyList<WorkoutArchiveSummaryDto>> GetWorkoutHistoryByMonthAsync(
         Guid userId,
         int year,
@@ -77,6 +80,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             return summaries;
         }).ConfigureAwait(false);
 
+    /// <summary>One archived session's detail.</summary>
     public async Task<WorkoutArchiveDetailDto?> GetWorkoutSessionDetailAsync(
         Guid userId,
         Guid sessionId,
@@ -140,6 +144,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             };
         }).ConfigureAwait(false);
 
+    /// <summary>Updates a session's notes and effort.</summary>
     public async Task<bool> UpdateWorkoutSessionNotesAsync(
         Guid userId,
         Guid sessionId,
@@ -173,6 +178,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             return true;
         }).ConfigureAwait(false);
 
+    /// <summary>Updates one archived exercise set.</summary>
     public async Task<bool> UpdateExerciseSetAsync(
         Guid userId,
         Guid setId,
@@ -230,6 +236,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             return true;
         }).ConfigureAwait(false);
 
+    /// <summary>Total sessions the user has finished.</summary>
     public async Task<int> GetTotalSessionsCountAsync(
         Guid userId,
         CancellationToken cancellationToken = default) =>
@@ -249,6 +256,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             return count;
         }).ConfigureAwait(false);
 
+    /// <summary>The months the user has history for.</summary>
     public async Task<IReadOnlyList<HistoryMonthOptionDto>> GetAvailableHistoryMonthsAsync(
         Guid userId,
         CancellationToken cancellationToken = default) =>
@@ -279,6 +287,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
                 .ToList();
         }).ConfigureAwait(false);
 
+    /// <summary>Sessions finished in a month.</summary>
     public async Task<int> GetWorkoutHistoryCountByMonthAsync(
         Guid userId,
         int year,
@@ -302,6 +311,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             return count;
         }).ConfigureAwait(false);
 
+    /// <summary>The user's personal records per exercise.</summary>
     public async Task<IReadOnlyList<ExercisePersonalRecordDto>> GetPersonalRecordsAsync(
         Guid userId,
         CancellationToken cancellationToken = default) =>
@@ -375,6 +385,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
             return records.OrderBy(r => r.ExerciseName, StringComparer.OrdinalIgnoreCase).ToList();
         }).ConfigureAwait(false);
 
+    /// <summary>Builds the summary rows for the given sessions.</summary>
     private static async Task<IReadOnlyList<WorkoutArchiveSummaryDto>> BuildSummariesAsync(
         PostgresDbContext dbContext,
         Guid userId,
@@ -431,6 +442,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
         return result;
     }
 
+    /// <summary>The account's zone, falling back to UTC when none is stored, which every archive date boundary is computed in.</summary>
     private async Task<TimeZoneInfo> LoadAccountTimeZoneAsync(Guid userId, CancellationToken cancellationToken)
     {
         var zoneId = await dbContext.WorkoutAccountPlanningStates.AsNoTracking()
@@ -444,11 +456,13 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
         catch (InvalidTimeZoneException) { return TimeZoneInfo.Utc; }
     }
 
+    /// <summary>The local start of a session in the account's zone.</summary>
     private static DateTime ToLocalStart(DateTime startedAt, TimeZoneInfo zone) =>
         DateTime.SpecifyKind(
             TimeZoneInfo.ConvertTimeFromUtc(DateTime.SpecifyKind(startedAt, DateTimeKind.Utc), zone),
             DateTimeKind.Unspecified);
 
+    /// <summary>The UTC bounds of a local date range, which is how the archive query stays indexable.</summary>
     private static (DateTime Start, DateTime End) GetHistoryDateRange(int year, int month, TimeZoneInfo zone)
     {
         if (year is < MinValidYear or > MaxValidYear || month is < MinValidMonth or > MaxValidMonth)
@@ -458,6 +472,7 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
         return (ToUtcBoundary(start, zone), ToUtcBoundary(end, zone));
     }
 
+    /// <summary>One local boundary as UTC, resolving an ambiguous local time to its first occurrence.</summary>
     private static DateTime ToUtcBoundary(DateTime local, TimeZoneInfo zone)
     {
         // A month can begin in a skipped or repeated hour in some account zones.

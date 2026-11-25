@@ -1,8 +1,10 @@
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
 
+/// <summary>Appends the diary's event rows, which is what other devices replay to catch up.</summary>
 internal static class PostgresNutritionDiaryEventWriter
 {
+    /// <summary>Appends the diary command events a write produced.</summary>
     public static async Task AppendAsync(
         PostgresDbContext context,
         Guid userId,

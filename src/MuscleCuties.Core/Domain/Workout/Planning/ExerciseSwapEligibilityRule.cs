@@ -20,10 +20,12 @@ public sealed record ExerciseSwapEligibilityInput(
 /// <summary>A reviewed close alternative and the review conditions that travel with it.</summary>
 public sealed record ExerciseSwapCandidate(StrengthExerciseCatalogEntry Entry, string Conditions);
 
+/// <summary>Whether a swap is allowed, with the refusal reason when it is not.</summary>
 public sealed record ExerciseSwapEligibilityResult(
     IReadOnlyList<ExerciseSwapCandidate> Candidates,
     IReadOnlyList<string> ReasonCodes)
 {
+    /// <summary>True when the exercise may be swapped in under the rules.</summary>
     public bool Allows(int exerciseId) =>
         Candidates.Any(candidate => candidate.Entry.Candidate.ExerciseId == exerciseId);
 }
@@ -45,6 +47,7 @@ public static class ExerciseSwapEligibilityRule
     private static readonly IReadOnlySet<MovementPattern> NoPatterns = new HashSet<MovementPattern>();
     private static readonly IReadOnlySet<ActivityDemandTag> NoDemandTags = new HashSet<ActivityDemandTag>();
 
+    /// <summary>Allows the swap only to an exercise that trains the same pattern with equipment she has.</summary>
     public static ExerciseSwapEligibilityResult Evaluate(ExerciseSwapEligibilityInput? input)
     {
         if (input?.Equipment is not { } equipment || !Enum.IsDefined(equipment))
@@ -102,8 +105,10 @@ public static class ExerciseSwapEligibilityRule
         ActivityTrainingHistory? history, DateOnly localDate, TrainingExperienceLevel? profileExperience) =>
         StrengthPlanPreviewRule.EligibilityExperience(strengthActivity, history, localDate, profileExperience);
 
+    /// <summary>Key that identifies an original and substitute pair.</summary>
     private static string PairKey(int originalExerciseId, int substituteExerciseId) =>
         $"{originalExerciseId}:{substituteExerciseId}";
 
+    /// <summary>A refusal carrying no substitutes and the reason why.</summary>
     private static ExerciseSwapEligibilityResult Empty(string reason) => new([], [reason]);
 }

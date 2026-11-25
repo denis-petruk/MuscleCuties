@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Account.Recovery.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Account.Recovery;
 
+/// <summary>The persistence the recovery flow needs, including its short-lived sessions.</summary>
 public interface IAccountRecoveryStore
 {
     Task<AccountRecoveryStartResult> StartAsync(string emailOrUsername, CancellationToken cancellationToken);

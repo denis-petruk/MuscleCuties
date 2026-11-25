@@ -15,6 +15,7 @@ public sealed class ViewModelSubscription<TViewModel>
     private readonly Action? _onDetached;
     private TViewModel? _current;
 
+    /// <summary>Stores the change handler and the attach and detach callbacks.</summary>
     public ViewModelSubscription(
         PropertyChangedEventHandler onPropertyChanged,
         Action? onAttached = null,
@@ -26,6 +27,7 @@ public sealed class ViewModelSubscription<TViewModel>
         _onDetached = onDetached;
     }
 
+    /// <summary>The view model currently subscribed to.</summary>
     public TViewModel? Current => _current;
 
     /// <summary>
@@ -48,6 +50,8 @@ public sealed class ViewModelSubscription<TViewModel>
         _onAttached?.Invoke();
     }
 
+    /// <summary>Releases the handlers attached to the view model, so a page that goes away is not kept alive by its own</summary>
+    /// subscription.</summary>
     public void Detach()
     {
         if (_current is { } viewModel)

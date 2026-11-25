@@ -1,10 +1,14 @@
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
+/// <summary>One editable recipe ingredient. A catalog-backed row rescales its macros when the grams change,</summary>
+/// because the nutrition editor would otherwise allow a portion that disagrees with the catalog.</summary>
 public partial class RecipeIngredientEditor : ObservableObject
 {
     private const float EmptyNutrientValue = 0f;
     private const float DefaultCatalogSnapshotGrams = 100f;
+    /// <summary>The "0" placeholder for an empty nutrient field, written in the current culture so the parse</summary>
+    /// round-trips.</summary>
     private static string EmptyNutrientText => EmptyNutrientValue.ToString(CultureInfo.CurrentCulture);
 
     private float? _baseSnapshotGrams;
@@ -25,8 +29,10 @@ public partial class RecipeIngredientEditor : ObservableObject
     [ObservableProperty] private string _carbs = EmptyNutrientText;
     [ObservableProperty] private string _fats = EmptyNutrientText;
 
+    /// <summary>True when the ingredient refers to a catalog food.</summary>
     public bool IsCatalogBacked => FoodItemId.HasValue && FoodItemId.Value != Guid.Empty;
 
+    /// <summary>Applies the catalog values to the ingredient.</summary>
     public void ApplyCatalogSnapshot(
         Guid foodItemId,
         string name,
@@ -69,19 +75,7 @@ public partial class RecipeIngredientEditor : ObservableObject
         }
     }
 
-    public void ConvertToManual()
-    {
-        _baseSnapshotGrams = null;
-        _baseSnapshotCalories = null;
-        _baseSnapshotProtein = null;
-        _baseSnapshotCarbs = null;
-        _baseSnapshotFats = null;
-        FoodItemId = null;
-        SourceKind = "Manual";
-        SourceLabel = null;
-        SourceVersion = null;
-    }
-
+    /// <summary>Recalculates the macros when the grams change.</summary>
     partial void OnGramsChanged(string value)
     {
         if (_isScalingFromSnapshot || !IsCatalogBacked || !_baseSnapshotGrams.HasValue || _baseSnapshotGrams.Value <= EmptyNutrientValue)

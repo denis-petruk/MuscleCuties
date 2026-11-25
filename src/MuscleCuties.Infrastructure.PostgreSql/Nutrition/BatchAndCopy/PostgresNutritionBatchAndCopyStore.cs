@@ -21,6 +21,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
     private const string CopyPreviewCommitCommandPrefix = "nutrition.diary.copy.commit:";
     private const string QuickAddCommandPrefix = "nutrition.diary.quickadd:";
 
+    /// <summary>Reads the day's entries for a copy preview.</summary>
     public async Task<DiaryCopySnapshotDto> ReadSnapshotAsync(
         Guid userId,
         DateOnly date,
@@ -37,6 +38,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Applies the previewed copy.</summary>
     public async Task<CopyNutritionDiaryResponse> CommitPreviewedCopyAsync(
         Guid userId,
         CommitPreviewedNutritionCopyRequest request,
@@ -127,6 +129,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             : execution.Response;
     }
 
+    /// <summary>Saves a batch of diary changes.</summary>
     public async Task<BatchSaveNutritionDiaryResponse> BatchSaveAsync(
         Guid userId,
         BatchSaveNutritionDiaryRequest request,
@@ -220,6 +223,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             : execution.Response;
     }
 
+    /// <summary>Copies entries between days or meals.</summary>
     public async Task<CopyNutritionDiaryResponse> CopyAsync(
         Guid userId,
         CopyNutritionDiaryRequest request,
@@ -265,6 +269,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             : execution.Response;
     }
 
+    /// <summary>Copies the selected entries and reports the result.</summary>
     private static async Task<CopyNutritionDiaryResponse> ExecuteCopyItemsCoreAsync(
         PostgresDbContext context,
         Guid userId,
@@ -386,6 +391,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             false);
     }
 
+    /// <summary>Builds the entry snapshot for one date.</summary>
     private static async Task<DiaryCopySnapshotDto> BuildDateSnapshotCoreAsync(
         PostgresDbContext context,
         Guid userId,
@@ -418,6 +424,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         return new DiaryCopySnapshotDto(userId, date, revisionHash, items);
     }
 
+    /// <summary>Adds a quick-add entry.</summary>
     public async Task<QuickAddNutritionDiaryResponse> QuickAddAsync(
         Guid userId,
         QuickAddNutritionDiaryRequest request,
@@ -515,6 +522,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             : execution.Response;
     }
 
+    /// <summary>Checks the source food belongs to the user and is current.</summary>
     private static async Task<int?> VerifySourceFoodOwnershipAndVersionAsync(
         PostgresDbContext context,
         Guid userId,
@@ -554,6 +562,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         throw new ArgumentException("Invalid source food key.", nameof(sourceFoodKey));
     }
 
+    /// <summary>Reads the catalog id out of a food reference, answering false for one that names her own food instead.</summary>
     private static bool TryParseCatalogId(string foodKey, out int catalogId)
     {
         const string prefix = "catalog:";
@@ -563,6 +572,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             catalogId > 0;
     }
 
+    /// <summary>The same for a reference to one of her own foods.</summary>
     private static bool TryParseCustomId(string foodKey, out Guid customFoodId)
     {
         const string prefix = "custom:";
@@ -571,6 +581,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
             Guid.TryParseExact(foodKey.AsSpan(prefix.Length), "N", out customFoodId);
     }
 
+    /// <summary>Returns the day's diary row, creating it when absent.</summary>
     private static async Task<DailyNutritionLogRecord> GetOrCreateDailyLogAsync(
         PostgresDbContext context,
         Guid userId,
@@ -597,6 +608,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         return log;
     }
 
+    /// <summary>A GUID derived from the source row and day, so copying a day twice produces the same ids instead of duplicates.</summary>
     private static Guid CreateDeterministicUuid(Guid userId, string commandKey, int index)
     {
         var bytes = SHA256.HashData(Encoding.UTF8.GetBytes($"{userId:N}:{commandKey}:{index}"));
@@ -605,6 +617,7 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         return new Guid(guidBytes);
     }
 
+    /// <summary>The stored identity of a snapshot entry.</summary>
     private static Guid ParseSnapshotIdentity(string identity) =>
         !string.IsNullOrWhiteSpace(identity) &&
         identity.StartsWith(SnapshotPrefix, StringComparison.Ordinal) &&

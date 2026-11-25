@@ -17,6 +17,8 @@ namespace MuscleCuties.UI.ViewModels.Cycle;
 
 [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global",
     Justification = "Bound in XAML / view model contract.")]
+/// <summary>The cycle page: where the user is today, the predicted next period and phases, and the month calendar whose</summary>
+/// days she edits her logs on.</summary>
 public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposable
 {
     private readonly Func<DateTime> _currentDateProvider;
@@ -72,6 +74,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     private CyclePhase? _suggestedPhase;
     [ObservableProperty] private bool _useDarkTheme;
 
+    /// <summary>Takes the cycle use cases and the navigation callbacks.</summary>
     public CycleViewModel(
         ICycleOverviewUseCase overview,
         ICyclePhaseProjectionUseCase phaseProjection,
@@ -111,23 +114,32 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         InitializeGuidanceCommands();
     }
 
+    /// <summary>The current phase by its display name.</summary>
     public string PhaseLabel => CurrentPhase.ToString();
+    /// <summary>The month on screen, written out in full.</summary>
     public string CurrentMonthLabel => DisplayFormat.MonthYearFull(DisplayedMonth);
 
+    /// <summary>Which day of the cycle today is, and whether the length behind it is her own or only the fallback</summary>
+    /// baseline — the difference matters to her, so the wording says so.</summary>
     public string CycleDaySummary => HasActiveCycle
         ? _cachedPrediction?.PredictionSource == "default"
             ? $"Day {CurrentDay} of an estimated {CycleLength}-day cycle"
             : $"Day {CurrentDay} of {CycleLength}"
         : "No period dates logged";
 
+    /// <summary>Days until the next period, or the prompt to log one when no cycle is running.</summary>
     public string PeriodCountdownText => HasActiveCycle
         ? DaysUntilPeriod == 0 ? "Period due today" : $"Period in {DaysUntilPeriod}d"
         : "Log period start";
 
+    /// <summary>The phase action either advances a running cycle or starts one, so its label follows that state.</summary>
     public string PhaseLogActionText => HasActiveCycle ? "Next phase" : "Log menstrual phase";
 
+    /// <summary>True when the prediction came from the cache.</summary>
     public bool IsPredictionCached => _cachedPrediction?.CachedAsOfDate is not null;
 
+    /// <summary>Where the prediction came from — cached, a default baseline because her own cycle length is unknown, or her</summary>
+    /// own length — and says plainly when there is no cycle yet.</summary>
     public string PredictionSummary => HasActiveCycle
         ? IsPredictionCached
             ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Format("Ui_Cycle_CachedEstimateFormat",
@@ -137,25 +149,45 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 : $"Prediction from {CycleLength}d cycle"
         : "No active cycle yet";
 
+    /// <summary>The icon for the current phase.</summary>
     public string CurrentPhaseIconSource => CyclePhaseAssets.GetIconSource(CurrentPhase);
+    /// <summary>The illustration for the current phase.</summary>
     public string CurrentPhaseVisualSource => CyclePhaseAssets.GetVisualSource(CurrentPhase);
+    /// <summary>Whether the phase has an animation, which decides whether the animated view is used instead of the still</summary>
+    /// one.</summary>
     public bool CurrentPhaseUsesAnimatedVisual => CyclePhaseAssets.UsesAnimatedVisual(CurrentPhase);
+    /// <summary>Today's date.</summary>
     public DateTime Today => CurrentDate;
+    /// <summary>True when a calendar edit hint is shown.</summary>
     public bool HasCalendarEditHint => !string.IsNullOrWhiteSpace(CalendarEditHintText);
+    /// <summary>True when a phase edit status is shown.</summary>
     public bool HasPhaseEditStatus => !string.IsNullOrWhiteSpace(PhaseEditStatusText);
+    /// <summary>True when a phase suggestion is available.</summary>
     public bool HasSuggestedPhase => _suggestedPhase is not null;
+    /// <summary>True when the cycle warning suggests a phase.</summary>
     public bool HasCycleWarningSuggestedPhase => _cycleWarningSuggestedPhase is not null;
+    /// <summary>The phases the user can pick.</summary>
     public IReadOnlyList<CyclePhase> PhaseOptions { get; } = Enum.GetValues<CyclePhase>();
 
+    /// <summary>The current cycle day.</summary>
     public int CycleDay => CurrentDay;
+    /// <summary>Advances to the next phase.</summary>
     public AsyncRelayCommand AdvancePhaseCommand { get; }
+    /// <summary>Closes the date phase modal.</summary>
     public RelayCommand CloseDatePhaseModalCommand { get; }
+    /// <summary>Selects a phase option.</summary>
     public RelayCommand<CyclePhaseOptionItem> SelectPhaseOptionCommand { get; }
+    /// <summary>Saves the phase for the chosen date.</summary>
     public AsyncRelayCommand SaveDatePhaseCommand { get; }
+    /// <summary>Applies the suggested phase.</summary>
     public RelayCommand UseSuggestedPhaseCommand { get; }
+    /// <summary>Opens the earlier phase records.</summary>
     public RelayCommand ReviewEarlierPhaseRecordsCommand { get; }
+    /// <summary>Closes the cycle warning.</summary>
     public RelayCommand CloseCycleWarningPopupCommand { get; }
+    /// <summary>Applies the phase the warning suggests.</summary>
     public AsyncRelayCommand UseCycleWarningSuggestedPhaseCommand { get; }
+    /// <summary>Opens the cycle settings.</summary>
     public AsyncRelayCommand OpenCycleSettingsCommand { get; }
 
     private const string PhaseOrderConflictMessage =
@@ -185,28 +217,36 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         }
     }
 
+    /// <summary>Today from the injected clock, so the page can be exercised on a fixed date.</summary>
     private DateTime CurrentDate => _currentDateProvider().Date;
 
+    /// <summary>Loads the cycle data.</summary>
     public AsyncRelayCommand LoadDataCommand { get; }
 
+    /// <summary>The first-load indicator, so a calendar refresh does not blank the page.</summary>
     public bool IsPageLoading => _loadGate.IsLoading(IsBusy);
 
+    /// <summary>Releases the view model's subscriptions.</summary>
     public void Dispose()
     {
         _loadGate.Dispose();
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>Marks the page stale so the next appearance reloads after a log was changed elsewhere.</summary>
     public void Invalidate()
     {
         _loadGate.MarkStale();
     }
 
+    /// <summary>Opens the cycle settings, when the page was given a way to.</summary>
     private async Task OpenCycleSettingsAsync()
     {
         if (_openCycleSettingsAsync is not null) await _openCycleSettingsAsync();
     }
 
+    /// <summary>Re-reads the phase colours only when the theme really changed, so a redundant call does not repaint the</summary>
+    /// whole calendar.</summary>
     public void RefreshThemeColors(bool useDarkTheme)
     {
         if (UseDarkTheme == useDarkTheme)
@@ -215,10 +255,14 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         UseDarkTheme = useDarkTheme;
     }
 
+    /// <summary>Reloads the cycle data.</summary>
     public AsyncRelayCommand RefreshCommand { get; }
+    /// <summary>The API's own message for the last failed load, with a generic one when there was none.</summary>
     public string LoadErrorMessage => _lastLoadFailure?.MessageText ?? UiTextCatalog.Get("Dashboard_Shared_CouldNotLoadData");
+    /// <summary>The retry is offered only for a failure a retry can fix; a refusal that will not change hides it.</summary>
     public System.Windows.Input.ICommand? RetryLoadCommand => _lastLoadFailure?.IsRetryable == false ? null : LoadDataCommand;
 
+    /// <summary>Pull-to-refresh, which skips a load already running instead of queueing a second one.</summary>
     private async Task RefreshAsync()
     {
         if (IsBusy)
@@ -239,6 +283,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         }
     }
 
+    /// <summary>The first load: the cycle, its prediction and the month on screen, with failures kept for the retry</summary>
+    /// surface.</summary>
     private async Task LoadDataCoreAsync()
     {
         IsBusy = true;
@@ -263,6 +309,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         }
     }
 
+    /// <summary>Reloads the cycle and rebuilds the calendar under a version, so a slow older answer cannot overwrite a newer</summary>
+    /// one.</summary>
     private async Task RefreshCycleDataAsync()
     {
         var loadVersion = Interlocked.Increment(ref _calendarLoadVersion);
@@ -343,6 +391,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         NotifyCycleSummaryProperties();
     }
 
+    /// <summary>The phase to show: the prediction's, unless it could not say, in which case the stored cycle is asked.</summary>
     private async Task<CyclePhase> ResolveCurrentPhaseAsync(CyclePhase predictionPhase, DateTime today)
     {
         if (predictionPhase != CyclePhase.Unknown)
@@ -364,6 +413,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         return predictionPhase;
     }
 
+    /// <summary>Tells the rest of the app that the cycle changed, tolerating a listener that throws so one broken subscriber</summary>
+    /// cannot fail the write that just succeeded.</summary>
     private void NotifyCycleMutated()
     {
         try
@@ -376,6 +427,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         }
     }
 
+    /// <summary>Moves the cycle to its next phase and reloads, refusing while another write is running.</summary>
     private async Task AdvancePhaseAsync()
     {
         if (IsBusy)
@@ -425,6 +477,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         }
     }
 
+    /// <summary>Opens the editor for a tapped day, falling back to the day already selected when the tap carried no item.</summary>
     private void OpenCalendarDay(CycleDayItem? day)
     {
         day ??= CalendarDays.FirstOrDefault(d => d.Date?.Date == SelectedDate.Date)
@@ -455,8 +508,10 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Closes the modal and restores the previous selection.</summary>
     private void CloseDatePhaseModal() => CloseDatePhaseModal(restoreSelection: true);
 
+    /// <summary>Closes the day editor and, when asked, puts the calendar's selection back where it was before the edit.</summary>
     private void CloseDatePhaseModal(bool restoreSelection)
     {
         IsDatePhaseModalVisible = false;
@@ -472,6 +527,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         _selectedDateBeforeCalendarEdit = null;
     }
 
+    /// <summary>Records the phase chosen for the day being edited.</summary>
     private void SelectPhaseOption(CyclePhaseOptionItem? option)
     {
         if (option is null)
@@ -488,6 +544,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Saves the phase chosen for the day; a refusal keeps the editor open with its reason instead of closing on a</summary>
+    /// write that did not happen.</summary>
     private async Task SaveDatePhaseAsync()
     {
         if (_selectedCalendarDay?.Date is not DateTime date)
@@ -509,6 +567,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         await SavePhaseForDateAsync(date, selectedPhase.Value, "Calendar phase edit");
     }
 
+    /// <summary>Accepts the phase the order warning suggested, instead of the one the user had picked.</summary>
     private void UseSuggestedPhase()
     {
         if (_suggestedPhase is null)
@@ -526,6 +585,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Shows the earlier records that made this change look out of order, so the user can judge the conflict rather</summary>
+    /// than take the warning on trust.</summary>
     private void ReviewEarlierPhaseRecords()
     {
         HasPhaseJumpWarning = false;
@@ -541,11 +602,13 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>An edit can be saved once a phase is chosen and no other write is running.</summary>
     private bool CanSaveDatePhase()
     {
         return _selectedCalendarDay?.Date is DateTime date && date.Date <= CurrentDate.Date;
     }
 
+    /// <summary>The single write for one day's phase and its note, shared by this page's two entry points.</summary>
     private async Task SavePhaseForDateAsync(DateTime date, CyclePhase phase, string note)
     {
         IsBusy = true;
@@ -584,16 +647,19 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         }
     }
 
+    /// <summary>The chosen phase option's value, or nothing while no option is selected.</summary>
     private CyclePhase? GetSelectedPhase()
     {
         return PhaseEditOptions.FirstOrDefault(option => option.IsSelected)?.Phase;
     }
 
+    /// <summary>Advancing needs a running cycle and no write in flight.</summary>
     private bool CanAdvancePhase()
     {
         return !IsBusy;
     }
 
+    /// <summary>The last logged phase as one line with when it was logged, or empty when nothing has been logged.</summary>
     private static string FormatLastPhaseLog(CyclePhaseEntry? log)
     {
         return log is null
@@ -603,6 +669,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 DisplayFormat.DayMonth(log.LoggedAt));
     }
 
+    /// <summary>The calendar days for the prediction and logs.</summary>
     private ObservableCollection<CycleDayItem> BuildCalendarDays(
         CyclePredictionSummary prediction,
         IReadOnlyCollection<CyclePhaseEntry> phaseLogs,
@@ -641,6 +708,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         return items;
     }
 
+    /// <summary>One calendar day item.</summary>
     private CycleDayItem CreateCalendarDayItem(
         DateTime date,
         CyclePredictionSummary prediction,
@@ -663,52 +731,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             _phaseProjection);
     }
 
-    private static Color ResolveDayStrokeColor(
-        CyclePhase phase,
-        bool isToday,
-        bool hasRecordedObservation,
-        bool isEstimated,
-        bool useDarkTheme)
-    {
-        return CycleCalendarItemBuilder.ResolveDayStrokeColor(phase, isToday, hasRecordedObservation, isEstimated,
-            useDarkTheme);
-    }
-
-    private static Color GetDayBackground(CyclePhase phase, bool isToday, bool useDarkTheme)
-    {
-        return CycleCalendarItemBuilder.GetDayBackground(phase, isToday, useDarkTheme);
-    }
-
-    private static Color GetPhaseBackgroundColor(CyclePhase phase, bool useDarkTheme)
-    {
-        return CycleCalendarItemBuilder.GetPhaseBackgroundColor(phase, useDarkTheme);
-    }
-
-    private static Color GetNeutralDayBackground(bool isToday, bool useDarkTheme)
-    {
-        return CycleCalendarItemBuilder.GetNeutralDayBackground(isToday, useDarkTheme);
-    }
-
-    private static Color GetNeutralDayTextColor(bool useDarkTheme)
-    {
-        return CycleCalendarItemBuilder.GetNeutralDayTextColor(useDarkTheme);
-    }
-
-    private static Color GetTodayDayTextColor(bool isNeutral, bool useDarkTheme)
-    {
-        return CycleCalendarItemBuilder.GetTodayDayTextColor(isNeutral, useDarkTheme);
-    }
-
-    private static Color GetPredictedDayStrokeColor(CyclePhase phase, bool useDarkTheme)
-    {
-        return CycleCalendarItemBuilder.GetPredictedDayStrokeColor(phase, useDarkTheme);
-    }
-
-    private static Color GetPhaseTextColor(CyclePhase phase, bool useDarkTheme)
-    {
-        return CycleCalendarItemBuilder.GetPhaseTextColor(phase, useDarkTheme);
-    }
-
+    /// <summary>The phase legend, rebuilt for the theme so its swatches match the calendar.</summary>
     private static ObservableCollection<PhaseItem> BuildPhaseItems(bool useDarkTheme)
     {
         return new ObservableCollection<PhaseItem>
@@ -721,8 +744,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 IllustrationSource = CyclePhaseAssets.GetVisualSource(CyclePhase.Menstrual),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Menstrual),
                 UsesAnimatedIllustration = CyclePhaseAssets.UsesAnimatedVisual(CyclePhase.Menstrual),
-                BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme),
-                TextColor = GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme)
+                BackgroundColor = CycleCalendarItemBuilder.GetPhaseBackgroundColor(CyclePhase.Menstrual, useDarkTheme),
+                TextColor = CycleCalendarItemBuilder.GetPhaseTextColor(CyclePhase.Menstrual, useDarkTheme)
             },
             new()
             {
@@ -732,8 +755,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 IllustrationSource = CyclePhaseAssets.GetVisualSource(CyclePhase.Follicular),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Follicular),
                 UsesAnimatedIllustration = CyclePhaseAssets.UsesAnimatedVisual(CyclePhase.Follicular),
-                BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme),
-                TextColor = GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme)
+                BackgroundColor = CycleCalendarItemBuilder.GetPhaseBackgroundColor(CyclePhase.Follicular, useDarkTheme),
+                TextColor = CycleCalendarItemBuilder.GetPhaseTextColor(CyclePhase.Follicular, useDarkTheme)
             },
             new()
             {
@@ -743,8 +766,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 IllustrationSource = CyclePhaseAssets.GetVisualSource(CyclePhase.Ovulatory),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Ovulatory),
                 UsesAnimatedIllustration = CyclePhaseAssets.UsesAnimatedVisual(CyclePhase.Ovulatory),
-                BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme),
-                TextColor = GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme)
+                BackgroundColor = CycleCalendarItemBuilder.GetPhaseBackgroundColor(CyclePhase.Ovulatory, useDarkTheme),
+                TextColor = CycleCalendarItemBuilder.GetPhaseTextColor(CyclePhase.Ovulatory, useDarkTheme)
             },
             new()
             {
@@ -754,12 +777,13 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 IllustrationSource = CyclePhaseAssets.GetVisualSource(CyclePhase.Luteal),
                 IconSource = CyclePhaseAssets.GetIconSource(CyclePhase.Luteal),
                 UsesAnimatedIllustration = CyclePhaseAssets.UsesAnimatedVisual(CyclePhase.Luteal),
-                BackgroundColor = GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme),
-                TextColor = GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme)
+                BackgroundColor = CycleCalendarItemBuilder.GetPhaseBackgroundColor(CyclePhase.Luteal, useDarkTheme),
+                TextColor = CycleCalendarItemBuilder.GetPhaseTextColor(CyclePhase.Luteal, useDarkTheme)
             }
         };
     }
 
+    /// <summary>The phase options with the given one selected.</summary>
     private static ObservableCollection<CyclePhaseOptionItem> BuildPhaseOptions(CyclePhase? selectedPhase,
         bool useDarkTheme)
     {
@@ -779,6 +803,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         }));
     }
 
+    /// <summary>Warns that the chosen phase does not follow the last logged one, and offers the phase that would.</summary>
     private void ShowPhaseOrderWarning(string message, CyclePhase suggestedPhase)
     {
         _suggestedPhase = suggestedPhase;
@@ -789,6 +814,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         HasPhaseJumpWarning = true;
     }
 
+    /// <summary>The same warning for a cycle that would start out of order, carrying the phase it suggests.</summary>
     private void ShowCycleOrderPopup(string message, CyclePhase suggestedPhase)
     {
         _cycleWarningSuggestedPhase = suggestedPhase;
@@ -800,6 +826,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             FormatCycleOrderWarningMessage(message));
     }
 
+    /// <summary>Shows a warning about the cycle without a suggestion to apply.</summary>
     private void ShowCycleWarningPopup(string title, string message)
     {
         CycleWarningTitle = title;
@@ -807,11 +834,13 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         IsCycleWarningPopupVisible = true;
     }
 
+    /// <summary>Dismisses the warning and forgets the phase it was suggesting, so a later popup cannot apply a stale one.</summary>
     private void CloseCycleWarningPopup()
     {
         IsCycleWarningPopupVisible = false;
     }
 
+    /// <summary>Applies the warning's suggested phase and closes it.</summary>
     private async Task UseCycleWarningSuggestedPhaseAsync()
     {
         if (_cycleWarningSuggestedPhase is null || IsBusy)
@@ -851,6 +880,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         }
     }
 
+    /// <summary>The order warning with the suggested phase named in it.</summary>
     private static string FormatCycleOrderWarningMessage(string message)
     {
         return message
@@ -858,17 +888,20 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             .Replace("Cycle phases must follow order.", "This phase would skip a step.");
     }
 
+    /// <summary>A phase by the name the app shows for it.</summary>
     private static string FormatPhaseName(CyclePhase phase)
     {
         return MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(
             $"Cycle_Phase_{phase}_Name");
     }
 
+    /// <summary>Rebuilds the themed visuals when the theme changes.</summary>
     partial void OnUseDarkThemeChanged(bool value)
     {
         ApplyThemeColors();
     }
 
+    /// <summary>Re-derives every theme-dependent colour at once after the theme changed, so no cell keeps the old palette.</summary>
     private void ApplyThemeColors()
     {
         Phases = BuildPhaseItems(UseDarkTheme);
@@ -895,14 +928,14 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
                 IsEstimated = day.IsEstimated,
                 IsPredictedFuture = day.IsPredictedFuture,
                 BackgroundColor = day.IsNeutral
-                    ? GetNeutralDayBackground(day.IsToday, UseDarkTheme)
-                    : GetDayBackground(day.Phase, day.IsToday, UseDarkTheme),
+                    ? CycleCalendarItemBuilder.GetNeutralDayBackground(day.IsToday, UseDarkTheme)
+                    : CycleCalendarItemBuilder.GetDayBackground(day.Phase, day.IsToday, UseDarkTheme),
                 TextColor = day.IsToday
-                    ? GetTodayDayTextColor(day.IsNeutral, UseDarkTheme)
+                    ? CycleCalendarItemBuilder.GetTodayDayTextColor(day.IsNeutral, UseDarkTheme)
                     : day.IsNeutral
-                        ? GetNeutralDayTextColor(UseDarkTheme)
-                        : GetPhaseTextColor(day.Phase, UseDarkTheme),
-                StrokeColor = ResolveDayStrokeColor(
+                        ? CycleCalendarItemBuilder.GetNeutralDayTextColor(UseDarkTheme)
+                        : CycleCalendarItemBuilder.GetPhaseTextColor(day.Phase, UseDarkTheme),
+                StrokeColor = CycleCalendarItemBuilder.ResolveDayStrokeColor(
                     day.Phase,
                     day.IsToday,
                     day.HasRecordedObservation,
@@ -919,6 +952,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         RefreshGuidanceContent(CurrentPhase, UseDarkTheme);
     }
 
+    /// <summary>Refreshes the phase visuals when the phase changes.</summary>
     partial void OnCurrentPhaseChanged(CyclePhase value)
     {
         OnPropertyChanged(nameof(PhaseLabel));
@@ -929,42 +963,50 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         RefreshGuidanceContent(value, UseDarkTheme);
     }
 
+    /// <summary>Refreshes the summary when the cycle day changes.</summary>
     partial void OnCurrentDayChanged(int value)
     {
         NotifyCycleSummaryProperties();
     }
 
+    /// <summary>Refreshes the summary when the cycle length changes.</summary>
     partial void OnCycleLengthChanged(int value)
     {
         NotifyCycleSummaryProperties();
     }
 
+    /// <summary>Refreshes the summary when the countdown changes.</summary>
     partial void OnDaysUntilPeriodChanged(int value)
     {
         OnPropertyChanged(nameof(PeriodCountdownText));
     }
 
+    /// <summary>Refreshes the summary when a cycle starts or ends.</summary>
     partial void OnHasActiveCycleChanged(bool value)
     {
         NotifyCycleSummaryProperties();
     }
 
+    /// <summary>Refreshes the command states when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         AdvancePhaseCommand.NotifyCanExecuteChanged();
         SaveDatePhaseCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Refreshes the hint flag when the text changes.</summary>
     partial void OnCalendarEditHintTextChanged(string value)
     {
         OnPropertyChanged(nameof(HasCalendarEditHint));
     }
 
+    /// <summary>Refreshes the status flag when the text changes.</summary>
     partial void OnPhaseEditStatusTextChanged(string value)
     {
         OnPropertyChanged(nameof(HasPhaseEditStatus));
     }
 
+    /// <summary>Raises the summary properties the page binds.</summary>
     private void NotifyCycleSummaryProperties()
     {
         OnPropertyChanged(nameof(CycleDaySummary));

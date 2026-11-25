@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
+/// <summary>An ingredient she is adding to a recipe, with its weight.</summary>
 public sealed record RecipeIngredientInputDto(
     Guid? FoodItemId,
     string Name,
@@ -15,6 +16,7 @@ public sealed record RecipeIngredientInputDto(
     string? SourceVersion = null
 );
 
+/// <summary>An ingredient of a stored recipe.</summary>
 public sealed record RecipeIngredientDto(
     Guid Id,
     Guid? FoodItemId,
@@ -32,6 +34,7 @@ public sealed record RecipeIngredientDto(
     string? SourceVersion = null
 );
 
+/// <summary>A recipe to create from its ingredients.</summary>
 public sealed record CreateRecipeRequest(
     string Name,
     string? Description,
@@ -40,6 +43,7 @@ public sealed record CreateRecipeRequest(
     IReadOnlyList<RecipeIngredientInputDto> Ingredients
 );
 
+/// <summary>A change to a stored recipe.</summary>
 public sealed record UpdateRecipeRequest(
     Guid RecipeId,
     int ExpectedVersion,
@@ -50,6 +54,7 @@ public sealed record UpdateRecipeRequest(
     IReadOnlyList<RecipeIngredientInputDto> Ingredients
 );
 
+/// <summary>A recipe as the list shows it.</summary>
 public sealed record RecipeSummaryDto(
     Guid Id,
     string Name,
@@ -65,6 +70,7 @@ public sealed record RecipeSummaryDto(
     int ConcurrencyVersion = 1
 );
 
+/// <summary>A recipe in full, with its ingredients and totals.</summary>
 public sealed record RecipeDetailsDto(
     Guid Id,
     string Name,
@@ -88,11 +94,13 @@ public sealed record RecipeDetailsDto(
     int ConcurrencyVersion = 1
 );
 
+/// <summary>A request to preview a portion of a recipe.</summary>
 public sealed record PreviewRecipePortionRequest(
     Guid RecipeId,
     float? ServingsCount,
     float? Grams);
 
+/// <summary>A request to convert a portion into grams.</summary>
 public sealed record CalculateRecipePortionRequest(
     Guid RecipeId,
     string RecipeName,
@@ -106,13 +114,17 @@ public sealed record CalculateRecipePortionRequest(
     float? RequestedServingsCount,
     float? RequestedGrams);
 
+/// <summary>Whether the conversion succeeded, and the grams when it did.</summary>
 public sealed record FoodMassConversionOutputDto(bool Succeeded, float? Grams);
+/// <summary>One way to measure a food, with its weight in grams.</summary>
 public sealed record FoodServingOptionOutputDto(string Label, string Unit, float Grams);
+/// <summary>The measures available for a food.</summary>
 public sealed record FoodPortionCatalogOutputDto(
     string GramUnit,
     IReadOnlyList<string> SupportedUnits,
     IReadOnlyList<FoodServingOptionOutputDto> StandardOptions);
 
+/// <summary>What a portion of a recipe would contribute.</summary>
 public sealed record RecipePortionPreviewDto(
     Guid RecipeId,
     string RecipeName,
@@ -132,6 +144,7 @@ public sealed record RecipePortionPreviewDto(
     float NetCarbs,
     float Fats);
 
+/// <summary>One food inside a meal template.</summary>
 public sealed record MealTemplateItemDto(
     Guid Id,
     string Name,
@@ -144,6 +157,7 @@ public sealed record MealTemplateItemDto(
     float Fats
 );
 
+/// <summary>A meal template with its foods.</summary>
 public sealed record MealTemplateDto(
     Guid Id,
     string Name,
@@ -157,12 +171,14 @@ public sealed record MealTemplateDto(
     DateTime CreatedAtUtc
 );
 
+/// <summary>A logged meal saved as a reusable template.</summary>
 public sealed record SaveMealAsTemplateRequest(
     string TemplateName,
     int MealType,
     IReadOnlyList<MealTemplateItemDto> Items
 );
 
+/// <summary>Her recipes and templates in one payload, which is what the screen needs.</summary>
 public sealed record RecipesAndTemplatesBundleDto(
     IReadOnlyList<RecipeSummaryDto> Recipes,
     IReadOnlyList<MealTemplateDto> Templates

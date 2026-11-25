@@ -3,8 +3,10 @@ using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
 
+/// <summary>Applies a correction, refusing one that would put phases out of order.</summary>
 public sealed class CyclePhaseEditUseCase(ICyclePhaseEditStore store) : ICyclePhaseEditUseCase
 {
+    /// <summary>Applies the correction, refusing one that would leave the phases out of order.</summary>
     public Task<CyclePhaseEditResult> SaveAsync(CyclePhaseEditRequest request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);

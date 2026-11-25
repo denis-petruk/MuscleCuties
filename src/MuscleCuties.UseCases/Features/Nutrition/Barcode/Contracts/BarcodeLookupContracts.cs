@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Barcode.Contracts;
 
+/// <summary>Which barcode format was scanned, so a misread can be told from an unknown product.</summary>
 public enum BarcodeSymbologyDto
 {
     Auto = 0,
@@ -12,11 +13,13 @@ public enum BarcodeSymbologyDto
     Code128 = 5
 }
 
+/// <summary>A scanned code, with the symbology the scanner reported.</summary>
 public sealed record BarcodeLookupRequest(
     string BarcodeText,
     BarcodeSymbologyDto Symbology = BarcodeSymbologyDto.Auto
 );
 
+/// <summary>The food a code resolves to, or why it did not resolve.</summary>
 public sealed record BarcodeLookupResult(
     bool IsFound,
     bool IsValidBarcode,

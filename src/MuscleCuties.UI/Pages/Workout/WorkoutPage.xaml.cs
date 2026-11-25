@@ -6,6 +6,9 @@ using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Pages.Workout;
 
+/// <summary>
+///     Train tab: this week's plan, its filters, and the injury log.
+/// </summary>
 public partial class WorkoutPage : ContentPage
 {
     private readonly WorkoutViewModel _viewModel;
@@ -13,6 +16,7 @@ public partial class WorkoutPage : ContentPage
     private readonly INavigationContextService _navigationContext;
     private Task? _injuryModalLoadTask;
 
+    /// <summary>Initializes the page with its view models and navigation context.</summary>
     public WorkoutPage(WorkoutViewModel vm, WorkoutSessionViewModel sessionViewModel,
         INavigationContextService navigationContext)
     {
@@ -27,6 +31,7 @@ public partial class WorkoutPage : ContentPage
         this.BindWithTiming(vm, started);
     }
 
+    /// <summary>Reads the day it was opened for and loads it.</summary>
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
@@ -40,6 +45,7 @@ public partial class WorkoutPage : ContentPage
         this.BeginDeferredLoad(() => FeaturedWorkoutLazy.LoadIfNeededAsync(true).AsTask());
     }
 
+    /// <summary>Starts the view model's work when the page appears.</summary>
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -48,6 +54,7 @@ public partial class WorkoutPage : ContentPage
         this.BeginPageLoad(() => _viewModel.LoadDataCommand.ExecuteAsync(null));
     }
 
+    /// <summary>Releases the page when navigated away from.</summary>
     protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
     {
         _viewModel.CloseInjuryModalCommand.Execute(null);
@@ -57,6 +64,7 @@ public partial class WorkoutPage : ContentPage
         base.OnNavigatedFrom(args);
     }
 
+    /// <summary>Opens the activity picker for a session, on the main thread because it is driven by a view-model event.</summary>
     private async Task OnSessionActivitiesRequested(int workoutDayId)
     {
         await MainThread.InvokeOnMainThreadAsync(() =>
@@ -74,14 +82,17 @@ public partial class WorkoutPage : ContentPage
         });
     }
 
+    /// <summary>Closes the picker and clears the view model's visibility flag together.</summary>
     private void CloseSessionActivities()
     {
         SessionActivitiesOverlay.IsOpen = false;
         _viewModel.IsSessionActivitiesVisible = false;
     }
 
+    /// <summary>Closes the session activity list.</summary>
     private void OnCloseSessionActivitiesClicked(object? sender, EventArgs e) => CloseSessionActivities();
 
+    /// <summary>Starts the session for the tapped activity, ignoring taps while busy or on a row without a tag.</summary>
     private async void OnSessionActivitySelected(object? sender, TappedEventArgs e)
     {
         if (sender is not BindableObject { BindingContext: WorkoutActivitySectionItem activity } ||
@@ -94,6 +105,7 @@ public partial class WorkoutPage : ContentPage
         await Shell.Current.GoToAsync(nameof(WorkoutSessionPage));
     }
 
+    /// <summary>Applies the workout changes the view model reports.</summary>
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName != nameof(WorkoutViewModel.IsInjuryModalVisible))
@@ -110,6 +122,7 @@ public partial class WorkoutPage : ContentPage
         }
     }
 
+    /// <summary>Loads and shows the injury modal only when needed, closing it again if it cannot be presented.</summary>
     private async Task UpdateInjuryModalAsync()
     {
         if (!_viewModel.IsInjuryModalVisible && !InjuryModalLazy.HasLazyViewLoaded)
@@ -136,6 +149,7 @@ public partial class WorkoutPage : ContentPage
         modal.IsOpen = _viewModel.IsInjuryModalVisible;
     }
 
+    /// <summary>Closes the open sheet before leaving the page.</summary>
     protected override bool OnBackButtonPressed()
     {
         if (_viewModel.IsRescheduleModalVisible)

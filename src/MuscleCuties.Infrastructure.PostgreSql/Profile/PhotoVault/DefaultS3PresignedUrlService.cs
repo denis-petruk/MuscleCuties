@@ -4,6 +4,7 @@ using MuscleCuties.UseCases.Features.Profile.PhotoVault;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
+/// <summary>Signs the URLs a client uploads and downloads with, so the bucket credential never reaches the app.</summary>
 public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
 {
     private const string Algorithm = "AWS4-HMAC-SHA256";
@@ -29,9 +30,11 @@ public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
     private readonly string _secretKey;
     private readonly string? _sessionToken;
 
+    /// <summary>True when the configuration carries the S3 settings the signer needs.</summary>
     public static bool IsConfigured(IConfiguration? configuration) =>
         S3StorageConfiguration.HasBucketName(configuration);
 
+    /// <summary>Takes the bucket settings the signatures are scoped to.</summary>
     public DefaultS3PresignedUrlService(IConfiguration configuration)
     {
         _bucket = S3StorageConfiguration.RequireBucketName(configuration);
@@ -41,12 +44,14 @@ public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
         _sessionToken = configuration["Storage:S3:SessionToken"] ?? configuration["AWS_SESSION_TOKEN"];
     }
 
+    /// <summary>A PUT URL for one key, valid for a short window.</summary>
     public string GeneratePresignedUploadUrl(string s3Key, string contentType, TimeSpan expiration)
     {
         PhotoObjectKeys.RequireUpload(s3Key);
         return BuildPresignedUrl(s3Key, "PUT", expiration, contentType);
     }
 
+    /// <summary>A POST policy for larger uploads, which lets the client send a form instead of a single request.</summary>
     public S3PresignedPost GeneratePresignedUploadPost(string s3Key, string contentType, string uploadIntentId, string sha256Checksum, TimeSpan expiration)
     {
         var photoId = PhotoObjectKeys.RequireUpload(s3Key);
@@ -97,11 +102,13 @@ public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
         return new S3PresignedPost($"https://{host}/", fields, expiresAtUtc);
     }
 
+    /// <summary>A GET URL for one key, so a photo can be shown without making the bucket public.</summary>
     public string GeneratePresignedDownloadUrl(string s3Key, TimeSpan expiration)
     {
         return BuildPresignedUrl(s3Key, "GET", expiration, null);
     }
 
+    /// <summary>A GET URL pinned to one object version, so a download cannot silently return a newer photo.</summary>
     public string GeneratePresignedDownloadUrl(string s3Key, string versionId, TimeSpan expiration)
     {
         if (string.IsNullOrWhiteSpace(versionId) || versionId == "null")
@@ -109,11 +116,13 @@ public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
         return BuildPresignedUrl(s3Key, "GET", expiration, null, versionId);
     }
 
+    /// <summary>A DELETE URL for one key, used only by the cleanup path.</summary>
     public string GeneratePresignedDeleteUrl(string s3Key, TimeSpan expiration)
     {
         return BuildPresignedUrl(s3Key, "DELETE", expiration, null);
     }
 
+    /// <summary>The SigV4 query signature for one request, which is the single place a presigned URL's parameters are assembled.</summary>
     private string BuildPresignedUrl(string s3Key, string httpMethod, TimeSpan expiration, string? contentType, string? versionId = null)
     {
         var now = DateTime.UtcNow;
@@ -159,6 +168,7 @@ public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
         return $"https://{host}/{cleanKey}?{canonicalQueryString}&X-Amz-Signature={signature}";
     }
 
+    /// <summary>Reads a required credential, failing rather than signing with an empty value.</summary>
     private static string RequireCredential(IConfiguration configuration, string key, string awsEnvironmentKey)
     {
         var value = configuration[key] ?? configuration[awsEnvironmentKey];
@@ -167,6 +177,7 @@ public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
         return value;
     }
 
+    /// <summary>The base64 policy document a POST upload must carry, including the conditions the bucket enforces.</summary>
     private string BuildPostPolicy(DateTime expiresAtUtc, IReadOnlyDictionary<string, string> fields)
     {
         using var stream = new MemoryStream();
@@ -195,9 +206,11 @@ public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
         return Encoding.UTF8.GetString(stream.ToArray());
     }
 
+    /// <summary>Trims a header value so it can be signed.</summary>
     private static string NormalizeHeaderValue(string value) =>
         string.Join(' ', value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
 
+    /// <summary>Whether a value looks like a hex SHA-256, which is how a malformed checksum is refused before signing.</summary>
     private static bool IsSha256Hex(string? value)
     {
         if (value is null || value.Length != Sha256HexCharacterCount)
@@ -212,6 +225,7 @@ public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
         }
     }
 
+    /// <summary>The derived signing key for a date and region.</summary>
     private static byte[] GetSignatureKey(string key, string dateStamp, string regionName, string serviceName)
     {
         var kSecret = Encoding.UTF8.GetBytes("AWS4" + key);
@@ -221,6 +235,7 @@ public sealed class DefaultS3PresignedUrlService : IS3PresignedUrlService
         return HMACSHA256.HashData(kService, Encoding.UTF8.GetBytes(RequestType));
     }
 
+    /// <summary>Lower-case hex, which is the form the signature and checksum fields use.</summary>
     private static string ToHex(byte[] data)
     {
         var builder = new StringBuilder(data.Length * 2);

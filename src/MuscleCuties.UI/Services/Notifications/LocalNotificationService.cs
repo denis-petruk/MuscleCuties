@@ -13,8 +13,12 @@ using UserNotifications;
 
 namespace MuscleCuties.UI.Services.Notifications;
 
+/// <summary>Platform half of local notifications: Android uses an alarm with a broadcast receiver, Apple uses</summary>
+/// a calendar trigger. Both key alerts by the same numeric id so a cancel finds them.</summary>
 public sealed class LocalNotificationService : ILocalNotificationService
 {
+    /// <summary>Delivers an alert immediately; Apple is given a one-second trigger because it has no immediate</summary>
+    /// delivery path.</summary>
     public Task<bool> ShowAsync(int notificationId, string title, string body)
     {
 #if ANDROID
@@ -26,6 +30,7 @@ public sealed class LocalNotificationService : ILocalNotificationService
 #endif
     }
 
+    /// <summary>Schedules an alert. A time in the past is delivered immediately rather than dropped.</summary>
     public Task<bool> ScheduleAsync(int notificationId, string title, string body, DateTime scheduledAt)
     {
 #if ANDROID
@@ -37,6 +42,7 @@ public sealed class LocalNotificationService : ILocalNotificationService
 #endif
     }
 
+    /// <summary>Removes a pending and an already-delivered alert with this id. Safe to call when none exists.</summary>
     public Task CancelAsync(int notificationId)
     {
 #if ANDROID
@@ -66,6 +72,7 @@ public sealed class LocalNotificationService : ILocalNotificationService
 #pragma warning disable CA1416
     private const int NotificationPermissionRequestCode = 4601;
 
+    /// <summary>Posts an alert through the receiver, after making sure the notification permission is granted.</summary>
     private static Task<bool> ShowAndroidAsync(int notificationId, string title, string body)
     {
         if (!EnsureAndroidNotificationPermission())
@@ -75,6 +82,7 @@ public sealed class LocalNotificationService : ILocalNotificationService
         return Task.FromResult(true);
     }
 
+    /// <summary>Schedules an alarm that fires the receiver at the given time, carrying the id, title and body.</summary>
     private static Task<bool> ScheduleAndroidAsync(int notificationId, string title, string body, DateTime scheduledAt)
     {
         if (scheduledAt <= DateTime.Now.AddSeconds(1))
@@ -104,6 +112,8 @@ public sealed class LocalNotificationService : ILocalNotificationService
         return Task.FromResult(alarmManager is not null);
     }
 
+    /// <summary>Requests the post-notifications permission on Android 13 and later. Returns false on the call</summary>
+    /// that raises the prompt, because the answer is not known yet.</summary>
     private static bool EnsureAndroidNotificationPermission()
     {
         if (Build.VERSION.SdkInt < BuildVersionCodes.Tiramisu)
@@ -120,6 +130,7 @@ public sealed class LocalNotificationService : ILocalNotificationService
         return false;
     }
 
+    /// <summary>Flags for creating or updating an alarm intent, adding immutability from Android 6.</summary>
     private static PendingIntentFlags BuildPendingIntentFlags()
     {
         var flags = PendingIntentFlags.UpdateCurrent;
@@ -129,6 +140,7 @@ public sealed class LocalNotificationService : ILocalNotificationService
         return flags;
     }
 
+    /// <summary>Flags for looking up an existing alarm intent without creating one.</summary>
     private static PendingIntentFlags BuildNotificationLookupFlags()
     {
         var flags = PendingIntentFlags.NoCreate;
@@ -138,6 +150,7 @@ public sealed class LocalNotificationService : ILocalNotificationService
     }
 #pragma warning restore CA1416
 #elif IOS || MACCATALYST
+    /// <summary>Schedules one notification through iOS.</summary>
     private static async Task<bool> ScheduleAppleAsync(int notificationId, string title, string body,
         DateTime scheduledAt)
     {
@@ -158,6 +171,7 @@ public sealed class LocalNotificationService : ILocalNotificationService
         return await AddAppleNotificationRequestAsync(center, request);
     }
 
+    /// <summary>Asks for alert and sound permission and reports whether it was granted.</summary>
     private static Task<bool> RequestAppleAuthorizationAsync(UNUserNotificationCenter center)
     {
         var completion = new TaskCompletionSource<bool>();
@@ -167,6 +181,7 @@ public sealed class LocalNotificationService : ILocalNotificationService
         return completion.Task;
     }
 
+    /// <summary>One-second trigger for an immediate alert, calendar trigger for a future one.</summary>
     private static UNNotificationTrigger CreateAppleTrigger(DateTime scheduledAt)
     {
         if (scheduledAt <= DateTime.Now.AddSeconds(1))
@@ -186,6 +201,7 @@ public sealed class LocalNotificationService : ILocalNotificationService
         return UNCalendarNotificationTrigger.CreateTrigger(components, false);
     }
 
+    /// <summary>Adds the request to the notification center.</summary>
     private static Task<bool> AddAppleNotificationRequestAsync(
         UNUserNotificationCenter center,
         UNNotificationRequest request)

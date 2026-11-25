@@ -11,6 +11,7 @@ namespace MuscleCuties.Infrastructure.ApiClient;
 /// </summary>
 public sealed class PlanningRequestFailedException : HttpRequestException
 {
+    /// <summary>Reports a planning request the backend refused.</summary>
     public PlanningRequestFailedException(
         string operation,
         BackendApiStatus status,
@@ -28,6 +29,7 @@ public sealed class PlanningRequestFailedException : HttpRequestException
     /// <summary>The planning step that failed, e.g. "create strength plan proposal".</summary>
     public string Operation { get; }
 
+    /// <summary>Status the backend returned.</summary>
     public BackendApiStatus Status { get; }
 
     /// <summary>The backend's stable error category, when it sent one.</summary>

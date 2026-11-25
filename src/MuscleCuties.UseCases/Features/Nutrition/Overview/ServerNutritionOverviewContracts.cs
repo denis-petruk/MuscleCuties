@@ -3,6 +3,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Overview;
 
+/// <summary>The server-side overview read.</summary>
 public interface IServerNutritionOverviewStore
 {
     Task<NutritionOverviewResponse> GetOverviewAsync(
@@ -56,8 +57,10 @@ public interface IServerNutritionOverviewStore
         CancellationToken cancellationToken = default);
 }
 
+/// <summary>Assembles the overview on the server from one consistent read.</summary>
 public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore store)
 {
+    /// <summary>Loads the server's nutrition overview for a user and day.</summary>
     public async Task<NutritionOverviewResponse> GetOverviewAsync(
         Guid userId,
         DateOnly date,
@@ -74,6 +77,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
         };
     }
 
+    /// <summary>The plan's macro targets for a user.</summary>
     public async Task<NutritionTargetMacrosDto> GetPlanTargetsAsync(
         Guid userId,
         string breakfastPreference = "Savoury",
@@ -86,6 +90,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
         return NutritionTargetContractMapper.WithMealDistribution(targets, breakfastPreference);
     }
 
+    /// <summary>The day's meal plan for a user.</summary>
     public Task<IReadOnlyList<DayMealPlanItemDto>> GetDayMealPlanAsync(
         Guid userId,
         DateOnly date,
@@ -97,6 +102,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
         return store.GetDayMealPlanAsync(userId, date, breakfastPreference, cancellationToken);
     }
 
+    /// <summary>Regenerates one planned meal for a user.</summary>
     public Task<DayMealPlanItemDto> RefreshDayMealAsync(
         Guid userId,
         DayMealPlanItemDto item,
@@ -108,6 +114,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
         return store.RefreshDayMealAsync(userId, item, breakfastPreference, cancellationToken);
     }
 
+    /// <summary>The meal suggestions for a user's day.</summary>
     public Task<IReadOnlyList<MealSuggestionDto>> GetMealSuggestionsAsync(
         Guid userId,
         string mealType,
@@ -120,6 +127,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
         return store.GetMealSuggestionsAsync(userId, mealType, breakfastPreference, excludeConceptNames, cancellationToken);
     }
 
+    /// <summary>Logs a meal for a user.</summary>
     public Task LogMealAsync(
         Guid userId,
         LogMealRequest request,
@@ -134,6 +142,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
         return store.LogMealAsync(userId, request, cancellationToken);
     }
 
+    /// <summary>Updates a user's logged meal.</summary>
     public Task UpdateMealAsync(
         Guid userId,
         UpdateMealRequest request,
@@ -149,6 +158,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
         return store.UpdateMealAsync(userId, request, cancellationToken);
     }
 
+    /// <summary>The ingredient inputs of a user's planned meal.</summary>
     public Task<IReadOnlyList<MealIngredientInputDto>> GetMealIngredientsAsync(
         Guid userId,
         int mealId,
@@ -159,6 +169,7 @@ public sealed class ServerNutritionOverviewUseCase(IServerNutritionOverviewStore
         return store.GetMealIngredientsAsync(userId, mealId, cancellationToken);
     }
 
+    /// <summary>Creates a custom food for a user.</summary>
     public Task<CustomFoodResultDto> CreateCustomFoodAsync(
         Guid userId,
         CreateCustomFoodRequest request,

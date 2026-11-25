@@ -87,6 +87,7 @@ public static class InjuryWorseningMovementRule
         return blocked;
     }
 
+    /// <summary>A set built from the given movement patterns.</summary>
     private static HashSet<MovementPattern> Set(params MovementPattern[] patterns) =>
         patterns.ToHashSet();
 }

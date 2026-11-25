@@ -3,9 +3,11 @@ using MuscleCuties.UseCases.Features.Account.SignIn;
 
 namespace MuscleCuties.Infrastructure.Account.SignIn;
 
+/// <summary>The account sign-in through the backend, which is the only place a password is exchanged for a session.</summary>
 public sealed class CloudAccountSignInStore(
     MobileJourneyCloudGateway cloudGateway) : IAccountSignInStore
 {
+    /// <summary>Signs in against the backend with email and password.</summary>
     public async Task<SignedInAccount?> SignInWithPasswordAsync(
         string emailOrUsername,
         string password,
@@ -25,6 +27,7 @@ public sealed class CloudAccountSignInStore(
         throw new HttpRequestException($"Password sign-in failed with status {result.Status}.");
     }
 
+    /// <summary>Signs in with an Apple identity token against the backend.</summary>
     public async Task<PlatformAccountOutcome> SignInWithPlatformAsync(
         string provider,
         string userIdentifier,

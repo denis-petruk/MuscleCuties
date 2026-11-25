@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>Converts a portion into grams, answering failure instead of assuming a density.</summary>
 public static class FoodPortionMassRule
 {
     public const float OneGram = 1f;
@@ -12,8 +13,10 @@ public static class FoodPortionMassRule
     public const string OunceUnit = "oz";
     public const string PoundUnit = "lb";
 
+    /// <summary>True when the gram amount is a finite, positive weight.</summary>
     public static bool IsValidGrams(float grams) => float.IsFinite(grams) && grams > NoGrams;
 
+    /// <summary>Converts a measure to grams, answering false for a unit it cannot convert rather than assuming one.</summary>
     public static bool TryConvertMassToGrams(float amount, string? unit, out float grams)
     {
         grams = NoGrams;

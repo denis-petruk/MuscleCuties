@@ -10,32 +10,42 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
     private const float MinimumWeightGrams = 0.01f;
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Stores a new recipe.</summary>
     public Task<RecipeDetailsDto> SaveRecipeAsync(RecipeDetailsDto recipe, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("A tenant user ID is required when saving recipes to PostgreSQL.");
 
+    /// <summary>The user's recipes.</summary>
     public Task<IReadOnlyList<RecipeSummaryDto>> GetRecipesAsync(CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("A tenant user ID is required when reading recipes from PostgreSQL.");
 
+    /// <summary>One recipe with its ingredients.</summary>
     public Task<RecipeDetailsDto?> GetRecipeByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("A tenant user ID is required when reading recipes from PostgreSQL.");
 
+    /// <summary>Deletes a recipe.</summary>
     public Task DeleteRecipeAsync(Guid id, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("A tenant user ID is required when deleting recipes from PostgreSQL.");
 
+    /// <summary>Stores a new meal template.</summary>
     public Task<MealTemplateDto> SaveMealTemplateAsync(MealTemplateDto template, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("A tenant user ID is required when saving meal templates to PostgreSQL.");
 
+    /// <summary>Her meal templates as summaries, newest first.</summary>
+    /// <summary>Her meal templates as summaries, newest first, optionally narrowed to one meal type.</summary>
     public Task<IReadOnlyList<MealTemplateDto>> GetMealTemplatesAsync(int? mealType = null, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("A tenant user ID is required when reading meal templates from PostgreSQL.");
 
+    /// <summary>One meal template by id.</summary>
     public Task<MealTemplateDto?> GetMealTemplateByIdAsync(Guid id, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("A tenant user ID is required when reading meal templates from PostgreSQL.");
 
+    /// <summary>Deletes a meal template.</summary>
     public Task DeleteMealTemplateAsync(Guid id, CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("A tenant user ID is required when deleting meal templates from PostgreSQL.");
 
     // Tenant-authoritative PostgreSQL operations:
 
+    /// <summary>Stores a recipe as a validated JSON snapshot, so a recipe can gain fields without a migration.</summary>
     public async Task<RecipeDetailsDto> SaveRecipeAsync(Guid userId, RecipeDetailsDto recipe, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(recipe);
@@ -75,6 +85,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Updates a recipe and its ingredient rows.</summary>
     public async Task<RecipeDetailsDto> UpdateRecipeAsync(
         Guid userId,
         RecipeDetailsDto recipe,
@@ -109,6 +120,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Her recipes as summaries, newest first, without reading the whole snapshot of each.</summary>
     public async Task<IReadOnlyList<RecipeSummaryDto>> GetRecipesAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         return await WithTenantAsync(userId, cancellationToken, async () =>
@@ -132,6 +144,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
         }).ConfigureAwait(false);
     }
 
+    /// <summary>One recipe in full, or nothing when it is not hers.</summary>
     public async Task<RecipeDetailsDto?> GetRecipeByIdAsync(Guid userId, Guid id, CancellationToken cancellationToken = default)
     {
         return await WithTenantAsync(userId, cancellationToken, async () =>
@@ -147,6 +160,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Deletes one of her recipes; the account predicate is part of the delete, so another account's row cannot match.</summary>
     public async Task DeleteRecipeAsync(Guid userId, Guid id, CancellationToken cancellationToken = default)
     {
         await WithTenantAsync(userId, cancellationToken, async () =>
@@ -165,6 +179,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Stores a meal template as a validated JSON snapshot.</summary>
     public async Task<MealTemplateDto> SaveMealTemplateAsync(Guid userId, MealTemplateDto template, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(template);
@@ -203,6 +218,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Her meal templates as summaries, newest first, optionally narrowed to one meal type.</summary>
     public async Task<IReadOnlyList<MealTemplateDto>> GetMealTemplatesAsync(Guid userId, int? mealType = null, CancellationToken cancellationToken = default)
     {
         return await WithTenantAsync(userId, cancellationToken, async () =>
@@ -231,6 +247,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
         }).ConfigureAwait(false);
     }
 
+    /// <summary>One template in full, or nothing when it is not hers.</summary>
     public async Task<MealTemplateDto?> GetMealTemplateByIdAsync(Guid userId, Guid id, CancellationToken cancellationToken = default)
     {
         return await WithTenantAsync(userId, cancellationToken, async () =>
@@ -246,6 +263,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Deletes one of her templates, scoped to her account in the predicate itself.</summary>
     public async Task DeleteMealTemplateAsync(Guid userId, Guid id, CancellationToken cancellationToken = default)
     {
         await WithTenantAsync(userId, cancellationToken, async () =>
@@ -282,6 +300,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Runs the action with the tenant setting applied.</summary>
     private async Task<T> WithTenantAsync<T>(Guid userId, CancellationToken ct, Func<Task<T>> action) =>
         await db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
@@ -293,6 +312,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
             return result;
         }).ConfigureAwait(false);
 
+    /// <summary>Refuses a recipe with no name or no lines before it is stored, so a stored snapshot is always renderable.</summary>
     private static void ValidateRecipe(RecipeDetailsDto recipe)
     {
         if (string.IsNullOrWhiteSpace(recipe.Name))
@@ -312,6 +332,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
             throw new ArgumentOutOfRangeException(nameof(recipe), "Recipe macro totals must be non-negative and finite.");
     }
 
+    /// <summary>The same check for a meal template.</summary>
     private static void ValidateTemplate(MealTemplateDto template)
     {
         if (string.IsNullOrWhiteSpace(template.Name))
@@ -324,6 +345,7 @@ public sealed class PostgresRecipeStore(PostgresDbContext db) : IRecipeStore
             throw new ArgumentOutOfRangeException(nameof(template), "Template macro totals must be non-negative and finite.");
     }
 
+    /// <summary>The summary shape of a recipe.</summary>
     private static RecipeSummaryDto ToSummary(RecipeDetailsDto r) => new(
         Id: r.Id,
         Name: r.Name,

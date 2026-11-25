@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>A recipe being edited, which enforces its own field limits before it can be saved.</summary>
 public sealed class RecipeDraft
 {
     public const int MaxNameLength = 160;
@@ -9,6 +10,7 @@ public sealed class RecipeDraft
     public const float MinIngredientGrams = 0f;
     public const float MinNutrientValue = 0f;
 
+    /// <summary>Holds a recipe together with the nutrition its ingredients add up to.</summary>
     private RecipeDraft(string name, string? description, IReadOnlyList<RecipeIngredient> ingredients,
         RecipeNutrientSummary nutrition, float? cookedWeightGrams)
     {
@@ -19,18 +21,25 @@ public sealed class RecipeDraft
         CookedWeightGrams = cookedWeightGrams;
     }
 
+    /// <summary>Name the user gave the recipe.</summary>
     public string Name { get; }
+    /// <summary>Optional note stored with the recipe.</summary>
     public string? Description { get; }
+    /// <summary>Ingredients with the grams the user entered.</summary>
     public IReadOnlyList<RecipeIngredient> Ingredients { get; }
+    /// <summary>Nutrition the ingredients add up to.</summary>
     public RecipeNutrientSummary Nutrition { get; }
+    /// <summary>Weight after cooking, when the user recorded one.</summary>
     public float? CookedWeightGrams { get; }
 
+    /// <summary>Shows one portion for the requested servings or weight.</summary>
     public RecipePortion PreviewPortion(float? requestedServingsCount, float? requestedGrams) =>
         RecipeBatchCalculationRule.CalculatePortion(new RecipeBatchTotals(
             Nutrition.ServingsCount, Nutrition.TotalRawWeightGrams, CookedWeightGrams,
             Nutrition.TotalCalories, Nutrition.TotalProtein, Nutrition.TotalCarbs,
             Nutrition.TotalNetCarbs, Nutrition.TotalFats), requestedServingsCount, requestedGrams);
 
+    /// <summary>Validates the recipe inputs and builds the draft with its nutrition.</summary>
     public static RecipeDraft Create(string name, string? description,
         IReadOnlyList<RecipeIngredient>? ingredients, float servingsCount, float? cookedWeightGrams)
     {
@@ -68,5 +77,6 @@ public sealed class RecipeDraft
             cookedWeightGrams);
     }
 
+    /// <summary>True when the nutrient value is finite and not negative.</summary>
     private static bool ValidNutrient(float value) => float.IsFinite(value) && value >= MinNutrientValue;
 }

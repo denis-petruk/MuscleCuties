@@ -27,6 +27,7 @@ public partial class HistoryIngredientEditor : ObservableObject
     private readonly float _carbsPer100Grams;
     private readonly float _fatsPer100Grams;
 
+    /// <summary>Row without macro totals, for callers that only need the quantity edit.</summary>
     public HistoryIngredientEditor(FoodHistoryIngredient ingredient)
         : this(ingredient, 0f, 0f, 0f, 0f)
     {
@@ -54,10 +55,13 @@ public partial class HistoryIngredientEditor : ObservableObject
         _fatsPer100Grams = fatsPer100Grams;
     }
 
+    /// <summary>The catalog food the ingredient refers to.</summary>
     public int FoodItemId { get; }
 
+    /// <summary>The ingredient's display name.</summary>
     public string Name { get; }
 
+    /// <summary>True when per-100 g macros were supplied, which decides whether the row can show totals.</summary>
     public bool HasMacros => _caloriesPer100Grams > 0f || _proteinPer100Grams > 0f ||
                              _carbsPer100Grams > 0f || _fatsPer100Grams > 0f;
 
@@ -65,6 +69,7 @@ public partial class HistoryIngredientEditor : ObservableObject
     public NutritionMacros MacrosForDraft => NutritionPresentationMapper.FromPer100Grams(
         _caloriesPer100Grams, _proteinPer100Grams, _carbsPer100Grams, _fatsPer100Grams, Grams);
 
+    /// <summary>Quantity and macros for the drafted portion, so the total follows the edit as it is typed.</summary>
     public string DetailText => $"{DisplayFormat.Grams(Grams)} · {MacrosForDraft.NutritionText}";
 
     /// <summary>
@@ -73,16 +78,19 @@ public partial class HistoryIngredientEditor : ObservableObject
     /// </summary>
     public float Grams => TryGetGrams(out var grams) ? grams : _originalGrams;
 
+    /// <summary>True while the drafted quantity cannot be parsed, which shows the error instead of saving.</summary>
     public bool HasAmountError => !TryGetGrams(out _);
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Performance", "CA1822:Mark members as static",
         Justification = "Target of compiled XAML bindings; must stay an instance member.")]
+    /// <summary>Localized message for an unparsable quantity.</summary>
     public string AmountErrorText => UiTextCatalog.Get("Nutrition_FoodLog_AmountError");
 
     /// <summary>True while the draft still equals the value this row was opened with.</summary>
     public bool IsUnchanged => string.Equals(GramsText, _originalText, StringComparison.Ordinal);
 
+    /// <summary>Converts the entered amount to grams, when it can.</summary>
     public bool TryGetGrams(out float grams) =>
         IngredientPortionDraft.TryParse(GramsText, _originalText, _originalGrams,
             CultureInfo.CurrentCulture, out grams);

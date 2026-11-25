@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Services.ExerciseMedia;
 
+/// <summary>Where downloaded exercise media is kept.</summary>
 public interface IExerciseMediaStore
 {
     string RootDirectory { get; }

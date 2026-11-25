@@ -4,6 +4,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 /// <summary>Adjusts only newly materialized occurrences under the caller's account transaction.</summary>
 internal static class PostgresCanonicalOccurrenceAdjustment
 {
+    /// <summary>Applies the deload and optional-session adjustments to the accepted plan.</summary>
     internal static async Task ApplyAsync(PostgresDbContext context, Guid userId, Guid? previousPlanId,
         DateOnly today, DateOnly firstDate, TimeZoneInfo zone,
         IReadOnlyList<StrengthPlanPreviewSessionV020> previewSessions,

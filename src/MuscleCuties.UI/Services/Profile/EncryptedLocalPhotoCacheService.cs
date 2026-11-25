@@ -5,6 +5,8 @@ using MuscleCuties.Infrastructure.Caching;
 
 namespace MuscleCuties.UI.Services.Profile;
 
+/// <summary>Encrypted on-device photo cache. Files are bound to an account and a photo id, so a cached file</summary>
+/// cannot be read under another account even when the path is known.</summary>
 public sealed class EncryptedLocalPhotoCacheService(
     string appDataDirectory,
     IProtectedPhotoCacheKeyStore keyStore,
@@ -20,6 +22,8 @@ public sealed class EncryptedLocalPhotoCacheService(
     private readonly SemaphoreSlim _gate = new(1, 1);
     private Guid? _activeAccountId;
 
+    /// <summary>Points the cache at an account. Switching accounts drops the previous account's key so its files</summary>
+    /// stay unreadable.</summary>
     public async Task ActivateAccountAsync(Guid accountId, CancellationToken cancellationToken = default)
     {
         if (accountId == Guid.Empty) throw new ArgumentException("Account identifier is required.", nameof(accountId));
@@ -37,6 +41,7 @@ public sealed class EncryptedLocalPhotoCacheService(
         }
     }
 
+    /// <summary>Stores the photo bytes encrypted.</summary>
     public async Task StoreAsync(Guid accountId, Guid photoId, Stream source,
         CancellationToken cancellationToken = default)
     {
@@ -91,6 +96,7 @@ public sealed class EncryptedLocalPhotoCacheService(
         }
     }
 
+    /// <summary>Opens the decrypted photo, when it is cached.</summary>
     public async Task<Stream?> OpenReadAsync(Guid accountId, Guid photoId,
         CancellationToken cancellationToken = default)
     {
@@ -129,9 +135,12 @@ public sealed class EncryptedLocalPhotoCacheService(
         }
     }
 
+    /// <summary>Removes the cached photos.</summary>
     public Task ClearAsync(CancellationToken cancellationToken = default) =>
         AccountScopedCacheClear.RunAsync(_gate, () => _activeAccountId = null, ClearCoreAsync, cancellationToken);
 
+    /// <summary>The cache key from secure storage, created on first use; a key of the wrong length is treated as</summary>
+    /// corruption and reported rather than used.</summary>
     private async Task<byte[]> GetOrCreateKeyAsync(CancellationToken cancellationToken)
     {
         var key = await keyStore.ReadAsync(cancellationToken).ConfigureAwait(false);
@@ -142,6 +151,8 @@ public sealed class EncryptedLocalPhotoCacheService(
         return key;
     }
 
+    /// <summary>Deletes the cached files and the key together, reporting the first failure only after attempting</summary>
+    /// both, so one failure cannot leave a key without files or files without a key.</summary>
     private async Task ClearCoreAsync(CancellationToken cancellationToken)
     {
         var directory = Path.Combine(appDataDirectory, CacheDirectoryName);
@@ -172,23 +183,28 @@ public sealed class EncryptedLocalPhotoCacheService(
         if (keyError is not null) throw keyError;
     }
 
+    /// <summary>Rejects a read or write for an account other than the active one.</summary>
     private void EnsureActiveAccount(Guid accountId)
     {
         if (_activeAccountId != accountId)
             throw new UnauthorizedAccessException("The photo cache account changed.");
     }
 
+    /// <summary>The file path of a cached photo.</summary>
     private static string PhotoPath(string directory, Guid accountId, Guid photoId) =>
         Path.Combine(directory, $"{accountId:N}_{photoId:N}{PhotoExtension}");
 
+    /// <summary>The extra data that binds the ciphertext to the photo.</summary>
     private static byte[] AssociatedData(Guid accountId, Guid photoId) =>
         Encoding.ASCII.GetBytes($"{accountId:N}:{photoId:N}");
 
+    /// <summary>Rejects missing identifiers before they become a path.</summary>
     private static void ValidateIdentity(Guid accountId, Guid photoId)
     {
         if (accountId == Guid.Empty || photoId == Guid.Empty)
             throw new ArgumentException("Account and photo identifiers are required.");
     }
 
+    /// <summary>Releases the cache's gate.</summary>
     public void Dispose() => _gate.Dispose();
 }

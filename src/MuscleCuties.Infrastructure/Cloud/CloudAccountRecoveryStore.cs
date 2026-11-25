@@ -2,12 +2,14 @@
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
+/// <summary>Password recovery through the backend: the three steps and the session they produce.</summary>
 public sealed class CloudAccountRecoveryStore(
     IMuscleCutiesBackendApiClient apiClient) : IAccountRecoveryStore
 {
     private const int PasswordRecoveryChallengePurpose = 2;
     private readonly ConcurrentDictionary<string, string> _challengeByEmail = new(StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Asks for a recovery code for an identifier, without revealing whether the account exists.</summary>
     public async Task<AccountRecoveryStartResult> StartAsync(string emailOrUsername, CancellationToken cancellationToken)
     {
         var email = emailOrUsername?.Trim().ToLowerInvariant() ?? string.Empty;
@@ -34,6 +36,7 @@ public sealed class CloudAccountRecoveryStore(
             response.ErrorCode ?? "Could not send recovery instructions.");
     }
 
+    /// <summary>Resends the recovery code through the backend.</summary>
     public async Task<AccountRecoveryStartResult> ResendAsync(
         string challengeId, string email, CancellationToken cancellationToken)
     {
@@ -57,6 +60,7 @@ public sealed class CloudAccountRecoveryStore(
             response.Data.ResendCooldownSeconds);
     }
 
+    /// <summary>Checks the code and keeps the session it earns, which the reset step needs.</summary>
     public async Task<AccountRecoveryVerifyResult> VerifyAsync(string challengeId, string email, string code, CancellationToken cancellationToken)
     {
         var response = await apiClient.SendMutationAsync<object, CloudEmailChallengeVerification>(
@@ -73,6 +77,7 @@ public sealed class CloudAccountRecoveryStore(
         return new AccountRecoveryVerifyResult(false, null, response.ErrorCode ?? "Invalid recovery code.");
     }
 
+    /// <summary>Sets the new password using the verified session, then drops that session.</summary>
     public async Task<AccountPasswordResetResult> ResetAsync(string email, string verificationToken, string newPassword, CancellationToken cancellationToken)
     {
         if (!_challengeByEmail.TryGetValue(email, out var challengeId) ||
@@ -92,6 +97,7 @@ public sealed class CloudAccountRecoveryStore(
             : new AccountPasswordResetResult(false, response.ErrorCode ?? "Password reset failed.");
     }
 
+    /// <summary>Forgets the recovery session for an address, so an abandoned attempt cannot be resumed.</summary>
     public void ClearSession(string? email)
     {
         if (email is not null)

@@ -9,6 +9,8 @@ using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
+/// <summary>The personal-info page: name and contact, birth date, body measurements in the chosen units, cycle</summary>
+/// baselines and the password change, which is saved separately from the profile itself.</summary>
 public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadAware
 {
     private readonly IProfilePersonalInfoUseCase _useCase;
@@ -66,6 +68,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
     [ObservableProperty] private SelectionOption<int>? _selectedPregnancyOption;
     [ObservableProperty] private SelectionOption<int>? _selectedContraceptionOption;
 
+    /// <summary>Takes the use cases and the navigation callbacks.</summary>
     public ProfilePersonalInfoViewModel(
         IProfilePersonalInfoUseCase useCase,
         IAccountPasswordValidator passwordValidator,
@@ -91,7 +94,10 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
         SelectedContraceptionOption = ContraceptionOptions[0];
     }
 
+    /// <summary>The first-load indicator; saving or changing the password leaves the loaded form on screen.</summary>
     public bool IsPageLoading => AppPageLoadGate.IsLoading(IsBusy, _hasLoadedOnce);
+    /// <summary>True for an edited field or for a partly typed password change, since the passwords are sent on their own</summary>
+    /// and would otherwise be lost without a warning.</summary>
     public bool HasUnsavedChanges =>
         _hasLoadedOnce &&
         (!string.Equals(BuildSnapshot(), _initialSnapshot, StringComparison.Ordinal) ||
@@ -99,19 +105,27 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
          !string.IsNullOrWhiteSpace(NewPassword) ||
          !string.IsNullOrWhiteSpace(ConfirmNewPassword));
 
+    /// <summary>The reveal button names what it will do to the field it sits on.</summary>
     public string CurrentPasswordToggleText =>
         UiTextCatalog.Get(IsCurrentPasswordHidden ? "Auth_Show" : "Auth_Hide");
 
+    /// <summary>The reveal button's label for the new password field.</summary>
     public string NewPasswordToggleText =>
         UiTextCatalog.Get(IsNewPasswordHidden ? "Auth_Show" : "Auth_Hide");
 
+    /// <summary>The reveal button's label for the confirmation field.</summary>
     public string ConfirmPasswordToggleText =>
         UiTextCatalog.Get(IsConfirmPasswordHidden ? "Auth_Show" : "Auth_Hide");
 
+    /// <summary>Shows or hides the current password.</summary>
     public RelayCommand ToggleCurrentPasswordVisibilityCommand { get; }
+    /// <summary>Shows or hides the new password.</summary>
     public RelayCommand ToggleNewPasswordVisibilityCommand { get; }
+    /// <summary>Shows or hides the confirmation.</summary>
     public RelayCommand ToggleConfirmPasswordVisibilityCommand { get; }
 
+    /// <summary>Hides all three password fields again, so a revealed password does not stay on screen after the page is</summary>
+    /// left or the screen goes away.</summary>
     public void MaskSensitiveInputs()
     {
         IsCurrentPasswordHidden = true;
@@ -119,15 +133,19 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
         IsConfirmPasswordHidden = true;
     }
 
+    /// <summary>The profile snapshot used to detect changes.</summary>
     private string BuildSnapshot() =>
         $"{Name}|{Email}|{BirthDate:O}|{HeightCm}|{WeightKg}|{CycleLength}|{SelectedPregnancyOption?.Value}|{SelectedContraceptionOption?.Value}";
 
+    /// <summary>Leaves the page, asking first when there are unsaved changes.</summary>
     private async Task BackAsync() =>
         await ProfileNavigationGuard.TryNavigateBackAsync(HasUnsavedChanges, ProfileDiscardPrompt.ConfirmAsync,
             _navigateBackAsync);
 
+    /// <summary>Pace applies only to the goals that use a weight target.</summary>
     public bool IsGoalPaceVisible => UsesWeightGoalPace(Goal);
 
+    /// <summary>The pregnancy answers.</summary>
     public IReadOnlyList<SelectionOption<int>> PregnancyOptions { get; } =
     [
         new(0, "Prefer not to say"),
@@ -135,6 +153,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
         new(2, "Yes")
     ];
 
+    /// <summary>The contraception answers.</summary>
     public IReadOnlyList<SelectionOption<int>> ContraceptionOptions { get; } =
     [
         new(0, "Prefer not to say"),
@@ -146,19 +165,30 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
     /// <summary>F06: the entry hint names the unit the stored preference displays.</summary>
     public string HeightUnitLabel => UnitsFormatter.HeightUnitLabel(_useMetricSystem);
 
+    /// <summary>The weight unit for this profile's chosen system.</summary>
     public string WeightUnitLabel => UnitsFormatter.WeightUnitLabel(_useMetricSystem);
 
+    /// <summary>The stored height shown in the chosen units, so the summary matches what the fields are entered in.</summary>
     public string HeightMeasurementText => FormatMeasurement(HeightCm, HeightUnitLabel);
 
+    /// <summary>The stored weight in the chosen units.</summary>
     public string WeightMeasurementText => FormatMeasurement(WeightKg, WeightUnitLabel);
 
+    /// <summary>The earliest birth date the form accepts.</summary>
     public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
+    /// <summary>The latest birth date the form accepts.</summary>
     public DateTime MaxBirthDate { get; } = DateTime.Today.AddYears(-18);
+    /// <summary>Loads the profile.</summary>
     public AsyncRelayCommand LoadDataCommand { get; }
+    /// <summary>Saves the profile.</summary>
     public AsyncRelayCommand SaveCommand { get; }
+    /// <summary>Changes the password.</summary>
     public AsyncRelayCommand ChangePasswordCommand { get; }
+    /// <summary>Returns to the profile.</summary>
     public AsyncRelayCommand BackCommand { get; }
 
+    /// <summary>Loads the profile and the unit preference it needs to display measurements, and keeps both as the</summary>
+    /// baseline the unsaved-changes flag compares against.</summary>
     private async Task LoadDataAsync()
     {
         IsBusy = true;
@@ -229,6 +259,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
         }
     }
 
+    /// <summary>Saves the profile fields; the password change is deliberately not part of this save.</summary>
     private async Task SaveAsync()
     {
         if (IsBusy)
@@ -279,6 +310,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
         }
     }
 
+    /// <summary>Changes the password on its own call, and clears the three fields only once it has succeeded.</summary>
     private async Task ChangePasswordAsync()
     {
         if (IsBusy)
@@ -327,6 +359,8 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
         }
     }
 
+    /// <summary>Checks the numeric fields against the accepted ranges and hands back the parsed values, so the save path and</summary>
+    /// the error messages can never disagree about what was entered.</summary>
     private bool TryValidate(out float height, out float weight, out int cycleLength)
     {
         height = (float)UnitsFormatter.FromDisplayHeight(ParseFloat(HeightCm), _useMetricSystem);
@@ -372,6 +406,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
     }
 
     // Parses user-entered decimals using current locale first, falling back to invariant "." separator.
+    /// <summary>A numeric field as a number, with unreadable text counting as zero so the range check reports it.</summary>
     private static float ParseFloat(string value)
     {
         return float.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var current)
@@ -381,6 +416,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
                 : 0f;
     }
 
+    /// <summary>A whole-number field as a number, with the same unreadable-as-zero behaviour.</summary>
     private static int ParseInt(string value)
     {
         return int.TryParse(value, NumberStyles.Integer, CultureInfo.CurrentCulture, out var current)
@@ -388,11 +424,14 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
             : 0;
     }
 
+    /// <summary>A stored number as field text, without trailing zeros, so a value does not change when it is loaded and</summary>
+    /// saved again.</summary>
     private static string FormatNumber(float value)
     {
         return value <= 0f ? string.Empty : value.ToString("0.#", CultureInfo.CurrentCulture);
     }
 
+    /// <summary>A measurement with the unit it is in, so the summary reads unambiguously in either system.</summary>
     private static string FormatMeasurement(string value, string unitLabel)
     {
         return double.TryParse(value, NumberStyles.Float, CultureInfo.CurrentCulture, out var parsed)
@@ -400,17 +439,21 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
             : string.Empty;
     }
 
+    /// <summary>The goals for which a pace choice applies.</summary>
     private static bool UsesWeightGoalPace(UserGoal goal)
     {
         return goal is UserGoal.FatLoss or UserGoal.Strength;
     }
 
+    /// <summary>Keeps the age in step with the birth date.</summary>
     partial void OnBirthDateChanged(DateTime value)
     {
         if (!IsBusy)
             _birthDateWasExplicitlyChanged = true;
     }
 
+    /// <summary>Records that the birth date was chosen: a date picker always holds a value, so its presence alone cannot say</summary>
+    /// the user answered.</summary>
     public void MarkBirthDateSelected()
     {
         if (!IsBusy)
@@ -419,6 +462,7 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
 
     // Body circumference measurements
     [ObservableProperty] private bool _useMetricCircumferenceUnits = true;
+    /// <summary>The measurements shown under the profile.</summary>
     [ObservableProperty] private string _circumferenceValueText = string.Empty;
     public System.Collections.ObjectModel.ObservableCollection<MuscleCuties.UseCases.Features.Progress.BodyMeasurements.BodyMeasurementOutputDto> CircumferenceReadings { get; } = [];
 

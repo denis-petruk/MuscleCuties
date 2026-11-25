@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
+/// <summary>The one meal-type to glyph mapping, so a meal type looks the same on every surface.</summary>
 internal static class MealTypeVisuals
 {
+    /// <summary>The icon glyph for a meal type.</summary>
     public static string GetIconData(string? mealType) => mealType?.ToUpperInvariant() switch
     {
         "BREAKFAST" =>

@@ -12,6 +12,7 @@ public static class WorkoutPopulationScopeRule
     public const string AgeUnsupported = "WorkoutPopulationAgeUnsupported";
     public const string PregnancyUnsupported = "WorkoutPopulationPregnancyUnsupported";
 
+    /// <summary>The reason the app cannot plan for her, or null when it can, so an unsupported population is named rather than guessed.</summary>
     public static string? Limitation(DateOnly? birthDate, DateOnly? accountLocalDate, PregnancyStatus pregnancy)
     {
         if (pregnancy == PregnancyStatus.Yes) return PregnancyUnsupported;

@@ -4,10 +4,14 @@ using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Controls.Injury;
 
+/// <summary>
+///     Body of the injury log: the saved injuries with their delete action.
+/// </summary>
 public partial class InjuryLogContent : ContentView
 {
     private readonly ViewModelSubscription<InjuryLogViewModel> _subscription;
 
+    /// <summary>Binds the injury list to its view model.</summary>
     public InjuryLogContent()
     {
         InitializeComponent();
@@ -15,6 +19,7 @@ public partial class InjuryLogContent : ContentView
             OnViewModelPropertyChanged);
     }
 
+    /// <summary>Redraws the list when the injury state changes.</summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(InjuryLogViewModel.ShowAddForm)

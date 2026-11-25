@@ -17,6 +17,8 @@ using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
+/// <summary>The generation flow: the athlete's answers, the preview the server returns, the gaps that block it, and</summary>
+/// the single route from preview to an applied plan.</summary>
 public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLoadAware
 {
     internal const string EditHiitAnswersContextKey = "edit-hiit-answers";
@@ -165,6 +167,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     [ObservableProperty] private bool _isProposalAccepted;
     [ObservableProperty] private bool _isTrainNavigationPending;
 
+    /// <summary>Takes the clients and the navigation callbacks.</summary>
     public StrengthPlanGenerationViewModel(
         IStrengthPlanProposalClientV020 proposalClient,
         IProfileWorkoutPreferencesUseCase preferences,
@@ -214,6 +217,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             () => !IsBusy && HasIneligibleSavedStyle);
     }
 
+    /// <summary>Switches the plan back to general strength.</summary>
     public AsyncRelayCommand SwitchToGeneralStrengthCommand { get; }
 
     /// <summary>
@@ -223,6 +227,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool HasIneligibleSavedStyle => IsBeforePreview && SelectedActivity is { } saved &&
         !StrengthStyleChoiceEligibilityProjection.IsOffered(saved.Activity, _trainingExperienceLevel);
 
+    /// <summary>Replaces a saved strength style the server would no longer offer with general strength, then reloads so</summary>
+    /// the form shows what will actually be planned.</summary>
     private async Task SwitchToGeneralStrengthAsync()
     {
         if (IsBusy || SelectedActivity is not { } saved)
@@ -269,6 +275,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             await LoadAsync();
     }
 
+    /// <summary>Reads the athlete's training experience, which decides which strength styles are offered; without the</summary>
+    /// profile port the form stays on its safe default.</summary>
     private async Task LoadTrainingExperienceLevelAsync()
     {
         if (_personalInfo is null)
@@ -284,42 +292,74 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>Loads the generation page.</summary>
     public AsyncRelayCommand LoadCommand { get; }
+    /// <summary>Shows or hides the training details.</summary>
     public RelayCommand ToggleTrainingDetailsCommand { get; }
+    /// <summary>Creates the plan proposal.</summary>
     public AsyncRelayCommand CreateProposalCommand { get; }
+    /// <summary>Accepts the proposal.</summary>
     public AsyncRelayCommand AcceptProposalCommand { get; }
+    /// <summary>Returns to the details for editing.</summary>
     public AsyncRelayCommand EditDetailsCommand { get; }
+    /// <summary>Closes the preview.</summary>
     public AsyncRelayCommand ClosePreviewCommand { get; }
+    /// <summary>Keeps the plan already in place.</summary>
     public AsyncRelayCommand KeepCurrentPlanCommand { get; }
+    /// <summary>Returns to the previous page.</summary>
     public AsyncRelayCommand BackCommand { get; }
+    /// <summary>Opens the workout page.</summary>
     public AsyncRelayCommand OpenTrainCommand { get; }
+    /// <summary>Leaves generation and opens the other features.</summary>
     public AsyncRelayCommand ExploreOtherFeaturesCommand { get; }
+    /// <summary>Takes over the preview another device left open.</summary>
     public AsyncRelayCommand TakeOverPreviewCommand { get; }
+    /// <summary>Regenerates the plan with a longer session.</summary>
     public AsyncRelayCommand UseLongerDurationCommand { get; }
+    /// <summary>Regenerates the plan with a shorter session.</summary>
     public AsyncRelayCommand UseShorterDurationCommand { get; }
+    /// <summary>Loads the page's data.</summary>
     public AsyncRelayCommand LoadDataCommand => LoadCommand;
 
+    /// <summary>True when a preview is loaded.</summary>
     public bool HasPreview => Preview is not null;
+    /// <summary>True when the preview can still be reviewed.</summary>
     public bool CanReviewPreview => HasPreview && !IsProposalAccepted && !IsTrainNavigationPending;
+    /// <summary>True when the plan can be applied from the preview.</summary>
     public bool CanApplyPlanFromPreview => CanReviewPreview;
+    /// <summary>True when the details can be edited from the preview.</summary>
     public bool CanEditDetailsFromPreview => CanReviewPreview && !HasMissingGapsWithAction;
+    /// <summary>True when the details can be edited before a preview.</summary>
     public bool CanEditDetailsFromPrerequisites => IsBeforePreview && !IsBusy && !IsProposalAccepted;
+    /// <summary>True when the preview can be submitted.</summary>
     public bool HasFeasiblePreview => CanSubmitProposal;
+    /// <summary>Any status other than feasible is a limitation the user has to read before applying.</summary>
     public bool HasLimitation => Preview is not null && Preview.Status != "Feasible";
+    /// <summary>True when the preview carries a mixed schedule.</summary>
     public bool HasMixedSchedule => Preview?.MixedActivitySchedule is not null;
+    /// <summary>True when the schedule has sessions.</summary>
     public bool HasMixedActivitySessions => MixedActivityDays.Count > NoPolicyReasons;
+    /// <summary>True when the schedule has no sessions.</summary>
     public bool HasNoMixedActivitySessions => !HasMixedActivitySessions;
+    /// <summary>True when rest days are summarised.</summary>
     public bool HasRestDays => !string.IsNullOrWhiteSpace(RestDaysSummary);
+    /// <summary>True when the schedule made activity decisions.</summary>
     public bool HasActivityDecisions => ActivityDecisions.Count > NoPolicyReasons;
+    /// <summary>True when the plan left movements out, which the preview must disclose rather than pass off as a full</summary>
+    /// session.</summary>
     public bool HasOmittedMovements => Preview?.AdvisoryCodes.Any(code =>
         code.StartsWith(MovementOmittedAdvisoryPrefix, StringComparison.Ordinal)) == true;
+    /// <summary>True when movements were dropped to fit the chosen session length, which is a different admission from</summary>
+    /// omitting them outright.</summary>
     public bool HasDurationOmissions => Preview?.AdvisoryCodes.Any(code =>
         code.StartsWith(MovementOmittedForDurationAdvisoryPrefix, StringComparison.Ordinal)) == true;
+    /// <summary>Names the movements the time limit removed, in the user's language.</summary>
     public string DurationOmissionsText => LocalizedFormat.Format(
         "Workout_Generation_DurationMovementOmitted", string.Join(", ",
             (Preview?.AdvisoryCodes ?? []).Where(code => code.StartsWith(MovementOmittedForDurationAdvisoryPrefix, StringComparison.Ordinal))
                 .Select(code => DurationOmittedMovementLabel(code[(code.LastIndexOf(':') + 1)..]))
                 .Distinct()));
+    /// <summary>The label for a movement left out by the duration.</summary>
     private static string DurationOmittedMovementLabel(string slot) => UiTextCatalog.Get(slot switch
     {
         "knee-dominant" => "Workout_Generation_MovementKneeOmitted",
@@ -330,25 +370,37 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         "goal-specific-accessory" => "Workout_Generation_MovementAccessoryOmitted",
         _ => "Workout_Generation_MovementUnavailable"
     });
+    /// <summary>True when a longer or shorter session can be chosen.</summary>
     public bool HasDurationChoice => HasLimitation && Preview?.MinimumRequiredSessionMinutes is not null;
+    /// <summary>The next session length that would satisfy the plan, rounded up to the picker's increment and bounded by</summary>
+    /// its minimum.</summary>
     private int? LongerDurationMinutes => Preview?.MinimumRequiredSessionMinutes is { } minimum
         ? (int)(Math.Ceiling((minimum - WorkoutPreferencesConstraints.MinimumActivitySessionDurationMinutes) /
             WorkoutPreferencesConstraints.ActivitySessionDurationIncrementMinutes) *
             WorkoutPreferencesConstraints.ActivitySessionDurationIncrementMinutes +
             WorkoutPreferencesConstraints.MinimumActivitySessionDurationMinutes)
         : null;
+    /// <summary>The longer option only exists while that length is still inside what the preferences allow.</summary>
     public bool CanUseLongerDuration => HasDurationChoice && LongerDurationMinutes is { } minutes &&
         minutes <= WorkoutPreferencesConstraints.MaximumActivitySessionDurationMinutes;
+    /// <summary>The longer-session action, naming the length it would switch to.</summary>
     public string LongerDurationText => LocalizedFormat.Format(
         "Workout_Generation_UseLongerDuration", (LongerDurationMinutes ?? WorkoutPreferencesConstraints.MinimumActivitySessionDurationMinutes).ToString(CultureInfo.CurrentCulture));
+    /// <summary>Pyramid of disclosures: omitted movements, time-dropped movements, or an activity that was asked for but</summary>
+    /// scheduled at no sessions. The strength alternative being declined is not a loss, so it does not count.</summary>
     public bool HasOptionalOmissions => HasOmittedMovements || HasDurationOmissions || Preview?.MixedActivitySchedule?.Activities.Any(
         decision => decision.ActivityTypeId != (int)WorkoutActivityDto.RestDay &&
                     decision.ScheduledSessionsPerWeek == NoPolicyReasons &&
                     !decision.ReasonCodes.Contains("StrengthAlternativeNotChosen") &&
                     !decision.ReasonCodes.Contains("ReplacedWithGeneralStrength")) == true;
+    /// <summary>True when the activity decisions start expanded.</summary>
     public bool ExpandActivityDecisions => HasLimitation || HasOptionalOmissions;
+    /// <summary>True when the schedule reported input reasons.</summary>
     public bool HasScheduleInputReasons => ScheduleInputReasons.Count > NoPolicyReasons;
+    /// <summary>True when the preview has notes.</summary>
     public bool HasPreviewNotes => PreviewNotes.Any(note => !string.IsNullOrWhiteSpace(note));
+    /// <summary>Whether the preview reports a gap the user can act on, which is what hides the apply path until details</summary>
+    /// are edited.</summary>
     public bool HasMissingGapsWithAction => Preview is not null &&
         (HasLimitation || HasOmittedMovements || HasDurationOmissions ||
          Preview.AdvisoryCodes.Concat(Preview.LimitationCodes).Any(IsActionableGapCode) ||
@@ -362,15 +414,21 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         code.StartsWith("LowerBodyCoverageBelowMinimum_", StringComparison.Ordinal) ||
         code.StartsWith("WeeklyCoverageMissing_", StringComparison.Ordinal) ||
         code.StartsWith("WeeklyCoverageBelowTarget_", StringComparison.Ordinal);
+    /// <summary>True when the preview has strength sessions.</summary>
     public bool HasStrengthPreviewSessions => StrengthPreviewSessions.Count > NoPolicyReasons;
+    /// <summary>True when the plan details are shown.</summary>
     public bool HasPlanDetails => HasActivityDecisions || HasStrengthPreviewSessions;
+    /// <summary>True when the chosen strength sessions are summarised.</summary>
     public bool HasChosenStrengthSummary => Preview?.EffectiveActivityTypeId is not null && HasStrengthPreviewSessions;
+    /// <summary>Which strength style the plan ended up using and over how many sessions, shown only when sessions exist.</summary>
     public string ChosenStrengthSummary => Preview?.EffectiveActivityTypeId is { } activity
         ? LocalizedFormat.Format("Workout_Generation_ChosenStrengthSummary",
             StrengthPlanGenerationDisplayMapper.ActivityLabel(activity),
             StrengthPreviewSessions.Count.ToString(CultureInfo.CurrentCulture))
         : string.Empty;
+    /// <summary>True before a preview is created.</summary>
     public bool IsBeforePreview => Preview is null;
+    /// <summary>True when a status message is shown.</summary>
     public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
 
     /// <summary>
@@ -383,9 +441,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Performance", "CA1822:Mark members as static",
         Justification = "Target of compiled XAML bindings; must stay an instance member.")]
+    /// <summary>Wording for the action that recovers a missing prerequisite.</summary>
     public string PrerequisiteRecoveryActionText =>
         UiTextCatalog.Get("Workout_Generation_PrerequisiteRecoveryAction");
 
+    /// <summary>True when the weekly summary is shown.</summary>
     public bool HasWeeklySummary => Preview is not null;
 
     /// <summary>
@@ -411,41 +471,63 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 aerobicMinutes.ToString(CultureInfo.CurrentCulture));
         }
     }
+    /// <summary>True when the training history was typed by the user.</summary>
     public bool IsHistorySelfReported => _historyWasSelfReported;
+    /// <summary>The training-details toggle reads as edit or hide, following the expanded state.</summary>
     public string TrainingDetailsToggleText => UiTextCatalog.Get(IsTrainingDetailsExpanded
         ? HideTrainingDetailsKey
         : EditTrainingDetailsKey);
+    /// <summary>True when the HIIT cardio choice is needed.</summary>
     public bool ShouldShowHiitUnderlyingCardioChoice =>
         _selectedProfileActivities.Contains(WorkoutActivityDto.Hiit) &&
         HiitUnderlyingCardioActivities.Count > NoPolicyReasons;
+    /// <summary>True when swimming is one of the chosen activities.</summary>
     public bool IsSwimmingSelected => _selectedProfileActivities.Contains(WorkoutActivityDto.Swimming);
+    /// <summary>True when rock climbing is one of the chosen activities.</summary>
     public bool IsRockClimbingSelected => _selectedProfileActivities.Contains(WorkoutActivityDto.RockClimbing);
+    /// <summary>True when yoga is one of the chosen activities.</summary>
     public bool IsYogaSelected => _selectedProfileActivities.Contains(WorkoutActivityDto.Yoga);
+    /// <summary>Whether the plan still needs the user's swimming facility answer.</summary>
     public bool MissingSwimmingFacility => IsRequiredAnswerMissing(WorkoutActivityRequirements.SwimmingFacilityMissing);
+    /// <summary>Whether the plan still needs the user's swimming ability answer.</summary>
     public bool MissingSwimmingAbility => IsRequiredAnswerMissing(WorkoutActivityRequirements.SwimmingAbilityMissing);
+    /// <summary>Whether the plan still needs the user's swimming style answer.</summary>
     public bool MissingSwimmingStyle => IsRequiredAnswerMissing(WorkoutActivityRequirements.SwimmingStyleMissing);
+    /// <summary>Whether the plan still needs the user's climbing competence answer.</summary>
     public bool MissingClimbingCompetence => IsRequiredAnswerMissing(WorkoutActivityRequirements.ClimbingCompetenceMissing);
+    /// <summary>Whether the plan still needs to know whether instruction is available.</summary>
     public bool MissingClimbingInstruction => IsRequiredAnswerMissing(WorkoutActivityRequirements.ClimbingInstructionMissing);
+    /// <summary>Whether the plan still needs the user's yoga type answer.</summary>
     public bool MissingYogaType => IsRequiredAnswerMissing(WorkoutActivityRequirements.YogaTypeMissing);
+    /// <summary>True when the HIIT cardio choice is required but missing.</summary>
     public bool MissingHiitUnderlyingActivity => _showMissingAnswers && ShouldShowHiitUnderlyingCardioChoice &&
         SelectedHiitUnderlyingCardioActivity is null;
+    /// <summary>Offered only when the plan cannot proceed on the chosen activities, so the alternative is not shown as a</summary>
+    /// casual detour.</summary>
     public bool CanOfferExploreOtherFeatures =>
         !HasExistingPlan && (IsBeforePreview
             ? IsSwimmingSelected || IsRockClimbingSelected || IsYogaSelected ||
               ShouldShowHiitUnderlyingCardioChoice || HasFittingStrengthStyleChoices
             : HasNoSafeActivityPreview);
+    /// <summary>A preview the plan refused for safety or missing answers, but not one that is merely infeasible.</summary>
     public bool HasNoSafeActivityPreview => Preview is { Status: not "Feasible" and not "RequiredAnswersMissing" and
         not "StrengthStyleChoiceRequired" } preview &&
         (preview.MixedActivitySchedule?.Sessions.Count ?? NoPolicyReasons) == NoPolicyReasons;
+    /// <summary>Whether applying would replace a plan the user already trains with, which needs saying before it happens.</summary>
     public bool HasExistingPlan => _hasExistingPlan || (_proposal?.ReplacesExistingPlan == true);
+    /// <summary>True when another device has a preview open.</summary>
     public bool HasActiveOtherPreview => _activeOtherProposalId.HasValue;
+    /// <summary>True when strength styles fit the profile.</summary>
     public bool HasFittingStrengthStyleChoices => FittingStrengthStyleChoices.Count > NoPolicyReasons;
+    /// <summary>True when the current plan can be kept.</summary>
     public bool CanKeepCurrentPlan => HasExistingPlan && IsBeforePreview;
+    /// <summary>Whether the preview asks the user to accept starting on less volume than requested.</summary>
     public bool RequiresReducedVolumeAcknowledgment =>
         Preview.RequiresReducedVolumeAcknowledgment();
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Performance", "CA1822:Mark members as static",
         Justification = "Target of compiled XAML bindings; must stay an instance member.")]
+    /// <summary>The reduced-volume disclosure in the user's language.</summary>
     public string ReducedVolumeNoticeText => UiTextCatalog.Get(ReducedVolumeNoticeKey);
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
@@ -461,18 +543,28 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
                 : "Explore other features";
         }
     }
+    /// <summary>True when the swimming style can be chosen.</summary>
     public bool CanChooseSwimmingStyle => HasSwimmingFacilityAccess is true && CanSwimIndependently is true;
+    /// <summary>The instruction question is only asked when nothing else is missing, so the form never stacks questions the</summary>
+    /// user cannot yet answer.</summary>
     public bool ShouldAskClimbingInstruction => MissingRequirements(ignoreClimbingInstruction: true)
         .Contains(WorkoutActivityRequirements.ClimbingInstructionMissing);
+    /// <summary>True when the saved availability can be used.</summary>
     public bool HasSavedAvailability => HasValidSavedAvailability;
+    /// <summary>True when a strength activity was saved.</summary>
     public bool HasSavedStrengthActivity => SelectedActivity is not null;
+    /// <summary>True while the page loads.</summary>
     public bool IsPageLoading => IsLoadingData;
+    /// <summary>True when the inputs can still be edited.</summary>
     public bool CanEditInputs => !IsBusy && Preview is null && !IsProposalAccepted && !IsTrainNavigationPending;
+    /// <summary>The saved training days as one readable line.</summary>
     public string SavedAvailabilitySummary => LocalizedFormat.Format(
         SavedAvailabilityFormatKey,
         string.Join(", ", _availableWeekdays.Select(StrengthPlanGenerationDisplayMapper.FullWeekdayLabel)));
+    /// <summary>The single line explaining why the preview is limited, from the preview's own codes.</summary>
     public string PreviewLimitationMessage =>
         StrengthPlanGenerationDisplayMapper.GetPreviewLimitationMessage(Preview);
+    /// <summary>Submitting needs an untouched proposal, no acceptance in flight and no navigation already pending.</summary>
     public bool CanSubmitProposal => !_proposalInvalidated && !IsProposalAccepted && !IsTrainNavigationPending &&
         _proposal is { IsPersisted: true, Lease: not null } &&
         Preview?.Status == "Feasible";
@@ -484,6 +576,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     public bool HasUnavailableApplyReason => CanReviewPreview && !IsBusy &&
         !string.IsNullOrWhiteSpace(UnavailableApplyReason) &&
         !string.Equals(UnavailableApplyReason, StatusMessage, StringComparison.Ordinal);
+    /// <summary>Why the plan cannot be applied yet, phrased for the user, or empty when it can.</summary>
     public string UnavailableApplyReason => StrengthPlanGenerationDecisions.ApplyUnavailableReason(
         Preview, _proposal, _proposalInvalidated, _pendingAcceptance is not null);
 
@@ -499,11 +592,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Performance", "CA1822:Mark members as static",
         Justification = "Target of compiled XAML bindings; must stay an instance member.")]
+    /// <summary>Wording that warns the apply action replaces the current plan.</summary>
     public string ReplacementApplyNoticeText => UiTextCatalog.Get(ReplacementApplyNoticeKey);
 
     [System.Diagnostics.CodeAnalysis.SuppressMessage(
         "Performance", "CA1822:Mark members as static",
         Justification = "Target of compiled XAML bindings; must stay an instance member.")]
+    /// <summary>The fuller replacement disclosure, including what happens to the plan being replaced.</summary>
     public string ReplacementDisclosureText => UiTextCatalog.Get(ReplacementDisclosureKey);
 
     /// <summary>The typed failure copy shown in the page's foreground state.</summary>
@@ -515,8 +610,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     /// </summary>
     public bool CanRetryLoad => _lastPlanningFailure is null || _lastPlanningFailure.IsRetryable;
 
+    /// <summary>Retry is offered only when repeating the same request can succeed; an outcome that needs different input</summary>
+    /// points at the editable details instead.</summary>
     public AsyncRelayCommand? RetryLoadCommand => CanRetryLoad ? LoadCommand : null;
 
+    /// <summary>Records the last planning failure and re-publishes whether retrying is allowed.</summary>
     private void SetLastPlanningFailure(ApiFailureNotice? notice)
     {
         _lastPlanningFailure = notice;
@@ -536,36 +634,46 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         _generationVersion++;
     }
 
+    /// <summary>Marks the page as gone and invalidates work started for it, so a late response cannot navigate or overwrite</summary>
+    /// the next visit.</summary>
     public void NotifyAppearanceExited()
     {
         _isAppearanceCurrent = false;
         _generationVersion++;
     }
 
+    /// <summary>True when the request version is still the current one.</summary>
     private bool IsCurrentGeneration(long requestVersion) =>
         WorkoutPlanningFlow.IsCurrentGeneration(_isAppearanceCurrent, requestVersion, _generationVersion);
 
     // G-01/G-02: only the first-plan exception activates without an Apply tap. A replacement or a
     // reduced-volume plan stays in the preview until the user taps Apply plan.
+    /// <summary>True when the plan can activate without a tap.</summary>
     private bool IsAutoActivationEligible(bool userRequested) =>
         StrengthPlanGenerationDecisions.MayActivateWithoutApply(_proposal, userRequested,
             HasMissingRequiredAnswers(), HasOptionalOmissions);
 
+    /// <summary>The saved training days are usable only between the smallest and largest number of days the planner</summary>
+    /// accepts.</summary>
     private bool HasValidSavedAvailability =>
         _availableWeekdays.Length is >= WorkoutPreferencesConstraints.MinimumAvailableWeekdays and
             <= WorkoutPreferencesConstraints.MaximumAvailableWeekdays;
 
+    /// <summary>True when a required answer is still missing.</summary>
     private bool HasMissingRequiredAnswers() => MissingRequirements().Count > NoPolicyReasons ||
         (ShouldShowHiitUnderlyingCardioChoice &&
          !HiitEvidenceCapture.IsComplete(DateOnly.FromDateTime(DateTime.Now),
              SelectedHiitUnderlyingCardioActivity?.Activity));
 
+    /// <summary>True when this answer is required and missing.</summary>
     private bool IsRequiredAnswerMissing(string code) => _showMissingAnswers && MissingRequirements().Contains(code);
 
+    /// <summary>The requirement codes the user still has to answer.</summary>
     private IReadOnlyList<string> MissingRequirements(bool ignoreClimbingInstruction = false) =>
         WorkoutActivityRequirements.Missing(_selectedProfileActivities,
             CurrentActivityEvidence(ignoreClimbingInstruction), DateOnly.FromDateTime(DateTime.Now));
 
+    /// <summary>The activity evidence built from the answers.</summary>
     private ActivityEligibilityInputV020[] CurrentActivityEvidence(bool ignoreClimbingInstruction = false) =>
         StrengthPlanActivityEvidenceMapper.Create(_selectedProfileActivities, HasSwimmingFacilityAccess,
                 CanSwimIndependently, WantsContinuousSwimming, HasRopeClimbingCompetence,
@@ -578,8 +686,12 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
     // Closing the preview returns to wherever generation started. The builder stays on screen only
     // when a safety answer is still missing and preferences have to change before previewing again.
+    /// <summary>Closing the preview must keep the builder on screen when a safety answer is still missing, because</summary>
+    /// preferences have to change before another preview is possible.</summary>
     private bool RequiresSafetyInput => _safetyPlanChanged || HasMissingRequiredAnswers();
 
+    /// <summary>Closes the preview and returns to wherever generation started, staying on the builder when a safety answer</summary>
+    /// is still missing.</summary>
     private async Task DismissPreviewAsync()
     {
         var keepBuilder = RequiresSafetyInput;
@@ -600,6 +712,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>After loading, either previews the plan or applies a plan the rules allow to activate without an explicit</summary>
+    /// apply, and only for the generation that is still current.</summary>
     private async Task InitializePlanPreviewOrAutoApplyAsync(long generation)
     {
         var selectedActivity = SelectedActivity;
@@ -661,6 +775,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>Releases the lease of a proposal that is no longer current, so an abandoned proposal does not hold the</summary>
+    /// user's plan slot.</summary>
     private async Task DiscardStaleProposalAsync(StrengthPlanProposalCreatedV020? proposal)
     {
         _proposal = null;
@@ -688,11 +804,13 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         return ComposeNotice(notice);
     }
 
+    /// <summary>The notice text with its reference line.</summary>
     private static string ComposeNotice(ApiFailureNotice notice) =>
         string.IsNullOrEmpty(notice.ReferenceText)
             ? notice.MessageText
             : $"{notice.MessageText} {notice.ReferenceText}";
 
+    /// <summary>Loads the form: saved preferences, history and the activity answers already on file.</summary>
     private async Task LoadAsync()
     {
         IsLoadError = false;
@@ -846,6 +964,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>Loads the recent training weeks that qualify the user for HIIT, and failing that leaves the evidence</summary>
+    /// form empty rather than assuming none.</summary>
     private async Task LoadRecentWorkoutHistoryAsync(DateOnly localDate)
     {
         try
@@ -880,6 +1000,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>The recent training weeks from the session dates.</summary>
     private static ObservableCollection<StrengthPlanRecentWeekDisplay> BuildRecentTrainingWeeks(
         DateOnly[] sessionDates,
         DateOnly localDate)
@@ -910,18 +1031,25 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         return result;
     }
 
+    /// <summary>The local date of a session start.</summary>
     private static DateOnly ToLocalSessionDate(DateTime startedAt) =>
         DateOnly.FromDateTime(DateTime.SpecifyKind(startedAt, DateTimeKind.Utc).ToLocalTime());
 
+    /// <summary>True when a proposal can be created.</summary>
     private bool CanCreateProposal() => !IsBusy && !IsLoadError && !HasActiveOtherPreview && SelectedActivity is not null &&
         HasValidSavedAvailability && Preview is null && !IsProposalAccepted && !IsTrainNavigationPending;
 
+    /// <summary>True when the training details can be toggled.</summary>
     private bool CanToggleTrainingDetails() => CanEditInputs;
 
+    /// <summary>Shows or hides the training details.</summary>
     private void ToggleTrainingDetails() => IsTrainingDetailsExpanded = !IsTrainingDetailsExpanded;
 
+    /// <summary>Creates the preview and the proposal.</summary>
     private Task CreateProposalAsync() => CreatePreviewAsync();
 
+    /// <summary>Drops the current preview and requests another at the longer session length, when that length is allowed</summary>
+    /// and the omissions are acceptable.</summary>
     private async Task RebuildForDurationAsync(bool allowOmissions)
     {
         if (IsBusy || !HasDurationChoice || (!allowOmissions && !CanUseLongerDuration)) return;
@@ -952,6 +1080,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         finally { IsBusy = false; }
     }
 
+    /// <summary>Requests a preview, recording the request as user intent so an auto-requested preview is not mistaken for</summary>
+    /// one the user asked to apply.</summary>
     private async Task CreatePreviewAsync(bool isUserIntent = true)
     {
         StatusMessage = NoStatusMessage;
@@ -1144,6 +1274,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>Fills every preview surface — sessions, decisions, notices and the mixed-activity schedule — from one</summary>
+    /// response so they cannot disagree.</summary>
     private void PopulatePreviewDisplays(StrengthPlanPreviewResponseV020 preview)
     {
         Preview = preview;
@@ -1199,6 +1331,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         NotifyPreviewChanged();
     }
 
+    /// <summary>The request that asks for a preview.</summary>
     private StrengthPlanPreviewRequestV020 BuildPreviewRequest(
         WorkoutActivityDto activity,
         WorkoutPreferencesDto preferences,
@@ -1233,16 +1366,21 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         };
     }
 
+    /// <summary>True when the proposal can be accepted.</summary>
     private bool CanAcceptProposal() => WorkoutPlanningFlow.CanAccept(IsBusy, IsProposalAccepted,
         IsTrainNavigationPending, _proposalInvalidated, _proposal?.IsPersisted == true,
         _proposal?.Lease is not null, IsPreviewApplicable, _pendingAcceptance is not null) &&
         HasStrengthPreviewSessions;
 
     // Only a feasible preview can be applied. Preferences are saved before the preview is requested.
+    /// <summary>True when the preview is feasible and can be applied.</summary>
     private bool IsPreviewApplicable => Preview is { Status: "Feasible" };
 
+    /// <summary>True when the other features can be offered.</summary>
     private bool CanExploreOtherFeatures() => !IsBusy && CanOfferExploreOtherFeatures;
 
+    /// <summary>Leaves generation for the other features when the chosen activities cannot be planned, after closing the</summary>
+    /// preview so nothing stays interactive behind it.</summary>
     private async Task ExploreOtherFeaturesAsync()
     {
         if (!CanExploreOtherFeatures())
@@ -1254,6 +1392,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             await _navigateToDashboardAsync();
     }
 
+    /// <summary>Takes over a plan proposal another device created, so the user can continue here rather than being blocked</summary>
+    /// by their own earlier session.</summary>
     private async Task TakeOverPreviewAsync()
     {
         if (_activeOtherProposalId is not { } proposalId)
@@ -1296,6 +1436,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>Handles the responses that must not become a preview — missing answers and safety refusals — and reports</summary>
+    /// whether the preview was consumed.</summary>
     private bool HandlePreflightRequirement(StrengthPlanPreviewResponseV020 preview)
     {
         if (string.Equals(preview.Status, "RequiredAnswersMissing", StringComparison.Ordinal))
@@ -1325,12 +1467,16 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         return true;
     }
 
+    /// <summary>True when the details can be edited.</summary>
     private bool CanEditDetails() => !IsBusy && !IsProposalAccepted;
 
+    /// <summary>True when the preview can be closed.</summary>
     private bool CanClosePreview() => !IsBusy && Preview is not null;
 
+    /// <summary>True when the train page can open.</summary>
     private bool CanOpenTrain() => !IsBusy && IsTrainNavigationPending;
 
+    /// <summary>Leaves the page through the back callback, ignored while a request is running.</summary>
     private async Task BackAsync()
     {
         if (IsBusy)
@@ -1352,6 +1498,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         await _navigateBackAsync();
     }
 
+    /// <summary>Closes the foreground sheet before routing to the editable details, so a stale preview cannot stay</summary>
+    /// interactive behind the editor.</summary>
     private async Task EditDetailsAsync()
     {
         // Close the foreground sheet before navigating so an obsolete failure/preview surface cannot
@@ -1385,6 +1533,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>Closes the preview, releasing its lease and any pending omissions choice.</summary>
     private async Task ClosePreviewAsync()
     {
         _allowMovementOmissionsForDuration = false;
@@ -1403,6 +1552,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         ClearPreview(clearStatus: !IsTrainNavigationPending);
     }
 
+    /// <summary>Opens the train tab once navigation to it is allowed.</summary>
     private async Task OpenTrainAsync()
     {
         if (!CanOpenTrain())
@@ -1432,8 +1582,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>Accepts the proposal after the apply tap.</summary>
     private Task AcceptProposalAsync() => AcceptProposalResponseAsync(++_generationVersion, fromApplyTap: true);
 
+    /// <summary>Applies the plan, refusing a response that belongs to a superseded generation or a proposal that can no</summary>
+    /// longer be accepted, so an apply cannot land twice or land late.</summary>
     private async Task AcceptProposalResponseAsync(long generation, bool fromApplyTap)
     {
         if (!IsCurrentGeneration(generation) || _proposal is null || !CanAcceptProposal())
@@ -1547,6 +1700,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>Refreshes the page when the chosen activity changes.</summary>
     partial void OnSelectedActivityChanged(StrengthPlanActivityChoice? value)
     {
         OnPropertyChanged(nameof(HasSavedStrengthActivity));
@@ -1565,21 +1719,28 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         ClearPreview();
     }
 
+    /// <summary>Refreshes the status flag when the text changes.</summary>
     partial void OnStatusMessageChanged(string value)
     {
         OnPropertyChanged(nameof(HasStatusMessage));
         OnPropertyChanged(nameof(HasUnavailableApplyReason));
     }
 
+    /// <summary>Refreshes the details state when it expands.</summary>
     partial void OnIsTrainingDetailsExpandedChanged(bool value) =>
         OnPropertyChanged(nameof(TrainingDetailsToggleText));
 
+    /// <summary>Marks the history as self-reported.</summary>
     partial void OnConsistentWeeksChanged(string value) => MarkHistoryAsSelfReported();
 
+    /// <summary>Marks the history as self-reported.</summary>
     partial void OnAverageSessionsPerWeekChanged(string value) => MarkHistoryAsSelfReported();
 
+    /// <summary>Marks the history as self-reported.</summary>
     partial void OnDaysSinceLastSessionChanged(string value) => MarkHistoryAsSelfReported();
 
+    /// <summary>Records that the user typed their training history themselves, which the plan must disclose rather than</summary>
+    /// present as logged data.</summary>
     private void MarkHistoryAsSelfReported()
     {
         if (_historyWasSelfReported)
@@ -1589,6 +1750,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(IsHistorySelfReported));
     }
 
+    /// <summary>Forgets the preview, its lease and its displays, keeping the status message when the caller needs to show</summary>
+    /// why the preview went away.</summary>
     private void ClearPreview(bool clearStatus = true)
     {
         _leaseRenewalCancellation?.Cancel();
@@ -1613,6 +1776,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         NotifyPreviewChanged();
     }
 
+    /// <summary>Keeps the proposal's lease alive while the preview is open, so the user can take their time deciding.</summary>
     private void StartLeaseRenewal(StrengthPlanProposalCreatedV020 proposal)
     {
         _leaseRenewalCancellation?.Cancel();
@@ -1625,6 +1789,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
 
     // The limitation itself is stated next to the disabled Apply in the sticky footer, so the notes
     // list carries the remaining advisories only and the screen states the fact once.
+    /// <summary>The notes shown with the preview.</summary>
     private IEnumerable<string> BuildPreviewNotes() =>
         ScheduleInputReasons
             .Concat(StrengthPlanGenerationDisplayMapper.CoverageNotes(Preview))
@@ -1637,6 +1802,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             .Where(note => !string.IsNullOrWhiteSpace(note))
             .Distinct();
 
+    /// <summary>What applying will replace: the activities and sessions of the plan currently held.</summary>
     private string BuildReplacementSummary()
     {
         var activities = Preview?.MixedActivitySchedule?.Activities
@@ -1653,12 +1819,16 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         return string.Join(Environment.NewLine, lines);
     }
 
+    /// <summary>The message listing the answers still needed.</summary>
     private string RequiredAnswersMessage() => WithSafetyNotice(UiTextCatalog.Get(RequiredAnswersKey));
 
+    /// <summary>The message prefixed with the safety notice when the plan changed.</summary>
     private string WithSafetyNotice(string message) => _safetyPlanChanged
         ? $"{UiTextCatalog.Get("Workout_Generation_SafetyPlanChanged")}{Environment.NewLine}{message}"
         : message;
 
+    /// <summary>Restores the activity answers already on file, including the HIIT evidence, so a returning user does not</summary>
+    /// answer the same questions twice.</summary>
     private void PrefillActivityAnswers(SavedActivityAnswersDto saved)
     {
         var swimming = saved.ActivityEligibilityEvidence.FirstOrDefault(answer => answer.Activity == WorkoutActivityDto.Swimming);
@@ -1675,6 +1845,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         HiitEvidenceCapture.Prefill(saved.HiitEligibilityEvidence, DateOnly.FromDateTime(DateTime.Now));
     }
 
+    /// <summary>Re-publishes every missing-answer flag after an answer changes.</summary>
     private void NotifyMissingAnswers()
     {
         OnPropertyChanged(nameof(MissingSwimmingFacility));
@@ -1686,6 +1857,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(MissingHiitUnderlyingActivity));
     }
 
+    /// <summary>Refreshes the enabled state whenever a property changes.</summary>
     protected override void OnPropertyChanged(PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
@@ -1695,6 +1867,8 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             NotifyMissingAnswers();
     }
 
+    /// <summary>The renewal loop; a transient failure waits for the next round or for Apply to revalidate, rather than</summary>
+    /// discarding a preview the user is still reading.</summary>
     private async Task RenewLeaseUntilClosedAsync(StrengthPlanProposalCreatedV020 proposal, CancellationToken cancellationToken)
     {
         try
@@ -1770,6 +1944,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         }
     }
 
+    /// <summary>Re-publishes every preview-derived flag and command state after the preview changes.</summary>
     private void NotifyPreviewChanged()
     {
         OnPropertyChanged(nameof(HasPreview));
@@ -1818,12 +1993,14 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         NotifyCommandStates();
     }
 
+    /// <summary>Re-publishes the availability summary and the flags that depend on the saved days.</summary>
     private void NotifyAvailabilityChanged()
     {
         OnPropertyChanged(nameof(HasSavedAvailability));
         OnPropertyChanged(nameof(SavedAvailabilitySummary));
     }
 
+    /// <summary>Replaces the activity selection and drops an underlying-HIIT activity that is no longer valid for it.</summary>
     private void UpdateSelectedProfileActivities(IReadOnlyList<int>? activityTypes)
     {
         var previousUnderlyingActivity = SelectedHiitUnderlyingCardioActivity?.Activity;
@@ -1863,47 +2040,58 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         OnPropertyChanged(nameof(ShouldAskClimbingInstruction));
     }
 
+    /// <summary>The yes and no answers.</summary>
     private static ObservableCollection<ActivityEvidenceAnswerChoice> CreateYesNoChoices() =>
     [
         new(UiTextCatalog.Get(EvidenceYesKey), true),
         new(UiTextCatalog.Get(EvidenceNoKey), false)
     ];
 
+    /// <summary>The swimming style answers.</summary>
     private static ObservableCollection<ActivityEvidenceAnswerChoice> CreateSwimmingStyleChoices() =>
     [
         new(UiTextCatalog.Get(SwimmingContinuousKey), true),
         new(UiTextCatalog.Get(SwimmingIntervalsKey), false)
     ];
 
+    /// <summary>The yoga content answers.</summary>
     private static ObservableCollection<ActivityEvidenceAnswerChoice> CreateYogaContentChoices() =>
     [
         new(UiTextCatalog.Get(YogaGentleKey), false),
         new(UiTextCatalog.Get(YogaDemandingKey), true)
     ];
 
+    /// <summary>Stores the swimming access answer.</summary>
     partial void OnSelectedSwimmingFacilityAccessChoiceChanged(ActivityEvidenceAnswerChoice? value) =>
         HasSwimmingFacilityAccess = value?.Value;
 
+    /// <summary>Stores the independent swimming answer.</summary>
     partial void OnSelectedIndependentSwimmingChoiceChanged(ActivityEvidenceAnswerChoice? value) =>
         CanSwimIndependently = value?.Value;
 
+    /// <summary>Stores the swimming style answer.</summary>
     partial void OnSelectedSwimmingStyleChoiceChanged(ActivityEvidenceAnswerChoice? value) =>
         WantsContinuousSwimming = value?.Value;
 
+    /// <summary>Stores the climbing competence answer.</summary>
     partial void OnSelectedRopeClimbingCompetenceChoiceChanged(ActivityEvidenceAnswerChoice? value) =>
         HasRopeClimbingCompetence = value?.Value;
 
+    /// <summary>Stores the climbing instruction answer.</summary>
     partial void OnSelectedClimbingInstructionChoiceChanged(ActivityEvidenceAnswerChoice? value) =>
         AppropriateClimbingInstructionAvailable = value?.Value;
 
+    /// <summary>Stores the yoga content answer.</summary>
     partial void OnSelectedYogaContentChoiceChanged(ActivityEvidenceAnswerChoice? value) =>
         IsDemandingYogaContent = value?.Value;
 
+    /// <summary>Refreshes the preview flags when a preview arrives.</summary>
     partial void OnPreviewChanged(StrengthPlanPreviewResponseV020? value)
     {
         OnPropertyChanged(nameof(CanEditInputs));
     }
 
+    /// <summary>Refreshes the HIIT evidence when the cardio activity changes.</summary>
     partial void OnSelectedHiitUnderlyingCardioActivityChanged(
         StrengthPlanActivityChoice? value)
     {
@@ -1913,6 +2101,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         NotifyMissingAnswers();
     }
 
+    /// <summary>Refreshes the swimming choices when the access answer changes.</summary>
     partial void OnHasSwimmingFacilityAccessChanged(bool? value)
     {
         OnPropertyChanged(nameof(CanChooseSwimmingStyle));
@@ -1920,6 +2109,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             SelectedSwimmingStyleChoice = null;
     }
 
+    /// <summary>Refreshes the swimming choices when the independence answer changes.</summary>
     partial void OnCanSwimIndependentlyChanged(bool? value)
     {
         OnPropertyChanged(nameof(CanChooseSwimmingStyle));
@@ -1927,6 +2117,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             SelectedSwimmingStyleChoice = null;
     }
 
+    /// <summary>Refreshes the climbing answer when competence changes.</summary>
     partial void OnHasRopeClimbingCompetenceChanged(bool? value)
     {
         OnPropertyChanged(nameof(ShouldAskClimbingInstruction));
@@ -1934,6 +2125,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             SelectedClimbingInstructionChoice = null;
     }
 
+    /// <summary>Every prerequisite still unanswered, so the page can name them together instead of one at a time.</summary>
     private List<string> CollectMissingPrerequisites()
     {
         var gaps = new List<string>();
@@ -1944,6 +2136,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         return gaps;
     }
 
+    /// <summary>Refreshes the command states when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(CanEditInputs));
@@ -1952,8 +2145,10 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         NotifyCommandStates();
     }
 
+    /// <summary>Refreshes the loading flag when loading changes.</summary>
     partial void OnIsLoadingDataChanged(bool value) => OnPropertyChanged(nameof(IsPageLoading));
 
+    /// <summary>Re-evaluates every command's availability after the state that gates them changed.</summary>
     private void NotifyCommandStates()
     {
         ToggleTrainingDetailsCommand.NotifyCanExecuteChanged();
@@ -1972,6 +2167,7 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
         LoadCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>The weekdays from their stored numbers.</summary>
     private static DayOfWeek[] NormalizeWeekdays(IReadOnlyList<int>? values) =>
         values is null
             ? []

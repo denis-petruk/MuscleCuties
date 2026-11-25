@@ -9,6 +9,8 @@ using MuscleCuties.UseCases.Features.Profile.PhotoVault.Contracts;
 
 namespace MuscleCuties.UI.Services.Profile;
 
+/// <summary>The photo vault over the backend and its transfer client. Entries carry local ids, so the server's</summary>
+/// identifiers never reach the UI.</summary>
 public sealed class MobilePhotoVaultStore(
     IMuscleCutiesBackendApiClient apiClient,
     HttpClient photoTransferClient) : IPhotoVaultStore
@@ -36,6 +38,8 @@ public sealed class MobilePhotoVaultStore(
     private int _nextEntryId;
     private long _sessionGeneration;
 
+    /// <summary>Reads the vault, retiring the previous session's local ids first so a cached entry cannot be acted</summary>
+    /// on after an account switch.</summary>
     public async Task<PhotoVaultLoadResult> LoadAsync(CancellationToken cancellationToken)
     {
         // This store can outlive a sign-in session. Retire old UI IDs before reading another account.
@@ -100,6 +104,8 @@ public sealed class MobilePhotoVaultStore(
         }
     }
 
+    /// <summary>Uploads a photo, refusing a missing file or one outside the accepted size range before any bytes</summary>
+    /// leave the device.</summary>
     public async Task<bool> AddAsync(AddPhotoVaultEntryRequest request, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(request.ImagePath) || !File.Exists(request.ImagePath))
@@ -172,6 +178,7 @@ public sealed class MobilePhotoVaultStore(
         }
     }
 
+    /// <summary>Deletes an entry by its local id; an id this session never issued deletes nothing.</summary>
     public async Task<bool> DeleteAsync(int entryId, CancellationToken cancellationToken)
     {
         Guid photoId;
@@ -197,25 +204,32 @@ public sealed class MobilePhotoVaultStore(
         return true;
     }
 
+    /// <summary>The current session generation, read under the identity lock.</summary>
     private long CurrentGeneration()
     {
         lock (_identityLock) return _sessionGeneration;
     }
 
+    /// <summary>Aborts an operation whose session has since changed, so its result is never applied to a different</summary>
+    /// account.</summary>
     private void ThrowIfSuperseded(long generation)
     {
         lock (_identityLock)
             if (generation != _sessionGeneration) throw Superseded();
     }
 
+    /// <summary>The error raised when a newer upload replaced this one.</summary>
     private static OperationCanceledException Superseded() =>
         new("The photo account session changed during this operation.");
 
+    /// <summary>Unwraps a successful response, raising a message that names the failed operation otherwise.</summary>
     private static T RequireData<T>(BackendApiResponse<T> response, string operation) where T : class =>
         response.Status == BackendApiStatus.Success && response.Data is not null
             ? response.Data
             : throw new InvalidOperationException($"Cloud {operation} failed ({response.Status}).");
 
+    /// <summary>Accepts only a plain HTTPS storage URL on the approved host, so a tampered response cannot point the</summary>
+    /// app at another origin.</summary>
     private static bool IsApprovedStorageUrl(string? value)
     {
         if (!Uri.TryCreate(value, UriKind.Absolute, out var uri) ||
@@ -231,16 +245,20 @@ public sealed class MobilePhotoVaultStore(
         return region.Length > 0 && region.IndexOf('.') < 0;
     }
 
+    /// <summary>True when the URL carries a download signature.</summary>
     private static bool HasPresignedDownloadSignature(string value) =>
         Uri.TryCreate(value, UriKind.Absolute, out var uri) &&
         uri.Query.Contains("X-Amz-Algorithm=", StringComparison.Ordinal) &&
         uri.Query.Contains("X-Amz-Expires=", StringComparison.Ordinal) &&
         uri.Query.Contains("X-Amz-Signature=", StringComparison.Ordinal);
 
+    /// <summary>True when the URL points at exactly the given object key.</summary>
     private static bool HasExactObjectPath(string url, string key) =>
         Uri.TryCreate(url, UriKind.Absolute, out var uri) &&
         string.Equals(Uri.UnescapeDataString(uri.AbsolutePath), "/" + key, StringComparison.Ordinal);
 
+    /// <summary>True when the object key is laid out for this account and this photo, which is what binds a stored</summary>
+    /// file to its owner.</summary>
     private static bool HasOwnerBoundPhotoKey(string? key, Guid photoId)
     {
         if (key is null) return false;

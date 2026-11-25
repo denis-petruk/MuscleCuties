@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>The minimum sets a template slot must reach before a session counts as complete.</summary>
 public sealed record TemplateVolumeFloor(
     string TemplateId,
     int MinimumWorkingSets,
@@ -7,6 +8,7 @@ public sealed record TemplateVolumeFloor(
     IReadOnlyDictionary<string, int> MinimumSetsBySlotId,
     string ReviewStatus = TemplateVolumeFloorRule.UnreviewedStatus);
 
+/// <summary>Whether a template met its floors, with the slots that fell short.</summary>
 public sealed record TemplateVolumeFloorEvaluationResult(
     bool IsAllowed,
     string? LimitationCode,
@@ -62,6 +64,7 @@ public static class TemplateVolumeFloorRule
             Math.Max(requiredCount, MinimumRemainingExercises), minimums, ReviewedStatus);
     }
 
+    /// <summary>The reviewed volume floor for a template version, when one exists.</summary>
     public static TemplateVolumeFloor? GetReviewedFloor(
         string? templateId,
         IReadOnlyDictionary<string, TemplateVolumeFloor>? customFloors = null)
@@ -84,11 +87,13 @@ public static class TemplateVolumeFloorRule
         return null;
     }
 
+    /// <summary>True when the template version has a reviewed volume floor.</summary>
     public static bool HasReviewedFloor(
         string? templateId,
         IReadOnlyDictionary<string, TemplateVolumeFloor>? customFloors = null) =>
         GetReviewedFloor(templateId, customFloors) is not null;
 
+    /// <summary>Checks the selected slots against the template's reviewed floor.</summary>
     public static TemplateVolumeFloorEvaluationResult EvaluateSelections(
         string templateId,
         IReadOnlyCollection<StrengthSlotSelection>? selections,
@@ -117,6 +122,7 @@ public static class TemplateVolumeFloorRule
                 "Exercise count is below the template floor.", floor.MinimumWorkingSets, totalSets)
             : result;
     }
+    /// <summary>Checks a session's selected exercises against the reviewed floor.</summary>
     public static TemplateVolumeFloorEvaluationResult Evaluate(
         string templateId,
         int actualWorkingSets,

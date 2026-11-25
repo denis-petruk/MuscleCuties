@@ -2,8 +2,10 @@ using MuscleCuties.UseCases.Features.Account.SignIn.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Account.SignIn;
 
+/// <summary>Sign-in by password or platform identity, answering the same shape either way.</summary>
 public sealed class AccountSignInUseCase(IAccountSignInStore store) : IAccountSignInUseCase
 {
+    /// <summary>Signs in with email and password, returning tokens or the refusal reason.</summary>
     public async Task<AccountSignInResult> SignInWithPasswordAsync(
         PasswordSignInRequest request,
         CancellationToken cancellationToken = default)
@@ -19,6 +21,7 @@ public sealed class AccountSignInUseCase(IAccountSignInStore store) : IAccountSi
             : new AccountSignInResult(true, account.IsOnboardingComplete);
     }
 
+    /// <summary>Signs in with an Apple or Google identity token.</summary>
     public async Task<AccountSignInResult> SignInWithPlatformAsync(
         PlatformSignInRequest request,
         CancellationToken cancellationToken = default)

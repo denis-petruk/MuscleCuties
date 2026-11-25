@@ -8,6 +8,8 @@ public static class OtpCodeRules
 {
     public const int CodeLength = 6;
 
+    /// <summary>Strips everything but digits and caps the result at the code length, so pasting a code with</summary>
+    /// spaces or a country prefix still fills the field.</summary>
     public static string DigitsOnly(string? value)
     {
         if (string.IsNullOrEmpty(value))

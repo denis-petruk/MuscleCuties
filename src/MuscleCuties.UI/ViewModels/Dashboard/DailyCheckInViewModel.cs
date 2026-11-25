@@ -6,6 +6,8 @@ using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 
 namespace MuscleCuties.UI.ViewModels.Dashboard;
 
+/// <summary>The daily check-in sheet: how she slept and feels today, answered once a day so readiness and the day's plan</summary>
+/// can follow from it.</summary>
 public partial class DailyCheckInViewModel : ObservableObject
 {
     private const int MinimumPlanningScaleValue = 1;
@@ -49,6 +51,7 @@ public partial class DailyCheckInViewModel : ObservableObject
     [ObservableProperty] private double _sleepHours;
     private bool _isSleepHoursAnswered;
 
+    /// <summary>Takes the check-in use case and the callbacks it reports to.</summary>
     public DailyCheckInViewModel(
         IDailyCheckInUseCase checkIn,
         Action invalidateDashboard,
@@ -72,9 +75,13 @@ public partial class DailyCheckInViewModel : ObservableObject
 
     [ObservableProperty] private bool _showHealthRationale;
 
+    /// <summary>Connects the health data source.</summary>
     public AsyncRelayCommand ConnectHealthCommand { get; }
+    /// <summary>Dismisses the health suggestion.</summary>
     public AsyncRelayCommand NotNowHealthCommand { get; }
 
+    /// <summary>Connects the health store and reloads the day, so sleep and activity she would otherwise type can come from</summary>
+    /// the device instead.</summary>
     private async Task ConnectHealthAsync()
     {
         ShowHealthRationale = false;
@@ -96,6 +103,8 @@ public partial class DailyCheckInViewModel : ObservableObject
             await CheckIfAlreadyCompletedAsync();
     }
 
+    /// <summary>Declines health access for now: the rationale closes and the check-in carries on with the typed answers</summary>
+    /// alone.</summary>
     private async Task NotNowHealthAsync()
     {
         ShowHealthRationale = false;
@@ -113,22 +122,33 @@ public partial class DailyCheckInViewModel : ObservableObject
         }
     }
 
+    /// <summary>Hours slept, or a dash until she actually answers the sleep question.</summary>
     public string SleepDisplay => _isSleepHoursAnswered ? DisplayFormat.Hours(SleepHours) : "—";
 
     /// <summary>Whether all supplemental observations are also answered; planning uses CanSubmit.</summary>
     public bool AreAllAnswersProvided => Answers.IsComplete;
 
+    /// <summary>The form as the answer set the use case validates; a sleep figure she never entered stays unset rather than</summary>
+    /// counting as zero.</summary>
     private DailyCheckInAnswers Answers => new(
         _isSleepHoursAnswered ? SleepHours : null, PlanningSleepQuality, EnergyLevel, PlanningSoreness,
         PainLevel, HasBloating, BodyWeight, PlanningFatigue);
+    /// <summary>Energy out of five, with a dash while it is unanswered.</summary>
     public string EnergyDisplay => EnergyLevel is { } value ? $"{value} / 5" : "— / 5";
+    /// <summary>The fatigue rating on its scale, with a dash when it was not given.</summary>
     public string FatigueDisplay => FormatPlanningRating(PlanningFatigue);
+    /// <summary>The sleep-quality rating on the same scale.</summary>
     public string PlanningSleepDisplay => FormatPlanningRating(PlanningSleepQuality);
+    /// <summary>The soreness rating on the same scale.</summary>
     public string PlanningSorenessDisplay => FormatPlanningRating(PlanningSoreness);
+    /// <summary>The stress rating on the same scale.</summary>
     public string PlanningStressDisplay => FormatPlanningRating(PlanningStress);
+    /// <summary>The scale values the planning questions offer.</summary>
     public IReadOnlyList<int> PlanningScaleOptions => _planningScaleOptions;
+    /// <summary>True when the readiness score is shown.</summary>
     public bool IsReadinessScoreDisplayEnabled => _isReadinessScoreDisplayEnabled;
 
+    /// <summary>Pain as a word, because a bare number would read as a measurement rather than her own report.</summary>
     public string PainDisplay => PainLevel switch
     {
         0 => "None",
@@ -138,9 +158,12 @@ public partial class DailyCheckInViewModel : ObservableObject
         _ => "—"
     };
 
+    /// <summary>True when a session summary line is shown.</summary>
     public bool HasSessionSummary => !string.IsNullOrWhiteSpace(SessionSummaryText);
 
+    /// <summary>Submits the check-in.</summary>
     public AsyncRelayCommand SubmitCommand { get; }
+    /// <summary>Skips the check-in.</summary>
     public AsyncRelayCommand SkipCommand { get; }
 
     /// <summary>True when the commit action can run; false names a prerequisite in <see cref="SubmitHint" />.</summary>
@@ -154,6 +177,8 @@ public partial class DailyCheckInViewModel : ObservableObject
         ? UiTextCatalog.Get("Dashboard_CheckIn_SubmitHint")
         : UiTextCatalog.Get("Dashboard_CheckIn_SubmitPrerequisiteHint");
 
+    /// <summary>Reads today's check-in and, when there already is one, closes the sheet as answered instead of asking the</summary>
+    /// same questions again.</summary>
     public async Task CheckIfAlreadyCompletedAsync()
     {
         if (IsBusy)
@@ -297,6 +322,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         }
     }
 
+    /// <summary>Fills the answers from the health data.</summary>
     [RelayCommand]
     private void SuggestFromAppleHealth()
     {
@@ -309,9 +335,11 @@ public partial class DailyCheckInViewModel : ObservableObject
         OnAnswerChanged();
     }
 
+    /// <summary>Shows or hides the additional details.</summary>
     [RelayCommand]
     private void ToggleAdditionalDetails() => ShowAdditionalDetails = !ShowAdditionalDetails;
 
+    /// <summary>Submits the answers once and closes on success; a refusal keeps everything typed so none of it is lost.</summary>
     private async Task SubmitAsync()
     {
         if (IsBusy || IsCompleted)
@@ -370,12 +398,14 @@ public partial class DailyCheckInViewModel : ObservableObject
         }
     }
 
+    /// <summary>Records that today was declined, so the sheet does not reopen, and tolerates a store that refuses the note.</summary>
     private async Task SkipAsync()
     {
         _invalidateDashboard();
         await _onCompletedAsync();
     }
 
+    /// <summary>The day the sheet is currently about.</summary>
     private DailyCheckInStatusRequest GetCurrentDay()
     {
         var timeZone = _clock.LocalTimeZone;
@@ -383,6 +413,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         return new DailyCheckInStatusRequest(DateOnly.FromDateTime(localNow.DateTime), timeZone.Id);
     }
 
+    /// <summary>Clears the answers so the next day starts blank.</summary>
     private void ResetDraft()
     {
         IsCompleted = false;
@@ -411,6 +442,8 @@ public partial class DailyCheckInViewModel : ObservableObject
         OnAnswerChanged();
     }
 
+    /// <summary>Clears the sheet when the signed-in account changes, so one account's answers can never be saved into</summary>
+    /// another's day.</summary>
     internal void ResetForAccountChange()
     {
         ++_statusLoadVersion;
@@ -423,6 +456,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         IsBusy = false;
     }
 
+    /// <summary>Refreshes the sleep guidance when the hours change.</summary>
     partial void OnSleepHoursChanged(double value)
     {
         SleepHours = Math.Clamp(value, DailyCheckInAnswers.MinimumSleepHours, DailyCheckInAnswers.MaximumSleepHours);
@@ -433,24 +467,28 @@ public partial class DailyCheckInViewModel : ObservableObject
         OnAnswerChanged();
     }
 
+    /// <summary>Refreshes the answers when the energy level changes.</summary>
     partial void OnEnergyLevelChanged(int? value)
     {
         OnPropertyChanged(nameof(EnergyDisplay));
         OnAnswerChanged();
     }
 
+    /// <summary>Refreshes the answers when the planning fatigue changes.</summary>
     partial void OnPlanningFatigueChanged(int? value)
     {
         OnPropertyChanged(nameof(FatigueDisplay));
         OnAnswerChanged();
     }
 
+    /// <summary>Refreshes the answers when the planning sleep quality changes.</summary>
     partial void OnPlanningSleepQualityChanged(int? value)
     {
         OnPropertyChanged(nameof(PlanningSleepDisplay));
         OnAnswerChanged();
     }
 
+    /// <summary>Refreshes the answers when the planning soreness changes.</summary>
     partial void OnPlanningSorenessChanged(int? value)
     {
         if (value is >= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue &&
@@ -463,6 +501,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         OnAnswerChanged();
     }
 
+    /// <summary>Maps the soreness slider onto the answer scale.</summary>
     partial void OnPlanningSorenessSliderChanged(double value)
     {
         var clamped = Math.Clamp(value, MinimumPlanningScaleValue, MaximumPlanningScaleValue);
@@ -475,8 +514,10 @@ public partial class DailyCheckInViewModel : ObservableObject
         OnPropertyChanged(nameof(PlanningSorenessDisplay));
     }
 
+    /// <summary>Refreshes the stress display when the answer changes.</summary>
     partial void OnPlanningStressChanged(int? value) => OnPropertyChanged(nameof(PlanningStressDisplay));
 
+    /// <summary>Refreshes the answers when the pain level changes.</summary>
     partial void OnPainLevelChanged(int? value)
     {
         if (value is { } level)
@@ -485,8 +526,10 @@ public partial class DailyCheckInViewModel : ObservableObject
         OnAnswerChanged();
     }
 
+    /// <summary>Refreshes the answers when the bloating answer changes.</summary>
     partial void OnHasBloatingChanged(bool? value) => OnAnswerChanged();
 
+    /// <summary>Refreshes the submit state after an answer changes.</summary>
     private void OnAnswerChanged()
     {
         OnPropertyChanged(nameof(AreAllAnswersProvided));
@@ -495,11 +538,13 @@ public partial class DailyCheckInViewModel : ObservableObject
         SubmitCommand?.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Refreshes the summary flag when the text changes.</summary>
     partial void OnSessionSummaryTextChanged(string value)
     {
         OnPropertyChanged(nameof(HasSessionSummary));
     }
 
+    /// <summary>Refreshes the command states when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(CanSubmit));
@@ -507,12 +552,14 @@ public partial class DailyCheckInViewModel : ObservableObject
         SubmitCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Refreshes the completion state when the check-in completes.</summary>
     partial void OnIsCompletedChanged(bool value)
     {
         OnPropertyChanged(nameof(CanSubmit));
         SubmitCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>The catalog key for a readiness band.</summary>
     private static string BandLocalizationKey(string? band) => band switch
     {
         "FeelingReady" => "Dashboard_Readiness_Band_FeelingReady",
@@ -521,6 +568,7 @@ public partial class DailyCheckInViewModel : ObservableObject
         _ => string.Empty
     };
 
+    /// <summary>The rating shown for a planning answer.</summary>
     private static string FormatPlanningRating(int? value) =>
         value is >= MinimumPlanningScaleValue and <= MaximumPlanningScaleValue ? $"{value} / 5" : "— / 5";
 }

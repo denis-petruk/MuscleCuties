@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
 
+/// <summary>One entry of a batch save.</summary>
 public sealed record BatchNutritionDiaryEntryInput(
     string? Identity,
     MealType MealType,
@@ -15,12 +16,14 @@ public sealed record BatchNutritionDiaryEntryInput(
     decimal Fat,
     DateTime LoggedAtUtc);
 
+/// <summary>Several entries saved in one call, idempotent on their key.</summary>
 public sealed record BatchSaveNutritionDiaryRequest(
     string IdempotencyKey,
     DateOnly Date,
     IReadOnlyList<string> DeleteIdentities,
     IReadOnlyList<BatchNutritionDiaryEntryInput> UpsertEntries);
 
+/// <summary>What the batch wrote, so the client can show the day at once.</summary>
 public sealed record BatchSaveNutritionDiaryResponse(
     Guid LogId,
     DateOnly Date,
@@ -28,12 +31,14 @@ public sealed record BatchSaveNutritionDiaryResponse(
     int DeletedCount,
     bool Replayed);
 
+/// <summary>A copy of one day onto another.</summary>
 public sealed record CopyNutritionDiaryRequest(
     string IdempotencyKey,
     DateOnly SourceDate,
     DateOnly TargetDate,
     MealType? MealType = null);
 
+/// <summary>What the copy wrote, with the new day's totals.</summary>
 public sealed record CopyNutritionDiaryResponse(
     Guid TargetLogId,
     DateOnly TargetDate,
@@ -41,6 +46,7 @@ public sealed record CopyNutritionDiaryResponse(
     IReadOnlyList<string> CopiedIdentities,
     bool Replayed);
 
+/// <summary>A quick add of a food with no measured portion.</summary>
 public sealed record QuickAddNutritionDiaryRequest(
     string IdempotencyKey,
     DateOnly Date,
@@ -58,6 +64,7 @@ public sealed record QuickAddNutritionDiaryRequest(
     int? SourceVersion = null,
     bool LegacyTimestampUnspecified = false);
 
+/// <summary>The stored entry and the day's new totals.</summary>
 public sealed record QuickAddNutritionDiaryResponse(
     Guid LogId,
     DateOnly Date,
@@ -66,6 +73,7 @@ public sealed record QuickAddNutritionDiaryResponse(
     int? SourceVersion,
     bool Replayed);
 
+/// <summary>The persistence batch saves and copies need.</summary>
 public interface INutritionBatchAndCopyStore
 {
     Task<BatchSaveNutritionDiaryResponse> BatchSaveAsync(

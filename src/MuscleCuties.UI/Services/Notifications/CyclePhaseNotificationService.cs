@@ -5,6 +5,8 @@ using MuscleCuties.UseCases.Features.Cycle.Overview;
 
 namespace MuscleCuties.UI.Services.Notifications;
 
+/// <summary>Alerts the person when their cycle phase changes, at most once a day, and schedules the next</summary>
+/// change in advance. Copy stays discreet: it never names the phase.</summary>
 public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationService
 {
     private static readonly TimeSpan MorningNotificationTime = new(8, 0, 0);
@@ -13,6 +15,7 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
     private readonly ICyclePhaseProjectionUseCase _phaseProjection;
     private readonly ILocalNotificationService _localNotificationService;
 
+    /// <summary>Takes the use cases and services that schedule phase reminders.</summary>
     public CyclePhaseNotificationService(
         ICycleOverviewUseCase cycleOverview,
         ICyclePhaseProjectionUseCase phaseProjection,
@@ -23,6 +26,8 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         _localNotificationService = localNotificationService;
     }
 
+    /// <summary>Cancels yesterday's alerts, compares the current phase with the last one recorded, and only</summary>
+    /// notifies on a change that has not already been announced today. Markers live in secure storage.</summary>
     public async Task NotifyIfPhaseChangedAsync(int userId)
     {
         if (userId <= 0)
@@ -88,6 +93,7 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         await ScheduleNextPhaseChangeReminderAsync(userId, predictionSummary);
     }
 
+    /// <summary>Schedules a reminder for the next phase change.</summary>
     private async Task ScheduleNextPhaseChangeReminderAsync(
         int userId,
         CyclePredictionSummary? predictionSummary)
@@ -110,6 +116,7 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
             scheduledAt);
     }
 
+    /// <summary>The first day ahead whose projected phase differs from today's, or null within one cycle.</summary>
     private PhaseChangeReminder? FindNextPhaseChangeReminder(CyclePredictionSummary prediction)
     {
         if (!prediction.HasActiveCycle || prediction.CurrentDay <= 0)
@@ -143,16 +150,19 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         return null;
     }
 
+    /// <summary>Secure-storage key holding the last announced phase, per account.</summary>
     private static string BuildLastPhaseKey(int userId)
     {
         return $"cycle.phase.last.{userId}";
     }
 
+    /// <summary>Secure-storage key holding the date last announced, which enforces one alert per day.</summary>
     private static string BuildLastNotificationDateKey(int userId)
     {
         return $"cycle.phase.notificationDate.{userId}";
     }
 
+    /// <summary>Reads a marker, treating an unavailable keychain as "no marker yet".</summary>
     private static async Task<string?> GetSecureMarkerAsync(string key)
     {
         try
@@ -165,6 +175,8 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         }
     }
 
+    /// <summary>Writes a marker. If secure storage is unavailable the write is skipped rather than falling back</summary>
+    /// to plain preferences, because the value reveals cycle state.</summary>
     private static async Task SetSecureMarkerAsync(string key, string value)
     {
         try
@@ -179,15 +191,18 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         }
     }
 
+    /// <summary>Id of today's alert, derived from the account so two accounts cannot cancel each other.</summary>
     private static int BuildTodayNotificationId(int userId)
     {
         return 740_000 + Math.Abs(userId % 10_000);
     }
 
+    /// <summary>Id of the scheduled next-change alert.</summary>
     private static int BuildNextNotificationId(int userId)
     {
         return 760_000 + Math.Abs(userId % 10_000);
     }
 
+    /// <summary>The date of the next phase change and the phase it moves to.</summary>
     private readonly record struct PhaseChangeReminder(DateTime Date, CyclePhase Phase);
 }

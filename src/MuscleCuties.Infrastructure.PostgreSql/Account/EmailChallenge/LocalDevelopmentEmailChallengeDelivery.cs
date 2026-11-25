@@ -18,6 +18,7 @@ public sealed class LocalDevelopmentEmailChallengeDelivery : IEmailChallengeDeli
     // and no other environment can read it.
     private static readonly ConcurrentDictionary<string, string> LatestCodes = new(StringComparer.Ordinal);
 
+    /// <summary>Reads the last code written for local development, so a developer can sign in without a mailbox.</summary>
     public static bool TryGetLatestCode(string normalizedEmail, int purpose, out string code)
     {
         code = string.Empty;
@@ -25,9 +26,11 @@ public sealed class LocalDevelopmentEmailChallengeDelivery : IEmailChallengeDeli
                LatestCodes.TryGetValue(Key(normalizedEmail, purpose), out code!);
     }
 
+    /// <summary>Key the local delivery uses to find an address's pending code.</summary>
     private static string Key(string normalizedEmail, int purpose) =>
         $"{purpose}:{normalizedEmail.Trim().ToLowerInvariant()}";
 
+    /// <summary>Records the code locally instead of sending an email.</summary>
     public Task<bool> SendAsync(
         string normalizedEmail, string code, int purpose, CancellationToken cancellationToken)
     {

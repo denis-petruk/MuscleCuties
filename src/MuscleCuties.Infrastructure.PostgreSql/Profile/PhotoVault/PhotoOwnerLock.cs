@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
+/// <summary>Serialises one account's photo writes with a database lock, so two uploads cannot interleave their publication.
 internal static class PhotoOwnerLock
 {
+    /// <summary>Takes the account's lock on the current transaction, so it is released with the transaction.</summary>
     public static async Task AcquireAsync(PostgresDbContext context, Guid ownerId, CancellationToken cancellationToken)
     {
         var transaction = context.Database.CurrentTransaction

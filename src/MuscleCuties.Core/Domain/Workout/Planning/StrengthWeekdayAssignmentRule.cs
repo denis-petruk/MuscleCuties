@@ -1,13 +1,16 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>Whether every strength session found a weekday.</summary>
 public enum StrengthWeekdayAssignmentStatus
 {
     Assigned,
     Limited
 }
 
+/// <summary>One strength session and the weekday it landed on.</summary>
 public sealed record StrengthWeekdayAssignment(int SessionIndex, DayOfWeek Weekday);
 
+/// <summary>The assignments with the status that says whether they all fit.</summary>
 public sealed record StrengthWeekdayAssignmentResult(
     StrengthWeekdayAssignmentStatus Status,
     IReadOnlyList<StrengthWeekdayAssignment> Assignments,
@@ -26,6 +29,7 @@ public static class StrengthWeekdayAssignmentRule
     private const string InvalidInputCode = "StrengthWeekdayAssignmentInvalid";
     private const string SessionCountExceedsAvailabilityCode = "StrengthSessionsExceedAvailableWeekdays";
 
+    /// <summary>Places the strength sessions on the user's weekdays.</summary>
     public static StrengthWeekdayAssignmentResult Assign(
         int sessionCount,
         IReadOnlySet<DayOfWeek>? availableWeekdays)
@@ -127,6 +131,7 @@ public static class StrengthWeekdayAssignmentRule
             StrengthWeekdayAssignmentStatus.Assigned, assignments, null);
     }
 
+    /// <summary>Picks weekdays spread across the available ones, so sessions do not cluster.</summary>
     private static DayOfWeek[] SelectEvenlySpaced(DayOfWeek[] orderedWeekdays, int sessionCount)
     {
         var current = new DayOfWeek[sessionCount];
@@ -176,10 +181,12 @@ public static class StrengthWeekdayAssignmentRule
         return best;
     }
 
+    /// <summary>Position of the day in the training week, Sunday last.</summary>
     private static int WeekdayOrder(DayOfWeek day) => day == DayOfWeek.Sunday
         ? WorkoutPreferencesRule.MaximumDaysPerWeek - 1
         : (int)day - MondayWeekOrderOffset;
 
+    /// <summary>An assignment that could not place the sessions, with the limitation.</summary>
     private static StrengthWeekdayAssignmentResult Limited(string limitationCode) =>
         new(StrengthWeekdayAssignmentStatus.Limited, Array.Empty<StrengthWeekdayAssignment>(), limitationCode);
 }

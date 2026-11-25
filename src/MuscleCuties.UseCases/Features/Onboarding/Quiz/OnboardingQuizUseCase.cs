@@ -2,14 +2,17 @@ using MuscleCuties.Core.Domain.Onboarding;
 
 namespace MuscleCuties.UseCases.Features.Onboarding.Quiz;
 
+/// <summary>Commits the quiz answers once and folds them into the profile.</summary>
 public sealed class OnboardingQuizUseCase(IOnboardingQuizStore store) : IOnboardingQuizUseCase
 {
+    /// <summary>Loads the onboarding quiz questions.</summary>
     public Task<IReadOnlyList<QuizQuestionDto>> LoadQuestionsAsync(
         bool refresh = false, CancellationToken cancellationToken = default)
     {
         return store.LoadQuestionsAsync(refresh, cancellationToken);
     }
 
+    /// <summary>Saves the quiz answers and finishes onboarding.</summary>
     public async Task<QuizCommitResult> CommitAsync(
         IReadOnlyList<QuizSelectionDto> selections, CancellationToken cancellationToken = default)
     {

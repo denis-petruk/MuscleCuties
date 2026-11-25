@@ -12,6 +12,7 @@ public sealed class PostgresWorkoutReconciliationDispatcher(
     private static readonly TimeSpan AccountAttemptTimeout = TimeSpan.FromSeconds(20);
 
     // The host persists the returned cursor and restarts from null after the final page.
+    /// <summary>Processes one page of accounts that need reconciliation.</summary>
     public async Task<WorkoutReconciliationPage> ProcessPageAsync(Guid? afterOwnerId, int pageSize,
         CancellationToken cancellationToken = default)
     {
@@ -74,5 +75,6 @@ public sealed class PostgresWorkoutReconciliationDispatcher(
     }
 }
 
+/// <summary>What one reconciliation dispatch pass processed, so a scheduled run reports its counts.</summary>
 public sealed record WorkoutReconciliationPage(int VisitedAccounts, int FailedAccounts, Guid? NextCursor,
     int DeferredAccounts = 0, int NeedsReviewAccounts = 0);

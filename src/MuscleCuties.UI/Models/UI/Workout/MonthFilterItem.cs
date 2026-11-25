@@ -9,5 +9,6 @@ public sealed record MonthFilterItem(
     string DisplayName,
     bool IsAllMonths = false)
 {
+    /// <summary>Highlights the month chip currently filtering the history list.</summary>
     public bool IsSelected { get; set; }
 }

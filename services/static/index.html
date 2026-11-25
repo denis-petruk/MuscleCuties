@@ -3,23 +3,89 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="MuscleCuties policy and support information.">
-  <title>MuscleCuties — Information</title>
-  <link rel="stylesheet" href="/site.css">
+  <meta name="description" content="Strength training, food and recovery in one personal workout journal.">
+  <title>MuscleCuties — Strength in your stride / Тренировки в своём ритме</title>
+  <link rel="icon" type="image/png" href="assets/app-icon.png">
+  <link rel="stylesheet" href="site.css">
+  <script src="site.js" defer></script>
 </head>
 <body>
+  <a class="skip-link ui-en" lang="en" href="#content-en">Skip to content</a>
+  <a class="skip-link ui-ru" lang="ru" href="#content-ru">Перейти к содержанию</a>
   <div class="container">
-    <header><a class="brand" href="/">MuscleCuties</a></header>
-    <main class="policy-card">
-      <h1>MuscleCuties information</h1>
-      <p>Read the current working drafts and contact the operator:</p>
-      <ul>
-        <li><a href="/privacy">Privacy policy</a></li>
-        <li><a href="/terms">Terms of use</a></li>
-        <li><a href="/support">Support</a></li>
-      </ul>
+    <header id="page-top">
+      <a class="brand" href="index.html"><img src="assets/app-icon.png" width="40" height="40" alt="">MuscleCuties</a>
+      <nav class="site-nav">
+        <a href="privacy.html"><span class="ui-en" lang="en">Privacy</span> <span class="ui-ru" lang="ru">Конфиденциальность</span></a>
+        <a href="terms.html"><span class="ui-en" lang="en">Terms</span> <span class="ui-ru" lang="ru">Условия</span></a>
+        <a href="support.html"><span class="ui-en" lang="en">Support</span> <span class="ui-ru" lang="ru">Поддержка</span></a>
+      </nav>
+      <div class="lang-switcher">
+        <button type="button" lang="en" id="btn-en" class="lang-btn" aria-pressed="true" onclick="setLanguage('en')">English</button>
+        <button type="button" lang="ru" id="btn-ru" class="lang-btn" aria-pressed="false" onclick="setLanguage('ru')">Русский</button>
+      </div>
+    </header>
+    <main tabindex="-1" lang="en" id="content-en" class="landing">
+      <section class="studio">
+        <div class="studio-copy">
+          <h1>Strong looks good <em>on you.</em></h1>
+          <p>Meet MuscleCuties, your strength training companion. Plan your next workout, remember your last set, and give food and recovery a place in the picture.</p>
+          <a class="primary-action" href="#training-en">Explore the app <span aria-hidden="true">↓</span></a>
+        </div>
+        <img class="studio-art" src="assets/illustrated-studio.jpg" width="1200" height="800" fetchpriority="high" alt="The MuscleCuties mascot flexes in a sunny illustrated training studio.">
+      </section>
+      <section class="training-story" id="training-en">
+        <div class="story-copy">
+          <h2>Where did I leave off?</h2>
+          <p>Last Thursday it was eight reps. Today, open your workout journal and pick up where you left off. Your sets, weights and little victories are right there.</p>
+        </div>
+        <div class="movement-strip" aria-hidden="true"><img class="pose pose-squat" src="assets/pose-squat.jpg" width="273" height="294" alt="" decoding="async"><img class="pose pose-curl" src="assets/pose-curl.jpg" width="228" height="294" alt="" decoding="async"><img class="pose pose-lunge" src="assets/pose-lunge.jpg" width="277" height="294" alt="" decoding="async"></div>
+      </section>
+      <section class="recovery-story">
+        <div class="rest-art" aria-hidden="true"><img class="pose pose-drink" src="assets/pose-drink.jpg" width="280" height="314" alt="" decoding="async"><img class="pose pose-stretch" src="assets/pose-stretch.jpg" width="257" height="294" alt="" decoding="async"></div>
+        <div class="story-copy">
+          <h2>Between the reps.</h2>
+          <p>A late lunch. A great night’s sleep. A day when everything feels heavier. Keep meals, recovery and cycle notes alongside your training, so you can see the whole week in context.</p>
+        </div>
+      </section>
+      <section class="closing-story">
+        <img class="pose pose-cheer" src="assets/pose-cheer.jpg" width="225" height="314" alt="" decoding="async">
+        <div><h2>Keep the wins you’d forget.</h2>
+        <p>Flip back through your workouts. That weight you once had to think twice about? It’s in your warm-up now.</p>
+        <a href="support.html?lang=en">Questions about MuscleCuties?</a></div>
+      </section>
     </main>
-    <footer>&copy; 2026 MuscleCuties. All rights reserved.</footer>
+    <main tabindex="-1" lang="ru" id="content-ru" class="landing hidden">
+      <section class="studio">
+        <div class="studio-copy">
+          <h1>Сила тебе <em>к лицу.</em></h1>
+          <p>MuscleCuties — твой спутник в силовых тренировках. Здесь можно составить план, вспомнить вес в прошлом подходе и заметить, как питание и отдых влияют на самочувствие.</p>
+          <a class="primary-action" href="#training-ru">Посмотреть, что внутри <span aria-hidden="true">↓</span></a>
+        </div>
+        <img class="studio-art" src="assets/illustrated-studio.jpg" width="1200" height="800" fetchpriority="high" alt="Талисман MuscleCuties показывает бицепс в залитом солнцем рисованном зале.">
+      </section>
+      <section class="training-story" id="training-ru">
+        <div class="story-copy">
+          <h2>На чём я остановилась?</h2>
+          <p>В прошлый четверг было восемь повторений. Открой дневник перед тренировкой — в нём уже записаны твои подходы, веса и маленькие победы.</p>
+        </div>
+        <div class="movement-strip" aria-hidden="true"><img class="pose pose-squat" src="assets/pose-squat.jpg" width="273" height="294" alt="" decoding="async"><img class="pose pose-curl" src="assets/pose-curl.jpg" width="228" height="294" alt="" decoding="async"><img class="pose pose-lunge" src="assets/pose-lunge.jpg" width="277" height="294" alt="" decoding="async"></div>
+      </section>
+      <section class="recovery-story">
+        <div class="rest-art" aria-hidden="true"><img class="pose pose-drink" src="assets/pose-drink.jpg" width="280" height="314" alt="" decoding="async"><img class="pose pose-stretch" src="assets/pose-stretch.jpg" width="257" height="294" alt="" decoding="async"></div>
+        <div class="story-copy">
+          <h2>Между подходами.</h2>
+          <p>Поздний обед, крепкий сон или день, когда даже привычный вес кажется тяжёлым. Записывай питание, отдых и дни цикла рядом с тренировками — так проще увидеть, какой была неделя.</p>
+        </div>
+      </section>
+      <section class="closing-story">
+        <img class="pose pose-cheer" src="assets/pose-cheer.jpg" width="225" height="314" alt="" decoding="async">
+        <div><h2>Запомни, что уже получается.</h2>
+        <p>Полистай дневник тренировок. Помнишь гантели, к которым долго присматривалась? Может быть, теперь ты берёшь их на разминку.</p>
+        <a href="support.html?lang=ru">Есть вопросы о MuscleCuties?</a></div>
+      </section>
+    </main>
+    <footer>&copy; 2026 MuscleCuties. <span class="ui-en" lang="en">All rights reserved.</span> <span class="ui-ru" lang="ru">Все права защищены.</span></footer>
   </div>
 </body>
 </html>

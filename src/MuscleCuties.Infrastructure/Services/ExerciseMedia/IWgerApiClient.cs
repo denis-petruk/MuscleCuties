@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Services.ExerciseMedia;
 
+/// <summary>The wger exercise client, which supplies exercise text and muscles.</summary>
 public interface IWgerApiClient
 {
     Task<IReadOnlyList<WgerExerciseInfo>> GetExercisesAsync(int limit = 50, int offset = 0,

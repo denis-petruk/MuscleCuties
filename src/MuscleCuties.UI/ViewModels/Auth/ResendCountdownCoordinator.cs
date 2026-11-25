@@ -14,6 +14,7 @@ public sealed class ResendCountdownCoordinator : IDisposable
     private bool _disposed;
     private CancellationTokenSource? _timerCts;
 
+    /// <summary>Takes the state callback and the countdown texts.</summary>
     public ResendCountdownCoordinator(
         Action<int, bool, string> onStateChanged,
         string readyText,
@@ -26,12 +27,14 @@ public sealed class ResendCountdownCoordinator : IDisposable
         _timeProvider = timeProvider ?? TimeProvider.System;
     }
 
+    /// <summary>Stops the running countdown.</summary>
     public void Dispose()
     {
         _disposed = true;
         StopCountdown();
     }
 
+    /// <summary>Restarts the resend countdown, cancelling one already running so two timers cannot both decrement it.</summary>
     public void StartCountdown(int seconds)
     {
         StopCountdown();
@@ -49,6 +52,7 @@ public sealed class ResendCountdownCoordinator : IDisposable
         _ = RunCountdownAsync(timer, initialSeconds, _timeProvider.GetTimestamp());
     }
 
+    /// <summary>Cancels the running countdown, which is what stops a page that is closing from being ticked later.</summary>
     public void StopCountdown()
     {
         _timerCts?.Cancel();
@@ -56,6 +60,8 @@ public sealed class ResendCountdownCoordinator : IDisposable
         _timerCts = null;
     }
 
+    /// <summary>Ticks the countdown down from a start timestamp rather than counting wake-ups, so a suspended app resumes at</summary>
+    /// the right remaining time; it stops as soon as this timer was replaced or cancelled.</summary>
     private async Task RunCountdownAsync(CancellationTokenSource timer, int seconds, long startedAt)
     {
         try

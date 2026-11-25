@@ -2,8 +2,10 @@ using MuscleCuties.Core.Domain.Hydration;
 
 namespace MuscleCuties.UseCases.Features.Hydration;
 
+/// <summary>Her preset catalogue with the operations that produced it.</summary>
 public sealed record StoredWaterPresetCatalog(WaterPresetState State, string? ConcurrencyToken)
 {
+    /// <summary>The catalog the stored state currently holds.</summary>
     public WaterPresetCatalog Catalog => State.Catalog;
 }
 

@@ -9,6 +9,7 @@ public enum StartupRoute
     StartupError
 }
 
+/// <summary>Decides where the app opens, so a signed-out or unonboarded account never lands on a data screen.</summary>
 public static class StartupRoutingRule
 {
     /// <summary>

@@ -4,8 +4,10 @@ using MuscleCuties.Core.Models.Nutrition.Planning;
 
 namespace MuscleCuties.Core.Services.Nutrition.Planning;
 
+/// <summary>The sweet breakfast ideas the planner can choose from, kept together so the plan does not repeat one.</summary>
 internal static class SweetBreakfastCatalog
 {
+    /// <summary>The breakfast concepts available to the planner.</summary>
     private static readonly IReadOnlyList<MealConcept> Concepts =
     [
         new(
@@ -80,6 +82,7 @@ internal static class SweetBreakfastCatalog
             new HashSet<DietaryTag>())
     ];
 
+    /// <summary>The breakfast concepts available to the planner.</summary>
     public static IReadOnlyList<MealConcept> GetConcepts()
     {
         return Concepts;

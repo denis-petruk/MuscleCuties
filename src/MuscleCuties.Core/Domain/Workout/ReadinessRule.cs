@@ -5,6 +5,7 @@ using MuscleCuties.Core.Models.Workout.Planning;
 
 namespace MuscleCuties.Core.Domain.Workout;
 
+/// <summary>The scoring rules: each signal contributes within its configured bounds, and the total is clamped.</summary>
 public static class ReadinessRule
 {
     /// <summary>
@@ -26,6 +27,7 @@ public static class ReadinessRule
         return Compute(inputs, phase, config, baselines, reproductiveContext);
     }
 
+    /// <summary>Computes readiness from inputs, phase and configuration.</summary>
     public static Readiness Compute(DailyInputs inputs, CyclePhase phase, WorkoutPlanningConfig? config,
         CyclePhaseBaselines? baselines = null,
         ReproductiveContext? reproductiveContext = null)
@@ -80,6 +82,7 @@ public static class ReadinessRule
         return new Readiness(score, tier, breakdown);
     }
 
+    /// <summary>The score contribution of sleep quality, within its configured bounds.</summary>
     private static int ComputeSleepQualityAdjustment(SleepQuality? sleepQuality)
     {
         if (sleepQuality is null)
@@ -96,6 +99,7 @@ public static class ReadinessRule
         };
     }
 
+    /// <summary>The contribution of yesterday's load, so back-to-back hard days lower the score.</summary>
     private static int ComputePreviousDayLoadAdjustment(WorkoutLoad? load)
     {
         if (load is null || load.Kind is WorkoutLoadKind.Unavailable or WorkoutLoadKind.NoRecordedWorkout)
@@ -131,6 +135,7 @@ public static class ReadinessRule
         return 0;
     }
 
+    /// <summary>The contribution of the synced health signals, ignoring metrics that were not synced.</summary>
     private static int ComputeHealthAdjustment(DailyInputs inputs)
     {
         var rhrAdjustment = inputs.RestingHeartRate switch
@@ -152,6 +157,7 @@ public static class ReadinessRule
         return rhrAdjustment + activeEnergyAdjustment;
     }
 
+    /// <summary>The contribution of the cycle phase, which may lower but never raise the score.</summary>
     private static int ComputePhaseScore(ReadinessConfig rc, CyclePhase phase, CyclePhaseBaselines? baselines)
     {
         if (phase == CyclePhase.Unknown || !Enum.IsDefined(phase))
@@ -170,6 +176,7 @@ public static class ReadinessRule
         return (int)Math.Clamp((long)baseScore + energyAdjust - painAdjust, -10L, 20L);
     }
 
+    /// <summary>The contribution of yesterday's steps against her baseline.</summary>
     private static int ComputeStepsScore(StepsDeltaConfig? cfg, int stepsYesterday, int steps7dAvg)
     {
         if (cfg is null || stepsYesterday <= 0 || steps7dAvg <= 0)
@@ -186,6 +193,7 @@ public static class ReadinessRule
         return Math.Clamp(cfg.Normal, 0, 100);
     }
 
+    /// <summary>Reads the configured band table, returning the lowest band for a value below all of them.</summary>
     private static int BandLookup(double[][]? bands, double value)
     {
         if (bands is null || !double.IsFinite(value) || value < 0)
@@ -200,6 +208,7 @@ public static class ReadinessRule
         return 0;
     }
 
+    /// <summary>The neutral readiness used when a signal is missing.</summary>
     private static Readiness SafeDefault()
     {
         return new Readiness(0, ReadinessTier.Low,

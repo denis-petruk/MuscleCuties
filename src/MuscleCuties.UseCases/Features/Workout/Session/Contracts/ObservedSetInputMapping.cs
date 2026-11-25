@@ -13,6 +13,7 @@ public sealed record EditableObservedSet(
     int? LeftSideReps = null,
     int? RightSideReps = null);
 
+/// <summary>Maps an observed set command onto the stored set, keeping the client's key.</summary>
 public static class ObservedSetInputMapping
 {
     /// <summary>

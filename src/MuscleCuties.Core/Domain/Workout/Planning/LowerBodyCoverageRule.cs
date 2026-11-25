@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>The lower-body muscle groups coverage is checked for.</summary>
 public enum LowerBodyMuscleGroup
 {
     Glutes,
@@ -10,10 +11,12 @@ public enum LowerBodyMuscleGroup
     Adductors
 }
 
+/// <summary>Which lower-body groups the week trains, and the gap codes when one is missing.</summary>
 public sealed record LowerBodyCoverageResult(
     IReadOnlyDictionary<LowerBodyMuscleGroup, int> SessionExposures,
     IReadOnlyList<LowerBodyMuscleGroup> BelowMinimum)
 {
+    /// <summary>True when every lower-body muscle group is covered.</summary>
     public bool MeetsMinimum => BelowMinimum.Count == 0;
 }
 
@@ -50,8 +53,10 @@ public static class LowerBodyCoverageRule
             MovementPattern.KneeFlexion
         };
 
+    /// <summary>The lower-body muscle groups the rule checks, in order.</summary>
     public static IReadOnlyList<LowerBodyMuscleGroup> MuscleGroups => OrderedMuscles;
 
+    /// <summary>Checks which lower-body muscle groups the selected exercises cover.</summary>
     public static LowerBodyCoverageResult Evaluate(
         IEnumerable<IReadOnlyCollection<string>?>? sessionMuscleGroups)
     {
@@ -69,6 +74,7 @@ public static class LowerBodyCoverageRule
             UnconditionalCoverageMuscles.Where(muscle => exposures[muscle] < MinimumWeeklySessionExposures).ToArray());
     }
 
+    /// <summary>The stable code for a missing lower-body group, so the client can name it without parsing text.</summary>
     public static string GapCode(LowerBodyMuscleGroup muscle) => $"{CoverageGapCodePrefix}_{muscle}";
 
     /// <summary>
@@ -101,10 +107,12 @@ public static class LowerBodyCoverageRule
         return ids;
     }
 
+    /// <summary>True when the exercise's muscle name belongs to the group.</summary>
     private static bool Matches(LowerBodyMuscleGroup muscle, string? muscleName) =>
         !string.IsNullOrWhiteSpace(muscleName) &&
         NamesFor(muscle).Contains(muscleName.Trim(), StringComparer.OrdinalIgnoreCase);
 
+    /// <summary>Muscle names the catalog uses for the group.</summary>
     private static string[] NamesFor(LowerBodyMuscleGroup muscle) => muscle switch
     {
         LowerBodyMuscleGroup.Glutes => GlutesNames,

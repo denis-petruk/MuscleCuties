@@ -1,6 +1,8 @@
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
+/// <summary>A photo that a deletion must remove from the bucket.</summary>
 public sealed record PhotoPurgeCandidate(Guid PhotoId, string Key, DateTime NotBeforeUtc);
+/// <summary>One object key to delete for a photo, with the reason recorded against it.</summary>
 public sealed record PhotoPurgeTarget(Guid PhotoId, string Key, DateTime NotBeforeUtc);
 
 /// <summary>Builds a bounded-key purge inventory without widening the authenticated owner's scope.</summary>
@@ -8,6 +10,7 @@ public static class PhotoPurgeInventory
 {
     private static readonly TimeSpan UploadGrantSafetyMargin = TimeSpan.FromMinutes(5);
 
+    /// <summary>The keys a purge must remove for one photo, so deletion never has to guess a key.</summary>
     public static IReadOnlyList<PhotoPurgeTarget> Build(Guid ownerId, IEnumerable<PhotoPurgeCandidate> candidates, DateTime nowUtc)
     {
         if (ownerId == Guid.Empty || nowUtc.Kind != DateTimeKind.Utc)

@@ -4,6 +4,7 @@ namespace MuscleCuties.Core.Domain.Nutrition;
 public static class CustomFoodCreationRule
 {
     private const float GramsPerNutritionBasis = 100f;
+    /// <summary>Validates a custom food request and builds the food, reporting why it was refused.</summary>
     public static bool TryCreate(
         string? name,
         float servingAmount,
@@ -63,6 +64,7 @@ public static class CustomFoodCreationRule
         return true;
     }
 
+    /// <summary>True when the request carries a name, a serving and plausible nutrients.</summary>
     public static bool IsValidRequest(
         string? name,
         float servingAmount,
@@ -89,6 +91,7 @@ public static class CustomFoodCreationRule
             out _);
     }
 
+    /// <summary>Keeps the micronutrients the catalog knows and reports the rest as dropped.</summary>
     public static bool TryNormalizeMicronutrients(
         float? ironMilligrams,
         float? vitaminB12Micrograms,
@@ -108,6 +111,7 @@ public static class CustomFoodCreationRule
         return true;
     }
 
+    /// <summary>Floors a micronutrient at zero and drops a value she left blank, answering false for an unusable one.</summary>
     public static bool TryNormalizeOptionalMicronutrient(float? value, float servingGrams, out decimal? perHundredGrams)
     {
         perHundredGrams = null;
@@ -123,11 +127,13 @@ public static class CustomFoodCreationRule
         return true;
     }
 
+    /// <summary>True when the value fits the precision the column stores.</summary>
     private static bool CanStoreAsDecimal(float value) =>
         Math.Abs((double)value) <= (double)decimal.MaxValue &&
         (value == 0f || (decimal)value != 0m);
 }
 
+/// <summary>Per-100 g values she typed for a food she created.</summary>
 public readonly record struct CustomFoodNutrition(
     string Name,
     float CaloriesPer100Grams,
@@ -138,6 +144,7 @@ public readonly record struct CustomFoodNutrition(
     string ServingUnit,
     float ServingGrams);
 
+/// <summary>The micronutrient additions she typed, absent when she left them out.</summary>
 public readonly record struct CustomFoodMicronutrients(
     decimal? IronMilligramsPer100Grams,
     decimal? VitaminB12MicrogramsPer100Grams,

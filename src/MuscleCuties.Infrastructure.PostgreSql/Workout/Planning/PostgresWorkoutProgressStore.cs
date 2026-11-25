@@ -3,6 +3,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>The progress figures the workout tab shows, computed from sessions and credits.</summary>
 public sealed class PostgresWorkoutProgressStore(PostgresDbContext context) : IWorkoutProgressStore
 {
     private const string ReadyStatus = "Ready";
@@ -12,12 +13,14 @@ public sealed class PostgresWorkoutProgressStore(PostgresDbContext context) : IW
     private const string ExpiredStatus = "Expired";
     private const int InitialExperienceVersion = 0;
 
+    /// <summary>The user's workout progress.</summary>
     public Task<WorkoutProgressResponse> ReadAsync(Guid userId, CancellationToken cancellationToken) =>
         InTransactionAsync(userId, async () =>
         {
             return await SnapshotAsync(userId, ReadyStatus, cancellationToken).ConfigureAwait(false);
         }, cancellationToken);
 
+    /// <summary>Records the foreground time zone the user's device reports.</summary>
     public Task<WorkoutProgressResponse> AcceptForegroundTimeZoneAsync(Guid userId,
         WorkoutForegroundTimeZoneRequest request, CancellationToken cancellationToken) =>
         InTransactionAsync(userId, async () =>
@@ -57,6 +60,7 @@ public sealed class PostgresWorkoutProgressStore(PostgresDbContext context) : IW
             return await SnapshotAsync(userId, ReadyStatus, cancellationToken).ConfigureAwait(false);
         }, cancellationToken);
 
+    /// <summary>One consistent progress snapshot, so the tab's numbers cannot come from different moments.</summary>
     private async Task<WorkoutProgressResponse> SnapshotAsync(Guid userId, string status, CancellationToken cancellationToken)
     {
         var state = await context.WorkoutAccountPlanningStates.AsNoTracking().SingleOrDefaultAsync(row => row.UserId == userId,
@@ -68,6 +72,7 @@ public sealed class PostgresWorkoutProgressStore(PostgresDbContext context) : IW
             state?.EffectiveExperience.ToString(), days, state?.ExperienceVersion ?? InitialExperienceVersion, state?.PromotionPending ?? false);
     }
 
+    /// <summary>Runs the action inside a transaction with the tenant set.</summary>
     private async Task<T> InTransactionAsync<T>(Guid userId, Func<Task<T>> action, CancellationToken cancellationToken) =>
         await context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
@@ -85,10 +90,12 @@ public sealed class PostgresWorkoutProgressStore(PostgresDbContext context) : IW
         WorkoutLogRecord log, DateTime nowUtc, CancellationToken cancellationToken) =>
         await CreditAsync(context, userId, log.Date, log.Id, null, nowUtc, cancellationToken).ConfigureAwait(false);
 
+    /// <summary>Credits a finished planned session to the progress figures.</summary>
     internal static async Task CreditPlannedSessionAsync(PostgresDbContext context, Guid userId,
         WorkoutSessionLogRecord session, DateTime nowUtc, CancellationToken cancellationToken) =>
         await CreditAsync(context, userId, null, null, session.Id, nowUtc, cancellationToken).ConfigureAwait(false);
 
+    /// <summary>Adds one day's credit to the progress rows.</summary>
     private static async Task CreditAsync(PostgresDbContext context, Guid userId, DateOnly? recordedDate,
         Guid? sourceWorkoutLogId, Guid? sourceSessionId, DateTime nowUtc, CancellationToken cancellationToken)
     {

@@ -11,6 +11,8 @@ using MuscleCuties.UseCases.Features.Hydration.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>The diary for one day: the meal sections and their entries, the date strip, notes and water, plus the</summary>
+/// editor that adds or changes one item.</summary>
 public partial class FoodLogViewModel : ObservableObject, IDisposable
 {
     private const int PreviousDayOffset = -1;
@@ -25,11 +27,9 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     private readonly INutritionOverviewUseCase? _overviewUseCase;
     private readonly SemaphoreSlim _dateLoadLock = new(1, 1);
     // F02: hydration writes are serialized and only the confirmed total is trusted. A failed
-    // write rolls the visible total back and keeps a retry target instead of silently claiming
-    // the amount was saved.
+    // write rolls the visible total back instead of silently claiming the amount was saved.
     private readonly SemaphoreSlim _waterWriteLock = new(1, 1);
     private int _confirmedWaterIntakeMl;
-    private int? _pendingWaterIntakeMl;
     private readonly Func<Task>? _navigateBackAsync;
     private Guid _currentLogId;
     private int _dateLoadVersion;
@@ -90,6 +90,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     private string _savedNotes = string.Empty;
 
+    /// <summary>Notes can be saved once they differ from what is stored, so the save action is not offered for an</summary>
+    /// unchanged day.</summary>
     public bool CanSaveNotes => !IsWriting &&
                                 !string.Equals(NotesText, _savedNotes, StringComparison.Ordinal);
 
@@ -129,9 +131,12 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(WaterSummaryAccessibility))]
     private int _waterIntakeMl;
 
+    /// <summary>The water total as it is read aloud, with its unit and not just the number.</summary>
     public string WaterSummaryAccessibility =>
         UiTextCatalog.Format("Nutrition_Hydration_SummaryAccessibilityFormat", WaterIntakeMl);
 
+    /// <summary>The meal a new entry most likely belongs to: from the clock for today, and breakfast for any other day,</summary>
+    /// because there is no time of day to infer from.</summary>
     public MealType SuggestedAddMealType => IsSelectedDateToday
         ? DateTime.Now.Hour switch
         {
@@ -147,8 +152,10 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasWaterSaveError))]
     private string _waterSaveError = string.Empty;
 
+    /// <summary>True when saving the water entry failed.</summary>
     public bool HasWaterSaveError => !string.IsNullOrWhiteSpace(WaterSaveError);
 
+    /// <summary>Takes the use cases and the callbacks the diary reports to.</summary>
     public FoodLogViewModel(
         INutritionDailyLogUseCase dailyLogUseCase,
         IRecipePortionUseCase recipePortionUseCase,
@@ -192,10 +199,15 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     /// <summary>RM05: the same breakdown presentation the Nutrition page uses, loaded for this page's day.</summary>
     public NutritionBreakdownPresenter Breakdown { get; }
 
+    /// <summary>True when the editor holds a single food.</summary>
     public bool IsPlainFoodEditor => !IsGroupedEditor;
+    /// <summary>True when the edited food can be deleted.</summary>
     public bool CanDeleteEditingFood => IsEditingExisting && !IsMealContextLocked;
+    /// <summary>Which meal and what time the draft is being written for, for the locked context row.</summary>
     public string MealContextSummary =>
         $"{UiTextCatalog.Get($"Nutrition_MealType_{EditingMealType}")} · {DisplayFormat.Time(_draftTimestamp)}";
+    /// <summary>The sheet's heading, which tells editing apart from logging and names a whole meal when the editor was</summary>
+    /// opened from the meal itself.</summary>
     public string EditModalTitle => IsEditingExisting
         ? (IsMealContextLocked
             ? UiTextCatalog.Get("Nutrition_Breakdown_EditMeal")
@@ -204,30 +216,46 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     /// <summary>Draft totals for the meal being edited, so the sheet can open on what it contains.</summary>
     public string EditDraftCaloriesText => DisplayFormat.Calories(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Calories));
+    /// <summary>The draft's protein, summed over its ingredient editors as they are changed.</summary>
     public string EditDraftProteinText => DisplayFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Protein));
+    /// <summary>The draft's carbohydrate, summed the same way.</summary>
     public string EditDraftCarbsText => DisplayFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Carbs));
+    /// <summary>The draft's fat, summed the same way.</summary>
     public string EditDraftFatsText => DisplayFormat.Grams(EditingIngredients.Sum(i => (double)i.MacrosForDraft.Fats));
+    /// <summary>The ingredients of the food being edited.</summary>
     public ObservableCollection<HistoryIngredientEditor> EditingIngredients { get; } = [];
+    /// <summary>The meals a food can be logged in.</summary>
     public IReadOnlyList<MealType> MealCategories { get; } = Enum.GetValues<MealType>();
 
     /// <summary>Days shown either side of the selected day, so the seven cells fit one row.</summary>
     private const int DaysAroundSelectedDate = 3;
 
+    /// <summary>The days shown in the date strip.</summary>
     public ObservableCollection<DateStripDayItem> DateStripDays { get; } = [];
 
+    /// <summary>The breakfast group of the timeline.</summary>
     public MealSectionUiGroup BreakfastSection { get; } = new(MealType.Breakfast, "Breakfast");
+    /// <summary>The lunch group of the timeline.</summary>
     public MealSectionUiGroup LunchSection { get; } = new(MealType.Lunch, "Lunch");
+    /// <summary>The dinner group of the timeline.</summary>
     public MealSectionUiGroup DinnerSection { get; } = new(MealType.Dinner, "Dinner");
+    /// <summary>The snack group of the timeline.</summary>
     public MealSectionUiGroup SnackSection { get; } = new(MealType.Snack, "Snacks");
 
+    /// <summary>The meal groups in timeline order.</summary>
     public ObservableCollection<MealSectionUiGroup> MealSections { get; } = [];
 
+    /// <summary>Calories as a 0–1 fraction of the target, capped so an overshoot does not draw past the end of the ring.</summary>
     public double CalorieProgressRatio =>
         TargetCalories > 0 ? Math.Clamp(TotalCalories / TargetCalories, 0.0, 1.0) : 0.0;
+    /// <summary>The day's calories as a whole number.</summary>
     public string TotalCaloriesText => DisplayFormat.WholeNumber(TotalCalories);
 
+    /// <summary>Protein as a capped fraction of its target.</summary>
     public double ProteinProgressRatio => TargetProtein > 0 ? Math.Clamp(TotalProtein / TargetProtein, 0.0, 1.0) : 0.0;
+    /// <summary>Carbohydrate as a capped fraction of its target.</summary>
     public double CarbsProgressRatio => TargetCarbs > 0 ? Math.Clamp(TotalCarbs / TargetCarbs, 0.0, 1.0) : 0.0;
+    /// <summary>Fat as a capped fraction of its target.</summary>
     public double FatProgressRatio => TargetFat > 0 ? Math.Clamp(TotalFat / TargetFat, 0.0, 1.0) : 0.0;
 
     public string CalorieRemainingText
@@ -242,6 +270,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Whether the diary is showing today, which decides whether a new entry defaults to the clock's meal or to</summary>
+    /// breakfast.</summary>
     public bool IsSelectedDateToday => SelectedDate == DateOnly.FromDateTime(DateTime.Today);
 
     public string FormattedSelectedDate
@@ -263,21 +293,25 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Releases the view model's subscriptions.</summary>
     public void Dispose()
     {
         _isActive = false;
         ResetHydration();
         Breakdown.Clear();
+        _barcodeScan?.Dispose();
         _dateLoadLock.Dispose();
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>Reloads the diary when the nutrition data changes.</summary>
     private void OnNutritionChanged(object? sender, NutritionChangedEventArgs e)
     {
         if (_isActive && !IsWriting && e.Date == SelectedDate)
             _ = LoadLogForDateAsync(SelectedDate);
     }
 
+    /// <summary>Starts listening for changes elsewhere in the app and loads the diary the page opens on.</summary>
     public async Task InitializeAsync()
     {
         if (!_isActive && _changeNotifier is not null)
@@ -290,6 +324,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         await LoadLogForDateAsync(SelectedDate);
     }
 
+    /// <summary>Stops listening, drops hydration state and forgets the day, so a closed diary is not reloaded by another</summary>
+    /// screen's changes.</summary>
     public void Deactivate()
     {
         _isActive = false;
@@ -300,6 +336,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         CancelFoodSearch();
     }
 
+    /// <summary>Retries the failed load.</summary>
     [RelayCommand]
     private Task RetryLoadAsync()
     {
@@ -348,6 +385,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Loads the newly selected day.</summary>
     partial void OnSelectedDateChanged(DateOnly value)
     {
         ResetHydration();
@@ -366,6 +404,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         NotesText = string.Empty;
     }
 
+    /// <summary>Opens one logged item for editing, and reports on the page when it cannot be read.</summary>
     public async Task OpenRecordAsync(Guid id)
     {
         try
@@ -386,6 +425,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         catch { ShowStatus("Could not open this entry. Refresh and try again."); }
     }
 
+    /// <summary>Builds the surrounding days, marking today so the strip has an anchor.</summary>
     private void PopulateDateStrip(DateOnly centerDate)
     {
         DateStripDays.Clear();
@@ -407,6 +447,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Selects a day from the strip.</summary>
     [RelayCommand]
     public async Task SelectDateAsync(DateStripDayItem day)
     {
@@ -422,6 +463,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         await LoadLogForDateAsync(SelectedDate);
     }
 
+    /// <summary>Selects today.</summary>
     [RelayCommand]
     public async Task JumpToTodayAsync()
     {
@@ -439,6 +481,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         await LoadLogForDateAsync(SelectedDate);
     }
 
+    /// <summary>Selects the previous day.</summary>
     [RelayCommand]
     public async Task PreviousDayAsync()
     {
@@ -458,6 +501,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         await LoadLogForDateAsync(SelectedDate);
     }
 
+    /// <summary>Selects the next day.</summary>
     [RelayCommand]
     public async Task NextDayAsync()
     {
@@ -477,12 +521,14 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         await LoadLogForDateAsync(SelectedDate);
     }
 
+    /// <summary>Shows or hides the date picker.</summary>
     [RelayCommand]
     public void ToggleDatePicker()
     {
         IsDatePickerOpen = !IsDatePickerOpen;
     }
 
+    /// <summary>Selects the day the picker returned.</summary>
     [RelayCommand]
     public async Task DatePickerSelectedAsync(DateTime newDate)
     {
@@ -501,9 +547,12 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         await LoadLogForDateAsync(SelectedDate);
     }
 
+    /// <summary>Opens the editor for a new food in the meal.</summary>
     [RelayCommand]
     public Task OpenAddFoodAsync(MealType mealType) => OpenAddFoodCoreAsync(mealType, null);
 
+    /// <summary>Opens an empty entry for a meal, optionally at a given minute, and refuses while the day is loading,</summary>
+    /// writing or in error because the entry would target unknown data.</summary>
     private async Task OpenAddFoodCoreAsync(MealType mealType, int? minuteOfDay)
     {
         if (IsLoading || IsWriting || IsLoadError)
@@ -541,29 +590,11 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         await LoadFastLoggingShelvesAsync();
     }
 
-    /// <summary>
-    /// Interprets the add-food intent carried by a navigation query. The page only moves the
-    /// raw values, so the meaning of a meal name or a minute of day stays in this layer.
-    /// </summary>
-    public async Task OpenAddFoodIntentAsync(string? mealTypeName, int? minuteOfDay)
-    {
-        if (!Enum.TryParse<MealType>(mealTypeName, true, out var mealType) || !Enum.IsDefined(mealType))
-            return;
-
-        await OpenAddFoodCoreAsync(mealType, minuteOfDay);
-    }
-
-    // Kept for callers that pass the meal category as text.
-    public void OpenAddFood(string mealTypeStr)
-    {
-        if (!Enum.TryParse<MealType>(mealTypeStr, true, out var mealType))
-            mealType = MealType.Breakfast;
-        _ = OpenAddFoodAsync(mealType);
-    }
-
+    /// <summary>Opens the editor for an existing entry.</summary>
     [RelayCommand]
     public Task OpenEditFoodAsync(FoodLogEntry item) => OpenEditFoodCoreAsync(item, false);
 
+    /// <summary>Opens the meal's entries for editing.</summary>
     [RelayCommand]
     private async Task EditMealAsync(MealSectionUiGroup? section)
     {
@@ -571,6 +602,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             await OpenEditFoodCoreAsync(section.Items[0], true);
     }
 
+    /// <summary>Opens an item for editing, locking the meal and time when the editor was reached from that meal's own</summary>
+    /// sheet.</summary>
     private async Task OpenEditFoodCoreAsync(FoodLogEntry item, bool lockContext)
     {
         if (IsLoading || IsWriting || IsLoadError)
@@ -628,6 +661,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         IsEditModalVisible = true;
     }
 
+    /// <summary>Closes the food editor.</summary>
     [RelayCommand]
     public void CloseEditModal()
     {
@@ -641,15 +675,19 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         CancelFoodSearch();
     }
 
+    /// <summary>Refreshes the editing context when the lock changes.</summary>
     partial void OnIsMealContextLockedChanged(bool value) =>
         NotifyEditingContextProperties();
 
+    /// <summary>Refreshes the editing flags when the mode changes.</summary>
     partial void OnIsEditingExistingChanged(bool value) =>
         NotifyEditingContextProperties();
 
+    /// <summary>Refreshes the editing flags when the meal changes.</summary>
     partial void OnEditingMealTypeChanged(MealType value) =>
         OnPropertyChanged(nameof(MealContextSummary));
 
+    /// <summary>Raises the editing properties the page binds.</summary>
     private void NotifyEditingContextProperties()
     {
         OnPropertyChanged(nameof(CanDeleteEditingFood));
@@ -657,6 +695,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         OnPropertyChanged(nameof(EditModalTitle));
     }
 
+    /// <summary>Fills the ingredient editors from a stored meal and starts tracking their totals.</summary>
     private void SetIngredients(IReadOnlyList<FoodHistoryIngredient> ingredients)
     {
         EditingIngredients.Clear();
@@ -681,6 +720,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         TrackEditingIngredientTotals();
     }
 
+    /// <summary>Subscribes to each ingredient editor so a changed weight updates the draft's totals.</summary>
     private void TrackEditingIngredientTotals()
     {
         foreach (var editor in EditingIngredients)
@@ -692,12 +732,14 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         NotifyEditingIngredientTotals();
     }
 
+    /// <summary>Recalculates the editing totals when a field changes.</summary>
     private void OnEditingIngredientChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(HistoryIngredientEditor.GramsText))
             NotifyEditingIngredientTotals();
     }
 
+    /// <summary>Re-publishes the four draft totals after an ingredient changed.</summary>
     private void NotifyEditingIngredientTotals()
     {
         OnPropertyChanged(nameof(EditDraftCaloriesText));
@@ -719,6 +761,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         return false;
     }
 
+    /// <summary>The entry the editor would save: its identity, context and the values currently entered.</summary>
     private FoodLogEntry BuildDraft()
     {
         return new(EditingItemId, _currentLogId, EditingMealType,
@@ -731,6 +774,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         };
     }
 
+    /// <summary>Saves the food entry.</summary>
     [RelayCommand]
     public async Task SaveFoodItemAsync()
     {
@@ -789,11 +833,14 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }, editing ? "Item updated." : "Item added.");
     }
 
+    /// <summary>Saves an entry with a fixed success message.</summary>
     private Task CommitFoodAsync(DateOnly date, Func<Task> save, string success)
     {
         return CommitFoodAsync(date, save, () => success);
     }
 
+    /// <summary>The one write path for an entry: refuses a second concurrent write, reloads the day afterwards and reports</summary>
+    /// a failure without losing the draft.</summary>
     private async Task CommitFoodAsync(DateOnly date, Func<Task> save, Func<string> successMessageProvider)
     {
         if (IsWriting) return;
@@ -845,6 +892,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         IsWriting = false;
     }
 
+    /// <summary>Deletes the food entry.</summary>
     [RelayCommand]
     public async Task DeleteFoodItemAsync()
     {
@@ -859,28 +907,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         await CommitFoodAsync(_draftDate, () => _dailyLogUseCase.DeleteFoodItemAsync(id), "Item deleted.");
     }
 
-    [RelayCommand]
-    public async Task CopyYesterdayMealAsync(object? param)
-    {
-        if (param is MealType mt)
-            await CopyYesterdayMealInternalAsync(mt);
-        else if (param is string s && Enum.TryParse<MealType>(s, true, out var parsed))
-            await CopyYesterdayMealInternalAsync(parsed);
-    }
-
-    public async Task CopyYesterdayMealInternalAsync(MealType mealType)
-    {
-        if (IsWriting || IsLoading) return;
-        var targetDate = SelectedDate;
-        var sourceDate = targetDate.AddDays(PreviousDayOffset);
-
-        var count = 0;
-        await CommitFoodAsync(targetDate, async () =>
-        {
-            count = await _dailyLogUseCase.CopyPreviousMealAsync(sourceDate, targetDate, mealType);
-        }, () => count == 0 ? $"No foods found in yesterday's {mealType.ToString().ToLowerInvariant()}." : $"Copied {count} {(count == 1 ? "food" : "foods")} from yesterday.");
-    }
-
+    /// <summary>Copies yesterday's entries into today.</summary>
     [RelayCommand]
     public async Task CopyYesterdayDiaryAsync()
     {
@@ -895,47 +922,18 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }, () => count == 0 ? "No foods found in yesterday's diary." : $"Copied {count} {(count == 1 ? "food" : "foods")} from yesterday.");
     }
 
-    [ObservableProperty] private DateOnly _copySourceDate = DateOnly.FromDateTime(DateTime.Today.AddDays(-1));
-    [ObservableProperty] private bool _copyOverwriteMode;
     [ObservableProperty] private TimeSpan _editingConsumptionTime = DateTime.Now.TimeOfDay;
     [ObservableProperty] private bool _waterReminderOptedIn;
     [ObservableProperty] private TimeOnly _waterReminderQuietStart = new(22, 0);
     [ObservableProperty] private TimeOnly _waterReminderQuietEnd = new(7, 0);
 
+    /// <summary>The volumes the water buttons offer.</summary>
     public ObservableCollection<int> WaterPresetVolumesMl { get; }
 
+    /// <summary>The entries in timeline order.</summary>
     public ObservableCollection<FoodLogEntry> TimelineEntries { get; } = [];
-    public Dictionary<MealType, double> PerMealCalorieTargets { get; } = new();
 
-    [RelayCommand]
-    public async Task CopyFromSelectedSourceDateAsync(MealType? mealType = null)
-    {
-        if (IsWriting || IsLoading) return;
-        var targetDate = SelectedDate;
-        var sourceDate = CopySourceDate;
-        var count = 0;
-        await CommitFoodAsync(targetDate, async () =>
-        {
-            count = mealType.HasValue
-                ? await _dailyLogUseCase.CopyPreviousMealAsync(sourceDate, targetDate, mealType.Value)
-                : await _dailyLogUseCase.CopyEntireDayAsync(sourceDate, targetDate);
-        }, () => count == 0 ? $"No foods found on {sourceDate:MMM d}." : $"Copied {count} {(count == 1 ? "food" : "foods")} from {sourceDate:MMM d}.");
-    }
-
-    public void SetMealCalorieTarget(MealType mealType, double targetKcal)
-    {
-        if (double.IsFinite(targetKcal) && targetKcal >= 0)
-            PerMealCalorieTargets[mealType] = Math.Round(targetKcal, 0);
-    }
-
-    [RelayCommand]
-    public async Task RetryWaterSaveAsync()
-    {
-        var date = SelectedDate;
-        var target = _pendingWaterIntakeMl ?? WaterIntakeMl;
-        await WriteWaterAsync(date, target);
-    }
-
+    /// <summary>Changes the day's water by a delta under a write lock, so two quick taps cannot lose one of the changes.</summary>
     private async Task ChangeWaterAsync(int deltaMl)
     {
         var date = SelectedDate;
@@ -957,22 +955,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }
     }
 
-    private async Task WriteWaterAsync(DateOnly date, int target)
-    {
-        await _waterWriteLock.WaitAsync();
-        try
-        {
-            if (date != SelectedDate)
-                return;
-
-            await PersistWaterAsync(date, target);
-        }
-        finally
-        {
-            _waterWriteLock.Release();
-        }
-    }
-
+    /// <summary>Sends the water total, showing it immediately and restoring the confirmed value when the write fails.</summary>
     private async Task PersistWaterAsync(DateOnly date, int target)
     {
         var previous = _confirmedWaterIntakeMl;
@@ -986,7 +969,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
                 return;
 
             _confirmedWaterIntakeMl = target;
-            _pendingWaterIntakeMl = null;
             WaterIntakeMl = target;
         }
         catch
@@ -995,7 +977,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
                 return;
 
             WaterIntakeMl = previous;
-            _pendingWaterIntakeMl = target;
             WaterSaveError = UiTextCatalog.Get("Nutrition_FoodLog_WaterSaveFailed");
         }
         finally
@@ -1004,6 +985,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>Returns to the previous page.</summary>
     [RelayCommand]
     public async Task NavigateBackAsync()
     {
@@ -1011,6 +993,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             await _navigateBackAsync();
     }
 
+    /// <summary>Loads one day under a lock and a version, so switching dates quickly cannot leave the older day's entries</summary>
+    /// on screen.</summary>
     private async Task LoadLogForDateAsync(DateOnly date)
     {
         var version = Interlocked.Increment(ref _dateLoadVersion);
@@ -1033,7 +1017,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             if (_hydrationDay is null)
                 WaterIntakeMl = log.WaterIntakeMl;
             _confirmedWaterIntakeMl = log.WaterIntakeMl;
-            _pendingWaterIntakeMl = null;
             WaterSaveError = string.Empty;
             _savedNotes = log.Notes ?? string.Empty;
             NotesText = _savedNotes;
@@ -1081,6 +1064,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }
     }
 
+    /// <summary>The section a meal type belongs to.</summary>
     private MealSectionUiGroup GetSectionForMealType(MealType mealType)
     {
         return mealType switch
@@ -1092,6 +1076,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         };
     }
 
+    /// <summary>Recomputes the day's totals from the entries on screen, so the header matches the list after an edit.</summary>
     private void RecalculateTotalsFromUi()
     {
         var allItems = MealSections.SelectMany(s => s.Items).ToList();
@@ -1101,6 +1086,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         TotalFat = Math.Round(allItems.Sum(i => i.Fat), 1);
     }
 
+    /// <summary>Shows a transient status line from the diary's own actions.</summary>
     private void ShowStatus(string message)
     {
         StatusMessage = message;
@@ -1108,6 +1094,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         _ = HideStatusAfterDelayAsync(message);
     }
 
+    /// <summary>Clears the status line after its delay, but only if it still shows the message this call was given:</summary>
+    /// a newer status must not be wiped by an older timer.</summary>
     private async Task HideStatusAfterDelayAsync(string message)
     {
         await Task.Delay(3000);

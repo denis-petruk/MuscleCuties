@@ -2,8 +2,10 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 
 namespace MuscleCuties.UseCases.Features.Cycle.Contracts;
 
+/// <summary>Maps the domain cycle types onto the DTOs, so enum renames never reach the wire.</summary>
 public static class CycleContractMapper
 {
+    /// <summary>The domain phase for its wire value.</summary>
     public static CyclePhase ToCore(CyclePhaseDto phase) => phase switch
     {
         CyclePhaseDto.Menstrual => CyclePhase.Menstrual,
@@ -14,6 +16,7 @@ public static class CycleContractMapper
         _ => throw new ArgumentOutOfRangeException(nameof(phase), phase, "Unknown cycle phase.")
     };
 
+    /// <summary>The wire value for a domain phase.</summary>
     public static CyclePhaseDto ToDto(CyclePhase phase) => phase switch
     {
         CyclePhase.Menstrual => CyclePhaseDto.Menstrual,
@@ -24,6 +27,7 @@ public static class CycleContractMapper
         _ => throw new ArgumentOutOfRangeException(nameof(phase), phase, "Unknown cycle phase.")
     };
 
+    /// <summary>The domain flow intensity for its wire value.</summary>
     public static FlowIntensity ToCore(FlowIntensityDto intensity) => intensity switch
     {
         FlowIntensityDto.None => FlowIntensity.None,
@@ -34,6 +38,7 @@ public static class CycleContractMapper
         _ => throw new ArgumentOutOfRangeException(nameof(intensity), intensity, "Unknown flow intensity.")
     };
 
+    /// <summary>The wire value for a flow intensity.</summary>
     public static FlowIntensityDto ToDto(FlowIntensity intensity) => intensity switch
     {
         FlowIntensity.None => FlowIntensityDto.None,
@@ -44,6 +49,7 @@ public static class CycleContractMapper
         _ => throw new ArgumentOutOfRangeException(nameof(intensity), intensity, "Unknown flow intensity.")
     };
 
+    /// <summary>The domain symptom type for its wire value.</summary>
     public static SymptomType ToCore(SymptomTypeDto symptom) => symptom switch
     {
         SymptomTypeDto.Cramps => SymptomType.Cramps,
@@ -61,6 +67,7 @@ public static class CycleContractMapper
         _ => throw new ArgumentOutOfRangeException(nameof(symptom), symptom, "Unknown cycle symptom.")
     };
 
+    /// <summary>The wire value for a symptom type.</summary>
     public static SymptomTypeDto ToDto(SymptomType symptom) => symptom switch
     {
         SymptomType.Cramps => SymptomTypeDto.Cramps,

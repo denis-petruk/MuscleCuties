@@ -1,3 +1,5 @@
+// Fast logging, barcode capture, and quick-add flows.
+// Second half of FoodLogViewModel; see its declaration for the full contract.
 
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Nutrition;
@@ -9,6 +11,8 @@ using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>Fast logging: the recent, suggested and saved shelves, multi-select of several foods at once, and the food</summary>
+/// search behind them.</summary>
 public partial class FoodLogViewModel
 {
     private const double DefaultQuickAddCalories = 200.0;
@@ -18,6 +22,7 @@ public partial class FoodLogViewModel
     private const double DefaultQuickAddServingSize = 1.0;
     private const double DefaultQuickAddServingsCount = 1.0;
     private const string DefaultQuickAddServingUnit = "serving";
+    /// <summary>Name given to a quick add that has no name of its own.</summary>
     private static string DefaultQuickAddTitle => UiTextCatalog.Get("Nutrition_QuickAdd_DefaultName");
     private const string FoodStatusEnterTwoLettersKey = "Nutrition_FoodLog_StatusEnterTwoLetters";
     private const string FoodStatusSavedFoodsKey = "Nutrition_FoodLog_StatusSavedFoods";
@@ -69,27 +74,40 @@ public partial class FoodLogViewModel
     [NotifyPropertyChangedFor(nameof(SelectedQuickFoodsSummaryText))]
     private double _selectedQuickFoodsCalories;
 
+    /// <summary>The recently logged ingredients.</summary>
     public ObservableCollection<QuickFoodItemUiModel> RecentIngredients { get; } = [];
+    /// <summary>The recently accepted suggestions.</summary>
     public ObservableCollection<QuickFoodItemUiModel> RecentSuggestions { get; } = [];
+    /// <summary>The food search results.</summary>
     public ObservableCollection<QuickFoodItemUiModel> FoodSearchResults { get; } = [];
+    /// <summary>The user's saved recipes.</summary>
     public ObservableCollection<RecipeSummaryItem> SavedRecipes { get; } = [];
 
+    /// <summary>True when the manual food editor is shown.</summary>
     public bool IsManualEditorVisible => !IsFastLoggingVisible && !IsQuickAddCaloriesVisible &&
                                          !IsBarcodeScannerVisible && !IsRecipeBuilderVisible;
+    /// <summary>True when there are recent ingredients.</summary>
     public bool HasRecentIngredients => RecentIngredients.Count > 0;
+    /// <summary>True when there are recent suggestions.</summary>
     public bool HasRecentSuggestions => RecentSuggestions.Count > 0;
+    /// <summary>True when the search returned foods.</summary>
     public bool HasFoodSearchResults => FoodSearchResults.Count > 0;
+    /// <summary>True when the user has recipes.</summary>
     public bool HasSavedRecipes => SavedRecipes.Count > 0;
+    /// <summary>Whether any shelf item is ticked for a multi-add.</summary>
     public bool HasSelectedQuickFoods => SelectedQuickFoodsCount > 0;
 
+    /// <summary>How many items are ticked and what they add up to, so a multi-add can be checked before it is committed.</summary>
     public string SelectedQuickFoodsSummaryText =>
         $"Add {SelectedQuickFoodsCount} {(SelectedQuickFoodsCount == 1 ? "item" : "items")} • {DisplayFormat.Calories(SelectedQuickFoodsCalories)}";
 
+    /// <summary>Refreshes the selection total when a row is toggled.</summary>
     private void OnQuickFoodSelectionChanged(QuickFoodItemUiModel model)
     {
         UpdateMultiSelectionSummary();
     }
 
+    /// <summary>Recomputes the multi-select summary and its visibility from the current ticks.</summary>
     private void UpdateMultiSelectionSummary()
     {
         var allSelected = RecentIngredients
@@ -103,6 +121,7 @@ public partial class FoodLogViewModel
     }
 
     [RelayCommand]
+    /// <summary>Toggles a row's selection.</summary>
     [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "RelayCommand for ViewModel binding.")]
     public void ToggleQuickFoodSelection(QuickFoodItemUiModel? item)
@@ -111,6 +130,7 @@ public partial class FoodLogViewModel
         item.IsSelected = !item.IsSelected;
     }
 
+    /// <summary>Clears every selected row.</summary>
     [RelayCommand]
     public void ClearQuickFoodSelection()
     {
@@ -120,6 +140,7 @@ public partial class FoodLogViewModel
         UpdateMultiSelectionSummary();
     }
 
+    /// <summary>Logs the selected foods in one batch.</summary>
     [RelayCommand]
     public async Task BatchLogSelectedFoodsAsync()
     {
@@ -160,6 +181,7 @@ public partial class FoodLogViewModel
         ClearQuickFoodSelection();
     }
 
+    /// <summary>Loads the recent, suggested and saved shelves for the date and meal being edited.</summary>
     private async Task LoadFastLoggingShelvesAsync()
     {
         var date = SelectedDate;
@@ -210,6 +232,7 @@ public partial class FoodLogViewModel
         }
     }
 
+    /// <summary>Logs one food straight away.</summary>
     [RelayCommand]
     public async Task QuickLogFoodAsync(object? param)
     {
@@ -233,6 +256,7 @@ public partial class FoodLogViewModel
             $"Logged {item.Name}.");
     }
 
+    /// <summary>Marks the food as selected.</summary>
     [RelayCommand]
     private void SelectQuickFood(object? param)
     {
@@ -260,6 +284,7 @@ public partial class FoodLogViewModel
         CancelFoodSearch();
     }
 
+    /// <summary>Opens the manual editor.</summary>
     [RelayCommand]
     private void UseManualFood()
     {
@@ -272,6 +297,7 @@ public partial class FoodLogViewModel
         CancelFoodSearch();
     }
 
+    /// <summary>Opens the quick calorie entry.</summary>
     [RelayCommand]
     public void OpenQuickAddCalories()
     {
@@ -287,6 +313,7 @@ public partial class FoodLogViewModel
         CancelFoodSearch();
     }
 
+    /// <summary>Closes the quick calorie entry.</summary>
     [RelayCommand]
     public void CancelQuickAddCalories()
     {
@@ -296,6 +323,7 @@ public partial class FoodLogViewModel
         IsFastLoggingVisible = true;
     }
 
+    /// <summary>Opens the barcode scanner.</summary>
     [RelayCommand]
     public Task OpenBarcodeScannerAsync()
     {
@@ -312,44 +340,32 @@ public partial class FoodLogViewModel
         return Task.CompletedTask;
     }
 
+    /// <summary>The scan coordinator, created on first use so the diary never touches the camera unless asked to.</summary>
     private BarcodeScanCoordinator BarcodeScan =>
         _barcodeScan ??= new BarcodeScanCoordinator(_barcodeHardwareService);
 
+    /// <summary>True when the scanner sheet is open.</summary>
     private bool IsBarcodeScannerOpen => IsBarcodeScannerVisible && IsEditModalVisible;
 
+    /// <summary>Starts the camera scan.</summary>
     [RelayCommand]
     public async Task ScanBarcodeWithCameraAsync()
     {
         if (IsWriting || IsProcessingBarcode || !IsBarcodeScannerVisible) return;
 
-        if (!BarcodeScan.HasCamera)
+        var scan = await BarcodeScan.ScanAsync(() => IsBarcodeScannerOpen);
+        if (scan.BarcodeText is { } barcodeText)
         {
-            BarcodeScanStatus = UiTextCatalog.Get(BarcodeScanCoordinator.StatusCameraUnavailableKey);
-            return;
-        }
-
-        var sessionRevision = BarcodeScan.BeginSession();
-        var attempt = await BarcodeScan.CaptureAsync(sessionRevision);
-        if (!BarcodeScan.IsCurrent(sessionRevision) || !IsBarcodeScannerOpen) return;
-
-        if (attempt.TimedOut)
-        {
-            BarcodeScanStatus = BarcodeScanCoordinator.TimeoutStatusText;
-            return;
-        }
-
-        var capture = attempt.Capture;
-        if (BarcodeScanCoordinator.HasUsableBarcode(capture.BarcodeText, capture.Outcome))
-        {
-            var barcodeText = capture.BarcodeText!.Trim();
             BarcodeInputText = barcodeText;
-            await LookupBarcodeInternalAsync(barcodeText, capture.Symbology, sessionRevision);
+            await LookupBarcodeInternalAsync(barcodeText, scan.Symbology, scan.Revision);
             return;
         }
 
-        BarcodeScanStatus = BarcodeScanCoordinator.StatusTextFor(capture.Outcome);
+        if (scan.StatusText is { } statusText)
+            BarcodeScanStatus = statusText;
     }
 
+    /// <summary>Closes the scanner.</summary>
     [RelayCommand]
     public void CloseBarcodeScanner()
     {
@@ -361,6 +377,7 @@ public partial class FoodLogViewModel
         BarcodeScanStatus = string.Empty;
     }
 
+    /// <summary>Looks up the given or last scanned barcode.</summary>
     [RelayCommand]
     public async Task LookupBarcodeAsync(string? barcodeString = null)
     {
@@ -368,6 +385,7 @@ public partial class FoodLogViewModel
         await LookupBarcodeInternalAsync(barcodeString, BarcodeSymbology.Auto, sessionRevision);
     }
 
+    /// <summary>Looks the barcode up and shows the food it finds.</summary>
     private async Task LookupBarcodeInternalAsync(
         string? barcodeString,
         BarcodeSymbology symbology,
@@ -375,52 +393,41 @@ public partial class FoodLogViewModel
     {
         if (IsWriting || IsProcessingBarcode || _barcodeUseCase is null) return;
 
-        IsProcessingBarcode = true;
-        BarcodeScanStatus = UiTextCatalog.Get(BarcodeScanCoordinator.StatusSearchingCatalogKey);
+        var attempt = await BarcodeScan.LookupAsync(
+            _barcodeUseCase,
+            barcodeString,
+            BarcodeInputText,
+            symbology,
+            expectedSessionRevision,
+            () => IsBarcodeScannerOpen,
+            NutritionPresentationMapper.FromCatalogItem,
+            setProcessing: isProcessing => IsProcessingBarcode = isProcessing,
+            setStatus: statusText => BarcodeScanStatus = statusText);
 
-        try
-        {
-            var attempt = await BarcodeScan.LookupAsync(
-                _barcodeUseCase,
-                barcodeString,
-                BarcodeInputText,
-                symbology,
-                expectedSessionRevision,
-                () => IsBarcodeScannerOpen,
-                NutritionPresentationMapper.FromCatalogItem);
+        if (attempt.Food is not { } food)
+            return;
 
-            if (attempt.Food is not { } food)
-            {
-                if (attempt.StatusText is { } statusText)
-                    BarcodeScanStatus = statusText;
-                return;
-            }
+        _quickDraft = null;
+        SetIngredients([]);
+        EditingItemName = food.Name;
+        EditingCalories = Math.Max(0.0, food.Calories!.Value);
+        EditingProtein = Math.Max(0.0, food.Protein!.Value);
+        EditingCarbs = Math.Max(0.0, food.Carbs!.Value);
+        EditingFat = Math.Max(0.0, food.Fats!.Value);
+        EditingServingSize = food.ServingSize is > 0f ? food.ServingSize.Value : DefaultQuickAddServingSize;
+        EditingServingUnit = string.IsNullOrWhiteSpace(food.ServingSizeUnit) ? "g" : food.ServingSizeUnit;
+        EditingServingsCount = DefaultQuickAddServingsCount;
 
-            _quickDraft = null;
-            SetIngredients([]);
-            EditingItemName = food.Name;
-            EditingCalories = Math.Max(0.0, food.Calories!.Value);
-            EditingProtein = Math.Max(0.0, food.Protein!.Value);
-            EditingCarbs = Math.Max(0.0, food.Carbs!.Value);
-            EditingFat = Math.Max(0.0, food.Fats!.Value);
-            EditingServingSize = food.ServingSize is > 0f ? food.ServingSize.Value : DefaultQuickAddServingSize;
-            EditingServingUnit = string.IsNullOrWhiteSpace(food.ServingSizeUnit) ? "g" : food.ServingSizeUnit;
-            EditingServingsCount = DefaultQuickAddServingsCount;
+        IsBarcodeScannerVisible = false;
+        IsFastLoggingVisible = false;
+        IsQuickAddCaloriesVisible = false;
 
-            IsBarcodeScannerVisible = false;
-            IsFastLoggingVisible = false;
-            IsQuickAddCaloriesVisible = false;
-
-            ShowStatus(UiTextCatalog.Format(
-                BarcodeScanCoordinator.StatusFoundInCatalogFormatKey, food.Name,
-                Math.Round(food.Calories.Value)));
-        }
-        finally
-        {
-            IsProcessingBarcode = false;
-        }
+        ShowStatus(UiTextCatalog.Format(
+            BarcodeScanCoordinator.StatusFoundInCatalogFormatKey, food.Name,
+            Math.Round(food.Calories.Value)));
     }
 
+    /// <summary>Logs the quick calorie entry.</summary>
     [RelayCommand]
     public async Task SaveQuickCaloriesAsync()
     {
@@ -458,6 +465,7 @@ public partial class FoodLogViewModel
         IsBarcodeScannerVisible = false;
     }
 
+    /// <summary>Searches the local catalog.</summary>
     [RelayCommand]
     private async Task SearchFoodAsync()
     {
@@ -501,6 +509,7 @@ public partial class FoodLogViewModel
         }
     }
 
+    /// <summary>Searches the USDA catalog.</summary>
     [RelayCommand]
     private async Task SearchUsdaAsync()
     {
@@ -543,6 +552,7 @@ public partial class FoodLogViewModel
         }
     }
 
+    /// <summary>Replaces the search results with a page of hits.</summary>
     private void SetSearchResults(IEnumerable<QuickFood> results)
     {
         FoodSearchResults.Clear();
@@ -556,6 +566,7 @@ public partial class FoodLogViewModel
     private const float DefaultRecipeServingsCount = 1f;
     private const string GramsUnit = "g";
 
+    /// <summary>Logs one recipe as a meal.</summary>
     [RelayCommand]
     public async Task LogRecipeAsync(RecipeSummaryItem? recipe)
     {
@@ -563,20 +574,12 @@ public partial class FoodLogViewModel
         var date = SelectedDate;
         var mealType = EditingMealType;
 
-        var preview = SelectedRecipePortionPreview is { } existingPreview && existingPreview.RecipeId == recipe.Id
-            ? existingPreview
-            : null;
-
-        var servingGrams = preview is not null
-            ? preview.SelectedGrams
-            : (recipe.PerServingGrams > 0f ? recipe.PerServingGrams : DefaultRecipeServingGrams);
-        var servingsCount = preview is not null
-            ? preview.SelectedServingsCount
-            : DefaultRecipeServingsCount;
-        var calories = preview is not null ? preview.Calories : recipe.PerServingCalories;
-        var protein = preview is not null ? preview.Protein : recipe.PerServingProtein;
-        var carbs = preview is not null ? preview.Carbs : recipe.PerServingCarbs;
-        var fats = preview is not null ? preview.Fats : recipe.PerServingFats;
+        var servingGrams = recipe.PerServingGrams > 0f ? recipe.PerServingGrams : DefaultRecipeServingGrams;
+        var servingsCount = DefaultRecipeServingsCount;
+        var calories = recipe.PerServingCalories;
+        var protein = recipe.PerServingProtein;
+        var carbs = recipe.PerServingCarbs;
+        var fats = recipe.PerServingFats;
 
         var loggedItem = new LoggedFoodEntry(
             Id: Guid.NewGuid(),
@@ -599,6 +602,7 @@ public partial class FoodLogViewModel
             $"Logged {DisplayFormat.Decimal2(servingsCount)} {(Math.Abs(servingsCount - 1f) < 0.001f ? "serving" : "servings")} of '{recipe.Name}' ({DisplayFormat.Calories(calories)}).");
     }
 
+    /// <summary>Saves the edited meal as a template.</summary>
     [RelayCommand]
     public async Task SaveMealAsTemplateAsync(object? param)
     {
@@ -650,6 +654,7 @@ public partial class FoodLogViewModel
         }
     }
 
+    /// <summary>Saves the entry's notes.</summary>
     [RelayCommand]
     public async Task SaveNotesAsync()
     {
@@ -673,6 +678,7 @@ public partial class FoodLogViewModel
         }
     }
 
+    /// <summary>Opens the recipe for editing.</summary>
     [RelayCommand]
     public async Task EditRecipeAsync(RecipeSummaryItem? recipe)
     {
@@ -700,6 +706,7 @@ public partial class FoodLogViewModel
         }
     }
 
+    /// <summary>Deletes the recipe after confirmation.</summary>
     [RelayCommand]
     public async Task DeleteRecipeAsync(RecipeSummaryItem? recipe)
     {
@@ -732,11 +739,13 @@ public partial class FoodLogViewModel
         }
     }
 
+    /// <summary>Asks the user to confirm the action.</summary>
     private static Task<bool> ConfirmAsync(string title, string message, string accept, string cancel) =>
         Shell.Current is { } shell
             ? shell.DisplayAlertAsync(title, message, accept, cancel)
             : Task.FromResult(true);
 
+    /// <summary>Re-publishes whether each shelf has anything to show after a load.</summary>
     private void NotifyShelfVisibility()
     {
         OnPropertyChanged(nameof(HasRecentIngredients));
@@ -744,6 +753,7 @@ public partial class FoodLogViewModel
         OnPropertyChanged(nameof(HasSavedRecipes));
     }
 
+    /// <summary>Abandons a search in flight so its results cannot land after the finder moved on.</summary>
     private void CancelFoodSearch()
     {
         _foodSearchCancellation?.Cancel();

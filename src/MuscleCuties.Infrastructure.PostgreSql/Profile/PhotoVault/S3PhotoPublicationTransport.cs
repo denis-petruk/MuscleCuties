@@ -5,12 +5,14 @@ using MuscleCuties.UseCases.Features.Profile.PhotoVault;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
+/// <summary>The publication half of the S3 inspector: it copies the sanitized bytes into place and confirms the stored object.</summary>
 public sealed partial class DefaultS3PhotoObjectInspector
 {
     private const int MaximumTransportBytes = 15 * 1024 * 1024;
     private const int TransportBufferBytes = 81920;
     private static readonly TimeSpan PhotoTransportTimeout = TimeSpan.FromSeconds(30);
 
+    /// <summary>Reads the published object's bytes at a version.</summary>
     public async Task<ReadOnlyMemory<byte>> ReadVersionAsync(PhotoUploadObjectContext context, string versionId,
         CancellationToken cancellationToken = default)
     {
@@ -52,6 +54,7 @@ public sealed partial class DefaultS3PhotoObjectInspector
         { throw new S3PhotoObjectInspectionException(S3PhotoObjectInspectionFailure.Transient, "Photo body transport failed.", exception); }
     }
 
+    /// <summary>Publishes the sanitized bytes as the photo's object.</summary>
     public async Task<S3PhotoPublication> PublishAsync(PhotoUploadObjectContext context, SanitizedPhotoBytes photo,
         CancellationToken cancellationToken = default)
     {
@@ -98,6 +101,7 @@ public sealed partial class DefaultS3PhotoObjectInspector
         { throw new S3PhotoObjectInspectionException(S3PhotoObjectInspectionFailure.Transient, "Photo publication transport failed.", exception); }
     }
 
+    /// <summary>Builds the signed request for one object operation.</summary>
     private HttpRequestMessage CreatePhotoRequest(HttpMethod method, string key, string? versionId = null,
         byte[]? bytes = null, Guid? photoId = null)
     {
@@ -137,12 +141,14 @@ public sealed partial class DefaultS3PhotoObjectInspector
         return request;
     }
 
+    /// <summary>Refuses a response without a version id, because an unversioned object cannot be cleaned up later.</summary>
     private static void RequireVersion(string? version)
     {
         if (string.IsNullOrWhiteSpace(version) || version == "null")
             throw Failure(S3PhotoObjectInspectionFailure.InvalidResponse, "Versioned S3 storage is required for photos.");
     }
 
+    /// <summary>Throws with the status when S3 refused the request, so a failed publish never looks like a success.</summary>
     private static void RequireSuccess(HttpResponseMessage response)
     {
         if (response.IsSuccessStatusCode) return;

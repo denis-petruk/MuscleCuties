@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Hydration;
 
+/// <summary>The presets a new account starts with, so the quick adds are useful on day one.</summary>
 public static class DefaultWaterPresets
 {
     public const int SmallMillilitres = 250;

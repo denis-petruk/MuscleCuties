@@ -42,11 +42,13 @@ public sealed class ExternalFoodFallbackSearchStore(
     public const int SparseResultThreshold = 5;
     public const int MaximumImportedPerSearch = 10;
 
+    /// <summary>Searches with no query, which returns nothing.</summary>
     public Task<IReadOnlyList<FoodCatalogCandidate>> SearchCandidatesAsync(
         string query,
         CancellationToken cancellationToken = default) =>
         inner.SearchCandidatesAsync(query, cancellationToken);
 
+    /// <summary>Searches local and external sources when the catalog has no match.</summary>
     public async Task<IReadOnlyList<FoodCatalogCandidate>> SearchCandidatesAsync(
         string query,
         Guid? ownerUserId,

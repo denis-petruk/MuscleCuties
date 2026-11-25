@@ -18,12 +18,17 @@ using UIKit;
 
 namespace MuscleCuties.UI.Composition;
 
+/// <summary>Platform-specific wiring: handler tweaks that give the app's inputs and buttons their native</summary>
+/// appearance, the platform services, and logging.</summary>
 public static class PlatformCompositionExtensions
 {
     // Matches AuthInputValidator's minimum length and character-class requirements.
     private const string NewPasswordRules =
         "required: upper; required: lower; required: digit; required: [-().&@?'#,/+_*]; minlength: 8;";
 
+    /// <summary>Adjusts the native input and button handlers: Android inputs lose their default chrome and gain</summary>
+    /// autofill hints, iOS entries lose the border and pick the right text-content type, and buttons get their</summary>
+    /// corner radius with layout protection.</summary>
     public static MauiAppBuilder ConfigurePlatformInputHandlers(this MauiAppBuilder builder)
     {
         return builder.ConfigureMauiHandlers(handlers =>
@@ -92,6 +97,8 @@ public static class PlatformCompositionExtensions
         });
     }
 
+    /// <summary>Registers the platform services: notifications, Apple sign-in and HealthKit where available, and a</summary>
+    /// disabled health sync elsewhere.</summary>
     public static IServiceCollection RegisterPlatformServices(this IServiceCollection services)
     {
         services.AddSingleton<INavigationContextService, NavigationContextService>();
@@ -135,6 +142,7 @@ public static class PlatformCompositionExtensions
         return services;
     }
 
+    /// <summary>Adds debug logging in debug builds only, so release builds write nothing.</summary>
     public static MauiAppBuilder ConfigureAppLogging(this MauiAppBuilder builder)
     {
 #if DEBUG
@@ -145,6 +153,7 @@ public static class PlatformCompositionExtensions
 
 
 
+    /// <summary>What an auth input holds, so the platform can hint the keyboard and autofill correctly.</summary>
     private enum AuthFieldKind
     {
         None,
@@ -156,6 +165,7 @@ public static class PlatformCompositionExtensions
         OneTimeCode
     }
 
+    /// <summary>Maps an input's automation id to its field kind; an unknown id means no hint.</summary>
     private static AuthFieldKind GetAuthFieldKind(string? automationId)
     {
         return automationId switch
@@ -172,6 +182,7 @@ public static class PlatformCompositionExtensions
     }
 
 #if ANDROID
+    /// <summary>Removes the Android input's underline and padding so the app's own container draws the field.</summary>
     private static void ClearAndroidInputChrome(Android.Views.View view)
     {
         view.BackgroundTintList = Android.Content.Res.ColorStateList.ValueOf(Android.Graphics.Color.Transparent);
@@ -179,6 +190,8 @@ public static class PlatformCompositionExtensions
         view.SetPadding(0, 0, 0, 0);
     }
 
+    /// <summary>Gives the field the autofill hint that matches what it holds, so password managers fill the right</summary>
+    /// box.</summary>
     private static void ConfigureAndroidAutofill(Android.Widget.EditText editText, string? automationId)
     {
         var hint = GetAuthFieldKind(automationId) switch

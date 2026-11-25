@@ -35,6 +35,7 @@ public static class WorkoutActivityIcons
             }
             : "CircleSmall24";
 
+    /// <summary>The icon glyph shown for an activity tag.</summary>
     public static string ForTag(string? tag) => (tag ?? string.Empty).Trim().ToUpperInvariant() switch
     {
         "STRENGTH" => "Dumbbell24",

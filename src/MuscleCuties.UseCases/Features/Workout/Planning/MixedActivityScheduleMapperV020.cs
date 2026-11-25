@@ -12,6 +12,7 @@ internal static class MixedActivityScheduleMapperV020
     private const int RequiredHeavyExerciseExposures =
         ActivityPrescriptionRule.StrengthHighIntensityRequiredExerciseExposures;
 
+    /// <summary>Builds the mixed-activity context from the preview source.</summary>
     public static MixedActivityWeekScheduleContext ToContext(
         StrengthPlanPreviewRequestV020 request,
         StrengthPlanPreviewSourceV020 source,
@@ -75,6 +76,7 @@ internal static class MixedActivityScheduleMapperV020
             chosenStrengthActivity);
     }
 
+    /// <summary>The training history recorded for each activity.</summary>
     private static Dictionary<WorkoutActivityType, ActivityTrainingHistory?> BuildActivityHistories(
         StrengthPlanPreviewRequestV020 request,
         IReadOnlyList<ActivityEligibilityInputV020> evidenceInputs)
@@ -91,6 +93,7 @@ internal static class MixedActivityScheduleMapperV020
         return result;
     }
 
+    /// <summary>The prescription context for one activity.</summary>
     private static ActivityPrescriptionContext ToPrescriptionContext(
         WorkoutActivityType activity,
         StrengthPlanPreviewRequestV020 request,
@@ -146,6 +149,7 @@ internal static class MixedActivityScheduleMapperV020
             IsDemandingYogaContent: evidenceInput?.IsDemandingYogaContent);
     }
 
+    /// <summary>The HIIT evidence the preview source carries.</summary>
     private static HiitEligibilityEvidence? CreateHiitEvidence(
         WorkoutActivityType activity,
         StrengthPlanPreviewRequestV020 request,
@@ -184,6 +188,7 @@ internal static class MixedActivityScheduleMapperV020
             hiitInput?.ExistingClearanceScreeningSatisfied == true);
     }
 
+    /// <summary>The training history for one activity, when recorded.</summary>
     private static ActivityTrainingHistory? ToHistory(ActivityTrainingHistoryInputV020? history) =>
         history is null
             ? null

@@ -2,9 +2,11 @@ using MuscleCuties.Core.Domain.Workout;
 
 namespace MuscleCuties.UseCases.Features.CheckInAndInjury;
 
+/// <summary>Saves a check-in or an injury, then marks the plan for regeneration so safety is never stale.</summary>
 public sealed class CheckInAndInjuryUseCase(ICheckInAndInjuryStore store)
 {
 
+    /// <summary>Loads the check-ins inside a date range.</summary>
     public Task<IReadOnlyList<DailyCheckInRecord>> LoadCheckInsAsync(
         Guid userId,
         DateOnly from,
@@ -16,6 +18,7 @@ public sealed class CheckInAndInjuryUseCase(ICheckInAndInjuryStore store)
         return store.LoadCheckInsAsync(userId, from, through, cancellationToken);
     }
 
+    /// <summary>Saves the day's check-in, replacing the existing one.</summary>
     public Task<DailyCheckInRecord> SaveCheckInAsync(
         SaveDailyCheckInRequest request,
         CancellationToken cancellationToken = default)
@@ -33,6 +36,7 @@ public sealed class CheckInAndInjuryUseCase(ICheckInAndInjuryStore store)
         return store.SaveCheckInAsync(request, cancellationToken);
     }
 
+    /// <summary>Deletes the day's check-in, reporting whether one existed.</summary>
     public Task<bool> DeleteCheckInAsync(
         Guid userId,
         Guid checkInId,
@@ -41,6 +45,7 @@ public sealed class CheckInAndInjuryUseCase(ICheckInAndInjuryStore store)
             ? Task.FromResult(false)
             : store.DeleteCheckInAsync(userId, checkInId, cancellationToken);
 
+    /// <summary>Loads the user's injury records.</summary>
     public Task<IReadOnlyList<InjuryObservationRecord>> LoadInjuriesAsync(
         Guid userId,
         bool activeOnly = false,
@@ -51,6 +56,7 @@ public sealed class CheckInAndInjuryUseCase(ICheckInAndInjuryStore store)
         return store.LoadInjuriesAsync(userId, activeOnly, cancellationToken);
     }
 
+    /// <summary>Saves an injury record, creating or updating it.</summary>
     public Task<InjuryObservationRecord> SaveInjuryAsync(
         SaveInjuryObservationRequest request,
         CancellationToken cancellationToken = default)
@@ -64,6 +70,7 @@ public sealed class CheckInAndInjuryUseCase(ICheckInAndInjuryStore store)
         return store.SaveInjuryAsync(request with { Status = normalizedStatus }, cancellationToken);
     }
 
+    /// <summary>Deletes an injury record, reporting whether one existed.</summary>
     public Task<bool> DeleteInjuryAsync(
         Guid userId,
         Guid injuryId,

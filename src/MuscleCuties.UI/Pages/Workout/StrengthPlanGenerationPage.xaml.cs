@@ -2,6 +2,9 @@ using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Pages.Workout;
 
+/// <summary>
+///     Progress page shown while the first strength plan is generated.
+/// </summary>
 public partial class StrengthPlanGenerationPage : ContentPage
 {
     private readonly StrengthPlanGenerationViewModel _viewModel;
@@ -11,12 +14,14 @@ public partial class StrengthPlanGenerationPage : ContentPage
     // dropped instead of mutating a popped page while the native layout is being torn down.
     private long _appearanceVersion;
 
+    /// <summary>Initializes the page and its view model.</summary>
     public StrengthPlanGenerationPage(StrengthPlanGenerationViewModel viewModel)
     {
         this.InitializeAndBind(InitializeComponent, viewModel);
         _viewModel = viewModel;
     }
 
+    /// <summary>Starts the generation when the page appears.</summary>
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -30,6 +35,7 @@ public partial class StrengthPlanGenerationPage : ContentPage
             () => appearanceVersion == _appearanceVersion);
     }
 
+    /// <summary>Stops the view model when the page goes away.</summary>
     protected override void OnDisappearing()
     {
         _appearanceVersion++;
@@ -37,6 +43,7 @@ public partial class StrengthPlanGenerationPage : ContentPage
         base.OnDisappearing();
     }
 
+    /// <summary>Cancels the generation before leaving the page.</summary>
     protected override bool OnBackButtonPressed()
     {
         if (_viewModel.IsBusy)
@@ -57,6 +64,7 @@ public partial class StrengthPlanGenerationPage : ContentPage
         return base.OnBackButtonPressed();
     }
 
+    /// <summary>Updates the layout when the page size changes.</summary>
     private void OnPageSizeChanged(object? sender, EventArgs args)
     {
         if (Height <= 0)

@@ -3,10 +3,12 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>Maps a catalog row onto the planner's exercise entry, including the reviewed tag sets.</summary>
 public static class WorkoutExerciseV020CatalogMapper
 {
     private const decimal SecondsPerMinute = 60m;
 
+    /// <summary>One catalog row as the planner's entry, carrying only the reviewed values a restriction may use.</summary>
     public static StrengthExerciseCatalogEntry Map(WorkoutExerciseDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(definition);
@@ -110,6 +112,7 @@ public static class WorkoutExerciseV020CatalogMapper
         }
     }
 
+    /// <summary>The equipment kinds a required set allows.</summary>
     private static IReadOnlySet<ExerciseEquipmentKind>? MapEquipment(EquipmentSet required,
         ICollection<string> gaps)
     {
@@ -148,9 +151,11 @@ public static class WorkoutExerciseV020CatalogMapper
         }
     }
 
+    /// <summary>The enum tags from their stored JSON, or nothing when the row has never been reviewed.</summary>
     private static IReadOnlySet<TEnum>? ParseEnumSet<TEnum>(string? json, string label, ICollection<string> gaps)
         where TEnum : struct, Enum => ParseEnumSet<TEnum>(json, label, gaps, allowEmpty: false);
 
+    /// <summary>Parses a stored enum set, reporting the values it cannot read.</summary>
     private static IReadOnlySet<TEnum>? ParseEnumSet<TEnum>(string? json, string label, ICollection<string> gaps,
         bool allowEmpty)
         where TEnum : struct, Enum
@@ -179,6 +184,7 @@ public static class WorkoutExerciseV020CatalogMapper
         }
     }
 
+    /// <summary>The integer ids from their stored JSON, or nothing when the row carries none.</summary>
     private static IReadOnlySet<int>? ParseIntegerSet(string? json, string label, ICollection<string> gaps)
     {
         if (string.IsNullOrWhiteSpace(json))

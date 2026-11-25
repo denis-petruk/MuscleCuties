@@ -2,7 +2,9 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>One strength session placed on a weekday.</summary>
 public sealed record StrengthScheduleAssignment(int SessionIndex, DayOfWeek Day);
+/// <summary>The placements with the reason any session could not be placed.</summary>
 public sealed record StrengthScheduleAssignmentResult(
     IReadOnlyList<StrengthScheduleAssignment> Assignments, IReadOnlyList<string> Limitations);
 
@@ -11,6 +13,7 @@ public static class StrengthScheduleAssignmentRule
 {
     public const string SessionsReducedForMuscleRecovery = "StrengthSessionsReducedForMuscleRecovery";
 
+    /// <summary>Rebuilds the week's strength assignment so it matches the mixed-activity schedule.</summary>
     public static MixedActivityWeekScheduleResult Reconcile(
         MixedActivityWeekScheduleResult schedule,
         IReadOnlyList<IReadOnlySet<string>?> muscles,
@@ -42,6 +45,7 @@ public static class StrengthScheduleAssignmentRule
             } : decision).ToArray();
         return schedule with { Sessions = sessions, Activities = activities, StrengthAssignments = assignment.Assignments };
     }
+    /// <summary>Assigns the mixed-activity week to strength sessions and reports what could not be placed.</summary>
     public static StrengthScheduleAssignmentResult Assign(
         IReadOnlyList<IReadOnlySet<string>?> muscles,
         IReadOnlyCollection<DayOfWeek> availableDays,
@@ -85,6 +89,7 @@ public static class StrengthScheduleAssignmentRule
         }
     }
 
+    /// <summary>Adjusts a candidate session to the schedule, leaving it untouched when it already fits.</summary>
     private static WorkoutScheduleValidationSession[] AdjustCandidate(WorkoutScheduleValidationSession[] source)
     {
         var result = source.Select(session => session with

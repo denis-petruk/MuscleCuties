@@ -4,8 +4,10 @@ using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 
+/// <summary>Maps stored readiness onto the form's DTO, filling the defaults the form expects.</summary>
 public static class TodayReadinessCheckInMapper
 {
+    /// <summary>Maps a stored check-in onto today's readiness card.</summary>
     public static TodayReadinessCheckInDto Map(
         int? sleepQuality,
         int? energy,

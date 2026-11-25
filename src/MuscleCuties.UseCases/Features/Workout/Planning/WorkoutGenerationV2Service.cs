@@ -14,6 +14,7 @@ namespace MuscleCuties.UseCases.Features.Workout.Planning;
 /// </summary>
 public static class WorkoutGenerationV2Service
 {
+    /// <summary>Generates a plan from the preview source.</summary>
     public static WorkoutGenerationResultV2 GenerateFromPreviewSource(
         StrengthPlanPreviewRequestV020 request,
         StrengthPlanPreviewSourceV020 source,
@@ -119,6 +120,7 @@ public static class WorkoutGenerationV2Service
         return WorkoutGenerationEngineV2.Generate(input);
     }
 
+    /// <summary>The strength style the weekly inputs imply.</summary>
     private static StrengthStyleV2 ResolveStrengthStyle(
         StrengthPlanPreviewRequestV020 request,
         IReadOnlySet<WorkoutActivityType> selectedActivities)
@@ -138,6 +140,7 @@ public static class WorkoutGenerationV2Service
         };
     }
 
+    /// <summary>Maps the catalog onto the generator's input, dropping entries the generator cannot use.</summary>
     private static IReadOnlyList<ExerciseCatalogItemV2> MapCatalog(StrengthPlanPreviewSourceV020 source)
     {
         var list = new List<ExerciseCatalogItemV2>(source.Catalog.Count);
@@ -207,6 +210,7 @@ public static class WorkoutGenerationV2Service
         return list;
     }
 
+    /// <summary>The planning tier for an activity experience level.</summary>
     private static TrainingExperienceLevel MapExperience(ActivityExperience experience) => experience switch
     {
         ActivityExperience.Beginner => TrainingExperienceLevel.Beginner,
@@ -215,6 +219,7 @@ public static class WorkoutGenerationV2Service
         _ => TrainingExperienceLevel.Unknown
     };
 
+    /// <summary>The muscle contributions an exercise carries.</summary>
     private static IReadOnlyList<ExerciseMuscleContributionV2> MapMuscleContributions(
         int exerciseId,
         MovementPattern pattern,
@@ -304,6 +309,7 @@ public static class WorkoutGenerationV2Service
         };
     }
 
+    /// <summary>The version-2 muscle group for an accounting target.</summary>
     private static MuscleGroupV2 MapTarget(MuscleAccountingTarget target) => target switch
     {
         MuscleAccountingTarget.GluteMaximus => MuscleGroupV2.GluteusMaximus,
@@ -323,6 +329,7 @@ public static class WorkoutGenerationV2Service
         _ => MuscleGroupV2.Core
     };
 
+    /// <summary>Maps a free-text muscle name onto the movement target, answering false rather than guessing.</summary>
     private static bool TryMapMuscleName(string rawName, MovementPattern pattern, out MuscleGroupV2 muscle)
     {
         var normalized = rawName.Trim().ToLowerInvariant();
@@ -360,6 +367,7 @@ public static class WorkoutGenerationV2Service
             or "adductors" or "hip_adductors" or "hipadductors";
     }
 
+    /// <summary>The stored value when it is a positive count.</summary>
     private static int? TryGetPositiveInt(IReadOnlyDictionary<int, int>? values, int key) =>
         values is not null && values.TryGetValue(key, out var count) && count > 0 ? count : null;
 }

@@ -3,17 +3,20 @@ using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 
+/// <summary>Searches the catalog and her own foods, ranking exact matches first.</summary>
 public sealed class FoodCatalogSearchUseCase(IFoodCatalogSearchStore store) : IFoodCatalogSearchUseCase
 {
     private const int MinPageSize = FoodCatalogSearchDefaults.FirstPageNumber;
     private const int MaxPageSize = 50;
     private const int DefaultPageSize = FoodCatalogSearchDefaults.DefaultPageSize;
 
+    /// <summary>Searches the catalog for the query.</summary>
     public async Task<FoodCatalogSearchResponse> SearchAsync(
         FoodCatalogSearchRequest request,
         CancellationToken cancellationToken = default) =>
         await SearchAsync(request, null, cancellationToken).ConfigureAwait(false);
 
+    /// <summary>Searches the catalog with a result limit and paging token.</summary>
     public async Task<FoodCatalogSearchResponse> SearchAsync(
         FoodCatalogSearchRequest request,
         Guid? ownerUserId,

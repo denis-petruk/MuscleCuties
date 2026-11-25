@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Dashboard.Overview;
 
+/// <summary>The server-side read the dashboard is built from.</summary>
 public interface IServerDashboardOverviewStore
 {
     Task<DashboardOverviewResponse> LoadOverviewAsync(

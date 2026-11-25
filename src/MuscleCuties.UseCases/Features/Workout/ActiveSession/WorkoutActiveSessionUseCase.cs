@@ -1,9 +1,12 @@
 namespace MuscleCuties.UseCases.Features.Workout.ActiveSession;
 
+/// <summary>Runs the active session: start, log sets, checkpoint, finish or cancel, each idempotent on its key.</summary>
 public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store)
 {
+    /// <summary>The planned session's history for one workout day.</summary>
     public Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken = default) =>
         store.GetPlannedSessionHistoryAsync(userId, workoutDayId, cancellationToken);
+    /// <summary>The active session of a planned workout day.</summary>
     public Task<ActiveWorkoutSessionSnapshot?> GetPlannedSessionAsync(Guid userId, int workoutDayId, CancellationToken cancellationToken = default) =>
         store.GetPlannedSessionAsync(userId, workoutDayId, cancellationToken);
     private const int MaximumIdempotencyKeyLength = 128;
@@ -24,6 +27,7 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
     private const decimal MinimumDistanceKm = 0m;
     private const decimal MaximumDistanceKm = 500m;
 
+    /// <summary>Resumes a paused timed interval.</summary>
     public Task<ActiveWorkoutSessionSnapshot?> ResumeTimingAsync(Guid userId, ResumeWorkoutTimingCommand command,
         CancellationToken cancellationToken = default)
     {
@@ -32,6 +36,7 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
         return store.ResumeTimingAsync(userId, command, cancellationToken);
     }
 
+    /// <summary>Records progress of the running timed interval.</summary>
     public Task<ActiveWorkoutSessionSnapshot?> CheckpointTimingAsync(Guid userId, CheckpointWorkoutTimingCommand command,
         CancellationToken cancellationToken = default)
     {
@@ -42,6 +47,7 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
         return store.CheckpointTimingAsync(userId, command, cancellationToken);
     }
 
+    /// <summary>Loads the active session.</summary>
     public Task<ActiveWorkoutSessionSnapshot?> GetSessionAsync(
         Guid userId,
         Guid sessionId,
@@ -52,6 +58,7 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
         return store.GetSessionAsync(userId, sessionId, cancellationToken);
     }
 
+    /// <summary>Starts a planned session.</summary>
     public Task<ActiveWorkoutSessionSnapshot> StartSessionAsync(
         Guid userId,
         StartWorkoutSessionCommand command,
@@ -70,6 +77,7 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
             cancellationToken);
     }
 
+    /// <summary>Creates or updates one set in the active session.</summary>
     public Task<ActiveWorkoutSessionSnapshot?> UpsertSetAsync(
         Guid userId,
         UpsertWorkoutSessionSetCommand command,
@@ -84,6 +92,7 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
             cancellationToken);
     }
 
+    /// <summary>Finishes the session and records its totals.</summary>
     public Task<ActiveWorkoutSessionSnapshot?> FinishSessionAsync(
         Guid userId,
         FinishWorkoutSessionCommand command,
@@ -113,6 +122,7 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
             cancellationToken);
     }
 
+    /// <summary>Cancels the session and reports the outcome.</summary>
     public Task<ActiveWorkoutSessionSnapshot?> CancelSessionAsync(
         Guid userId,
         CancelWorkoutSessionCommand command,
@@ -123,6 +133,7 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
         return store.CancelSessionAsync(userId, command, cancellationToken);
     }
 
+    /// <summary>Refuses a command with no account, session or key, which would otherwise write an unattributable row.</summary>
     private static void ValidateCommon(Guid userId, Guid sessionId, string idempotencyKey)
     {
         if (userId == Guid.Empty || sessionId == Guid.Empty)
@@ -131,6 +142,7 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
             throw new ArgumentException("A valid non-empty idempotency key is required.", nameof(idempotencyKey));
     }
 
+    /// <summary>Refuses a set with no exercise, negative weight or non-positive reps.</summary>
     private static void ValidateSet(ActiveExerciseSetInput? set)
     {
         ArgumentNullException.ThrowIfNull(set);
@@ -152,9 +164,11 @@ public sealed class WorkoutActiveSessionUseCase(IWorkoutActiveSessionStore store
             throw new ArgumentException("Exercise set values are outside supported bounds.", nameof(set));
     }
 
+    /// <summary>Keeps a distance only when it is a usable positive value.</summary>
     private static decimal? NormalizeDistance(decimal? distance) =>
         distance is > 0m ? Math.Round(distance.Value, 2, MidpointRounding.AwayFromZero) : null;
 
+    /// <summary>Cleans one set input before it is stored.</summary>
     private static ActiveExerciseSetInput NormalizeSet(ActiveExerciseSetInput set) =>
         set with
         {

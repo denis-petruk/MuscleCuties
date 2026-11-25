@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Nutrition.CustomFoods.Contracts;
 
+/// <summary>A food she is creating, with the values she typed.</summary>
 public sealed record CreateCustomFoodRequest(
     string Name,
     float ServingAmount,
@@ -14,6 +15,7 @@ public sealed record CreateCustomFoodRequest(
     float? VitaminDMicrograms = null,
     float? CalciumMilligrams = null);
 
+/// <summary>A food she created, as the client shows it.</summary>
 public sealed record CustomFoodDto(
     string FoodKey,
     string Name,
@@ -29,6 +31,7 @@ public sealed record CustomFoodDto(
     float? VitaminDMicrograms = null,
     float? CalciumMilligrams = null);
 
+/// <summary>A food she created as stored, including its per-100 g values.</summary>
 public sealed record CustomFoodRecord(
     Guid Id,
     string Name,

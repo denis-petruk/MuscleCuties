@@ -3,8 +3,10 @@ using MuscleCuties.UseCases.Features.Cycle.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 
+/// <summary>Saves a phase log, creating the cycle row first when none covers the day.</summary>
 public sealed class SaveCyclePhaseLogUseCase(ICyclePhaseLogStore store) : ISaveCyclePhaseLogUseCase
 {
+    /// <summary>Saves one day's phase log and reports what changed.</summary>
     public Task<SaveCyclePhaseLogOutput> ExecuteAsync(
         SaveCyclePhaseLogInput input,
         CancellationToken cancellationToken = default)

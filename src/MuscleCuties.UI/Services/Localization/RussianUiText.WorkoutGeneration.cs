@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Russian copy for plan generation.</summary>
 internal static partial class RussianUiText
 {
+    /// <summary>Registers the Russian labels for workout generation.</summary>
     static partial void RegisterWorkoutGenerationStrings()
     {
         Values["Workout_Generation_DurationOmissionNotice"] = "Некоторые движения исключены, чтобы уложиться в выбранное время тренировки.";

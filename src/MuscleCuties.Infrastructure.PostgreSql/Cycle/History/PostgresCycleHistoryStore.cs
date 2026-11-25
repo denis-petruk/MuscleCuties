@@ -6,10 +6,12 @@ using MuscleCuties.UseCases.Features.Cycle.History;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Cycle.History;
 
+/// <summary>Cycle and symptom history on PostgreSQL: what the prediction reads, plus the writes that maintain cycle lengths.</summary>
 public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeProvider timeProvider) : ICycleHistoryStore
 {
     private const int UnknownCycleLength = 0;
 
+    /// <summary>The minimal history a prediction needs, read without loading every symptom.</summary>
     public async Task<CyclePredictionInputs> LoadPredictionInputsAsync(Guid userId, DateOnly today, CancellationToken cancellationToken)
     {
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -36,6 +38,7 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         }).ConfigureAwait(false);
     }
 
+    /// <summary>The full history for a window, ordered so the caller can project forward from the last logged day.</summary>
     public async Task<CycleHistorySnapshot> LoadAsync(Guid userId, DateOnly from, DateOnly through, CancellationToken cancellationToken)
     {
         // This is a read-only path. A pooled Npgsql connection avoids first-request EF model and
@@ -104,6 +107,7 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         return new CycleHistorySnapshot(cycles, symptoms);
     }
 
+    /// <summary>Stores a cycle start or end and recalculates the affected length in the same transaction, so a length is never left stale.</summary>
     public async Task<CycleObservation?> SaveCycleAsync(SaveCycleObservation request, CancellationToken cancellationToken)
     {
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -133,6 +137,7 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Stores a symptom against the cycle that covers its date, refusing a date no cycle covers.</summary>
     public async Task<CycleSymptom?> SaveSymptomAsync(SaveCycleSymptom request, CancellationToken cancellationToken)
     {
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -159,6 +164,7 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Deletes one symptom, answering false when it is not hers.</summary>
     public async Task<bool> DeleteSymptomAsync(Guid userId, Guid symptomId, CancellationToken cancellationToken)
     {
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -178,6 +184,7 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Deletes a cycle only when no symptom log still points at it, because that link is restricted.</summary>
     public async Task<bool> DeleteCycleAsync(Guid userId, Guid cycleId, CancellationToken cancellationToken)
     {
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -202,6 +209,7 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Recomputes every cycle length from the recorded starts, which is what keeps a back-filled history consistent.</summary>
     private async Task RecalculateCycleLengthsFromStartsAsync(Guid userId, CancellationToken cancellationToken)
     {
         var cycles = await dbContext.CycleLogs
@@ -217,12 +225,15 @@ public sealed class PostgresCycleHistoryStore(PostgresDbContext dbContext, TimeP
         }
     }
 
+    /// <summary>Takes a row lock on the record id to serialize writes.</summary>
     private Task<int> LockRecordIdAsync(Guid id, CancellationToken cancellationToken) =>
         dbContext.Database.ExecuteSqlInterpolatedAsync($"SELECT pg_advisory_xact_lock(hashtextextended({id.ToString("D")}, 0))", cancellationToken);
 
+    /// <summary>True when the update failed because the id already exists.</summary>
     private static bool IsUniqueIdCollision(DbUpdateException exception) =>
         exception.InnerException is PostgresException { SqlState: PostgresErrorCodes.UniqueViolation };
 
+    /// <summary>Rolls the transaction back and returns nothing.</summary>
     private static async Task<T?> Rollback<T>(Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction) where T : class
     { await transaction.RollbackAsync().ConfigureAwait(false); return null; }
 }

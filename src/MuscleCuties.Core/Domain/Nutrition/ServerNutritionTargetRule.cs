@@ -6,6 +6,7 @@ using MuscleCuties.Core.Models.Nutrition.Planning;
 
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>The targets the server returns, with the provenance of each.</summary>
 public sealed record ServerNutritionTargetResult(
     float Calories, float Protein, float Carbs, float Fats,
     NutritionTargetProvenance Provenance);
@@ -65,6 +66,7 @@ public static class ServerNutritionTargetRule
         GeneralCalories, GeneralProtein, GeneralCarbs, GeneralFats,
         NutritionTargetProvenance.Unavailable(GeneralCalories));
 
+    /// <summary>Calculates the server's calorie and macro targets from the profile and its goal.</summary>
     public static ServerNutritionTargetResult Calculate(int age, float heightCm, float weightKg,
         int workoutDaysPerWeek, UserGoal goal, WeightGoalPace pace, string trainingExperience,
         CyclePhase phase, ReproductiveContext context, ProfileNutritionGoals saved)
@@ -108,7 +110,9 @@ public static class ServerNutritionTargetRule
         return new(shownCalories, protein, carbs, fats, provenance);
     }
 
+    /// <summary>The multiplier the weekly training days imply.</summary>
     private static float ActivityMultiplier(int days) => days switch { <= 0 => MinimumActivityMultiplier, <= LowActivityDaysThreshold => LowActivityMultiplier, <= ModerateActivityDaysThreshold => ModerateActivityMultiplier, <= HighActivityDaysThreshold => HighActivityMultiplier, _ => MaximumActivityMultiplierValue };
+    /// <summary>Splits the day's calories into macros, keeping protein at the goal's per-kilogram floor.</summary>
     private static (float Protein, float Carbs, float Fats) CalculateMacros(float calories, float weight, UserGoal goal, CyclePhase phase)
     {
         var proteinPerKg = goal switch { UserGoal.FatLoss => FatLossProteinGramsPerKg, UserGoal.Strength => StrengthProteinGramsPerKg, UserGoal.MuscleTone => MuscleToneProteinGramsPerKg, _ => DefaultProteinGramsPerKg };

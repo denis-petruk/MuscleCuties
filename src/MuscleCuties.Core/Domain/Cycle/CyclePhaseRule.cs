@@ -2,8 +2,10 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 
 namespace MuscleCuties.Core.Domain.Cycle;
 
+/// <summary>One observed cycle start with its length, the evidence a phase is derived from.</summary>
 public readonly record struct CyclePhaseObservation(CyclePhase Phase, DateTime LoggedAt);
 
+/// <summary>Derives phases from cycle lengths, clamping every length into the supported range first.</summary>
 public static class CyclePhaseRule
 {
     private const int NoCycleDay = 0;
@@ -19,12 +21,14 @@ public static class CyclePhaseRule
     private const int NoDaysRemaining = 0;
     private const int DefaultCycleDay = 1;
 
+    /// <summary>Clamps a length into the supported range, so an outlier cannot shift every later phase.</summary>
     public static int NormalizeCycleLength(int cycleLength)
     {
         return Math.Clamp(cycleLength > 0 ? cycleLength : CycleLengthLimits.Default,
             CycleLengthLimits.Minimum, CycleLengthLimits.Maximum);
     }
 
+    /// <summary>The phase for a cycle day, using the standard split of the cycle length.</summary>
     public static CyclePhase CalculatePhase(int cycleDay, int cycleLength)
     {
         if (cycleDay <= NoCycleDay)
@@ -38,6 +42,7 @@ public static class CyclePhaseRule
         return CyclePhase.Luteal;
     }
 
+    /// <summary>The day within the cycle, counted from the last start and wrapped at the length.</summary>
     public static int CalculateCycleDay(DateTime date, DateTime? cycleStartDate, int cycleLength)
     {
         if (cycleStartDate is null)
@@ -46,6 +51,7 @@ public static class CyclePhaseRule
         return ProjectCycleDay(DefaultCycleDay, cycleStartDate.Value, date, cycleLength);
     }
 
+    /// <summary>The day within the cycle for a future date, which is what the countdown reads.</summary>
     public static int ProjectCycleDay(int cycleDay, DateTime cycleDayDate, DateTime date, int cycleLength)
     {
         if (cycleDay <= NoCycleDay)
@@ -58,6 +64,7 @@ public static class CyclePhaseRule
         return (projectedOffset + normalizedCycleLength) % normalizedCycleLength + FirstCycleDay;
     }
 
+    /// <summary>Days until the phase changes, floored at zero once it has.</summary>
     public static int GetDaysRemainingInPhase(int cycleDay, int cycleLength, CyclePhase phase)
     {
         if (cycleDay <= NoCycleDay || phase is CyclePhase.Unknown || !Enum.IsDefined(phase))
@@ -78,6 +85,7 @@ public static class CyclePhaseRule
         return daysRemaining;
     }
 
+    /// <summary>The first day of the phase a date falls in, so a countdown starts from a real boundary.</summary>
     public static int GetPhaseAnchorDay(CyclePhase phase, int cycleLength)
     {
         var normalizedCycleLength = NormalizeCycleLength(cycleLength);
@@ -109,6 +117,7 @@ public static class CyclePhaseRule
         return loggedLocalDate.AddDays(FirstCycleDay - anchorDay);
     }
 
+    /// <summary>The phase that follows, wrapping from the last back to the first.</summary>
     public static CyclePhase GetNextPhase(CyclePhase phase)
     {
         return phase switch
@@ -121,6 +130,7 @@ public static class CyclePhaseRule
         };
     }
 
+    /// <summary>Derives the phase for a date from that day's manual phase log, falling back to the projection rule.</summary>
     public static CyclePhase ProjectPhaseFromLog(
         CyclePhaseObservation observation, DateTime date, int cycleLength)
     {

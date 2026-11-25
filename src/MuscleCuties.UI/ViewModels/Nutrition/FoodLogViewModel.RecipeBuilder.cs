@@ -1,3 +1,6 @@
+// Recipe creation, ingredient rows, and saved-recipe loading.
+// Second half of FoodLogViewModel; see its declaration for the full contract.
+
 using System.Collections.Concurrent;
 using System.Text;
 using System.ComponentModel;
@@ -7,6 +10,8 @@ using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>The recipe builder: ingredients from the catalog or by hand, a live preview of the totals, and loading a</summary>
+/// saved recipe back into the editor.</summary>
 public partial class FoodLogViewModel
 {
     private const float InitialRecipeServings = 1f;
@@ -30,19 +35,20 @@ public partial class FoodLogViewModel
     [NotifyPropertyChangedFor(nameof(HasRecipePreview), nameof(RecipePreviewSummary))]
     private RecipeDetailsItem? _recipePreview;
 
-    [ObservableProperty] private string _selectedRecipePortionServingsText = InitialRecipeServings.ToString(CultureInfo.CurrentCulture);
-    [ObservableProperty] private string _selectedRecipePortionGramsText = string.Empty;
-    [ObservableProperty] private RecipePortionPreview? _selectedRecipePortionPreview;
-
+    /// <summary>The ingredients being edited.</summary>
     public ObservableCollection<RecipeIngredientEditor> RecipeEditorIngredients { get; } = [];
+    /// <summary>True when recipe creation is available.</summary>
     public bool CanCreateRecipes => _createRecipeUseCase is not null;
+    /// <summary>True when a preview is shown.</summary>
     public bool HasRecipePreview => RecipePreview is not null;
+    /// <summary>The recipe's totals as one line, or the prompt to add ingredients while it has none.</summary>
     public string RecipePreviewSummary => RecipePreview is { } preview
         ? string.Format(CultureInfo.CurrentCulture, RecipePreviewFormats.GetOrAdd(UiTextCatalog.Get("Nutrition_Recipe_PreviewSummary"), CompositeFormat.Parse),
             preview.PerServingCalories, preview.PerServingProtein, preview.PerServingCarbs,
             preview.PerServingFats, preview.PerServingGrams)
         : string.Empty;
 
+    /// <summary>Opens the recipe builder.</summary>
     [RelayCommand]
     public void OpenRecipeBuilder()
     {
@@ -56,7 +62,7 @@ public partial class FoodLogViewModel
         CancelFoodSearch();
     }
 
-    [RelayCommand]
+    /// <summary>Fills the builder from a saved recipe, so an existing recipe is edited rather than recreated.</summary>
     public void LoadSavedRecipeIntoEditor(RecipeDetailsItem? details)
     {
         if (details is null || IsWriting || !CanCreateRecipes) return;
@@ -106,6 +112,8 @@ public partial class FoodLogViewModel
         InvalidateRecipePreview();
     }
 
+    /// <summary>Points an ingredient row at a catalog food, carrying its macros and weight across so the row's totals</summary>
+    /// update without a second lookup.</summary>
     public void SelectCatalogFoodForRecipeIngredient(RecipeIngredientEditor? row, FoodCatalogItem? catalogItem, float? gramsOverride = null)
     {
         if (row is null || catalogItem is null || IsWriting || !IsRecipeBuilderVisible) return;
@@ -139,41 +147,7 @@ public partial class FoodLogViewModel
         InvalidateRecipePreview();
     }
 
-    [RelayCommand]
-    public void ConvertRecipeIngredientToManual(RecipeIngredientEditor? row)
-    {
-        if (row is null || IsWriting || !IsRecipeBuilderVisible) return;
-        row.ConvertToManual();
-        InvalidateRecipePreview();
-    }
-
-    [RelayCommand]
-    public void PreviewSelectedRecipePortion(RecipeSummaryItem? recipe)
-    {
-        if (recipe is null)
-        {
-            SelectedRecipePortionPreview = null;
-            return;
-        }
-
-        try
-        {
-            float? requestedServings = !string.IsNullOrWhiteSpace(SelectedRecipePortionServingsText)
-                ? ParseRecipeNumber(SelectedRecipePortionServingsText)
-                : null;
-            float? requestedGrams = requestedServings is null && !string.IsNullOrWhiteSpace(SelectedRecipePortionGramsText)
-                ? ParseRecipeNumber(SelectedRecipePortionGramsText)
-                : null;
-
-            SelectedRecipePortionPreview = NutritionPresentationMapper.CalculateRecipePortion(
-                _recipePortionUseCase, recipe, requestedServings, requestedGrams);
-        }
-        catch
-        {
-            SelectedRecipePortionPreview = null;
-        }
-    }
-
+    /// <summary>Adds an empty ingredient row.</summary>
     [RelayCommand]
     public void AddRecipeIngredient()
     {
@@ -184,6 +158,7 @@ public partial class FoodLogViewModel
         InvalidateRecipePreview();
     }
 
+    /// <summary>Removes an ingredient row.</summary>
     [RelayCommand]
     public void RemoveRecipeIngredient(RecipeIngredientEditor? row)
     {
@@ -193,6 +168,7 @@ public partial class FoodLogViewModel
         InvalidateRecipePreview();
     }
 
+    /// <summary>Closes the builder and drops the draft.</summary>
     [RelayCommand]
     public void CancelRecipeBuilder()
     {
@@ -201,6 +177,7 @@ public partial class FoodLogViewModel
         IsFastLoggingVisible = IsEditModalVisible;
     }
 
+    /// <summary>Previews the recipe's nutrition.</summary>
     [RelayCommand]
     public async Task PreviewRecipeAsync()
     {
@@ -226,6 +203,7 @@ public partial class FoodLogViewModel
         finally { IsWriting = false; }
     }
 
+    /// <summary>Saves the recipe.</summary>
     [RelayCommand]
     public async Task SaveRecipeAsync()
     {
@@ -269,6 +247,7 @@ public partial class FoodLogViewModel
         finally { IsWriting = false; }
     }
 
+    /// <summary>The ingredients as request inputs.</summary>
     private List<RecipeIngredientInput> BuildRecipeIngredients() =>
         RecipeEditorIngredients.Select(row => new RecipeIngredientInput(
             row.FoodItemId,
@@ -282,6 +261,7 @@ public partial class FoodLogViewModel
             SourceLabel: row.SourceLabel,
             SourceVersion: row.SourceVersion)).ToList();
 
+    /// <summary>The catalog food's identifier when it is one the recipe can reference, otherwise empty.</summary>
     private static Guid TryExtractCatalogGuid(FoodCatalogItem item)
     {
         if (!string.IsNullOrWhiteSpace(item.FoodKey))
@@ -296,17 +276,24 @@ public partial class FoodLogViewModel
         return new Guid(bytes);
     }
 
+    /// <summary>Reads the number, or zero when unreadable.</summary>
     private static float ParseRecipeNumber(string text) =>
         float.TryParse(text, NumberStyles.Float, CultureInfo.CurrentCulture, out var value)
             ? value
             : throw new FormatException("Invalid recipe number.");
 
+    /// <summary>Drops the stale preview when an ingredient changes.</summary>
     private void OnRecipeIngredientChanged(object? sender, PropertyChangedEventArgs args) => InvalidateRecipePreview();
+    /// <summary>Drops the stale preview when the name changes.</summary>
     partial void OnRecipeNameChanged(string value) => InvalidateRecipePreview();
+    /// <summary>Drops the stale preview when the description changes.</summary>
     partial void OnRecipeDescriptionChanged(string value) => InvalidateRecipePreview();
+    /// <summary>Drops the stale preview when the servings change.</summary>
     partial void OnRecipeServingsTextChanged(string value) => InvalidateRecipePreview();
+    /// <summary>Drops the stale preview when the cooked weight changes.</summary>
     partial void OnRecipeCookedWeightTextChanged(string value) => InvalidateRecipePreview();
 
+    /// <summary>Marks the preview stale after an ingredient changed, so it is recomputed before it is shown again.</summary>
     private void InvalidateRecipePreview()
     {
         _recipeEditorRevision++;
@@ -314,6 +301,7 @@ public partial class FoodLogViewModel
         RecipeEditorStatus = string.Empty;
     }
 
+    /// <summary>Empties the builder — name, ingredients and preview — before a new recipe.</summary>
     private void ResetRecipeBuilder()
     {
         _recipeEditorRevision++;

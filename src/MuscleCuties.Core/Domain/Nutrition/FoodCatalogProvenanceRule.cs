@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>Where a catalogue food came from, which decides how much its values are trusted.</summary>
 public enum FoodCatalogSourceKind
 {
     LocalFood,
@@ -7,6 +8,7 @@ public enum FoodCatalogSourceKind
     UsdaFoodDataCentral
 }
 
+/// <summary>How uncertain a source's values are, which the ranking weighs.</summary>
 public sealed record FoodCatalogSourceUncertainty(
     FoodCatalogSourceKind SourceKind,
     string NeutralSourceKey,
@@ -14,12 +16,14 @@ public sealed record FoodCatalogSourceUncertainty(
     bool HasCompleteMacronutrients,
     float? VerifiedServingMassGrams);
 
+/// <summary>Classifies a food's source and its uncertainty, so a derived value is never shown as measured.</summary>
 public static class FoodCatalogProvenanceRule
 {
     public const string LocalFoodSourceKey = "Nutrition_Source_LocalFood";
     public const string CustomFoodSourceKey = "Nutrition_Source_CustomFood";
     public const string UsdaFoodDataCentralSourceKey = "Nutrition_Source_UsdaFoodDataCentral";
 
+    /// <summary>Classifies a food's source from the record itself, defaulting to the least trusted kind.</summary>
     public static FoodCatalogSourceKind Classify(FoodCatalogCandidate candidate)
     {
         ArgumentNullException.ThrowIfNull(candidate);
@@ -33,6 +37,7 @@ public static class FoodCatalogProvenanceRule
             : FoodCatalogSourceKind.LocalFood;
     }
 
+    /// <summary>The uncertainty band for that source, with the reason it applies.</summary>
     public static FoodCatalogSourceUncertainty EvaluateUncertainty(FoodCatalogCandidate candidate)
     {
         ArgumentNullException.ThrowIfNull(candidate);

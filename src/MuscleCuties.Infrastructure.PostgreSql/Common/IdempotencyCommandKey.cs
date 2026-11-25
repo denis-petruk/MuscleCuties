@@ -8,6 +8,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Common;
 /// </summary>
 internal static class IdempotencyCommandKey
 {
+    /// <summary>A single key from a command family and its idempotency key, so two families cannot collide on one key.</summary>
     public static string Build(string prefix, string idempotencyKey)
     {
         var normalized = prefix + idempotencyKey.Trim();

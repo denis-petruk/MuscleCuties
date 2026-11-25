@@ -89,6 +89,8 @@ using MuscleCuties.Server.Hydration;
 
 namespace MuscleCuties.Server;
 
+/// <summary>Builds the whole HTTP surface: authentication, the endpoint groups, the error shape and the health checks, so</summary>
+/// the host and the tests stand up the same app.</summary>
 public static class ApiApplication
 {
     private const string AuthenticationSectionName = "Authentication";
@@ -113,6 +115,7 @@ public static class ApiApplication
     private const string EmailChallengeRoute = "/api/v1/email-challenges";
     private const string ProfileUnitsRoute = "/api/v1/profile/units";
 
+    /// <summary>Builds the API pipeline: configuration, services, authentication, endpoints and health probes.</summary>
     public static WebApplication Build(
         WebApplicationBuilder builder,
         Action<IServiceCollection>? configureServices = null)
@@ -498,6 +501,7 @@ public static class ApiApplication
 
         app.MapGet(LiveRoute, () => Results.Ok(new HealthResponse("live", ApiVersion)))
             .AllowAnonymous();
+        /// <summary>Writes the bare health status word with no-store caching, disclosing nothing about the checks behind it.</summary>
         static Task WriteHealthStatusAsync(
             HttpContext healthContext,
             Microsoft.Extensions.Diagnostics.HealthChecks.HealthReport report)
@@ -901,10 +905,13 @@ public static class ApiApplication
         return app;
     }
 
+    /// <summary>The liveness answer: a status word and the API version the process is running.</summary>
     private sealed record HealthResponse(string Status, string ApiVersion);
     /// <summary>Server requests refresh their diary through API reads, so there are no process-local observers to notify.</summary>
     private sealed class ServerNutritionBatchAndCopyChangeNotifier : INutritionBatchAndCopyChangeNotifier
     {
+        /// <summary>Deliberately empty: a server request reloads its diary through the API, so there is no in-process observer to</summary>
+        /// notify.</summary>
         public void NotifyNutritionChanged(Guid userId, DateOnly date)
         {
             if (userId == Guid.Empty)
@@ -914,12 +921,20 @@ public static class ApiApplication
         }
     }
 
+    /// <summary>Whether the caller holds a valid session, and for whom, plus the API version.</summary>
     private sealed record SessionResponse(bool IsAuthenticated, string? UserId, string ApiVersion);
+    /// <summary>The current and the wanted password, both required so a session alone cannot change the password.</summary>
     private sealed record ChangePasswordBody(string CurrentPassword, string NewPassword);
+    /// <summary>The created account's id and whether it still has to finish onboarding.</summary>
     private sealed record AccountRegistrationResponse(Guid UserId, bool OnboardingComplete);
+    /// <summary>A refused registration as a stable code the client translates, rather than prose the client would have to</summary>
+    /// parse.</summary>
     private sealed record AccountRegistrationError(string Code);
+    /// <summary>The challenge and its nonce, so an Apple sign-in can be completed without a nonce being reused.</summary>
     private sealed record AppleNonceResponse(string ChallengeId, string Nonce);
+    /// <summary>The refresh token to revoke on sign-out.</summary>
     private sealed record RevokeSessionBody(string RefreshToken);
+    /// <summary>The unit choices with the version the client edited, so an edit made against stale state is refused.</summary>
     private sealed record UpdateProfileUnitsRequest(
         int ExpectedVersion,
         bool UseMetricSystem,
@@ -928,13 +943,19 @@ public static class ApiApplication
         string? HeightUnit,
         string? DistanceUnit,
         string? EnergyUnit);
+    /// <summary>The editable profile fields; the date-of-birth flag distinguishes clearing it from leaving it alone, which a</summary>
+    /// nullable date cannot.</summary>
     private sealed record UpdateServerProfileBody(
         int ExpectedVersion, string? Name, DateOnly? DateOfBirth, bool SetDateOfBirth, decimal? Height, decimal? Weight,
         string? Goal, string? WeightGoalPace, string? TrainingExperienceLevel,
         int? CycleLength, string? DietaryTags, string? EquipmentLevel,
         string? ReproductiveContextJson = null, string? ProfileImagePath = null);
+    /// <summary>A correction to one quiz answer, against the version the client believes it has.</summary>
     private sealed record CorrectServerQuizResponseBody(int ExpectedVersion, int AnswerId);
+    /// <summary>The nutrition preferences with the version they were read at.</summary>
     private sealed record UpdateServerNutritionPreferencesBody(int ExpectedVersion, string Goal, string WeightGoalPace, string DietaryTags);
+    /// <summary>The workout preferences with the version they were read at; the exclusions and capabilities are optional so an</summary>
+    /// older client can still send the rest.</summary>
     private sealed record UpdateServerWorkoutPreferencesBody(int ExpectedVersion, IReadOnlyList<int> ActivityTypes,
         IReadOnlyList<int> AvailableWeekdays, IReadOnlyDictionary<int, int> ActivitySessionDurationsMinutes,
         string? EquipmentLevel = null,
@@ -942,10 +963,12 @@ public static class ApiApplication
         HashSet<int>? ExcludedExerciseIds = null,
         bool? GluteFocus = null,
         MuscleCuties.Core.Domain.Workout.Planning.EquipmentCapabilities? EquipmentCapabilities = null);
+    /// <summary>The nutrition targets keyed by name, kept as raw JSON so a target the server does not know survives a save.</summary>
     private sealed record UpdateServerNutritionTargetsBody(int ExpectedVersion, IReadOnlyDictionary<string, JsonElement> Targets);
 
     private static readonly JsonSerializerOptions ChallengeJsonOptions = new() { PropertyNamingPolicy = null };
 
+    /// <summary>Maps an email-challenge start outcome onto its HTTP result, including rate-limit and delivery failures.</summary>
     private static IResult MapChallengeStart(EmailChallengeOperationResult result) => result.Status switch
     {
         EmailChallengeStatus.Succeeded => Results.Json(new
@@ -959,6 +982,7 @@ public static class ApiApplication
         _ => Results.BadRequest(new AccountRegistrationError("invalidChallengeRequest"))
     };
 
+    /// <summary>Maps an email-challenge verification outcome onto its HTTP result.</summary>
     private static IResult MapChallengeVerification(EmailChallengeOperationResult result) => result.Status switch
     {
         EmailChallengeStatus.Succeeded => Results.Json(new
@@ -982,9 +1006,11 @@ public static class ApiApplication
         return Guid.TryParse(subject, out userId) && userId != Guid.Empty;
     }
 
+    /// <summary>Reads the caller's user id from the HTTP context's principal.</summary>
     private static bool TryGetAuthenticatedUserId(HttpContext context, out Guid userId) =>
         TryGetUserId(context.User, out userId);
 
+    /// <summary>Maps a profile write outcome onto its HTTP result, including version conflicts and unknown catalog references.</summary>
     private static IResult MapProfileWrite(ServerProfileWriteResult result) => result.Status switch
     {
         ServerProfileWriteStatus.Saved => Results.Ok(new { result.Version }),
@@ -995,8 +1021,11 @@ public static class ApiApplication
     };
 }
 
+/// <summary>Maps the account operations' outcomes onto one HTTP result each, so every endpoint answers a refused session</summary>
+/// the same way.</summary>
 internal static class SessionOperationHttpResults
 {
+    /// <summary>Answers a session operation with its tokens, or 401 for every refused status.</summary>
     public static IResult OkOrUnauthorized(SessionOperationResult result) => result.Status switch
     {
         SessionOperationStatus.Succeeded when result.Tokens is not null => Results.Ok(result.Tokens),
@@ -1004,8 +1033,11 @@ internal static class SessionOperationHttpResults
     };
 }
 
+/// <summary>The readiness probe: the process is only reported ready when the database answers, so a deploy is not routed to</summary>
+/// an instance that cannot serve.</summary>
 internal sealed class PostgreSqlReadinessCheck(PostgresDbContext dbContext) : Microsoft.Extensions.Diagnostics.HealthChecks.IHealthCheck
 {
+    /// <summary>Reports healthy only when the database answers a connection check.</summary>
     public async Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult> CheckHealthAsync(
         Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext context,
         CancellationToken cancellationToken = default)
@@ -1036,6 +1068,7 @@ internal sealed class PostgreSqlSchemaCompatibilityCheck(PostgresDbContext dbCon
     private const string IncompatibleDescription = "Database schema does not match the deployed model.";
     private const string UnreadableDescription = "Database schema is unreadable.";
 
+    /// <summary>Compares the deployed model with the database schema and reports one fixed description either way.</summary>
     public async Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult> CheckHealthAsync(
         Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext context,
         CancellationToken cancellationToken = default)
@@ -1075,6 +1108,7 @@ internal static class ApiFailureClassifier
     private const string RequestCancelledCode = "requestCancelled";
     private const string InternalErrorCode = "internalError";
 
+    /// <summary>Reduces an exception to the stable error code the API returns, so no message or SQL detail leaks.</summary>
     public static string Classify(Exception exception) => exception switch
     {
         Npgsql.PostgresException { SqlState: MissingTableSqlState } => DatabaseMissingTableCode,

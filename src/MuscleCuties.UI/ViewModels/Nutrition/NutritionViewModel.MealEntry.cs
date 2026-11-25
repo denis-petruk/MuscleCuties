@@ -1,3 +1,6 @@
+// Add-meal chooser, meal templates, and meal-type state.
+// Second half of NutritionViewModel; see its declaration for the full contract.
+
 using System.Diagnostics.CodeAnalysis;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UI.Services.Nutrition;
@@ -5,6 +8,8 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>The entry point into logging a meal: choose a meal type, start a manual meal, ideas or a day plan, and the</summary>
+/// saved meal templates that can be logged in one tap.</summary>
 public partial class NutritionViewModel
 {
     private const float GramsPerHundred = 100f;
@@ -25,19 +30,28 @@ public partial class NutritionViewModel
     [ObservableProperty] private string _pageStatusMessage = string.Empty;
     [ObservableProperty] private bool _isPageStatusVisible;
 
+    /// <summary>The user's meal templates.</summary>
     public ObservableCollection<MealTemplate> MealTemplates { get; } = [];
 
+    /// <summary>True when breakfast is the entry's meal.</summary>
     public bool IsEntryBreakfastSelected => EntryMealType == MealType.Breakfast;
+    /// <summary>True when lunch is the entry's meal.</summary>
     public bool IsEntryLunchSelected => EntryMealType == MealType.Lunch;
+    /// <summary>True when dinner is the entry's meal.</summary>
     public bool IsEntryDinnerSelected => EntryMealType == MealType.Dinner;
+    /// <summary>True when a snack is the entry's meal.</summary>
     public bool IsEntrySnackSelected => EntryMealType == MealType.Snack;
+    /// <summary>True when there are meal templates.</summary>
     public bool HasMealTemplates => MealTemplates.Count > 0;
+    /// <summary>True when a template status is shown.</summary>
     public bool HasMealTemplateStatus => !string.IsNullOrWhiteSpace(MealTemplateStatus);
 
+    /// <summary>Always true, as a meal type is always chosen.</summary>
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in Nutrition XAML / view model contract.")]
     public bool HasEntryMealTypeSelected => true;
 
+    /// <summary>Opens the meal chooser and its editor together, so the page never flashes between two sheets.</summary>
     private void OpenMealEntry()
     {
         if (IsBusy)
@@ -59,6 +73,7 @@ public partial class NutritionViewModel
         _ = LoadMealTemplatesAsync();
     }
 
+    /// <summary>Closes the chooser and forgets which entry the user was on.</summary>
     private void CloseMealEntry()
     {
         IsMealEntryModalVisible = false;
@@ -66,6 +81,7 @@ public partial class NutritionViewModel
         MealTemplateStatus = string.Empty;
     }
 
+    /// <summary>Records the meal type chosen in the entry sheet.</summary>
     private void SelectEntryMealType(MealType mealType)
     {
         if (IsWritingMealEntry)
@@ -75,6 +91,8 @@ public partial class NutritionViewModel
         NotifyEntryProperties();
     }
 
+    /// <summary>Opens an empty editor for the chosen meal, defaulting the type to the one the clock suggests when none was</summary>
+    /// picked. Returns without acting while a write is in flight.</summary>
     private Task StartManualMealAsync()
     {
         if (IsBusy || IsWritingMealEntry)
@@ -92,6 +110,8 @@ public partial class NutritionViewModel
         return Task.CompletedTask;
     }
 
+    /// <summary>Opens the ideas sheet for the chosen meal and loads the first page of suggestions, remembering whether to</summary>
+    /// return to the editor afterwards.</summary>
     private void StartSuggestedMeal()
     {
         if (IsBusy || IsWritingMealEntry)
@@ -125,6 +145,7 @@ public partial class NutritionViewModel
         _ = LoadSuggestionsAsync();
     }
 
+    /// <summary>Opens the day-plan variant of the sheet, which plans every meal rather than one.</summary>
     private void StartDayPlan()
     {
         _returnToMealEditorAfterSuggestion = false;
@@ -147,6 +168,7 @@ public partial class NutritionViewModel
         _ = LoadDayPlanAsync();
     }
 
+    /// <summary>Shows or hides the template list, loading it the first time it is opened.</summary>
     private void ToggleTemplatePicker()
     {
         if (IsWritingMealEntry)
@@ -157,6 +179,8 @@ public partial class NutritionViewModel
             _ = LoadMealTemplatesAsync();
     }
 
+    /// <summary>Loads the saved templates; without the use case the list says templates are unavailable rather than</summary>
+    /// appearing empty.</summary>
     private async Task LoadMealTemplatesAsync()
     {
         if (IsLoadingMealTemplates)
@@ -194,6 +218,7 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Logs a template as a meal in one step, reporting a failure on the entry sheet.</summary>
     private async Task LogMealTemplateAsync(MealTemplate? template)
     {
         if (template is null || IsWritingMealEntry || IsLoadingMealTemplates)
@@ -245,6 +270,7 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Deletes a template and refreshes the list.</summary>
     private async Task DeleteMealTemplateAsync(MealTemplate? template)
     {
         if (template is null || IsLoadingMealTemplates || _getRecipesAndTemplatesUseCase is null)
@@ -278,6 +304,7 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Saves a logged meal as a reusable template under its own name.</summary>
     private async Task SaveMealAsTemplateAsync(MealItem? meal)
     {
         if (meal is null || IsSavingMealTemplate)
@@ -319,6 +346,8 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>The template rows a meal would become, one per ingredient, with gram weights worked out from the serving</summary>
+    /// the user chose.</summary>
     private async Task<IReadOnlyList<MealTemplateItem>> BuildMealTemplateItemsAsync(MealItem meal)
     {
         if (meal.LoggedMealId > 0)
@@ -369,12 +398,14 @@ public partial class NutritionViewModel
         ];
     }
 
+    /// <summary>Re-publishes the template list's visibility and status after it changes.</summary>
     private void NotifyMealTemplateState()
     {
         OnPropertyChanged(nameof(HasMealTemplates));
         OnPropertyChanged(nameof(HasMealTemplateStatus));
     }
 
+    /// <summary>Shows a transient status line; a newer message supersedes the older one's timer.</summary>
     private void ShowPageStatus(string message)
     {
         var version = ++_pageStatusVersion;
@@ -383,6 +414,7 @@ public partial class NutritionViewModel
         _ = HidePageStatusAsync(version);
     }
 
+    /// <summary>Hides the status line after its delay unless a newer message has replaced it.</summary>
     private async Task HidePageStatusAsync(int version)
     {
         await Task.Delay(PageStatusDuration);
@@ -390,6 +422,7 @@ public partial class NutritionViewModel
             IsPageStatusVisible = false;
     }
 
+    /// <summary>Raises the entry properties the page binds.</summary>
     private void NotifyEntryProperties()
     {
         OnPropertyChanged(nameof(IsEntryBreakfastSelected));
@@ -398,5 +431,6 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(IsEntrySnackSelected));
     }
 
+    /// <summary>Refreshes the status flag when the text changes.</summary>
     partial void OnMealTemplateStatusChanged(string value) => OnPropertyChanged(nameof(HasMealTemplateStatus));
 }

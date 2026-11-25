@@ -6,14 +6,20 @@ using MuscleCuties.Core.Models.Entities.Nutrition;
 
 namespace MuscleCuties.Core.Services.Nutrition;
 
+/// <summary>One way to measure a food, with its weight in grams so any choice becomes a weight.</summary>
 public sealed class FoodServingOption
 {
+    /// <summary>What the user sees, such as a household measure.</summary>
     public string Label { get; set; } = string.Empty;
+    /// <summary>The unit the amount is counted in before it is converted to grams.</summary>
     public string Unit { get; set; } = string.Empty;
+    /// <summary>What one unit weighs, which is the conversion the diary applies.</summary>
     public float Grams { get; set; }
+    /// <summary>Where the option came from, so a guessed portion can be told from a stated one.</summary>
     public string Source { get; set; } = string.Empty;
 }
 
+/// <summary>Builds and reads the serving options stored with a food, with the fallbacks that keep a food usable when the source states no portion.</summary>
 public static partial class FoodServingOptions
 {
     private const float DistinctGramTolerance = 0.01f;
@@ -22,6 +28,7 @@ public static partial class FoodServingOptions
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Units a custom food may be saved with.</summary>
     public static IReadOnlyList<string> CustomFoodUnits { get; } =
     [
         "g",
@@ -29,6 +36,7 @@ public static partial class FoodServingOptions
         "lb"
     ];
 
+    /// <summary>The serving options every food starts with.</summary>
     private static IReadOnlyList<FoodServingOption> StandardOptions { get; } =
     [
         new() { Label = "g", Unit = "g", Grams = OnePortion, Source = "Standard" },
@@ -38,17 +46,20 @@ public static partial class FoodServingOptions
 
     [UnconditionalSuppressMessage("Trimming", "IL2026",
         Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
+    /// <summary>The stored JSON for a food's options, or nothing when there is nothing worth storing.</summary>
     public static string? CreateOptionsJson(FdcFoodDetail detail)
     {
         var options = BuildFdcOptions(detail);
         return options.Count == 0 ? null : JsonSerializer.Serialize(options, JsonOptions);
     }
 
+    /// <summary>The options for a food, always including the per-100 g one.</summary>
     public static IReadOnlyList<FoodServingOption> BuildOptionsForFood(FoodItem food)
     {
         return BuildOptions(food.ServingSize, food.ServingSizeUnit, food.ServingOptionsJson);
     }
 
+    /// <summary>Builds the serving options a food offers from its stored serving.</summary>
     public static IReadOnlyList<FoodServingOption> BuildOptions(float? servingSize, string? servingSizeUnit,
         string? servingOptionsJson)
     {
@@ -77,6 +88,7 @@ public static partial class FoodServingOptions
 
     [UnconditionalSuppressMessage("Trimming", "IL2026",
         Justification = "EF Core blocks full trimming; reflection-based JSON is safe.")]
+    /// <summary>The options read back from their stored JSON, with the per-100 g option added if it is missing.</summary>
     public static IReadOnlyList<FoodServingOption> ReadOptions(string? servingOptionsJson)
     {
         if (string.IsNullOrWhiteSpace(servingOptionsJson))
@@ -95,11 +107,13 @@ public static partial class FoodServingOptions
         }
     }
 
+    /// <summary>The grams for an amount of a chosen unit, or false when the unit is unknown.</summary>
     public static bool TryConvertToGrams(float amount, string? unit, out float grams)
     {
         return FoodPortionMassRule.TryConvertMassToGrams(amount, unit, out grams);
     }
 
+    /// <summary>The options the source's portions imply, with duplicates dropped.</summary>
     private static List<FoodServingOption> BuildFdcOptions(FdcFoodDetail detail)
     {
         var options = new List<FoodServingOption>();
@@ -154,6 +168,7 @@ public static partial class FoodServingOptions
         return options;
     }
 
+    /// <summary>The label for a portion, preferring the household wording over the bare amount.</summary>
     private static string BuildPortionLabel(FdcFoodPortion portion)
     {
         var unit = FirstPresent(
@@ -178,6 +193,7 @@ public static partial class FoodServingOptions
         };
     }
 
+    /// <summary>A package weight read out of free text, which is how a stated size becomes an option.</summary>
     private static bool TryParsePackageWeight(string? packageWeight, out float grams)
     {
         grams = NoGrams;
@@ -196,6 +212,7 @@ public static partial class FoodServingOptions
         return false;
     }
 
+    /// <summary>Adds an option unless the same unit and weight is already there, since sources repeat portions.</summary>
     public static void AddDistinctOption(List<FoodServingOption> options, FoodServingOption option)
     {
         if (!float.IsFinite(option.Grams) || option.Grams <= NoGrams || string.IsNullOrWhiteSpace(option.Label))
@@ -217,6 +234,7 @@ public static partial class FoodServingOptions
         });
     }
 
+    /// <summary>A unit in the one spelling the options compare by.</summary>
     private static string NormalizeUnit(string unit)
     {
         var normalized = unit.Trim().ToLowerInvariant().Replace(".", string.Empty);
@@ -237,21 +255,25 @@ public static partial class FoodServingOptions
         };
     }
 
+    /// <summary>A label with the source's whitespace and punctuation tidied.</summary>
     private static string CleanLabel(string value)
     {
         return WhiteSpaceRegex().Replace(value.Trim(), " ");
     }
 
+    /// <summary>The first non-empty candidate, so a label falls back through the source's alternative wordings.</summary>
     private static string? FirstPresent(params string?[] values)
     {
         return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
     }
 
+        /// <summary>The generated regex that recognizes a package weight.</summary>
     [GeneratedRegex(
         @"(?<amount>\d+(?:\.\d+)?)\s*(?<unit>kg|kilograms?|g|grams?|mg|milligrams?|lb|lbs|pounds?|oz|ounces?)",
         RegexOptions.IgnoreCase)]
     private static partial Regex PackageWeightRegex();
 
+    /// <summary>The generated regex that collapses runs of whitespace.</summary>
     [GeneratedRegex(@"\s+")]
     private static partial Regex WhiteSpaceRegex();
 }

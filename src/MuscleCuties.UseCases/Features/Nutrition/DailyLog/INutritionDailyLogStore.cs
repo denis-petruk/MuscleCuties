@@ -3,6 +3,7 @@ using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 
+/// <summary>The persistence the daily log needs.</summary>
 public interface INutritionDailyLogStore
 {
     Task<DailyNutritionLogSnapshot> GetLogForDateAsync(DateOnly date, CancellationToken cancellationToken = default);

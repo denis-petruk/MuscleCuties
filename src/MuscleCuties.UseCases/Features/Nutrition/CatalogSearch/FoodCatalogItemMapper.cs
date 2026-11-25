@@ -10,6 +10,7 @@ namespace MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 /// </summary>
 public static class FoodCatalogItemMapper
 {
+    /// <summary>Projects a candidate onto the row the search list renders.</summary>
     public static FoodCatalogItemDto Map(FoodCatalogCandidate candidate)
     {
         ArgumentNullException.ThrowIfNull(candidate);

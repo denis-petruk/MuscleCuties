@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Russian copy for nutrition, profile and account screens.</summary>
 internal static partial class RussianUiText
 {
+    /// <summary>Registers the Russian labels for nutrition, profile and auth.</summary>
     static partial void RegisterNutritionProfileAuthStrings()
     {
         Values["Ui_Common_Error_ConnectionRetry"] = "Что-то пошло не так. Проверьте подключение и повторите попытку.";

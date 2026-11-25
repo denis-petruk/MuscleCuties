@@ -3,8 +3,10 @@ using MuscleCuties.Core.Models.Workout.Planning;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>Maps recorded injuries onto blocked activities, so a blocked type is never prescribed.</summary>
 public static class InjuryActivityRestrictionRule
 {
+    /// <summary>The activities the recorded injuries block, as a set the scheduler subtracts from.</summary>
     public static IReadOnlySet<WorkoutActivityType> GetBlockedActivities(IEnumerable<Injury>? injuries)
     {
         var blocked = new HashSet<WorkoutActivityType>();

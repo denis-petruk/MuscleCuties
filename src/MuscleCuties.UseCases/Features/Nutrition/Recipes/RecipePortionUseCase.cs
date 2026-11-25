@@ -3,6 +3,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Recipes;
 
+/// <summary>Converting a portion into grams.</summary>
 public interface IRecipePortionUseCase
 {
     RecipePortionPreviewDto Calculate(CalculateRecipePortionRequest request);
@@ -10,8 +11,10 @@ public interface IRecipePortionUseCase
     FoodPortionCatalogOutputDto GetCatalog();
 }
 
+/// <summary>Converts a portion using the food's stored measures, answering failure rather than guessing.</summary>
 public sealed class RecipePortionUseCase : IRecipePortionUseCase
 {
+    /// <summary>Scales the recipe's nutrients to the requested portion, refusing a portion with no measure.</summary>
     public RecipePortionPreviewDto Calculate(CalculateRecipePortionRequest request)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -48,12 +51,14 @@ public sealed class RecipePortionUseCase : IRecipePortionUseCase
             portion.Fats);
     }
 
+    /// <summary>Converts a measure into grams, answering failure rather than assuming a density.</summary>
     public FoodMassConversionOutputDto ConvertMassToGrams(float amount, string? unit)
     {
         var succeeded = FoodPortionMassRule.TryConvertMassToGrams(amount, unit, out var grams);
         return new FoodMassConversionOutputDto(succeeded, succeeded ? grams : null);
     }
 
+    /// <summary>The portion sizes the recipe screen offers.</summary>
     public FoodPortionCatalogOutputDto GetCatalog() => new(
         FoodPortionMassRule.GramUnit,
         Array.AsReadOnly(new[]

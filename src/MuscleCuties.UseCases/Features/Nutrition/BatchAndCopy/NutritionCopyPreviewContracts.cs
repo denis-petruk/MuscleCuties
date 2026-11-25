@@ -2,12 +2,14 @@ using MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
 
+/// <summary>Whether a copy replaces the target day or adds to it.</summary>
 public enum DiaryCopyModeDto
 {
     Merge,
     Overwrite
 }
 
+/// <summary>One food the copy would write, with its amount.</summary>
 public sealed record DiaryCopyFoodDto(
     string Identity,
     string Name,
@@ -18,12 +20,14 @@ public sealed record DiaryCopyFoodDto(
     decimal Fat,
     string? GroupIdentity = null);
 
+/// <summary>The source day frozen for a preview, so committing writes what was previewed.</summary>
 public sealed record DiaryCopySnapshotDto(
     Guid OwnerId,
     DateOnly Date,
     string Revision,
     IReadOnlyList<DiaryCopyFoodDto> Items);
 
+/// <summary>The totals the copy would produce.</summary>
 public sealed record DiaryCopyTotalsDto(
     int Count,
     decimal Calories,
@@ -31,12 +35,14 @@ public sealed record DiaryCopyTotalsDto(
     decimal Carbs,
     decimal Fat);
 
+/// <summary>A request to preview copying one day onto another.</summary>
 public sealed record PreviewNutritionCopyRequest(
     DateOnly SourceDate,
     DateOnly TargetDate,
     MealType? MealType,
     DiaryCopyModeDto Mode);
 
+/// <summary>The preview, carrying the token a commit must present.</summary>
 public sealed record PreviewNutritionCopyResponse(
     Guid OwnerId,
     DateOnly SourceDate,
@@ -52,6 +58,7 @@ public sealed record PreviewNutritionCopyResponse(
     DiaryCopyTotalsDto ExistingTargetTotals,
     DiaryCopyTotalsDto ResultingTargetTotals);
 
+/// <summary>A commit of a preview the user has seen.</summary>
 public sealed record CommitPreviewedNutritionCopyRequest(
     string IdempotencyKey,
     DateOnly SourceDate,

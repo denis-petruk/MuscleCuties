@@ -4,6 +4,9 @@ using MuscleCuties.UseCases.Features.Workout.Archive;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
+/// <summary>
+///     Archive state: completed sessions grouped by week, with their detail.
+/// </summary>
 public partial class WorkoutHistoryViewModel : ObservableObject
 {
     private const int PageSize = 25;
@@ -74,6 +77,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
 
     [ObservableProperty] private int _totalSessionsCount;
 
+    /// <summary>Takes the archive use case and the back navigation callback.</summary>
     public WorkoutHistoryViewModel(
         IWorkoutArchiveUseCase workoutArchiveUseCase,
         Func<Task>? navigateBackAsync = null)
@@ -82,26 +86,33 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         _navigateBackAsync = navigateBackAsync;
     }
 
+    /// <summary>The history sessions.</summary>
     public ObservableCollection<WorkoutArchiveSummaryDto> Sessions { get; } = [];
 
+    /// <summary>The recorded effort as text, or "not recorded" when the session has none.</summary>
     public string DetailRpeFormatted => EditingRpe is { } rpe
         ? UiTextCatalog.Format("Workout_History_RpeValueFormat", rpe)
         : UiTextCatalog.Get("Workout_History_NotRecorded");
 
+    /// <summary>The months the history can be filtered to.</summary>
     public ObservableCollection<MonthFilterItem> AvailableMonths { get; } = [];
 
+    /// <summary>The exercise groups of the open session.</summary>
     public ObservableCollection<ExerciseSetsUiGroup> ExerciseGroups { get; } = [];
 
+    /// <summary>Refreshes the edit state when the effort changes.</summary>
     partial void OnEditingRpeChanged(int? value)
     {
         OnPropertyChanged(nameof(DetailRpeFormatted));
     }
 
+    /// <summary>Loads the history the page opens with.</summary>
     public async Task InitializeAsync()
     {
         await LoadHistoryAsync();
     }
 
+    /// <summary>Loads the history.</summary>
     [RelayCommand]
     public async Task LoadHistoryAsync()
     {
@@ -163,6 +174,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         }
     }
 
+    /// <summary>Filters the history to a month.</summary>
     [RelayCommand]
     public async Task SelectMonthAsync(MonthFilterItem? month)
     {
@@ -178,6 +190,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         await LoadFilteredHistoryAsync();
     }
 
+    /// <summary>Shows the history unfiltered.</summary>
     [RelayCommand]
     public async Task ShowAllMonthsAsync()
     {
@@ -186,6 +199,8 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             await SelectMonthAsync(all);
     }
 
+    /// <summary>Reloads the list for the selected month, tagging the request so a slower earlier response cannot</summary>
+    /// replace the newer month's rows.</summary>
     private async Task LoadFilteredHistoryAsync()
     {
         var requestId = ++_filterRequestId;
@@ -233,6 +248,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         }
     }
 
+    /// <summary>Loads the next page of history.</summary>
     [RelayCommand]
     public async Task LoadNextPageAsync()
     {
@@ -272,6 +288,8 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         }
     }
 
+    /// <summary>Puts the loaded sessions into the list, either replacing it or appending for the next page, and keeps the</summary>
+    /// lifetime volume from being counted twice on append.</summary>
     private void ApplySessions(IReadOnlyList<WorkoutArchiveSummaryDto> history, bool isAppend = false)
     {
         var currentTotal = isAppend ? LifetimeVolumeKg : 0.0;
@@ -290,6 +308,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         HasNoSessions = Sessions.Count == 0;
     }
 
+    /// <summary>Opens one session's detail.</summary>
     [RelayCommand]
     public async Task OpenSessionDetailAsync(WorkoutArchiveSummaryDto summary)
     {
@@ -366,12 +385,14 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         }
     }
 
+    /// <summary>Closes the session detail.</summary>
     [RelayCommand]
     public void CloseSessionDetail()
     {
         IsDetailSheetVisible = false;
     }
 
+    /// <summary>Saves an edited set.</summary>
     [RelayCommand]
     public async Task SaveSetEditAsync(EditableExerciseSetItem? item)
     {
@@ -432,27 +453,35 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         }
     }
 
+    /// <summary>True when the history has sessions.</summary>
     public bool HasSessions => Sessions.Count > 0;
+    /// <summary>True when a month filter is applied.</summary>
     public bool IsFilteredByMonth => SelectedMonth is not null && !SelectedMonth.IsAllMonths;
+    /// <summary>True when the first load failed.</summary>
     public bool ShowInitialLoadError => IsError && Sessions.Count == 0;
+    /// <summary>True when a page load failed.</summary>
     public bool ShowFooterLoadError => IsError && Sessions.Count > 0;
 
+    /// <summary>Refreshes the error flags when the state changes.</summary>
     partial void OnIsErrorChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowInitialLoadError));
         OnPropertyChanged(nameof(ShowFooterLoadError));
     }
 
+    /// <summary>Refreshes the empty state when sessions change.</summary>
     partial void OnHasNoSessionsChanged(bool value)
     {
         OnPropertyChanged(nameof(HasSessions));
     }
 
+    /// <summary>Refreshes the filter flag when the month changes.</summary>
     partial void OnSelectedMonthChanged(MonthFilterItem? value)
     {
         OnPropertyChanged(nameof(IsFilteredByMonth));
     }
 
+    /// <summary>Refreshes the edit state when the effort text changes.</summary>
     partial void OnEditingRpeTextChanged(string value)
     {
         RpeValidationError = string.Empty;
@@ -467,12 +496,14 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             EditingRpe = parsed;
     }
 
+    /// <summary>Retries the failed load.</summary>
     [RelayCommand]
     public Task RetryAsync()
     {
         return Sessions.Count == 0 ? LoadHistoryAsync() : LoadNextPageAsync();
     }
 
+    /// <summary>Saves the session notes.</summary>
     [RelayCommand]
     public async Task SaveSessionNotesAsync()
     {
@@ -528,6 +559,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         }
     }
 
+    /// <summary>Returns to the previous page.</summary>
     [RelayCommand]
     public async Task NavigateBackAsync()
     {
@@ -535,6 +567,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             await _navigateBackAsync();
     }
 
+    /// <summary>Reports a failure as a notice, and as the page's error state when the failure left nothing to show.</summary>
     private void ShowFailure(Exception exception, string fallbackKey, bool markLoadError = false)
     {
         var notice = ApiFailurePresenter.FromException(exception, fallbackKey);
@@ -547,6 +580,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         ShowStatus(notice.MessageText);
     }
 
+    /// <summary>A weight in kilograms as text.</summary>
     private static string FormatKilograms(double kilograms) =>
         UiTextCatalog.Format(
             "Workout_History_ValueKgFormat",
@@ -554,6 +588,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
                 ? DisplayFormat.Number(kilograms)
                 : DisplayFormat.WholeNumber(kilograms));
 
+    /// <summary>Shows a transient status line; a newer message supersedes the older one's timer.</summary>
     private void ShowStatus(string message)
     {
         StatusMessage = message;
@@ -562,6 +597,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         _ = HideStatusAsync(version);
     }
 
+    /// <summary>Hides the status line after its delay, unless a newer message has replaced it meanwhile.</summary>
     private async Task HideStatusAsync(int version)
     {
         await Task.Delay(TimeSpan.FromMilliseconds(StatusMessageVisibilityMilliseconds));

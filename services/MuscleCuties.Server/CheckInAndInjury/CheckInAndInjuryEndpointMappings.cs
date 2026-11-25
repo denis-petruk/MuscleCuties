@@ -5,11 +5,13 @@ using MuscleCuties.UseCases.Features.CheckInAndInjury;
 
 namespace MuscleCuties.Server.CheckInAndInjury;
 
+/// <summary>The daily check-in and injury routes, mounted under the authenticated group.</summary>
 public static class CheckInAndInjuryEndpointMappings
 {
     private const string CheckInsRoute = "/api/v1/check-ins";
     private const string InjuriesRoute = "/api/v1/injuries";
 
+    /// <summary>Registers the check-in and injury endpoints with their request and response contracts.</summary>
     public static IEndpointRouteBuilder MapCheckInAndInjuryEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var checkInsGroup = endpoints.MapGroup(CheckInsRoute).RequireAuthorization();
@@ -179,6 +181,7 @@ public static class CheckInAndInjuryEndpointMappings
     }
 
 
+    /// <summary>The day being answered and its observations; the values are optional because a partial check-in is allowed.</summary>
     public sealed record SaveDailyCheckInBody(
         Guid Id,
         DateOnly Date,
@@ -200,6 +203,7 @@ public static class CheckInAndInjuryEndpointMappings
         string? PlanningTimeZoneId = null,
         int? PlanningFatigue = null);
 
+    /// <summary>One injury report for the body part it names.</summary>
     public sealed record SaveInjuryObservationBody(
         Guid? Id,
         int? SiteFlag,

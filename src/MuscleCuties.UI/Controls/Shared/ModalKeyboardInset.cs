@@ -34,6 +34,7 @@ public static class ModalKeyboardInset
     /// <summary>Unsubscribes a sheet that closed.</summary>
     public static void Unsubscribe(Action<double> onChanged) => Subscribers.Remove(onChanged);
 
+    /// <summary>Starts listening for keyboard frame changes once, so every open sheet shares one observation.</summary>
     private static void StartObserving()
     {
 #if IOS
@@ -47,6 +48,8 @@ public static class ModalKeyboardInset
     }
 
 #if IOS
+    /// <summary>Turns the keyboard's frame into the overlap with the app window, which is the amount a sheet has to give</summary>
+    /// up rather than the keyboard's raw height.</summary>
     private static void OnWillChangeFrame(UIKit.UIKeyboardEventArgs args)
     {
         var screen = UIKit.UIApplication.SharedApplication.ConnectedScenes
@@ -67,6 +70,7 @@ public static class ModalKeyboardInset
     }
 #endif
 
+    /// <summary>Tells every open sheet how much of its bottom the keyboard now covers.</summary>
     private static void Publish(double overlap)
     {
         if (Math.Abs(overlap - Current) < 0.5)

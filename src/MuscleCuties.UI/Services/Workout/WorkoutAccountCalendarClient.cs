@@ -3,11 +3,14 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.Services.Workout;
 
+/// <summary>Keeps the server's workout calendar in the device's time zone.</summary>
 public interface IWorkoutAccountCalendarClient
 {
     Task UpdateForegroundTimeZoneAsync(CancellationToken cancellationToken = default);
 }
 
+/// <summary>Sends the device time zone to the server when it differs, gated so two calls cannot race the</summary>
+/// same version.</summary>
 public sealed class WorkoutAccountCalendarClient(IMuscleCutiesBackendApiClient apiClient)
     : IWorkoutAccountCalendarClient, IDisposable
 {
@@ -16,8 +19,11 @@ public sealed class WorkoutAccountCalendarClient(IMuscleCutiesBackendApiClient a
     private const string ReadyStatus = "Ready";
     private readonly SemaphoreSlim _updateGate = new(1, 1);
 
+    /// <summary>Releases the client's update gate.</summary>
     public void Dispose() => _updateGate.Dispose();
 
+    /// <summary>Reads the calendar state and, when the stored zone differs from the device's, sends the change</summary>
+    /// with the version it just read. A conflict is surfaced so the caller reloads instead of retrying blind.</summary>
     public async Task UpdateForegroundTimeZoneAsync(CancellationToken cancellationToken = default)
     {
         await _updateGate.WaitAsync(cancellationToken);

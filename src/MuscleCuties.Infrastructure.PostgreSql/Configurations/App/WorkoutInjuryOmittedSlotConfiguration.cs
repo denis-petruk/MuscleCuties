@@ -2,8 +2,10 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Configurations.App;
 
+/// <summary>Maps the slots withheld for an injury, unique per plan, date, session and slot.</summary>
 public sealed class WorkoutInjuryOmittedSlotConfiguration : IEntityTypeConfiguration<WorkoutInjuryOmittedSlotRecord>
 {
+    /// <summary>Makes the omission key unique so replanning cannot record the same withheld slot twice.</summary>
     public void Configure(EntityTypeBuilder<WorkoutInjuryOmittedSlotRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_injury_omitted_slots");

@@ -4,6 +4,7 @@ using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Account.Registration;
 
+/// <summary>A quiz question carried into registration, with its options.</summary>
 public sealed record AccountRegistrationQuizQuestion(
     int Id,
     string Question,
@@ -11,21 +12,26 @@ public sealed record AccountRegistrationQuizQuestion(
     MuscleCuties.Core.Models.Enums.Quiz.QuizQuestionType QuestionType,
     IReadOnlyList<AccountRegistrationQuizAnswer> Answers);
 
+/// <summary>One option of that question, with the profile value it maps to.</summary>
 public sealed record AccountRegistrationQuizAnswer(int Id, string Text, int OrderIndex, int MappedValue);
 
+/// <summary>Proof that the provider delivered the registration email.</summary>
 public sealed record RegistrationEmailReceipt(string Id, DateTimeOffset ExpiresAt);
 
+/// <summary>Verifies such a receipt, so registration cannot complete without delivery.</summary>
 public interface IRegistrationEmailReceiptVerifier
 {
     bool TryVerify(string token, string email, string challengeId, out RegistrationEmailReceipt? receipt);
 }
 
+/// <summary>Hashes the password while the registration is pending.</summary>
 public interface IRegistrationPasswordHasher
 {
     string HashPassword(string password);
     bool VerifyPassword(string password, string encodedHash);
 }
 
+/// <summary>The single write that creates the account and everything it starts with.</summary>
 public interface ICompleteAccountRegistrationStore
 {
     Task<IReadOnlyList<AccountRegistrationQuizQuestion>> LoadQuizQuestionsAsync(

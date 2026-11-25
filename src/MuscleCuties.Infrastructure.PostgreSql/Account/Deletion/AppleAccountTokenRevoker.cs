@@ -4,6 +4,7 @@ using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 
+/// <summary>Revokes the Apple tokens of a deleted account, which is the part of deletion only Apple can confirm.</summary>
 public sealed class AppleAccountTokenRevoker(
     PostgresDbContext dbContext,
     HttpClient httpClient,
@@ -20,12 +21,14 @@ public sealed class AppleAccountTokenRevoker(
     private const string AppleRevokeEndpoint = "https://appleid.apple.com/auth/revoke";
     private const int ClientSecretLifetimeSeconds = 300;
 
+    /// <summary>True when the revoker has the credentials Apple requires.</summary>
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(clientId) &&
         !string.IsNullOrWhiteSpace(teamId) &&
         !string.IsNullOrWhiteSpace(keyId) &&
         !string.IsNullOrWhiteSpace(privateKeyPem);
 
+    /// <summary>Exchanges an authorization code for the refresh token Apple issued.</summary>
     public async Task<string?> ExchangeAuthorizationCodeForRefreshTokenAsync(
         string? authorizationCode,
         CancellationToken cancellationToken = default)
@@ -62,6 +65,7 @@ public sealed class AppleAccountTokenRevoker(
         return null;
     }
 
+    /// <summary>Revokes the account's Apple token.</summary>
     public async Task<AppleTokenRevocationResult> RevokeAccountTokenAsync(
         Guid userId,
         string? authorizationCode = null,
@@ -163,6 +167,7 @@ public sealed class AppleAccountTokenRevoker(
                 AccountDeletionFailureCode.AppleAuthorizationRequired);
     }
 
+    /// <summary>Builds the short-lived client secret Apple requires, signed with the account's key and expiring quickly so a leaked secret is worthless.</summary>
     public string CreateClientSecretJwt()
     {
         if (!IsConfigured)
@@ -194,6 +199,7 @@ public sealed class AppleAccountTokenRevoker(
         return $"{unsignedToken}.{Base64UrlEncode(signature)}";
     }
 
+    /// <summary>Base64url encoding without padding.</summary>
     private static string Base64UrlEncode(byte[] bytes) =>
         Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 }

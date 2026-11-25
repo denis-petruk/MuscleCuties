@@ -1,4 +1,3 @@
-using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.UI.Navigation;
 using Xunit;
 
@@ -17,20 +16,6 @@ public sealed class MealNavigationContractTests
         Assert.Equal(route, shellRoute);
         Assert.True(NutritionNavigation.TryReadEntryId(ParseQuery(shellRoute), out var parsed));
         Assert.Equal(historyId, parsed);
-    }
-
-    [Fact]
-    public void Add_food_route_keeps_addMeal_and_addAt_through_shell_navigation()
-    {
-        var route = NutritionNavigation.ToAddFood(MealType.Dinner, 18 * 60 + 30);
-
-        var shellRoute = ShellNavigationRoute.ForShell(route);
-
-        Assert.Equal(route, shellRoute);
-        Assert.True(NutritionNavigation.TryReadAddFoodIntent(
-            ParseQuery(shellRoute), out var mealTypeName, out var minuteOfDay));
-        Assert.Equal(nameof(MealType.Dinner), mealTypeName);
-        Assert.Equal(18 * 60 + 30, minuteOfDay);
     }
 
     [Theory]

@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 
+/// <summary>The catalog search.</summary>
 public interface IFoodCatalogSearchUseCase
 {
     Task<FoodCatalogSearchResponse> SearchAsync(

@@ -1,7 +1,9 @@
 namespace MuscleCuties.UseCases.Features.Profile.Feedback;
 
+/// <summary>Sends a report through the transport, applying the attachment policy first.</summary>
 public sealed class ProfileFeedbackUseCase(IProfileFeedbackComposer composer) : IProfileFeedbackUseCase
 {
+    /// <summary>Opens a feedback draft for the user to edit.</summary>
     public async Task<ProfileFeedbackResult> OpenDraftAsync(
         ProfileFeedbackRequest request, CancellationToken cancellationToken = default)
     {
@@ -35,6 +37,7 @@ public sealed class ProfileFeedbackUseCase(IProfileFeedbackComposer composer) : 
         return new ProfileFeedbackResult(true, "Feedback email is ready to send.");
     }
 
+    /// <summary>Trims an optional field and returns null for a blank one, so empty strings never reach the transport.</summary>
     private static string Optional(string value)
     {
         return string.IsNullOrWhiteSpace(value) ? "Not specified" : value.Trim();

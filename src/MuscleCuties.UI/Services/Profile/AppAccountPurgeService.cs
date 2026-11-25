@@ -8,6 +8,8 @@ using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
 
 namespace MuscleCuties.UI.Services.Profile;
 
+/// <summary>Deletes the account on the server and then everything it left on the device: local state, cached</summary>
+/// photos and keys.</summary>
 public sealed class AppAccountPurgeService : IAppAccountPurgeService
 {
     private const string DeleteAccountRoute = "/api/v1/accounts/me";
@@ -30,6 +32,7 @@ public sealed class AppAccountPurgeService : IAppAccountPurgeService
     private readonly ILocalPhotoCacheService _photoCache;
     private readonly ConcurrentDictionary<int, bool> _acknowledgedServerDeletions = new();
 
+    /// <summary>Takes the services the purge needs.</summary>
     public AppAccountPurgeService(
         IServiceScopeFactory scopeFactory,
         Lazy<IAppPreloadService> preloadService,
@@ -42,6 +45,8 @@ public sealed class AppAccountPurgeService : IAppAccountPurgeService
         _photoCache = photoCache;
     }
 
+    /// <summary>Purges the account, reporting per step whether it succeeded. Local data is only cleared for the</summary>
+    /// account the server confirmed deleting.</summary>
     public async Task<AccountPurgeResult> PurgeAccountDataAsync(int userId, CancellationToken ct = default)
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
@@ -105,6 +110,8 @@ public sealed class AppAccountPurgeService : IAppAccountPurgeService
         }
     }
 
+    /// <summary>Clears everything this device holds for the signed-in account and signs out, used when the account is</summary>
+    /// already gone on the server.</summary>
     public async Task PurgeAllAccountDataAndKeysAsync()
     {
         await using var scope = _scopeFactory.CreateAsyncScope();
@@ -129,6 +136,8 @@ public sealed class AppAccountPurgeService : IAppAccountPurgeService
         }
     }
 
+    /// <summary>The message for a failed deletion: offline and expired sessions get their own wording, because both</summary>
+    /// leave the account intact.</summary>
     private static string? GetDeletionFailureMessage(BackendApiResponse<AccountDeletionResult> response)
     {
         if (response.Status == BackendApiStatus.OfflineRejected)
@@ -151,6 +160,7 @@ public sealed class AppAccountPurgeService : IAppAccountPurgeService
             : AccountDeletionFailedMessage;
     }
 
+    /// <summary>Asks the server to delete the account.</summary>
     private static Task<BackendApiResponse<AccountDeletionResult>> RequestServerDeletionAsync(
         IMuscleCutiesBackendApiClient apiClient,
         CancellationToken cancellationToken,
@@ -161,6 +171,7 @@ public sealed class AppAccountPurgeService : IAppAccountPurgeService
             new AccountDeletionRequest(authorizationCode),
             cancellationToken: cancellationToken);
 
+    /// <summary>The result that reports a failed purge.</summary>
     private static AccountPurgeResult Failed(string message) =>
         new(false, false, false, [message]);
 }

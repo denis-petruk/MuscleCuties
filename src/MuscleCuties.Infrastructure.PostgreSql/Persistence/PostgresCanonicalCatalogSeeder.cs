@@ -9,6 +9,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Persistence;
 
+/// <summary>What a seed run wrote, per catalog, so a deployment can report the result once.</summary>
 public sealed record CanonicalCatalogSeedSummary(
     int QuizQuestionCount,
     int QuizAnswerCount,
@@ -38,6 +39,7 @@ public static class PostgresCanonicalCatalogSeeder
     public const string EmbeddedManifestResourceName =
         "MuscleCuties.Infrastructure.PostgreSql.Persistence.Seed.CanonicalCatalogManifest.json";
 
+    /// <summary>Ingests the canonical catalog from its embedded manifest.</summary>
     public static async Task<CanonicalCatalogSeedSummary> IngestFromManifestAsync(
         PostgresDbContext context,
         string manifestFilePath,
@@ -85,6 +87,7 @@ public static class PostgresCanonicalCatalogSeeder
         return summary;
     }
 
+    /// <summary>Performs the ingestion inside one transaction.</summary>
     private static async Task<CanonicalCatalogSeedSummary> IngestAsync(
         PostgresDbContext context,
         byte[] rawBytes,
@@ -721,6 +724,7 @@ public static class PostgresCanonicalCatalogSeeder
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Reads a quiz answer's mapped value, refusing a shape the profile cannot store.</summary>
     internal static int ParseMappedValue(JsonElement element)
     {
         if (element.ValueKind == JsonValueKind.Number && element.TryGetInt32(out var numeric))
@@ -756,6 +760,7 @@ public static class PostgresCanonicalCatalogSeeder
         throw new InvalidDataException("Quiz answer mappedValue must be an integer or a supported enum member.");
     }
 
+    /// <summary>The enum member whose name matches the manifest value.</summary>
     private static int ParseEnumValue<TEnum>(string member) where TEnum : struct, Enum
     {
         if (Enum.TryParse<TEnum>(member, ignoreCase: false, out var value) && Enum.IsDefined(value))
@@ -763,6 +768,7 @@ public static class PostgresCanonicalCatalogSeeder
 
         throw new InvalidDataException($"Unsupported {typeof(TEnum).Name} quiz answer member: {member}.");
     }
+    /// <summary>The per-100 g nutrient values a starter food is seeded with.</summary>
     private readonly record struct StarterFoodNutrients(
         decimal? Calories, decimal? Protein, decimal? Carbs, decimal? Fats,
         decimal? Fiber, decimal? Iron, decimal? VitaminB12, decimal? VitaminC,

@@ -20,6 +20,7 @@ public partial class DailyCheckInModal : AnimatedModalView
         set => SetValue(CloseCommandProperty, value);
     }
 
+    /// <summary>Builds the modal's content the first time it opens.</summary>
     protected override void PrepareForOpen()
     {
         if (_hasContent)
@@ -33,6 +34,7 @@ public partial class DailyCheckInModal : AnimatedModalView
             $"[Performance][DailyCheckInModal] Deferred view initialized in {Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1} ms.");
     }
 
+    /// <summary>Refits the sheet height after the size changes.</summary>
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);

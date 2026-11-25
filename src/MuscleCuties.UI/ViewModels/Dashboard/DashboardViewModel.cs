@@ -26,6 +26,8 @@ namespace MuscleCuties.UI.ViewModels.Dashboard;
 
 [SuppressMessage("ReSharper", "UnusedAutoPropertyAccessor.Global",
     Justification = "Bound in XAML / view model contract.")]
+/// <summary>The dashboard: today's readiness, the workout and cycle summaries, and the two sheets it hosts — the daily</summary>
+/// check-in and the injury log.</summary>
 public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDisposable
 {
     private readonly IDailyCheckInUseCase _dailyCheckIn;
@@ -153,6 +155,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private string _workoutTitle =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Workout_Page_PlaceholderTitle");
 
+    /// <summary>Takes the use cases and the callbacks the dashboard reports to.</summary>
     public DashboardViewModel(
         IDashboardOverviewUseCase overview,
         IWorkoutInjuryUseCase injuries,
@@ -196,24 +199,34 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OpenPhotoVaultCommand = new AsyncRelayCommand(OpenPhotoVaultAsync);
     }
 
+    /// <summary>Opens the photo vault.</summary>
     public AsyncRelayCommand OpenPhotoVaultCommand { get; }
 
+    /// <summary>True when any dashboard modal is open.</summary>
     public bool IsAnyModalVisible => IsInjuryModalVisible || IsCheckInModalVisible;
 
+    /// <summary>True when readiness guidance is shown today.</summary>
     public bool HasTodayReadinessGuidance => HasTodayReadinessScore &&
                                              _readinessPresentationSettings.AreReadinessSuggestionsEnabled;
 
+    /// <summary>The check-in sheet's model, built on first use so the dashboard does not construct a form nobody opened.</summary>
     public DailyCheckInViewModel CheckInVm => _checkInVm ??= new DailyCheckInViewModel(
         _dailyCheckIn, _invalidateDashboard, CloseCheckInAfterCompletionAsync, _healthSync, _userIdProvider);
 
+    /// <summary>The injury sheet's model, likewise built on first use; its back action is deliberately empty because the sheet</summary>
+    /// closes itself.</summary>
     public InjuryLogViewModel InjuryLogVm => _injuryLogVm ??= new InjuryLogViewModel(
         _injuries, () => Task.CompletedTask, RefreshAfterInjuryChangeAsync);
 
+    /// <summary>The phase card's heading, which says the phase is missing instead of leaving the row blank when there is</summary>
+    /// none.</summary>
     public string DashboardPhaseHeaderText => CurrentPhase == CyclePhase.Unknown
         ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Phase_MissingHeader")
         : MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
             "Dashboard_Phase_HeaderFormat", LocalizedCurrentPhaseName);
 
+    /// <summary>Typical hormone patterns for the phase, worded as typical and replaced by a prompt to log a cycle when there</summary>
+    /// is none: it is education, not a measurement of her hormones.</summary>
     public string HormonalSummary => !HasActiveCycle
         ? "Log your cycle to see typical hormone patterns for each phase."
         : CurrentPhase switch
@@ -225,6 +238,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             _ => "Hormone patterns vary; a phase estimate cannot measure your hormone levels."
         };
 
+    /// <summary>Which day of the cycle this is when it can be counted, otherwise the phase's name.</summary>
     public string PhaseStatusText => CurrentPhase == CyclePhase.Unknown
         ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Phase_MissingStatus")
         : CurrentCycleDay > 0
@@ -238,12 +252,16 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             : MuscleCuties.UI.Services.Localization.UiTextCatalog.Format(
                 "Dashboard_Phase_StatusSelectedFormat", LocalizedCurrentPhaseName);
 
+    /// <summary>The label above the workout figure names the unit the plan's summary line is counted in, because that</summary>
+    /// wording comes from the plan itself.</summary>
     public string WorkoutCountLabel => IsRestDay
         ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_CountActivity")
         : WorkoutExercisesCount.Contains("sets", StringComparison.OrdinalIgnoreCase)
             ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_CountSets")
             : MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_CountExercises");
 
+    /// <summary>The workout figure: the recovery wording on a rest day, otherwise the leading number of the plan's summary</summary>
+    /// line.</summary>
     public string WorkoutCountValue => IsRestDay
         ? MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_CountRecovery")
         : int.TryParse(WorkoutExercisesCount.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(),
@@ -269,6 +287,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         }
     }
 
+    /// <summary>The phase card's title for the phase she is in.</summary>
     public string PhaseCardTitle => MuscleCuties.UI.Services.Localization.UiTextCatalog.Get(CurrentPhase switch
     {
         CyclePhase.Menstrual => "Dashboard_Phase_TitleRecovery",
@@ -278,6 +297,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         _ => "Dashboard_Phase_TitleCycle"
     });
 
+    /// <summary>The short advice for the phase, preferring this cycle's own insight and falling back to the generic text.</summary>
     public string PhaseShortAdvice => CurrentPhase switch
     {
         CyclePhase.Menstrual => FirstPresent(HasActiveCycle ? CycleInsightText : string.Empty,
@@ -291,12 +311,16 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         _ => string.Empty
     };
 
+    /// <summary>The phase's localized name.</summary>
     private string LocalizedCurrentPhaseName =>
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get($"Dashboard_Phase_{CurrentPhase}");
 
+    /// <summary>The icon for the current phase.</summary>
     public string PhaseIconSource => CyclePhaseAssets.GetIconSource(CurrentPhase);
+    /// <summary>True when the current phase is known.</summary>
     public bool HasKnownPhase => CurrentPhase != CyclePhase.Unknown;
 
+    /// <summary>Which column of the phase strip stands for the phase she is in.</summary>
     public int CurrentPhaseColumn => CurrentPhase switch
     {
         CyclePhase.Menstrual => 0,
@@ -306,12 +330,17 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         _ => 0
     };
 
+    /// <summary>Days left in the current phase, or a placeholder while the cycle day is not known.</summary>
     public string PhaseTimeLeftValue => CurrentCycleDay <= 0 ? "--" : $"{CalculateDaysLeftInCurrentPhase()}d";
+    /// <summary>Ovulation is framed as peak time rather than a phase boundary, so its label differs from the other</summary>
+    /// phases.</summary>
     public string PhaseTimeLeftLabel => CurrentPhase is CyclePhase.Ovulatory ? "Peak left" : "Phase left";
+    /// <summary>Days until the next period, or the prompt to log period dates when there is no cycle to predict from.</summary>
     public string NextPeriodValue => !HasActiveCycle && CurrentCycleDay <= 0
         ? "--"
         : DaysUntilPeriod <= 0 ? "Today" : $"{DaysUntilPeriod}d";
 
+    /// <summary>The phase's training-load note.</summary>
     public string LoadAdjustmentText => CurrentPhase switch
     {
         CyclePhase.Menstrual => "-10%",
@@ -321,6 +350,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         _ => "0%"
     };
 
+    /// <summary>The workout badge names the session's state, so the card is not read as untouched once it has been started or</summary>
+    /// finished.</summary>
     public string WorkoutBadgeText => IsTodaysWorkoutCompleted
         ? "Workout completed"
         : IsWorkoutInProgress
@@ -328,22 +359,26 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             : $"Today · {SessionProgressText}";
 
     // The store reports "Completed (<volume> kg volume)" for a finished session, so match the prefix.
+    /// <summary>True once today's session is logged, which decides both the badge and what the action offers.</summary>
     public bool IsTodaysWorkoutCompleted =>
         SessionProgressText.StartsWith("Completed", StringComparison.OrdinalIgnoreCase);
 
     // The store reports "Active Session" for a session that has started but not finished.
+    /// <summary>True when a session has been started but not yet finished.</summary>
     public bool IsWorkoutInProgress =>
         string.Equals(SessionProgressText, "Active Session", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(SessionProgressText, "In Progress", StringComparison.OrdinalIgnoreCase) ||
         string.Equals(WorkoutSubtitle, "In Progress", StringComparison.OrdinalIgnoreCase);
 
     // Suppress redundant status-only subtitles already announced by WorkoutBadgeText ("Today · In Progress" / "Workout completed").
+    /// <summary>The workout subtitle appears only when there is a session to describe.</summary>
     public bool ShowWorkoutSubtitle =>
         !string.IsNullOrWhiteSpace(WorkoutSubtitle) &&
         !(IsWorkoutInProgress && string.Equals(WorkoutSubtitle.Trim(), "In Progress", StringComparison.OrdinalIgnoreCase)) &&
         !(IsTodaysWorkoutCompleted && string.Equals(WorkoutSubtitle.Trim(), "Completed Today", StringComparison.OrdinalIgnoreCase));
 
     // One label for the Today primary action, so a finished or running session is never offered as "Start".
+    /// <summary>The action reads as starting, resuming or resting, following the session's state.</summary>
     public string WorkoutActionText => IsRestDay
         ? UiTextCatalog.Get("Dashboard_Workout_ViewRestDay")
         : IsTodaysWorkoutCompleted
@@ -352,9 +387,11 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
                 ? UiTextCatalog.Get("Workout_Overview_ResumeWorkout")
                 : UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
 
+    /// <summary>The injury button's spoken label names what it opens.</summary>
     public string InjuryButtonAccessibilityText => UiTextCatalog.Get(
         HasActiveInjuries ? "Dashboard_Page_OpenInjuryLogActiveA11y" : "Dashboard_Page_OpenInjuryLogA11y");
 
+    /// <summary>The nutrition card's spoken summary, carrying the day's totals so the card is not read as bare labels.</summary>
     public string NutritionCardAccessibilityText => UiTextCatalog.Format(
         "Dashboard_Nutrition_SummaryA11yFormat",
         CaloriesConsumed,
@@ -363,10 +400,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         CarbsText,
         FatsText);
 
+    /// <summary>The session streak, worded for one day or many.</summary>
     public string WorkoutStreakText => WorkoutStreakDays == 1
         ? "1 day session streak"
         : $"{WorkoutStreakDays} day session streak";
 
+    /// <summary>The logging streak, worded the same way.</summary>
     public string NutritionStreakText => NutritionStreakDays == 1
         ? "1 day log streak"
         : $"{NutritionStreakDays} day log streak";
@@ -380,41 +419,62 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private const double CheckInRecoveryWeight = 0.7;
     private const double BaselineRecoveryWeight = 0.3;
 
+    /// <summary>The single figure the ring shows: her self-reported readiness averaged with the computed recovery, so neither</summary>
+    /// one alone can carry the score.</summary>
     public int CompositeScore => (ReadinessScore + RecoveryScore) / 2;
 
+    /// <summary>The subtitle marks the score as self-reported, and only when there is a check-in to report.</summary>
     public string ReadinessSubtitleText => HasTodayReadinessRecord
         ? "Dashboard_Readiness_SelfReportedSubtitle"
         : string.Empty;
 
+    /// <summary>Readiness as a capped 0–1 fraction for the ring.</summary>
     public float ReadinessProgress =>
         Math.Clamp(ReadinessScore / MaximumScoreProgressDivisor, 0f, 1f);
 
+    /// <summary>Recovery as the same capped fraction.</summary>
     public float RecoveryProgress =>
         Math.Clamp(RecoveryScore / MaximumScoreProgressDivisor, 0f, 1f);
 
+    /// <summary>True when at least one trend has data.</summary>
     public bool HasAnyTrend => HasWeightTrend;
 
+    /// <summary>Calories as a capped fraction of the target, so an overshoot does not draw past the bar's end.</summary>
     public float CaloriesProgress =>
         MacroProgressFormatter.CalculateProgress(ConsumedCalories, TargetCalories);
 
+    /// <summary>The day's calories in the card's own number formatting.</summary>
     public string CaloriesConsumed => MacroProgressFormatter.FormatCaloriesConsumed(ConsumedCalories);
+    /// <summary>The calorie target in the same formatting, so consumed and goal read as a pair.</summary>
     public string CaloriesGoal => MacroProgressFormatter.FormatCaloriesGoal(TargetCalories);
 
+    /// <summary>Protein consumed against its target, as the macro row shows it.</summary>
     public string ProteinText => MacroProgressFormatter.FormatGramsText(ConsumedProtein, TargetProtein);
+    /// <summary>Protein as a capped fraction of its target.</summary>
     public float ProteinProgress => MacroProgressFormatter.CalculateProgress(ConsumedProtein, TargetProtein);
 
+    /// <summary>Carbohydrate consumed against its target.</summary>
     public string CarbsText => MacroProgressFormatter.FormatGramsText(ConsumedCarbs, TargetCarbs);
+    /// <summary>Carbohydrate as a capped fraction of its target.</summary>
     public float CarbsProgress => MacroProgressFormatter.CalculateProgress(ConsumedCarbs, TargetCarbs);
 
+    /// <summary>Fat consumed against its target.</summary>
     public string FatsText => MacroProgressFormatter.FormatGramsText(ConsumedFats, TargetFats);
+    /// <summary>Fat as a capped fraction of its target.</summary>
     public float FatsProgress => MacroProgressFormatter.CalculateProgress(ConsumedFats, TargetFats);
+    /// <summary>Refreshes the dashboard.</summary>
     public AsyncRelayCommand RefreshCommand { get; }
+    /// <summary>Opens the cycle page.</summary>
     public AsyncRelayCommand OpenCycleCommand { get; }
+    /// <summary>Opens the workout page.</summary>
     public AsyncRelayCommand OpenWorkoutCommand { get; }
+    /// <summary>Starts the planned workout.</summary>
     public AsyncRelayCommand StartWorkoutCommand { get; }
 
     private readonly IProfilePersonalInfoUseCase? _personalInfo;
 
+    /// <summary>The calorie target adjusted for today's active energy from the health store, or the base target unchanged when</summary>
+    /// that data cannot be read — an unavailable value never moves the budget.</summary>
     private async Task<float> ApplyHealthCalorieAdjustmentAsync(float baseTarget)
     {
         if (_healthSync is null || _userIdProvider is null || _personalInfo is null)
@@ -448,14 +508,18 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             return baseTarget;
         }
     }
+    /// <summary>Opens the nutrition page.</summary>
     public AsyncRelayCommand OpenNutritionCommand { get; }
+    /// <summary>Releases the view model's subscriptions.</summary>
     public void Dispose()
     {
         _loadGate.Dispose();
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>Loads the dashboard.</summary>
     public AsyncRelayCommand LoadDataCommand { get; }
+    /// <summary>The first-load indicator, so a refresh does not blank a dashboard already on screen.</summary>
     public bool IsPageLoading => _loadGate.IsLoading(IsBusy);
 
     /// <summary>
@@ -469,49 +533,58 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     public AsyncRelayCommand? RetryLoadCommand =>
         _lastFailure is null || _lastFailure.IsRetryable ? LoadDataCommand : null;
 
+    /// <summary>Opens the photo vault, and does nothing when the page was given no way to.</summary>
     private Task OpenPhotoVaultAsync()
     {
         return _openPhotoVaultAsync?.Invoke() ?? Task.CompletedTask;
     }
 
+    /// <summary>Refreshes the nutrition figures when the diary changes.</summary>
     private void OnNutritionChanged(object? sender, NutritionChangedEventArgs e)
     {
         _loadGate.InvalidateAndReloadIfToday(e.Date, LoadDataCoreAsync, this);
     }
 
+    /// <summary>Marks the dashboard stale so the next appearance reloads it after a change made elsewhere.</summary>
     public void Invalidate()
     {
         _loadGate.MarkStale();
     }
 
+    /// <summary>Reloads after the profile changed, because the greeting and the targets both come from it.</summary>
     public Task OnProfileChangedAsync()
     {
         Invalidate();
         return _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
+    /// <summary>Refreshes the profile figures when the profile changes.</summary>
     public void OnProfileChanged()
     {
         _ = OnProfileChangedAsync();
     }
 
+    /// <summary>Reloads after the cycle changed, because the phase card is built from it.</summary>
     public Task OnCycleChangedAsync()
     {
         Invalidate();
         return _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
+    /// <summary>Refreshes the cycle figures when the cycle changes.</summary>
     public void OnCycleChanged()
     {
         _ = OnCycleChangedAsync();
     }
 
+    /// <summary>Opens the injury modal.</summary>
     [RelayCommand]
     private async Task OpenInjuryModalAsync()
     {
         await InjuryLogVm.OpenModalAsync(() => IsInjuryModalVisible = true);
     }
 
+    /// <summary>Closes the injury modal.</summary>
     [RelayCommand]
     private void CloseInjuryModal()
     {
@@ -519,6 +592,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         IsInjuryModalVisible = false;
     }
 
+    /// <summary>Opens the daily check-in.</summary>
     [RelayCommand]
     private async Task OpenDailyCheckInAsync()
     {
@@ -526,9 +600,12 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         await CheckInVm.CheckIfAlreadyCompletedAsync();
     }
 
+    /// <summary>Closes the daily check-in.</summary>
     [RelayCommand]
     private void CloseCheckInModal() => IsCheckInModalVisible = false;
 
+    /// <summary>Drops the check-in draft when the signed-in account changes, so one account's answers can never be saved into</summary>
+    /// another's day.</summary>
     internal void ResetCheckInForAccountChange()
     {
         IsCheckInModalVisible = false;
@@ -547,6 +624,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         await _loadGate.RunAsync(LoadDataCoreAsync, this, true);
     }
 
+    /// <summary>Refreshes the dashboard after an injury change.</summary>
     private Task RefreshAfterInjuryChangeAsync() =>
         _loadGate.RefreshAfterInjuryChangeAsync(
             InjuryLogVm.HasActiveInjuries,
@@ -554,6 +632,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             LoadDataCoreAsync,
             this);
 
+    /// <summary>Repaints the phase card only when the theme really changed, so a redundant call does not rebuild its</summary>
+    /// colours.</summary>
     public void RefreshThemeColors(bool useDarkTheme)
     {
         UseDarkTheme = useDarkTheme;
@@ -564,6 +644,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     }
 
     // A units-preference failure keeps the last known system instead of hiding the dashboard.
+    /// <summary>Reads the unit preference the trend card formats its figures with.</summary>
     private async Task LoadDisplayUnitsAsync()
     {
         try
@@ -578,6 +659,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         }
     }
 
+    /// <summary>Pull-to-refresh, which skips a load already running instead of queueing a second one.</summary>
     private async Task RefreshAsync()
     {
         IsRefreshing = true;
@@ -591,6 +673,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         }
     }
 
+    /// <summary>Opens the workout, and does nothing when the page was given no way to.</summary>
     private Task StartWorkoutAsync()
     {
         return IsRestDay || _todaysWorkoutDayId <= 0
@@ -598,6 +681,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             : _openWorkoutSessionAsync(_todaysWorkoutDayId);
     }
 
+    /// <summary>The dashboard's one load: profile, cycle, plan, nutrition, readiness and trends together, with a failure kept</summary>
+    /// for the retry surface instead of leaving half a dashboard on screen.</summary>
     private async Task LoadDataCoreAsync()
     {
         IsBusy = true;
@@ -725,6 +810,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         }
     }
 
+    /// <summary>Applies today's check-in to the readiness cards, or clears them when there is none.</summary>
     private void ApplyTodayReadiness(TodayReadinessCheckInDto? readiness)
     {
         HasTodayReadinessRecord = readiness is not null;
@@ -783,8 +869,10 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OnPropertyChanged(nameof(ReadinessSubtitleText));
     }
 
+    /// <summary>The rating shown for a check-in answer.</summary>
     private static string FormatRating(int? rating) => rating?.ToString(CultureInfo.CurrentCulture) ?? "—";
 
+    /// <summary>Raises the phase properties the page binds.</summary>
     private void NotifyPhaseProperties()
     {
         OnPropertyChanged(nameof(DashboardPhaseHeaderText));
@@ -804,17 +892,20 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OnPropertyChanged(nameof(PhaseCardDividerColor));
     }
 
+    /// <summary>Raises the macro properties the page binds.</summary>
     private void NotifyMacroProperties()
     {
         MacroProgressFormatter.NotifyAll(OnPropertyChanged);
         OnPropertyChanged(nameof(NutritionCardAccessibilityText));
     }
 
+    /// <summary>Refreshes the injury banner when injuries change.</summary>
     partial void OnHasActiveInjuriesChanged(bool value)
     {
         OnPropertyChanged(nameof(InjuryButtonAccessibilityText));
     }
 
+    /// <summary>Raises the user's name and greeting properties.</summary>
     private void NotifyUserLinkedProperties()
     {
         OnPropertyChanged(nameof(Greetings));
@@ -826,12 +917,14 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     }
 
 
+    /// <summary>How many days remain in the phase she is in.</summary>
     private int CalculateDaysLeftInCurrentPhase()
     {
         return _cyclePhaseProjection.GetDaysRemaining(
             new CyclePhaseCountdownInputDto(CurrentCycleDay, PredictedCycleLength, CurrentPhase)).DaysRemaining;
     }
 
+    /// <summary>The first word of a full name, for the greeting.</summary>
     private static string GetFirstName(string? fullName)
     {
         var trimmed = fullName?.Trim();
@@ -841,11 +934,14 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         return trimmed.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
     }
 
+    /// <summary>The first candidate that has content, empty when none of them do.</summary>
     private static string FirstPresent(params string[] values)
     {
         return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value)) ?? string.Empty;
     }
 
+    /// <summary>Repaints the phase card from the phase's palette, or from the neutral card colours when the phase colour is
+    /// turned off.</summary>
     private void RefreshPhaseCardColors()
     {
         PhaseCardBackgroundColor = UsePhaseCardColor
@@ -855,27 +951,25 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             ? GetPhaseTextColor(CurrentPhase, UseDarkTheme)
             : PhaseThemePalette.GetNeutralCardTextColor(UseDarkTheme);
         PhaseCardDividerColor = UsePhaseCardColor
-            ? GetPhaseDividerColor(CurrentPhase, UseDarkTheme)
+            ? PhaseThemePalette.GetPhaseDividerColor(CurrentPhase, UseDarkTheme)
             : PhaseThemePalette.GetNeutralDividerColor(UseDarkTheme);
     }
 
+    /// <summary>The phase card's fill, falling back to the neutral card colour for a phase that has none.</summary>
     private static Color GetPhaseBackgroundColor(CyclePhase phase, bool useDarkTheme)
     {
         return PhaseThemePalette.GetPhaseBackgroundColor(phase, useDarkTheme,
             PhaseThemePalette.GetNeutralCardBackgroundColor(useDarkTheme));
     }
 
+    /// <summary>The phase card's ink, with the same neutral fallback so the text stays readable.</summary>
     private static Color GetPhaseTextColor(CyclePhase phase, bool useDarkTheme)
     {
         return PhaseThemePalette.GetPhaseTextColor(phase, useDarkTheme,
             PhaseThemePalette.GetNeutralCardTextColor(useDarkTheme));
     }
 
-    private static Color GetPhaseDividerColor(CyclePhase phase, bool useDarkTheme)
-    {
-        return PhaseThemePalette.GetPhaseDividerColor(phase, useDarkTheme);
-    }
-
+    /// <summary>Refreshes the phase visuals when the phase changes.</summary>
     partial void OnCurrentPhaseChanged(CyclePhase value)
     {
         if (_isBulkLoading) return;
@@ -883,35 +977,41 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         NotifyPhaseProperties();
     }
 
+    /// <summary>Refreshes the phase card colour when the setting changes.</summary>
     partial void OnUsePhaseCardColorChanged(bool value)
     {
         if (_isBulkLoading) return;
         RefreshPhaseCardColors();
     }
 
+    /// <summary>Rebuilds the themed visuals when the theme changes.</summary>
     partial void OnUseDarkThemeChanged(bool value)
     {
         RefreshPhaseCardColors();
     }
 
+    /// <summary>Refreshes the macro bars when the calories change.</summary>
     partial void OnConsumedCaloriesChanged(float value)
     {
         if (_isBulkLoading) return;
         MacroProgressFormatter.NotifyCaloriesConsumed(OnPropertyChanged);
     }
 
+    /// <summary>Refreshes the macro bars when the target changes.</summary>
     partial void OnTargetCaloriesChanged(float value)
     {
         if (_isBulkLoading) return;
         MacroProgressFormatter.NotifyCaloriesGoal(OnPropertyChanged);
     }
 
+    /// <summary>Refreshes the greeting when the name changes.</summary>
     partial void OnDisplayNameChanged(string value)
     {
         if (_isBulkLoading) return;
         OnPropertyChanged(nameof(Greetings));
     }
 
+    /// <summary>Refreshes the cycle summary when the day changes.</summary>
     partial void OnCurrentCycleDayChanged(int value)
     {
         if (_isBulkLoading) return;
@@ -920,6 +1020,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OnPropertyChanged(nameof(NextPeriodValue));
     }
 
+    /// <summary>Refreshes the cycle summary when the length changes.</summary>
     partial void OnPredictedCycleLengthChanged(int value)
     {
         if (_isBulkLoading) return;
@@ -927,18 +1028,21 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OnPropertyChanged(nameof(PhaseTimeLeftValue));
     }
 
+    /// <summary>Refreshes the countdown when it changes.</summary>
     partial void OnDaysUntilPeriodChanged(int value)
     {
         if (_isBulkLoading) return;
         OnPropertyChanged(nameof(NextPeriodValue));
     }
 
+    /// <summary>Refreshes the insight card when the text changes.</summary>
     partial void OnCycleInsightTextChanged(string value)
     {
         if (_isBulkLoading) return;
         OnPropertyChanged(nameof(PhaseShortAdvice));
     }
 
+    /// <summary>Refreshes the workout card when the subtitle changes.</summary>
     partial void OnWorkoutSubtitleChanged(string value)
     {
         if (_isBulkLoading) return;
@@ -947,6 +1051,7 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OnPropertyChanged(nameof(ShowWorkoutSubtitle));
     }
 
+    /// <summary>Refreshes the workout card when the progress text changes.</summary>
     partial void OnSessionProgressTextChanged(string value)
     {
         OnPropertyChanged(nameof(WorkoutActionText));
@@ -957,18 +1062,21 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
         OnPropertyChanged(nameof(ShowWorkoutSubtitle));
     }
 
+    /// <summary>Refreshes the streak when the workout days change.</summary>
     partial void OnWorkoutStreakDaysChanged(int value)
     {
         if (_isBulkLoading) return;
         OnPropertyChanged(nameof(WorkoutStreakText));
     }
 
+    /// <summary>Refreshes the streak when the nutrition days change.</summary>
     partial void OnNutritionStreakDaysChanged(int value)
     {
         if (_isBulkLoading) return;
         OnPropertyChanged(nameof(NutritionStreakText));
     }
 
+    /// <summary>Refreshes the check-in prompt when the need changes.</summary>
     partial void OnNeedsDailyCheckInChanged(bool value)
     {
         OpenDailyCheckInCommand.NotifyCanExecuteChanged();

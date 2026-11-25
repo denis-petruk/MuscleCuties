@@ -4,10 +4,12 @@ using MuscleCuties.UseCases.Features.Cycle.History;
 
 namespace MuscleCuties.Server.Cycle;
 
+/// <summary>The cycle-history routes: saving a cycle, a symptom log and reading the history back.</summary>
 public static class CycleHistoryEndpointMappings
 {
     private const string Route = "/api/v1/cycle/history";
 
+    /// <summary>Registers the cycle-history endpoints.</summary>
     public static IEndpointRouteBuilder MapCycleHistoryEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(Route).RequireAuthorization();
@@ -70,6 +72,8 @@ public static class CycleHistoryEndpointMappings
         return endpoints;
     }
 
+    /// <summary>A cycle as the client knows it: its id (so a re-send is the same cycle) and its start and optional end.</summary>
     public sealed record SaveCycleBody(Guid Id, DateOnly StartDate, DateOnly? EndDate);
+    /// <summary>One symptom on one day of a cycle, with its severity.</summary>
     public sealed record SaveSymptomBody(Guid Id, Guid CycleId, DateOnly Date, string Type, int Severity, string? Notes);
 }

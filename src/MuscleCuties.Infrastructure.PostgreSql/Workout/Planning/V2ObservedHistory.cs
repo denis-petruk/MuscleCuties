@@ -3,8 +3,10 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>Reads what she has actually done, which is the only evidence progression may be based on.</summary>
 internal static class V2ObservedHistory
 {
+    /// <summary>The strength sets the version-2 progression reads.</summary>
     internal static async Task<IReadOnlyList<ObservedSetRecordV2>> LoadAsync(PostgresDbContext db,
         Guid userId, string timeZoneId, CancellationToken ct)
     {
@@ -70,6 +72,7 @@ internal static class V2ObservedHistory
             .ThenBy(set => set.SetNumber).ToArray();
     }
 
+    /// <summary>The cardio results the version-2 progression reads.</summary>
     internal static async Task<IReadOnlyList<CardioActualRecordV2>> LoadCardioAsync(PostgresDbContext db,
         Guid userId, string timeZoneId, CancellationToken ct)
     {

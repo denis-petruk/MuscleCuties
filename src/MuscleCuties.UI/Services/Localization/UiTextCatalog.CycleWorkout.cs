@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Cycle screens and workout-day copy: phase names, log entry labels and schedule wording.</summary>
 public static partial class UiTextCatalog
 {
+    /// <summary>Registers the cycle and workout strings.</summary>
     static partial void RegisterCycleWorkoutStrings()
     {
         English["Injury_PainReassessmentDue"] = "It has been 72 hours. Use Edit to reassess pain and movement restrictions before returning to this exercise.";

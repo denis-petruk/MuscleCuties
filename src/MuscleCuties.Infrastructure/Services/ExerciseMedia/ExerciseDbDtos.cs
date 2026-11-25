@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace MuscleCuties.Core.Services.ExerciseMedia;
 
+/// <summary>One exercise as the external exercise database describes it.</summary>
 public sealed class ExerciseDbItem
 {
     [JsonPropertyName("id")] public string Id { get; set; } = string.Empty;

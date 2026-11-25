@@ -5,8 +5,10 @@ using MuscleCuties.Core.Models.Workout.Planning;
 
 namespace MuscleCuties.Core.Domain.Workout;
 
+/// <summary>Turns client-sent evidence into the same readiness shape the stored path produces.</summary>
 public static class ReadinessEvidenceRule
 {
+    /// <summary>Scores readiness from the health evidence and cycle phase.</summary>
     public static HealthResult<int> Evaluate(ReadinessEvidence? evidence, CyclePhase phase,
         WorkoutPlanningConfig? config, string? reviewedPolicyVersion,
         CyclePhaseBaselines? baselines = null,

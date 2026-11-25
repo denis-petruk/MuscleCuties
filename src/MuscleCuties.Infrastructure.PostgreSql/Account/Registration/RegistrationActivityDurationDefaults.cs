@@ -1,10 +1,12 @@
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 
+/// <summary>The activity durations a new account starts with, so a fresh plan has believable session lengths before she chooses any.</summary>
 internal static class RegistrationActivityDurationDefaults
 {
     private const int DefaultFlexibleActivitySessionsPerWeek = 1;
 
+    /// <summary>The session length each selected activity defaults to.</summary>
     public static IReadOnlyDictionary<string, int> ForSelectedActivities(
         IReadOnlyCollection<int> activityTypes,
         int? strengthSessionDurationMinutes = null)
@@ -30,6 +32,7 @@ internal static class RegistrationActivityDurationDefaults
                 StringComparer.Ordinal);
     }
 
+    /// <summary>The weekly frequency each selected activity defaults to.</summary>
     public static IReadOnlyDictionary<string, int> ForSelectedActivityFrequencies(
         IReadOnlyCollection<int> activityTypes)
     {

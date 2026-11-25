@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Cycle.Contracts;
 
+/// <summary>The phase as the client sees it, kept separate from the domain enum.</summary>
 public enum CyclePhaseDto
 {
     Menstrual,
@@ -9,6 +10,7 @@ public enum CyclePhaseDto
     Unknown
 }
 
+/// <summary>The flow intensity as the client sees it.</summary>
 public enum FlowIntensityDto
 {
     None,
@@ -18,6 +20,7 @@ public enum FlowIntensityDto
     Heavy
 }
 
+/// <summary>The symptom as the client sees it.</summary>
 public enum SymptomTypeDto
 {
     Cramps,

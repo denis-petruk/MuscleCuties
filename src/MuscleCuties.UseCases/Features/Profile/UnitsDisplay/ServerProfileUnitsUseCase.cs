@@ -3,8 +3,10 @@ using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 
+/// <summary>Applies a units change on the server.</summary>
 public sealed class ServerProfileUnitsUseCase(IServerProfileUnitsStore store)
 {
+    /// <summary>The server's stored units, or null when the profile has none yet.</summary>
     public Task<ServerProfileUnitsSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(store);
@@ -13,6 +15,7 @@ public sealed class ServerProfileUnitsUseCase(IServerProfileUnitsStore store)
             : store.LoadAsync(userId, cancellationToken);
     }
 
+    /// <summary>Saves the user's unit preference.</summary>
     public Task<SaveServerProfileUnitsResult> SaveAsync(
         SaveServerProfileUnitsRequest request,
         CancellationToken cancellationToken = default)

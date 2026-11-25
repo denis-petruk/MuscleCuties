@@ -2,6 +2,7 @@ using MuscleCuties.Core.Domain.Nutrition;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Barcode;
 
+/// <summary>Finds a food by its barcode, across the catalog and her own foods.</summary>
 public interface IBarcodeFoodLookupStore
 {
     Task<FoodCatalogCandidate?> FindFoodByBarcodeAsync(

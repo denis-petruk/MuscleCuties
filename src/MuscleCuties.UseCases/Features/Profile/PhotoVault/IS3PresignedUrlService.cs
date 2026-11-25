@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Profile.PhotoVault;
 
+/// <summary>Issues the short-lived URLs uploads and views use.</summary>
 public interface IS3PresignedUrlService
 {
     string GeneratePresignedUploadUrl(string s3Key, string contentType, TimeSpan expiration);
@@ -10,4 +11,5 @@ public interface IS3PresignedUrlService
     string GeneratePresignedDeleteUrl(string s3Key, TimeSpan expiration);
 }
 
+/// <summary>A presigned upload target with the fields the client must post with it.</summary>
 public sealed record S3PresignedPost(string Url, IReadOnlyDictionary<string, string> Fields, DateTime ExpiresAtUtc);

@@ -4,8 +4,12 @@ using Foundation;
 
 namespace MuscleCuties.UI.Services.Profile;
 
+/// <summary>Keeps profile media out of device backups and, where the platform allows, marks it as protected at</summary>
+/// rest.</summary>
 internal static class ProfileMediaProtection
 {
+    /// <summary>Applies the platform protection to one file; a failure raises, because unprotected personal media is</summary>
+    /// the outcome worth stopping for.</summary>
     public static void Apply(string path)
     {
 #if IOS || MACCATALYST

@@ -4,6 +4,7 @@ using MuscleCuties.Core.Domain.Nutrition;
 
 namespace MuscleCuties.Core.Models.Nutrition.Planning;
 
+/// <summary>A day's nutrition plan, with the targets it must meet.</summary>
 public sealed record NutritionPlan(
     float Calories,
     float Protein,
@@ -24,6 +25,7 @@ public sealed record NutritionPlan(
     BreakfastPreference BreakfastPreference = BreakfastPreference.Savoury,
     NutritionTargetProvenance? TargetProvenance = null);
 
+/// <summary>The targets one meal must hit within the day's plan.</summary>
 public sealed record MealNutritionTarget(
     MealType MealType,
     float Calories,

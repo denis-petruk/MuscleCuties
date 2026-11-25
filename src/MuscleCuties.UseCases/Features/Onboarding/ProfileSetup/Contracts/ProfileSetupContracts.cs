@@ -5,6 +5,7 @@ global using ProfileSetupResult = MuscleCuties.Contracts.Onboarding.ProfileSetup
 
 namespace MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
 
+/// <summary>The first-run setup form.</summary>
 public interface IProfileSetupUseCase
 {
     Task<ProfileSetupLoadResult> LoadAsync(CancellationToken cancellationToken = default);

@@ -6,6 +6,7 @@ namespace MuscleCuties.UI.Controls.Shared;
 /// </summary>
 public sealed class CardTapTarget : Button
 {
+    /// <summary>Makes a card's whole surface pressable while leaving its inner controls able to take their own taps.</summary>
     public CardTapTarget()
     {
         Text = string.Empty;

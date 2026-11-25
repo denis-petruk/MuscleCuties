@@ -2,6 +2,7 @@
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
+/// <summary>The personal-info page through the backend, including its versioned save.</summary>
 public sealed class CloudProfilePersonalInfoStore(
     IMuscleCutiesBackendApiClient apiClient) : IProfilePersonalInfoStore
 {
@@ -11,6 +12,7 @@ public sealed class CloudProfilePersonalInfoStore(
     // treats as "not stored", an absent cycle length maps to 0 and an unknown experience to Unknown.
     private static readonly DateTime UnsetBirthDate = default;
 
+    /// <summary>The stored personal info with the version it was read at.</summary>
     public async Task<LoadPersonalInfoResult> LoadAsync(CancellationToken cancellationToken)
     {
         var response = await apiClient.GetAsync<ServerProfileSnapshot>(ProfileRoute, cancellationToken).ConfigureAwait(false);
@@ -43,6 +45,8 @@ public sealed class CloudProfilePersonalInfoStore(
         return new LoadPersonalInfoResult(snapshot.Email, profile);
     }
 
+    /// <summary>Saves against the version that was read, so a change made on another device is refused rather than</summary>
+    /// overwritten.</summary>
     public async Task<bool> SaveWithSnapshotAsync(SavePersonalInfoRequest request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -102,6 +106,7 @@ public sealed class CloudProfilePersonalInfoStore(
         return response.Status == BackendApiStatus.Success;
     }
 
+    /// <summary>Changes the password after snapshotting the profile.</summary>
     public async Task<ChangeAccountPasswordResult> ChangePasswordWithSnapshotAsync(
         ChangeAccountPasswordRequest request, CancellationToken cancellationToken)
     {

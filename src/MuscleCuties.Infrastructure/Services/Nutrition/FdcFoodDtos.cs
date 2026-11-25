@@ -2,6 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace MuscleCuties.Core.Services.Nutrition;
 
+/// <summary>The fields every food search result and detail share.</summary>
 public abstract class FdcFoodItemBase
 {
     [JsonPropertyName("fdcId")] public int FdcId { get; set; }
@@ -23,12 +24,14 @@ public abstract class FdcFoodItemBase
     [JsonPropertyName("servingSizeUnit")] public string? ServingSizeUnit { get; set; }
 
     [JsonPropertyName("householdServingFullText")]
+    /// <summary>The household measure the source states, which the serving options parse.</summary>
     public string? HouseholdServingFullText { get; set; }
 
     [JsonPropertyName("packageWeight")] public string? PackageWeight { get; set; }
 }
 
 
+/// <summary>A food's full record, which carries the nutrient rows the per-100 g values are read from.</summary>
 public class FdcFoodDetail : FdcFoodItemBase
 {
     [JsonPropertyName("foodNutrients")] public List<FdcFoodDetailNutrient> FoodNutrients { get; set; } = [];
@@ -36,6 +39,7 @@ public class FdcFoodDetail : FdcFoodItemBase
     [JsonPropertyName("foodPortions")] public List<FdcFoodPortion> FoodPortions { get; set; } = [];
 }
 
+/// <summary>One nutrient row of a food detail.</summary>
 public class FdcFoodDetailNutrient
 {
     [JsonPropertyName("nutrientId")] public int? NutrientId { get; set; }
@@ -57,6 +61,7 @@ public class FdcFoodDetailNutrient
     [JsonPropertyName("value")] public float? Value { get; set; }
 }
 
+/// <summary>The nutrient a row refers to, whose number is what the app matches.</summary>
 public class FdcNutrient
 {
     [JsonPropertyName("id")] public int Id { get; set; }
@@ -68,6 +73,7 @@ public class FdcNutrient
     [JsonPropertyName("unitName")] public string? UnitName { get; set; }
 }
 
+/// <summary>One portion the source offers, with its weight and household measure.</summary>
 public class FdcFoodPortion
 {
     [JsonPropertyName("amount")] public float? Amount { get; set; }
@@ -77,11 +83,13 @@ public class FdcFoodPortion
     [JsonPropertyName("modifier")] public string? Modifier { get; set; }
 
     [JsonPropertyName("portionDescription")]
+    /// <summary>The household wording of a portion, which becomes the option's label.</summary>
     public string? PortionDescription { get; set; }
 
     [JsonPropertyName("measureUnit")] public FdcMeasureUnit? MeasureUnit { get; set; }
 }
 
+/// <summary>The unit a portion's amount is expressed in.</summary>
 public class FdcMeasureUnit
 {
     [JsonPropertyName("name")] public string? Name { get; set; }

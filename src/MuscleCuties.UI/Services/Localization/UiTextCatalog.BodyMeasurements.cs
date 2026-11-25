@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Body-measurement copy: site and side names, history rows and the edit form.</summary>
 public static partial class UiTextCatalog
 {
+    /// <summary>Registers the body measurement strings.</summary>
     static partial void RegisterBodyMeasurementStrings()
     {
         English["Profile_Measurement_Title"] = "Body measurements";

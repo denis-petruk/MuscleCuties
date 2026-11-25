@@ -2,17 +2,23 @@ using Microsoft.Maui.Controls;
 
 namespace MuscleCuties.UI.Pages.Startup;
 
+/// <summary>
+///     Launch page that resolves the session and routes to login, onboarding, or the app.
+/// </summary>
 public partial class AppStartupPage : ContentPage
 {
     private bool _isActionInProgress;
     private bool _isThemeHandlerAttached;
 
+    /// <summary>Initializes the startup page declared in its XAML.</summary>
     public AppStartupPage()
     {
         this.InitializeWithTiming(InitializeComponent);
         ApplyTheme();
     }
 
+    /// <summary>Shows the startup failure with the wording that matches it: an unlock problem is recoverable by unlocking,</summary>
+    /// anything else by retrying or resetting.</summary>
     internal void ShowStartupError(bool unableToUnlockData)
     {
         StartupErrorLabel.Text = unableToUnlockData ? UiTextCatalog.Get("Dashboard_Startup_UnlockFailedTitle") : UiTextCatalog.Get("Startup_UnableToStart");
@@ -31,6 +37,7 @@ public partial class AppStartupPage : ContentPage
         ResetButton.IsEnabled = true;
     }
 
+    /// <summary>Retries startup with the buttons disabled, so a slow retry cannot be started twice.</summary>
     private async void OnRetryClicked(object? sender, EventArgs e)
     {
         if (_isActionInProgress)
@@ -63,6 +70,7 @@ public partial class AppStartupPage : ContentPage
         }
     }
 
+    /// <summary>Resets local state and restarts startup, guarded like the retry.</summary>
     private async void OnResetClicked(object? sender, EventArgs e)
     {
         if (_isActionInProgress)
@@ -109,6 +117,7 @@ public partial class AppStartupPage : ContentPage
         }
     }
 
+    /// <summary>Starts the app setup when the page appears.</summary>
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -124,6 +133,7 @@ public partial class AppStartupPage : ContentPage
         }
     }
 
+    /// <summary>Stops the setup animation when the page goes away.</summary>
     protected override void OnDisappearing()
     {
         if (Application.Current is App app)
@@ -138,11 +148,14 @@ public partial class AppStartupPage : ContentPage
         base.OnDisappearing();
     }
 
+    /// <summary>Applies the new theme's artwork.</summary>
     private void OnRequestedThemeChanged(object? sender, AppThemeChangedEventArgs e)
     {
         ApplyTheme(e.RequestedTheme);
     }
 
+    /// <summary>Applies the page's light or dark resources, resolving the system default when the app has not chosen</summary>
+    /// one.</summary>
     private void ApplyTheme(AppTheme? requestedTheme = null)
     {
         var theme = requestedTheme ?? Application.Current?.RequestedTheme ?? AppTheme.Unspecified;

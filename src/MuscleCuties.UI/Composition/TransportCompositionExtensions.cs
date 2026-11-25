@@ -19,6 +19,8 @@ using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
 namespace MuscleCuties.UI.Composition;
 
+/// <summary>Registers the HTTP layer: the backend client with its timeout and retry handlers, and the two</summary>
+/// remote exercise catalogues.</summary>
 public static class TransportCompositionExtensions
 {
 #if DEBUG
@@ -26,6 +28,8 @@ public static class TransportCompositionExtensions
 #endif
     private const int BackendRequestTimeoutSeconds = 15;
 
+    /// <summary>Registers the named HTTP clients and the caching and session handlers they share. The backend base</summary>
+    /// address can be overridden from preferences in debug builds only.</summary>
     public static IServiceCollection RegisterTransportServices(this IServiceCollection services)
     {
 

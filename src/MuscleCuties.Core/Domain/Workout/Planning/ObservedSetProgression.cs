@@ -14,6 +14,7 @@ public sealed record ObservedSetHistoryRow(
     bool TechniqueAcceptable = true,
     bool IsWarmup = false);
 
+/// <summary>Turns recorded sets into the exposure history progression reads.</summary>
 public static class ObservedSetProgressionHistoryBuilder
 {
     public const int RequiredConsecutiveWeeks = StrengthProgressionRule.TwoConsecutiveWeeksForDoubleProgression;
@@ -63,6 +64,7 @@ public static class ObservedSetProgressionHistoryBuilder
     }
 }
 
+/// <summary>The load change progression advises, with the reason it advised it.</summary>
 public sealed record StrengthProgressionAdvice(
     string RecommendationCode,
     decimal? PrescribedLoad,
@@ -70,6 +72,7 @@ public sealed record StrengthProgressionAdvice(
     MajorMuscleGroup? Muscle = null,
     EffectiveExperienceTier? Tier = null);
 
+/// <summary>Advances load only on completed target reps, never on a partial session.</summary>
 public static class StrengthProgressionAdviceRule
 {
     public const string StartingWeightCode = "Workout_Recommendation_StartingWeight";
@@ -81,18 +84,23 @@ public static class StrengthProgressionAdviceRule
     public const string MaintainCode = "Workout_Recommendation_MaintainFormat";
     public const string ReduceCode = "Workout_Recommendation_ReduceFormat";
 
+    /// <summary>Guidance to start at the weight the last session used.</summary>
     public static StrengthProgressionAdvice StartingWeight() =>
         new(StartingWeightCode, null, LoadIncreased: false);
 
+    /// <summary>Guidance to start a band movement at the tension recorded last time.</summary>
     public static StrengthProgressionAdvice BandStartingTension() =>
         new(BandStartingTensionCode, null, LoadIncreased: false);
 
+    /// <summary>Guidance to add repetitions before adding band tension.</summary>
     public static StrengthProgressionAdvice BandProgressReps() =>
         new(BandProgressRepsCode, null, LoadIncreased: false);
 
+    /// <summary>Guidance to hold the weight and add repetitions.</summary>
     public static StrengthProgressionAdvice Endurance() =>
         new(EnduranceCode, null, LoadIncreased: false);
 
+    /// <summary>Guidance to record every set, which the progression needs.</summary>
     public static StrengthProgressionAdvice LogEachSet() =>
         new(LogEachSetCode, null, LoadIncreased: false);
 

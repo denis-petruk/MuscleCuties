@@ -12,6 +12,7 @@ public static class IngredientPortionDraft
     /// <summary>Round-trip text, so re-opening a row never rounds its stored quantity.</summary>
     public static string Format(float grams) => Format(grams, CultureInfo.CurrentCulture);
 
+    /// <summary>Formats grams with the culture's separators and unit.</summary>
     public static string Format(float grams, CultureInfo culture) =>
         grams.ToString("R", culture ?? CultureInfo.CurrentCulture);
 
@@ -62,6 +63,7 @@ public static class IngredientPortionDraft
         return false;
     }
 
+    /// <summary>True when the grams value is a usable positive number.</summary>
     private static bool IsUsable(float grams) => float.IsFinite(grams) && grams > 0;
 
     /// <summary>

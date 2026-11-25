@@ -22,11 +22,13 @@ public sealed partial class DefaultS3PhotoObjectInspector : IS3PhotoObjectInspec
     private readonly string? _sessionToken;
     private readonly TimeProvider _timeProvider;
 
+    /// <summary>Takes the HTTP client and configuration used to sign inspection requests.</summary>
     public DefaultS3PhotoObjectInspector(HttpClient httpClient, IConfiguration configuration)
         : this(httpClient, configuration, TimeProvider.System)
     {
     }
 
+    /// <summary>Takes the time provider the request dates are signed with, so signing is testable.</summary>
     internal DefaultS3PhotoObjectInspector(HttpClient httpClient, IConfiguration configuration, TimeProvider timeProvider)
     {
         _httpClient = httpClient;
@@ -38,6 +40,7 @@ public sealed partial class DefaultS3PhotoObjectInspector : IS3PhotoObjectInspec
         _sessionToken = configuration["Storage:S3:SessionToken"] ?? configuration["AWS_SESSION_TOKEN"];
     }
 
+    /// <summary>Reads the object's size, type and checksum from S3.</summary>
     public async Task<S3PhotoObjectInspection> InspectAsync(
         PhotoUploadObjectContext context,
         CancellationToken cancellationToken = default)
@@ -106,6 +109,7 @@ public sealed partial class DefaultS3PhotoObjectInspector : IS3PhotoObjectInspec
         }
     }
 
+    /// <summary>Refuses a context whose key or bucket is not the one this inspector is configured for.</summary>
     private void ValidateContext(PhotoUploadObjectContext context)
     {
         if (context is null || context.OwnerId == Guid.Empty || context.PhotoId == Guid.Empty)
@@ -119,6 +123,7 @@ public sealed partial class DefaultS3PhotoObjectInspector : IS3PhotoObjectInspec
             throw new ArgumentException("The upload intent size is outside supported bounds.", nameof(context));
     }
 
+    /// <summary>The object URI for a key, with the key encoded the way the signature expects.</summary>
     private Uri BuildObjectUri(string key)
     {
         var host = $"{_bucket}.s3.{_region}.amazonaws.com";
@@ -126,6 +131,7 @@ public sealed partial class DefaultS3PhotoObjectInspector : IS3PhotoObjectInspec
         return new Uri($"https://{host}/{path}", UriKind.Absolute);
     }
 
+    /// <summary>The derived signing key for a request date, which is how SigV4 scopes a secret to one day and region.</summary>
     private byte[] GetSigningKey(string dateStamp)
     {
         var dateKey = HMACSHA256.HashData(Encoding.UTF8.GetBytes("AWS4" + _secretKey), Encoding.UTF8.GetBytes(dateStamp));
@@ -134,6 +140,7 @@ public sealed partial class DefaultS3PhotoObjectInspector : IS3PhotoObjectInspec
         return HMACSHA256.HashData(serviceKey, Encoding.UTF8.GetBytes(RequestType));
     }
 
+    /// <summary>Reads a required credential, failing with a configuration error rather than sending an unsigned request.</summary>
     private static string RequiredCredential(IConfiguration configuration, string key, string environmentKey)
     {
         var value = configuration[key] ?? configuration[environmentKey];
@@ -142,10 +149,13 @@ public sealed partial class DefaultS3PhotoObjectInspector : IS3PhotoObjectInspec
             : value;
     }
 
+    /// <summary>The value of one response header.</summary>
     private static string? GetHeader(System.Net.Http.Headers.HttpResponseHeaders headers, string name) =>
         headers.TryGetValues(name, out var values) ? values.FirstOrDefault() : null;
 
+    /// <summary>The exception that carries a failure reason.</summary>
     private static S3PhotoObjectInspectionException Failure(S3PhotoObjectInspectionFailure failure, string message) => new(failure, message);
 
+    /// <summary>Lowercase hex of the bytes.</summary>
     private static string ToHex(byte[] value) => Convert.ToHexString(value).ToLowerInvariant();
 }

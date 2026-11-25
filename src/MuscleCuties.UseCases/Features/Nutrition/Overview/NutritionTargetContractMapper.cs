@@ -4,8 +4,10 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Overview;
 
+/// <summary>Maps stored targets onto the DTOs, keeping unset targets absent rather than zero.</summary>
 public static class NutritionTargetContractMapper
 {
+    /// <summary>Adds the per-meal distribution to the macro targets.</summary>
     public static NutritionTargetMacrosDto WithMealDistribution(
         NutritionTargetMacrosDto target,
         string? breakfastPreference)

@@ -5,6 +5,9 @@ using MuscleCuties.UseCases.Features.Profile.Feedback;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
+/// <summary>
+///     Feedback form state: draft text, the contact opt-in, and the submission result.
+/// </summary>
 public partial class ProfileFeedbackViewModel : ObservableObject
 {
     private readonly Func<Task> _navigateBackAsync;
@@ -24,6 +27,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
     private SelectionOption<FeedbackTopic>? _selectedTopicOption;
     [ObservableProperty] private string _statusMessage = string.Empty;
 
+    /// <summary>Takes the feedback use case and the back navigation callback.</summary>
     public ProfileFeedbackViewModel(
         IProfileFeedbackUseCase useCase,
         Func<Task> navigateBackAsync)
@@ -39,6 +43,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         SelectedPriorityOption = PriorityOptions[0];
     }
 
+    /// <summary>The feedback topics to choose from.</summary>
     public IReadOnlyList<SelectionOption<FeedbackTopic>> TopicOptions { get; } =
     [
         new(FeedbackTopic.DesignOrStyle, "Design or style", "SparkleCircle24"),
@@ -50,6 +55,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         new(FeedbackTopic.NewIdea, "New idea", "ChatBubblesQuestion24")
     ];
 
+    /// <summary>The priorities to choose from.</summary>
     public IReadOnlyList<SelectionOption<FeedbackPriority>> PriorityOptions { get; } =
     [
         new(FeedbackPriority.NiceToImprove, "Nice to improve", "SparkleCircle24"),
@@ -58,19 +64,26 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         new(FeedbackPriority.TinyPolish, "Tiny polish", "TargetEdit24")
     ];
 
+    /// <summary>Send needs a message or an adjustment and no send in flight; the topic and priority already have</summary>
+    /// defaults, so they are never what stops a report.</summary>
     public bool IsReadyToSend =>
         !IsBusy && (!string.IsNullOrWhiteSpace(FeedbackText) || !string.IsNullOrWhiteSpace(AdjustmentText));
 
+    /// <summary>True when the submit hint is shown.</summary>
     public bool ShowSubmitHint => !IsReadyToSend && !IsBusy;
 
+    /// <summary>True when the draft has unsent content.</summary>
     public bool HasUnsavedDraft =>
         !string.IsNullOrWhiteSpace(FeedbackText) ||
         !string.IsNullOrWhiteSpace(AdjustmentText) ||
         !string.IsNullOrWhiteSpace(ScreenName) ||
         HasAttachment;
 
+    /// <summary>True when a file is attached.</summary>
     public bool HasAttachment => _attachment is not null;
+    /// <summary>The chosen topic's name, falling back to the default so the chip never reads empty.</summary>
     public string SelectedTopicLabel => SelectedTopicOption?.Label ?? "Design or style";
+    /// <summary>The chosen priority's name, with the same default.</summary>
     public string SelectedPriorityLabel => SelectedPriorityOption?.Label ?? "Nice to improve";
 
     public SelectionOption<FeedbackTopic>? SelectedTopicOption
@@ -97,16 +110,23 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         }
     }
 
+    /// <summary>Loads the draft.</summary>
     public AsyncRelayCommand LoadDataCommand { get; }
+    /// <summary>Sends the feedback.</summary>
     public AsyncRelayCommand SendFeedbackCommand { get; }
+    /// <summary>Copies the feedback to the clipboard.</summary>
     public AsyncRelayCommand CopyFeedbackCommand { get; }
+    /// <summary>Removes the attachment.</summary>
     public RelayCommand RemoveAttachmentCommand { get; }
+    /// <summary>Leaves the page, warning about the draft.</summary>
     public AsyncRelayCommand BackCommand { get; }
 
+    /// <summary>Returns to the previous page, dropping the draft when confirmed.</summary>
     private async Task BackAsync() =>
         await ProfileNavigationGuard.TryNavigateBackAsync(HasUnsavedDraft, ProfileDiscardPrompt.ConfirmAsync,
             _navigateBackAsync);
 
+    /// <summary>Attaches the chosen file.</summary>
     public void AttachFile(
         string fileName,
         string filePath,
@@ -129,11 +149,13 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         OnPropertyChanged(nameof(HasUnsavedDraft));
     }
 
+    /// <summary>Reports why an attachment was refused, through the same status line the rest of the page uses.</summary>
     public void SetAttachmentError(string message)
     {
         AttachmentStatus = message;
     }
 
+    /// <summary>The page has nothing to read, so opening it only clears the status left by a previous visit.</summary>
     private Task LoadDataAsync()
     {
         StatusMessage = string.Empty;
@@ -141,6 +163,8 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         return Task.CompletedTask;
     }
 
+    /// <summary>Submits the report with its attachment, and keeps the draft when the submission is refused so the user can</summary>
+    /// retry it.</summary>
     private async Task SendFeedbackAsync()
     {
         if (IsBusy)
@@ -185,6 +209,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         }
     }
 
+    /// <summary>Puts the report on the clipboard as plain text, for a user who would rather paste it somewhere else.</summary>
     private async Task CopyFeedbackAsync()
     {
         if (IsBusy || !HasUnsavedDraft)
@@ -209,6 +234,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         StatusMessage = UiTextCatalog.Get("Profile_Feedback_Copied");
     }
 
+    /// <summary>A shape check for the optional reply address, so a typo is caught before the report is sent.</summary>
     private static bool IsValidEmail(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -219,6 +245,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
                trimmed.Contains('.', StringComparison.Ordinal);
     }
 
+    /// <summary>Refreshes the send state when the text changes.</summary>
     partial void OnFeedbackTextChanged(string value)
     {
         OnPropertyChanged(nameof(IsReadyToSend));
@@ -226,6 +253,7 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         OnPropertyChanged(nameof(HasUnsavedDraft));
     }
 
+    /// <summary>Refreshes the send state when the adjustment changes.</summary>
     partial void OnAdjustmentTextChanged(string value)
     {
         OnPropertyChanged(nameof(IsReadyToSend));
@@ -233,17 +261,21 @@ public partial class ProfileFeedbackViewModel : ObservableObject
         OnPropertyChanged(nameof(HasUnsavedDraft));
     }
 
+    /// <summary>Refreshes the draft when the name changes.</summary>
     partial void OnScreenNameChanged(string value)
     {
         OnPropertyChanged(nameof(HasUnsavedDraft));
     }
 
+    /// <summary>Refreshes the command states when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(IsReadyToSend));
         OnPropertyChanged(nameof(ShowSubmitHint));
     }
 
+    /// <summary>Drops the attachment and its name, which also makes the draft dirty or clean again through the</summary>
+    /// attachment flag.</summary>
     private void RemoveAttachment()
     {
         _attachment = null;

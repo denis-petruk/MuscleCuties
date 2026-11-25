@@ -12,6 +12,7 @@ internal sealed class OnboardingAccountScope(IBackendSessionTokenStore? tokenSto
     private readonly object _sync = new();
     private Guid? _claimedAccountId;
 
+    /// <summary>The account onboarding is running for, or nothing when it has not been decided yet.</summary>
     public async Task<Guid?> ReadAsync(CancellationToken cancellationToken)
     {
         if (tokenStore is null)

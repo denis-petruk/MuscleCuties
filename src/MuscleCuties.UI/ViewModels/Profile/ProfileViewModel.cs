@@ -8,6 +8,8 @@ using MuscleCuties.UseCases.Features.Profile.Overview;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
+/// <summary>The you tab: the athlete's identity and summary figures, the rows that lead to each settings page, and the</summary>
+/// photo vault's privacy state.</summary>
 public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDisposable
 {
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
@@ -60,6 +62,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         "Profile_Summary_PhotoCountFormat", 0);
     [ObservableProperty] private int _workoutStreakDays;
 
+    /// <summary>Takes the profile use cases and the navigation callbacks.</summary>
     public ProfileViewModel(
         IProfileOverviewUseCase useCase,
         IProfileRefreshNotifier refreshNotifier,
@@ -81,76 +84,110 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         OpenVaultCommand = new AsyncRelayCommand(OpenVaultAsync);
     }
 
+    /// <summary>The avatar letter, taken from the display name and falling back to a neutral letter when there is no</summary>
+    /// name.</summary>
     public string UserInitial => !string.IsNullOrWhiteSpace(Name) ? Name[0].ToString().ToUpperInvariant() : "U";
 
+    /// <summary>The name shown for the user.</summary>
     public string UserName => !string.IsNullOrWhiteSpace(Name) ? Name :
         !string.IsNullOrWhiteSpace(Email) ? Email.Split('@')[0] : UiTextCatalog.TranslateRuntimeText("Athlete");
 
+    /// <summary>How many sessions the profile has completed.</summary>
     public int SessionCount => CompletedSessions;
+    /// <summary>How many cycles the profile has tracked.</summary>
     public int PhasesTracked => CyclesTracked;
+    /// <summary>How many cycles have been tracked, worded for one or many.</summary>
     public string CyclesTrackedText => CyclesTracked == 1 ? "1 cycle" : $"{CyclesTracked} cycles";
+    /// <summary>The current cycle phase as the summary row shows it.</summary>
     public string CurrentPhaseLabel => CurrentPhase.ToString();
+    /// <summary>An avatar is only shown when its file still exists or it is an HTTPS image, so a deleted local file or a</summary>
+    /// stale path cannot leave a broken picture.</summary>
     public bool HasProfileImage => !string.IsNullOrWhiteSpace(ProfileImagePath) &&
                                    (File.Exists(ProfileImagePath) ||
                                     (Uri.TryCreate(ProfileImagePath, UriKind.Absolute, out var uri) &&
                                      uri.Scheme == Uri.UriSchemeHttps));
+    /// <summary>True when no profile photo is set.</summary>
     public bool HasNoProfileImage => !HasProfileImage;
+    /// <summary>The avatar path when there is a usable one, empty when there is not.</summary>
     public string ProfileImageSource => HasProfileImage ? ProfileImagePath : string.Empty;
+    /// <summary>Signs the user out.</summary>
     public AsyncRelayCommand LogoutCommand { get; }
+    /// <summary>Deletes the account and its data.</summary>
     public AsyncRelayCommand DeleteAccountAndDataCommand { get; }
+    /// <summary>Opens the given route.</summary>
     public AsyncRelayCommand<string> OpenRouteCommand { get; }
+    /// <summary>Shows or hides the vault photos.</summary>
     public RelayCommand ToggleVaultPrivacyCommand { get; }
+    /// <summary>Opens the photo vault.</summary>
     public AsyncRelayCommand OpenVaultCommand { get; }
+    /// <summary>True when an account action failed.</summary>
     public bool HasAccountActionError => !string.IsNullOrWhiteSpace(AccountActionError);
 
     // The photo preview has three mutually exclusive states: an actionable empty state,
     // a revealed photo, and the privacy veil. Without photos there is nothing to reveal,
     // so the veil and its "show" action must not appear.
+    /// <summary>True when the vault has no photos.</summary>
     public bool ShowVaultEmptyState => !HasVaultPhotos;
+    /// <summary>True when the vault preview is shown.</summary>
     public bool ShowVaultPhotoPreview => HasVaultPhotos && IsVaultRevealed;
+    /// <summary>True when the vault privacy overlay is shown.</summary>
     public bool ShowVaultPrivacyOverlay => HasVaultPhotos && !IsVaultRevealed;
 
+    /// <summary>The availability row as spoken text: its title plus the days it currently holds.</summary>
     public string WorkoutAvailabilityRowAccessibilityText =>
         RowAccessibilityText("Profile_Details_WorkoutAvailability", AvailableWeekdaysText);
 
+    /// <summary>The nutrition row as spoken text, with the current pacing.</summary>
     public string NutritionRowAccessibilityText =>
         RowAccessibilityText("Profile_Details_Nutrition", NutritionPacingText);
 
+    /// <summary>The personal-info row as spoken text, naming what the page holds.</summary>
     public static string PersonalInfoRowAccessibilityText =>
         RowAccessibilityText("Profile_Details_PersonalInfo",
             UiTextCatalog.Get("Profile_Details_NameEmailPasswordCycleBaselines"));
 
+    /// <summary>The units row as spoken text, with the system currently chosen.</summary>
     public string UnitsDisplayRowAccessibilityText =>
         RowAccessibilityText("Profile_Details_UnitsDisplay", UnitsDisplayText);
 
+    /// <summary>The privacy row as spoken text, stating that health records stay on the device.</summary>
     public static string PrivacyRowAccessibilityText =>
         RowAccessibilityText("Profile_Privacy_Policy",
             UiTextCatalog.Get("Profile_Details_HealthRecordsStayOnThisDevice"));
 
+    /// <summary>The feedback row as spoken text, naming what it is for.</summary>
     public static string SendFeedbackRowAccessibilityText =>
         RowAccessibilityText("Profile_Details_SendFeedback",
             UiTextCatalog.Get("Profile_Details_ReportAnIssueOrSuggestA"));
 
+    /// <summary>Loads the profile.</summary>
     public AsyncRelayCommand LoadDataCommand { get; }
+    /// <summary>The first-load indicator, not shown for a reload the page has already rendered once.</summary>
     public bool IsPageLoading => _loadGate.IsLoading(IsBusy);
+    /// <summary>True while an account action runs.</summary>
     public bool IsAccountActionBusy => IsBusy && _loadGate.HasLoaded;
 
+    /// <summary>Releases the view model's subscriptions.</summary>
     public void Dispose()
     {
         _loadGate.Dispose();
         GC.SuppressFinalize(this);
     }
 
+    /// <summary>Marks the summary stale so the next appearance reloads it.</summary>
     public void Invalidate()
     {
         _loadGate.MarkStale();
     }
 
+    /// <summary>Refreshes the error flag when the text changes.</summary>
     partial void OnAccountActionErrorChanged(string value)
     {
         OnPropertyChanged(nameof(HasAccountActionError));
     }
 
+    /// <summary>Loads the identity, the summary figures and the vault's first photo, which is what the tab shows without</summary>
+    /// the user opening anything.</summary>
     private async Task LoadDataCoreAsync()
     {
         IsBusy = true;
@@ -198,11 +235,14 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         }
     }
 
+    /// <summary>Reveals or re-covers the vault's photos; the veil is the only thing standing between a shoulder-surfer</summary>
+    /// and the pictures.</summary>
     private void ToggleVaultPrivacy()
     {
         IsVaultRevealed = !IsVaultRevealed;
     }
 
+    /// <summary>Opens the photo journey vault.</summary>
     private async Task OpenVaultAsync()
     {
         await _navigateToPreferenceAsync("PhotoJourneyVaultPage");
@@ -216,6 +256,8 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         UiTextCatalog.Format("Profile_Details_RowAccessibilityFormat",
             UiTextCatalog.Get(titleKey), UiTextCatalog.TranslateRuntimeText(detail));
 
+    /// <summary>Opens a settings page by its registered route, ignoring an empty one so a row without a target does</summary>
+    /// nothing.</summary>
     private async Task OpenRouteAsync(string? route)
     {
         if (string.IsNullOrWhiteSpace(route))
@@ -224,6 +266,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         await _navigateToPreferenceAsync(route);
     }
 
+    /// <summary>Signs out and returns to the login screen, after the confirmation the command's own page puts up.</summary>
     private async Task LogoutAsync()
     {
         if (IsBusy) return;
@@ -248,6 +291,8 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         }
     }
 
+    /// <summary>Deletes the account and its data and returns to login; a refusal is reported on the page rather than leaving</summary>
+    /// the user in a half-deleted state.</summary>
     private async Task DeleteAccountAndDataAsync()
     {
         if (IsBusy) return;
@@ -285,6 +330,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         }
     }
 
+    /// <summary>Stores the newly chosen avatar path and republishes everything that depends on whether a picture exists.</summary>
     public async Task UpdateProfileImageAsync(string? imagePath)
     {
         var savedImagePath = await _useCase.UpdateProfileImageAsync(imagePath);
@@ -294,6 +340,8 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         ProfileImagePath = savedImagePath;
     }
 
+    /// <summary>The goal and its pace as the single line the details row shows, with no pace for goals that do not use</summary>
+    /// one.</summary>
     private static string FormatNutritionGoalPace(UserGoal goal, WeightGoalPace pace)
     {
         return goal switch
@@ -316,28 +364,33 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         };
     }
 
+    /// <summary>Refreshes the shown name when it changes.</summary>
     partial void OnNameChanged(string value)
     {
         OnPropertyChanged(nameof(UserInitial));
         OnPropertyChanged(nameof(UserName));
     }
 
+    /// <summary>Refreshes the session count.</summary>
     partial void OnCompletedSessionsChanged(int value)
     {
         OnPropertyChanged(nameof(SessionCount));
     }
 
+    /// <summary>Refreshes the phase count.</summary>
     partial void OnCyclesTrackedChanged(int value)
     {
         OnPropertyChanged(nameof(PhasesTracked));
         OnPropertyChanged(nameof(CyclesTrackedText));
     }
 
+    /// <summary>Refreshes the phase visuals when the phase changes.</summary>
     partial void OnCurrentPhaseChanged(CyclePhase value)
     {
         OnPropertyChanged(nameof(CurrentPhaseLabel));
     }
 
+    /// <summary>Refreshes the photo state when the path changes.</summary>
     partial void OnProfileImagePathChanged(string value)
     {
         OnPropertyChanged(nameof(HasProfileImage));
@@ -345,6 +398,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(ProfileImageSource));
     }
 
+    /// <summary>Refreshes the vault flags when photos change.</summary>
     partial void OnHasVaultPhotosChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowVaultEmptyState));
@@ -352,6 +406,7 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
         OnPropertyChanged(nameof(ShowVaultPrivacyOverlay));
     }
 
+    /// <summary>Refreshes the vault flags when the blur changes.</summary>
     partial void OnIsVaultRevealedChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowVaultPhotoPreview));

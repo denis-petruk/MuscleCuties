@@ -7,6 +7,7 @@ internal static class AcceptedGenerationPlanV2
 {
     private static readonly JsonSerializerOptions JsonOptions = WorkoutPlanningJson.Create();
 
+    /// <summary>Registers the occurrence dose in an accepted plan session.</summary>
     internal static GenerationSessionV2? ApplyOccurrenceDose(GenerationSessionV2? generation,
         IReadOnlyList<PlannedExerciseSnapshot> exercises)
     {
@@ -24,6 +25,7 @@ internal static class AcceptedGenerationPlanV2
         }).ToArray() };
     }
 
+    /// <summary>Loads one accepted plan session for the user.</summary>
     internal static async Task<GenerationSessionV2?> LoadSessionAsync(PostgresDbContext db, Guid userId,
         WorkoutDayRecord day, CancellationToken ct)
     {

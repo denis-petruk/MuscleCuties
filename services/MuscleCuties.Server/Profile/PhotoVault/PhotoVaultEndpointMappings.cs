@@ -5,10 +5,12 @@ using MuscleCuties.UseCases.Features.Profile.PhotoVault.Contracts;
 
 namespace MuscleCuties.Server.Profile.PhotoVault;
 
+/// <summary>The photo-vault routes: its entries and the media they point at.</summary>
 public static class PhotoVaultEndpointMappings
 {
     private const string PhotosRoute = "/api/v1/photos";
 
+    /// <summary>Registers the vault endpoints.</summary>
     public static IEndpointRouteBuilder MapPhotoVaultEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(PhotosRoute).RequireAuthorization();

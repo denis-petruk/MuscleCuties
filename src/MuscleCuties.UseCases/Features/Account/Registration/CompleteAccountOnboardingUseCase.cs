@@ -5,6 +5,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.UseCases.Features.Account.Registration;
 
+/// <summary>Completes onboarding once the profile answers and quiz are in.</summary>
 public interface ICompleteAccountOnboardingUseCase
 {
     Task<CompleteAccountOnboardingResult> ExecuteAsync(
@@ -13,6 +14,7 @@ public interface ICompleteAccountOnboardingUseCase
         CancellationToken cancellationToken = default);
 }
 
+/// <summary>The single write that stores the onboarding result.</summary>
 public interface ICompleteAccountOnboardingStore
 {
     Task<IReadOnlyList<AccountRegistrationQuizQuestion>> LoadQuizQuestionsAsync(
@@ -24,10 +26,12 @@ public interface ICompleteAccountOnboardingStore
         CancellationToken cancellationToken);
 }
 
+/// <summary>Marks onboarding complete only after the answers are stored.</summary>
 public sealed class CompleteAccountOnboardingUseCase(
     ICompleteAccountOnboardingStore store,
     TimeProvider timeProvider) : ICompleteAccountOnboardingUseCase
 {
+    /// <summary>Finishes onboarding by saving the profile and the quiz answers.</summary>
     public async Task<CompleteAccountOnboardingResult> ExecuteAsync(
         Guid userId,
         CompleteAccountOnboardingRequest request,

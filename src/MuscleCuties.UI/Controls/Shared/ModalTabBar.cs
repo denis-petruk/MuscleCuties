@@ -16,6 +16,7 @@ internal static class ModalTabBar
 {
     private static readonly ConditionalWeakTable<Page, OpenSheets> Open = new();
 
+    /// <summary>Hides the tab bar while a sheet is open, remembering that this page hid it.</summary>
     public static void Acquire(Page? page)
     {
         if (page is null)
@@ -31,6 +32,7 @@ internal static class ModalTabBar
         state.Count++;
     }
 
+    /// <summary>Brings the tab bar back once the last sheet on that page has closed.</summary>
     public static void Release(Page? page)
     {
         if (page is null || !Open.TryGetValue(page, out var state))
@@ -43,6 +45,7 @@ internal static class ModalTabBar
             Shell.SetTabBarIsVisible(page, state.WasVisible);
     }
 
+    /// <summary>How many sheets each page has open, so the tab bar returns exactly once rather than per sheet.</summary>
     private sealed class OpenSheets
     {
         public int Count;

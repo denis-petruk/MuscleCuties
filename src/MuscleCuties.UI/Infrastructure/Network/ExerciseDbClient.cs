@@ -9,6 +9,8 @@ using MuscleCuties.Core.Services.ExerciseMedia;
 
 namespace MuscleCuties.UI.Infrastructure.Network;
 
+/// <summary>Read-only client for the ExerciseDB catalog: paged exercise lists and one exercise by id, through</summary>
+/// the shared retry policy.</summary>
 public sealed partial class ExerciseDbClient : IExerciseDbClient
 {
     private static readonly TimeSpan DefaultRateLimitDelay = TimeSpan.FromMilliseconds(500);
@@ -18,6 +20,7 @@ public sealed partial class ExerciseDbClient : IExerciseDbClient
     private readonly HttpClient _httpClient;
     private readonly ILogger<ExerciseDbClient>? _logger;
 
+    /// <summary>Takes the configured client, defaulting its base address so the relative paths resolve.</summary>
     public ExerciseDbClient(HttpClient httpClient, ILogger<ExerciseDbClient>? logger = null)
     {
         _httpClient = httpClient;
@@ -27,6 +30,7 @@ public sealed partial class ExerciseDbClient : IExerciseDbClient
             _httpClient.BaseAddress = BaseUri;
     }
 
+    /// <summary>The exercise page the ExerciseDB API returns.</summary>
     public async Task<IReadOnlyList<ExerciseDbItem>> GetExercisesAsync(
         int limit = 50,
         int offset = 0,
@@ -47,6 +51,8 @@ public sealed partial class ExerciseDbClient : IExerciseDbClient
         return response ?? [];
     }
 
+    /// <summary>One exercise by id, or null when the id is blank, the device is offline, or the catalog does not</summary>
+    /// know it.</summary>
     public async Task<ExerciseDbItem?> GetExerciseByIdAsync(string id, CancellationToken ct = default)
     {
         if (string.IsNullOrWhiteSpace(id) || !CanSendRequest())
@@ -60,6 +66,7 @@ public sealed partial class ExerciseDbClient : IExerciseDbClient
             ct).ConfigureAwait(false);
     }
 
+    /// <summary>Streams the media file behind the given URL.</summary>
     public Task<Stream?> DownloadMediaStreamAsync(Uri mediaUri, CancellationToken ct = default) =>
         !CanSendRequest() || mediaUri is null
             ? Task.FromResult<Stream?>(null)
@@ -81,6 +88,7 @@ public sealed partial class ExerciseDbClient : IExerciseDbClient
                         LogExerciseDbFailed(_logger, nameof(Exception), exception);
                 });
 
+    /// <summary>Sends the request and reads its JSON body.</summary>
     private Task<T?> SendAndReadAsync<T>(
         Func<HttpRequestMessage> createRequest,
         JsonTypeInfo<T> jsonTypeInfo,
@@ -103,20 +111,25 @@ public sealed partial class ExerciseDbClient : IExerciseDbClient
                     LogExerciseDbFailed(_logger, nameof(Exception), exception);
             });
 
+    /// <summary>True when the device is online enough to send.</summary>
     private bool CanSendRequest() =>
         HttpRetryPolicy.CanSendRequest(NetworkRetryHelper.HasInternetAccess,
             _logger is { } logger ? () => LogOfflineSkipped(logger) : null);
 
+    /// <summary>Logs the status the ExerciseDB API returned.</summary>
     [LoggerMessage(EventId = 1, Level = LogLevel.Information, Message = "ExerciseDB API returned {StatusCode}.")]
     private static partial void LogExerciseDbStatus(ILogger logger, HttpStatusCode statusCode);
 
+    /// <summary>Logs that the ExerciseDB request timed out.</summary>
     [LoggerMessage(EventId = 2, Level = LogLevel.Information, Message = "ExerciseDB request timed out.")]
     private static partial void LogExerciseDbTimeout(ILogger logger);
 
+    /// <summary>Logs the exception that broke the ExerciseDB request.</summary>
     [LoggerMessage(EventId = 3, Level = LogLevel.Information,
         Message = "ExerciseDB request failed. Failure type: {ExceptionType}.")]
     private static partial void LogExerciseDbFailed(ILogger logger, string exceptionType, Exception ex);
 
+    /// <summary>Logs that the request was skipped while offline.</summary>
     [LoggerMessage(EventId = 4, Level = LogLevel.Information,
         Message = "ExerciseDB request skipped because the device is offline.")]
     private static partial void LogOfflineSkipped(ILogger logger);
@@ -125,6 +138,7 @@ public sealed partial class ExerciseDbClient : IExerciseDbClient
 [JsonSourceGenerationOptions(JsonSerializerDefaults.Web)]
 [JsonSerializable(typeof(List<ExerciseDbItem>))]
 [JsonSerializable(typeof(ExerciseDbItem))]
+/// <summary>Source-generated JSON metadata, so the client parses without reflection.</summary>
 internal sealed partial class ExerciseDbJsonContext : JsonSerializerContext
 {
 }

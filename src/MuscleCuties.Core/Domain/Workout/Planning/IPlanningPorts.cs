@@ -39,12 +39,14 @@ public sealed class SystemPlanningClockPort(TimeProvider? timeProvider = null) :
 {
     private readonly TimeProvider _timeProvider = timeProvider ?? TimeProvider.System;
 
+    /// <summary>Today in the account's local zone, read from the injectable provider so the day can be pinned.</summary>
     public DateOnly GetCurrentLocalDate()
     {
         var localNow = _timeProvider.GetLocalNow();
         return DateOnly.FromDateTime(localNow.DateTime);
     }
 
+    /// <summary>The current UTC time from the injected clock.</summary>
     public DateTimeOffset GetUtcNow() => _timeProvider.GetUtcNow();
 }
 
@@ -53,6 +55,7 @@ public sealed class SystemPlanningClockPort(TimeProvider? timeProvider = null) :
 /// </summary>
 public sealed class DefaultPlanningCatalogPort : IPlanningCatalogPort
 {
+    /// <summary>Strength templates for a week with the given number of strength days.</summary>
     public IReadOnlyList<StrengthTemplateDefinition> GetTemplatesForSchedule(int strengthDaysPerWeek) =>
         StrengthTemplateCatalog.ForSchedule(strengthDaysPerWeek);
 }
@@ -62,12 +65,15 @@ public sealed class DefaultPlanningCatalogPort : IPlanningCatalogPort
 /// </summary>
 public sealed class DefaultPlanningSafetyPort : IPlanningSafetyPort
 {
+    /// <summary>Activities the current injuries rule out.</summary>
     public IReadOnlySet<WorkoutActivityType> EvaluateRestrictedActivities(IEnumerable<Injury>? injuries) =>
         InjuryActivityRestrictionRule.GetBlockedActivities(injuries);
 
+    /// <summary>True when the movement pattern is not blocked by the current restrictions.</summary>
     public bool IsMovementPatternAllowed(MovementPattern pattern, IReadOnlySet<MovementPattern>? blockedPatterns) =>
         blockedPatterns is null || !blockedPatterns.Contains(pattern);
 
+    /// <summary>True when the activity is restricted for this profile.</summary>
     public bool IsActivityRestricted(WorkoutActivityType activity, IReadOnlySet<WorkoutActivityType>? restrictedActivities, bool hasCurrentSymptoms) =>
         restrictedActivities?.Contains(activity) ?? hasCurrentSymptoms;
 }

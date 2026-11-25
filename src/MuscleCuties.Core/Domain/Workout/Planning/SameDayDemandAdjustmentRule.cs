@@ -5,6 +5,7 @@ namespace MuscleCuties.Core.Domain.Workout.Planning;
 /// <summary>Reduces an eligible demanding occurrence to its existing conservative duration policy.</summary>
 public static class SameDayDemandAdjustmentRule
 {
+    /// <summary>Lowers the session's demand when it shares a day with harder work, or returns null when nothing changes.</summary>
     public static ActivitySessionPrescription? Adjust(ActivitySessionPrescription? original)
     {
         if (original is null) return null;
@@ -21,6 +22,7 @@ public static class SameDayDemandAdjustmentRule
         return original with { MainMinutes = minimum };
     }
 
+    /// <summary>True when the adjusted session stays within what the day can carry.</summary>
     public static bool IsValid(ActivitySessionPrescription? original,
         ActivitySessionPrescription? occurrence, decimal? durationMinutes)
     {
@@ -31,6 +33,7 @@ public static class SameDayDemandAdjustmentRule
         return durationMinutes == TotalMinutes(occurrence);
     }
 
+    /// <summary>Total minutes a prescription prescribes across its segments.</summary>
     public static decimal TotalMinutes(ActivitySessionPrescription prescription) =>
         (prescription.WarmupMinutes ?? decimal.Zero) + (prescription.MainMinutes ?? decimal.Zero) +
         (prescription.CooldownMinutes ?? decimal.Zero);

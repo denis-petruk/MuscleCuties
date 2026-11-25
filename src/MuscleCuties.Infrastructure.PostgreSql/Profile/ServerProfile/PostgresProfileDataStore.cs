@@ -7,6 +7,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 
+/// <summary>The profile as the server serves it: the stored row plus the answers and history folded into one snapshot.</summary>
 public sealed class PostgresProfileDataStore(
     PostgresDbContext dbContext,
     TimeProvider timeProvider)
@@ -25,6 +26,7 @@ public sealed class PostgresProfileDataStore(
     private const string ExpiredWorkoutPreviewStatus = "Expired";
     private const int DefaultBaselineSteps = 8000;
 
+    /// <summary>The account's profile snapshot, or nothing when the account has not completed onboarding.</summary>
     public async Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken)
     {
         if (userId == Guid.Empty)
@@ -72,6 +74,7 @@ public sealed class PostgresProfileDataStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>The user's profile history.</summary>
     public async Task<IReadOnlyList<ServerProfileHistoryEntry>> LoadHistoryAsync(
         Guid userId,
         CancellationToken cancellationToken)
@@ -92,6 +95,7 @@ public sealed class PostgresProfileDataStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>The user's stored quiz answers.</summary>
     public async Task<IReadOnlyList<ServerQuizResponse>> LoadQuizResponsesAsync(
         Guid userId,
         CancellationToken cancellationToken)
@@ -115,6 +119,7 @@ public sealed class PostgresProfileDataStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Saves a profile update.</summary>
     public Task<ServerProfileWriteResult> UpdateProfileAsync(
         UpdateServerProfileRequest request,
         CancellationToken cancellationToken) => UpdateAsync(
@@ -146,6 +151,7 @@ public sealed class PostgresProfileDataStore(
                        profile.EquipmentLevel), request.EquipmentLevel is not null,
         request.SetDateOfBirth || request.ReproductiveContextJson is not null);
 
+    /// <summary>Corrects one stored quiz answer.</summary>
     public async Task<ServerProfileWriteResult> CorrectQuizResponseAsync(
         CorrectServerQuizResponseRequest request,
         CancellationToken cancellationToken)
@@ -179,6 +185,7 @@ public sealed class PostgresProfileDataStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Saves the nutrition preferences.</summary>
     public Task<ServerProfileWriteResult> UpdateNutritionPreferencesAsync(
         UpdateServerNutritionPreferencesRequest request,
         CancellationToken cancellationToken) => UpdateAsync(
@@ -192,6 +199,7 @@ public sealed class PostgresProfileDataStore(
             profile.DietaryTags = request.DietaryTags;
         }, cancellationToken);
 
+    /// <summary>Saves the workout preferences.</summary>
     public async Task<ServerProfileWriteResult> UpdateWorkoutPreferencesAsync(
         UpdateServerWorkoutPreferencesRequest request,
         CancellationToken cancellationToken)
@@ -269,6 +277,7 @@ public sealed class PostgresProfileDataStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Saves the nutrition targets.</summary>
     public Task<ServerProfileWriteResult> UpdateNutritionTargetsAsync(
         UpdateServerNutritionTargetsRequest request,
         CancellationToken cancellationToken) => UpdateAsync(
@@ -278,6 +287,7 @@ public sealed class PostgresProfileDataStore(
         (profile, _) => profile.NutritionGoalsJson = MergeTargets(profile.NutritionGoalsJson, request.Targets),
         cancellationToken);
 
+    /// <summary>Applies one update with the version check.</summary>
     private async Task<ServerProfileWriteResult> UpdateAsync(
         Guid userId,
         int expectedVersion,
@@ -318,6 +328,7 @@ public sealed class PostgresProfileDataStore(
         return result;
     }
 
+    /// <summary>Reconciles the profile against the population safety rules.</summary>
     private async Task ApplyPopulationSafetyAsync(Guid userId, UserProfileRecord profile, DateTime nowUtc,
         CancellationToken cancellationToken)
     {
@@ -355,6 +366,7 @@ public sealed class PostgresProfileDataStore(
         }
     }
 
+    /// <summary>Writes the new version and its snapshot.</summary>
     private async Task<ServerProfileWriteResult> SaveVersionedAsync(
         Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction transaction,
         UserProfileRecord profile,
@@ -374,6 +386,7 @@ public sealed class PostgresProfileDataStore(
         }
     }
 
+    /// <summary>Runs the action inside a transaction with the tenant set.</summary>
     private async Task<T> ExecuteTenantTransactionAsync<T>(
         Guid userId,
         CancellationToken cancellationToken,
@@ -396,6 +409,7 @@ public sealed class PostgresProfileDataStore(
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Records a snapshot of the profile as it was.</summary>
     private UserProfileSnapshotRecord AddSnapshot(
         Guid userId,
         string reason,
@@ -416,11 +430,13 @@ public sealed class PostgresProfileDataStore(
 
     private static readonly JsonSerializerOptions WebJsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Reads the stored activity answers, falling back to an empty answer set when the JSON is absent or unreadable.</summary>
     private static SavedActivityAnswersDto DeserializeAnswers(string? json) => string.IsNullOrWhiteSpace(json)
         ? new SavedActivityAnswersDto(0, [], null)
         : JsonSerializer.Deserialize<SavedActivityAnswersDto>(json, WebJsonOptions)
           ?? new SavedActivityAnswersDto(0, [], null);
 
+    /// <summary>Maps a stored profile onto its snapshot shape.</summary>
     private static ServerProfileSnapshot ToSnapshot(
         UserProfileRecord profile,
         UserRecord? user = null,
@@ -456,6 +472,7 @@ public sealed class PostgresProfileDataStore(
         profile.GluteFocus,
         DeserializeAnswers(answersJson).EquipmentCapabilities);
 
+    /// <summary>Merges new nutrition targets into the stored JSON, keeping keys the caller did not send.</summary>
     private static string MergeTargets(string currentJson, IReadOnlyDictionary<string, string> updates)
     {
         var targets = JsonNode.Parse(string.IsNullOrWhiteSpace(currentJson) ? EmptyJsonObject : currentJson) as JsonObject
@@ -465,6 +482,7 @@ public sealed class PostgresProfileDataStore(
         return targets.ToJsonString();
     }
 
+    /// <summary>Strips personal fields from a history entry, because history is shown as a summary rather than a data export.</summary>
     private static ServerProfileHistoryEntry SanitizeHistoryEntry(ServerProfileHistoryEntry entry)
     {
         var profile = JsonNode.Parse(entry.ProfileJson) as JsonObject ?? new JsonObject();
@@ -472,15 +490,19 @@ public sealed class PostgresProfileDataStore(
         return entry with { ProfileJson = profile.ToJsonString() };
     }
 
+    /// <summary>True when the request carries a usable version.</summary>
     private static bool ValidVersionRequest(Guid userId, int expectedVersion) =>
         userId != Guid.Empty && expectedVersion >= MinimumExpectedProfileVersion;
 
+    /// <summary>The result that reports invalid input.</summary>
     private static ServerProfileWriteResult Invalid() =>
         new(ServerProfileWriteStatus.InvalidRequest, null);
 
+    /// <summary>The result that reports a missing profile.</summary>
     private static ServerProfileWriteResult Missing() =>
         new(ServerProfileWriteStatus.ProfileMissing, null);
 
+    /// <summary>The result that reports a version conflict.</summary>
     private static ServerProfileWriteResult Conflict(int? version) =>
         new(ServerProfileWriteStatus.VersionConflict, version);
 }

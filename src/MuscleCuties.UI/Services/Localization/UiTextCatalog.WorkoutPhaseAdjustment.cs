@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Copy for phase-adjusted sessions, where the cycle phase changes what a workout asks for.</summary>
 public static partial class UiTextCatalog
 {
+    /// <summary>Registers the phase adjustment strings.</summary>
     static partial void RegisterWorkoutPhaseAdjustmentStrings()
     {
         English["Workout_PhaseAdjustment_Open"] = "Review upcoming workouts";

@@ -1,3 +1,6 @@
+// Measurement history and unit conversion.
+// Second half of ProfilePersonalInfoViewModel; see its declaration for the full contract.
+
 using System.Diagnostics.CodeAnalysis;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UI.Models.UI.Common;
@@ -7,6 +10,8 @@ using MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
+/// <summary>The measurements half of the personal-info page: the paged history, the single-record editor, and the</summary>
+/// retry path that keeps a refused write rather than making the user re-enter it.</summary>
 public partial class ProfilePersonalInfoViewModel
 {
     private const int MeasurementPageSize = 8;
@@ -16,6 +21,8 @@ public partial class ProfilePersonalInfoViewModel
     private CancellationTokenSource? _measurementVisit;
     private MeasurementHistoryRow[] _measurementHistory = [];
     private BodyMeasurementOutputDto? _editingMeasurement;
+    /// <summary>The write that is about to be sent, held as a call rather than a request so a refused attempt can be</summary>
+    /// replayed unchanged and its outcome reported in its own words.</summary>
     private sealed record PendingMeasurement(
         string SuccessKey,
         Func<CancellationToken, Task<BackendApiResponse<BodyMeasurementOutputDto>>> SendAsync);
@@ -73,29 +80,41 @@ public partial class ProfilePersonalInfoViewModel
     [ObservableProperty] private DateTime _measurementDate = DateTime.Today;
     [ObservableProperty] private DateTime _maxMeasurementDate = DateTime.Today;
 
+    /// <summary>The earliest date a measurement can take.</summary>
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Bound in XAML.")]
     public DateTime MinMeasurementDate => DateTime.MinValue;
 
+    /// <summary>The body sites a measurement can record.</summary>
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Bound in XAML.")]
     public IReadOnlyList<SelectionOption<string>> MeasurementSites => BodyMeasurementPresentation.Sites;
 
+    /// <summary>The sides a measurement can record.</summary>
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Bound in XAML.")]
     public IReadOnlyList<SelectionOption<string>> MeasurementSides => BodyMeasurementPresentation.Sides;
 
+    /// <summary>The units a measurement can use.</summary>
     [SuppressMessage("Performance", "CA1822:Mark members as static", Justification = "Bound in XAML.")]
     public IReadOnlyList<SelectionOption<string>> MeasurementUnits => BodyMeasurementPresentation.Units;
 
+    /// <summary>Only sites that can be measured on either side ask for one, so the control is hidden for the rest.</summary>
     public bool IsMeasurementSideRequired => BodyMeasurementPresentation.NeedsSide(MeasurementSite?.Value);
 
+    /// <summary>The value field's label names the unit currently selected, which is what the number will be stored in.</summary>
     public string MeasurementValueLabel => UiTextCatalog.Format("Profile_Measurement_Value",
         UiTextCatalog.Get(MeasurementUnit?.Label ?? "Common_Unit_Cm"));
 
+    /// <summary>True when the history can be opened.</summary>
     public bool CanUseMeasurementHistory => IsMeasurementHistoryLoaded && !IsMeasurementBusy;
+    /// <summary>True when a measurement can be edited.</summary>
     public bool CanEditMeasurement => !IsMeasurementBusy && !CanRetryMeasurementMutation;
+    /// <summary>True when the measurement can be saved.</summary>
     public bool CanSaveMeasurement => CanEditMeasurement && !MeasurementRecordChanged;
+    /// <summary>True when the history is empty.</summary>
     public bool ShowEmptyMeasurements => IsMeasurementHistoryLoaded && VisibleMeasurements.Count == 0;
+    /// <summary>Whether the paged list still has rows to reveal, which is what shows the show-more action.</summary>
     public bool HasMoreMeasurements => VisibleMeasurements.Count < _measurementHistory.Length;
 
+    /// <summary>Opens the measurement history.</summary>
     [RelayCommand]
     private async Task OpenMeasurementHistoryAsync()
     {
@@ -106,6 +125,7 @@ public partial class ProfilePersonalInfoViewModel
         await RefreshMeasurementHistoryAsync();
     }
 
+    /// <summary>Reloads the measurement history.</summary>
     [RelayCommand]
     private async Task RefreshMeasurementHistoryAsync()
     {
@@ -127,6 +147,7 @@ public partial class ProfilePersonalInfoViewModel
         }
     }
 
+    /// <summary>Starts a new measurement.</summary>
     [RelayCommand]
     private async Task AddMeasurementAsync()
     {
@@ -161,6 +182,8 @@ public partial class ProfilePersonalInfoViewModel
         }
     }
 
+    /// <summary>Opens one stored reading for editing and reports whether it did; it refuses while the history is still</summary>
+    /// loading or busy, and while another record is already open.</summary>
     public bool BeginEditMeasurement(MeasurementHistoryRow reading)
     {
         if (!CanUseMeasurementHistory || IsMeasurementEditorOpen)
@@ -170,6 +193,7 @@ public partial class ProfilePersonalInfoViewModel
         return true;
     }
 
+    /// <summary>Cancels the measurement being entered.</summary>
     [RelayCommand]
     private async Task CancelMeasurementAsync()
     {
@@ -183,6 +207,7 @@ public partial class ProfilePersonalInfoViewModel
             await RefreshMeasurementHistoryAsync();
     }
 
+    /// <summary>Shows more of the history.</summary>
     [RelayCommand]
     private void ShowMoreMeasurements()
     {
@@ -190,6 +215,7 @@ public partial class ProfilePersonalInfoViewModel
         UpdateVisibleMeasurements();
     }
 
+    /// <summary>Asks before deleting the measurement.</summary>
     [RelayCommand]
     private void RequestMeasurementDelete()
     {
@@ -197,9 +223,11 @@ public partial class ProfilePersonalInfoViewModel
             IsMeasurementDeleteConfirmationOpen = true;
     }
 
+    /// <summary>Closes the delete confirmation.</summary>
     [RelayCommand]
     private void CancelMeasurementDelete() => IsMeasurementDeleteConfirmationOpen = false;
 
+    /// <summary>Deletes the measurement.</summary>
     [RelayCommand]
     private Task DeleteMeasurementAsync()
     {
@@ -212,6 +240,7 @@ public partial class ProfilePersonalInfoViewModel
         return SendMeasurementAsync();
     }
 
+    /// <summary>Saves the measurement.</summary>
     [RelayCommand]
     private Task SaveMeasurementAsync()
     {
@@ -251,9 +280,12 @@ public partial class ProfilePersonalInfoViewModel
         return SendMeasurementAsync();
     }
 
+    /// <summary>Retries the failed measurement change.</summary>
     [RelayCommand]
     private Task RetryMeasurementAsync() => SendMeasurementAsync();
 
+    /// <summary>Cancels the page's measurement work when it goes away, so answers that arrive afterwards are ignored instead</summary>
+    /// of writing into a closed page.</summary>
     public void ResetMeasurementVisit()
     {
         _measurementVisit?.Cancel();
@@ -268,10 +300,13 @@ public partial class ProfilePersonalInfoViewModel
         _preferMetricMeasurements = true;
     }
 
+    /// <summary>Clears the side when the site changes.</summary>
     partial void OnMeasurementSiteChanged(SelectionOption<string>? value) => MeasurementSide = null;
 
+    /// <summary>The token that cancels the current history visit.</summary>
     private CancellationToken MeasurementVisitToken() => (_measurementVisit ??= new CancellationTokenSource()).Token;
 
+    /// <summary>Opens the editor on a reading, or empty for a new one, and clears any notice left by the previous attempt.</summary>
     private void StartMeasurementEditor(BodyMeasurementOutputDto? reading)
     {
         ClearMeasurementNotice();
@@ -288,6 +323,7 @@ public partial class ProfilePersonalInfoViewModel
         IsMeasurementEditorOpen = true;
     }
 
+    /// <summary>Closes the editor and drops its draft together with the write that was waiting on it.</summary>
     private void ResetMeasurementEditor()
     {
         IsMeasurementEditorOpen = false;
@@ -300,6 +336,8 @@ public partial class ProfilePersonalInfoViewModel
         MeasurementValue = string.Empty;
     }
 
+    /// <summary>Sends the pending write once and keeps it pending when it is refused, so the retry action can resend the</summary>
+    /// same values.</summary>
     private async Task SendMeasurementAsync()
     {
         if (IsMeasurementBusy || _pendingMeasurement is not { } pending)
@@ -360,6 +398,7 @@ public partial class ProfilePersonalInfoViewModel
         }
     }
 
+    /// <summary>After a write, reloads the history and reports the outcome plus whatever the reload itself had to say.</summary>
     private async Task CompleteMeasurementAttemptAsync(string outcomeKey, CancellationToken token)
     {
         ResetMeasurementEditor();
@@ -368,6 +407,8 @@ public partial class ProfilePersonalInfoViewModel
             (string.IsNullOrWhiteSpace(MeasurementStatus) ? string.Empty : $" {MeasurementStatus}");
     }
 
+    /// <summary>Loads the first page of history and marks it loaded, or reports the failure and leaves it unloaded so it can</summary>
+    /// be asked for again.</summary>
     private async Task ReadMeasurementsAsync(CancellationToken token)
     {
         if (_measurementClient is null)
@@ -406,8 +447,10 @@ public partial class ProfilePersonalInfoViewModel
         IsMeasurementHistoryLoaded = true;
     }
 
+    /// <summary>Refreshes the shown slice of the history.</summary>
     private void UpdateVisibleMeasurements() => VisibleMeasurements = _measurementHistory.Take(_measurementVisibleCount).ToArray();
 
+    /// <summary>Forgets the loaded rows, so reopening the history fetches fresh ones instead of showing stale measurements.</summary>
     private void ClearMeasurementHistory()
     {
         IsMeasurementHistoryLoaded = false;
@@ -416,12 +459,15 @@ public partial class ProfilePersonalInfoViewModel
         UpdateVisibleMeasurements();
     }
 
+    /// <summary>Drops the status and support reference from a previous attempt before a new one starts.</summary>
     private void ClearMeasurementNotice()
     {
         MeasurementStatus = string.Empty;
         MeasurementReference = string.Empty;
     }
 
+    /// <summary>Shows the API's own message and reference for a refused measurement, so a report can name the exact</summary>
+    /// request.</summary>
     private void ShowMeasurementFailure(ApiFailureNotice notice)
     {
         MeasurementStatus = notice.MessageText;

@@ -2,6 +2,7 @@ using MuscleCuties.Core.Domain.Workout.Planning;
 
 namespace MuscleCuties.UseCases.Features.Profile.ServerProfile;
 
+/// <summary>The profile as the server stores it.</summary>
 public sealed record ServerProfileSnapshot(
     string Name,
     DateOnly? DateOfBirth,
@@ -34,6 +35,7 @@ public sealed record ServerProfileSnapshot(
     bool GluteFocus = false,
     EquipmentCapabilities? EquipmentCapabilities = null);
 
+/// <summary>A profile change, applied against the version it was based on.</summary>
 public sealed record UpdateServerProfileRequest(
     Guid UserId,
     int ExpectedVersion,
@@ -51,16 +53,20 @@ public sealed record UpdateServerProfileRequest(
     string? ReproductiveContextJson = null,
     string? ProfileImagePath = null);
 
+/// <summary>One earlier profile version.</summary>
 public sealed record ServerProfileHistoryEntry(Guid Id, string Reason, string ProfileJson, DateTime CreatedAtUtc);
 
+/// <summary>One stored quiz answer.</summary>
 public sealed record ServerQuizResponse(int QuestionId, int AnswerId, DateTime AnsweredAtUtc);
 
+/// <summary>A correction to a stored quiz answer.</summary>
 public sealed record CorrectServerQuizResponseRequest(
     Guid UserId,
     int ExpectedVersion,
     int QuestionId,
     int AnswerId);
 
+/// <summary>A change to the nutrition preferences.</summary>
 public sealed record UpdateServerNutritionPreferencesRequest(
     Guid UserId,
     int ExpectedVersion,
@@ -68,6 +74,7 @@ public sealed record UpdateServerNutritionPreferencesRequest(
     string WeightGoalPace,
     string DietaryTags);
 
+/// <summary>A change to the workout preferences.</summary>
 public sealed record UpdateServerWorkoutPreferencesRequest(
     Guid UserId,
     int ExpectedVersion,
@@ -80,11 +87,13 @@ public sealed record UpdateServerWorkoutPreferencesRequest(
     bool? GluteFocus = null,
     EquipmentCapabilities? EquipmentCapabilities = null);
 
+/// <summary>A change to the nutrition targets.</summary>
 public sealed record UpdateServerNutritionTargetsRequest(
     Guid UserId,
     int ExpectedVersion,
     IReadOnlyDictionary<string, string> Targets);
 
+/// <summary>How a profile write ended.</summary>
 public enum ServerProfileWriteStatus
 {
     Saved,
@@ -94,8 +103,10 @@ public enum ServerProfileWriteStatus
     InvalidCatalogReference
 }
 
+/// <summary>The outcome of a profile write, with the new version when it applied.</summary>
 public sealed record ServerProfileWriteResult(ServerProfileWriteStatus Status, int? Version);
 
+/// <summary>The server profile persistence.</summary>
 public interface IServerProfileDataStore
 {
     Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken);

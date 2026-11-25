@@ -3,12 +3,14 @@ using MuscleCuties.UseCases.Features.Nutrition.Diary;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
 
+/// <summary>Previews a day copy and commits it, refusing a commit whose preview is stale.</summary>
 public sealed class NutritionCopyPreviewUseCase(
     INutritionCopyPreviewStore store,
     INutritionBatchAndCopyChangeNotifier? changeNotifier = null)
 {
     private const int MaximumIdempotencyKeyLength = 128;
 
+    /// <summary>Previews what copying a day's entries would change.</summary>
     public async Task<PreviewNutritionCopyResponse> PreviewAsync(
         Guid userId,
         PreviewNutritionCopyRequest request,
@@ -47,6 +49,7 @@ public sealed class NutritionCopyPreviewUseCase(
             ToDto(projection.ResultingTargetTotals));
     }
 
+    /// <summary>Applies the copy the preview described.</summary>
     public async Task<CopyNutritionDiaryResponse> CommitAsync(
         Guid userId,
         CommitPreviewedNutritionCopyRequest request,
@@ -73,6 +76,7 @@ public sealed class NutritionCopyPreviewUseCase(
         return response;
     }
 
+    /// <summary>Maps a previewed food back into the entry the commit will write, so the commit writes what was shown.</summary>
     private static DiaryCopyFood ToDomain(DiaryCopyFoodDto item)
     {
         ArgumentNullException.ThrowIfNull(item);
@@ -80,13 +84,16 @@ public sealed class NutritionCopyPreviewUseCase(
             item.Calories, item.Protein, item.Carbs, item.Fat, item.GroupIdentity);
     }
 
+    /// <summary>Maps a copy food onto its wire shape.</summary>
     private static DiaryCopyFoodDto ToDto(DiaryCopyFood item) =>
         new(item.Identity, item.Name, NutritionMealTypeMapper.ToContract(item.MealType),
             item.Calories, item.Protein, item.Carbs, item.Fat, item.GroupIdentity);
 
+    /// <summary>Maps copy totals onto their wire shape.</summary>
     private static DiaryCopyTotalsDto ToDto(DiaryCopyTotals totals) =>
         new(totals.Count, totals.Calories, totals.Protein, totals.Carbs, totals.Fat);
 
+    /// <summary>The domain copy mode for the wire value.</summary>
     private static MuscleCuties.Core.Models.Enums.Nutrition.DiaryCopyMode ToDomainMode(DiaryCopyModeDto mode) =>
         mode switch
         {
@@ -95,6 +102,7 @@ public sealed class NutritionCopyPreviewUseCase(
             _ => throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown diary copy mode.")
         };
 
+    /// <summary>Refuses a preview with no foods or an unknown mode, which the commit could not apply.</summary>
     private static void ValidateSnapshot(DiaryCopySnapshotDto snapshot, Guid userId, DateOnly expectedDate)
     {
         if (snapshot is null || snapshot.OwnerId != userId || snapshot.Date != expectedDate ||
@@ -102,6 +110,7 @@ public sealed class NutritionCopyPreviewUseCase(
             throw new InvalidOperationException("The diary snapshot does not match the requested owner and date.");
     }
 
+    /// <summary>Refuses an empty owner, since a copy is always scoped to one account.</summary>
     private static void RequireOwner(Guid userId)
     {
         if (userId == Guid.Empty)

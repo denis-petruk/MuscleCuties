@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Workout.Planning;
 
+/// <summary>The catalog read.</summary>
 public interface IWorkoutPlanningCatalogStore
 {
     Task<WorkoutPlanningCatalogResponse> GetCatalogAsync(CancellationToken cancellationToken = default);

@@ -3,6 +3,9 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
+/// <summary>
+///     Reads the stored profile and preferences into the planning input.
+/// </summary>
 internal static class StrengthPlanGenerationInputReader
 {
     private const decimal MinimumAverageSessions = 0m;
@@ -10,6 +13,7 @@ internal static class StrengthPlanGenerationInputReader
     public const int DefaultWarmupMinutes = 5;
     public const int DefaultCooldownMinutes = 5;
 
+    /// <summary>Reads the entered history into the contract input, when it is valid.</summary>
     public static bool TryRead(
         WorkoutActivityDto? activity,
         string consistentWeeks,

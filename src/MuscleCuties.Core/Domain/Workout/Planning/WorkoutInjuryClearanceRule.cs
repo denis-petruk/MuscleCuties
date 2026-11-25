@@ -1,6 +1,8 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>One injury episode, with whether it is still restricting training.</summary>
 public sealed record InjuryRestorationEpisode(bool IsActive, DateOnly? ClearedOn);
+/// <summary>Whether a displaced slot can be restored now, must wait, or is gone for good.</summary>
 public enum InjuryClearanceRestorationDisposition { Blocked, RestoreOptional, RestoreRequired }
 
 /// <summary>
@@ -18,6 +20,7 @@ public static class WorkoutInjuryClearanceRule
     public const decimal ConservativeReturnLoadMultiplier = 0.875m;
     public const int ConservativeReturnSessionCount = 2;
 
+    /// <summary>The reduced load the injured lift returns at.</summary>
     public static decimal ComputeConservativeReturnLoad(
         decimal priorWorkingLoadKg,
         int completedConservativeSessions,
@@ -52,6 +55,7 @@ public static class WorkoutInjuryClearanceRule
         !isCleared || clearedOn is null || effectiveDate is null || clearedOn > effectiveDate ||
         IsRestoredExerciseOptional(clearedOn.Value, effectiveDate.Value);
 
+    /// <summary>The first day a restoration may run, or null when nothing is required.</summary>
     public static DateOnly? RequiredFromLocalDate(DateOnly? originalClearanceDate)
     {
         if (originalClearanceDate is not { } clearance ||
@@ -66,6 +70,7 @@ public static class WorkoutInjuryClearanceRule
         allCurrentRestrictionsPermit && originalClearanceDate is { } clearance &&
         clearance <= effectiveDate && RequiredFromLocalDate(clearance).HasValue;
 
+    /// <summary>True when the restored exercise must stay optional for the week.</summary>
     public static bool IsRestoredExerciseOptional(DateOnly originalClearanceDate, DateOnly effectiveDate) =>
         RequiredFromLocalDate(originalClearanceDate) is not { } requiredFrom || effectiveDate < requiredFrom;
 
@@ -79,6 +84,7 @@ public static class WorkoutInjuryClearanceRule
         return RequiredFromLocalDate(dates.Max(date => date!.Value));
     }
 
+    /// <summary>True when every injured site has cleared, so normal loading can resume.</summary>
     public static bool CanRestoreForAllClearances(IEnumerable<DateOnly?> clearanceDates,
         bool allCurrentConstraintsPermit, DateOnly effectiveDate)
     {

@@ -7,6 +7,7 @@ using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Injury;
 
+/// <summary>Injuries as the workout side reports them, with the status the planner reads to withhold load.</summary>
 public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IServerWorkoutInjuryStore
 {
     private const int MaxSwapCandidates = 8;
@@ -16,6 +17,7 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
     private const int MatchScoreMultiplier = 100;
     private const double MatchDifferenceDivisor = 2.0;
 
+    /// <summary>The sessions and exercises an injury affects.</summary>
     public async Task<WorkoutInjuryImpactDto> GetImpactAsync(
         Guid userId,
         CancellationToken cancellationToken = default) =>
@@ -80,6 +82,7 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
             return new WorkoutInjuryImpactDto(true, summary, blocked, rehab, blockedActivities);
         }).ConfigureAwait(false);
 
+    /// <summary>Checks whether an injury rules out one exercise.</summary>
     public async Task<ExerciseContraindicationCheckDto> CheckContraindicationAsync(
         Guid userId,
         int exerciseDefinitionId,
@@ -128,6 +131,7 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
                 reason);
         }).ConfigureAwait(false);
 
+    /// <summary>The swap candidates that are safe for the injuries.</summary>
     public async Task<IReadOnlyList<WorkoutSwapCandidateDto>> GetSafeSwapCandidatesAsync(
         Guid userId,
         int exerciseDefinitionId,
@@ -213,6 +217,7 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
             return candidates;
         }).ConfigureAwait(false);
 
+    /// <summary>Swaps the exercise for a safe candidate.</summary>
     public async Task<bool> SwapExerciseAsync(
         Guid userId,
         Guid workoutDayExerciseId,
@@ -294,6 +299,7 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
             return true;
         }).ConfigureAwait(false);
 
+    /// <summary>The readable name of an injury site.</summary>
     private static string GetSiteName(InjuryFlag site) => site switch
     {
         InjuryFlag.Metatarsal => "Foot",
@@ -301,6 +307,7 @@ public sealed class PostgresWorkoutInjuryStore(PostgresDbContext dbContext) : IS
         _ => site.ToString()
     };
 
+    /// <summary>How well the exercise matches the injured site's muscles.</summary>
     private static double ComputeMuscleMatchScore(
         IReadOnlyList<ExerciseMuscleContribution> original,
         IReadOnlyList<ExerciseMuscleContribution> candidate,

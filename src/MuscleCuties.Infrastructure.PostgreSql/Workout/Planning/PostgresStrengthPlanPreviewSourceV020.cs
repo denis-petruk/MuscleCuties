@@ -8,9 +8,11 @@ using MuscleCuties.Core.Models.Workout.Planning;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>Assembles the inputs a preview is generated from, in one read so the preview cannot mix versions of the profile.</summary>
 public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbContext)
     : IStrengthPlanPreviewSourceV020
 {
+    /// <summary>Loads the preview source for the user.</summary>
     public Task<StrengthPlanPreviewSourceV020?> LoadAsync(Guid userId,
         CancellationToken cancellationToken) =>
         dbContext.Database.CreateExecutionStrategy().ExecuteAsync<StrengthPlanPreviewSourceV020?>(async () =>
@@ -29,6 +31,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         });
 
     // Caller owns the tenant transaction and account/catalog locks.
+    /// <summary>Loads the preview source inside the caller's transaction.</summary>
     internal async Task<StrengthPlanPreviewSourceV020?> LoadInCurrentTransactionAsync(Guid userId,
         CancellationToken cancellationToken)
     {
@@ -212,6 +215,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         };
     }
 
+    /// <summary>The activity types from their stored form, ignoring values that are not activity types.</summary>
     private static IReadOnlySet<int> ParseActivityTypes(string? value)
     {
         var set = (value ?? string.Empty).Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)
@@ -226,6 +230,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         return set;
     }
 
+    /// <summary>The available weekdays from their stored form, ignoring anything that is not a weekday.</summary>
     private static IReadOnlySet<DayOfWeek> ParseAvailableWeekdays(string? json)
     {
         try
@@ -251,6 +256,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         }
     }
 
+    /// <summary>The activity-to-session-length map from its stored form.</summary>
     private static IReadOnlyDictionary<int, int> ParseActivityDurations(string? json)
     {
         var result = new Dictionary<int, int>();
@@ -275,6 +281,7 @@ public sealed class PostgresStrengthPlanPreviewSourceV020(PostgresDbContext dbCo
         return result;
     }
 
+    /// <summary>The activity-to-frequency map from its stored form, ignoring malformed pairs.</summary>
     private static IReadOnlyDictionary<int, int> ParseActivityFrequencies(string? json)
     {
         try

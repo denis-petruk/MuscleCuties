@@ -16,6 +16,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
     private const int InitialAnswerVersion = 0;
     private static readonly JsonSerializerOptions JsonOptions = WorkoutPlanningJson.Create();
 
+    /// <summary>Stores a proposal and its lease.</summary>
     public async Task<StrengthPlanProposalCreatedV020> SaveAsync(Guid userId, StrengthPlanPreviewRequestV020 request,
         StrengthPlanPreviewResponseV020 preview, CancellationToken cancellationToken)
     {
@@ -39,6 +40,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
     }
 
     // Caller owns the tenant transaction and account/catalog locks and commits the result.
+    /// <summary>Stores the proposal inside the caller's transaction.</summary>
     internal async Task<StrengthPlanProposalCreatedV020> SaveInCurrentTransactionAsync(Guid userId,
         StrengthPlanPreviewRequestV020 request, StrengthPlanPreviewResponseV020 preview,
         CancellationToken cancellationToken, bool automaticOrigin = false, DateOnly? automaticStartDate = null)
@@ -155,6 +157,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             automaticOrigin ? null : ToLease(record), record.ConcurrencyVersion, activePlanId is not null);
     }
 
+    /// <summary>Checks the proposal request carries usable values.</summary>
     private static void ValidateProposalInput(Guid userId, StrengthPlanPreviewRequestV020 request,
         StrengthPlanPreviewResponseV020 preview)
     {
@@ -173,15 +176,19 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
 
     }
 
+    /// <summary>Renews the planning lease.</summary>
     public Task<PlanningLeaseResult> RenewAsync(Guid userId, PlanningLeaseRequest request, CancellationToken cancellationToken) =>
         UpdateLeaseAsync(userId, request, false, false, cancellationToken);
 
+    /// <summary>Closes the planning lease.</summary>
     public Task<PlanningLeaseResult> CloseAsync(Guid userId, PlanningLeaseRequest request, CancellationToken cancellationToken) =>
         UpdateLeaseAsync(userId, request, true, false, cancellationToken);
 
+    /// <summary>Takes over an abandoned proposal.</summary>
     public Task<PlanningLeaseResult> TakeoverAsync(Guid userId, Guid proposalId, CancellationToken cancellationToken) =>
         UpdateLeaseAsync(userId, new PlanningLeaseRequest(proposalId, Guid.Empty, 0), false, true, cancellationToken);
 
+    /// <summary>The preview that is currently open for the user.</summary>
     public async Task<ActivePlanningPreviewDto> GetActivePreviewAsync(Guid userId, CancellationToken cancellationToken) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
@@ -197,6 +204,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
                 new ActivePlanningPreviewDto(proposal.Id, new DateTimeOffset(DateTime.SpecifyKind(proposal.LeaseExpiresAtUtc!.Value, DateTimeKind.Utc)));
         }).ConfigureAwait(false);
 
+    /// <summary>The activity answers the user saved.</summary>
     public async Task<SavedActivityAnswersDto> ReadAnswersAsync(Guid userId, CancellationToken cancellationToken) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
@@ -209,6 +217,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             return answers with { Version = state?.AnswerVersion ?? InitialAnswerVersion, SafetyPlanChanged = false };
         }).ConfigureAwait(false);
 
+    /// <summary>Saves the activity answers.</summary>
     public async Task<SavedActivityAnswersDto> SaveAnswersAsync(Guid userId, SaveActivityAnswersRequest request,
         CancellationToken cancellationToken) => await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
     {
@@ -337,22 +346,26 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         return answers with { Version = state.AnswerVersion, SafetyPlanChanged = safetyPlanChanged };
     }).ConfigureAwait(false);
 
+    /// <summary>The stored activity answers, falling back to an empty set when the JSON is unreadable.</summary>
     private static SavedActivityAnswersDto DeserializeAnswers(string? json) => string.IsNullOrWhiteSpace(json)
         ? new SavedActivityAnswersDto(InitialAnswerVersion, [], null)
         : JsonSerializer.Deserialize<SavedActivityAnswersDto>(json, JsonOptions)
           ?? throw new InvalidOperationException("Saved activity answers are invalid.");
 
+    /// <summary>Serializes the underlying histories the answers carry.</summary>
     private static string SerializeUnderlyingHistories(IEnumerable<ActivityEligibilityInputV020> answers) =>
         JsonSerializer.Serialize(answers.Where(item => HiitEligibilityEvidenceRule.IsSupportedUnderlyingCardioActivity(
                 WorkoutActivityContractMapper.ToCore(item.Activity)))
             .OrderBy(item => item.Activity).Select(item => new { item.Activity, item.ActivityHistory }), JsonOptions);
 
+    /// <summary>The safety answer state for one activity's answers.</summary>
     private static ActivitySafetyAnswerState Classify(ActivityEligibilityInputV020? item) => item is null
         ? ActivitySafetyAnswerState.Unknown
         : ActivitySafetyAnswersRule.Classify(new ActivitySafetyAnswers(WorkoutActivityContractMapper.ToCore(item.Activity),
             item.HasSwimmingFacilityAccess, item.CanSwimIndependently, item.WantsContinuousSwimming,
             item.HasRopeClimbingCompetence, item.AppropriateClimbingInstructionAvailable, item.IsDemandingYogaContent));
 
+    /// <summary>Marks the plan's unsafe activities as suppressed.</summary>
     private async Task<bool> SuppressUnsafeActivitiesAsync(Guid userId, Guid planId,
         IReadOnlyList<int> activityIds, CancellationToken cancellationToken)
     {
@@ -384,6 +397,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         return changed;
     }
 
+    /// <summary>Writes the lease state change.</summary>
     private async Task<PlanningLeaseResult> UpdateLeaseAsync(Guid userId, PlanningLeaseRequest request, bool close,
         bool takeover, CancellationToken cancellationToken) =>
         await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
@@ -419,9 +433,11 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
                 item.Status == "Proposed" ? ToLease(item) : null);
         }).ConfigureAwait(false);
 
+    /// <summary>The lease shape of a stored proposal.</summary>
     private static PlanningLeaseDto ToLease(WorkoutPlanProposalV02Record item) =>
         new(item.LeaseId!.Value, item.LeaseFence, new DateTimeOffset(DateTime.SpecifyKind(item.LeaseExpiresAtUtc!.Value, DateTimeKind.Utc)));
 
+    /// <summary>The inputs a proposal was generated from.</summary>
     private sealed record ProposalInputSnapshot(
         StrengthPlanPreviewRequestV020 Request,
         int ProfileVersion,

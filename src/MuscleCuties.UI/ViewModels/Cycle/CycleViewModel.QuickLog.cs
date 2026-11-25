@@ -7,6 +7,7 @@ using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
 
+/// <summary>The quick log sheet: flow, symptoms and whether the period started or ended on the logged day.</summary>
 public partial class CycleViewModel
 {
     [ObservableProperty] private ObservableCollection<FlowOptionItem> _flowOptions = new();
@@ -23,13 +24,21 @@ public partial class CycleViewModel
     [ObservableProperty] private FlowIntensity? _selectedFlowIntensity;
     [ObservableProperty] private ObservableCollection<SymptomOptionItem> _symptomOptions = new();
 
+    /// <summary>Opens the quick log sheet.</summary>
     public RelayCommand OpenQuickLogCommand { get; private set; } = null!;
+    /// <summary>Closes the sheet without saving what was entered.</summary>
     public RelayCommand CloseQuickLogSheetCommand { get; private set; } = null!;
+    /// <summary>Marks, or unmarks, that the period started on the logged day.</summary>
     public RelayCommand TogglePeriodStartedCommand { get; private set; } = null!;
+    /// <summary>Marks, or unmarks, that the period ended on the logged day.</summary>
     public RelayCommand TogglePeriodEndedCommand { get; private set; } = null!;
+    /// <summary>Logs the start of a period straight from the sheet, for a user who only came to record that.</summary>
     public RelayCommand StartPeriodFromQuickLogCommand { get; private set; } = null!;
+    /// <summary>Chooses one flow level.</summary>
     public RelayCommand<FlowOptionItem> SelectFlowCommand { get; private set; } = null!;
+    /// <summary>Adds or removes one symptom from the day's log.</summary>
     public RelayCommand<SymptomOptionItem> ToggleSymptomCommand { get; private set; } = null!;
+    /// <summary>Saves the sheet's entries for the selected day.</summary>
     public AsyncRelayCommand SaveQuickLogCommand { get; private set; } = null!;
 
     /// <summary>
@@ -42,10 +51,13 @@ public partial class CycleViewModel
         (SelectedFlowIntensity is FlowIntensity intensity && intensity != FlowIntensity.None) ||
         SymptomOptions.Any(symptom => symptom.IsSelected);
 
+    /// <summary>The hint under the save action tells the user what is still missing, or confirms there is something to</summary>
+    /// save — the same fact the save's enabled state uses.</summary>
     public string SaveQuickLogHint => HasQuickLogInput
         ? string.Empty
         : MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_QuickLog_SaveRequiresInputHint");
 
+    /// <summary>Republishes what depends on the entered values after any of them changed.</summary>
     private void NotifyQuickLogInputChanged()
     {
         OnPropertyChanged(nameof(HasQuickLogInput));
@@ -53,6 +65,7 @@ public partial class CycleViewModel
         SaveQuickLogCommand?.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Wires the sheet's commands to their handlers.</summary>
     private void InitializeQuickLogCommands()
     {
         OpenQuickLogCommand = new RelayCommand(() => OpenQuickLog());
@@ -70,6 +83,7 @@ public partial class CycleViewModel
         SymptomOptions = BuildSymptomOptions(null);
     }
 
+    /// <summary>Opens the sheet for a day — today when none was given — and starts filling it from that day's stored entry.</summary>
     public void OpenQuickLog(CycleDayItem? day = null)
     {
         var targetDate = day?.Date ?? SelectedDate;
@@ -95,6 +109,8 @@ public partial class CycleViewModel
         _ = LoadExistingQuickLogForDateAsync(targetDate, loadVersion);
     }
 
+    /// <summary>Fills the sheet from the day's existing entry, ignoring an answer that arrives after another day was opened</summary>
+    /// so a fast tap cannot load one day's log into another.</summary>
     private async Task LoadExistingQuickLogForDateAsync(DateTime targetDate, int loadVersion)
     {
         try
@@ -129,6 +145,7 @@ public partial class CycleViewModel
         }
     }
 
+    /// <summary>Closes the sheet and drops the draft, so reopening it starts from the stored values.</summary>
     private void CloseQuickLogSheet()
     {
         IsQuickLogSheetVisible = false;
@@ -152,6 +169,7 @@ public partial class CycleViewModel
         QuickLogStatusText = string.Empty;
     }
 
+    /// <summary>Flips the period-started flag for the logged day.</summary>
     private void TogglePeriodStarted()
     {
         if (IsQuickLogLoading) return;
@@ -166,6 +184,7 @@ public partial class CycleViewModel
         NotifyQuickLogInputChanged();
     }
 
+    /// <summary>Flips the period-ended flag for the logged day.</summary>
     private void TogglePeriodEnded()
     {
         if (IsQuickLogLoading) return;
@@ -180,6 +199,7 @@ public partial class CycleViewModel
         NotifyQuickLogInputChanged();
     }
 
+    /// <summary>Selects one flow option, replacing any previous choice.</summary>
     private void SelectFlow(FlowOptionItem? option)
     {
         if (option is null || IsQuickLogLoading) return;
@@ -200,6 +220,7 @@ public partial class CycleViewModel
         NotifyQuickLogInputChanged();
     }
 
+    /// <summary>Adds or removes a symptom, keeping the list free of duplicates.</summary>
     private void ToggleSymptom(SymptomOptionItem? symptom)
     {
         if (symptom is null || IsQuickLogLoading) return;
@@ -215,6 +236,8 @@ public partial class CycleViewModel
         NotifyQuickLogInputChanged();
     }
 
+    /// <summary>The single save path for the sheet: writes once, reloads the calendar afterwards and reports a refusal</summary>
+    /// without closing on a write that did not happen.</summary>
     private async Task SaveQuickLogCoreAsync()
     {
         if (IsBusy || IsQuickLogLoading) return;
@@ -270,11 +293,13 @@ public partial class CycleViewModel
         }
     }
 
+    /// <summary>Refreshes the quick log state when loading changes.</summary>
     partial void OnIsQuickLogLoadingChanged(bool value)
     {
         SaveQuickLogCommand?.NotifyCanExecuteChanged();
     }
 
+    /// <summary>The flow choices with the stored one marked, so the sheet opens on what was logged.</summary>
     private static ObservableCollection<FlowOptionItem> BuildFlowOptions(FlowIntensity? selected)
     {
         return new ObservableCollection<FlowOptionItem>
@@ -310,6 +335,7 @@ public partial class CycleViewModel
         };
     }
 
+    /// <summary>The symptom options with the given ones selected.</summary>
     private static ObservableCollection<SymptomOptionItem> BuildSymptomOptions(
         IReadOnlyList<SymptomType>? selectedSymptoms)
     {

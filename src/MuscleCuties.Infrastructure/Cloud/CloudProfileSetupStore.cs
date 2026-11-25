@@ -2,6 +2,7 @@
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
+/// <summary>The first-run setup form through the backend.</summary>
 public sealed class CloudProfileSetupStore(
     IPendingRegistrationService pending,
     IBackendSessionTokenStore? tokenStore = null) : IProfileSetupStore, IProfileSetupPersistence
@@ -9,11 +10,13 @@ public sealed class CloudProfileSetupStore(
     private const int DefaultCycleLengthDays = 28;
     private readonly OnboardingAccountScope _accountScope = new(tokenStore);
 
+    /// <summary>Maps a staged profile onto the setup draft.</summary>
     private static ProfileSetupDraft Map(StagedProfileData staged) =>
         new(staged.Name, staged.BirthDate, staged.Height, staged.Weight,
             staged.ProfileImagePath, staged.CycleLength,
             staged.SelectedActivities.Select(a => (int)a).ToArray(), staged.UseMetricSystem);
 
+    /// <summary>Maps the setup draft onto the staged profile.</summary>
     private static StagedProfileData Map(ProfileSetupDraft draft) =>
         new(draft.Name.Trim(), draft.BirthDate, draft.HeightCm, draft.WeightKg,
             draft.ProfileImagePath.Trim(),
@@ -21,6 +24,7 @@ public sealed class CloudProfileSetupStore(
             draft.SelectedActivityTypes.Where(v => Enum.IsDefined(typeof(WorkoutActivityType), v)).Select(v => (WorkoutActivityType)v).ToHashSet(),
             draft.UseMetricSystem);
 
+    /// <summary>What the setup form should open on: the saved draft, if one was ever started.</summary>
     public async Task<ProfileSetupLoadResult> LoadAsync(CancellationToken cancellationToken)
     {
         var incompleteAccountId = await _accountScope.ReadAsync(cancellationToken)
@@ -47,6 +51,7 @@ public sealed class CloudProfileSetupStore(
         return new ProfileSetupLoadResult(false, null, null);
     }
 
+    /// <summary>Saves the setup answers and prepares the quiz that follows them, reporting whether both steps landed.</summary>
     public async Task<bool> SaveAndPrepareQuizAsync(ProfileSetupDraft draft, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -66,12 +71,14 @@ public sealed class CloudProfileSetupStore(
         return true;
     }
 
+    /// <summary>The setup draft already saved for this account, if any.</summary>
     public Task<ProfileSetupDraft?> LoadExistingAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         throw new NotSupportedException("Cloud profile setup cannot load an existing account draft from registration staging.");
     }
 
+    /// <summary>Saves an existing draft against the version it was read at.</summary>
     public Task<bool> SaveExistingWithSnapshotAsync(ProfileSetupDraft draft, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

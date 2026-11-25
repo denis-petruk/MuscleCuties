@@ -4,11 +4,14 @@ namespace MuscleCuties.Core.Data;
 // to keep that work off the UI thread and to serialize local database access.
 // External I/O may temporarily yield the gate; the same workflow reacquires it
 // before it can use its data store again.
+/// <summary>Serialises database work and yields the connection while an external call runs, because the provider allows</summary>
+/// only one operation at a time and holding it across an HTTP call stalls everything.</summary>
 internal static class DatabaseOperationGate
 {
     private static readonly SemaphoreSlim Gate = new(1, 1);
     private static readonly AsyncLocal<Lease?> CurrentLease = new();
 
+    /// <summary>Runs one database operation under the gate.</summary>
     internal static async Task<T> RunAsync<T>(Func<Task<T>> operation)
     {
         if (CurrentLease.Value is not null)
@@ -38,6 +41,7 @@ internal static class DatabaseOperationGate
         }
     }
 
+    /// <summary>Runs an operation that leaves the database — a network read — with the gate released around the wait.</summary>
     internal static async Task<T> AwaitExternalAsync<T>(Func<Task<T>> operation)
     {
         var lease = CurrentLease.Value;
@@ -62,6 +66,7 @@ internal static class DatabaseOperationGate
         }
     }
 
+    /// <summary>The gate's lease, which is what lets the external wait release and re-acquire in order.</summary>
     private sealed class Lease
     {
         public int Active = 1;

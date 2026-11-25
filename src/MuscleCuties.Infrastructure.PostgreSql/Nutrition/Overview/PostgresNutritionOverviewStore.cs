@@ -89,6 +89,7 @@ public sealed class PostgresNutritionOverviewStore(
             ["Rice Cakes", "Avocado", "Sea Salt"])
     ];
 
+    /// <summary>A stable int for a logged meal's GUID, for the DTO fields that still use ints.</summary>
     public static int ToStableLoggedMealIntId(Guid mealId)
     {
         var bytes = mealId.ToByteArray();
@@ -96,12 +97,14 @@ public sealed class PostgresNutritionOverviewStore(
         return raw > 0 ? raw : 1;
     }
 
+    /// <summary>The same for a custom food.</summary>
     public static int ToStableCustomFoodIntId(Guid customFoodId)
     {
         var bytes = customFoodId.ToByteArray();
         return BitConverter.ToInt32(bytes, 0) ^ BitConverter.ToInt32(bytes, sizeof(int));
     }
 
+    /// <summary>Loads the nutrition overview for the day.</summary>
     public async Task<NutritionOverviewResponse> GetOverviewAsync(
         Guid userId,
         DateOnly date,
@@ -324,6 +327,7 @@ public sealed class PostgresNutritionOverviewStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Logs a meal for the day.</summary>
     public async Task LogMealAsync(
         Guid userId,
         LogMealRequest request,
@@ -362,6 +366,7 @@ public sealed class PostgresNutritionOverviewStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Updates a logged meal.</summary>
     public async Task UpdateMealAsync(
         Guid userId,
         UpdateMealRequest request,
@@ -402,6 +407,7 @@ public sealed class PostgresNutritionOverviewStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>The ingredient inputs of a logged meal.</summary>
     public async Task<IReadOnlyList<MealIngredientInputDto>> GetMealIngredientsAsync(
         Guid userId,
         int mealId,
@@ -467,6 +473,7 @@ public sealed class PostgresNutritionOverviewStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Creates a custom food.</summary>
     public async Task<CustomFoodResultDto> CreateCustomFoodAsync(
         Guid userId,
         CreateCustomFoodRequest request,
@@ -546,6 +553,7 @@ public sealed class PostgresNutritionOverviewStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>The entries a meal is made of.</summary>
     private async Task<List<LoggedMealEntryRecord>> ResolveMealEntriesAsync(
         Guid userId,
         Guid loggedMealId,
@@ -635,10 +643,12 @@ public sealed class PostgresNutritionOverviewStore(
         return entries;
     }
 
+    /// <summary>True when the ingredient matches the food's stored nutrients.</summary>
     private static bool MatchesNutrientSnapshot(UserFoodItemRecord food, MealIngredientInputDto ingredient) =>
         food.Calories == (decimal)ingredient.Calories && food.Protein == (decimal)ingredient.Protein &&
         food.Carbs == (decimal)ingredient.Carbs && food.Fats == (decimal)ingredient.Fats;
 
+    /// <summary>The plan's macro targets for the profile.</summary>
     public async Task<NutritionTargetMacrosDto> GetPlanTargetsAsync(
         Guid userId,
         string breakfastPreference,
@@ -648,6 +658,7 @@ public sealed class PostgresNutritionOverviewStore(
         return new NutritionTargetMacrosDto(target.Calories, target.Protein, target.Carbs, target.Fats);
     }
 
+    /// <summary>The day's meal plan.</summary>
     public async Task<IReadOnlyList<DayMealPlanItemDto>> GetDayMealPlanAsync(
         Guid userId,
         DateOnly date,
@@ -716,6 +727,7 @@ public sealed class PostgresNutritionOverviewStore(
         return items;
     }
 
+    /// <summary>Regenerates one planned meal.</summary>
     public async Task<DayMealPlanItemDto> RefreshDayMealAsync(
         Guid userId,
         DayMealPlanItemDto item,
@@ -768,6 +780,7 @@ public sealed class PostgresNutritionOverviewStore(
             candidate);
     }
 
+    /// <summary>The meal suggestions for the day.</summary>
     public async Task<IReadOnlyList<MealSuggestionDto>> GetMealSuggestionsAsync(
         Guid userId,
         string mealType,
@@ -813,32 +826,39 @@ public sealed class PostgresNutritionOverviewStore(
         return suggestions;
     }
 
+    /// <summary>Loads the nutrition overview, ignoring the user because the store is already scoped.</summary>
     public Task<NutritionOverviewResponse> GetOverviewAsync(
         NutritionOverviewRequest request,
         CancellationToken cancellationToken = default) =>
         GetOverviewAsync(Guid.Empty, request.Date, request.BreakfastPreference, cancellationToken);
 
+    /// <summary>The plan's macro targets for the scoped profile.</summary>
     public Task<NutritionTargetMacrosDto> GetPlanTargetsAsync(
         string breakfastPreference,
         CancellationToken cancellationToken = default) =>
         GetPlanTargetsAsync(Guid.Empty, breakfastPreference, cancellationToken);
 
+    /// <summary>Logs a meal through the scoped store.</summary>
     public Task LogMealAsync(LogMealRequest request, CancellationToken cancellationToken = default) =>
         LogMealAsync(Guid.Empty, request, cancellationToken);
 
+    /// <summary>Updates a logged meal through the scoped store.</summary>
     public Task UpdateMealAsync(UpdateMealRequest request, CancellationToken cancellationToken = default) =>
         UpdateMealAsync(Guid.Empty, request, cancellationToken);
 
+    /// <summary>The ingredient inputs of a meal.</summary>
     public Task<IReadOnlyList<MealIngredientInputDto>> GetMealIngredientsAsync(
         int mealId,
         CancellationToken cancellationToken = default) =>
         GetMealIngredientsAsync(Guid.Empty, mealId, cancellationToken);
 
+    /// <summary>Creates a custom food through the scoped store.</summary>
     public Task<CustomFoodResultDto> CreateCustomFoodAsync(
         CreateCustomFoodRequest request,
         CancellationToken cancellationToken = default) =>
         CreateCustomFoodAsync(Guid.Empty, request, cancellationToken);
 
+    /// <summary>The meal suggestions for the scoped day.</summary>
     public Task<IReadOnlyList<MealSuggestionDto>> GetMealSuggestionsAsync(
         string mealType,
         string breakfastPreference,
@@ -846,20 +866,24 @@ public sealed class PostgresNutritionOverviewStore(
         CancellationToken cancellationToken = default) =>
         GetMealSuggestionsAsync(Guid.Empty, mealType, breakfastPreference, excludeConceptNames, cancellationToken);
 
+    /// <summary>The day's meal plan.</summary>
     public Task<IReadOnlyList<DayMealPlanItemDto>> GetDayMealPlanAsync(
         string breakfastPreference,
         CancellationToken cancellationToken = default) =>
         GetDayMealPlanAsync(Guid.Empty, DateOnly.FromDateTime(DateTime.UtcNow), breakfastPreference, cancellationToken);
 
+    /// <summary>Regenerates one planned meal.</summary>
     public Task<DayMealPlanItemDto> RefreshDayMealAsync(
         DayMealPlanItemDto item,
         string breakfastPreference,
         CancellationToken cancellationToken = default) =>
         RefreshDayMealAsync(Guid.Empty, item, breakfastPreference, cancellationToken);
 
+    /// <summary>Ensures the reference rows the overview reads are present.</summary>
     public Task EnsureReferenceDataReadyAsync(CancellationToken cancellationToken = default) =>
         Task.CompletedTask;
 
+    /// <summary>The meal concepts offered for a phase, filtered so an empty list is never shown as a suggestion.</summary>
     private static IReadOnlyList<ReferenceConceptItem> GetCatalogForMealType(string mealType, string breakfastPreference)
     {
         var isSweet = string.Equals(breakfastPreference, "Sweet", StringComparison.OrdinalIgnoreCase);
@@ -873,12 +897,14 @@ public sealed class PostgresNutritionOverviewStore(
         };
     }
 
+    /// <summary>The meal shares the breakfast preference implies.</summary>
     private static MealDistributionShare GetMealShares(string breakfastPreference) =>
         MealDistributionRule.GetShares(
             string.Equals(breakfastPreference, nameof(BreakfastPreference.Sweet), StringComparison.OrdinalIgnoreCase)
                 ? BreakfastPreference.Sweet
                 : BreakfastPreference.Savoury);
 
+    /// <summary>Builds one planned meal item, generating it when absent.</summary>
     private async Task<DayMealPlanItemDto> BuildDayMealPlanItemAsync(
         string mealType,
         string breakfastPreference,
@@ -925,6 +951,7 @@ public sealed class PostgresNutritionOverviewStore(
             fallbackConcept);
     }
 
+    /// <summary>Shapes a stored plan row into the response item.</summary>
     private static DayMealPlanItemDto BuildDayMealPlanItem(
         string mealType,
         float targetCalories,
@@ -950,6 +977,7 @@ public sealed class PostgresNutritionOverviewStore(
 
     public const float MaxGeneratedOilGrams = PortionCalculationRule.MaxOilGrams;
 
+    /// <summary>Maps a meal concept onto a suggestion, or nothing when it has no foods.</summary>
     private static MealSuggestionDto? MapConceptToSuggestion(
         ReferenceConceptItem concept, float targetCalories, float targetFats)
     {
@@ -990,6 +1018,7 @@ public sealed class PostgresNutritionOverviewStore(
         );
     }
 
+    /// <summary>The macro breakdown of a day, computed from its entries so the parts always sum to the totals shown.</summary>
     private static IReadOnlyList<MacroBreakdownItemDto> BuildMacroBreakdownDtos(float cals, float p, float c, float f)
     {
         var totalCals = cals <= 0 ? 1f : cals;
@@ -1005,6 +1034,7 @@ public sealed class PostgresNutritionOverviewStore(
         ];
     }
 
+    /// <summary>The focus heading and copy shown for the cycle phase.</summary>
     private static (string title, string copy) GetPhaseFocus(CyclePhase phase) => phase switch
     {
         CyclePhase.Menstrual => ("Iron + comfort", "Iron, warm carbs, easy protein."),
@@ -1014,6 +1044,7 @@ public sealed class PostgresNutritionOverviewStore(
         _ => ("Nutrition focus", "Balanced nutrition guidance.")
     };
 
+    /// <summary>One food's contribution to a meal, read once so the macro breakdown sums real rows.</summary>
     private sealed record MealEntryNutrientRow(
         Guid LoggedMealId,
         decimal Grams,
@@ -1035,6 +1066,7 @@ public sealed class PostgresNutritionOverviewStore(
         float Zinc,
         float Potassium);
 
+    /// <summary>A meal concept offered as a suggestion, with the slots it can fill.</summary>
     private sealed record ReferenceConceptItem(
         string Name,
         string Description,

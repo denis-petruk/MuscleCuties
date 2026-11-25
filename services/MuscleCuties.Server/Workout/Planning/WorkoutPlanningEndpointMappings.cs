@@ -5,6 +5,7 @@ using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
 
 namespace MuscleCuties.Server.Workout.Planning;
 
+/// <summary>The plan-generation and regeneration routes.</summary>
 public static class WorkoutPlanningEndpointMappings
 {
     private const string CatalogRoute = "/api/v1/workouts/catalog";
@@ -37,6 +38,7 @@ public static class WorkoutPlanningEndpointMappings
     private const string ErrorMessageWorkoutPreferencesRequireProposal =
         "Upgrade the app and submit workout preferences with the proposal.";
 
+    /// <summary>Registers the planning endpoints.</summary>
     public static IEndpointRouteBuilder MapWorkoutPlanningEndpoints(this IEndpointRouteBuilder endpoints)
     {
         endpoints.MapGet("/api/v1/workouts/plan/style-offer", async (ClaimsPrincipal principal,

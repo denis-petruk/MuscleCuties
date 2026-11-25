@@ -7,6 +7,7 @@ public static class PostgresTenantContext
 {
     public const string UserIdSetting = "app.user_id";
 
+    /// <summary>Sets the tenant identity for the current transaction.</summary>
     public static async Task SetForCurrentTransactionAsync(
         PostgresDbContext context,
         Guid userId,

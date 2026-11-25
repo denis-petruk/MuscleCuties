@@ -2,8 +2,10 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.UseCases.Features.Workout.Contracts;
 
+/// <summary>Maps planned activities onto the wire DTO, so the planner's enums stay internal.</summary>
 public static class WorkoutActivityContractMapper
 {
+    /// <summary>The domain activity for its wire value.</summary>
     public static WorkoutActivityType ToCore(WorkoutActivityDto activity) => activity switch
     {
         WorkoutActivityDto.StrengthHighIntensity => WorkoutActivityType.StrengthHighIntensity,
@@ -25,6 +27,7 @@ public static class WorkoutActivityContractMapper
         _ => throw new ArgumentOutOfRangeException(nameof(activity), activity, "Unknown workout activity.")
     };
 
+    /// <summary>The wire value for a domain activity.</summary>
     public static WorkoutActivityDto ToDto(WorkoutActivityType activity) => activity switch
     {
         WorkoutActivityType.StrengthHighIntensity => WorkoutActivityDto.StrengthHighIntensity,

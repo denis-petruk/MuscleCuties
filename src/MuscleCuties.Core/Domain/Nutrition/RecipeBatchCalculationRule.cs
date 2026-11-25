@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>One recipe ingredient with its per-100 g nutrients and grams.</summary>
 public sealed record RecipeIngredient(
     Guid Id,
     string Name,
@@ -18,17 +19,27 @@ public sealed record RecipeIngredient(
 {
     private const float MinNutrientBaseline = 0f;
 
+    /// <summary>True when the ingredient points at a catalog food.</summary>
     public bool IsCatalogBacked => FoodItemId.HasValue && FoodItemId.Value != Guid.Empty;
+    /// <summary>Grams floored at zero, so a corrupt row cannot poison the totals.</summary>
     public float SafeGrams => SafeNonNegative(Grams);
+    /// <summary>Calories floored at zero.</summary>
     public float SafeCalories => SafeNonNegative(Calories);
+    /// <summary>Protein floored at zero.</summary>
     public float SafeProtein => SafeNonNegative(Protein);
+    /// <summary>Carbs floored at zero.</summary>
     public float SafeCarbs => SafeNonNegative(Carbs);
+    /// <summary>Fats floored at zero.</summary>
     public float SafeFats => SafeNonNegative(Fats);
+    /// <summary>Fibre floored at zero.</summary>
     public float SafeFiber => SafeNonNegative(Fiber);
+    /// <summary>Sugar alcohols floored at zero.</summary>
     public float SafeSugarAlcohols => SafeNonNegative(SugarAlcohols);
 
+    /// <summary>Net carbs floored at zero, since a bad row could otherwise subtract calories.</summary>
     public float SafeNetCarbs => MathF.Max(MinNutrientBaseline, SafeCarbs - (SafeFiber + SafeSugarAlcohols));
 
+    /// <summary>The ingredient at a new weight, with every nutrient scaled in step.</summary>
     public RecipeIngredient ScaleQuantity(float newGrams)
     {
         if (!float.IsFinite(newGrams) || newGrams <= MinNutrientBaseline || SafeGrams <= MinNutrientBaseline)
@@ -47,20 +58,12 @@ public sealed record RecipeIngredient(
         };
     }
 
-    public RecipeIngredient ConvertToManual(string? manualName = null) =>
-        this with
-        {
-            Name = string.IsNullOrWhiteSpace(manualName) ? Name : manualName.Trim(),
-            FoodItemId = null,
-            SourceKind = "Manual",
-            SourceLabel = null,
-            SourceVersion = null
-        };
-
+    /// <summary>Returns the amount when it is finite and positive, otherwise zero.</summary>
     private static float SafeNonNegative(float value) =>
         float.IsFinite(value) ? MathF.Max(MinNutrientBaseline, value) : MinNutrientBaseline;
 }
 
+/// <summary>One recipe's nutrients, in the units the client shows.</summary>
 public sealed record RecipeNutrientSummary(
     float TotalCalories,
     float TotalProtein,
@@ -82,6 +85,7 @@ public sealed record RecipeNutrientSummary(
     float ServingsCount
 );
 
+/// <summary>The recipe's totals with its per-portion figures.</summary>
 public sealed record RecipeBatchTotals(
     float ServingsCount,
     float TotalRawWeightGrams,
@@ -92,6 +96,7 @@ public sealed record RecipeBatchTotals(
     float TotalNetCarbs,
     float TotalFats);
 
+/// <summary>One portion of the recipe, with the nutrients it carries.</summary>
 public sealed record RecipePortion(
     RecipeBatchTotals Batch,
     float SelectedServingsCount,
@@ -102,6 +107,7 @@ public sealed record RecipePortion(
     float NetCarbs,
     float Fats);
 
+/// <summary>Computes recipe totals and portions, refusing an ingredient with no weight.</summary>
 public static class RecipeBatchCalculationRule
 {
     public const float MinServingsCount = 0.1f;
@@ -111,6 +117,7 @@ public static class RecipeBatchCalculationRule
     public const float MinWeightGrams = 0.0f;
     public const float ZeroBaseline = 0.0f;
 
+    /// <summary>Turns a batch's totals into one portion, by servings or by weight.</summary>
     public static RecipePortion CalculatePortion(RecipeBatchTotals batch, float? requestedServingsCount,
         float? requestedGrams)
     {
@@ -148,6 +155,7 @@ public static class RecipeBatchCalculationRule
             CheckedPortionValue(batch.TotalFats * scale, nameof(batch.TotalFats)));
     }
 
+    /// <summary>A portion value checked for finiteness, so a bad input cannot produce an infinite total.</summary>
     private static float CheckedPortionValue(double value, string parameterName)
     {
         if (!double.IsFinite(value) || value > float.MaxValue || value < ZeroBaseline)
@@ -155,6 +163,7 @@ public static class RecipeBatchCalculationRule
         return (float)value;
     }
 
+    /// <summary>A portion value that must be positive, refused otherwise.</summary>
     private static float CheckedPositivePortionValue(double value, string parameterName)
     {
         var result = CheckedPortionValue(value, parameterName);
@@ -163,18 +172,21 @@ public static class RecipeBatchCalculationRule
         return result;
     }
 
+    /// <summary>Refuses a weight that is zero, negative or not a number.</summary>
     private static void RequirePositiveFinite(float value, string parameterName)
     {
         if (!float.IsFinite(value) || value <= ZeroBaseline)
             throw new ArgumentOutOfRangeException(parameterName, "Recipe portion values must be positive and finite.");
     }
 
+    /// <summary>Refuses a nutrient that is negative or not a number.</summary>
     private static void RequireNonNegativeFinite(float value, string parameterName)
     {
         if (!float.IsFinite(value) || value < ZeroBaseline)
             throw new ArgumentOutOfRangeException(parameterName, "Recipe totals must be nonnegative and finite.");
     }
 
+    /// <summary>Sums a batch's ingredients into its nutrient totals and cooked weight.</summary>
     public static RecipeNutrientSummary Calculate(
         IReadOnlyList<RecipeIngredient>? ingredients,
         float servingsCount,

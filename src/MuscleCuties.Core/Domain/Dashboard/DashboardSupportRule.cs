@@ -3,6 +3,7 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 
 namespace MuscleCuties.Core.Domain.Dashboard;
 
+/// <summary>The synced health signals the dashboard shows, absent when nothing was synced.</summary>
 public sealed record DashboardHealthMetrics(
     bool HasMovementData,
     int AverageSteps,
@@ -11,6 +12,7 @@ public sealed record DashboardHealthMetrics(
     int? RestingHeartRate,
     double? AverageActiveEnergyKcal);
 
+/// <summary>The cycle figures the dashboard shows, with whether they are measured or projected.</summary>
 public sealed record DashboardCycleMetrics(
     bool HasActiveCycle,
     bool IsPeriodDue,
@@ -20,6 +22,7 @@ public sealed record DashboardCycleMetrics(
     int PredictedCycleLength,
     int DaysUntilPeriod);
 
+/// <summary>The support card's contents: readiness, recovery and the cycle insight.</summary>
 public sealed record DashboardSupportResult(
     string CycleInsightText,
     string HydrationTarget,
@@ -30,8 +33,10 @@ public sealed record DashboardSupportResult(
     int RecoveryScore,
     string RecoveryLabel);
 
+/// <summary>Builds the support card, saying nothing rather than guessing when a signal is missing.</summary>
 public static class DashboardSupportRule
 {
+    /// <summary>Builds the dashboard's support card from cycle, nutrition and training inputs.</summary>
     public static DashboardSupportResult Build(
         DashboardCycleMetrics cycle,
         CyclePhase phase,
@@ -76,6 +81,7 @@ public static class DashboardSupportRule
             recoveryCapped ? "Recovery limited" : BuildRecoveryLabel(recoveryScore));
     }
 
+    /// <summary>Scores today's readiness out of one hundred from phase, calorie progress and training frequency.</summary>
     public static int CalculateReadinessScore(
         CyclePhase phase,
         float caloriesProgress,
@@ -148,6 +154,7 @@ public static class DashboardSupportRule
             100);
     }
 
+    /// <summary>Scores recovery out of one hundred from phase, nutrition, session progress and health metrics.</summary>
     public static int CalculateRecoveryScore(
         CyclePhase phase,
         float caloriesProgress,
@@ -196,6 +203,7 @@ public static class DashboardSupportRule
             100);
     }
 
+    /// <summary>The readiness label for the band, worded for her rather than exposing the number.</summary>
     public static string BuildReadinessLabel(int score)
     {
         return score switch
@@ -207,6 +215,7 @@ public static class DashboardSupportRule
         };
     }
 
+    /// <summary>The recovery label, which names rest when the recent load says so.</summary>
     public static string BuildRecoveryLabel(int score)
     {
         return score switch
@@ -218,6 +227,7 @@ public static class DashboardSupportRule
         };
     }
 
+    /// <summary>The cycle insight, worded as a projection whenever it is not measured.</summary>
     public static string BuildCycleInsightText(DashboardCycleMetrics cycle, CyclePhase phase)
     {
         if (!cycle.HasActiveCycle)
@@ -235,6 +245,7 @@ public static class DashboardSupportRule
             : $"Next period in {cycle.DaysUntilPeriod}d · Ovulation {ovulation}";
     }
 
+    /// <summary>The day's hydration target, scaled to the training planned for it.</summary>
     public static string BuildHydrationTarget(float? weight, DashboardHealthMetrics? health, int? localSteps = null)
     {
         if (weight is not > 0f || !float.IsFinite(weight.Value))
@@ -251,6 +262,7 @@ public static class DashboardSupportRule
         return $"{liters:N1} L";
     }
 
+    /// <summary>Writes the sleep goal line the dashboard shows for this phase and training week.</summary>
     public static string BuildSleepGoal(
         int workoutDaysPerWeek,
         CyclePhase phase,

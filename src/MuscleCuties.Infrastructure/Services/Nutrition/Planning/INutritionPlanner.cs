@@ -5,6 +5,7 @@ using MuscleCuties.Core.Models.Nutrition.Planning;
 
 namespace MuscleCuties.Core.Services.Nutrition.Planning;
 
+/// <summary>The plan targets the pages ask for, as a contract so the implementation can change.</summary>
 public interface INutritionPlanner
 {
     NutritionPlan CreateDailyPlan(

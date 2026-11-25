@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Hydration;
 
+/// <summary>One change to the reminder settings.</summary>
 public sealed record WaterReminderConfigurationChange(Guid OperationId, FixedWaterReminderSettings Settings);
 
 /// <summary>Server-owned wall-clock intent; device permission and delivery state are excluded.</summary>
@@ -7,6 +8,7 @@ public sealed class WaterReminderConfiguration
 {
     public const int MaximumOperations = 4096;
 
+    /// <summary>The reminder settings in force, with the times the scheduler uses.</summary>
     private WaterReminderConfiguration(Guid accountId, FixedWaterReminderSettings settings, WaterReminderConfigurationChange[] operations)
     {
         AccountId = accountId;
@@ -14,10 +16,14 @@ public sealed class WaterReminderConfiguration
         Operations = Array.AsReadOnly(operations);
     }
 
+    /// <summary>Account that owns the reminder settings.</summary>
     public Guid AccountId { get; }
+    /// <summary>Reminder times in force, or the disabled settings.</summary>
     public FixedWaterReminderSettings Settings { get; }
+    /// <summary>Durable changes applied to the settings, in order.</summary>
     public IReadOnlyList<WaterReminderConfigurationChange> Operations { get; }
 
+    /// <summary>Starts a configuration from the opt-in choice and the reminder times.</summary>
     public static WaterReminderConfiguration Create(Guid accountId, bool optedIn,
         IEnumerable<TimeOnly>? times, TimeOnly? quietStart, TimeOnly? quietEnd)
     {
@@ -26,6 +32,7 @@ public sealed class WaterReminderConfiguration
             : FixedWaterReminderSettings.Disabled(), []);
     }
 
+    /// <summary>Rebuilds a configuration from stored settings and its applied changes.</summary>
     public static WaterReminderConfiguration Restore(Guid accountId, FixedWaterReminderSettings settings,
         IEnumerable<WaterReminderConfigurationChange> operations)
     {
@@ -39,6 +46,7 @@ public sealed class WaterReminderConfiguration
         return new(accountId, settings, receipts);
     }
 
+    /// <summary>Applies a durable change to the opt-in flag, times and quiet window.</summary>
     public WaterReminderConfiguration Change(Guid operationId, bool optedIn, IEnumerable<TimeOnly>? times,
         TimeOnly? quietStart, TimeOnly? quietEnd)
     {

@@ -7,9 +7,11 @@ namespace MuscleCuties.UI.Resources.Converters;
 /// </summary>
 public sealed class SubmitHintVisibilityConverter : IValueConverter
 {
+    /// <summary>True when the submit hint should be shown.</summary>
     public object? Convert(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         value is false && !AccessibilityDecoration.IsAccessibilityTextSize();
 
+    /// <summary>Returns the value unchanged; the hint never drives the source.</summary>
     public object? ConvertBack(object? value, Type targetType, object? parameter, CultureInfo culture) =>
         throw new NotSupportedException();
 }

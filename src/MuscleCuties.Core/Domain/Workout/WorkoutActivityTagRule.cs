@@ -32,6 +32,7 @@ public static class WorkoutActivityTagRule
             "swim", "pool", "hiit", "interval", "dance", "yoga", "vinyasa", "mobility", "recovery",
             "breathing", "pilates"];
 
+    /// <summary>Assigns the demand tag from the workout type and exercise name, defaulting to the lighter tag.</summary>
     public static string Classify(string workoutType, string? exerciseName, int? durationSeconds)
     {
         var name = exerciseName ?? string.Empty;
@@ -45,12 +46,14 @@ public static class WorkoutActivityTagRule
         return Strength;
     }
 
+    /// <summary>Whether the exercise is scored on duration and distance rather than sets and reps.</summary>
     public static bool UsesEnduranceMetrics(string? exerciseName, int? durationSeconds)
     {
         if (durationSeconds is > 0) return true;
         return ContainsAny(exerciseName ?? string.Empty, EnduranceTerms);
     }
 
+    /// <summary>True when the exercise is a timed walk rather than a set-based lift.</summary>
     public static bool IsTimedWalk(string? exerciseName, int? durationSeconds) =>
         durationSeconds is > 0 && ContainsAny(exerciseName ?? string.Empty, WalkTerms);
 

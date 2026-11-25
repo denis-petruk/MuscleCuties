@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Models.Enums.Cycle;
 
+/// <summary>The symptoms she can log, kept stable because stored history references them.</summary>
 public enum SymptomType
 {
     Cramps = 0,

@@ -13,6 +13,7 @@ internal static class PlanningSafetyInputs
 {
     private const string ClearedStatus = "Cleared";
 
+    /// <summary>Today in the account's zone, or nothing when the zone is unknown, so a caller can choose to refuse rather than assume UTC.</summary>
     internal static DateOnly? AccountToday(string? timeZoneId)
     {
         if (string.IsNullOrWhiteSpace(timeZoneId))
@@ -63,15 +64,19 @@ internal static class PlanningSafetyInputs
             definitions.Select(definition => new ExerciseContraindicationPattern(
                 definition.Pattern, definition.Contraindications)));
 
+    /// <summary>The injury flags that are still active.</summary>
     internal static InjuryFlag ActiveInjuryFlags(IEnumerable<WorkoutInjuryLogRecord> relevantInjuries) =>
         relevantInjuries.Aggregate(InjuryFlag.None, (flags, injury) => flags | (InjuryFlag)injury.SiteFlag);
 
+    /// <summary>The equipment a stored value names, or nothing.</summary>
     internal static Equipment? ParseEquipment(string? value) =>
         Enum.TryParse<Equipment>(value, true, out var parsed) && Enum.IsDefined(parsed) ? parsed : null;
 
+    /// <summary>The goal a stored value names, or nothing.</summary>
     internal static UserGoal? ParseGoal(string? value) =>
         Enum.TryParse<UserGoal>(value, true, out var parsed) && Enum.IsDefined(parsed) ? parsed : null;
 
+    /// <summary>The profile's training experience, or nothing when unset.</summary>
     internal static TrainingExperienceLevel? ProfileTrainingExperience(
         WorkoutAccountPlanningStateRecord? planningState, UserProfileRecord? profile) =>
         planningState?.EffectiveExperience ?? (Enum.TryParse<TrainingExperienceLevel>(

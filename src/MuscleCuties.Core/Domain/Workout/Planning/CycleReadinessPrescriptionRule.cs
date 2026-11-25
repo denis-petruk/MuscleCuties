@@ -3,15 +3,19 @@ using MuscleCuties.Core.Models.Workout.Planning;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>One prescribed exercise the cycle evidence applies to.</summary>
 public sealed record CycleReadinessExercise(Guid PrescriptionId, int Sets, int OptionalSets,
     bool IsOptional, bool IsAccessory);
 
+/// <summary>An observed repeat of a symptom against a phase, which is what earns confidence.</summary>
 public sealed record CycleReadinessPatternObservation(
     CyclePhase Phase, string CycleId, string CheckInId, DateOnly Date,
     bool LowReadiness, bool TrustedCompletedWorkout);
 
+/// <summary>How much the observed pattern justifies changing the prescription.</summary>
 public enum CycleReadinessConfidence { None, Provisional, Repeated, Current }
 
+/// <summary>The exercises and observations the decision is made from.</summary>
 public sealed record CycleReadinessPrescriptionInput(
     CyclePhase Phase,
     PhaseReviewProvenance PhaseProvenance,
@@ -26,6 +30,7 @@ public sealed record CycleReadinessPrescriptionInput(
     bool PhaseEstimateReliable = false,
     PlanningReviewApproval? Approval = null);
 
+/// <summary>Whether the cycle evidence changes load, and the reason shown to her.</summary>
 public sealed record CycleReadinessPrescriptionDecision(
     Guid? AdjustedPrescriptionId,
     int? AdjustedSets,
@@ -69,6 +74,7 @@ public static class CycleReadinessPrescriptionRule
     public const int PatternObservationWindowDays = 180;
     public const decimal ShortSleepThresholdHours = 7m;
 
+    /// <summary>Reduces load only on a repeated symptom pattern, so one bad day never changes the plan.</summary>
     public static CycleReadinessPrescriptionDecision Evaluate(CycleReadinessPrescriptionInput? input)
     {
         if (input is null || input.Exercises is null || input.HasNewPainOrSafetyConcern ||
@@ -115,6 +121,7 @@ public static class CycleReadinessPrescriptionRule
                 currentCheckIn ? score!.Observation!.Revision : null, confidence);
     }
 
+    /// <summary>True when a review approval exists for the current revision.</summary>
     private static bool IsApproved(PlanningReviewApproval? approval) =>
         approval is not null &&
         !string.IsNullOrWhiteSpace(approval.ApprovalReference) &&

@@ -15,6 +15,7 @@ using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 
+/// <summary>Plans, days and session logs on PostgreSQL: the read that serves a session and the writes that record what was performed.</summary>
 public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbContext)
 {
     private const int OverviewScheduleWeeks = 4;
@@ -31,9 +32,11 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
 
     // Accepted V2 occurrences retain definition IDs for progression and immutable prescriptions.
     // Older day rows use public catalog IDs. The two database sequences overlap.
+    /// <summary>True when the row stores a definition id rather than an exercise id.</summary>
     private static bool UsesDefinitionId(WorkoutDayExerciseRecord row) =>
         row.PlanningTemplateId == "MC-V2" || row.PlanningSlotId?.StartsWith("v2-", StringComparison.Ordinal) == true;
 
+    /// <summary>Loads the catalog exercises the stored ids refer to.</summary>
     private async Task<Dictionary<int, Exercise>> LoadCatalogAsync(IEnumerable<int> storedIds,
         bool usesDefinitionIds, CancellationToken cancellationToken)
     {
@@ -56,6 +59,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return codes.ToDictionary(pair => pair.Key, pair => mirrors[pair.Value]);
     }
 
+    /// <summary>Loads the catalog exercises a session refers to.</summary>
     private async Task<Dictionary<int, Exercise>> LoadSessionCatalogAsync(
         IReadOnlyCollection<WorkoutDayExerciseRecord> rows, CancellationToken cancellationToken)
     {
@@ -72,6 +76,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return legacy;
     }
 
+    /// <summary>A stable positive int for a GUID, because DTOs that predate the GUID keys still need an id.</summary>
     public static int ToStableWorkoutIntId(Guid id)
     {
         var bytes = id.ToByteArray();
@@ -83,6 +88,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return positive == 0 ? 1 : positive;
     }
 
+    /// <summary>Loads the workout overview.</summary>
     public async Task<WorkoutOverviewResponse> LoadOverviewAsync(
         Guid userId,
         WorkoutOverviewRequest request,
@@ -208,6 +214,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
     /// </summary>
     public static class WorkoutOverviewBuilder
     {
+        /// <summary>Builds the overview response from the stored plan.</summary>
         public static WorkoutOverviewResponse Build(
             string? planName,
             string phase,
@@ -253,6 +260,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         }
     }
 
+    /// <summary>Reschedules a workout day.</summary>
     public async Task RescheduleAsync(
         Guid userId,
         RescheduleWorkoutDayRequest request,
@@ -335,6 +343,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         }).ConfigureAwait(false);
     }
 
+    /// <summary>The detail of one workout day.</summary>
     public async Task<WorkoutSessionDetailDto> GetDetailAsync(
         Guid userId,
         int workoutDayId,
@@ -585,6 +594,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             };
         }).ConfigureAwait(false);
 
+    /// <summary>Marks a session optional or required.</summary>
     public async Task SetSessionOptionalAsync(Guid userId, SetWorkoutSessionOptionalRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -610,6 +620,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Marks an exercise optional or required.</summary>
     public async Task SetExerciseOptionalAsync(Guid userId, SetWorkoutExerciseOptionalRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -636,6 +647,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Splits a superset into separate exercises.</summary>
     public async Task SplitSupersetAsync(Guid userId, SplitWorkoutSupersetRequest request,
         CancellationToken cancellationToken = default)
     {
@@ -684,6 +696,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Logs a completed workout session.</summary>
     public async Task LogAsync(
         Guid userId,
         LogWorkoutSessionRequest request,
@@ -910,6 +923,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
+    /// <summary>The swap candidates for one exercise.</summary>
     public async Task<IReadOnlyList<WorkoutSwapCandidateDto>> GetSwapCandidatesAsync(
         Guid userId,
         int workoutDayExerciseId,
@@ -1006,6 +1020,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                 .ToArray();
         }).ConfigureAwait(false);
 
+    /// <summary>Swaps one exercise.</summary>
     public async Task SwapAsync(
         Guid userId,
         SwapWorkoutExerciseRequest request,
@@ -1096,6 +1111,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
+    /// <summary>The movement note of an exercise.</summary>
     public async Task<WorkoutMovementNoteDto> GetMovementNoteAsync(
         Guid userId,
         int workoutDayExerciseId,
@@ -1127,6 +1143,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             return new WorkoutMovementNoteDto(workoutDayExerciseId, note?.Notes ?? string.Empty);
         }).ConfigureAwait(false);
 
+    /// <summary>Saves a movement note.</summary>
     public async Task SaveMovementNoteAsync(
         Guid userId,
         SaveWorkoutMovementNoteRequest request,
@@ -1185,6 +1202,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
+        /// <summary>The workout day the request refers to.</summary>
     private async Task<WorkoutDayRecord?> ResolveWorkoutDayAsync(
         Guid userId,
         int workoutDayId,
@@ -1222,6 +1240,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return null;
     }
 
+    /// <summary>The workout day exercise the request refers to.</summary>
     private async Task<WorkoutDayExerciseRecord?> ResolveWorkoutDayExerciseAsync(
         Guid userId,
         int workoutDayExerciseId,
@@ -1236,6 +1255,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return rows.FirstOrDefault(e => ToStableWorkoutIntId(e.Id) == workoutDayExerciseId);
     }
 
+    /// <summary>The cycle phase in force on the day.</summary>
     private async Task<CyclePhase> ResolveCyclePhaseAsync(
         Guid userId,
         DateOnly today,
@@ -1269,6 +1289,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             today.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified)).CurrentPhase;
     }
 
+    /// <summary>Updates the archive's session log row.</summary>
     private async Task UpsertArchiveSessionLogAsync(
         Guid userId,
         WorkoutDayRecord day,
@@ -1406,6 +1427,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
     private const string RestWorkoutType = "Rest";
     private const int RescheduleValidationRadiusDays = 3;
 
+    /// <summary>Renumbers a day's exercises in order, so the display order stays contiguous after a removal.</summary>
     private static void ReorderDay(IEnumerable<WorkoutDayRecord> days, DateOnly date)
     {
         var sessions = days.Where(day => day.Date == date && day.WorkoutType != RestWorkoutType &&
@@ -1478,6 +1500,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return WorkoutScheduleValidationRule.Validate(sessions);
     }
 
+    /// <summary>The stored id of a workout activity type.</summary>
     private async Task<int?> LoadWorkoutActivityTypeIdAsync(
         Guid userId,
         Guid workoutDayId,
@@ -1488,6 +1511,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             .FirstOrDefaultAsync(cancellationToken)
             .ConfigureAwait(false);
 
+    /// <summary>Builds the overview's workout list entries.</summary>
     private static IReadOnlyList<WorkoutListEntry> BuildWorkoutListEntries(
         IReadOnlyList<WorkoutDayRecord> workoutDays,
         IReadOnlyDictionary<Guid, IReadOnlyList<WorkoutDayExerciseRecord>> exercisesByDayId,
@@ -1564,6 +1588,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return entries;
     }
 
+    /// <summary>Builds the overview's schedule entries.</summary>
     private static IReadOnlyList<WorkoutScheduleEntry> BuildScheduleEntries(
         DateOnly startMonday,
         DateOnly today,
@@ -1658,6 +1683,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return result;
     }
 
+    /// <summary>The stored workout days that match the requested range.</summary>
     private static IReadOnlyList<WorkoutDayRecord> MatchWorkoutDays(
         IReadOnlyList<WorkoutDayRecord> workoutDays,
         DateOnly date,
@@ -1673,6 +1699,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return workoutDays.Where(day => day.DayOfWeek == dayOfWeek).ToArray();
     }
 
+    /// <summary>Builds one exercise's detail payload.</summary>
     private static WorkoutExerciseDetailDto BuildExerciseDetailDto(
         WorkoutDayExerciseRecord dayExercise,
         string workoutType,
@@ -1842,6 +1869,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         };
     }
 
+    /// <summary>The set rows a session detail shows.</summary>
     private static WorkoutSetDetailDto[] BuildSessionSetRows(
         int plannedWarmupSets,
         int plannedWorkingSets,
@@ -1872,6 +1900,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return warmups.Concat(working).ToArray();
     }
 
+    /// <summary>The progression advice shown for one exercise.</summary>
     private static StrengthProgressionAdvice BuildStrengthProgressionRecommendation(
         WorkoutDayExerciseRecord dayExercise,
         Exercise? exercise,
@@ -1895,6 +1924,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             plannedProgressionReps ?? dayExercise.Reps, currentLoad, conservativeWeeks);
     }
 
+    /// <summary>The experience tier the profile resolves to.</summary>
     private static EffectiveExperienceTier ResolveExperienceTier(UserProfileRecord? profile) =>
         Enum.TryParse<TrainingExperienceLevel>(profile?.TrainingExperienceLevel, ignoreCase: true, out var level)
             ? level switch
@@ -1906,6 +1936,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             }
             : EffectiveExperienceTier.Tier1BeginnerOrNew;
 
+    /// <summary>The major muscle group a catalog muscle belongs to.</summary>
     private static MajorMuscleGroup MapMajorMuscleGroup(MuscleGroup muscle) => muscle switch
     {
         MuscleGroup.Chest => MajorMuscleGroup.Chest,
@@ -1924,6 +1955,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         _ => MajorMuscleGroup.Core
     };
 
+    /// <summary>Builds the activity details of a day.</summary>
     private static IReadOnlyList<WorkoutActivityDetailDto> BuildActivityDetails(
         WorkoutDayRecord day,
         IReadOnlyList<WorkoutDayExerciseRecord> orderedExercises,
@@ -1975,6 +2007,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         }).ToArray();
     }
 
+    /// <summary>The activity type a non-strength day resolves to, or the neutral default when it names none.</summary>
     private static WorkoutActivityDto ResolveActivityType(WorkoutDayRecord day, string tag)
     {
         if (day.ActivityTypeId is { } typeId && Enum.IsDefined(typeof(WorkoutActivityDto), typeId))
@@ -1989,6 +2022,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         };
     }
 
+    /// <summary>True when the logged sets count as a complete exercise.</summary>
     private static bool IsExerciseLogComplete(
         WorkoutExerciseLogRecord? log,
         WorkoutDayExerciseRecord dayExercise,
@@ -2000,9 +2034,11 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return log.CompletedSets > 0 && log.CompletedReps > 0 && log.WeightKg is >= 0m;
     }
 
+    /// <summary>True when the exercise is tracked by time and distance.</summary>
     private static bool UsesEnduranceMetrics(WorkoutDayExerciseRecord dayExercise, string name) =>
         WorkoutActivityTagRule.UsesEnduranceMetrics(name, dayExercise.DurationSeconds);
 
+    /// <summary>The primary tag shown for an exercise.</summary>
     private static string BuildPrimaryTag(
         WorkoutDayRecord day,
         IReadOnlyList<WorkoutDayExerciseRecord> exercises,
@@ -2014,6 +2050,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return tags.FirstOrDefault() ?? StrengthTag;
     }
 
+    /// <summary>The tags shown for an exercise.</summary>
     private static IReadOnlyList<string> BuildActivityTags(
         WorkoutDayRecord day,
         IReadOnlyList<WorkoutDayExerciseRecord> exercises,
@@ -2039,12 +2076,14 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return tags;
     }
 
+    /// <summary>The section an exercise's tags place it in.</summary>
     private static string ClassifyExerciseTag(
         WorkoutDayExerciseRecord exercise,
         string workoutType,
         Exercise? catalogExercise) =>
         WorkoutActivityTagRule.Classify(workoutType, catalogExercise?.Name, exercise.DurationSeconds);
 
+    /// <summary>The section title for a tag.</summary>
     private static string BuildSectionTitle(string tag) => tag switch
     {
         CardioTag => "Cardio & Conditioning",
@@ -2053,6 +2092,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         _ => "Strength & Sculpt"
     };
 
+    /// <summary>The section subtitle for a tag.</summary>
     private static string BuildSectionSubtitle(string tag) => tag switch
     {
         CardioTag => "Paced conditioning work.",
@@ -2060,6 +2100,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         _ => "Progressive sets and reps."
     };
 
+    /// <summary>The human duration shown for a day, built from the planned minutes.</summary>
     private static string BuildDurationText(WorkoutDayRecord day, IReadOnlyList<WorkoutDayExerciseRecord> exercises)
     {
         if (day.PlannedMainDurationMinutes is > 0m)
@@ -2078,6 +2119,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return exercises.Count == 0 ? "Flexible" : $"{Math.Max(20, exercises.Count * FallbackMinutesPerExercise)} min";
     }
 
+    /// <summary>The details text shown under an exercise.</summary>
     private static string BuildDetailsText(
         WorkoutDayRecord day,
         IReadOnlyList<WorkoutDayExerciseRecord> exercises,
@@ -2093,6 +2135,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             : (exercises.Count > 0 ? "Exercise details ready" : $"Planned {day.Name} session.");
     }
 
+    /// <summary>The subtitle of a workout day.</summary>
     private static string BuildWorkoutDaySubtitle(
         WorkoutDayRecord day,
         IReadOnlyList<WorkoutDayExerciseRecord> exercises,
@@ -2114,6 +2157,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             : "Strength work with clear sets, reps, and room to progress.";
     }
 
+    /// <summary>The summary line of a workout day.</summary>
     private static string BuildWorkoutDaySummary(
         WorkoutDayRecord day,
         IReadOnlyList<WorkoutDayExerciseRecord> exercises)
@@ -2124,6 +2168,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return $"{exercises.Count} {(exercises.Count == 1 ? "exercise" : "exercises")}, about {duration}";
     }
 
+    /// <summary>The numeric planning id encoded in a template code, or null when the code carries none.</summary>
     private static int? ExtractPlanningId(string? code)
     {
         if (string.IsNullOrWhiteSpace(code) || !code.StartsWith("ENGINE_", StringComparison.OrdinalIgnoreCase))
@@ -2133,6 +2178,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             : null;
     }
 
+    /// <summary>How well the exercise matches the injured site's muscles.</summary>
     private static double ComputeMuscleMatchScore(
         ICollection<ExerciseMuscleContribution> current,
         ICollection<ExerciseMuscleContribution> candidate,
@@ -2161,6 +2207,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
         return normA <= 0 || normB <= 0 ? 0 : dot / (Math.Sqrt(normA) * Math.Sqrt(normB));
     }
 
+    /// <summary>The equipment name shown to her, with the enum's compound names spaced out.</summary>
     private static string FormatEquipmentName(EquipmentSet required)
     {
         if (required == EquipmentSet.None) return "Bodyweight";

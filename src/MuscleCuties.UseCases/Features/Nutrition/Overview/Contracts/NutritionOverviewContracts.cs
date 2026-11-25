@@ -1,10 +1,12 @@
 namespace MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
+/// <summary>A request for the nutrition overview of a day.</summary>
 public sealed record NutritionOverviewRequest(
     DateOnly Date,
     string BreakfastPreference = "Savoury"
 );
 
+/// <summary>The day's macro targets.</summary>
 public sealed record NutritionTargetMacrosDto(
     float Calories,
     float Protein,
@@ -13,8 +15,10 @@ public sealed record NutritionTargetMacrosDto(
     NutritionMealDistributionDto? MealDistribution = null
 );
 
+/// <summary>How the day's calories split across meals.</summary>
 public sealed record NutritionMealDistributionDto(float Breakfast, float Lunch, float Dinner, float Snack);
 
+/// <summary>What has been eaten, against the targets.</summary>
 public sealed record NutritionConsumedMacrosDto(
     float Calories,
     float Protein,
@@ -22,6 +26,7 @@ public sealed record NutritionConsumedMacrosDto(
     float Fats
 );
 
+/// <summary>One macro's share of the day, with the amount it accounts for.</summary>
 public sealed record MacroBreakdownItemDto(
     string Name,
     float Grams,
@@ -29,6 +34,7 @@ public sealed record MacroBreakdownItemDto(
     float Progress
 );
 
+/// <summary>One micronutrient's total for the day.</summary>
 public sealed record DailyMicronutrientDto(
     string Group,
     string Name,
@@ -49,6 +55,7 @@ public sealed record MicronutrientCoverageDto(
     IReadOnlyList<string> UnavailableItemNames
 );
 
+/// <summary>One meal's summary in the overview.</summary>
 public sealed record MealSummaryDto(
     Guid HistoryId,
     int LoggedMealId,
@@ -82,12 +89,14 @@ public sealed record MealSuggestionComponentDto(
     float Fats
 );
 
+/// <summary>One component of a suggested meal, with its ingredients.</summary>
 public sealed record MealSuggestionComponentGroupDto(
     string ComponentType,
     string Title,
     IReadOnlyList<MealSuggestionComponentDto> Items
 );
 
+/// <summary>A meal the planner suggests, sized to the day's remaining targets.</summary>
 public sealed record MealSuggestionDto(
     string ConceptName,
     string ConceptDescription,
@@ -104,6 +113,7 @@ public sealed record MealSuggestionDto(
     string DirectionsText
 );
 
+/// <summary>One planned meal in the day's plan.</summary>
 public sealed record DayMealPlanItemDto(
     string MealType,
     float TargetCalories,
@@ -116,6 +126,7 @@ public sealed record DayMealPlanItemDto(
     string ErrorMessage = ""
 );
 
+/// <summary>An ingredient she is adding to a meal, with its weight.</summary>
 public sealed record MealIngredientInputDto(
     int FoodItemId,
     string Name,
@@ -129,6 +140,7 @@ public sealed record MealIngredientInputDto(
     string SourceSummary
 );
 
+/// <summary>A meal to log, idempotent on its key.</summary>
 public sealed record LogMealRequest(
     DateOnly Date,
     string MealType,
@@ -138,6 +150,7 @@ public sealed record LogMealRequest(
     string? AcceptedSuggestionPhase = null
 );
 
+/// <summary>A change to a logged meal.</summary>
 public sealed record UpdateMealRequest(
     int MealId,
     DateOnly Date,
@@ -146,6 +159,7 @@ public sealed record UpdateMealRequest(
     IReadOnlyList<MealIngredientInputDto> Ingredients
 );
 
+/// <summary>A food to create from inside the meal flow.</summary>
 public sealed record CreateCustomFoodRequest(
     string Name,
     float ServingAmount,
@@ -161,6 +175,7 @@ public sealed record CreateCustomFoodRequest(
     float? CalciumMilligrams = null
 );
 
+/// <summary>The created food, so the meal can reference it immediately.</summary>
 public sealed record CustomFoodResultDto(
     int FoodItemId,
     string Name,
@@ -175,6 +190,7 @@ public sealed record CustomFoodResultDto(
     string NutritionSummary
 );
 
+/// <summary>The targets broken down by source, so the client can explain where a number came from.</summary>
 public sealed record NutritionTargetBreakdownDto(
     string Source,
     float? StartingEnergyCalories,
@@ -187,6 +203,7 @@ public sealed record NutritionTargetBreakdownDto(
     bool SavedRequestDiffersFromShownTarget
 );
 
+/// <summary>The whole overview payload for one day.</summary>
 public sealed record NutritionOverviewResponse(
     NutritionTargetMacrosDto Targets,
     NutritionConsumedMacrosDto Consumed,

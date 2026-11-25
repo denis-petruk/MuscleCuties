@@ -1,16 +1,17 @@
 
 namespace MuscleCuties.UI.Controls.Cycle;
 
+/// <summary>
+///     Compact popup that reports a cycle safety or input warning.
+/// </summary>
 public partial class CycleWarningPopup : AnimatedModalView
 {
+    /// <summary>Initializes the popup declared in its XAML.</summary>
     public CycleWarningPopup()
     {
         InitializeComponent();
     }
 
-    protected override void OnSizeAllocated(double width, double height)
-    {
-        base.OnSizeAllocated(width, height);
-        BottomSheetSizing.ApplyContentFit(SheetSurface, height);
-    }
+    /// <summary>Sizes the popup to its content.</summary>
+    protected override SheetSizing SheetSizingPolicy => SheetSizing.ContentFit;
 }

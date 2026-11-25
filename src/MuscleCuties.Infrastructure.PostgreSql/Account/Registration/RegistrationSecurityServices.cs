@@ -6,6 +6,7 @@ using MuscleCuties.UseCases.Features.Account.Registration;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 
+/// <summary>Verifies the signed receipt an email provider returns, so a registration is only completed for a delivery the provider actually made.</summary>
 public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailReceiptVerifier
 {
     private const int RegistrationPurposeValue = EmailReceiptLifetimePolicy.RegistrationPurpose;
@@ -18,6 +19,7 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
     private readonly TimeProvider timeProvider;
     private readonly int expectedPurpose;
 
+    /// <summary>Verifies the signed receipt that proves the email was checked.</summary>
     public SignedRegistrationEmailReceiptVerifier(
         IReadOnlyDictionary<string, string> publicKeysById,
         string issuer,
@@ -32,6 +34,7 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
         this.expectedPurpose = expectedPurpose;
     }
 
+    /// <summary>Checks the receipt's signature and that it names this address and purpose, answering false on any mismatch rather than throwing.</summary>
     public bool TryVerify(string token, string email, string challengeId, out RegistrationEmailReceipt? receipt)
     {
         receipt = null;
@@ -91,6 +94,7 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
         }
     }
 
+    /// <summary>Requires the expected fields and no others, so a receipt cannot smuggle a second claim past the check.</summary>
     private static bool HasExactFields(JsonElement element, params string[] expectedFields)
     {
         if (element.ValueKind != JsonValueKind.Object)
@@ -104,6 +108,7 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
         return seen.Count == expectedFields.Length;
     }
 
+    /// <summary>Base64url decoding for the receipt's segments, which the JWT-shaped token uses instead of standard base64.</summary>
     private static byte[] Decode(string segment)
     {
         if (segment.Length == 0 || segment.Any(character =>
@@ -114,6 +119,7 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
     }
 }
 
+/// <summary>The password hasher used while a registration is pending, so the plain password is never held between steps.</summary>
 public sealed class Pbkdf2RegistrationPasswordHasher : IRegistrationPasswordHasher
 {
     private const int WorkFactorIterations = 600_000;
@@ -127,6 +133,7 @@ public sealed class Pbkdf2RegistrationPasswordHasher : IRegistrationPasswordHash
         RandomNumberGenerator.GetBytes(DerivedKeyLengthBytes), DummySalt, WorkFactorIterations,
         HashAlgorithmName.SHA256, DerivedKeyLengthBytes);
 
+    /// <summary>Hashes with a per-password salt and the iteration count the stored format records.</summary>
     public string HashPassword(string password)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(password);
@@ -141,6 +148,7 @@ public sealed class Pbkdf2RegistrationPasswordHasher : IRegistrationPasswordHash
             Convert.ToBase64String(salt), Convert.ToBase64String(derivedKey));
     }
 
+    /// <summary>Verifies against the stored encoding and answers false, never throwing, on a malformed value.</summary>
     public bool VerifyPassword(string password, string encodedHash)
     {
         if (string.IsNullOrEmpty(password))
@@ -170,6 +178,7 @@ public sealed class Pbkdf2RegistrationPasswordHasher : IRegistrationPasswordHash
         }
     }
 
+    /// <summary>Spends the same work as a real verification when no account matched, so response time does not reveal whether an address is registered.</summary>
     private static bool VerifyAgainstDummy(string password)
     {
         var actual = Rfc2898DeriveBytes.Pbkdf2(

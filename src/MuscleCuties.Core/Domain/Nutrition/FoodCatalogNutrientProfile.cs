@@ -29,7 +29,9 @@ public sealed record FoodCatalogNutrientProfile(
                            IsKnownNonNegative(Calcium) && IsKnownNonNegative(Magnesium) &&
                            IsKnownNonNegative(Zinc) && IsKnownNonNegative(Potassium);
 
+    /// <summary>True when any nutrient differs from the profile it is compared with.</summary>
     public bool HasChangedFrom(FoodCatalogNutrientProfile previous) => this != previous;
 
+    /// <summary>True when the nutrient is either unset or a non-negative amount.</summary>
     private static bool IsKnownNonNegative(decimal? value) => value is >= 0m;
 }

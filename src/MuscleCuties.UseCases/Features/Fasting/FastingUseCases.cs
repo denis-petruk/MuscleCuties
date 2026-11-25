@@ -2,6 +2,7 @@ using MuscleCuties.Core.Domain.Fasting;
 
 namespace MuscleCuties.UseCases.Features.Fasting;
 
+/// <summary>Whether fasting can be offered to this account, and why not when it cannot.</summary>
 public enum FastingEligibilityResponseDto
 {
     Unanswered,
@@ -10,6 +11,7 @@ public enum FastingEligibilityResponseDto
     Unsure
 }
 
+/// <summary>The session's state as the client shows it.</summary>
 public enum FastingSessionStatusDto
 {
     Active,
@@ -17,8 +19,10 @@ public enum FastingSessionStatusDto
     Ended
 }
 
+/// <summary>One pause inside a fast, which is subtracted from its effective duration.</summary>
 public sealed record FastingPauseIntervalDto(DateTimeOffset PausedAtUtc, DateTimeOffset? ResumedAtUtc);
 
+/// <summary>One fast as the client shows it, with its pauses and elapsed time.</summary>
 public sealed record FastingSessionOutputDto(
     Guid Id,
     Guid AccountId,
@@ -36,10 +40,12 @@ public sealed record FastingSessionOutputDto(
     long? ElapsedSeconds,
     IReadOnlyList<FastingPauseIntervalDto> Pauses);
 
+/// <summary>The account's fasting state: the running session, if any, and the clock status.</summary>
 public sealed record FastingStateOutputDto(
     FastingSessionOutputDto? ActiveSession,
     IReadOnlyList<FastingSessionOutputDto> History);
 
+/// <summary>A request to start a fast, carrying its target and the command key.</summary>
 public sealed record StartFastingSessionInputDto(
     Guid AccountId,
     Guid SessionId,
@@ -51,6 +57,7 @@ public sealed record StartFastingSessionInputDto(
     bool EnablePlannedEndReminder = false,
     bool? IsProfilePregnant = null);
 
+/// <summary>A pause, resume or end command, idempotent on its key.</summary>
 public sealed record TransitionFastingSessionInputDto(
     Guid AccountId,
     Guid SessionId,
@@ -60,6 +67,7 @@ public sealed record TransitionFastingSessionInputDto(
     FastingEligibilityResponseDto EligibilityResponse = FastingEligibilityResponseDto.YesAllApply,
     bool? IsProfilePregnant = null);
 
+/// <summary>A correction of the recorded times, which needs the reason the client sends.</summary>
 public sealed record CorrectFastingSessionInputDto(
     Guid AccountId,
     Guid SessionId,
@@ -69,6 +77,7 @@ public sealed record CorrectFastingSessionInputDto(
     DateTimeOffset? CorrectedEndedAtUtc,
     DateTimeOffset CorrectedAtUtc);
 
+/// <summary>A change to the planned end, which the reminder follows.</summary>
 public sealed record UpdateFastingPlannedEndInputDto(
     Guid AccountId,
     Guid SessionId,
@@ -77,6 +86,7 @@ public sealed record UpdateFastingPlannedEndInputDto(
     DateTimeOffset? PlannedEndAtUtc,
     bool EnablePlannedEndReminder);
 
+/// <summary>The persistence fasting needs, with its command receipts.</summary>
 public interface IFastingSessionStore
 {
     Task<FastingSessionOutputDto?> TryReplayCommandAsync(Guid accountId, Guid commandId, string payloadSignature, CancellationToken cancellationToken);
@@ -85,8 +95,10 @@ public interface IFastingSessionStore
     Task<FastingSession> SaveAsync(Guid accountId, Guid commandId, string payloadSignature, FastingSession session, int? expectedVersion, CancellationToken cancellationToken);
 }
 
+/// <summary>Starts, pauses, resumes, ends and corrects fasts, refusing a command whose account or id is missing.</summary>
 public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvider timeProvider)
 {
+    /// <summary>The account's current fast and clock status, with elapsed time already net of pauses.</summary>
     public async Task<FastingStateOutputDto> GetStateAsync(Guid accountId, bool isClockUncertain = false, CancellationToken cancellationToken = default)
     {
         RequireAccount(accountId);
@@ -101,6 +113,7 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         return new FastingStateOutputDto(active, mapped);
     }
 
+    /// <summary>Starts a fast, refusing one when a fast is already open because only one may run at a time.</summary>
     public async Task<FastingSessionOutputDto> StartAsync(StartFastingSessionInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -127,6 +140,7 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         return Map(saved, timeProvider.GetUtcNow(), false);
     }
 
+    /// <summary>Pauses the running fast, recording the interval so its duration is not counted.</summary>
     public async Task<FastingSessionOutputDto> PauseAsync(TransitionFastingSessionInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -142,6 +156,7 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         return Map(saved, timeProvider.GetUtcNow(), false);
     }
 
+    /// <summary>Closes the open pause, refusing a resume when the fast is not paused.</summary>
     public async Task<FastingSessionOutputDto> ResumeAsync(TransitionFastingSessionInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -158,6 +173,7 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         return Map(saved, timeProvider.GetUtcNow(), false);
     }
 
+    /// <summary>Ends the fast, keeping its recorded duration as the result.</summary>
     public async Task<FastingSessionOutputDto> EndAsync(TransitionFastingSessionInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -173,6 +189,7 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         return Map(saved, timeProvider.GetUtcNow(), false);
     }
 
+    /// <summary>Rewrites the recorded times, refusing an order that would put the end before the start.</summary>
     public async Task<FastingSessionOutputDto> CorrectTimesAsync(CorrectFastingSessionInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -188,6 +205,7 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         return Map(saved, timeProvider.GetUtcNow(), false);
     }
 
+    /// <summary>Moves the planned end, which the reminder schedule follows.</summary>
     public async Task<FastingSessionOutputDto> UpdatePlannedEndAsync(UpdateFastingPlannedEndInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -203,22 +221,26 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         return Map(saved, timeProvider.GetUtcNow(), false);
     }
 
+    /// <summary>Loads a fast for the account or refuses because it is unknown.</summary>
     private async Task<FastingSession> RequireSessionAsync(Guid accountId, Guid sessionId, CancellationToken cancellationToken) =>
         await store.LoadByIdAsync(accountId, sessionId, cancellationToken).ConfigureAwait(false)
         ?? throw new KeyNotFoundException("Fasting record was not found for the current account.");
 
+    /// <summary>Refuses an empty account, since every fasting row is owned and no default exists.</summary>
     private static void RequireAccount(Guid accountId)
     {
         if (accountId == Guid.Empty)
             throw new UnauthorizedAccessException("An authenticated account is required.");
     }
 
+    /// <summary>Refuses an empty command key, which would make the write non-idempotent.</summary>
     private static void RequireCommand(Guid commandId)
     {
         if (commandId == Guid.Empty)
             throw new ArgumentException("A non-empty command ID is required.", nameof(commandId));
     }
 
+    /// <summary>The domain eligibility answer for its wire value.</summary>
     private static FastingEligibilityResponse ToDomain(FastingEligibilityResponseDto response) => response switch
     {
         FastingEligibilityResponseDto.Unanswered => FastingEligibilityResponse.Unanswered,
@@ -228,6 +250,7 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         _ => throw new ArgumentOutOfRangeException(nameof(response), response, "Unknown fasting eligibility response.")
     };
 
+    /// <summary>The wire value for a fast's status.</summary>
     private static FastingSessionStatusDto ToDto(FastingSessionStatus status) => status switch
     {
         FastingSessionStatus.Active => FastingSessionStatusDto.Active,
@@ -236,6 +259,7 @@ public sealed class FastingSessionUseCase(IFastingSessionStore store, TimeProvid
         _ => throw new ArgumentOutOfRangeException(nameof(status), status, "Unknown fasting session status.")
     };
 
+    /// <summary>Projects a stored session onto the output DTO, computing elapsed time from the pauses.</summary>
     public static FastingSessionOutputDto Map(FastingSession session, DateTimeOffset referenceNowUtc, bool isClockUncertain)
     {
         var evaluation = session.EvaluateElapsed(referenceNowUtc, isClockUncertain);

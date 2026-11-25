@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.CheckInAndInjury;
 
+/// <summary>One day's check-in as stored: what she reported and what the planner derived.</summary>
 public sealed record DailyCheckInRecord(
     Guid Id,
     DateOnly Date,
@@ -25,6 +26,7 @@ public sealed record DailyCheckInRecord(
     long PlanningRevision = 0,
     int? PlanningFatigue = null);
 
+/// <summary>A day's answers sent up, idempotent on its key.</summary>
 public sealed record SaveDailyCheckInRequest(
     Guid UserId,
     Guid Id,
@@ -47,6 +49,7 @@ public sealed record SaveDailyCheckInRequest(
     string? PlanningTimeZoneId = null,
     int? PlanningFatigue = null);
 
+/// <summary>One reported injury as stored, with the status that restricts planning.</summary>
 public sealed record InjuryObservationRecord(
     Guid Id,
     int SiteFlag,
@@ -60,6 +63,7 @@ public sealed record InjuryObservationRecord(
     bool? ClinicianAdvisedAvoid = null,
     DateTimeOffset? PainReassessmentDueAtUtc = null);
 
+/// <summary>An injury report sent up.</summary>
 public sealed record SaveInjuryObservationRequest(
     Guid UserId,
     Guid Id,
@@ -72,28 +76,35 @@ public sealed record SaveInjuryObservationRequest(
         MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
     bool? ClinicianAdvisedAvoid = null);
 
+/// <summary>A conflicting id was reused, which is a client bug rather than a retry.</summary>
 public sealed class CheckInAndInjuryIdConflictException : Exception
 {
+    /// <summary>A conflicting id was reused, which the caller must fix rather than retry.</summary>
     public CheckInAndInjuryIdConflictException()
         : base("The supplied record ID cannot be used.")
     {
     }
 }
 
+/// <summary>An injury cannot be recorded while a session is in progress, because the plan it affects is in use.</summary>
 public sealed class ActiveWorkoutPreventsInjuryException : Exception
 {
+    /// <summary>An injury cannot change mid-session, because the plan in use would become unsafe.</summary>
     public ActiveWorkoutPreventsInjuryException()
         : base("End or abandon the active workout before recording an injury.") { }
 }
 
+/// <summary>The date is locked by another write, so the caller must re-read before saving.</summary>
 public sealed class CheckInAndInjuryDateConflictException : Exception
 {
+    /// <summary>The date is locked by another write, so the caller must re-read and merge.</summary>
     public CheckInAndInjuryDateConflictException()
         : base("A check-in already exists for this owner and date.")
     {
     }
 }
 
+/// <summary>The persistence check-ins and injuries need.</summary>
 public interface ICheckInAndInjuryStore
 {
     Task<IReadOnlyList<DailyCheckInRecord>> LoadCheckInsAsync(

@@ -3,6 +3,8 @@ using System.Text;
 
 namespace MuscleCuties.Core.Services.Auth;
 
+/// <summary>The password hashing, with the legacy format still verified so an old account can migrate on its next</summary>
+/// sign-in.</summary>
 public sealed class PasswordHasher : IPasswordHasher
 {
     public const string SchemePrefix = "PBKDF2-SHA256";
@@ -12,8 +14,10 @@ public sealed class PasswordHasher : IPasswordHasher
     public const int SaltSizeBytes = 16;
     public const int HashSizeBytes = 32;
 
+    /// <summary>The hasher the app uses unless a test substitutes one.</summary>
     public static PasswordHasher Default { get; } = new();
 
+    /// <summary>A stored hash for a new password, in the current format.</summary>
     public string HashPassword(string password)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(password);
@@ -29,6 +33,8 @@ public sealed class PasswordHasher : IPasswordHasher
         return $"{SchemePrefix}:{DefaultIterations}:{Convert.ToBase64String(salt)}:{Convert.ToBase64String(hash)}";
     }
 
+    /// <summary>Verifies a password and says whether its stored hash is in the old format, which is when the caller should</summary>
+    /// rehash it.</summary>
     public (bool IsValid, bool NeedsMigration) VerifyPassword(string password, string? storedHash)
     {
         if (string.IsNullOrEmpty(password) || string.IsNullOrWhiteSpace(storedHash))
@@ -52,6 +58,7 @@ public sealed class PasswordHasher : IPasswordHasher
         return (false, false);
     }
 
+    /// <summary>Verifies against the current key-derivation format.</summary>
     private static (bool IsValid, bool NeedsMigration) VerifyPbkdf2(string password, string storedHash)
     {
         var parts = storedHash.Split(':');
@@ -97,6 +104,7 @@ public sealed class PasswordHasher : IPasswordHasher
         return (matches, needsMigration);
     }
 
+    /// <summary>Whether a stored hash is in the legacy format, so only those accounts are migrated.</summary>
     private static bool IsLegacySha256(string storedHash, out byte[] decodedBytes)
     {
         decodedBytes = [];

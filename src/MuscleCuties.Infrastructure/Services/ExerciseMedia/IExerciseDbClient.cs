@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Services.ExerciseMedia;
 
+/// <summary>The external exercise database client.</summary>
 public interface IExerciseDbClient
 {
     Task<IReadOnlyList<ExerciseDbItem>> GetExercisesAsync(int limit = 50, int offset = 0,

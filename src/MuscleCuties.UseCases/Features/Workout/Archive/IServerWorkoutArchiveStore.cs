@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Workout.Archive;
 
+/// <summary>The server-side archive read.</summary>
 public interface IServerWorkoutArchiveStore
 {
     Task<IReadOnlyList<WorkoutArchiveSummaryDto>> GetWorkoutHistoryAsync(

@@ -4,8 +4,10 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.Operations;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Configurations.Operations;
 
+/// <summary>Maps the nutrient snapshots taken before a catalog change.</summary>
 public sealed class FoodItemVersionConfiguration : IEntityTypeConfiguration<FoodItemVersionRecord>
 {
+    /// <summary>Places the snapshots in the operations schema and indexes them by food and time, which is the read a diff makes.</summary>
     public void Configure(EntityTypeBuilder<FoodItemVersionRecord> builder)
     {
         builder.ToTable("food_item_versions", "catalog");
@@ -26,8 +28,10 @@ public sealed class FoodItemVersionConfiguration : IEntityTypeConfiguration<Food
     }
 }
 
+/// <summary>Maps the catalog sync runs.</summary>
 public sealed class FoodSyncLogConfiguration : IEntityTypeConfiguration<FoodSyncLogRecord>
 {
+    /// <summary>Places the runs in the operations schema and indexes them newest-first for an operator's read.</summary>
     public void Configure(EntityTypeBuilder<FoodSyncLogRecord> builder)
     {
         builder.ToTable("food_sync_logs", "ops");

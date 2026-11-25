@@ -3,12 +3,14 @@ using MuscleCuties.UseCases.Features.Account.Deletion;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 
+/// <summary>Records what a deletion did, without the account's data: only the outcome and reasons, never personal content.</summary>
 public sealed class DefaultAccountDeletionAuditStore : IAccountDeletionAuditStore
 {
     private readonly ConcurrentBag<AccountDeletionAuditEntry> _entries = [];
     private readonly string? _logFilePath;
     private readonly object _fileLock = new();
 
+    /// <summary>Takes an optional log file; without one the audit is kept in memory, which is what development uses.</summary>
     public DefaultAccountDeletionAuditStore(string? logFilePath = null)
     {
         _logFilePath = logFilePath;
@@ -33,6 +35,7 @@ public sealed class DefaultAccountDeletionAuditStore : IAccountDeletionAuditStor
         }
     }
 
+    /// <summary>Records one account deletion.</summary>
     public Task RecordDeletionAuditAsync(
         AccountDeletionAuditEntry entry,
         CancellationToken cancellationToken = default)
@@ -60,6 +63,7 @@ public sealed class DefaultAccountDeletionAuditStore : IAccountDeletionAuditStor
         return Task.CompletedTask;
     }
 
+    /// <summary>The deletion audits recorded for the account.</summary>
     public Task<IReadOnlyList<AccountDeletionAuditEntry>> GetDeletionAuditsAsync(
         CancellationToken cancellationToken = default)
     {

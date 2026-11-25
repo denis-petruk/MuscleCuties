@@ -19,6 +19,7 @@ public sealed record S3PhotoObjectInspection(
     string? VersionId,
     ReadOnlyMemory<byte>? ObjectBytes = null);
 
+/// <summary>Why an uploaded object was rejected before publication.</summary>
 public enum S3PhotoObjectInspectionFailure
 {
     NotFound,
@@ -27,11 +28,13 @@ public enum S3PhotoObjectInspectionFailure
     InvalidResponse
 }
 
+/// <summary>An inspection that failed, raised instead of publishing an unverified object.</summary>
 public sealed class S3PhotoObjectInspectionException(
     S3PhotoObjectInspectionFailure failure,
     string message,
     Exception? innerException = null) : Exception(message, innerException)
 {
+    /// <summary>Why the object could not be inspected.</summary>
     public S3PhotoObjectInspectionFailure Failure { get; } = failure;
 }
 
@@ -51,4 +54,5 @@ public interface IS3PhotoObjectInspector
         throw new InvalidOperationException("Immutable photo publication is not configured.");
 }
 
+/// <summary>An object that passed inspection, with the details the metadata row needs.</summary>
 public sealed record S3PhotoPublication(string Key, string VersionId, string Sha256Checksum);

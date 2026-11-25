@@ -3,6 +3,7 @@ using System.Text.RegularExpressions;
 
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>One candidate the search ranks, with the fields the ranking compares.</summary>
 public sealed record FoodCatalogCandidate(
     int Id,
     string Name,
@@ -40,6 +41,7 @@ public static partial class FoodCatalogRankingRule
         "chips", "drink", "juice", "mix", "sauce", "soup"
     ];
 
+    /// <summary>Orders catalog candidates by how well they match the search text.</summary>
     public static IReadOnlyList<FoodCatalogCandidate> Rank(
         string? query,
         IEnumerable<FoodCatalogCandidate>? candidates)
@@ -93,6 +95,7 @@ public static partial class FoodCatalogRankingRule
             .ToList();
     }
 
+    /// <summary>Cleans a catalogue description into the name the list shows.</summary>
     public static string FormatFoodName(string description)
     {
         var trimmed = description.Trim();
@@ -105,6 +108,7 @@ public static partial class FoodCatalogRankingRule
         return trimmed;
     }
 
+    /// <summary>Splits the query into tokens, so a multi-word query still matches.</summary>
     public static List<string> Tokenize(string query)
     {
         return NormalizeSearchText(query)
@@ -115,6 +119,7 @@ public static partial class FoodCatalogRankingRule
             .ToList();
     }
 
+    /// <summary>Folds case and accents, so a search matches however she typed it.</summary>
     public static string NormalizeSearchText(string value)
     {
         if (string.IsNullOrWhiteSpace(value))
@@ -129,6 +134,7 @@ public static partial class FoodCatalogRankingRule
         return string.Join(" ", tokens).Trim();
     }
 
+    /// <summary>Folds one token to its comparison form.</summary>
     public static string NormalizeToken(string token)
     {
         if (token.Length <= 3 || token.Any(char.IsDigit))
@@ -164,12 +170,14 @@ public static partial class FoodCatalogRankingRule
         return normalizedToken;
     }
 
+    /// <summary>Whether the name carries every query token, the minimum to appear at all.</summary>
     private static bool MatchesTokens(string name, IReadOnlyCollection<string> tokens)
     {
         var normalized = NormalizeSearchText(name);
         return tokens.All(token => normalized.Contains(token, StringComparison.OrdinalIgnoreCase));
     }
 
+    /// <summary>Scores how early and completely the name matches, so an exact name outranks a mention.</summary>
     private static int RankName(string name, List<string> tokens)
     {
         var normalizedName = NormalizeSearchText(name);
@@ -190,6 +198,7 @@ public static partial class FoodCatalogRankingRule
         return 4;
     }
 
+    /// <summary>The bonus a whole food gets, which outranks a branded one at equal match.</summary>
     private static int WholeFoodRank(string name, List<string> tokens)
     {
         var normalizedName = NormalizeSearchText(name);
@@ -215,6 +224,7 @@ public static partial class FoodCatalogRankingRule
         return 3;
     }
 
+    /// <summary>Scores a match found in a secondary field, ranked below the name.</summary>
     private static int SearchFieldRank(string searchableText, IReadOnlyList<string> tokens)
     {
         var normalized = NormalizeSearchText(searchableText);
@@ -239,6 +249,7 @@ public static partial class FoodCatalogRankingRule
         };
     }
 
+    /// <summary>How many macros the entry reports, so a complete entry outranks a sparse one.</summary>
     private static int CountPrimaryMacros(FoodCatalogCandidate food)
     {
         return (food.Protein is > 0f ? 1 : 0) +
@@ -246,6 +257,7 @@ public static partial class FoodCatalogRankingRule
                (food.Fats is > 0f ? 1 : 0);
     }
 
+    /// <summary>The key duplicates collapse by, so one food appears once.</summary>
     private static string BuildDedupKey(FoodCatalogCandidate food)
     {
         if (food.IsCustom)
@@ -272,9 +284,11 @@ public static partial class FoodCatalogRankingRule
     public static string BuildFullSearchableText(string primaryText, string? ingredients) =>
         string.Join(" ", primaryText, ingredients);
 
+    /// <summary>The generated regex that strips punctuation a search should ignore.</summary>
     [GeneratedRegex("[^a-z0-9]+")]
     private static partial Regex SearchCleanupRegex();
 
+    /// <summary>The generated regex that collapses runs of whitespace.</summary>
     [GeneratedRegex("\\s+")]
     private static partial Regex WhiteSpaceRegex();
 }

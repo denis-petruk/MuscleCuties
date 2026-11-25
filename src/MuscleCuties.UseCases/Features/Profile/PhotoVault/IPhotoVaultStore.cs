@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Profile.PhotoVault;
 
+/// <summary>The photo vault persistence.</summary>
 public interface IPhotoVaultStore
 {
     Task<PhotoVaultLoadResult> LoadAsync(CancellationToken cancellationToken);

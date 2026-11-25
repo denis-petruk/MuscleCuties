@@ -5,6 +5,9 @@ using MuscleCuties.UI.Models.UI.Cycle;
 
 namespace MuscleCuties.UI.Controls.Cycle;
 
+/// <summary>
+///     Month grid for the cycle calendar: builds the day cells and marks each day with its phase.
+/// </summary>
 public sealed class CycleMonthGrid : Grid
 {
     private const int DaysPerWeek = 7;
@@ -33,6 +36,7 @@ public sealed class CycleMonthGrid : Grid
     private int _currentLeadingOffset = -1;
     private CycleDayItem? _visuallySelectedDay;
 
+    /// <summary>Builds the seven-column month grid and gives every cell the command it raises when tapped.</summary>
     public CycleMonthGrid()
     {
         RowSpacing = AppThemeResources.GetDouble("UiSpacing0");
@@ -60,6 +64,7 @@ public sealed class CycleMonthGrid : Grid
         set => SetValue(IsExpandedProperty, value);
     }
 
+    /// <summary>Rebuilds the day cells when the items source changes.</summary>
     private static void OnItemsSourceChanged(BindableObject bindable, object oldValue, object newValue)
     {
         var grid = (CycleMonthGrid)bindable;
@@ -68,6 +73,7 @@ public sealed class CycleMonthGrid : Grid
             grid.UpdateDays((IReadOnlyList<CycleDayItem>?)newValue);
     }
 
+    /// <summary>Builds the day cells when the grid expands.</summary>
     private static void OnIsExpandedChanged(BindableObject bindable, object oldValue, object newValue)
     {
         var grid = (CycleMonthGrid)bindable;
@@ -75,6 +81,7 @@ public sealed class CycleMonthGrid : Grid
             grid.UpdateDays(grid.ItemsSource);
     }
 
+    /// <summary>Hands the new command to every day cell button.</summary>
     private static void OnDaySelectedCommandChanged(BindableObject bindable, object oldValue, object newValue)
     {
         var grid = (CycleMonthGrid)bindable;
@@ -83,6 +90,8 @@ public sealed class CycleMonthGrid : Grid
                 button.Command = grid.WrapCommand((ICommand?)newValue);
     }
 
+    /// <summary>The command the cells invoke, adapted from the bound one so the grid stays independent of the page's command</summary>
+    /// type.</summary>
     private Command<CycleDayItem>? WrapCommand(ICommand? inner)
     {
         if (inner is null) return null;
@@ -95,6 +104,7 @@ public sealed class CycleMonthGrid : Grid
         });
     }
 
+    /// <summary>Rebuilds the cells for a month, reusing the ones already on screen so a refresh does not flash the grid.</summary>
     private void UpdateDays(IReadOnlyList<CycleDayItem>? days)
     {
         if (days is null || days.Count == 0)
@@ -114,6 +124,8 @@ public sealed class CycleMonthGrid : Grid
         ApplySelectionRing();
     }
 
+    /// <summary>Adds or removes cells until the grid holds the month's days plus the leading blanks that put the first day</summary>
+    /// under its weekday.</summary>
     private void EnsureCellCount(int count, int leadingOffset)
     {
         if (_dayCells.Count == count && _currentLeadingOffset == leadingOffset)
@@ -160,6 +172,7 @@ public sealed class CycleMonthGrid : Grid
         }
     }
 
+    /// <summary>Copies each day's state onto the cell that is already showing it.</summary>
     private void UpdateExistingCells(IReadOnlyList<CycleDayItem> days)
     {
         for (var index = 0; index < days.Count; index++)
@@ -183,6 +196,7 @@ public sealed class CycleMonthGrid : Grid
         }
     }
 
+    /// <summary>Marks the selected day, so the grid shows which day the detail above it is describing.</summary>
     private void ApplySelectionRing()
     {
         var selected = _visuallySelectedDay;
@@ -213,6 +227,7 @@ public sealed class CycleMonthGrid : Grid
         }
     }
 
+    /// <summary>Empties every cell, used when the month has no days to show.</summary>
     private void ClearCells()
     {
         Children.Clear();
@@ -221,6 +236,7 @@ public sealed class CycleMonthGrid : Grid
         _currentLeadingOffset = -1;
     }
 
+    /// <summary>One empty day cell with the shape and gestures every cell shares.</summary>
     private static Border CreateDayCell()
     {
         // A calendar cell shows a day number and its marker in a seventh of the card width. The shared

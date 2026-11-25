@@ -2,10 +2,12 @@ using MuscleCuties.Core.Models.Enums.Nutrition;
 
 namespace MuscleCuties.Core.Domain.Nutrition;
 
+/// <summary>One food of a saved template, with the amount she ate.</summary>
 public sealed record SavedMealTemplateItem(
     Guid Id, string Name, float ServingSize, string ServingUnit, float ServingsCount,
     float Calories, float Protein, float Carbs, float Fats);
 
+/// <summary>A meal she saved for reuse, with the foods and amounts it holds.</summary>
 public sealed class SavedMealTemplate
 {
     public const int MaxNameLength = 160;
@@ -15,6 +17,7 @@ public sealed class SavedMealTemplate
     public const float MinimumNutritionValue = 0f;
     public const float MinimumPortionValue = 0f;
 
+    /// <summary>Holds a reusable meal with the nutrition its foods add up to.</summary>
     private SavedMealTemplate(string name, MealType mealType, IReadOnlyList<SavedMealTemplateItem> items,
         float calories, float protein, float carbs, float fats)
     {
@@ -27,14 +30,22 @@ public sealed class SavedMealTemplate
         TotalFats = fats;
     }
 
+    /// <summary>Name the user gave the template.</summary>
     public string Name { get; }
+    /// <summary>Meal of the day the template belongs to.</summary>
     public MealType MealType { get; }
+    /// <summary>Foods the template saves.</summary>
     public IReadOnlyList<SavedMealTemplateItem> Items { get; }
+    /// <summary>Energy the saved foods add up to.</summary>
     public float TotalCalories { get; }
+    /// <summary>Protein the saved foods add up to.</summary>
     public float TotalProtein { get; }
+    /// <summary>Carbohydrate the saved foods add up to.</summary>
     public float TotalCarbs { get; }
+    /// <summary>Fat the saved foods add up to.</summary>
     public float TotalFats { get; }
 
+    /// <summary>Validates the inputs and sums the items' nutrition into the template.</summary>
     public static SavedMealTemplate Create(string name, MealType mealType,
         IReadOnlyList<SavedMealTemplateItem>? items)
     {
@@ -75,5 +86,6 @@ public sealed class SavedMealTemplate
             (float)calories, (float)protein, (float)carbs, (float)fats);
     }
 
+    /// <summary>True when the nutrient value is finite and not negative.</summary>
     private static bool ValidNutrient(float value) => float.IsFinite(value) && value >= MinimumNutritionValue;
 }

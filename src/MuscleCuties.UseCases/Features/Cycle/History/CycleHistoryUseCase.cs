@@ -3,6 +3,7 @@ namespace MuscleCuties.UseCases.Features.Cycle.History;
 using MuscleCuties.Core.Domain.Cycle;
 using CoreCycleObservation = MuscleCuties.Core.Domain.Cycle.CycleObservation;
 
+/// <summary>Reads and writes cycle history, recalculating lengths when a start changes.</summary>
 public sealed class CycleHistoryUseCase(ICycleHistoryStore store)
 {
     private static readonly DateOnly MinimumDate = new(1970, 1, 1);
@@ -10,6 +11,7 @@ public sealed class CycleHistoryUseCase(ICycleHistoryStore store)
     private static readonly DateOnly PredictionMaximumDate = new(2100, 1, 1);
     private const int UnknownCycleLength = 0;
 
+    /// <summary>The stored history replayed in order, which the prediction depends on.</summary>
     public Task<CycleHistorySnapshot> LoadAsync(Guid userId, DateOnly from, DateOnly through, CancellationToken cancellationToken = default)
     {
         if (userId == Guid.Empty || from < MinimumDate || through > MaximumDate || through < from)
@@ -17,6 +19,7 @@ public sealed class CycleHistoryUseCase(ICycleHistoryStore store)
         return store.LoadAsync(userId, from, through, cancellationToken);
     }
 
+    /// <summary>Predicts the next phase from the stored history, and says so plainly when there is too little of it.</summary>
     public async Task<CyclePredictionProjection> ProjectPredictionAsync(Guid userId, DateOnly today, CancellationToken cancellationToken = default)
     {
         if (userId == Guid.Empty || today < MinimumDate || today > PredictionMaximumDate)
@@ -72,12 +75,15 @@ public sealed class CycleHistoryUseCase(ICycleHistoryStore store)
             estimate.PredictionSource);
     }
 
+    /// <summary>Converts a stored cycle into the domain observation the prediction rules read.</summary>
     private static MuscleCuties.Core.Domain.Cycle.CycleObservation ToCoreObservation(CycleObservation cycle, int cycleLength) =>
         new(cycle.StartDate.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified),
             cycle.EndDate?.ToDateTime(TimeOnly.MinValue, DateTimeKind.Unspecified), cycleLength);
 
+    /// <summary>The date of a timestamp, or nothing when it has none.</summary>
     private static DateOnly? ToDateOnly(DateTime? date) => date is null ? null : DateOnly.FromDateTime(date.Value);
 
+    /// <summary>Stores a cycle start or end, recalculating the affected cycle's length.</summary>
     public Task<CycleObservation?> SaveCycleAsync(SaveCycleObservation request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -87,6 +93,7 @@ public sealed class CycleHistoryUseCase(ICycleHistoryStore store)
         return store.SaveCycleAsync(request, cancellationToken);
     }
 
+    /// <summary>Stores a symptom against a cycle, refusing one whose cycle is not hers.</summary>
     public Task<CycleSymptom?> SaveSymptomAsync(SaveCycleSymptom request, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -98,11 +105,13 @@ public sealed class CycleHistoryUseCase(ICycleHistoryStore store)
         return store.SaveSymptomAsync(request with { Type = normalizedType }, cancellationToken);
     }
 
+    /// <summary>Deletes one cycle record, reporting whether it existed.</summary>
     public Task<bool> DeleteCycleAsync(Guid userId, Guid cycleId, CancellationToken cancellationToken = default) =>
         userId == Guid.Empty || cycleId == Guid.Empty
             ? Task.FromResult(false)
             : store.DeleteCycleAsync(userId, cycleId, cancellationToken);
 
+    /// <summary>Deletes one symptom record, reporting whether it existed.</summary>
     public Task<bool> DeleteSymptomAsync(Guid userId, Guid symptomId, CancellationToken cancellationToken = default) =>
         userId == Guid.Empty || symptomId == Guid.Empty
             ? Task.FromResult(false)

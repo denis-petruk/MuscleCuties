@@ -1,6 +1,9 @@
 
 namespace MuscleCuties.UI.Controls.Profile;
 
+/// <summary>
+///     Sheet that shows two progress photos side by side.
+/// </summary>
 public partial class PhotoComparisonModal : AnimatedModalView
 {
     private const double MinimumComparisonFraction = 0.1d;
@@ -8,23 +11,23 @@ public partial class PhotoComparisonModal : AnimatedModalView
     private const double InitialComparisonFraction = 0.5d;
     private const double WholeComparisonWidth = 1d;
 
+    /// <summary>Initializes the modal and places the comparison divider.</summary>
     public PhotoComparisonModal()
     {
         InitializeComponent();
         UpdateComparisonDivider(InitialComparisonFraction);
     }
 
-    protected override void OnSizeAllocated(double width, double height)
-    {
-        base.OnSizeAllocated(width, height);
-        BottomSheetSizing.Apply(SheetSurface, height);
-    }
+    /// <summary>Sizes the sheet to fill its host.</summary>
+    protected override SheetSizing SheetSizingPolicy => SheetSizing.Fill;
 
+    /// <summary>Moves the divider to the slider's new position.</summary>
     private void OnComparisonSliderChanged(object? sender, ValueChangedEventArgs args)
     {
         UpdateComparisonDivider(args.NewValue);
     }
 
+    /// <summary>Moves the before/after divider to a fraction of the image, so the two photos meet exactly at the handle.</summary>
     private void UpdateComparisonDivider(double fraction)
     {
         var clamped = Math.Clamp(fraction, MinimumComparisonFraction, MaximumComparisonFraction);

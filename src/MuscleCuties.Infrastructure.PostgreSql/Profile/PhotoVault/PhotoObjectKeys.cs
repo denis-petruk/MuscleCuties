@@ -5,15 +5,19 @@ public static class PhotoObjectKeys
 {
     private const int KeySegmentCount = 3;
     private const int PhotoIdSegment = 2;
+    /// <summary>Object key of a photo before it is published.</summary>
     public static string Upload(Guid ownerId, Guid photoId) => $"photos/{ownerId:D}/{photoId:N}";
+    /// <summary>Object key of a published photo.</summary>
     public static string Published(Guid ownerId, Guid photoId) => $"published-photos/{ownerId:D}/{photoId:N}";
 
+    /// <summary>Refuses a key that is not the upload key for this owner and photo, which is the guard that keeps cleanup away from other objects.</summary>
     public static void RequireUpload(Guid ownerId, Guid photoId, string key)
     {
         if (ownerId == Guid.Empty || photoId == Guid.Empty || key != Upload(ownerId, photoId))
             throw new ArgumentException("The object key must match its owner and upload intent.", nameof(key));
     }
 
+    /// <summary>Reads the photo id back out of an upload key, refusing a key that is not one.</summary>
     public static Guid RequireUpload(string key)
     {
         var segments = key?.Split('/');

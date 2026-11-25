@@ -2,8 +2,10 @@ using MuscleCuties.UI.Services.Nutrition;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>The nutrition breakdown panel, opened either for the whole day or for one logged meal.</summary>
 public partial class NutritionViewModel
 {
+    /// <summary>Shows the day's totals with their coverage line.</summary>
     private void OpenDailyBreakdown()
     {
         Breakdown.Show(
@@ -15,6 +17,7 @@ public partial class NutritionViewModel
         IsBreakdownModalVisible = true;
     }
 
+    /// <summary>Shows one meal's macros and micronutrients, with the meal attached so it can be edited from the panel.</summary>
     private void OpenMealBreakdown(MealItem? meal)
     {
         if (meal is null)
@@ -28,6 +31,7 @@ public partial class NutritionViewModel
         IsBreakdownModalVisible = true;
     }
 
+    /// <summary>Hides the panel and empties it, so the next opening cannot show the previous breakdown.</summary>
     private void CloseBreakdownModal()
     {
         IsBreakdownModalVisible = false;

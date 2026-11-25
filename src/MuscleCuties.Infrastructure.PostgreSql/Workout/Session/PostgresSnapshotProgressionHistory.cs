@@ -1,8 +1,10 @@
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 
+/// <summary>Reads progression history out of a stored prescription snapshot, so history survives the live rows being rewritten.</summary>
 internal static class PostgresSnapshotProgressionHistory
 {
+    /// <summary>The progression exposures recorded per exercise.</summary>
     internal static async Task<Dictionary<int, IReadOnlyList<SnapshotProgressionExposure>>> LoadAsync(
         PostgresDbContext db, Guid userId, int[] exerciseIds, Guid? currentSessionId, CancellationToken ct,
         IReadOnlySet<int>? unilateralExerciseIds = null)

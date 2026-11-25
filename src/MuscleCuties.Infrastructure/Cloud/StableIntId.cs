@@ -6,6 +6,7 @@ namespace MuscleCuties.Infrastructure.Cloud;
 /// </summary>
 internal static class StableIntId
 {
+    /// <summary>A stable local id for an account from its GUID, so the local rows keep one number per account.</summary>
     public static int From(Guid id)
     {
         Span<byte> bytes = stackalloc byte[16];

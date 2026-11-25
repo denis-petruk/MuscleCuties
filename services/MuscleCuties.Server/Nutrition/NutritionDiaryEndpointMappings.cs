@@ -12,6 +12,7 @@ public static class NutritionDiaryEndpointMappings
     private const int DefaultHistoryPageSize = 30;
     private const int DefaultEventPageSize = 50;
 
+    /// <summary>Registers the diary read and write endpoints.</summary>
     public static IEndpointRouteBuilder MapNutritionDiaryEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(DiaryRoute).RequireAuthorization();
@@ -172,5 +173,6 @@ public static class NutritionDiaryEndpointMappings
     }
 
 
+    /// <summary>The identity the saved diary entry was given, so the client can address it afterwards.</summary>
     public sealed record SaveNutritionDiaryEntryResponse(string Identity);
 }

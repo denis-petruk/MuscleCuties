@@ -6,14 +6,17 @@ using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Barcode;
 
+/// <summary>Resolves a barcode, refusing a malformed code before it reaches storage.</summary>
 public sealed class LookupBarcodeUseCase(IBarcodeFoodLookupStore store) : ILookupBarcodeUseCase
 {
 
+    /// <summary>Looks up a scanned barcode and reports the match or why there is none.</summary>
     public async Task<BarcodeLookupResult> ExecuteAsync(
         BarcodeLookupRequest request,
         CancellationToken cancellationToken = default) =>
         await ExecuteAsync(request, null, cancellationToken).ConfigureAwait(false);
 
+    /// <summary>Looks up a barcode value with the symbology the scanner reported.</summary>
     public async Task<BarcodeLookupResult> ExecuteAsync(
         BarcodeLookupRequest request,
         Guid? ownerUserId,
@@ -41,6 +44,7 @@ public sealed class LookupBarcodeUseCase(IBarcodeFoodLookupStore store) : ILooku
         return new BarcodeLookupResult(true, true, barcode.NormalizedValue, dto, null);
     }
 
+    /// <summary>The barcode format for the wire symbology.</summary>
     private static BarcodeFormat MapSymbology(BarcodeSymbologyDto symbology) => symbology switch
     {
         BarcodeSymbologyDto.Ean13 => BarcodeFormat.Ean13,

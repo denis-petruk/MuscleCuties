@@ -3,9 +3,12 @@ using MuscleCuties.UseCases.Features.Profile.Feedback;
 
 namespace MuscleCuties.UI.Services.Profile;
 
+/// <summary>Validates a feedback attachment before handing it to the mail composer, and refuses</summary>
+/// files inside the app's private storage so a diagnostic bundle cannot be sent by mistake.</summary>
 public sealed class LocalProfileFeedbackComposer(IFeedbackEmailService emailService)
     : IProfileFeedbackComposer
 {
+    /// <summary>Opens the feedback as a mail draft.</summary>
     public Task OpenDraftAsync(string subject, string body,
         ProfileFeedbackAttachmentDto? attachment, CancellationToken cancellationToken)
     {
@@ -28,6 +31,8 @@ public sealed class LocalProfileFeedbackComposer(IFeedbackEmailService emailServ
         return emailService.SendFeedbackAsync(subject, body, attachments);
     }
 
+    /// <summary>True only for a path inside the app's own storage, so an attachment can never come from elsewhere on</summary>
+    /// the device.</summary>
     private static bool IsWithinAppStorage(string filePath)
     {
         var root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(FileSystem.AppDataDirectory));

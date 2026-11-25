@@ -4,10 +4,12 @@ using MuscleCuties.UseCases.Features.Workout.Injury;
 
 namespace MuscleCuties.Server.Workout.Injury;
 
+/// <summary>The routes that read injuries back for the workout screens.</summary>
 public static class WorkoutInjuryEndpointMappings
 {
     private const string InjuriesRoute = "/api/v1/workouts/injuries";
 
+    /// <summary>Registers the workout injury endpoints.</summary>
     public static IEndpointRouteBuilder MapWorkoutInjuryEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(InjuriesRoute).RequireAuthorization();

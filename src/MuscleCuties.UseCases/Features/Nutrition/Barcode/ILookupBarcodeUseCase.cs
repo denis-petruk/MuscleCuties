@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Barcode.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Barcode;
 
+/// <summary>Resolves a scanned barcode to a food.</summary>
 public interface ILookupBarcodeUseCase
 {
     Task<BarcodeLookupResult> ExecuteAsync(

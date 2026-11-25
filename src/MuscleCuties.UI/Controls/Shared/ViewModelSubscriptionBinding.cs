@@ -8,6 +8,7 @@ namespace MuscleCuties.UI.Controls.Shared;
 /// </summary>
 public static class ViewModelSubscriptionBinding
 {
+    /// <summary>Keeps the subscription following the control's binding context.</summary>
     public static ViewModelSubscription<TViewModel> BindToControl<TViewModel>(
         VisualElement element,
         PropertyChangedEventHandler onPropertyChanged,

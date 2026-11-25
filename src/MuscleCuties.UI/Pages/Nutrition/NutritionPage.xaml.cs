@@ -4,11 +4,15 @@ using MuscleCuties.UI.ViewModels.Nutrition;
 
 namespace MuscleCuties.UI.Pages.Nutrition;
 
+/// <summary>
+///     Nutrition tab: daily meals, macro balance, phase focus, and the add-meal and suggestion sheets.
+/// </summary>
 public partial class NutritionPage : ContentPage
 {
     private readonly NutritionViewModel _viewModel;
     private int _lastCelebrationToken;
 
+    /// <summary>Takes its view model and binds before presentation so the loading overlay is active immediately.</summary>
     public NutritionPage(NutritionViewModel vm)
     {
         _viewModel = vm;
@@ -18,6 +22,7 @@ public partial class NutritionPage : ContentPage
         this.InitializeAndBind(InitializeComponent, vm);
     }
 
+    /// <summary>Reloads the day when navigated to.</summary>
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
@@ -30,6 +35,7 @@ public partial class NutritionPage : ContentPage
         this.BeginDeferredLoad(LoadDeferredCardsAsync);
     }
 
+    /// <summary>Opens the diary, and on failure reports it on the page instead of leaving the tap doing nothing.</summary>
     private async void OnOpenDailyFoodLogClicked(object? sender, EventArgs e)
     {
         try
@@ -43,6 +49,7 @@ public partial class NutritionPage : ContentPage
         }
     }
 
+    /// <summary>Loads the cards below the fold in sequence, yielding between them.</summary>
     private async Task LoadDeferredCardsAsync()
     {
         await PhaseFocusLazy.LoadIfNeededAsync(true);
@@ -50,18 +57,21 @@ public partial class NutritionPage : ContentPage
         await BalanceCardLazy.LoadIfNeededAsync(true);
     }
 
+    /// <summary>Releases the page when navigated away from.</summary>
     protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
     {
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         base.OnNavigatedFrom(args);
     }
 
+    /// <summary>Stops the view model when the page goes away.</summary>
     protected override void OnDisappearing()
     {
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         base.OnDisappearing();
     }
 
+    /// <summary>Applies the nutrition changes the view model reports.</summary>
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is not (nameof(NutritionViewModel.IsMealEditorVisible) or
@@ -93,6 +103,8 @@ public partial class NutritionPage : ContentPage
         });
     }
 
+    /// <summary>Loads whichever modal the view model has asked for, treating an editor-to-entry handoff as one</summary>
+    /// presentation rather than two.</summary>
     private async Task LoadRequestedViewsAsync()
     {
         var handoffToEditor = NutritionMealEntryHandoff.IsHandoff(
@@ -129,6 +141,7 @@ public partial class NutritionPage : ContentPage
         }
     }
 
+    /// <summary>Loads the breakdown panel only when it is visible or has been loaded before.</summary>
     private async Task LoadBreakdownViewAsync()
     {
         if (!_viewModel.IsBreakdownModalVisible && !Breakdown.HasLazyViewLoaded)
@@ -164,6 +177,7 @@ public partial class NutritionPage : ContentPage
         }
     }
 
+    /// <summary>Closes the open sheet before leaving the page.</summary>
     protected override bool OnBackButtonPressed()
     {
         if (_viewModel.IsMealDetailVisible)

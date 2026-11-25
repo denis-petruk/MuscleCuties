@@ -3,13 +3,18 @@ using MuscleCuties.UI.ViewModels.Profile;
 
 namespace MuscleCuties.UI.Pages.Profile;
 
+/// <summary>
+///     Personal details: name, birth date, and body measurements.
+/// </summary>
 public partial class ProfilePersonalInfoPage : ContentPage
 {
+    /// <summary>Initializes the page and its view model.</summary>
     public ProfilePersonalInfoPage(ProfilePersonalInfoViewModel vm)
     {
         this.InitializeAndBind(InitializeComponent, vm);
     }
 
+    /// <summary>Loads the profile when navigated to.</summary>
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
@@ -17,6 +22,7 @@ public partial class ProfilePersonalInfoPage : ContentPage
             ((ProfilePersonalInfoViewModel)BindingContext).LoadDataCommand.ExecuteAsync(null));
     }
 
+    /// <summary>Releases the page when navigated away from.</summary>
     protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
     {
         var vm = (ProfilePersonalInfoViewModel)BindingContext;
@@ -25,6 +31,7 @@ public partial class ProfilePersonalInfoPage : ContentPage
         base.OnNavigatedFrom(args);
     }
 
+    /// <summary>Closes the open sheet before leaving the page.</summary>
     protected override bool OnBackButtonPressed()
     {
         if (BindingContext is ProfilePersonalInfoViewModel vm && vm.HasUnsavedChanges)
@@ -36,6 +43,7 @@ public partial class ProfilePersonalInfoPage : ContentPage
         return base.OnBackButtonPressed();
     }
 
+    /// <summary>Opens the editor for the measurement row that was tapped and scrolls it into view.</summary>
     private async void OnEditMeasurementClicked(object? sender, EventArgs e)
     {
         if (sender is Button { CommandParameter: MeasurementHistoryRow reading } &&
@@ -46,6 +54,7 @@ public partial class ProfilePersonalInfoPage : ContentPage
         }
     }
 
+    /// <summary>Reports the new birth date so the age rule is re-applied.</summary>
     private void OnBirthDateSelected(object? sender, DateChangedEventArgs e)
     {
         ((ProfilePersonalInfoViewModel)BindingContext).MarkBirthDateSelected();

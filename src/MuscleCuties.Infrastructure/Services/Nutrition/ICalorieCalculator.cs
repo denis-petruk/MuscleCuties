@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Services.Nutrition;
 
+/// <summary>The calorie maths as the planner and the pages see it.</summary>
 public interface ICalorieCalculator
 {
     float CalculateBmr(float weightKg, float heightCm, int age);

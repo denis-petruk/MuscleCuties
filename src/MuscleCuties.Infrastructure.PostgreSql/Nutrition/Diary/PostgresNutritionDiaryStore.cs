@@ -15,6 +15,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
     private const int DefaultWaterMillilitres = 0;
     private readonly PostgresIdempotencyExecutor _idempotencyExecutor = idempotencyExecutor ?? new PostgresIdempotencyExecutor();
 
+    /// <summary>Loads one day of the diary.</summary>
     public async Task<NutritionDiaryDay> GetDayAsync(Guid userId, DateOnly date, int pageSize, string? pageToken,
         CancellationToken cancellationToken)
     {
@@ -61,6 +62,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Loads one diary entry by id.</summary>
     public Task<NutritionDiaryEntry?> GetSnapshotEntryByIdAsync(Guid userId, Guid itemId, CancellationToken cancellationToken) =>
         WithTenant(userId, cancellationToken, async () =>
         {
@@ -70,6 +72,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
             return row is null ? null : ToSnapshotEntry(row);
         });
 
+    /// <summary>Loads the diary days before a date.</summary>
     public async Task<NutritionDiaryHistory> GetHistoryAsync(Guid userId, DateOnly beforeDate, int pageSize,
         CancellationToken cancellationToken)
     {
@@ -109,6 +112,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Stores a hand-typed entry under the day's lock and appends its event in the same transaction.</summary>
     public async Task<string> SaveManualEntryAsync(Guid userId, SaveNutritionDiaryEntry item, CancellationToken cancellationToken)
     {
         var id = item.Identity is null ? Guid.NewGuid() : ParseSnapshotIdentity(item.Identity);
@@ -155,6 +159,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         return SnapshotPrefix + id.ToString("N");
     }
 
+    /// <summary>Updates the day's notes and water, keeping the entry totals untouched.</summary>
     public async Task UpdateMetadataAsync(Guid userId, UpdateNutritionDiaryMetadata metadata, CancellationToken cancellationToken)
     {
         await WithTenant(userId, cancellationToken, async () =>
@@ -173,6 +178,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Saves a batch of diary entries.</summary>
     public async Task<BatchSaveNutritionDiaryResponse> BatchSaveEntriesAsync(
         Guid userId, BatchSaveNutritionDiaryEntries command, CancellationToken cancellationToken)
     {
@@ -248,6 +254,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         return execution.Response;
     }
 
+    /// <summary>Copies entries between days or meals.</summary>
     public async Task<CopyNutritionDiaryResponse> CopyEntriesAsync(
         Guid userId, CopyNutritionDiary command, CancellationToken cancellationToken)
     {
@@ -363,6 +370,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         return execution.Response;
     }
 
+    /// <summary>Adds a quick-add entry.</summary>
     public async Task<QuickAddNutritionDiaryResponse> QuickAddEntryAsync(
         Guid userId, QuickAddNutritionDiaryEntry command, CancellationToken cancellationToken)
     {
@@ -428,6 +436,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         return execution.Response;
     }
 
+    /// <summary>The command events after a sequence number.</summary>
     public async Task<NutritionDiaryCommandEventPage> GetEventsAfterAsync(
         Guid userId, long afterCursor, int pageSize, CancellationToken cancellationToken)
     {
@@ -446,6 +455,7 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Runs the action with the tenant setting applied.</summary>
     private async Task<T> WithTenant<T>(Guid userId, CancellationToken ct, Func<Task<T>> action) =>
         await db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
@@ -457,11 +467,13 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
             return result;
         }).ConfigureAwait(false);
 
+    /// <summary>Maps a stored entry onto the diary entry shape.</summary>
     private static NutritionDiaryEntry ToSnapshotEntry(FoodItemEntryRecord row) => new(
         SnapshotPrefix + row.Id.ToString("N"), row.LocalDate, Enum.Parse<MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType>(row.MealType), row.Name,
         row.ServingSize, row.ServingUnit, row.ServingsCount, row.Calories, row.Protein, row.Carbs, row.Fat,
         DateTime.SpecifyKind(row.LoggedAtTimestamp, DateTimeKind.Utc), true);
 
+    /// <summary>A logged meal as a diary entry, summing its foods so the day totals are still one number per entry.</summary>
     private static NutritionDiaryEntry ToMealEntry(LoggedMealRecord meal, IReadOnlyList<FoodAmount> foods)
     {
         // Legacy grouped meals expose their source meal identity and preserve catalog-derived values.
@@ -477,8 +489,11 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
             LoggedMealId: global::MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview.PostgresNutritionOverviewStore.ToStableLoggedMealIntId(meal.Id));
     }
 
+    /// <summary>Scales a per-100-gram value to the grams logged.</summary>
     private static decimal Scale(decimal? per100, decimal grams) => per100.GetValueOrDefault() * grams / 100m;
+    /// <summary>A food reference with its weight, resolved to a catalog or custom food before the day is written.</summary>
     private sealed record FoodAmount(decimal Grams, string Name, decimal? Calories, decimal? Protein, decimal? Carbs, decimal? Fat);
+    /// <summary>Reads the stored timestamp and identity of a generated entry, or nothing when it was not generated.</summary>
     private static (DateTime LoggedAtUtc, string Identity)? ParsePageToken(string? token)
     {
         if (token is null) return null;
@@ -497,8 +512,10 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         }
     }
 
+    /// <summary>Page token for one diary entry.</summary>
     private static string CreatePageToken(NutritionDiaryEntry entry) => Convert.ToBase64String(
         Encoding.UTF8.GetBytes($"{entry.LoggedAtUtc:O}\n{entry.Identity}"));
+    /// <summary>The stored identity of a snapshot entry.</summary>
     private static Guid ParseSnapshotIdentity(string identity) =>
         identity.StartsWith(SnapshotPrefix, StringComparison.Ordinal) && Guid.TryParseExact(identity[SnapshotPrefix.Length..], "N", out var id)
             ? id : throw new ArgumentException("Only snapshot identities can be manually corrected.", nameof(identity));

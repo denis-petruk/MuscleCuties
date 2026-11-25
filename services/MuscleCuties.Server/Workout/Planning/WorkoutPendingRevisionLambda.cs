@@ -14,6 +14,8 @@ public sealed class WorkoutPendingRevisionLambda
         ApiApplication.Build(WebApplication.CreateBuilder()));
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>The Lambda entry point: reads the queued message, runs the reconciliation and returns nothing, because the queue</summary>
+    /// is the only channel back.</summary>
     public async Task<Stream> FunctionHandler(Stream input)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -35,5 +37,6 @@ public sealed class WorkoutPendingRevisionLambda
         return output;
     }
 
+    /// <summary>The queued message: the single user whose plan revision is waiting.</summary>
     public sealed record PendingWorkoutRevisionMessage(Guid UserId);
 }

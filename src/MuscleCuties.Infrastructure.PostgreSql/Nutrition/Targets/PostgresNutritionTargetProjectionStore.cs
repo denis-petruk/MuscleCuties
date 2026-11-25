@@ -19,6 +19,7 @@ public sealed class PostgresNutritionTargetProjectionStore(PostgresDbContext db)
     private const float MinimumWeightKg = 30f;
     private const float MaximumWeightKg = 500f;
 
+    /// <summary>Loads the stored nutrition target projection for the day.</summary>
     public async Task<ServerNutritionTargetProjection> LoadAsync(Guid userId, DateOnly date, CancellationToken cancellationToken) =>
         await db.Database.CreateExecutionStrategy().ExecuteAsync<ServerNutritionTargetProjection>(async () =>
         {
@@ -87,12 +88,15 @@ public sealed class PostgresNutritionTargetProjectionStore(PostgresDbContext db)
                 phase, PhaseCode(phase), context.AllowsCyclePhaseTrainingAdjustments ? "nutrition.targets.personalized" : "nutrition.targets.phase_guidance_unavailable");
         }).ConfigureAwait(false);
 
+    /// <summary>Reads the stored goals, falling back through the legacy shapes so an older profile still projects a target.</summary>
     private static ProfileNutritionGoals ParseGoals(string json)
     {
         try { return JsonSerializer.Deserialize<ProfileNutritionGoals>(json) ?? ProfileNutritionGoals.Empty; }
         catch (JsonException) { return ProfileNutritionGoals.Empty; }
     }
 
+    /// <summary>True when the birth date can support the age the projection needs.</summary>
     private static bool BirthDateUsable(DateOnly? birth, DateOnly date, int age) => birth.HasValue && birth.Value.Year > EarliestValidBirthYear && birth.Value <= date && age >= MinimumAdultAge;
+    /// <summary>Catalog code for the cycle phase's adjustment row.</summary>
     private static string PhaseCode(CyclePhase phase) => $"cycle.phase.{phase.ToString().ToLowerInvariant()}";
 }

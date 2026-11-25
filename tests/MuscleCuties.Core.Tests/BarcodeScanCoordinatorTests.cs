@@ -58,6 +58,56 @@ public sealed class BarcodeScanCoordinatorTests
     }
 
     [Fact]
+    public async Task ScanReportsTheDecodedBarcodeWithTheRevisionThatOwnsIt()
+    {
+        var coordinator = new BarcodeScanCoordinator(new DecodingHardware());
+
+        var scan = await coordinator.ScanAsync(() => true);
+
+        Assert.Equal("0123456789012", scan.BarcodeText);
+        Assert.Equal(BarcodeSymbology.Ean13, scan.Symbology);
+        Assert.Equal(coordinator.Revision, scan.Revision);
+        Assert.Null(scan.StatusText);
+    }
+
+    [Fact]
+    public async Task ScanReportsNoCodeDetectedWhenTheCaptureTimesOut()
+    {
+        var coordinator = new BarcodeScanCoordinator(new NeverCompletingHardware(), TimeSpan.FromMilliseconds(20));
+
+        var scan = await coordinator.ScanAsync(() => true);
+
+        Assert.Null(scan.BarcodeText);
+        Assert.Equal(BarcodeScanCoordinator.StatusNoCodeDetectedKey, scan.StatusText);
+    }
+
+    [Fact]
+    public async Task ScanWritesNothingWhenANewerSessionSupersededItsCapture()
+    {
+        var hardware = new SupersedingHardware();
+        var coordinator = new BarcodeScanCoordinator(hardware);
+        hardware.Supersede = () => coordinator.NextRevision();
+
+        var scan = await coordinator.ScanAsync(() => true);
+
+        Assert.Null(scan.BarcodeText);
+        Assert.Null(scan.StatusText);
+    }
+
+    [Fact]
+    public async Task ScanWithoutACameraShowsCameraUnavailable()
+    {
+        var coordinator = new BarcodeScanCoordinator(null);
+
+        var scan = await coordinator.ScanAsync(() => true);
+
+        Assert.False(coordinator.HasCamera);
+        Assert.Equal(0, coordinator.Revision);
+        Assert.Null(scan.BarcodeText);
+        Assert.Equal(BarcodeScanCoordinator.StatusCameraUnavailableKey, scan.StatusText);
+    }
+
+    [Fact]
     public async Task StartingASessionSupersedesThePreviousRevision()
     {
         var coordinator = new BarcodeScanCoordinator(new NeverCompletingHardware());
@@ -198,5 +248,23 @@ public sealed class BarcodeScanCoordinatorTests
     {
         public override Task<BarcodeCameraCaptureResult> CaptureBarcodeAsync(CancellationToken cancellationToken = default) =>
             Task.FromException<BarcodeCameraCaptureResult>(new InvalidOperationException("camera failed"));
+    }
+
+    private class DecodingHardware : NeverCompletingHardware
+    {
+        public override Task<BarcodeCameraCaptureResult> CaptureBarcodeAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(new BarcodeCameraCaptureResult(
+                BarcodeCaptureOutcome.Decoded, "0123456789012", BarcodeSymbology.Ean13));
+    }
+
+    private sealed class SupersedingHardware : DecodingHardware
+    {
+        public Action? Supersede { get; set; }
+
+        public override Task<BarcodeCameraCaptureResult> CaptureBarcodeAsync(CancellationToken cancellationToken = default)
+        {
+            Supersede?.Invoke();
+            return base.CaptureBarcodeAsync(cancellationToken);
+        }
     }
 }

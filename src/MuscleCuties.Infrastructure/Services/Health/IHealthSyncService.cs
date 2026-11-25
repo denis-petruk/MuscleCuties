@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Services.Health;
 
+/// <summary>The health sync as the app sees it.</summary>
 public interface IHealthSyncService
 {
     HealthDataSource DeviceHealthSource { get; }

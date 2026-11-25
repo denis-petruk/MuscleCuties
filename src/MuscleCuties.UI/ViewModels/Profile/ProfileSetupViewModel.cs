@@ -8,6 +8,8 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
+/// <summary>The first-run setup form: height and weight in the chosen system, birth date, goal and activity, saved as</summary>
+/// the profile before the app opens.</summary>
 public partial class ProfileSetupViewModel : ObservableObject
 {
     private const int InchesPerFoot = 12;
@@ -51,6 +53,7 @@ public partial class ProfileSetupViewModel : ObservableObject
     [ObservableProperty] private bool _useMetricSystem = true;
     [ObservableProperty] private ObservableCollection<WorkoutActivityOptionItem> _workoutActivityOptions = new();
 
+    /// <summary>Takes the setup use case and the quiz navigation callback.</summary>
     public ProfileSetupViewModel(
         IProfileSetupUseCase useCase,
         Func<Task> navigateToQuizAsync)
@@ -66,15 +69,23 @@ public partial class ProfileSetupViewModel : ObservableObject
         WorkoutActivityOptions = ProfileWorkoutActivityOptions.Build(new HashSet<WorkoutActivityDto>());
     }
 
+    /// <summary>The earliest birth date the form accepts.</summary>
     public DateTime MinBirthDate { get; } = DateTime.Today.AddYears(-100);
+    /// <summary>The latest birth date the form accepts.</summary>
     public DateTime MaxBirthDate { get; } = DateTime.Today.AddYears(-18);
 
+    /// <summary>The height values in centimetres.</summary>
     public List<int> MetricHeightOptions { get; } = Enumerable.Range(100, 121).ToList();
+    /// <summary>The feet values.</summary>
     public List<int> FeetOptions { get; } = Enumerable.Range(4, 4).ToList();
+    /// <summary>The inch values.</summary>
     public List<int> InchesOptions { get; } = Enumerable.Range(0, 12).ToList();
+    /// <summary>The weight values in kilograms.</summary>
     public List<int> MetricWeightOptions { get; } = Enumerable.Range(30, 171).ToList();
+    /// <summary>The weight values in pounds.</summary>
     public List<int> ImperialWeightOptions { get; } = Enumerable.Range(66, 375).ToList();
 
+    /// <summary>The goal options.</summary>
     public IReadOnlyList<SelectionOption<UserGoal>> GoalOptions { get; } =
     [
         new(UserGoal.FatLoss, "Fat Loss"),
@@ -83,17 +94,26 @@ public partial class ProfileSetupViewModel : ObservableObject
         new(UserGoal.MaintainHealth, "Maintain Health")
     ];
 
+    /// <summary>True when imperial units are chosen.</summary>
     public bool UseImperialSystem => !UseMetricSystem;
 
     // Measurements start unanswered so an untouched form can never save the old seeded defaults.
+    /// <summary>Height only counts as answered once a value above zero is entered, so an untouched form can never save the</summary>
+    /// seeded defaults.</summary>
     public bool HasAnsweredHeight => UseMetricSystem ? SelectedHeightCm > 0 : SelectedFeet > 0;
+    /// <summary>The same rule for weight, which also starts unanswered.</summary>
     public bool HasAnsweredWeight => UseMetricSystem ? SelectedWeightKg > 0 : SelectedWeightLbs > 0;
 
+    /// <summary>The activity choices grouped into their sections for the picker, rebuilt whenever the selection changes.</summary>
     public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions { get; private set; } = [];
 
+    /// <summary>The resource key for the weight unit this system enters.</summary>
     public string WeightUnit => UseMetricSystem ? "Common_Unit_Kg" : "Common_Unit_Lbs";
+    /// <summary>An avatar is shown only while its file still exists, so a deleted picture does not leave an empty frame.</summary>
     public bool HasProfileImage => !string.IsNullOrWhiteSpace(ProfileImagePath) && File.Exists(ProfileImagePath);
+    /// <summary>True when no photo was picked.</summary>
     public bool HasNoProfileImage => !HasProfileImage;
+    /// <summary>The avatar path when there is a usable one, empty when there is not.</summary>
     public string ProfileImageSource => HasProfileImage ? ProfileImagePath : string.Empty;
 
     public float Height
@@ -108,15 +128,24 @@ public partial class ProfileSetupViewModel : ObservableObject
         set => SelectedWeightKg = (int)value;
     }
 
+    /// <summary>Saves the profile and continues.</summary>
     public AsyncRelayCommand ContinueCommand { get; }
+    /// <summary>Loads the setup draft.</summary>
     public AsyncRelayCommand LoadDataCommand { get; }
+    /// <summary>Accepts the chosen birth date.</summary>
     public RelayCommand ConfirmBirthDateCommand { get; }
+    /// <summary>Chooses metric units.</summary>
     public RelayCommand SelectMetricUnitsCommand { get; }
+    /// <summary>Chooses imperial units.</summary>
     public RelayCommand SelectImperialUnitsCommand { get; }
+    /// <summary>Toggles a workout activity.</summary>
     public RelayCommand<WorkoutActivityOptionItem> ToggleWorkoutActivityCommand { get; }
 
+    /// <summary>Saves the profile.</summary>
     public AsyncRelayCommand SaveCommand => ContinueCommand;
 
+    /// <summary>Fills the form from an existing profile, loading the birth date behind a flag so the picker's own value is</summary>
+    /// never counted as the user's answer.</summary>
     private async Task LoadDataAsync()
     {
         if (IsBusy)
@@ -182,11 +211,13 @@ public partial class ProfileSetupViewModel : ObservableObject
         }
     }
 
+    /// <summary>Refreshes the command states when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         ContinueCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Converts the shown height and weight when the units change.</summary>
     partial void OnUseMetricSystemChanged(bool value)
     {
         if (value)
@@ -214,36 +245,42 @@ public partial class ProfileSetupViewModel : ObservableObject
         OnPropertyChanged(nameof(UseImperialSystem));
     }
 
+    /// <summary>Keeps the imperial height in step.</summary>
     partial void OnSelectedHeightCmChanged(int value)
     {
         if (value > 0 && HeightError == HeightRequiredError)
             HeightError = string.Empty;
     }
 
+    /// <summary>Keeps the metric height in step.</summary>
     partial void OnSelectedFeetChanged(int value)
     {
         if (value > 0 && HeightError == HeightRequiredError)
             HeightError = string.Empty;
     }
 
+    /// <summary>Keeps the imperial weight in step.</summary>
     partial void OnSelectedWeightKgChanged(int value)
     {
         if (value > 0 && WeightError == WeightRequiredError)
             WeightError = string.Empty;
     }
 
+    /// <summary>Keeps the metric weight in step.</summary>
     partial void OnSelectedWeightLbsChanged(int value)
     {
         if (value > 0 && WeightError == WeightRequiredError)
             WeightError = string.Empty;
     }
 
+    /// <summary>Refreshes the continue state when the acknowledgement changes.</summary>
     partial void OnWellnessAcknowledgedChanged(bool value)
     {
         if (value && WellnessError == WellnessRequiredError)
             WellnessError = string.Empty;
     }
 
+    /// <summary>Keeps the age in step when the birth date changes.</summary>
     partial void OnBirthDateChanged(DateTime oldValue, DateTime newValue)
     {
         // The iOS date picker pushes its initial value back through the two-way binding; only a
@@ -252,6 +289,7 @@ public partial class ProfileSetupViewModel : ObservableObject
             _birthDateWasSelected = true;
     }
 
+    /// <summary>Refreshes the age shown for the birth date.</summary>
     partial void OnBirthDateChanged(DateTime value)
     {
         var today = DateTime.Today;
@@ -285,12 +323,14 @@ public partial class ProfileSetupViewModel : ObservableObject
             _birthDatePickerFocused = true;
     }
 
+    /// <summary>Treats the picker being closed as an answer, but only when the user actually opened it.</summary>
     public void MarkBirthDateConfirmedFromPicker()
     {
         if (!_loadingBirthDate && _birthDatePickerFocused)
             MarkBirthDateAnswered();
     }
 
+    /// <summary>Treats a changed date as an answer; a programmatic load or re-picking the same day is not one.</summary>
     public void MarkBirthDateSelected(DateTime? oldDate, DateTime? newDate)
     {
         if (!_loadingBirthDate && _birthDatePickerFocused && newDate is { } picked && oldDate?.Date != picked.Date)
@@ -308,6 +348,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         MarkBirthDateAnswered();
     }
 
+    /// <summary>Records that the birth date has been answered, which is what the form's validity check reads.</summary>
     private void MarkBirthDateAnswered()
     {
         _birthDateWasSelected = true;
@@ -319,6 +360,7 @@ public partial class ProfileSetupViewModel : ObservableObject
     /// <summary>True only after the user picked a birth date (or one was loaded from a saved profile).</summary>
     public bool HasSelectedBirthDate => _birthDateWasSelected;
 
+    /// <summary>Shows the stored birth date without that counting as a choice.</summary>
     private void ApplyLoadedBirthDate(DateTime birthDate)
     {
         _loadingBirthDate = true;
@@ -335,6 +377,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         }
     }
 
+    /// <summary>Validates the form, saves the profile and moves on; anything refused stays on the page as field errors.</summary>
     private async Task ContinueAsync()
     {
         IsBusy = true;
@@ -403,6 +446,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         }
     }
 
+    /// <summary>Drops the per-field errors so a retry starts from a clean form rather than showing stale complaints.</summary>
     private void ClearFieldErrors()
     {
         // The age error belongs to the birthday field and survives a Continue press until fixed.
@@ -414,6 +458,7 @@ public partial class ProfileSetupViewModel : ObservableObject
         WellnessError = string.Empty;
     }
 
+    /// <summary>Turns one activity on or off and keeps the grouped sections in step with the selection.</summary>
     private void ToggleWorkoutActivity(WorkoutActivityOptionItem? item)
     {
         if (item is null)
@@ -424,12 +469,14 @@ public partial class ProfileSetupViewModel : ObservableObject
             StrengthActivityError = string.Empty;
     }
 
+    /// <summary>Stores the chosen avatar and republishes everything that depends on whether a picture exists.</summary>
     public void SetProfileImage(string? imagePath)
     {
         ProfileImagePath = string.IsNullOrWhiteSpace(imagePath) ? string.Empty : imagePath.Trim();
         ErrorMessage = string.Empty;
     }
 
+    /// <summary>Follows the activity options when they are replaced.</summary>
     partial void OnWorkoutActivityOptionsChanged(ObservableCollection<WorkoutActivityOptionItem> value)
     {
         GroupedWorkoutActivityOptions = ProfileWorkoutActivityOptions.BuildGroups(value);
@@ -437,6 +484,7 @@ public partial class ProfileSetupViewModel : ObservableObject
     }
 
 
+    /// <summary>Refreshes the photo state when the path changes.</summary>
     partial void OnProfileImagePathChanged(string value)
     {
         OnPropertyChanged(nameof(HasProfileImage));

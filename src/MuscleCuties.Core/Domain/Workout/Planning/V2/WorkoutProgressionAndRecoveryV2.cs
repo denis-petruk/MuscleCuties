@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning.V2;
 
+/// <summary>Whether load advances, holds or drops, and why.</summary>
 public enum ProgressionDecisionKindV2
 {
     CalibrationRequired = 0,
@@ -11,6 +12,7 @@ public enum ProgressionDecisionKindV2
     RecommendGlutePlateauPlusOneSet = 4
 }
 
+/// <summary>The next prescription for one exercise, with the reason it changed.</summary>
 public sealed record StrengthProgressionDecisionV2(
     int ExerciseId,
     ProgressionDecisionKindV2 Decision,
@@ -19,6 +21,7 @@ public sealed record StrengthProgressionDecisionV2(
     int? RecommendedTargetRepsAfterIncrease = null,
     int? RecommendedAdditionalWeeklySets = null);
 
+/// <summary>Whether an exercise may return after a pain restriction, and from which date.</summary>
 public sealed record PainReturnEligibilityV2(
     bool ReassessmentDue,
     bool CanReturnWithConservativeLoad,
@@ -26,6 +29,7 @@ public sealed record PainReturnEligibilityV2(
     int RemainingConservativeSessions,
     string ReasonCode);
 
+/// <summary>The next cardio prescription, with the band it moves to.</summary>
 public sealed record CardioProgressionRecommendationV2(
     WorkoutActivityType Activity,
     int? RecommendedDurationMinutes,
@@ -55,6 +59,7 @@ public static class WorkoutProgressionAndRecoveryV2
     public const string MaintainCurrentLoadCode = "MaintainCurrentLoad";
     public const string DeloadSessionsExcludedCode = "DeloadSessionsExcludedFromRegression";
 
+    /// <summary>Decides whether the recorded sets justify more load, more reps, or none.</summary>
     public static StrengthProgressionDecisionV2 EvaluateStrengthProgression(
         ExerciseCatalogItemV2 exercise,
         int prescribedSets,
@@ -195,6 +200,7 @@ public static class WorkoutProgressionAndRecoveryV2
         return new(exercise.ExerciseId, ProgressionDecisionKindV2.Maintain, currentLoad, MaintainCurrentLoadCode);
     }
 
+    /// <summary>Decides whether a painful site may return to loading yet.</summary>
     public static PainReturnEligibilityV2 EvaluatePainReturn(
         PainRestrictionV2 restriction,
         DateTimeOffset nowUtc,
@@ -243,6 +249,7 @@ public static class WorkoutProgressionAndRecoveryV2
             ReasonCode: "ConservativeReturnLoadApplied");
     }
 
+    /// <summary>Recommends the next cardio session's length from the recorded history.</summary>
     public static CardioProgressionRecommendationV2 EvaluateCardioProgression(
         WorkoutActivityType activity,
         IReadOnlyList<CardioActualRecordV2>? history)
@@ -290,6 +297,7 @@ public static class WorkoutProgressionAndRecoveryV2
             ReasonCode: "MaintainCardioBaseline");
     }
 
+    /// <summary>The reps that count for progression, treating a missing record as zero work.</summary>
     private static int EffectiveReps(ObservedSetRecordV2 set, bool isUnilateral)
     {
         if (!isUnilateral)
@@ -301,6 +309,7 @@ public static class WorkoutProgressionAndRecoveryV2
         return set.RepsCompleted;
     }
 
+    /// <summary>True when the sets met the effort and repetition targets for an increase.</summary>
     private static bool QualifiesForIncrease(
         ObservedSetRecordV2[] sets,
         bool isUnilateral,
@@ -311,6 +320,7 @@ public static class WorkoutProgressionAndRecoveryV2
             EffectiveReps(s, isUnilateral) >= maxReps &&
             (s.RirActual is null || s.RirActual.Value >= Math.Max(0, targetRir - 1)));
 
+    /// <summary>True when any set fell below the minimum repetition target.</summary>
     private static bool IsBelowMinimumReps(
         ObservedSetRecordV2[] sets,
         bool isUnilateral,

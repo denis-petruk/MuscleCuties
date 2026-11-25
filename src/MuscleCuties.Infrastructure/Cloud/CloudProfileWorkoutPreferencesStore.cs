@@ -2,12 +2,14 @@
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
+/// <summary>The workout preferences through the backend.</summary>
 public sealed class CloudProfileWorkoutPreferencesStore(
     IMuscleCutiesBackendApiClient apiClient) : IProfileWorkoutPreferencesStore
 {
     private const string ProfileRoute = "/api/v1/profile";
     private const string WorkoutPreferencesRoute = "/api/v1/profile/workout-preferences";
 
+    /// <summary>The saved preferences, or nothing before they have been saved.</summary>
     public async Task<WorkoutPreferencesDto?> LoadAsync(CancellationToken cancellationToken)
     {
         var response = await apiClient.GetAsync<ServerProfileSnapshot>(ProfileRoute, cancellationToken).ConfigureAwait(false);
@@ -17,6 +19,7 @@ public sealed class CloudProfileWorkoutPreferencesStore(
         return CloudWorkoutPreferencesSnapshotMapper.ToPreferences(snapshot);
     }
 
+    /// <summary>Saves the preferences against the version that was read.</summary>
     public async Task<bool> SaveAsync(WorkoutPreferencesDto preferences, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(preferences);

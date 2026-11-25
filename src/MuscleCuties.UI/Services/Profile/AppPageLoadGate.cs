@@ -2,6 +2,8 @@ using MuscleCuties.UI.ViewModels.Common;
 
 namespace MuscleCuties.UI.Services.Profile;
 
+/// <summary>Serialises a page's loads and skips a reload that is still fresh, so tab switches and resumed</summary>
+/// screens do not duplicate requests.</summary>
 internal sealed class AppPageLoadGate : IDisposable
 {
     private const string ReportedLoadFailure = "Page load reported an error.";
@@ -12,11 +14,14 @@ internal sealed class AppPageLoadGate : IDisposable
     private DateTime _lastLoadedAtUtc = DateTime.MinValue;
     private int _revision;
 
+    /// <summary>Sets how long a completed load counts as fresh.</summary>
     public AppPageLoadGate(TimeSpan freshnessWindow)
     {
         _freshnessWindow = freshnessWindow;
     }
 
+    /// <summary>Whether a load has ever completed, which decides between the first-load indicator and a quiet</summary>
+    /// refresh.</summary>
     public bool HasLoaded { get; private set; }
 
     /// <summary>
@@ -30,16 +35,19 @@ internal sealed class AppPageLoadGate : IDisposable
         return isBusy && !hasLoaded;
     }
 
+    /// <summary>The same rule applied to this gate's own history.</summary>
     public bool IsLoading(bool isBusy)
     {
         return IsLoading(isBusy, HasLoaded);
     }
 
+    /// <summary>Releases the gate's synchronization.</summary>
     public void Dispose()
     {
         _semaphore.Dispose();
     }
 
+    /// <summary>Forces the next load to run and invalidates any load still in flight.</summary>
     public void MarkStale()
     {
         Interlocked.Increment(ref _revision);
@@ -47,6 +55,8 @@ internal sealed class AppPageLoadGate : IDisposable
         HasLoaded = false;
     }
 
+    /// <summary>Runs a page's load and reports its failure on the page, so the screen shows a retry affordance rather</summary>
+    /// than a blank body.</summary>
     public async Task RunAsync(Func<Task> loadAsync, IPageLoadAware page, bool force = false)
     {
         // This boundary is shared by preloads, page entry and the Retry command.
@@ -78,6 +88,8 @@ internal sealed class AppPageLoadGate : IDisposable
         }
     }
 
+    /// <summary>Runs one load at a time, re-checking freshness once the semaphore is held so a load queued behind a</summary>
+    /// finishing one does not duplicate it.</summary>
     public async Task RunAsync(Func<Task> loadAsync, bool force = false)
     {
         if (!force && IsFresh())
@@ -125,12 +137,15 @@ internal sealed class AppPageLoadGate : IDisposable
         return RunAsync(loadAsync, page, true);
     }
 
+    /// <summary>Marks the data stale and reloads only when the change concerns today, so a change to a past day</summary>
+    /// does not disturb the current one.</summary>
     public void InvalidateAndReloadIfToday(DateOnly changedDate, Func<Task> loadAsync, IPageLoadAware page)
     {
         MarkStale();
         if (changedDate == DateOnly.FromDateTime(DateTime.Today)) _ = RunAsync(loadAsync, page, true);
     }
 
+    /// <summary>True when a load has completed inside the freshness window.</summary>
     private bool IsFresh()
     {
         return HasLoaded &&

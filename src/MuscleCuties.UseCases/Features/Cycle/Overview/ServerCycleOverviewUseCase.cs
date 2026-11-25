@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Cycle.History;
 
 namespace MuscleCuties.UseCases.Features.Cycle.Overview;
 
+/// <summary>The overview the server returns, already assembled from the rows.</summary>
 public sealed record ServerCycleOverview(
     CyclePredictionProjection Prediction,
     CycleHistorySnapshot History,
@@ -9,6 +10,7 @@ public sealed record ServerCycleOverview(
     string PhaseCode,
     string PredictionSourceCode);
 
+/// <summary>One phase log as the server returns it.</summary>
 public sealed record ServerCyclePhaseLog(
     Guid Id,
     Guid? CycleId,
@@ -21,14 +23,17 @@ public sealed record ServerCyclePhaseLog(
     string? Note,
     DateTime CreatedAt);
 
+/// <summary>The projection the server reads for the overview.</summary>
 public interface IServerCyclePhaseLogProjectionStore
 {
     Task<IReadOnlyList<ServerCyclePhaseLog>> LoadAsync(Guid userId, DateOnly from, DateOnly through,
         CancellationToken cancellationToken);
 }
 
+/// <summary>Assembles the server's overview from the projected phase logs.</summary>
 public sealed class ServerCycleOverviewUseCase(CycleHistoryUseCase history, IServerCyclePhaseLogProjectionStore phaseLogStore)
 {
+    /// <summary>Loads the server-side cycle overview for a user and range.</summary>
     public async Task<ServerCycleOverview> LoadAsync(Guid userId, DateOnly from, DateOnly through, DateOnly today,
         CancellationToken cancellationToken = default)
     {

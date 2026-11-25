@@ -8,6 +8,7 @@ namespace MuscleCuties.Core.Services.Profile;
 /// </summary>
 public sealed class LocalProfileMediaStore(string rootDirectory, Action<string> protectPath)
 {
+    /// <summary>Stores a profile image and returns its path, replacing any file of the same name.</summary>
     public async Task<string> StoreAsync(Stream source, string folder, string extension, CancellationToken ct = default)
     {
         var directory = GetDirectory(folder);
@@ -46,6 +47,7 @@ public sealed class LocalProfileMediaStore(string rootDirectory, Action<string> 
 
     // Preserve legacy references and bytes; apply protection in place. Missing
     // photos are tolerated, while real access/protection errors remain visible.
+    /// <summary>Applies the platform's file protection to the images already stored, which the app does after a restore.</summary>
     public void ProtectExistingFiles()
     {
         foreach (var folder in new[] { "profile", "vault" })
@@ -62,6 +64,7 @@ public sealed class LocalProfileMediaStore(string rootDirectory, Action<string> 
         }
     }
 
+    /// <summary>The directory a media folder lives in, created if it is missing.</summary>
     private string GetDirectory(string folder)
     {
         if (folder is not ("profile" or "vault"))

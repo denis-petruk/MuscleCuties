@@ -3,12 +3,14 @@ using MuscleCuties.UseCases.Features.Account.Registration;
 
 namespace MuscleCuties.UseCases.Features.Account.Authentication;
 
+/// <summary>Applies a verified reset: new hash, every other session revoked, one transaction.</summary>
 public sealed class CompletePasswordResetUseCase(
     IRegistrationEmailReceiptVerifier receiptVerifier,
     IRegistrationPasswordHasher passwordHasher,
     IAccountPasswordResetStore store,
     TimeProvider timeProvider) : IAccountPasswordResetUseCase
 {
+    /// <summary>Completes a password reset with the verified challenge and stores the new password.</summary>
     public async Task<PasswordResetStatus> ExecuteAsync(
         ResetPasswordRequest request,
         CancellationToken cancellationToken)

@@ -2,6 +2,7 @@
 
 namespace MuscleCuties.Infrastructure.Cloud;
 
+/// <summary>The profile tab's summary through the backend.</summary>
 public sealed class CloudProfileOverviewStore(
     IMuscleCutiesBackendApiClient apiClient,
     MobileJourneyCloudGateway cloudGateway) : IProfileOverviewStore
@@ -15,6 +16,7 @@ public sealed class CloudProfileOverviewStore(
     private const int DefaultCycleLengthDays = 28;
 
 #if DEBUG
+    /// <summary>Sends the profile request and traces the response.</summary>
     private static async Task<BackendApiResponse<T>> TraceProfileResponseAsync<T>(
         Task<BackendApiResponse<T>> responseTask, string operation)
     {
@@ -25,6 +27,7 @@ public sealed class CloudProfileOverviewStore(
     }
 #endif
 
+    /// <summary>The summary figures, read as one payload so the tab does not show a half-updated set.</summary>
     public async Task<ProfileOverviewSource> LoadAsync(CancellationToken cancellationToken)
     {
         var today = DateOnly.FromDateTime(DateTime.Today);
@@ -143,11 +146,13 @@ public sealed class CloudProfileOverviewStore(
         return new ProfileOverviewSource(overview, predictedPhase, predictedPhase);
     }
 
+    /// <summary>Signs out from the profile tab.</summary>
     public async Task LogoutAsync(CancellationToken cancellationToken)
     {
         await cloudGateway.LogoutAndPurgeLocalStateAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Stores the avatar path on the profile and returns it, or nothing when there was no image to store.</summary>
     public Task<string?> UpdateProfileImageAsync(string? imagePath, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();

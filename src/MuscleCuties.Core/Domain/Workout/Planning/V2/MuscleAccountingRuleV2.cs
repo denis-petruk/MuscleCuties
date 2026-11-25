@@ -26,6 +26,7 @@ public static class MuscleAccountingRuleV2
         MuscleGroupV2.HipAbductors
     ];
 
+    /// <summary>Totals the direct and indirect work each muscle group receives in the week.</summary>
     public static MuscleAccountingSummaryV2 Evaluate(
         IReadOnlyList<PlannedSessionV2> sessions,
         IReadOnlyDictionary<int, ExerciseCatalogItemV2> catalogById,

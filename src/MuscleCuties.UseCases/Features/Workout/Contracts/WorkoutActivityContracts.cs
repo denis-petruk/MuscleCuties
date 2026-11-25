@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Workout.Contracts;
 
+/// <summary>One planned activity as the client shows it.</summary>
 public enum WorkoutActivityDto
 {
     StrengthHighIntensity = 0,

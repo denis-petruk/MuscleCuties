@@ -7,6 +7,9 @@ using MuscleCuties.UseCases.Features.Profile.PhotoVault;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
+/// <summary>
+///     Photo vault state: the stored photos, the selected comparison, and the privacy toggles.
+/// </summary>
 public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAware, IDisposable
 {
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
@@ -37,6 +40,7 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
     [ObservableProperty] private string _comparisonSelectionBannerText = string.Empty;
     [ObservableProperty] private bool _hasPendingComparisonSelection;
 
+    /// <summary>Takes the photo use case and the back navigation callback.</summary>
     public PhotoJourneyVaultViewModel(
         IPhotoVaultUseCase useCase,
         Func<Task> navigateBackAsync)
@@ -54,27 +58,44 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         NavigateBackCommand = new AsyncRelayCommand(NavigateBackAsync);
     }
 
+    /// <summary>The blur control names what tapping it will do, rather than the state it is in.</summary>
     public string PrivacyBlurButtonText => IsPrivacyBlurEnabled ? "Reveal All" : "Blur All";
+    /// <summary>True when a status message is shown.</summary>
     public bool HasStatusMessage => !string.IsNullOrWhiteSpace(StatusMessage);
+    /// <summary>Comparing needs two photos whose files are still on the device, so a missing file cannot open a comparison</summary>
+    /// against a blank half.</summary>
     public bool CanComparePhotos => Photos.Count(p => p.IsImageAvailable) >= 2;
+    /// <summary>Loads the photo timeline.</summary>
     public AsyncRelayCommand LoadPhotosCommand => LoadDataCommand;
+    /// <summary>Shows or hides the privacy blur.</summary>
     public RelayCommand TogglePrivacyBlurCommand { get; }
+    /// <summary>Reveals or hides one photo.</summary>
     public RelayCommand<PhotoVaultItem> ToggleItemRevealCommand { get; }
+    /// <summary>Deletes a photo.</summary>
     public AsyncRelayCommand<PhotoVaultItem> DeletePhotoCommand { get; }
+    /// <summary>Chooses the first comparison photo.</summary>
     public AsyncRelayCommand<PhotoVaultItem> SelectFirstComparisonPhotoCommand { get; }
+    /// <summary>Chooses the second comparison photo.</summary>
     public AsyncRelayCommand<PhotoVaultItem> SelectSecondComparisonPhotoCommand { get; }
+    /// <summary>Closes the comparison.</summary>
     public RelayCommand CloseComparisonCommand { get; }
+    /// <summary>Returns to the previous page.</summary>
     public AsyncRelayCommand NavigateBackCommand { get; }
 
+    /// <summary>The first-load indicator; reloading the vault keeps the grid on screen.</summary>
     public bool IsPageLoading => _loadGate.IsLoading(IsBusy);
 
+    /// <summary>Loads the photos.</summary>
     public AsyncRelayCommand LoadDataCommand { get; }
 
+    /// <summary>Marks the vault stale so the next appearance reloads it after a photo was added elsewhere.</summary>
     public void Invalidate()
     {
         _loadGate.MarkStale();
     }
 
+    /// <summary>Reloads the grid and re-applies the privacy defaults, so a reload never inherits a reveal from the previous</summary>
+    /// visit.</summary>
     private async Task LoadPhotosCoreAsync()
     {
         ResetPrivacy();
@@ -114,17 +135,21 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         }
     }
 
+    /// <summary>Reveals or blurs the whole grid at once; a photo with no file stays hidden either way.</summary>
     private void TogglePrivacyBlur()
     {
         IsPrivacyBlurEnabled = !IsPrivacyBlurEnabled;
         foreach (var photo in Photos) photo.IsRevealed = !IsPrivacyBlurEnabled && photo.IsImageAvailable;
     }
 
+    /// <summary>Applies the blur change to every photo.</summary>
     partial void OnIsPrivacyBlurEnabledChanged(bool value)
     {
         OnPropertyChanged(nameof(PrivacyBlurButtonText));
     }
 
+    /// <summary>Flips one photo and re-derives whether the grid still counts as fully blurred, so the global control stays</summary>
+    /// honest after a single reveal.</summary>
     private void ToggleItemReveal(PhotoVaultItem? item)
     {
         if (item is null || !item.IsImageAvailable || !Photos.Contains(item)) return;
@@ -132,6 +157,8 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         IsPrivacyBlurEnabled = Photos.All(photo => !photo.IsRevealed);
     }
 
+    /// <summary>Re-blurs every photo, closes the comparison and bumps the privacy revision, which makes any image load</summary>
+    /// still in flight for a revealed photo discard its result.</summary>
     public void ResetPrivacy()
     {
         _privacyRevision++;
@@ -140,6 +167,8 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         ResetComparison();
     }
 
+    /// <summary>Fills one of the two comparison slots and renders the pair; it refuses a photo that is gone, so a deleted</summary>
+    /// photo cannot be compared.</summary>
     private async Task SelectComparisonPhotoAsync(PhotoVaultItem? item, bool isFirst)
     {
         if (item is null || !item.IsImageAvailable || !Photos.Contains(item)) return;
@@ -191,6 +220,7 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         }
     }
 
+    /// <summary>Marks which rows are currently chosen for comparison, using the same revision the images did.</summary>
     private void SyncComparisonSelectionState()
     {
         foreach (var photo in Photos)
@@ -213,6 +243,7 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         }
     }
 
+    /// <summary>Forgets both comparison selections and the rendered pair.</summary>
     private void ResetComparison()
     {
         _privacyRevision++;
@@ -222,6 +253,7 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         ResetComparisonImages();
     }
 
+    /// <summary>Closes the comparison view and drops both rendered images.</summary>
     private void ResetComparisonImages()
     {
         IsComparisonOpen = false;
@@ -229,6 +261,8 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         ComparisonSecondImagePath = null;
     }
 
+    /// <summary>Adds a photo with the phase it was taken in and reloads the grid, reporting whether it was stored so the</summary>
+    /// caller can keep the picker's result.</summary>
     public async Task<bool> AddPhotoAsync(string imagePath, DateTime date, double? weightKg, string notes)
     {
         var added = await _useCase.AddAsync(new AddPhotoVaultEntryRequest(
@@ -254,6 +288,7 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         return true;
     }
 
+    /// <summary>Deletes one photo and reloads, refusing while another write is running or when the row no longer exists.</summary>
     private async Task DeletePhotoAsync(PhotoVaultItem? item)
     {
         if (item is null || IsBusy) return;
@@ -302,11 +337,13 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
         }
     }
 
+    /// <summary>Leaves the vault through the navigation the page was given.</summary>
     private Task NavigateBackAsync()
     {
         return _navigateBackAsync();
     }
 
+    /// <summary>Releases the view model's subscriptions.</summary>
     public void Dispose()
     {
         _loadGate.Dispose();

@@ -6,6 +6,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 /// <summary>Requires the serialized publication-columns migration; never falls back to an unversioned read.</summary>
 public static class PostgresPhotoPublicationReceiptStore
 {
+    /// <summary>Records that an uploaded object was published.</summary>
     public static async Task SaveAsync(PostgresDbContext context, PhotoUploadObjectContext intent,
         S3PhotoPublication publication, CancellationToken cancellationToken)
     {
@@ -31,6 +32,7 @@ public static class PostgresPhotoPublicationReceiptStore
             throw new InvalidOperationException("The immutable publication receipt could not be recorded.");
     }
 
+    /// <summary>The publication recorded for a photo, when one exists.</summary>
     public static async Task<S3PhotoPublication?> LoadAsync(PostgresDbContext context, Guid ownerId, Guid photoId,
         CancellationToken cancellationToken)
     {
@@ -51,6 +53,7 @@ public static class PostgresPhotoPublicationReceiptStore
         return receipt;
     }
 
+    /// <summary>Builds the parameterised command a receipt write uses, keeping SQL and values separate.</summary>
     private static NpgsqlCommand Command(PostgresDbContext context, string sql)
     {
         var transaction = context.Database.CurrentTransaction

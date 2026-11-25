@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Profile.NutritionSettings;
 
+/// <summary>The nutrition-settings read and write.</summary>
 public interface IProfileNutritionSettingsStore
 {
     Task<NutritionSettingsProfileDto?> LoadAsync(CancellationToken cancellationToken);

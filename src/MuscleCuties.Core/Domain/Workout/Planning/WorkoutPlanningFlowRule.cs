@@ -1,8 +1,11 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>What leaving planning does, so the preview is closed rather than left open.</summary>
 public enum WorkoutPlanningBackAction { ClosePreview, ResumeAfterApply, Leave }
+/// <summary>Where an accepted plan sends her.</summary>
 public enum WorkoutPlanningSuccessDestination { Dashboard, Workout }
 
+/// <summary>The step planning is on.</summary>
 public enum WorkoutPlanningState
 {
     Initial,
@@ -15,6 +18,7 @@ public enum WorkoutPlanningState
     Completed
 }
 
+/// <summary>The events that move planning between steps.</summary>
 public enum WorkoutPlanningEvent
 {
     PreviewLoaded,
@@ -34,12 +38,15 @@ public sealed record PlanAcceptanceAcknowledgments(
     bool ReplacementConfirmed,
     bool ReducedVolumeAcknowledged);
 
+/// <summary>The allowed transitions, so a stale client cannot skip a required step.</summary>
 public static class WorkoutPlanningFlowRule
 {
+    /// <summary>Where the flow's back action goes from this state.</summary>
     public static WorkoutPlanningBackAction Back(bool hasPreview, bool navigationPending) => navigationPending
         ? WorkoutPlanningBackAction.ResumeAfterApply
         : hasPreview ? WorkoutPlanningBackAction.ClosePreview : WorkoutPlanningBackAction.Leave;
 
+    /// <summary>Where a successful plan lands, depending on whether it replaced one.</summary>
     public static WorkoutPlanningSuccessDestination Success(bool replacesExistingPlan) => replacesExistingPlan
         ? WorkoutPlanningSuccessDestination.Workout : WorkoutPlanningSuccessDestination.Dashboard;
 
@@ -81,15 +88,18 @@ public static class WorkoutPlanningFlowRule
         long activeRequestVersion) =>
         appearanceIsCurrent && requestVersion == activeRequestVersion;
 
+    /// <summary>The acknowledgements a plan acceptance needs, given whether it replaces one.</summary>
     public static PlanAcceptanceAcknowledgments AcceptanceAcknowledgments(bool replacesExistingPlan,
         bool reducedVolumeRequired) =>
         new(replacesExistingPlan, replacesExistingPlan && reducedVolumeRequired);
 
+    /// <summary>True when the plan may be accepted in the current state.</summary>
     public static bool CanAccept(bool busy, bool accepted, bool navigationPending, bool invalidated,
         bool persisted, bool hasLease, bool feasible, bool uncertainAcceptance) =>
         !busy && !accepted && !navigationPending && persisted && hasLease && feasible &&
         (!invalidated || uncertainAcceptance);
 
+    /// <summary>The next planning state for a trigger.</summary>
     public static WorkoutPlanningState Transition(WorkoutPlanningState current, WorkoutPlanningEvent trigger) =>
         (current, trigger) switch
         {
@@ -118,9 +128,11 @@ public static class WorkoutPlanningFlowRule
             _ => current
         };
 
+    /// <summary>True when the state, lease and feasibility allow acceptance.</summary>
     public static bool CanAcceptInState(WorkoutPlanningState state, bool hasLease, bool feasible) =>
         (state is WorkoutPlanningState.PreviewReady or WorkoutPlanningState.UncertainAcceptance) && hasLease && feasible;
 
+    /// <summary>True when the user must confirm replacing the active plan.</summary>
     public static bool RequiresReplacementConsentPrompt(WorkoutPlanningState state, bool replacesExistingPlan) =>
         replacesExistingPlan && state == WorkoutPlanningState.PreviewReady;
 }

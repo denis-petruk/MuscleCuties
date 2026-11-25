@@ -13,6 +13,7 @@ public enum MicronutrientCoverageStatus
     Unavailable
 }
 
+/// <summary>Reports which micronutrients the day covers, so a gap can be named rather than averaged away.</summary>
 public static class MicronutrientCoverageRule
 {
     /// <summary>

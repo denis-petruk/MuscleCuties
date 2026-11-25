@@ -16,6 +16,7 @@ public sealed class MealEditAction : Button
     /// </summary>
     public const string AutomationIdentity = "MealEditAction";
 
+    /// <summary>One row's edit action, carrying what the editor needs to open on that row.</summary>
     public MealEditAction()
     {
         AutomationId = AutomationIdentity;

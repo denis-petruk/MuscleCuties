@@ -22,6 +22,7 @@ public static class CardioSessionDurationRule
     public const int WalkingOrRowingStandaloneDayEstablishedMinutes = 45;
     public const int WalkingOrRowingMaximumSessionMinutes = 90;
 
+    /// <summary>Minutes a cardio-only day prescribes for the activity and experience level.</summary>
     public static decimal StandaloneDayMinutes(WorkoutActivityType activity, ActivityExperience experience) =>
         activity switch
         {
@@ -35,6 +36,7 @@ public static class CardioSessionDurationRule
                 : WalkingOrRowingStandaloneDayBeginnerMinutes
         };
 
+    /// <summary>Longest single cardio session the activity allows.</summary>
     public static decimal MaximumSessionMinutes(WorkoutActivityType activity) =>
         activity switch
         {

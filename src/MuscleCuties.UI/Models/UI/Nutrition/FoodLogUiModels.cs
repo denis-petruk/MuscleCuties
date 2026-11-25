@@ -3,12 +3,14 @@ using MuscleCuties.Core.Models.Nutrition;
 
 namespace MuscleCuties.UI.Models.UI.Nutrition;
 
+/// <summary>One day in the diary's week strip, carrying its own selected state.</summary>
 public partial class DateStripDayItem : ObservableObject
 {
     [ObservableProperty] private bool _hasData;
 
     [ObservableProperty] private bool _isSelected;
 
+    /// <summary>Builds the cell's labels once, so scrolling the strip does not reformat them.</summary>
     public DateStripDayItem(DateOnly date, bool isToday)
     {
         Date = date;
@@ -17,13 +19,19 @@ public partial class DateStripDayItem : ObservableObject
         IsToday = isToday;
     }
 
+    /// <summary>The day this strip cell shows.</summary>
     public DateOnly Date { get; }
+    /// <summary>The cell's weekday name.</summary>
     public string DayName { get; }
+    /// <summary>The cell's day of the month.</summary>
     public string DayNumber { get; }
+    /// <summary>True when the cell is today.</summary>
     public bool IsToday { get; }
 
+    /// <summary>True when the cell shows the today marker.</summary>
     public bool ShowTodayDot => IsToday && !IsSelected;
 
+    /// <summary>Spoken label for the cell: the date, plus "today" when it is.</summary>
     public string AccessibilityDescription => IsToday
         ? $"{DisplayFormat.DayMonthWithWeekday(Date)}, {UiTextCatalog.Get("Common_Today")}"
         : DisplayFormat.DayMonthWithWeekday(Date);
@@ -31,12 +39,15 @@ public partial class DateStripDayItem : ObservableObject
     /// <summary>Zero-based slot in the visible week strip.</summary>
     public int Position { get; set; }
 
+    /// <summary>Refreshes the marker when the cell's selection changes.</summary>
     partial void OnIsSelectedChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowTodayDot));
     }
 }
 
+/// <summary>One meal's card in the diary: its totals, the single line that names what was eaten, and</summary>
+/// whether the meal can be edited as one unit or must be opened row by row.</summary>
 public partial class MealSectionUiGroup : ObservableObject
 {
     private const int MaxSummaryIngredients = 4;
@@ -62,18 +73,25 @@ public partial class MealSectionUiGroup : ObservableObject
 
     [ObservableProperty] private bool _showItemRows;
 
+    /// <summary>Creates the section for a meal type; its items are added afterwards.</summary>
     public MealSectionUiGroup(MealType mealType, string title)
     {
         MealType = mealType;
         Title = title;
     }
 
+    /// <summary>The meal this section groups.</summary>
     public MealType MealType { get; }
+    /// <summary>The section's heading.</summary>
     public string Title { get; }
+    /// <summary>Outline glyph for the section's meal type.</summary>
     public string MealTypeIconData => MealTypeVisuals.GetIconData(MealType.ToString());
 
+    /// <summary>The entries in this section.</summary>
     public ObservableCollection<FoodLogEntry> Items { get; } = [];
 
+    /// <summary>Recalculates the card from its items: calorie and macro totals, the name shown, the ingredient
+    /// line, the share of the daily target, and whether rows or the edit action are shown.</summary>
     public void RefreshSummary(float dailyTargetCalories = 0f)
     {
         HasItems = Items.Count > 0;

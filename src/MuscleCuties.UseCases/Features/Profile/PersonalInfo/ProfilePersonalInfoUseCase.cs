@@ -4,13 +4,16 @@ using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Profile.PersonalInfo;
 
+/// <summary>Loads and saves personal info, refusing a save based on an older version.</summary>
 public sealed class ProfilePersonalInfoUseCase(IProfilePersonalInfoStore store) : IProfilePersonalInfoUseCase
 {
+    /// <summary>The personal info with the version a save must send back.</summary>
     public Task<LoadPersonalInfoResult> LoadAsync(CancellationToken cancellationToken = default)
     {
         return store.LoadAsync(cancellationToken);
     }
 
+    /// <summary>Applies the edits, refusing one based on an older version so two devices cannot overwrite each other.</summary>
     public async Task<SavePersonalInfoResult> SaveAsync(
         SavePersonalInfoRequest request, CancellationToken cancellationToken = default)
     {
@@ -35,6 +38,7 @@ public sealed class ProfilePersonalInfoUseCase(IProfilePersonalInfoStore store) 
         return new SavePersonalInfoResult(saved ? PersonalInfoSaveError.None : PersonalInfoSaveError.AccountMissing);
     }
 
+    /// <summary>Changes the account password after checking the current one.</summary>
     public Task<ChangeAccountPasswordResult> ChangePasswordAsync(
         ChangeAccountPasswordRequest request, CancellationToken cancellationToken = default)
     {

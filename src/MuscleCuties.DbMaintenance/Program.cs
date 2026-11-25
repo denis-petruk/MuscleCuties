@@ -10,6 +10,11 @@ using Npgsql;
 
 return await DatabaseMaintenance.RunAsync(args);
 
+/// <summary>
+///     Command-line entry points for schema maintenance: <c>dbinit</c>, <c>migrate</c>, <c>dbcheck</c>, <c>seed</c>,
+///     <c>baseline-script</c>, <c>session-lock-runner</c>, and the photo cleanup pass. Runs as a process or a
+///     deployment step, never inside Lambda, and prints JSON results for the caller to read.
+/// </summary>
 public static class DatabaseMaintenance
 {
     private const string ConnectionStringEnvironmentVariable = "ConnectionStrings__PostgreSql";
@@ -44,6 +49,10 @@ public static class DatabaseMaintenance
     private const int LockHealthCommandTimeoutSeconds = 2;
     private const int LockChildShutdownTimeoutSeconds = 10;
 
+    /// <summary>
+    ///     Dispatches one command and returns the process exit code: 0 on success, 1 on a failed operation,
+    ///     2 on invalid usage. Refuses to run inside AWS Lambda and keeps provider detail out of the output.
+    /// </summary>
     public static async Task<int> RunAsync(string[] args)
     {
         if (!TryParse(args, out var command))
@@ -209,6 +218,10 @@ public static class DatabaseMaintenance
         }
     }
 
+    /// <summary>
+    ///     Runs one photo cleanup pass with the dedicated dispatch and processor connections, both of which
+    ///     must use <c>SSL Mode=VerifyFull</c>. The dispatch cursor is persisted so the next run resumes.
+    /// </summary>
     private static async Task<int> RunPhotoCleanupAsync(string[] args)
     {
         var dispatchConnectionString = Environment.GetEnvironmentVariable(CleanupDispatchConnectionStringEnvironmentVariable);
@@ -245,6 +258,10 @@ public static class DatabaseMaintenance
         return result.OwnersFailed == 0 ? 0 : 1;
     }
 
+    /// <summary>
+    ///     Recognises the command in the first argument. <c>session-lock-runner</c> is only accepted when the
+    ///     child command follows a <c>--</c> separator; anything else is rejected as invalid usage.
+    /// </summary>
     public static bool TryParse(string[] args, out string? command)
     {
         command = null;
@@ -286,9 +303,14 @@ public static class DatabaseMaintenance
         PropertyNamingPolicy = JsonNamingPolicy.SnakeCaseLower
     };
 
+    /// <summary>Writes one maintenance result as snake_case JSON for the calling tool.</summary>
     private static void WriteJson<T>(T value) =>
         Console.WriteLine(JsonSerializer.Serialize(value, ResultJsonOptions));
 
+    /// <summary>
+    ///     Holds the deployment advisory lock for the lifetime of a child command, so two deployments cannot
+    ///     migrate the same database at once. The lock is verified on the child's own backend before it starts.
+    /// </summary>
     private static async Task<int> RunSessionLockRunnerAsync(string[] args)
     {
         var dashIndex = Array.IndexOf(args, "--");
@@ -331,6 +353,10 @@ public static class DatabaseMaintenance
         return await ExecuteChildProcessAsync(childCmd, childArgs, npgsqlConnection, backendPid);
     }
 
+    /// <summary>
+    ///     Polls the deployment advisory lock until it is granted or the acquisition window closes. Returns
+    ///     false rather than throwing when another deployment holds it.
+    /// </summary>
     private static async Task<bool> TryAcquireAdvisoryLockAsync(NpgsqlConnection connection)
     {
         var deadline = DateTime.UtcNow.AddSeconds(AdvisoryLockAcquireTimeoutSeconds);
@@ -348,6 +374,7 @@ public static class DatabaseMaintenance
         return false;
     }
 
+    /// <summary>Runs a child command, forwarding interrupts, and keeps the advisory lock connection alive until it exits.</summary>
     private static async Task<int> ExecuteChildProcessAsync(
         string childCmd,
         string[] childArgs,
@@ -408,6 +435,10 @@ public static class DatabaseMaintenance
         }
     }
 
+    /// <summary>
+    ///     Confirms this connection's backend still owns the session-level advisory lock. A failed or
+    ///     timed-out probe returns false, because it cannot establish ownership.
+    /// </summary>
     private static async Task<bool> HasSessionLockAsync(NpgsqlConnection connection, int backendPid)
     {
         try
@@ -440,11 +471,16 @@ public static class DatabaseMaintenance
     }
 }
 
+/// <summary>
+///     Runs the photo cleanup processor for one owner against the processor connection, which the
+///     dispatcher hands in per owner batch.
+/// </summary>
 internal sealed class LocalPhotoCleanupOwnerProcessorRunner(
     string processorConnectionString,
     MuscleCuties.UseCases.Features.Profile.PhotoVault.IS3PhotoObjectCleanup s3Cleanup,
     IConfiguration configuration) : IPhotoCleanupOwnerProcessorRunner
 {
+    /// <summary>Claims and cleans one owner's due photo objects, bounded by the batch size and lease.</summary>
     public async Task<PhotoCleanupBatchResult> ProcessOwnerAsync(Guid ownerId, int batchSize, TimeSpan leaseDuration, CancellationToken cancellationToken)
     {
         var options = new DbContextOptionsBuilder<PostgresDbContext>()

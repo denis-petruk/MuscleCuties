@@ -4,10 +4,12 @@ using MuscleCuties.UseCases.Features.Dashboard.Overview;
 
 namespace MuscleCuties.Server.Dashboard;
 
+/// <summary>The dashboard overview route, which is the one call the home screen makes.</summary>
 public static class DashboardOverviewEndpointMappings
 {
     private const string DashboardRoute = "/api/v1/dashboard";
 
+    /// <summary>Registers the overview endpoint.</summary>
     public static IEndpointRouteBuilder MapDashboardEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(DashboardRoute).RequireAuthorization();

@@ -3,27 +3,35 @@ using System.Text;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Persistence;
 
+/// <summary>One embedded migration script: its version, resource name and checksum, which together decide whether it may run.</summary>
 public sealed record MigrationScriptDefinition(
     int Version,
     string ScriptName,
     string ResourceName);
 
+/// <summary>What one script did: applied, skipped as already applied, or failed with the reason.</summary>
 public sealed record MigrationExecutionResult(
     int Version,
     string ScriptName,
     string ChecksumSha256,
     bool AlreadyApplied);
 
+/// <summary>The outcome of a migration pass, listing what ran so a startup can report it once.</summary>
 public sealed record SchemaMigrationSummary(
     int CurrentVersion,
     int MigrationsApplied,
     IReadOnlyList<MigrationExecutionResult> Details);
 
+/// <summary>The ledger of applied scripts. A checksum mismatch means an applied script changed, which the runner refuses rather than guesses about.</summary>
 public sealed class AppliedMigrationRecord
 {
+    /// <summary>The script's ordinal; the runner applies only versions above the highest here.</summary>
     public int Version { get; set; }
+    /// <summary>The script's name, so the ledger is readable without the code.</summary>
     public string ScriptName { get; set; } = string.Empty;
+    /// <summary>Hash of the script as applied; a different hash for the same version stops the run.</summary>
     public string ChecksumSha256 { get; set; } = string.Empty;
+    /// <summary>When it was applied.</summary>
     public DateTimeOffset AppliedAtUtc { get; set; }
 }
 
@@ -163,6 +171,7 @@ public static class PostgresSchemaMigrations
         return results;
     }
 
+    /// <summary>Applies the pending schema migrations.</summary>
     public static async Task<SchemaMigrationSummary> ApplyMigrationsAsync(
         PostgresDbContext context,
         CancellationToken cancellationToken = default)
@@ -292,6 +301,7 @@ public static class PostgresSchemaMigrations
         return new SchemaMigrationSummary(currentVersion, newlyAppliedCount, results);
     }
 
+    /// <summary>True when the table exists.</summary>
     private static async Task<bool> TableExistsAsync(
         PostgresDbContext context,
         string qualifiedName,
@@ -307,6 +317,7 @@ public static class PostgresSchemaMigrations
         return await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) is true;
     }
 
+    /// <summary>Loads an embedded script by resource name, failing loudly when it is missing rather than running nothing.</summary>
     private static async Task<string> ReadScriptAsync(string resourceName, CancellationToken cancellationToken)
     {
         var assembly = typeof(PostgresSchemaMigrations).Assembly;
@@ -317,12 +328,14 @@ public static class PostgresSchemaMigrations
         return await reader.ReadToEndAsync(cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>The script's hash, stored as the ledger checksum.</summary>
     private static string ComputeSha256Hex(string text)
     {
         var bytes = Encoding.UTF8.GetBytes(text);
         return Convert.ToHexStringLower(SHA256.HashData(bytes));
     }
 
+    /// <summary>Runs a script's SQL as one transaction, so a failing statement leaves the schema at the previous version.</summary>
     private static async Task ExecuteRawSqlAsync(PostgresDbContext context, string sql, CancellationToken cancellationToken)
     {
         var connection = (NpgsqlConnection)context.Database.GetDbConnection();

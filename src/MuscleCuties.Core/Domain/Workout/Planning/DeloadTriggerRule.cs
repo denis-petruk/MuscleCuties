@@ -24,6 +24,7 @@ public static class DeloadTriggerRule
     public const decimal ZeroReductionFraction = 0.0m;
     public const int ZeroRirIncrease = 0;
 
+    /// <summary>Prescribes a deload only when performance and recovery both point the same way.</summary>
     public static DeloadPrescription Evaluate(IReadOnlyList<WeeklyPerformanceAndRecoveryRecord>? history)
     {
         if (history is null || history.Count == ZeroConsecutiveWeeks)
@@ -77,6 +78,7 @@ public static class DeloadTriggerRule
             TriggerReason: "Deload threshold not met; normal progression criteria maintained.");
     }
 
+    /// <summary>Reduces the set count by the fraction, floored at one set so the muscle stays trained.</summary>
     public static int CalculateDeloadSets(int originalSets, decimal reductionFraction = DefaultDeloadSetReductionFraction)
     {
         if (originalSets <= MinimumWorkingSetsPerMuscle)
@@ -89,6 +91,7 @@ public static class DeloadTriggerRule
         return Math.Max(MinimumWorkingSetsPerMuscle, reducedSets);
     }
 
+    /// <summary>Raises reps in reserve by the given amount, so the deload lowers effort without changing movements.</summary>
     public static int CalculateDeloadRir(int currentRir, int rirIncrease = DefaultDeloadRirIncrease)
     {
         var clampedIncrease = Math.Clamp(rirIncrease, DefaultDeloadRirIncrease, MaxDeloadRirIncrease);
@@ -97,6 +100,7 @@ public static class DeloadTriggerRule
     }
 }
 
+/// <summary>One week's performance and recovery figures, the evidence a deload is judged on.</summary>
 public sealed record WeeklyPerformanceAndRecoveryRecord(
     int WeekIndex,
     bool CompoundUnderperformed,
@@ -122,6 +126,7 @@ public sealed record WeeklyPerformanceAndRecoveryRecord(
     }
 }
 
+/// <summary>What the deload changes and the reason, so she can see why the week is lighter.</summary>
 public sealed record DeloadPrescription(
     bool IsDeloadTriggered,
     int ConsecutiveTriggerWeeks,

@@ -1,6 +1,8 @@
 
 namespace MuscleCuties.UI.Controls.Nutrition;
 
+/// <summary>The add-or-edit entry sheet, built on the shared modal base so it inherits the focus and keyboard</summary>
+/// behaviour.</summary>
 public partial class MealEntryModal : AnimatedModalView
 {
     /// <summary>
@@ -13,9 +15,6 @@ public partial class MealEntryModal : AnimatedModalView
         InitializeComponent();
     }
 
-    protected override void OnSizeAllocated(double width, double height)
-    {
-        base.OnSizeAllocated(width, height);
-        BottomSheetSizing.Apply(SheetSurface, height);
-    }
+    /// <summary>Sizes the sheet to fill its host.</summary>
+    protected override SheetSizing SheetSizingPolicy => SheetSizing.Fill;
 }

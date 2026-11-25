@@ -6,6 +6,7 @@ using MuscleCuties.UseCases.Features.Profile.PhotoVault.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
+/// <summary>Stores upload intents, unique per account and idempotency key so a retried request reuses one row.</summary>
 public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) : IPhotoUploadIntentStore
 {
     // The signer caps POST grants at 15 minutes; this five-minute margin covers issuer/worker clock skew.
@@ -13,6 +14,7 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
     private const long MaximumDeclaredSizeBytes = 15 * 1024 * 1024;
     private static readonly Regex Sha256Pattern = new("\\A[0-9a-fA-F]{64}\\z", RegexOptions.Compiled);
 
+    /// <summary>Creates the upload intent, or returns the one the same request already created.</summary>
     public async Task<PhotoUploadIntentDto> CreateOrGetAsync(
         Guid userId,
         CreatePhotoUploadIntentRequest request,
@@ -72,6 +74,7 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
         }).ConfigureAwait(false);
     }
 
+    /// <summary>The upload intent for a photo.</summary>
     public async Task<PhotoUploadIntentDto?> GetAsync(
         Guid userId,
         Guid photoId,
@@ -95,6 +98,7 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
         return ToDto(record);
     }).ConfigureAwait(false);
 
+    /// <summary>Moves the intent to a new state.</summary>
     public async Task<PhotoUploadIntentDto?> TransitionAsync(
         Guid userId,
         Guid photoId,
@@ -160,6 +164,7 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
         return ToDto(record);
     }).ConfigureAwait(false);
 
+    /// <summary>Begins the transaction with the tenant identity set.</summary>
     private async Task<Microsoft.EntityFrameworkCore.Storage.IDbContextTransaction> BeginTenantTransactionAsync(
         Guid userId,
         CancellationToken cancellationToken)
@@ -180,6 +185,7 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
         }
     }
 
+    /// <summary>Expires the intent when its window has passed.</summary>
     private async Task<PhotoUploadIntentRecord> ExpireIfNeededAsync(
         PhotoUploadIntentRecord record,
         DateTime nowUtc,
@@ -206,6 +212,7 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
             cancellationToken);
     }
 
+    /// <summary>Queues the cleanup of the intent's objects.</summary>
     private async Task EnqueueCleanupAsync(
         PhotoUploadIntentRecord intent,
         string reason,
@@ -223,6 +230,7 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
             """, cancellationToken);
     }
 
+    /// <summary>Maps a stored intent onto its response shape.</summary>
     private static PhotoUploadIntentDto ToDto(PhotoUploadIntentRecord record) => new(
         record.Id,
         record.S3Key,
@@ -234,6 +242,7 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
         record.ExpiresAtUtc,
         Enum.Parse<PhotoUploadIntentState>(record.State, ignoreCase: false));
 
+    /// <summary>True when the stored intent came from the same request.</summary>
     private static bool SameRequest(PhotoUploadIntentRecord record, CreatePhotoUploadIntentRequest request) =>
         string.Equals(record.ContentType, request.ContentType, StringComparison.Ordinal)
         && record.DeclaredSizeBytes == request.DeclaredSizeBytes
@@ -241,6 +250,7 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
             Convert.FromHexString(record.Sha256Checksum),
             Convert.FromHexString(request.Sha256Checksum));
 
+    /// <summary>Checks the intent request carries usable values.</summary>
     private static void Validate(
         Guid userId,
         CreatePhotoUploadIntentRequest request,

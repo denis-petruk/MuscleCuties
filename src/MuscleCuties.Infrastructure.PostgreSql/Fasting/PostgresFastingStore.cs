@@ -3,6 +3,7 @@ using MuscleCuties.UseCases.Features.Fasting;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Fasting;
 
+/// <summary>Fasting sessions and their pause state, stored as one JSON document per account with the receipts that make command replays safe.</summary>
 public sealed class PostgresFastingStore(
     PostgresDbContext dbContext,
     TimeProvider timeProvider) : IFastingSessionStore
@@ -10,6 +11,7 @@ public sealed class PostgresFastingStore(
     private const string FastingStateKey = "state:fasting:sessions";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Replays a previously applied fast command.</summary>
     public async Task<FastingSessionOutputDto?> TryReplayCommandAsync(
         Guid accountId,
         Guid commandId,
@@ -25,12 +27,14 @@ public sealed class PostgresFastingStore(
         return session is null ? null : FastingSessionUseCase.Map(RestoreDomain(accountId, session), timeProvider.GetUtcNow(), false);
     }
 
+    /// <summary>Every session for the account, newest first.</summary>
     public async Task<IReadOnlyList<FastingSession>> LoadAllAsync(Guid accountId, CancellationToken cancellationToken)
     {
         var state = await ReadStateAsync(accountId, cancellationToken).ConfigureAwait(false);
         return state.Sessions.Select(s => RestoreDomain(accountId, s)).ToArray();
     }
 
+    /// <summary>One session, or nothing when it is not hers.</summary>
     public async Task<FastingSession?> LoadByIdAsync(Guid accountId, Guid sessionId, CancellationToken cancellationToken)
     {
         var state = await ReadStateAsync(accountId, cancellationToken).ConfigureAwait(false);
@@ -38,6 +42,7 @@ public sealed class PostgresFastingStore(
         return item is null ? null : RestoreDomain(accountId, item);
     }
 
+    /// <summary>Stores the fast and returns the saved state.</summary>
     public async Task<FastingSession> SaveAsync(
         Guid accountId,
         Guid commandId,
@@ -117,6 +122,7 @@ public sealed class PostgresFastingStore(
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>The stored document, or an empty state when the account has never fasted.</summary>
     private async Task<PersistedFastingState> ReadStateAsync(Guid accountId, CancellationToken cancellationToken)
     {
         var strategy = dbContext.Database.CreateExecutionStrategy();
@@ -135,6 +141,7 @@ public sealed class PostgresFastingStore(
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Maps a stored fast onto the domain object.</summary>
     private static FastingSession RestoreDomain(Guid accountId, PersistedFastingSession s) =>
         FastingSession.Restore(
             s.Id,
@@ -151,6 +158,7 @@ public sealed class PostgresFastingStore(
             s.Version,
             s.Pauses.Select(p => new FastingPauseInterval(p.PausedAtUtc, p.ResumedAtUtc)));
 
+    /// <summary>Maps the domain fast onto its stored shape.</summary>
     private static PersistedFastingSession ToPersisted(FastingSession s) => new(
         s.Id,
         s.AttestationPolicyVersion,
@@ -165,8 +173,10 @@ public sealed class PostgresFastingStore(
         s.Version,
         s.Pauses.Select(p => new PersistedPause(p.PausedAtUtc, p.ResumedAtUtc)).ToArray());
 
+    /// <summary>One pause inside a stored fast, replayed to reconstruct the session's effective duration.</summary>
     private sealed record PersistedPause(DateTimeOffset PausedAtUtc, DateTimeOffset? ResumedAtUtc);
 
+    /// <summary>One fast as stored: its window and target, which the document replays into the session the API returns.</summary>
     private sealed record PersistedFastingSession(
         Guid Id,
         string AttestationPolicyVersion,
@@ -181,6 +191,8 @@ public sealed class PostgresFastingStore(
         int Version,
         PersistedPause[] Pauses);
 
+    /// <summary>A recorded command, kept so a replayed request returns the first answer instead of applying twice.</summary>
     private sealed record PersistedFastingReceipt(Guid CommandId, string Signature, Guid SessionId);
+    /// <summary>The whole fasting document for one account.</summary>
     private sealed record PersistedFastingState(List<PersistedFastingSession> Sessions, List<PersistedFastingReceipt> Receipts);
 }

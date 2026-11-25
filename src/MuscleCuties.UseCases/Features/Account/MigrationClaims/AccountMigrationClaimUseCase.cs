@@ -3,6 +3,7 @@ using System.Text;
 
 namespace MuscleCuties.UseCases.Features.Account.MigrationClaims;
 
+/// <summary>Issues and redeems claims, refusing a source account that is already mapped.</summary>
 public sealed class AccountMigrationClaimUseCase(
     IAccountMigrationClaimStore store,
     TimeProvider timeProvider) : IAccountMigrationClaimUseCase
@@ -12,6 +13,7 @@ public sealed class AccountMigrationClaimUseCase(
     private const int ClaimLifetimeMinutes = 10;
     private const int NonceLengthBytes = 32;
 
+    /// <summary>Creates a single-use claim that lets a legacy account be migrated.</summary>
     public async Task<CreatedMigrationClaim?> CreateAsync(
         Guid destinationUserId,
         CreateMigrationClaimRequest request,
@@ -25,6 +27,7 @@ public sealed class AccountMigrationClaimUseCase(
         return await CreateWithNonceAsync(destinationUserId, request, nonce, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Redeems a migration claim, reporting whether it was used, expired or unknown.</summary>
     public Task<MigrationClaimOutcome> RedeemAsync(
         Guid destinationUserId,
         RedeemMigrationClaimRequest request,
@@ -43,6 +46,7 @@ public sealed class AccountMigrationClaimUseCase(
             cancellationToken);
     }
 
+    /// <summary>Creates the claim with a fresh nonce, retrying until the nonce is unique.</summary>
     private async Task<CreatedMigrationClaim> CreateWithNonceAsync(
         Guid destinationUserId,
         CreateMigrationClaimRequest request,
@@ -60,9 +64,11 @@ public sealed class AccountMigrationClaimUseCase(
         return new CreatedMigrationClaim(claimId, nonce, expiresAt);
     }
 
+    /// <summary>True when the source key is a plausible external account identifier.</summary>
     private static bool IsValidSourceKey(string? value) =>
         !string.IsNullOrWhiteSpace(value) && value.Length is >= MinimumSourceKeyCharacters and <= MaximumSourceKeyCharacters &&
         value.All(character => char.IsAsciiLetterOrDigit(character) || character is '-' or '_');
 
+    /// <summary>SHA-256 hash, hex encoded, so a claim is stored without its raw key.</summary>
     private static string Hash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
 }

@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>How practised she is at an activity, which widens the allowed session count and duration.</summary>
 public enum ActivityExperience
 {
     Unknown,
@@ -16,17 +17,20 @@ public sealed record ActivityTrainingHistory(
     DateOnly? LastCompletedSessionDate,
     bool IsSelfReported);
 
+/// <summary>The experience tier an activity's history earns, with the evidence behind it.</summary>
 public sealed record ActivityExperienceResult(
     ActivityExperience Experience,
     bool IsSelfReported,
     IReadOnlyList<string> Reasons);
 
+/// <summary>Decides that tier from her answers, so an untested activity never starts advanced.</summary>
 public static class ActivityExperienceRule
 {
     public const int MinimumConsistentWeeksForEstablished = 12;
     public const int EstablishedSessionsPerWeek = 2;
     public const int ReturningInactivityDays = 28;
 
+    /// <summary>Grades an activity's experience level from the user's history with it.</summary>
     public static ActivityExperienceResult Classify(
         string activityId,
         ActivityTrainingHistory? history,

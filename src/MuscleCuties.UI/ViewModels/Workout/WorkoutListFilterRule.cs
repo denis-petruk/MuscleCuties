@@ -17,6 +17,8 @@ public static class WorkoutListFilterRule
     public const string CardioTag = "CARDIO";
     public const string RecoveryTag = "RECOVERY";
 
+    /// <summary>Whether a scheduled day belongs in the filtered list. A rest day never does — it is context in the week</summary>
+    /// strip, not a workout — and an unset filter shows everything else.</summary>
     public static bool IsVisible(bool isRestDay, string? workoutTag, string? filterTag)
     {
         // A rest day is week context in the schedule strip, never a tappable workout card.

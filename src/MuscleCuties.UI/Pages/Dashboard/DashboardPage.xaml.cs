@@ -5,6 +5,9 @@ using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Pages.Dashboard;
 
+/// <summary>
+///     Today tab: readiness, targets, today's workout, nutrition, and the daily check-in sheet.
+/// </summary>
 public partial class DashboardPage : ContentPage
 {
     private readonly TaskCompletionSource _initialLoadCompleted =
@@ -17,6 +20,8 @@ public partial class DashboardPage : ContentPage
     private Task? _checkInModalLoadTask;
     private Task? _injuryModalLoadTask;
 
+    /// <summary>Takes its view model and the injury log it shares, watches theme changes, and binds before the page</summary>
+    /// is presented.</summary>
     public DashboardPage(DashboardViewModel vm)
     {
         _viewModel = vm;
@@ -25,8 +30,10 @@ public partial class DashboardPage : ContentPage
         this.InitializeAndBind(InitializeComponent, vm);
     }
 
+    /// <summary>Completes when the dashboard's first load finishes.</summary>
     internal Task InitialLoadCompleted => _initialLoadCompleted.Task;
 
+    /// <summary>Starts the view model's work when the page appears.</summary>
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -47,17 +54,20 @@ public partial class DashboardPage : ContentPage
         this.BeginDeferredLoad(LoadDeferredCardsAsync);
     }
 
+    /// <summary>Refreshes the dashboard when navigated to.</summary>
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
         _viewModel.ReattachPropertyChanged(OnViewModelPropertyChanged);
     }
 
+    /// <summary>Starts the deferred card load once; a later call joins the running task instead of repeating it.</summary>
     private Task LoadDeferredCardsAsync()
     {
         return _deferredCardsLoad ??= LoadDeferredCardsCoreAsync();
     }
 
+    /// <summary>Loads the cards below the fold one by one, yielding between them to keep scrolling responsive.</summary>
     private async Task LoadDeferredCardsCoreAsync()
     {
         // Keep the deferred creation order aligned with the visual reading order.
@@ -74,6 +84,7 @@ public partial class DashboardPage : ContentPage
         await TrendCardLazy.LoadIfNeededAsync(true);
     }
 
+    /// <summary>Applies the dashboard changes the view model reports.</summary>
     private async void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         var isInjuryModal = e.PropertyName == nameof(DashboardViewModel.IsInjuryModalVisible);
@@ -99,6 +110,8 @@ public partial class DashboardPage : ContentPage
         }
     }
 
+    /// <summary>Hands the injury modal to the shared helper with this page's lazy view and load task, so it is loaded</summary>
+    /// once and closed through the view model.</summary>
     private async Task UpdateInjuryModalAsync()
     {
         await PageLoadExtensions.UpdateInjuryModalAsync(
@@ -110,6 +123,8 @@ public partial class DashboardPage : ContentPage
             _viewModel.CloseInjuryModalCommand);
     }
 
+    /// <summary>Loads and shows the check-in modal only once it is needed or already loaded, so the dashboard does not</summary>
+    /// pay for it on first paint.</summary>
     private async Task UpdateCheckInModalAsync()
     {
         if (!_viewModel.IsCheckInModalVisible && !CheckInModalLazy.HasLazyViewLoaded)
@@ -137,6 +152,7 @@ public partial class DashboardPage : ContentPage
         modal.IsOpen = _viewModel.IsCheckInModalVisible;
     }
 
+    /// <summary>Stops the view model when the page goes away.</summary>
     protected override void OnDisappearing()
     {
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
@@ -146,12 +162,14 @@ public partial class DashboardPage : ContentPage
         base.OnDisappearing();
     }
 
+    /// <summary>Releases the page when navigated away from.</summary>
     protected override void OnNavigatedFrom(NavigatedFromEventArgs args)
     {
         _viewModel.PropertyChanged -= OnViewModelPropertyChanged;
         base.OnNavigatedFrom(args);
     }
 
+    /// <summary>Closes the open sheet before leaving the page.</summary>
     protected override bool OnBackButtonPressed()
     {
         if (PageLoadExtensions.TryCloseModalOnBack(_viewModel.IsInjuryModalVisible, _viewModel.CloseInjuryModalCommand))

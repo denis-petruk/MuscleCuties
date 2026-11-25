@@ -5,10 +5,13 @@ using MuscleCuties.UseCases.Features.Profile.Overview;
 
 namespace MuscleCuties.UI.Services.Profile;
 
+/// <summary>Account deletion as the profile feature sees it: the purge service does the work, and the session</summary>
+/// port supplies the identity.</summary>
 public sealed class LocalProfileAccountDeletion(
     IAppAccountPurgeService purgeService,
     IProfileAccountSession session) : IProfileAccountDeletion
 {
+    /// <summary>Deletes the account's local data.</summary>
     public async Task<ProfileAccountDeletionResult> DeleteLocalAccountAsync(
         int userId,
         CancellationToken cancellationToken)

@@ -6,6 +6,7 @@ global using StartAccountRegistrationResult = MuscleCuties.Contracts.Account.Sta
 
 namespace MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 
+/// <summary>The registration step the endpoints expose.</summary>
 public interface IAccountRegistrationUseCase
 {
     Task<StartAccountRegistrationResult> StartAsync(

@@ -9,6 +9,8 @@ using MuscleCuties.Infrastructure.Nutrition.Planning;
 
 namespace MuscleCuties.Core.Services.Nutrition.Planning;
 
+/// <summary>Turns a profile into daily targets: calories from the calculator, then macros, fibre and a per-meal split that</summary>
+/// respects the phase's focus.</summary>
 public class NutritionPlanner : INutritionPlanner
 {
     private const float DefaultCalories = 2000f;
@@ -23,11 +25,13 @@ public class NutritionPlanner : INutritionPlanner
 
     private readonly ICalorieCalculator _calorieCalculator;
 
+    /// <summary>Takes the calorie maths as a dependency, so the targets can be recomputed without the planner knowing how.</summary>
     public NutritionPlanner(ICalorieCalculator calorieCalculator)
     {
         _calorieCalculator = calorieCalculator;
     }
 
+    /// <summary>Builds the day's nutrition plan from the profile and its activity.</summary>
     public NutritionPlan CreateDailyPlan(
         UserProfile profile,
         CyclePhase phase,
@@ -117,6 +121,7 @@ public class NutritionPlanner : INutritionPlanner
                 calculatedCalories, calories, customGoals, calculatedGoals, savedMacroOverridesRetained));
     }
 
+    /// <summary>Builds the plan used when the personalised calculation cannot run.</summary>
     public NutritionPlan CreateFallbackPlan(
         CyclePhase phase,
         BreakfastPreference breakfastPreference = BreakfastPreference.Savoury)
@@ -144,6 +149,7 @@ public class NutritionPlanner : INutritionPlanner
             NutritionTargetProvenance.GeneralStarting(DefaultCalories));
     }
 
+    /// <summary>Whether the profile carries enough measurements to compute a target at all.</summary>
     private static bool HasUsableMetrics(UserProfile profile, DateTime date)
     {
         return float.IsFinite(profile.Height) &&
@@ -155,6 +161,7 @@ public class NutritionPlanner : INutritionPlanner
                CalculateAge(profile.DateOfBirth, date) >= 18;
     }
 
+    /// <summary>Age in whole years from a birth date, which the basal rate needs.</summary>
     public static int CalculateAge(DateTime dateOfBirth, DateTime date)
     {
         var age = date.Year - dateOfBirth.Year;
@@ -164,6 +171,7 @@ public class NutritionPlanner : INutritionPlanner
         return Math.Clamp(age, 12, 100);
     }
 
+    /// <summary>The activity multiplier the profile's training frequency implies.</summary>
     private static float CalculateActivityMultiplier(
         int workoutDaysPerWeek,
         TrainingExperienceLevel experienceLevel)
@@ -180,6 +188,7 @@ public class NutritionPlanner : INutritionPlanner
         return Math.Clamp(baseMultiplier + experienceAdjustment, 1.2f, 1.85f);
     }
 
+    /// <summary>The calorie change the profile's goal applies.</summary>
     private static float CalculateGoalAdjustment(
         float tdee,
         UserGoal goal,
@@ -196,6 +205,7 @@ public class NutritionPlanner : INutritionPlanner
         };
     }
 
+    /// <summary>The protein, carb and fat grams the plan targets.</summary>
     private static (float Protein, float Carbs, float Fats) CalculateMacros(
         float calories,
         float weightKg,
@@ -231,6 +241,7 @@ public class NutritionPlanner : INutritionPlanner
         return (protein, carbs, fats);
     }
 
+    /// <summary>The fibre target, scaled from the calorie target and the phase's focus.</summary>
     private static float CalculateFiber(float calories, CyclePhase phase)
     {
         var baseline = MathF.Max(25f, calories / 1000f * 14f);
@@ -238,6 +249,7 @@ public class NutritionPlanner : INutritionPlanner
         return RoundToNearest(baseline + phaseBonus, 1f);
     }
 
+    /// <summary>Litres of water the plan recommends for the day.</summary>
     private static float CalculateWaterLiters(
         float weightKg,
         int workoutDaysPerWeek,
@@ -248,6 +260,7 @@ public class NutritionPlanner : INutritionPlanner
         return RoundToNearest(Math.Clamp(weightKg * 0.035f + trainingBonus + phaseBonus, 1.8f, 4.0f), 0.1f);
     }
 
+    /// <summary>What the phase is asking of the diet, in the words the plan shows.</summary>
     private static string GetPhaseFocus(CyclePhase phase)
     {
         return phase switch
@@ -260,6 +273,7 @@ public class NutritionPlanner : INutritionPlanner
         };
     }
 
+    /// <summary>The nutrition notes for a phase, which the plan shows alongside the targets.</summary>
     private static IReadOnlyCollection<string> BuildNotes(UserProfile profile)
     {
         List<string> notes = [];
@@ -282,6 +296,7 @@ public class NutritionPlanner : INutritionPlanner
         return notes;
     }
 
+    /// <summary>How the day's calories split across meals for the phase.</summary>
     public static MealDistributionShares GetMealShares(BreakfastPreference preference)
     {
         var shares = MealDistributionRule.GetShares(preference);
@@ -289,6 +304,7 @@ public class NutritionPlanner : INutritionPlanner
             shares.Dinner, shares.Snack);
     }
 
+    /// <summary>One meal's share of the day's calories.</summary>
     public static float GetMealShare(MealType mealType, BreakfastPreference preference)
     {
         var shares = GetMealShares(preference);
@@ -302,6 +318,7 @@ public class NutritionPlanner : INutritionPlanner
         };
     }
 
+    /// <summary>One meal's share of the day's protein, which can differ from its calorie share.</summary>
     public static float GetMealProteinShare(MealType mealType, BreakfastPreference preference)
     {
         return GetMealShares(preference).GetProteinShare(mealType);
@@ -311,6 +328,7 @@ public class NutritionPlanner : INutritionPlanner
     // 26-30% for breakfast and dinner based on morning preference, and 10% for a flexible snack.
     // Daily protein goals are distributed 100% across the three main meals (Breakfast, Lunch, Dinner)
     // to preserve substantial meal protein thresholds, leaving snacks protein-neutral.
+    /// <summary>Splits the daily targets across the day's meals.</summary>
     public static IReadOnlyCollection<MealNutritionTarget> BuildMealTargets(
         float calories,
         float protein,
@@ -333,6 +351,7 @@ public class NutritionPlanner : INutritionPlanner
         ];
     }
 
+    /// <summary>The targets for one meal of the day.</summary>
     public static MealNutritionTarget BuildMealTarget(
         MealType mealType,
         float calorieShare,
@@ -350,6 +369,7 @@ public class NutritionPlanner : INutritionPlanner
             RoundToNearest(fats * calorieShare, 1f));
     }
 
+    /// <summary>The targets for one meal with an explicit calorie share.</summary>
     public static MealNutritionTarget BuildMealTarget(
         MealType mealType,
         float share,
@@ -361,19 +381,23 @@ public class NutritionPlanner : INutritionPlanner
         return BuildMealTarget(mealType, share, share, calories, protein, carbs, fats);
     }
 
+    /// <summary>A value rounded to the step the plan displays in, so the numbers read as chosen rather than computed.</summary>
     public static float RoundToNearest(float value, float nearest)
     {
         return MathF.Round(value / nearest) * nearest;
     }
 
+    /// <summary>The shares of the day each meal receives.</summary>
     public readonly record struct MealDistributionShares(
         float Breakfast,
         float Lunch,
         float Dinner,
         float Snack = 0.10f)
     {
+        /// <summary>The share left for the main meals once the smaller ones are taken.</summary>
         public float MainMealTotal => Breakfast + Lunch + Dinner;
 
+        /// <summary>A meal's protein share, which is the one the plan uses to size its protein portion.</summary>
         public float GetProteinShare(MealType mealType)
         {
             var mainTotal = MainMealTotal;

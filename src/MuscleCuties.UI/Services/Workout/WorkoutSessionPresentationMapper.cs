@@ -3,8 +3,12 @@ using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.UI.Services.Workout;
 
+/// <summary>Turns a session DTO into the activity blocks and exercise cards the session screen binds,</summary>
+/// including the per-set rows and their numbering.</summary>
 internal static class WorkoutSessionPresentationMapper
 {
+    /// <summary>Builds the blocks in plan order. A plan without activity blocks is shown as one block, and a plan</summary>
+    /// with neither blocks nor exercises maps to nothing rather than an empty section.</summary>
     public static IReadOnlyList<WorkoutActivitySectionItem> MapActivities(WorkoutSessionDetailDto detail)
     {
         var exercises = detail.Exercises.Select(MapExercise).ToArray();
@@ -49,6 +53,8 @@ internal static class WorkoutSessionPresentationMapper
         }).ToArray();
     }
 
+    /// <summary>Builds one exercise card: its planned values, its metric fields, and its sets renumbered by kind
+    /// so a warm-up never hides "working set 1".</summary>
     private static WorkoutExerciseItem MapExercise(WorkoutExerciseDetailDto source)
     {
         var item = new WorkoutExerciseItem
@@ -134,6 +140,8 @@ internal static class WorkoutSessionPresentationMapper
         return item;
     }
 
+    /// <summary>Uses the localized recommendation when the catalog has its key, otherwise the server text, so an</summary>
+    /// unknown code never appears raw on screen.</summary>
     private static string FormatRecommendation(WorkoutExerciseDetailDto source)
     {
         if (string.IsNullOrWhiteSpace(source.RecommendationCode))

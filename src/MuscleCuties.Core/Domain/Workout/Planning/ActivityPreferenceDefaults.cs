@@ -8,6 +8,7 @@ public static class ActivityPreferenceDefaults
     public const int OptionalSessionsPerWeek = 1;
     public const int ClimbingBaselineSessionsPerWeek = 1;
 
+    /// <summary>Weekly sessions the policy assumes for the activity, when it sets one.</summary>
     public static int? PolicySessionsPerWeek(WorkoutActivityType activity) => activity switch
     {
         WorkoutActivityType.HighVolumeStrength => ActivityPrescriptionRule.HighVolumeStrengthSessionsPerWeek,
@@ -23,11 +24,13 @@ public static class ActivityPreferenceDefaults
         _ => null
     };
 
+    /// <summary>Session length the activity defaults to, when it has one.</summary>
     public static int? DurationMinutes(WorkoutActivityType activity) =>
         WorkoutPreferencesRule.RequiresSessionDuration(activity)
             ? WorkoutPreferencesRule.DefaultSessionDurationMinutes(activity)
             : null;
 
+    /// <summary>Weekly sessions for the activity, capped by the weekdays the user has.</summary>
     public static int? SessionsPerWeek(WorkoutActivityType activity, int availableWeekdays) =>
         activity switch
         {

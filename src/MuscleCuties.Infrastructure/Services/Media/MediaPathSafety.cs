@@ -6,6 +6,7 @@ namespace MuscleCuties.Infrastructure.Services.Media;
 /// </summary>
 public static class MediaPathSafety
 {
+    /// <summary>Whether a path really stays inside a root directory, so a crafted name cannot read or delete outside it.</summary>
     public static bool IsWithinRoot(string path, string? rootDirectory)
     {
         if (string.IsNullOrWhiteSpace(rootDirectory) || !Path.IsPathFullyQualified(path))
@@ -16,6 +17,7 @@ public static class MediaPathSafety
             OperatingSystem.IsWindows() ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal);
     }
 
+    /// <summary>Normalizes a path so two spellings of the same file compare equal.</summary>
     private static string Normalize(string path) =>
         Path.GetFullPath(path).Replace(Path.AltDirectorySeparatorChar, Path.DirectorySeparatorChar);
 }

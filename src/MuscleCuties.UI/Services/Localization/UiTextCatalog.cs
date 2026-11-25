@@ -2,6 +2,8 @@ using System.Text.RegularExpressions;
 
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>The app's copy. English strings are registered by feature partials, Russian lives in</summary>
+/// <see cref="RussianUiText" />, and text that arrives from the database is translated by exact match.</summary>
 public static partial class UiTextCatalog
 {
     private const char HashKeyPrefix = 'T';
@@ -21,6 +23,7 @@ public static partial class UiTextCatalog
         ["Dashboard_HydrationValueFormat"] = "Hydration: {0}",
     };
 
+    /// <summary>Loads the catalog and registers every string group.</summary>
     static UiTextCatalog()
     {
         RegisterDashboardStrings();
@@ -39,30 +42,44 @@ public static partial class UiTextCatalog
             .ToDictionary(group => group.Key, group => group.First().Key, StringComparer.Ordinal);
     }
 
+    /// <summary>Declares the dashboard string registration.</summary>
     static partial void RegisterDashboardStrings();
+    /// <summary>Declares the cycle and workout string registration.</summary>
     static partial void RegisterCycleWorkoutStrings();
+    /// <summary>Declares the nutrition, profile and auth string registration.</summary>
     static partial void RegisterNutritionProfileAuthStrings();
+    /// <summary>Declares the workout generation string registration.</summary>
     static partial void RegisterWorkoutGenerationStrings();
+    /// <summary>Declares the phase adjustment string registration.</summary>
     static partial void RegisterWorkoutPhaseAdjustmentStrings();
+    /// <summary>Declares the hydration string registration.</summary>
     static partial void RegisterHydrationStrings();
+    /// <summary>Declares the body measurement string registration.</summary>
     static partial void RegisterBodyMeasurementStrings();
 
     private static readonly Dictionary<string, string> AuthoredKeyByEnglish;
 
+    /// <summary>Keys with no Russian translation, used by the localization check so a gap is caught before</summary>
+    /// release rather than showing English on a Russian device.</summary>
     internal static IReadOnlyCollection<string> MissingRussianKeys =>
         English.Keys.Where(key => !RussianUiText.Values.ContainsKey(key)).ToArray();
 
+    /// <summary>Keys whose Russian text dropped or reordered format placeholders, which would print a literal</summary>
+    /// brace or lose a value.</summary>
     internal static IReadOnlyCollection<string> InvalidRussianFormatKeys => English
         .Where(pair => RussianUiText.Values.TryGetValue(pair.Key, out var russian) &&
                        !FormatArguments(pair.Value).SequenceEqual(FormatArguments(russian)))
         .Select(pair => pair.Key)
         .ToArray();
 
+    /// <summary>True when the key is registered, used before resolving text that may be a plain string.</summary>
     internal static bool HasKey(string key)
     {
         return English.ContainsKey(key);
     }
 
+    /// <summary>The text for a key in the active language, falling back to English and then to the key itself,</summary>
+    /// so a missing entry is visible instead of blank.</summary>
     public static string Get(string key)
     {
         if (!English.TryGetValue(key, out var english))
@@ -75,11 +92,14 @@ public static partial class UiTextCatalog
         return english;
     }
 
+    /// <summary>Resolves a format string and fills it with composite formatting in the current culture.</summary>
     public static string Format(string key, params object?[] args)
     {
         return string.Format(CultureInfo.CurrentCulture, Get(key), args);
     }
 
+    /// <summary>Recognises generated keys (<c>T</c> plus ten hex digits), which are excluded when English text is</summary>
+    /// mapped back to an authored key.</summary>
     private static bool IsHashKey(string key)
     {
         if (key.Length != HashKeyLength || key[0] != HashKeyPrefix)
@@ -90,6 +110,8 @@ public static partial class UiTextCatalog
         return true;
     }
 
+    /// <summary>The format placeholders in a string, sorted, so two translations can be compared for the same</summary>
+    /// set of arguments.</summary>
     private static string[] FormatArguments(string text)
     {
         return Regex.Matches(text, @"\{\d+(?::[^}]*)?\}")

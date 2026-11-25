@@ -1,9 +1,11 @@
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
+/// <summary>The reviewed exclusion catalog: which exercise a restriction must exclude, read by the planner.</summary>
 public sealed class PostgresReviewedExerciseExclusionCatalogV020Store(
     PostgresDbContext dbContext) : IReviewedExerciseExclusionCatalogV020Store
 {
+    /// <summary>The reviewed exclusions the database holds.</summary>
     public async Task<IReadOnlyList<ReviewedExerciseExclusionOptionV020>> LoadAsync(
         CancellationToken cancellationToken = default)
     {

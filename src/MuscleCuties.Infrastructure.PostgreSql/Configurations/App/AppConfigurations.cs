@@ -5,10 +5,12 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Configurations.App;
 
+/// <summary>The conventions every app table shares: snake_case columns, numeric decimals, jsonb for columns named *Json, and the tenant key that scopes a row to one account.</summary>
 internal static class AppModelConfiguration
 {
     private static readonly Regex WordBoundary = new("([a-z0-9])([A-Z])", RegexOptions.Compiled);
 
+    /// <summary>Applies the table's conventions and the tenant machinery: a never-generated id, the (user_id, id) alternate key child rows reference, a user index, and a cascade from the account.</summary>
     public static void ConfigureTenant<TEntity>(EntityTypeBuilder<TEntity> builder, string table)
         where TEntity : class, ITenantRecord
     {
@@ -34,6 +36,7 @@ internal static class AppModelConfiguration
             .OnDelete(DeleteBehavior.Cascade);
     }
 
+    /// <summary>Applies the conventions to a table that is not account-scoped, so it gets no tenant key and no cascade from an account.</summary>
     public static void ConfigureGlobal<TEntity>(EntityTypeBuilder<TEntity> builder, string table)
         where TEntity : class
     {
@@ -51,12 +54,15 @@ internal static class AppModelConfiguration
         }
     }
 
+    /// <summary>Snake case name of a column or table.</summary>
     public static string ToSnakeCase(string value) => WordBoundary.Replace(value, "$1_$2").ToLowerInvariant();
 
 }
 
+/// <summary>A day's readiness overlay; one row per account and plan day, so the overlay cannot be applied twice.</summary>
 public sealed class WorkoutCycleReadinessOccurrenceConfiguration : IEntityTypeConfiguration<WorkoutCycleReadinessOccurrenceRecord>
 {
+    /// <summary>Reaches its day through the (user_id, id) key, so an overlay cannot point at another account's day.</summary>
     public void Configure(EntityTypeBuilder<WorkoutCycleReadinessOccurrenceRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_cycle_readiness_occurrences");
@@ -66,8 +72,10 @@ public sealed class WorkoutCycleReadinessOccurrenceConfiguration : IEntityTypeCo
     }
 }
 
+/// <summary>Accounts. Uniqueness is on the normalised address, and the Apple id is unique only where it is present.</summary>
 public sealed class UserConfiguration : IEntityTypeConfiguration<UserRecord>
 {
+    /// <summary>Stores the address with a binary collation and derives the normalised form in the database, so uniqueness is decided by one expression rather than by the writer.</summary>
     public void Configure(EntityTypeBuilder<UserRecord> builder)
     {
         AppModelConfiguration.ConfigureGlobal(builder, "users");
@@ -86,8 +94,10 @@ public sealed class UserConfiguration : IEntityTypeConfiguration<UserRecord>
     }
 }
 
+/// <summary>Objects the reconciler must confirm. Ownership is deliberately absent: the row carries only an opaque key.</summary>
 public sealed class PhotoObjectReconcileTargetConfiguration : IEntityTypeConfiguration<PhotoObjectReconcileTargetRecord>
 {
+    /// <summary>Adds the due-order index the reconciler reads and a constraint that a lease token and its expiry appear together.</summary>
     public void Configure(EntityTypeBuilder<PhotoObjectReconcileTargetRecord> builder)
     {
         AppModelConfiguration.ConfigureGlobal(builder, "photo_object_reconcile_targets");
@@ -106,8 +116,10 @@ public sealed class PhotoObjectReconcileTargetConfiguration : IEntityTypeConfigu
     }
 }
 
+/// <summary>Redeemed verification codes, keyed by the challenge id the email carried.</summary>
 public sealed class EmailChallengeConfiguration : IEntityTypeConfiguration<EmailChallengeRecord>
 {
+    /// <summary>Keeps the challenge id as the key, so the emailed identifier is what the redemption is looked up by.</summary>
     public void Configure(EntityTypeBuilder<EmailChallengeRecord> builder)
     {
         AppModelConfiguration.ConfigureGlobal(builder, "email_challenges");
@@ -118,8 +130,10 @@ public sealed class EmailChallengeConfiguration : IEntityTypeConfiguration<Email
     }
 }
 
+/// <summary>Issued refresh tokens, unique by token hash so a token can only exist once.</summary>
 public sealed class RefreshSessionConfiguration : IEntityTypeConfiguration<RefreshSessionRecord>
 {
+    /// <summary>Indexes the family so a whole rotation lineage can be revoked at once, and requires the expiry to follow the issue.</summary>
     public void Configure(EntityTypeBuilder<RefreshSessionRecord> builder)
     {
         AppModelConfiguration.ConfigureGlobal(builder, "refresh_sessions");
@@ -140,8 +154,10 @@ public sealed class RefreshSessionConfiguration : IEntityTypeConfiguration<Refre
     }
 }
 
+/// <summary>One-time Apple sign-in nonces, unique by hash and indexed by expiry for pruning.</summary>
 public sealed class AppleSignInNonceConfiguration : IEntityTypeConfiguration<AppleSignInNonceRecord>
 {
+    /// <summary>Unique by nonce hash and indexed by expiry, which is how expired rows are pruned.</summary>
     public void Configure(EntityTypeBuilder<AppleSignInNonceRecord> builder)
     {
         AppModelConfiguration.ConfigureGlobal(builder, "apple_sign_in_nonces");
@@ -155,8 +171,10 @@ public sealed class AppleSignInNonceConfiguration : IEntityTypeConfiguration<App
     }
 }
 
+/// <summary>Revoked access tokens, unique by token id so a revocation is recorded once.</summary>
 public sealed class RevokedAccessTokenConfiguration : IEntityTypeConfiguration<RevokedAccessTokenRecord>
 {
+    /// <summary>Unique by token id and indexed by expiry, so the denial list stays small.</summary>
     public void Configure(EntityTypeBuilder<RevokedAccessTokenRecord> builder)
     {
         AppModelConfiguration.ConfigureGlobal(builder, "revoked_access_tokens");
@@ -172,8 +190,10 @@ public sealed class RevokedAccessTokenConfiguration : IEntityTypeConfiguration<R
     }
 }
 
+/// <summary>Verification code challenges, with the attempt, expiry and purpose limits expressed as constraints.</summary>
 public sealed class EmailChallengeSessionConfiguration : IEntityTypeConfiguration<EmailChallengeSessionRecord>
 {
+    /// <summary>Constrains purpose to the two supported values, keeps attempts non-negative, and indexes the newest challenge per address.</summary>
     public void Configure(EntityTypeBuilder<EmailChallengeSessionRecord> builder)
     {
         AppModelConfiguration.ConfigureGlobal(builder, "email_challenge_sessions");
@@ -207,8 +227,10 @@ public sealed class EmailChallengeSessionConfiguration : IEntityTypeConfiguratio
     }
 }
 
+/// <summary>Claim nonces for pre-existing accounts, unique by hash.</summary>
 public sealed class SourceAccountClaimNonceConfiguration : IEntityTypeConfiguration<SourceAccountClaimNonceRecord>
 {
+    /// <summary>Unique by nonce hash and indexed by expiry; the destination account must exist.</summary>
     public void Configure(EntityTypeBuilder<SourceAccountClaimNonceRecord> builder)
     {
         AppModelConfiguration.ConfigureGlobal(builder, "source_account_claim_nonces");
@@ -229,8 +251,10 @@ public sealed class SourceAccountClaimNonceConfiguration : IEntityTypeConfigurat
     }
 }
 
+/// <summary>Source-account mappings, unique per source account so an import cannot run twice.</summary>
 public sealed class SourceAccountMappingConfiguration : IEntityTypeConfiguration<SourceAccountMappingRecord>
 {
+    /// <summary>Makes the source pair and the claim id unique, so one source account and one claim each map exactly once.</summary>
     public void Configure(EntityTypeBuilder<SourceAccountMappingRecord> builder)
     {
         AppModelConfiguration.ConfigureGlobal(builder, "source_account_mappings");
@@ -251,8 +275,10 @@ public sealed class SourceAccountMappingConfiguration : IEntityTypeConfiguration
     }
 }
 
+/// <summary>The profile: one row per account, JSON columns constrained to the shape the app stores, and the concurrency token a save must match.</summary>
 public sealed class UserProfileConfiguration : IEntityTypeConfiguration<UserProfileRecord>
 {
+    /// <summary>Makes the row unique per account, marks the version as a concurrency token, and constrains each JSON column to the type the app writes: arrays for id lists, objects for maps.</summary>
     public void Configure(EntityTypeBuilder<UserProfileRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "user_profiles");
@@ -283,8 +309,10 @@ public sealed class UserProfileConfiguration : IEntityTypeConfiguration<UserProf
     }
 }
 
+/// <summary>Recorded command keys, unique per account, with the answer required to appear together with its completion time.</summary>
 public sealed class CommandIdempotencyConfiguration : IEntityTypeConfiguration<CommandIdempotencyRecord>
 {
+    /// <summary>Makes the key unique per account and requires the stored answer and its completion time to appear together.</summary>
     public void Configure(EntityTypeBuilder<CommandIdempotencyRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "command_idempotency");
@@ -300,8 +328,10 @@ public sealed class CommandIdempotencyConfiguration : IEntityTypeConfiguration<C
     }
 }
 
+/// <summary>The diary event cursor, keyed by account rather than by a surrogate id: there is exactly one per account.</summary>
 public sealed class NutritionDiaryEventCursorConfiguration : IEntityTypeConfiguration<NutritionDiaryEventCursorRecord>
 {
+    /// <summary>Keys on the account instead of a surrogate id, because there is exactly one cursor per account.</summary>
     public void Configure(EntityTypeBuilder<NutritionDiaryEventCursorRecord> builder)
     {
         builder.ToTable("nutrition_diary_event_cursors", "app");
@@ -313,8 +343,10 @@ public sealed class NutritionDiaryEventCursorConfiguration : IEntityTypeConfigur
     }
 }
 
+/// <summary>The diary's append-only command log, unique per account and cursor position.</summary>
 public sealed class NutritionDiaryCommandEventConfiguration : IEntityTypeConfiguration<NutritionDiaryCommandEventRecord>
 {
+    /// <summary>Makes the cursor unique per account, so two events cannot claim one position.</summary>
     public void Configure(EntityTypeBuilder<NutritionDiaryCommandEventRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "nutrition_diary_command_events");
@@ -325,13 +357,17 @@ public sealed class NutritionDiaryCommandEventConfiguration : IEntityTypeConfigu
     }
 }
 
+/// <summary>Profile copies. Only the tenant conventions apply; a snapshot is never joined to.</summary>
 public sealed class UserProfileSnapshotConfiguration : IEntityTypeConfiguration<UserProfileSnapshotRecord>
 {
+    /// <summary>Applies only the tenant conventions; a snapshot is written and read whole, never joined.</summary>
     public void Configure(EntityTypeBuilder<UserProfileSnapshotRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "user_profile_snapshots");
 }
 
+/// <summary>Onboarding answers, tied to the exact answer option and to the snapshot they were folded into.</summary>
 public sealed class UserQuizResponseConfiguration : IEntityTypeConfiguration<UserQuizResponseRecord>
 {
+    /// <summary>Reaches the answer option through the catalog's alternate key, so an answer cannot be attached to another question.</summary>
     public void Configure(EntityTypeBuilder<UserQuizResponseRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "user_quiz_responses");
@@ -344,8 +380,10 @@ public sealed class UserQuizResponseConfiguration : IEntityTypeConfiguration<Use
     }
 }
 
+/// <summary>Recorded cycles, indexed by account and start date descending for the newest-first read.</summary>
 public sealed class CycleLogConfiguration : IEntityTypeConfiguration<CycleLogRecord>
 {
+    /// <summary>Indexed by account and start date descending, which is the newest-first read the overview makes.</summary>
     public void Configure(EntityTypeBuilder<CycleLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "cycle_logs");
@@ -353,8 +391,10 @@ public sealed class CycleLogConfiguration : IEntityTypeConfiguration<CycleLogRec
     }
 }
 
+/// <summary>Per-day phase logs, one per account and local date, with the cycle link restricted rather than cascaded.</summary>
 public sealed class CyclePhaseLogConfiguration : IEntityTypeConfiguration<CyclePhaseLogRecord>
 {
+    /// <summary>One row per account and local date, and its cycle link is restricted so deleting a cycle cannot silently drop logged days.</summary>
     public void Configure(EntityTypeBuilder<CyclePhaseLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "cycle_phase_logs");
@@ -365,8 +405,10 @@ public sealed class CyclePhaseLogConfiguration : IEntityTypeConfiguration<CycleP
     }
 }
 
+/// <summary>Symptoms per day, indexed newest-first and tied to their cycle by a restricted key.</summary>
 public sealed class SymptomLogConfiguration : IEntityTypeConfiguration<SymptomLogRecord>
 {
+    /// <summary>Indexed newest-first and linked to its cycle with a restricted key.</summary>
     public void Configure(EntityTypeBuilder<SymptomLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "symptom_logs");
@@ -376,6 +418,7 @@ public sealed class SymptomLogConfiguration : IEntityTypeConfiguration<SymptomLo
     }
 }
 
+/// <summary>Readiness answers, with the planning scales pinned to 1–5 and the revision kept non-negative.</summary>
 public sealed class DailyReadinessLogConfiguration : IEntityTypeConfiguration<DailyReadinessLogRecord>
 {
     private const int MinimumPlanningScaleValue = 1;
@@ -384,6 +427,7 @@ public sealed class DailyReadinessLogConfiguration : IEntityTypeConfiguration<Da
     private static readonly string PlanningScaleConstraint = $"(planning_sleep_quality IS NULL OR planning_sleep_quality BETWEEN {MinimumPlanningScaleValue} AND {MaximumPlanningScaleValue}) AND (planning_soreness IS NULL OR planning_soreness BETWEEN {MinimumPlanningScaleValue} AND {MaximumPlanningScaleValue}) AND (planning_stress IS NULL OR planning_stress BETWEEN {MinimumPlanningScaleValue} AND {MaximumPlanningScaleValue})";
     private static readonly string PlanningRevisionConstraint = $"planning_revision >= {InitialPlanningRevision}";
 
+    /// <summary>Pins the planning scales to 1–5 and the revision to non-negative, so a plan can trust any stored value.</summary>
     public void Configure(EntityTypeBuilder<DailyReadinessLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "daily_readiness_logs");
@@ -400,10 +444,12 @@ public sealed class DailyReadinessLogConfiguration : IEntityTypeConfiguration<Da
     }
 }
 
+/// <summary>Reported injuries; the column limits keep a free-text trigger short enough to index later.</summary>
 public sealed class WorkoutInjuryLogConfiguration : IEntityTypeConfiguration<WorkoutInjuryLogRecord>
 {
     private const int WorseningTriggerMaximumLength = 32;
 
+    /// <summary>Limits the free-text trigger column, which is descriptive only and never parsed by the planner.</summary>
     public void Configure(EntityTypeBuilder<WorkoutInjuryLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_injury_logs");
@@ -411,8 +457,10 @@ public sealed class WorkoutInjuryLogConfiguration : IEntityTypeConfiguration<Wor
     }
 }
 
+/// <summary>The link from a suppressed exercise row to its injury episode, unique per pair.</summary>
 public sealed class WorkoutInjuryPrescriptionLinkConfiguration : IEntityTypeConfiguration<WorkoutInjuryPrescriptionLinkRecord>
 {
+    /// <summary>Unique per prescription and episode, so restoring an episode cannot restore one row twice.</summary>
     public void Configure(EntityTypeBuilder<WorkoutInjuryPrescriptionLinkRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_injury_prescription_links");
@@ -426,13 +474,17 @@ public sealed class WorkoutInjuryPrescriptionLinkConfiguration : IEntityTypeConf
     }
 }
 
+/// <summary>The plan in force. Only the tenant conventions apply; the active plan is chosen by the row's own flag.</summary>
 public sealed class WorkoutPlanConfiguration : IEntityTypeConfiguration<WorkoutPlanRecord>
 {
+    /// <summary>Applies only the tenant conventions; which plan is in force is carried by the row itself.</summary>
     public void Configure(EntityTypeBuilder<WorkoutPlanRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "workout_plans");
 }
 
+/// <summary>Version-2 proposals, whose status and decision columns are constrained to the four states the planner can be in.</summary>
 public sealed class WorkoutPlanProposalV02Configuration : IEntityTypeConfiguration<WorkoutPlanProposalV02Record>
 {
+    /// <summary>Constrains status to the four decision states and pins the decision columns to that state, so a half-decided proposal cannot exist.</summary>
     public void Configure(EntityTypeBuilder<WorkoutPlanProposalV02Record> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_plan_proposals_v02");
@@ -456,8 +508,10 @@ public sealed class WorkoutPlanProposalV02Configuration : IEntityTypeConfigurati
     }
 }
 
+/// <summary>Applied version-2 revisions, unique per plan and revision number so a revision cannot be applied twice.</summary>
 public sealed class WorkoutPlanRevisionV02Configuration : IEntityTypeConfiguration<WorkoutPlanRevisionV02Record>
 {
+    /// <summary>Makes the revision number unique per plan and requires it positive, which is what makes "newer" decidable.</summary>
     public void Configure(EntityTypeBuilder<WorkoutPlanRevisionV02Record> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_plan_revisions_v02");
@@ -475,8 +529,10 @@ public sealed class WorkoutPlanRevisionV02Configuration : IEntityTypeConfigurati
     }
 }
 
+/// <summary>A plan's days, with the removal flags defaulted to false and the duration constrained non-negative.</summary>
 public sealed class WorkoutDayConfiguration : IEntityTypeConfiguration<WorkoutDayRecord>
 {
+    /// <summary>Defaults the removal flags to false and constrains the planned duration non-negative.</summary>
     public void Configure(EntityTypeBuilder<WorkoutDayRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_days");
@@ -493,8 +549,10 @@ public sealed class WorkoutDayConfiguration : IEntityTypeConfiguration<WorkoutDa
     }
 }
 
+/// <summary>A day's exercises, with optional sets required to be a strict subset of the working sets.</summary>
 public sealed class WorkoutDayExerciseConfiguration : IEntityTypeConfiguration<WorkoutDayExerciseRecord>
 {
+    /// <summary>Requires optional sets to be a strict subset of the working sets, so skipping them is always possible.</summary>
     public void Configure(EntityTypeBuilder<WorkoutDayExerciseRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_day_exercises");
@@ -510,8 +568,10 @@ public sealed class WorkoutDayExerciseConfiguration : IEntityTypeConfiguration<W
     }
 }
 
+/// <summary>Performed sessions, indexed newest-first; distance is stored to two decimal places of a kilometre.</summary>
 public sealed class WorkoutSessionLogConfiguration : IEntityTypeConfiguration<WorkoutSessionLogRecord>
 {
+    /// <summary>Indexes newest-first and fixes distance to two decimals, which is the precision the app displays.</summary>
     public void Configure(EntityTypeBuilder<WorkoutSessionLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_session_logs");
@@ -520,8 +580,10 @@ public sealed class WorkoutSessionLogConfiguration : IEntityTypeConfiguration<Wo
     }
 }
 
+/// <summary>Performed sets. Unilateral reps must be given for both sides or for neither.</summary>
 public sealed class ExerciseSetLogConfiguration : IEntityTypeConfiguration<ExerciseSetLogRecord>
 {
+    /// <summary>Requires both unilateral rep counts or neither, keeping the per-side data trustworthy.</summary>
     public void Configure(EntityTypeBuilder<ExerciseSetLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "exercise_set_logs");
@@ -539,8 +601,10 @@ public sealed class ExerciseSetLogConfiguration : IEntityTypeConfiguration<Exerc
     }
 }
 
+/// <summary>Legacy workout logs, indexed newest-first; the day they log is restricted so history cannot lose its plan.</summary>
 public sealed class WorkoutLogConfiguration : IEntityTypeConfiguration<WorkoutLogRecord>
 {
+    /// <summary>Indexed newest-first, and its day link is restricted so deleting a plan cannot erase history.</summary>
     public void Configure(EntityTypeBuilder<WorkoutLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_logs");
@@ -550,8 +614,10 @@ public sealed class WorkoutLogConfiguration : IEntityTypeConfiguration<WorkoutLo
     }
 }
 
+/// <summary>Legacy per-exercise rows, cascaded from their log and restricted against the day's prescription.</summary>
 public sealed class WorkoutExerciseLogConfiguration : IEntityTypeConfiguration<WorkoutExerciseLogRecord>
 {
+    /// <summary>Cascades from its log but restricts against the day's prescription, so a prescription change cannot delete logged work.</summary>
     public void Configure(EntityTypeBuilder<WorkoutExerciseLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_exercise_logs");
@@ -563,8 +629,10 @@ public sealed class WorkoutExerciseLogConfiguration : IEntityTypeConfiguration<W
     }
 }
 
+/// <summary>Exercise swaps, one per account and original exercise.</summary>
 public sealed class UserExercisePreferenceConfiguration : IEntityTypeConfiguration<UserExercisePreferenceRecord>
 {
+    /// <summary>One swap per account and original exercise, with both exercises restricted from deletion.</summary>
     public void Configure(EntityTypeBuilder<UserExercisePreferenceRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "user_exercise_preferences");
@@ -574,8 +642,10 @@ public sealed class UserExercisePreferenceConfiguration : IEntityTypeConfigurati
     }
 }
 
+/// <summary>Her notes on a movement; the exercise is restricted so a note never dangles.</summary>
 public sealed class UserMovementNoteConfiguration : IEntityTypeConfiguration<UserMovementNoteRecord>
 {
+    /// <summary>Restricts the exercise reference so a note never outlives the movement it describes.</summary>
     public void Configure(EntityTypeBuilder<UserMovementNoteRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "user_movement_notes");
@@ -583,8 +653,10 @@ public sealed class UserMovementNoteConfiguration : IEntityTypeConfiguration<Use
     }
 }
 
+/// <summary>Nutrition days, indexed by account and local date descending.</summary>
 public sealed class DailyNutritionLogConfiguration : IEntityTypeConfiguration<DailyNutritionLogRecord>
 {
+    /// <summary>Indexed by account and local date descending, which is the diary's read.</summary>
     public void Configure(EntityTypeBuilder<DailyNutritionLogRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "daily_nutrition_logs");
@@ -592,8 +664,10 @@ public sealed class DailyNutritionLogConfiguration : IEntityTypeConfiguration<Da
     }
 }
 
+/// <summary>Foods logged on a day, cascaded from the day's row.</summary>
 public sealed class FoodItemEntryConfiguration : IEntityTypeConfiguration<FoodItemEntryRecord>
 {
+    /// <summary>Cascades from its day, so deleting a day removes its entries and nothing else.</summary>
     public void Configure(EntityTypeBuilder<FoodItemEntryRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "food_item_entries");
@@ -602,18 +676,24 @@ public sealed class FoodItemEntryConfiguration : IEntityTypeConfiguration<FoodIt
     }
 }
 
+/// <summary>Foods she created. Only the tenant conventions apply; they never join the shared catalog.</summary>
 public sealed class UserFoodItemConfiguration : IEntityTypeConfiguration<UserFoodItemRecord>
 {
+    /// <summary>Applies only the tenant conventions: her foods are kept out of the shared catalog by scope, not by a flag.</summary>
     public void Configure(EntityTypeBuilder<UserFoodItemRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "user_food_items");
 }
 
+/// <summary>Her meal templates. Only the tenant conventions apply.</summary>
 public sealed class UserMealTemplateConfiguration : IEntityTypeConfiguration<UserMealTemplateRecord>
 {
+    /// <summary>Applies only the tenant conventions.</summary>
     public void Configure(EntityTypeBuilder<UserMealTemplateRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "user_meal_templates");
 }
 
+/// <summary>Foods inside her templates; exactly one of the catalog and her own food may be set.</summary>
 public sealed class UserMealTemplateEntryConfiguration : IEntityTypeConfiguration<UserMealTemplateEntryRecord>
 {
+    /// <summary>Requires exactly one food reference, so an entry is never ambiguous between the catalog and her own foods.</summary>
     public void Configure(EntityTypeBuilder<UserMealTemplateEntryRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "user_meal_template_entries");
@@ -628,13 +708,17 @@ public sealed class UserMealTemplateEntryConfiguration : IEntityTypeConfiguratio
     }
 }
 
+/// <summary>Meals logged on a day. Only the tenant conventions apply.</summary>
 public sealed class LoggedMealConfiguration : IEntityTypeConfiguration<LoggedMealRecord>
 {
+    /// <summary>Applies only the tenant conventions.</summary>
     public void Configure(EntityTypeBuilder<LoggedMealRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "logged_meals");
 }
 
+/// <summary>Foods inside logged meals; exactly one food reference must be set.</summary>
 public sealed class LoggedMealEntryConfiguration : IEntityTypeConfiguration<LoggedMealEntryRecord>
 {
+    /// <summary>Requires exactly one food reference and cascades from its meal.</summary>
     public void Configure(EntityTypeBuilder<LoggedMealEntryRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "logged_meal_entries");
@@ -649,18 +733,24 @@ public sealed class LoggedMealEntryConfiguration : IEntityTypeConfiguration<Logg
     }
 }
 
+/// <summary>Saved recipes. Only the tenant conventions apply; the contents are a JSON snapshot.</summary>
 public sealed class RecipeConfiguration : IEntityTypeConfiguration<RecipeRecord>
 {
+    /// <summary>Applies only the tenant conventions; the recipe body is a JSON snapshot.</summary>
     public void Configure(EntityTypeBuilder<RecipeRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "recipes");
 }
 
+/// <summary>Saved meal templates. Only the tenant conventions apply.</summary>
 public sealed class SavedMealTemplateConfiguration : IEntityTypeConfiguration<SavedMealTemplateRecord>
 {
+    /// <summary>Applies only the tenant conventions.</summary>
     public void Configure(EntityTypeBuilder<SavedMealTemplateRecord> builder) => AppModelConfiguration.ConfigureTenant(builder, "saved_meal_templates");
 }
 
+/// <summary>Progress photos, indexed by account and date descending; the image path is required.</summary>
 public sealed class PhotoJourneyEntryConfiguration : IEntityTypeConfiguration<PhotoJourneyEntryRecord>
 {
+    /// <summary>Requires the image path and indexes newest-first by account.</summary>
     public void Configure(EntityTypeBuilder<PhotoJourneyEntryRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "photo_journey_entries");
@@ -669,8 +759,10 @@ public sealed class PhotoJourneyEntryConfiguration : IEntityTypeConfiguration<Ph
     }
 }
 
+/// <summary>Authorised uploads: state limited to the five lifecycle values, size positive, expiry after issue, and the key unique per account.</summary>
 public sealed class PhotoUploadIntentConfiguration : IEntityTypeConfiguration<PhotoUploadIntentRecord>
 {
+    /// <summary>Limits state to the five lifecycle values, keeps the size positive and the expiry after issue, and makes the key unique per account.</summary>
     public void Configure(EntityTypeBuilder<PhotoUploadIntentRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "photo_upload_intents");
@@ -695,8 +787,10 @@ public sealed class PhotoUploadIntentConfiguration : IEntityTypeConfiguration<Ph
     }
 }
 
+/// <summary>The deletion queue: state, reason and failure category are constrained, and a lease exists only while leased.</summary>
 public sealed class PhotoObjectCleanupConfiguration : IEntityTypeConfiguration<PhotoObjectCleanupRecord>
 {
+    /// <summary>Constrains state, reason and failure category to the known values, and requires a lease token exactly while leased.</summary>
     public void Configure(EntityTypeBuilder<PhotoObjectCleanupRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "photo_object_cleanups");
@@ -719,10 +813,12 @@ public sealed class PhotoObjectCleanupConfiguration : IEntityTypeConfiguration<P
     }
 }
 
+/// <summary>Stores an empty string as an empty JSON string, because a jsonb column rejects the empty text the domain model uses for absent.</summary>
 internal sealed class JsonTextValueConverter : ValueConverter<string, string>
 {
     public static readonly JsonTextValueConverter Instance = new();
 
+    /// <summary>Maps the empty string to an empty JSON string and back, which is the one translation a jsonb column needs.</summary>
     private JsonTextValueConverter()
         : base(value => value.Length == 0 ? "\"\"" : value,
             value => value == "\"\"" ? string.Empty : value)

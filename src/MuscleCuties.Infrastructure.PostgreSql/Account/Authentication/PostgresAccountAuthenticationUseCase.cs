@@ -8,6 +8,7 @@ using MuscleCuties.UseCases.Features.Account.Registration;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
 
+/// <summary>The server-side auth flow on PostgreSQL: password and Apple sign-in, refresh rotation, revocation and the existence checks registration depends on.</summary>
 public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticationUseCase
 {
     private const int AccessLifetimeMinutes = 15;
@@ -29,6 +30,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
     private readonly IAppleAccountTokenRevoker? appleTokenRevoker;
     private readonly ILogger<PostgresAccountAuthenticationUseCase>? logger;
 
+    /// <summary>Takes the stores, hasher and limiter the sign-in flow uses.</summary>
     public PostgresAccountAuthenticationUseCase(
         PostgresDbContext dbContext,
         IRegistrationPasswordHasher passwordHasher,
@@ -54,6 +56,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         this.logger = logger;
     }
 
+    /// <summary>Issues a verification challenge, returns the id the client echoes back and delivers the code through the configured sender, never in the response.</summary>
     public async Task<(string ChallengeId, string Nonce)> CreateAppleNonceAsync(CancellationToken cancellationToken)
     {
         await dbContext.AppleSignInNonces.Where(item => item.ExpiresAtUtc <= timeProvider.GetUtcNow().UtcDateTime)
@@ -71,6 +74,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return (record.Id.ToString("D"), nonce);
     }
 
+    /// <summary>Signs in with password and email, applying the login limiter.</summary>
     public async Task<SessionOperationResult> LoginWithPasswordAsync(
         PasswordLoginRequest request,
         string? trustedSourceAddress,
@@ -102,6 +106,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return result;
     }
 
+    /// <summary>Signs in with an Apple token, creating the account on first use.</summary>
     public async Task<SessionOperationResult> LoginWithAppleAsync(
         AppleLoginRequest request,
         CancellationToken cancellationToken)
@@ -151,6 +156,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             .ConfigureAwait(false);
     }
 
+    /// <summary>Runs the Apple sign-in inside one transaction.</summary>
     private async Task<SessionOperationResult> LoginWithAppleTransactionalAsync(
         Guid nonceId,
         AppleVerifiedIdentity identity,
@@ -259,12 +265,14 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return result;
     }
 
+    /// <summary>True when the account's profile is still the placeholder created at sign-up.</summary>
     private static bool IsUnfilledInitialProfile(UserProfileRecord profile) =>
         profile.DateOfBirth is null &&
         profile.Height <= 0m &&
         profile.Weight <= 0m &&
         string.IsNullOrWhiteSpace(profile.Goal);
 
+    /// <summary>Creates an account from a verified Apple identity, taking the email only when Apple released it and marking onboarding incomplete so the quiz still runs.</summary>
     private UserRecord CreateAppleAccount(AppleVerifiedIdentity identity, DateTime now)
     {
         var subjectHash = Hash(identity.AppleUserId)[..GeneratedUsernameSuffixCharacters];
@@ -300,6 +308,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return user;
     }
 
+    /// <summary>Exchanges a refresh token for a new pair inside one transaction, marking the old token replaced so a replay is refused.</summary>
     public async Task<SessionOperationResult> RefreshAsync(RefreshSessionRequest request, CancellationToken cancellationToken)
     {
         if (request is null || string.IsNullOrWhiteSpace(request.RefreshToken))
@@ -310,6 +319,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             .ConfigureAwait(false);
     }
 
+    /// <summary>Refreshes the session tokens inside one transaction.</summary>
     private async Task<SessionOperationResult> RefreshTransactionalAsync(
         string tokenHash,
         CancellationToken cancellationToken)
@@ -357,6 +367,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             CreateTokens(session.UserId, session.FamilyId, nextToken, timeProvider.GetUtcNow(), isOnboardingComplete));
     }
 
+    /// <summary>Revokes a session family and records the access token as revoked, so both halves of the pair stop working.</summary>
     public async Task<bool> RevokeAsync(RevokeSessionRequest request, CancellationToken cancellationToken)
     {
         if (request is null || request.UserId == Guid.Empty || string.IsNullOrWhiteSpace(request.RefreshToken))
@@ -368,6 +379,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             .ConfigureAwait(false);
     }
 
+    /// <summary>Revokes a refresh token inside one transaction.</summary>
     private async Task<bool> RevokeTransactionalAsync(
         RevokeSessionRequest request,
         string tokenHash,
@@ -402,6 +414,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return session is not null || revokedAccessToken;
     }
 
+    /// <summary>Whether an access token has been revoked; the token id is compared, never the token itself.</summary>
     public async Task<bool> IsAccessTokenRevokedAsync(string tokenId, string sessionId, CancellationToken cancellationToken)
     {
         if (!Guid.TryParse(sessionId, out var familyId))
@@ -416,6 +429,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
                 cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Changes the password, refusing when the current one does not match.</summary>
     public async Task<PasswordChangeStatus> ChangePasswordAsync(
         Guid userId,
         string currentPassword,
@@ -434,6 +448,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             .ConfigureAwait(false);
     }
 
+    /// <summary>Changes the password inside one transaction.</summary>
     private async Task<PasswordChangeStatus> ChangePasswordTransactionalAsync(
         Guid userId,
         string currentPassword,
@@ -469,6 +484,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return PasswordChangeStatus.Succeeded;
     }
 
+    /// <summary>Whether the normalised address already has an account.</summary>
     public Task<bool> EmailExistsAsync(string email, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(email)) return Task.FromResult(false);
@@ -476,6 +492,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return dbContext.Users.AsNoTracking().AnyAsync(u => u.NormalizedEmail == normalized, cancellationToken);
     }
 
+    /// <summary>Whether a username is taken; the check is case-insensitive because usernames are compared that way.</summary>
     public Task<bool> UsernameExistsAsync(string username, CancellationToken cancellationToken)
     {
         if (string.IsNullOrWhiteSpace(username)) return Task.FromResult(false);
@@ -483,6 +500,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return dbContext.Users.AsNoTracking().AnyAsync(u => u.Username != null && u.Username.ToLower() == normalized, cancellationToken);
     }
 
+    /// <summary>Creates the session record and returns its tokens.</summary>
     private async Task<SessionOperationResult> CreateSessionAsync(
         Guid userId,
         Guid familyId,
@@ -509,6 +527,7 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
             CreateTokens(userId, familyId, refreshToken, now, isOnboardingComplete));
     }
 
+    /// <summary>Issues the access and refresh tokens for a session.</summary>
     private SessionTokens CreateTokens(
         Guid userId,
         Guid familyId,
@@ -530,6 +549,8 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         return new SessionTokens(userId, accessToken, refreshToken, expires, isOnboardingComplete);
     }
 
+    /// <summary>SHA-256 hash of a token, hex encoded, stored instead of the token.</summary>
     private static string Hash(string value) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(value))).ToLowerInvariant();
+    /// <summary>Base64url encoding without padding.</summary>
     private static string Encode(byte[] value) => Convert.ToBase64String(value).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 }

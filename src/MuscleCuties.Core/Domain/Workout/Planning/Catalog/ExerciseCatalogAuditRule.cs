@@ -70,6 +70,7 @@ public static class MuscleAccountingTaxonomy
         return DirectGroups.TryGetValue(group, out var target) ? target : null;
     }
 
+    /// <summary>True when the catalog row's back coverage is derived rather than stated.</summary>
     public static bool IsBackDerived(string? muscleGroup) =>
         string.Equals(muscleGroup, LatsGroup, StringComparison.OrdinalIgnoreCase) ||
         string.Equals(muscleGroup, UpperBackGroup, StringComparison.OrdinalIgnoreCase);

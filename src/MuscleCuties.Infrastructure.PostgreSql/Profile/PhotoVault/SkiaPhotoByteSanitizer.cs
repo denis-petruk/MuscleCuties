@@ -4,6 +4,7 @@ using SkiaSharp;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
+/// <summary>Re-encodes an uploaded photo so only pixels survive: metadata, location and multi-picture payloads are dropped before the object is published.</summary>
 public sealed class SkiaPhotoByteSanitizer : IPhotoByteSanitizer
 {
     public const int MaximumInputBytes = 20 * 1024 * 1024;
@@ -13,8 +14,10 @@ public sealed class SkiaPhotoByteSanitizer : IPhotoByteSanitizer
     private const int JpegSofStart = 0xc0;
     private const int JpegSofEnd = 0xcf;
     private const int JpegApp2Marker = 0xe2;
+    /// <summary>The signature of an MPF payload, which marks a file carrying extra images that must be stripped.</summary>
     private static ReadOnlySpan<byte> MultiPictureFormatSignature => "MPF\0"u8;
 
+    /// <summary>Decodes, applies the EXIF orientation and re-encodes, returning the canonical bytes; a file that decodes to nothing is rejected rather than stored.</summary>
     public SanitizedPhotoBytes Sanitize(ReadOnlyMemory<byte> source, CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -65,6 +68,7 @@ public sealed class SkiaPhotoByteSanitizer : IPhotoByteSanitizer
         return new SanitizedPhotoBytes(bytes, "image/jpeg", Convert.ToHexString(SHA256.HashData(bytes)).ToLowerInvariant());
     }
 
+    /// <summary>Bakes the EXIF rotation into the pixels, because the orientation tag itself is discarded.</summary>
     private static void ApplyOrigin(SKCanvas canvas, SKEncodedOrigin origin, int width, int height)
     {
         switch (origin)
@@ -82,6 +86,7 @@ public sealed class SkiaPhotoByteSanitizer : IPhotoByteSanitizer
         }
     }
 
+    /// <summary>Whether the output is a single PNG or JPEG with no trailing data, which is the only shape that is published.</summary>
     private static bool IsCanonicalStillImage(ReadOnlySpan<byte> bytes)
     {
         if (bytes.Length >= 6 && (bytes[..6].SequenceEqual("GIF87a"u8) || bytes[..6].SequenceEqual("GIF89a"u8))) return false;
@@ -91,6 +96,7 @@ public sealed class SkiaPhotoByteSanitizer : IPhotoByteSanitizer
         return IsCanonicalJpeg(bytes);
     }
 
+    /// <summary>Walks the PNG chunks to EOF, rejecting anything after IEND or a bad CRC.</summary>
     private static bool IsCanonicalPng(ReadOnlySpan<byte> bytes)
     {
         var offset = 8;
@@ -118,6 +124,7 @@ public sealed class SkiaPhotoByteSanitizer : IPhotoByteSanitizer
         return false;
     }
 
+    /// <summary>The PNG chunk checksum, which is how a tampered chunk is detected.</summary>
     private static uint PngCrc(ReadOnlySpan<byte> bytes)
     {
         var crc = uint.MaxValue;
@@ -129,6 +136,7 @@ public sealed class SkiaPhotoByteSanitizer : IPhotoByteSanitizer
         return ~crc;
     }
 
+    /// <summary>Requires the JPEG to end exactly after its end-of-image marker, rejecting appended payloads.</summary>
     private static bool IsCanonicalJpeg(ReadOnlySpan<byte> bytes)
     {
         if (bytes.Length < 4 || bytes[0] != 0xff || bytes[1] != 0xd8) return false;

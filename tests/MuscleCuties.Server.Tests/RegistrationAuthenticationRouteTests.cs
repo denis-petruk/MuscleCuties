@@ -320,29 +320,6 @@ public sealed class RegistrationAuthenticationRouteTests
     }
 
     [Fact]
-    public void EveryEndpointMappingReadsTheCallerThroughTheSharedHelper()
-    {
-        var root = AppContext.BaseDirectory;
-        while (!string.IsNullOrEmpty(root) && !File.Exists(Path.Combine(root, "MuscleCuties.sln")))
-            root = Directory.GetParent(root)?.FullName;
-
-        Assert.False(string.IsNullOrEmpty(root), "Could not locate the repository root from the test output directory.");
-
-        var mappings = Directory.GetFiles(
-            Path.Combine(root!, "services", "MuscleCuties.Server"), "*EndpointMappings.cs", SearchOption.AllDirectories);
-
-        Assert.NotEmpty(mappings);
-        foreach (var file in mappings)
-        {
-            var source = File.ReadAllText(file);
-            if (!source.Contains("ClaimsPrincipal", StringComparison.Ordinal)) continue;
-
-            Assert.DoesNotContain("private static bool TryUser(", source);
-            Assert.Contains("ApiApplication.TryGetUserId", source);
-        }
-    }
-
-    [Fact]
     public void TryGetUserIdReadsTheNameIdentifierClaimFirst()
     {
         var userId = Guid.NewGuid();

@@ -2,12 +2,15 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>Her answers to the safety questions for one activity.</summary>
 public sealed record ActivitySafetyAnswers(WorkoutActivityType Activity, bool? SwimmingFacility,
     bool? SwimmingAbility, bool? SwimmingContinuous, bool? ClimbingCompetence,
     bool? ClimbingInstruction, bool? DemandingYoga, ActivityExperience ClimbingExperience = ActivityExperience.Unknown);
 
+/// <summary>Whether the answers cleared the activity, blocked it, or are missing.</summary>
 public enum ActivitySafetyAnswerState { Unknown, Safe, Unsafe }
 
+/// <summary>Reads those answers, treating an unanswered activity as unsafe rather than assuming consent.</summary>
 public static class ActivitySafetyAnswersRule
 {
     public const string SwimmingFacilityMissing = "SwimmingFacilityMissing";
@@ -19,6 +22,7 @@ public static class ActivitySafetyAnswersRule
     public const string DuplicateAnswers = "DuplicateActivityAnswers";
 
     // Classification uses only explicit safety facts; Unknown must never restore an activity.
+    /// <summary>Reads the safety answer given for an activity, treating an absent answer as unanswered.</summary>
     public static ActivitySafetyAnswerState Classify(ActivitySafetyAnswers? answer) => answer?.Activity switch
     {
         WorkoutActivityType.Swimming when answer.SwimmingFacility is false || answer.SwimmingAbility is false => ActivitySafetyAnswerState.Unsafe,
@@ -29,6 +33,7 @@ public static class ActivitySafetyAnswersRule
         _ => ActivitySafetyAnswerState.Unknown
     };
 
+    /// <summary>The selected activities the user has not answered a safety question for.</summary>
     public static IReadOnlyList<string> Missing(IReadOnlyCollection<WorkoutActivityType> selected,
         IReadOnlyCollection<ActivitySafetyAnswers> answers)
     {

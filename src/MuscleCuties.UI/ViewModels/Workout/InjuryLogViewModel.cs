@@ -11,6 +11,8 @@ public sealed record InjuryWorseningOption(
     MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger Trigger,
     string Label);
 
+/// <summary>The injury log: active and cleared entries, the add/edit form with its required answers, and the</summary>
+/// plan and page refreshes an injury change forces.</summary>
 public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
 {
     private const string ReloadAfterChangeFailedTextKey = "Injury_Log_ReloadAfterChangeFailed";
@@ -54,6 +56,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     private InjuryWorseningOption? _selectedWorseningOption;
     [ObservableProperty] private DateTime _sinceDateValue = DateTime.Today;
 
+    /// <summary>Takes the injury use case and the navigation callbacks.</summary>
     public InjuryLogViewModel(
         IWorkoutInjuryUseCase injuries,
         Func<Task> navigateBackAsync,
@@ -124,11 +127,16 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         RetryPageRefreshCommand = new AsyncRelayCommand(RetryPageRefreshAsync, () => !IsBusy);
     }
 
+    /// <summary>True when an injury is being edited.</summary>
     public bool IsEditing => EditingInjuryId is not null;
+    /// <summary>Heading for the form, worded for editing or for a new entry.</summary>
     public string FormTitle => UiTextCatalog.Get(IsEditing ? "Injury_Log_FormEdit" : "Injury_Log_FormNew");
+    /// <summary>The chosen pain level as words rather than a number.</summary>
     public string PainLabelText => PainLabelFor(NewPainLevel);
 
+    /// <summary>The worsening triggers to choose from.</summary>
     public IReadOnlyList<InjuryWorseningOption> WorseningTriggerOptions { get; }
+    /// <summary>The clinician advice answers.</summary>
     public IReadOnlyList<InjuryAdviceOption> ClinicianAdviceOptions { get; }
 
     /// <summary>
@@ -140,26 +148,35 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             SelectedWorseningOption?.Trigger ??
             MuscleCuties.Core.Domain.Workout.InjuryWorseningTrigger.NotAnswered,
             ClinicianAdvisedAvoid);
+    /// <summary>True when injuries have cleared.</summary>
     public bool HasClearedInjuries => ClearedInjuries.Count > 0;
+    /// <summary>True when injuries are active.</summary>
     public bool HasActiveInjuries => ActiveInjuries.Count > 0;
 
+    /// <summary>True when only cleared injuries remain.</summary>
     public bool HasNoActiveInjuries => _hasLoaded && !IsBusy && !IsLoadError &&
                                        ActiveInjuries.Count == 0 && ClearedInjuries.Count > 0;
 
+    /// <summary>True when the user logged no injuries.</summary>
     public bool HasNoInjuries => _hasLoaded && !IsBusy && !IsLoadError &&
                                  ActiveInjuries.Count == 0 && ClearedInjuries.Count == 0;
 
+    /// <summary>True when the empty state is shown.</summary>
     public bool ShowEmptyState => _hasLoaded && !IsBusy && !IsLoadError &&
                                   !ShowAddForm && ActiveInjuries.Count == 0;
 
+    /// <summary>Empty-state heading that distinguishes a user who never logged an injury from one whose injuries have</summary>
+    /// all cleared.</summary>
     public string EmptyStateTitle => UiTextCatalog.Get(ClearedInjuries.Count == 0
         ? "Injury_Log_EmptyNone_Title"
         : "Injury_Log_EmptyCleared_Title");
 
+    /// <summary>The empty-state body, matching the same two cases.</summary>
     public string EmptyStateDetail => UiTextCatalog.Get(ClearedInjuries.Count == 0
         ? "Injury_Log_EmptyNone_Detail"
         : "Injury_Log_EmptyCleared_Detail");
 
+    /// <summary>True when an error is shown.</summary>
     public bool HasError => !string.IsNullOrEmpty(ErrorText);
     public bool ClinicianAdvisedAvoid
     {
@@ -170,16 +187,24 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             _clinicianAdviceTouched = true;
         }
     }
+    /// <summary>True when the advice question is answered.</summary>
     public bool HasClinicianAdviceAnswer => SelectedClinicianAdvice is not null;
+    /// <summary>True when the advice answer is yes.</summary>
     public bool IsClinicianAdviceYes => SelectedClinicianAdvice == true;
+    /// <summary>True when the advice answer is no.</summary>
     public bool IsClinicianAdviceNo => SelectedClinicianAdvice == false;
+    /// <summary>True when the advice answer is missing.</summary>
     public bool IsClinicianAdviceUnanswered => SelectedClinicianAdvice is null;
 
+    /// <summary>Save needs a site, a status and a start date that is not in the future.</summary>
     public bool CanSaveInjury => !IsBusy && SelectedSiteFlag != WorkoutInjurySite.None && SelectedStatus is not null &&
                                  SinceDateValue.Date <= DateTime.Today;
 
+    /// <summary>True when the form still needs an answer before saving.</summary>
     public bool ShowSaveInjuryPrerequisiteHint => !CanSaveInjury && !IsBusy;
 
+    /// <summary>Names the answers still missing, combining both when neither is given, and stays empty once saving is</summary>
+    /// possible.</summary>
     public string SaveInjuryPrerequisiteHint => (SelectedSiteFlag == WorkoutInjurySite.None, SelectedStatus is null) switch
     {
         (true, true) => UiTextCatalog.Get("Injury_Log_SavePrerequisiteBoth"),
@@ -188,30 +213,49 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         _ => string.Empty
     };
 
+    /// <summary>Today's date.</summary>
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in Injury XAML / view model contract.")]
     public DateTime Today => DateTime.Today;
 
+    /// <summary>The injury sites to choose from.</summary>
     public List<InjuryFlagOption> AvailableSites { get; }
+    /// <summary>The injury statuses to choose from.</summary>
     public List<InjuryStatusOption> AvailableStatuses { get; }
 
+    /// <summary>Loads the injuries.</summary>
     public AsyncRelayCommand LoadCommand { get; }
+    /// <summary>Shows or hides the add form.</summary>
     public RelayCommand ToggleAddFormCommand { get; }
+    /// <summary>Saves the injury.</summary>
     public AsyncRelayCommand SaveInjuryCommand { get; }
+    /// <summary>Deletes the injury.</summary>
     public AsyncRelayCommand<int> DeleteInjuryCommand { get; }
+    /// <summary>Marks the injury as cleared.</summary>
     public AsyncRelayCommand<InjuryLogItem> MarkClearedCommand { get; }
+    /// <summary>Returns to the previous page.</summary>
     public AsyncRelayCommand NavigateBackCommand { get; }
+    /// <summary>Opens the injury for editing.</summary>
     public RelayCommand<InjuryLogItem> EditInjuryCommand { get; }
+    /// <summary>Leaves the edit form.</summary>
     public RelayCommand CancelEditCommand { get; }
+    /// <summary>Selects the injury site.</summary>
     public RelayCommand<InjuryFlagOption> SelectSiteCommand { get; }
+    /// <summary>Selects the injury status.</summary>
     public RelayCommand<InjuryStatusOption> SelectStatusCommand { get; }
+    /// <summary>Selects the clinician advice answer.</summary>
     public RelayCommand<InjuryAdviceOption> SelectClinicianAdviceOptionCommand { get; }
+    /// <summary>Shows or hides the cleared history.</summary>
     public RelayCommand ToggleHistoryCommand { get; }
+    /// <summary>Retries the page refresh.</summary>
     public AsyncRelayCommand RetryPageRefreshCommand { get; }
 
+    /// <summary>True while the page loads.</summary>
     public bool IsPageLoading => IsBusy;
+    /// <summary>Loads the injuries.</summary>
     public AsyncRelayCommand LoadDataCommand => LoadCommand;
 
+    /// <summary>Refreshes the page state when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         OnPropertyChanged(nameof(IsPageLoading));
@@ -227,16 +271,19 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         RetryPageRefreshCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Refreshes the form when the site changes.</summary>
     partial void OnSelectedSiteFlagChanged(WorkoutInjurySite value)
     {
         RefreshSaveState();
     }
 
+    /// <summary>Refreshes the form when the status changes.</summary>
     partial void OnSelectedStatusChanged(WorkoutInjuryStatus? value)
     {
         RefreshSaveState();
     }
 
+    /// <summary>Applies the tapped yes/no answer; a cleared selection is ignored so the question cannot be un-answered.</summary>
     private void SelectClinicianAdviceOption(InjuryAdviceOption? option)
     {
         if (option is null)
@@ -249,17 +296,20 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     // Keeps the three segmented cells in step with the answer, including a restored edit or a
     // reset back to unanswered. The selected cell is what VoiceOver announces, so the visual and
     // the accessible state cannot diverge.
+    /// <summary>Refreshes the form when the advice answer changes.</summary>
     partial void OnSelectedClinicianAdviceChanged(bool? value)
     {
         foreach (var option in ClinicianAdviceOptions)
             option.IsSelected = option.Value == value;
     }
 
+    /// <summary>Refreshes the form when the start date changes.</summary>
     partial void OnSinceDateValueChanged(DateTime value)
     {
         RefreshSaveState();
     }
 
+    /// <summary>Re-evaluates the save button and its hint after any field that can make the form saveable changes.</summary>
     private void RefreshSaveState()
     {
         OnPropertyChanged(nameof(CanSaveInjury));
@@ -268,22 +318,27 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         SaveInjuryCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Refreshes the form when the pain level changes.</summary>
     partial void OnNewPainLevelChanged(int value)
     {
         OnPropertyChanged(nameof(PainLabelText));
     }
 
+    /// <summary>Refreshes the edit mode when the injury changes.</summary>
     partial void OnEditingInjuryIdChanged(int? value)
     {
         OnPropertyChanged(nameof(IsEditing));
         OnPropertyChanged(nameof(FormTitle));
     }
 
+    /// <summary>Refreshes the empty state when the form opens.</summary>
     partial void OnShowAddFormChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowEmptyState));
     }
 
+    /// <summary>Loads the page from scratch, abandoning any edit in progress so a stale draft cannot be saved onto the</summary>
+    /// reloaded list.</summary>
     private async Task LoadAsync()
     {
         CancelEdit();
@@ -309,6 +364,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         }
     }
 
+    /// <summary>Fills the active and cleared lists and re-publishes the empty-state copy, which depends on both.</summary>
     private async Task ReloadInjuriesAsync()
     {
         var allLogs = await _injuries.GetAllInjuriesAsync();
@@ -358,6 +414,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         OnPropertyChanged(nameof(EmptyStateDetail));
     }
 
+    /// <summary>Creates or updates the entry, then refreshes the plan because an injury changes what training is safe.</summary>
     private async Task SaveInjuryAsync()
     {
         var status = SelectedStatus;
@@ -396,6 +453,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         }
     }
 
+    /// <summary>Runs an injury action, reporting its failure with the given message.</summary>
     private async Task ExecuteInjuryActionAsync(int injuryId, string errorMessage, string operationName,
         Func<Task> actionAsync)
     {
@@ -424,12 +482,14 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         }
     }
 
+    /// <summary>Deletes an entry through the shared action path, which owns the busy state and the failure wording.</summary>
     private async Task DeleteInjuryAsync(int id)
     {
         await ExecuteInjuryActionAsync(id, UiTextCatalog.Get("Injury_Log_DeleteFailed"), "Delete",
             () => _injuries.DeleteInjuryAsync(id));
     }
 
+    /// <summary>Moves an active injury to the cleared list, ignoring entries that are already cleared or a busy form.</summary>
     private async Task MarkClearedAsync(InjuryLogItem? item)
     {
         if (item is not { IsActive: true } || IsBusy)
@@ -439,12 +499,14 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             () => _injuries.ClearInjuryAsync(item.Id));
     }
 
+    /// <summary>Opens an empty form, dropping whatever the previous form held.</summary>
     private void BeginAdd()
     {
         CancelEdit();
         ShowAddForm = true;
     }
 
+    /// <summary>Opens the form filled with an existing entry, which is what makes saving update rather than add.</summary>
     private void EditInjury(InjuryLogItem? item)
     {
         if (item is null) return;
@@ -490,11 +552,14 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             await LoadCommand.ExecuteAsync(null);
     }
 
+    /// <summary>Returns the form to its closed, empty state when the sheet is dismissed.</summary>
     public void ResetForm()
     {
         CancelEdit();
     }
 
+    /// <summary>Clears the edit identity, the fields and every save or refresh error, so a cancelled edit leaves nothing</summary>
+    /// of itself on screen.</summary>
     private void CancelEdit()
     {
         // A cancelled edit must not leave the previous save/reconcile error on screen.
@@ -522,6 +587,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         ShowAddForm = false;
     }
 
+    /// <summary>Selects one site and deselects the rest, keeping the single-choice list consistent with the bound flag.</summary>
     private void SelectSite(InjuryFlagOption? selected)
     {
         if (selected is null) return;
@@ -532,6 +598,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         SelectedSiteFlag = selected.Flag;
     }
 
+    /// <summary>The same single-choice handling for the status list.</summary>
     private void SelectStatus(InjuryStatusOption? selected)
     {
         if (selected is null) return;
@@ -542,6 +609,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         SelectedStatus = selected.Status;
     }
 
+    /// <summary>Refreshes the plan and the page after a change, keeping whichever half failed flagged so the user can</summary>
+    /// retry it without losing the change.</summary>
     private async Task RefreshAfterChangeAsync()
     {
         IsPlanRefreshError = false;
@@ -591,6 +660,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
             _pendingChangeRefresh = false;
     }
 
+    /// <summary>Retries the page half of a failed refresh, and clears the pending marker once both halves are clean.</summary>
     private async Task RetryPageRefreshAsync()
     {
         IsBusy = true;
@@ -617,6 +687,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         }
     }
 
+    /// <summary>Maps a pain level to its wording, with zero reading as no pain.</summary>
     private static string PainLabelFor(int level)
     {
         var key = level switch
@@ -631,6 +702,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         return UiTextCatalog.Get(key);
     }
 
+    /// <summary>A site's English name, used where the value has to leave the app as text rather than as a catalog key.</summary>
     internal static string DisplayNameFor(WorkoutInjurySite site)
     {
         return site switch

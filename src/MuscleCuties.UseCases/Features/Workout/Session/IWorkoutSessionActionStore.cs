@@ -3,6 +3,7 @@ using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 
 namespace MuscleCuties.UseCases.Features.Workout.Session;
 
+/// <summary>The session action persistence.</summary>
 public interface IWorkoutSessionActionStore
 {
     Task<IReadOnlyList<PlannedWorkoutSessionHistoryEntry>> GetPlannedSessionHistoryAsync(int workoutDayId, CancellationToken cancellationToken);

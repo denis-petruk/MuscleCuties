@@ -15,8 +15,10 @@ public interface ISesEmailTransport
     Task SendAsync(SendEmailRequest request, CancellationToken cancellationToken);
 }
 
+/// <summary>The SES transport for verification codes: sends one message and reports the provider's receipt.</summary>
 public sealed class AmazonSesEmailTransport(IAmazonSimpleEmailServiceV2 client) : ISesEmailTransport
 {
+    /// <summary>Sends a prepared email through SES.</summary>
     public Task SendAsync(SendEmailRequest request, CancellationToken cancellationToken) =>
         client.SendEmailAsync(request, cancellationToken);
 }
@@ -37,6 +39,7 @@ public sealed class SesEmailChallengeDelivery(
     private const int RequiredCodeLength = 6;
     private const string Utf8 = "UTF-8";
 
+    /// <summary>Sends a challenge code to the address.</summary>
     public async Task<bool> SendAsync(
         string normalizedEmail,
         string code,
@@ -137,6 +140,7 @@ public sealed class SesEmailChallengeDelivery(
             exception is AmazonServiceException serviceException ? serviceException.ErrorCode : "none");
     }
 
+    /// <summary>A cheap shape check before a send, so a malformed address is not handed to the provider.</summary>
     private static bool IsPlausibleEmail(string? value)
     {
         if (string.IsNullOrWhiteSpace(value) || value.Length > 254)
@@ -146,6 +150,7 @@ public sealed class SesEmailChallengeDelivery(
                !value.Any(char.IsWhiteSpace);
     }
 
+    /// <summary>Plain-text body of the registration email.</summary>
     private static string BuildRegistrationText(string code) =>
         $"""
         Welcome to MuscleCuties!
@@ -156,6 +161,7 @@ public sealed class SesEmailChallengeDelivery(
         If you did not create a MuscleCuties account, you can safely ignore this email.
         """;
 
+    /// <summary>HTML body of the registration email.</summary>
     private static string BuildRegistrationHtml(string code) =>
         $$"""
         <!DOCTYPE html>
@@ -192,6 +198,7 @@ public sealed class SesEmailChallengeDelivery(
         </html>
         """;
 
+    /// <summary>Plain-text body of the password reset email.</summary>
     private static string BuildPasswordResetText(string code) =>
         $"""
         MuscleCuties Password Reset
@@ -202,6 +209,7 @@ public sealed class SesEmailChallengeDelivery(
         If you did not request a password reset, please secure your account immediately.
         """;
 
+    /// <summary>HTML body of the password reset email.</summary>
     private static string BuildPasswordResetHtml(string code) =>
         $$"""
         <!DOCTYPE html>

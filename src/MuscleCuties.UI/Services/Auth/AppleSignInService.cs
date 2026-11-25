@@ -7,15 +7,23 @@ using UIKit;
 
 namespace MuscleCuties.UI.Services.Auth;
 
+/// <summary>Sign in with Apple. The server issues a nonce first, the system sheet signs the hashed nonce,</summary>
+/// and the result carries the identity token plus the raw nonce the server verifies it against.</summary>
 public sealed class AppleSignInService(
     MuscleCuties.Infrastructure.ApiClient.IMuscleCutiesBackendApiClient? apiClient = null) : IAppleSignInService, IPlatformSignInService
 {
+    /// <summary>The challenge the server issued, and the nonce that must be hashed into the Apple request.</summary>
     private sealed record AppleNonceDto(string ChallengeId, string Nonce);
 
+    /// <summary>Provider id sent with the credential and used in messages.</summary>
     public string ProviderName => "Apple";
+    /// <summary>Label for the sign-in screen's Apple button.</summary>
     public string LoginButtonText => "Log In with Apple";
+    /// <summary>Label for the registration screen's Apple button, worded for creating an account.</summary>
     public string RegisterButtonText => "Sign in with Apple";
 
+    /// <summary>Requests a nonce, presents the Apple sheet, and returns the credential. Returns null when the</summary>
+    /// person cancelled or a sheet is already open, so cancel is not reported as an error.</summary>
     public async Task<PlatformSignInResult?> SignInAsync(CancellationToken cancellationToken = default)
     {
 #if IOS || MACCATALYST
@@ -58,6 +66,8 @@ public sealed class AppleSignInService(
 #endif
     }
 
+    /// <summary>Asks Apple whether the stored Apple identity is still authorized, which is how a revoked</summary>
+    /// sign-in is detected before the next request fails.</summary>
     public Task<AppleCredentialState> GetCredentialStateAsync(string appleUserId)
     {
 #if IOS || MACCATALYST
@@ -91,6 +101,7 @@ public sealed class AppleSignInService(
 #endif
     }
 
+    /// <summary>Provider-neutral entry point used by the adapter.</summary>
     public Task<PlatformSignInResult?> SignInWithProviderAsync(CancellationToken cancellationToken = default)
     {
         return SignInAsync(cancellationToken);
@@ -102,6 +113,7 @@ public sealed class AppleSignInService(
 #endif
 
 #if IOS || MACCATALYST
+    /// <summary>Starts Apple's sign-in sheet and completes the caller with the result.</summary>
     private void StartAppleSignIn(
         TaskCompletionSource<PlatformSignInResult?> completion,
         string? rawNonce,
@@ -142,6 +154,8 @@ public sealed class AppleSignInService(
         }
     }
 
+    /// <summary>Drops the retained controller, delegate and context provider once the sheet has finished, so a</summary>
+    /// second attempt is not blocked by a stale session.</summary>
     private void ClearActiveSession()
     {
         _activeController = null;
@@ -149,12 +163,15 @@ public sealed class AppleSignInService(
         _activeContextProvider = null;
     }
 
+    /// <summary>Receives the Apple result and translates it: a cancelled or empty credential completes with null,</summary>
+    /// any other failure completes with an error the screen can show.</summary>
     private sealed class AppleAuthorizationDelegate(
         TaskCompletionSource<PlatformSignInResult?> completion,
         Action clearActiveSession,
         string? rawNonce,
         string? nonceChallengeId) : ASAuthorizationControllerDelegate
     {
+        /// <summary>Completes the sign-in with the credential Apple returned.</summary>
         public override void DidComplete(
             ASAuthorizationController controller,
             ASAuthorization authorization)
@@ -197,6 +214,7 @@ public sealed class AppleSignInService(
             }
         }
 
+        /// <summary>Completes the sign-in with the error Apple returned.</summary>
         public override void DidComplete(
             ASAuthorizationController controller,
             NSError error)
@@ -217,6 +235,8 @@ public sealed class AppleSignInService(
             }
         }
 
+        /// <summary>Turns the common provisioning-profile failure into an actionable message instead of the raw</summary>
+        /// system text.</summary>
         private static string BuildErrorMessage(NSError error)
         {
             if (error.Domain == "com.apple.AuthenticationServices.AuthorizationError" &&
@@ -227,6 +247,7 @@ public sealed class AppleSignInService(
             return error.LocalizedDescription ?? "Apple login could not finish. Please try again.";
         }
 
+        /// <summary>Joins the given and family name Apple returned; Apple only supplies them on first sign-in.</summary>
         private static string? BuildFullName(NSPersonNameComponents? fullName)
         {
             if (fullName is null)
@@ -241,10 +262,14 @@ public sealed class AppleSignInService(
         }
     }
 
+    /// <summary>Supplies the window the Apple sheet is presented over, falling back to the key window of any</summary>
+    /// connected scene.</summary>
     private sealed class ApplePresentationContextProvider :
         NSObject,
         IASAuthorizationControllerPresentationContextProviding
     {
+        /// <summary>The window to present over; throws when there is none, because a sheet with no anchor cannot be</summary>
+        /// shown at all.</summary>
         public UIWindow GetPresentationAnchor(ASAuthorizationController controller)
         {
             var currentWindow = Platform.GetCurrentUIViewController()?.View?.Window;

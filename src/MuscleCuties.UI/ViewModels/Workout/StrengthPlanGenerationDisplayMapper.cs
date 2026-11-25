@@ -4,6 +4,8 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
+/// <summary>Turns a plan preview into readable rows: activity and weekday labels, coverage and limitation notes,</summary>
+/// and the per-session schedule the generation page shows.</summary>
 internal static class StrengthPlanGenerationDisplayMapper
 {
     private const int NoPolicyReasons = 0;
@@ -17,6 +19,7 @@ internal static class StrengthPlanGenerationDisplayMapper
     private const string SessionWithheldOneKey = "Workout_Generation_SessionWithheldOne";
     private const string SessionWithheldManyKey = "Workout_Generation_SessionWithheldManyFormat";
 
+    /// <summary>The session as its display model.</summary>
     public static MixedActivitySessionDisplay ToMixedActivitySessionDisplay(
         MixedActivityScheduleSessionV020 session)
     {
@@ -72,6 +75,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         return string.Join(" · ", parts);
     }
 
+    /// <summary>The decision as its display model.</summary>
     public static MixedActivityDecisionDisplay ToMixedActivityDecisionDisplay(
         MixedActivityScheduleDecisionV020 decision)
     {
@@ -110,6 +114,8 @@ internal static class StrengthPlanGenerationDisplayMapper
             new ObservableCollection<string>(reasons));
     }
 
+    /// <summary>The activity's name for an id that may come from a newer server build, in which case it reads as</summary>
+    /// unknown rather than as an empty label.</summary>
     public static string ActivityLabel(int activityTypeId)
     {
         if (!Enum.IsDefined(typeof(WorkoutActivityDto), activityTypeId))
@@ -118,6 +124,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         return ActivityLabel((WorkoutActivityDto)activityTypeId);
     }
 
+    /// <summary>The label for an activity.</summary>
     public static string ActivityLabel(WorkoutActivityDto activity) => activity switch
     {
         WorkoutActivityDto.GeneralStrength => UiTextCatalog.Get("Workout_Generation_GeneralStrength"),
@@ -139,6 +146,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         _ => UiTextCatalog.Get("Workout_Generation_UnknownActivity")
     };
 
+    /// <summary>The description shown for a strength activity.</summary>
     public static string StrengthPlanDescription(WorkoutActivityDto activity) => activity switch
     {
         WorkoutActivityDto.GeneralStrength => UiTextCatalog.Get("Workout_Generation_GeneralStrengthDescription"),
@@ -147,6 +155,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         _ => string.Empty
     };
 
+    /// <summary>The full label for a weekday.</summary>
     public static string FullWeekdayLabel(DayOfWeek weekday) => UiTextCatalog.Get(weekday switch
     {
         DayOfWeek.Monday => "Workout_Generation_FullDayMonday",
@@ -159,6 +168,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         _ => "Workout_Generation_UnknownDay"
     });
 
+    /// <summary>The short label for a weekday.</summary>
     public static string ShortWeekdayLabel(DayOfWeek weekday) => UiTextCatalog.Get(WeekdayLabelKey(weekday));
 
     /// <summary>The one short weekday resource key set; session titles and day chips both read it.</summary>
@@ -174,6 +184,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         _ => "Workout_Generation_UnknownDay"
     };
 
+    /// <summary>The message shown for a schedule reason code.</summary>
     public static string ScheduleReasonMessage(string reasonCode) => UiTextCatalog.Get(reasonCode switch
     {
         "ActivitySelectionMissing" or "NoActivitiesSelected" => "Workout_Generation_Reason_NoActivitiesSelected",
@@ -330,6 +341,8 @@ internal static class StrengthPlanGenerationDisplayMapper
         return notes;
     }
 
+    /// <summary>The notes shown after a plan is accepted: which regions are under-covered and whether a session was</summary>
+    /// withheld, so the user knows what the plan will not do.</summary>
     public static IReadOnlyList<string> PostAcceptanceNotices(StrengthPlanPreviewResponseV020? preview)
     {
         if (preview is null)
@@ -355,6 +368,8 @@ internal static class StrengthPlanGenerationDisplayMapper
         return notes.Distinct().ToArray();
     }
 
+    /// <summary>One line naming why the plan is limited, combining plan-level and per-session codes without repeating</summary>
+    /// the same reason twice.</summary>
     public static string GetPreviewLimitationMessage(StrengthPlanPreviewResponseV020? preview)
     {
         if (preview is null)
@@ -467,9 +482,12 @@ internal static class StrengthPlanGenerationDisplayMapper
         };
     }
 
+    /// <summary>True when the code says a session was withheld.</summary>
     private static bool IsSessionWithheldCode(string? code) =>
         code is not null && code.StartsWith(SessionWithheldCodePrefix, StringComparison.Ordinal);
 
+    /// <summary>The scheduled sessions per week when the plan sets them, otherwise the target it was aiming for, marked</summary>
+    /// as a target so the two are never confused.</summary>
     private static string ActivityFrequencySummary(MixedActivityScheduleDecisionV020 decision)
     {
         if (decision.ScheduledSessionsPerWeek > NoPolicyReasons)
@@ -480,6 +498,7 @@ internal static class StrengthPlanGenerationDisplayMapper
             : NoStatusMessage;
     }
 
+    /// <summary>A session count as text, with its own singular wording and "not specified" when the plan left it open.</summary>
     private static string FrequencyValue(int? value)
     {
         if (!value.HasValue)
@@ -491,11 +510,13 @@ internal static class StrengthPlanGenerationDisplayMapper
             value.Value.ToString(CultureInfo.CurrentCulture));
     }
 
+    /// <summary>The frequency summary for a weekly count.</summary>
     private static string FrequencySummaryValue(int? value) => value.HasValue
         ? LocalizedFormat.Format("Workout_Generation_ActivityFrequencyPerWeekFormat",
             value.Value.ToString(CultureInfo.CurrentCulture))
         : UiTextCatalog.Get("Workout_Generation_NotSpecified");
 
+    /// <summary>The label for a schedule disposition.</summary>
     private static string DispositionLabel(string disposition) => disposition switch
     {
         "Scheduled" => UiTextCatalog.Get("Workout_Generation_Disposition_Scheduled"),
@@ -506,6 +527,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         _ => UiTextCatalog.Get("Workout_Generation_Disposition_Review")
     };
 
+    /// <summary>The label for a prescription status.</summary>
     private static string PrescriptionStatusLabel(string status) => status switch
     {
         "Eligible" => UiTextCatalog.Get("Workout_Generation_Prescription_Eligible"),
@@ -549,6 +571,7 @@ internal static class StrengthPlanGenerationDisplayMapper
         "HighVolumeConservativeStart"
     };
 
+    /// <summary>True when the code only informs the user.</summary>
     public static bool IsInformationalDiagnosticCode(string? code) =>
         !string.IsNullOrWhiteSpace(code) && InformationalDiagnosticCodes.Contains(code);
 }

@@ -5,6 +5,9 @@ using MuscleCuties.UI.Models.UI.Workout;
 
 namespace MuscleCuties.UI.Controls.Workout;
 
+/// <summary>
+///     Featured workout card on the Train tab, including its rest-day guidance.
+/// </summary>
 public partial class FeaturedWorkoutCard : ContentView
 {
     private const int SingleActivityCount = 1;
@@ -69,6 +72,7 @@ public partial class FeaturedWorkoutCard : ContentView
     public static readonly BindableProperty TogglePreviewCommandProperty =
         BindableProperty.Create(nameof(TogglePreviewCommand), typeof(ICommand), typeof(FeaturedWorkoutCard));
 
+    /// <summary>Initializes the card declared in its XAML.</summary>
     public FeaturedWorkoutCard()
     {
         InitializeComponent();
@@ -167,7 +171,9 @@ public partial class FeaturedWorkoutCard : ContentView
         set => SetValue(HasMultipleActivitiesProperty, value);
     }
 
+    /// <summary>True when the workout has activity sections.</summary>
     public bool HasActivities => ActivitySections is { Count: > 0 };
+    /// <summary>True when the workout has exactly one activity.</summary>
     public bool HasSingleActivity => ActivitySections?.Count == SingleActivityCount;
 
     public ObservableCollection<ExercisePreviewItem>? ExercisePreviews
@@ -188,27 +194,41 @@ public partial class FeaturedWorkoutCard : ContentView
         set => SetValue(TogglePreviewCommandProperty, value);
     }
 
+    /// <summary>True when the card has exercise previews to show.</summary>
     public bool HasExercisePreviews => ExercisePreviews is { Count: > 0 };
 
+    /// <summary>How many exercises the preview holds, written next to it, and empty when the plan has none.</summary>
     public string ExercisePreviewsCountText => ExercisePreviews != null && ExercisePreviews.Count > 0
         ? $"({ExercisePreviews.Count} exercises)"
         : string.Empty;
 
+    /// <summary>The preview toggle names what tapping it will do, not the state it is in.</summary>
     public string PreviewChevron => IsPreviewExpanded ? "▲ Hide" : "▼ Preview";
 
+    /// <summary>The action's icon: an edit when the card opens the editor, a play when it starts the session, tinted and sized</summary>
+    /// from the theme.</summary>
     public ImageSource ActionIcon => (IsEditAction ? FluentIcons.Edit24 : FluentIcons.Play24)
         .ToImageSource(AppThemeResources.GetColor("IconContrastDark"), AppThemeResources.GetDouble("UiDimension15"));
 
+    /// <summary>The first activity the session is built from.</summary>
     public string PrimaryActivityTitle { get; private set; } = string.Empty;
+    /// <summary>How much of that first activity the session contains.</summary>
     public string PrimaryActivityCount { get; private set; } = string.Empty;
+    /// <summary>The first activity's accent fill, taken from its own colour so the chip matches the rest of the app.</summary>
     public Color PrimaryActivityBackground { get; private set; } = AppThemeResources.GetRequired<Color>("Transparent");
+    /// <summary>The ink that stays readable on that fill.</summary>
     public Color PrimaryActivityTextColor { get; private set; } = AppThemeResources.GetRequired<Color>("TextPrimary");
 
+    /// <summary>The second activity, empty when the session has only one.</summary>
     public string SecondaryActivityTitle { get; private set; } = string.Empty;
+    /// <summary>How much of the second activity the session contains.</summary>
     public string SecondaryActivityCount { get; private set; } = string.Empty;
+    /// <summary>The second activity's accent fill.</summary>
     public Color SecondaryActivityBackground { get; private set; } = AppThemeResources.GetRequired<Color>("Transparent");
+    /// <summary>The ink for the second chip's fill.</summary>
     public Color SecondaryActivityTextColor { get; private set; } = AppThemeResources.GetRequired<Color>("TextPrimary");
 
+    /// <summary>Refreshes the card's derived flags when the previews change.</summary>
     private static void OnExercisePreviewsChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is FeaturedWorkoutCard card)
@@ -218,17 +238,20 @@ public partial class FeaturedWorkoutCard : ContentView
         }
     }
 
+    /// <summary>Refreshes the card when the preview expansion changes.</summary>
     private static void OnIsPreviewExpandedChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is FeaturedWorkoutCard card) card.OnPropertyChanged(nameof(PreviewChevron));
     }
 
+    /// <summary>Refreshes the card's derived flags when the sections change.</summary>
     private static void OnActivitySectionsChanged(BindableObject bindable, object oldValue, object newValue)
     {
         if (bindable is FeaturedWorkoutCard card)
             card.RefreshActivityProperties();
     }
 
+    /// <summary>Refreshes the card's derived flags whenever a bound property changes.</summary>
     protected override void OnPropertyChanged(string? propertyName = null)
     {
         base.OnPropertyChanged(propertyName);
@@ -237,6 +260,8 @@ public partial class FeaturedWorkoutCard : ContentView
         else if (propertyName == nameof(IsEditAction)) OnPropertyChanged(nameof(ActionIcon));
     }
 
+    /// <summary>Rebuilds both activity chips from the plan, so the card shows what the session really contains rather than what</summary>
+    /// was last shown.</summary>
     private void RefreshActivityProperties()
     {
         var sections = ActivitySections;
@@ -277,6 +302,7 @@ public partial class FeaturedWorkoutCard : ContentView
         OnPropertyChanged(nameof(SecondaryActivityTextColor));
     }
 
+    /// <summary>The short title used for an activity's section.</summary>
     private static string ShortActivityTitle(WorkoutActivitySection section) => section.Tag switch
     {
         "CARDIO" => "Cardio",

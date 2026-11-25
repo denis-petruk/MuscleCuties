@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Workout.Injury;
 
+/// <summary>The injury persistence.</summary>
 public interface IWorkoutInjuryStore
 {
     Task<WorkoutInjuryImpactDto> GetImpactAsync(CancellationToken ct = default);

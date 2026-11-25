@@ -17,6 +17,7 @@ public partial class DailyCheckInContent : ContentView
     private readonly AppThemeSubscription _themeSubscription;
     private readonly ViewModelSubscription<DailyCheckInViewModel> _subscription;
 
+    /// <summary>Binds the check-in content to its view model and theme.</summary>
     public DailyCheckInContent()
     {
         InitializeComponent();
@@ -31,15 +32,23 @@ public partial class DailyCheckInContent : ContentView
             onDetached: _themeSubscription.Detach);
     }
 
+    /// <summary>The sleep-quality chips in level order, so a level can index its chip.</summary>
     private Button[] SleepQualityChips =>
         [SleepQualityChip1, SleepQualityChip2, SleepQualityChip3, SleepQualityChip4, SleepQualityChip5];
 
+    /// <summary>The energy chips in level order.</summary>
     private Button[] EnergyChips => [EnergyChip1, EnergyChip2, EnergyChip3, EnergyChip4, EnergyChip5];
+    /// <summary>The fatigue chips in level order.</summary>
     private Button[] FatigueChips => [FatigueChip1, FatigueChip2, FatigueChip3, FatigueChip4, FatigueChip5];
+    /// <summary>The pain chips, which start at no pain so the array index is the level itself.</summary>
     private Button[] PainChips => [PainChip0, PainChip1, PainChip2, PainChip3];
+    /// <summary>The soreness chips in level order.</summary>
     private Button[] SorenessChips => [SorenessChip1, SorenessChip2, SorenessChip3, SorenessChip4, SorenessChip5];
+    /// <summary>The bloating chips, no first and yes second.</summary>
     private Button[] BloatingChips => [BloatingNoChip, BloatingYesChip];
 
+    /// <summary>Repaints the chips only for the answered values, so unrelated property changes do not rebuild the whole</summary>
+    /// form.</summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(DailyCheckInViewModel.PlanningSleepQuality)
@@ -51,6 +60,7 @@ public partial class DailyCheckInContent : ContentView
             UpdateChipGroups();
     }
 
+    /// <summary>Records the tapped sleep-quality level and repaints the group.</summary>
     private void OnSleepQualityClicked(object? sender, EventArgs e)
     {
         if (TryReadLevel(sender, out var level) && BindingContext is DailyCheckInViewModel vm)
@@ -60,6 +70,7 @@ public partial class DailyCheckInContent : ContentView
         }
     }
 
+    /// <summary>Records the tapped energy level.</summary>
     private void OnEnergyClicked(object? sender, EventArgs e)
     {
         if (TryReadLevel(sender, out var level) && BindingContext is DailyCheckInViewModel vm)
@@ -69,6 +80,7 @@ public partial class DailyCheckInContent : ContentView
         }
     }
 
+    /// <summary>Records the tapped fatigue level.</summary>
     private void OnFatigueClicked(object? sender, EventArgs e)
     {
         if (TryReadLevel(sender, out var level) && BindingContext is DailyCheckInViewModel vm)
@@ -78,6 +90,7 @@ public partial class DailyCheckInContent : ContentView
         }
     }
 
+    /// <summary>Records the tapped pain level, where the first chip means no pain.</summary>
     private void OnPainClicked(object? sender, EventArgs e)
     {
         if (TryReadLevel(sender, out var level) && BindingContext is DailyCheckInViewModel vm)
@@ -87,6 +100,7 @@ public partial class DailyCheckInContent : ContentView
         }
     }
 
+    /// <summary>Records the tapped soreness level.</summary>
     private void OnSorenessClicked(object? sender, EventArgs e)
     {
         if (TryReadLevel(sender, out var level) && BindingContext is DailyCheckInViewModel vm)
@@ -96,6 +110,7 @@ public partial class DailyCheckInContent : ContentView
         }
     }
 
+    /// <summary>Records the tapped bloating answer, which is a yes or no rather than a level.</summary>
     private void OnBloatingClicked(object? sender, EventArgs e)
     {
         if (TryReadLevel(sender, out var level) && BindingContext is DailyCheckInViewModel vm)
@@ -105,6 +120,7 @@ public partial class DailyCheckInContent : ContentView
         }
     }
 
+    /// <summary>The level a chip carries in its command parameter, so the handler never has to know which chip it was.</summary>
     private static bool TryReadLevel(object? sender, out int level)
     {
         level = 0;
@@ -112,6 +128,8 @@ public partial class DailyCheckInContent : ContentView
                int.TryParse(parameter.ToString(), out level);
     }
 
+    /// <summary>Repaints every group from the view model, which is what keeps the chips in step with an answer restored from</summary>
+    /// a draft.</summary>
     private void UpdateChipGroups()
     {
         if (BindingContext is not DailyCheckInViewModel vm)
@@ -125,6 +143,7 @@ public partial class DailyCheckInContent : ContentView
         UpdateChipGroup(BloatingChips, vm.HasBloating switch { false => 0, true => 1, null => -1 });
     }
 
+    /// <summary>Lights the chip at an index and clears the rest, with a negative index meaning nothing is chosen.</summary>
     private static void UpdateChipGroup(Button[] chips, int selectedIndex)
     {
         var selectedHint = Services.Localization.UiTextCatalog.Get("Common_Selected");

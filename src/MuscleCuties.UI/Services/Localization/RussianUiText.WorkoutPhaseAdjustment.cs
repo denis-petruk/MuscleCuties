@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Russian copy for phase-adjusted sessions.</summary>
 internal static partial class RussianUiText
 {
+    /// <summary>Registers the Russian labels for phase adjustments.</summary>
     static partial void RegisterWorkoutPhaseAdjustmentStrings()
     {
         Values["Workout_PhaseAdjustment_Open"] = "Проверить ближайшие тренировки";

@@ -1,5 +1,7 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Russian copy for the catalog's own keys, registered per feature and read by</summary>
+/// <see cref="UiTextCatalog.Get" /> when the active language is Russian.</summary>
 internal static partial class RussianUiText
 {
     internal static readonly Dictionary<string, string> Values = new(StringComparer.Ordinal)
@@ -16,6 +18,7 @@ internal static partial class RussianUiText
         ["Nutrition_MealTypeHeader"] = "Тип приема пищи",
     };
 
+    /// <summary>Registers the language's strings the first time the type is used.</summary>
     static RussianUiText()
     {
         RegisterDashboardStrings();
@@ -27,11 +30,18 @@ internal static partial class RussianUiText
         RegisterBodyMeasurementStrings();
     }
 
+    /// <summary>Declares the dashboard string registration.</summary>
     static partial void RegisterDashboardStrings();
+    /// <summary>Declares the cycle and workout string registration.</summary>
     static partial void RegisterCycleWorkoutStrings();
+    /// <summary>Declares the nutrition, profile and auth string registration.</summary>
     static partial void RegisterNutritionProfileAuthStrings();
+    /// <summary>Declares the workout generation string registration.</summary>
     static partial void RegisterWorkoutGenerationStrings();
+    /// <summary>Declares the phase adjustment string registration.</summary>
     static partial void RegisterWorkoutPhaseAdjustmentStrings();
+    /// <summary>Declares the hydration string registration.</summary>
     static partial void RegisterHydrationStrings();
+    /// <summary>Declares the body measurement string registration.</summary>
     static partial void RegisterBodyMeasurementStrings();
 }

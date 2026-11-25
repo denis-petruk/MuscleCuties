@@ -1,5 +1,6 @@
 namespace MuscleCuties.Core.Models.Enums.Quiz;
 
+/// <summary>How a question is answered, which decides the control and the validation.</summary>
 public enum QuizQuestionType
 {
     Goal = 0,

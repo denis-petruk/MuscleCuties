@@ -6,6 +6,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 /// <summary>Loads linked, dated check-ins and completed app sessions without inferring symptoms or performance.</summary>
 internal static class PostgresCyclePersonalizationEvidence
 {
+    /// <summary>Loads the cycle readiness observations the prescription reads.</summary>
     internal static async Task<IReadOnlyList<CycleReadinessPatternObservation>> LoadAsync(
         PostgresDbContext db, Guid userId, DateOnly today, string timeZoneId, CancellationToken cancellationToken)
     {

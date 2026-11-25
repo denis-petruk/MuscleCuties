@@ -1,5 +1,7 @@
 namespace MuscleCuties.UI.Services.Configuration;
 
+/// <summary>Which backend a build talks to. Values are persisted in stored tokens and cache keys,</summary>
+/// so they keep their historical numbers.</summary>
 public enum AppTargetEnvironment
 {
     Local = 0,
@@ -7,6 +9,8 @@ public enum AppTargetEnvironment
     Beta = 2
 }
 
+/// <summary>Decides the backend base URL and the storage keys that depend on it. Every URL passes</summary>
+/// an explicit host allowlist, so a stored override cannot point a build at an unknown server.</summary>
 public static class AppEndpointConfiguration
 {
     public const string LocalBaseUrl = "http://127.0.0.1:5080";
@@ -35,6 +39,7 @@ public static class AppEndpointConfiguration
         }
     }
 
+    /// <summary>The API base URL the environment talks to.</summary>
     public static string GetDefaultBaseUrl(AppTargetEnvironment environment) => environment switch
     {
         AppTargetEnvironment.Local => LocalBaseUrl,
@@ -42,6 +47,8 @@ public static class AppEndpointConfiguration
         _ => throw new ArgumentOutOfRangeException(nameof(environment), environment, "Unsupported target environment.")
     };
 
+    /// <summary>Accepts only absolute http(s) URLs whose host is on the allowlist; returns the parsed</summary>
+    /// URI so callers do not have to parse twice.</summary>
     public static bool IsAllowlisted(string urlString, out Uri? validatedUri)
     {
         validatedUri = null;
@@ -77,6 +84,8 @@ public static class AppEndpointConfiguration
         return true;
     }
 
+    /// <summary>Honours an override only in a Local build and only when it stays on loopback, so a</summary>
+    /// persisted override cannot redirect a debug build into a shared environment.</summary>
     public static string ResolveBackendBaseUrl(string? overrideUrl = null)
     {
         if (ActiveEnvironment == AppTargetEnvironment.Local &&
@@ -88,9 +97,11 @@ public static class AppEndpointConfiguration
         return GetDefaultBaseUrl(ActiveEnvironment);
     }
 
+    /// <summary>The cache directory the environment uses.</summary>
     public static string GetCacheDirectoryName(AppTargetEnvironment environment) =>
         $"snapshots_{environment.ToString().ToLowerInvariant()}";
 
+    /// <summary>The storage key that holds the environment's session token.</summary>
     public static string GetSessionTokenKey(AppTargetEnvironment environment) =>
         $"backend_session_token_{environment.ToString().ToLowerInvariant()}";
 }

@@ -1,17 +1,22 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>One set from a finished session, as progression reads it.</summary>
 public sealed record SnapshotProgressionSet(int Number, int Repetitions, decimal LoadKg, int? Rir, bool TechniqueAcceptable,
     int? LeftSideReps = null, int? RightSideReps = null);
+/// <summary>One session's exposure of an exercise, with when it was performed.</summary>
 public sealed record SnapshotProgressionExposure(DateTime CompletedAt, int PrescribedSets, int PrescribedRepetitions,
     int? TargetRir, IReadOnlyList<SnapshotProgressionSet> Sets, bool IsUnilateral = false,
     int? MaximumPrescribedRepetitions = null);
 
+/// <summary>Advances load from finished-session snapshots, so progression survives a fresh install.</summary>
 public static class SnapshotProgressionRule
 {
+    /// <summary>Progression guidance for a muscle group at the given experience tier.</summary>
     public static StrengthProgressionAdvice Resolve(MajorMuscleGroup muscle, EffectiveExperienceTier tier,
         int exerciseId, int plannedReps, decimal currentLoad, IReadOnlyList<SnapshotProgressionExposure> exposures) =>
         ResolveCore(muscle, tier, exerciseId, plannedReps, currentLoad, exposures);
 
+    /// <summary>Chooses the guidance from the snapshot's recorded sets.</summary>
     private static StrengthProgressionAdvice ResolveCore(MajorMuscleGroup muscle, EffectiveExperienceTier tier,
         int exerciseId, int plannedReps, decimal currentLoad, IReadOnlyList<SnapshotProgressionExposure> exposures)
     {
@@ -56,6 +61,7 @@ public static class SnapshotProgressionRule
         return new StrengthProgressionAdvice(StrengthProgressionAdviceRule.MaintainCode, currentLoad, false, muscle, tier);
     }
 
+    /// <summary>Repetitions the set counts, with unilateral sets doubled.</summary>
     private static int EffectiveRepetitions(SnapshotProgressionSet set, bool isUnilateral) =>
         isUnilateral ? Math.Min(set.LeftSideReps!.Value, set.RightSideReps!.Value) : set.Repetitions;
 }

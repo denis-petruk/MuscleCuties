@@ -14,6 +14,7 @@ public sealed class PhotoCleanupProcessor(
     private const int MaximumBackoffMinutes = 24 * 60;
     private const int MaximumBackoffExponent = 10;
 
+    /// <summary>Cleans up the objects one owner left behind.</summary>
     public async Task<PhotoCleanupBatchResult> ProcessOwnerAsync(
         Guid ownerId,
         int batchSize,
@@ -57,6 +58,7 @@ public sealed class PhotoCleanupProcessor(
         return new PhotoCleanupBatchResult(items.Count, completed, retried, fenced);
     }
 
+    /// <summary>The wait before a retry, growing with the attempt count so a failing provider is not hammered.</summary>
     private static int BackoffMinutes(int attemptCount)
     {
         var exponent = Math.Clamp(attemptCount - 1, 0, MaximumBackoffExponent);
@@ -64,4 +66,5 @@ public sealed class PhotoCleanupProcessor(
     }
 }
 
+/// <summary>What one batch deleted, failed and left due.</summary>
 public sealed record PhotoCleanupBatchResult(int Claimed, int Completed, int Retried, int Fenced);

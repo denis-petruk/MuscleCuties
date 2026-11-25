@@ -2,23 +2,30 @@ using MuscleCuties.Core.Domain.Progress;
 
 namespace MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
 
+/// <summary>A measurement to record, with the units it is given in.</summary>
 public sealed record CreateBodyMeasurementInputDto(
     Guid Id, Guid CommandId, string Site, string Side, DateOnly LocalDate, double Value, string Unit);
 
+/// <summary>A correction of a recorded measurement.</summary>
 public sealed record CorrectBodyMeasurementInputDto(
     Guid Id, Guid CommandId, int ExpectedVersion, string Site, string Side,
     DateOnly LocalDate, double Value, string Unit);
 
+/// <summary>A measurement to remove.</summary>
 public sealed record DeleteBodyMeasurementInputDto(Guid Id, Guid CommandId, int ExpectedVersion);
 
+/// <summary>The range the history is read for.</summary>
 public sealed record BodyMeasurementHistoryInputDto(DateOnly From, DateOnly Through);
 
+/// <summary>One measurement as the history shows it.</summary>
 public sealed record BodyMeasurementOutputDto(
     Guid Id, string Site, string Side, DateOnly LocalDate, decimal EnteredValue,
     string EnteredUnit, decimal ValueCentimeters, int Version);
 
+/// <summary>The measurement history for the range.</summary>
 public sealed record BodyMeasurementHistoryOutputDto(IReadOnlyList<BodyMeasurementOutputDto> Readings);
 
+/// <summary>The measurement persistence, scoped to the signed-in account.</summary>
 public interface IBodyMeasurementSession
 {
     Guid CurrentUserId { get; }

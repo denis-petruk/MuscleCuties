@@ -2,6 +2,7 @@ using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Dashboard.Overview;
 
+/// <summary>Builds the dashboard on the server, where the reads are one query each.</summary>
 public sealed class ServerDashboardOverviewUseCase(IServerDashboardOverviewStore store)
 {
     private const int MinimumValidCalendarYear = 1970;
@@ -9,6 +10,7 @@ public sealed class ServerDashboardOverviewUseCase(IServerDashboardOverviewStore
     private const int MinimumValidCalendarMonth = 1;
     private const int MaximumValidCalendarMonth = 12;
 
+    /// <summary>Loads the dashboard overview for the calling user.</summary>
     public Task<DashboardOverviewResponse> LoadOverviewAsync(
         Guid userId,
         DateOnly today,
@@ -21,6 +23,7 @@ public sealed class ServerDashboardOverviewUseCase(IServerDashboardOverviewStore
         return store.LoadOverviewAsync(userId, today, timeZoneId, cancellationToken);
     }
 
+    /// <summary>Loads the dashboard calendar for the calling user and month.</summary>
     public Task<DashboardCalendarResponse> LoadCalendarAsync(
         Guid userId,
         int year,

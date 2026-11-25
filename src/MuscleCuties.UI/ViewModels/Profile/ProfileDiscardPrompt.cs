@@ -8,6 +8,8 @@ namespace MuscleCuties.UI.ViewModels.Profile;
 /// </summary>
 internal static class ProfileDiscardPrompt
 {
+    /// <summary>Asks before unsaved edits are dropped. Without a shell there is nobody to ask, so it allows the</summary>
+    /// navigation rather than trapping the user on the page.</summary>
     public static async Task<bool> ConfirmAsync()
     {
         if (Shell.Current is not { } shell)

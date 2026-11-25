@@ -10,6 +10,7 @@ public static class WeeklyMovementCoverageRule
     public const string MissingHipExtension = "WeeklyMovementCoverageMissing_HipExtension";
     public const string UnknownCoverage = "WeeklyMovementCoverageUnknown";
 
+    /// <summary>The movement patterns the week's exercises leave untrained.</summary>
     public static IReadOnlyList<string> MissingPatterns(
         IReadOnlyCollection<int> selectedExerciseIds, IReadOnlyList<StrengthExerciseCatalogEntry> catalog)
     {

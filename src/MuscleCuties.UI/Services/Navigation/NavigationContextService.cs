@@ -3,10 +3,12 @@ using System.Diagnostics.CodeAnalysis;
 
 namespace MuscleCuties.UI.Services.Navigation;
 
+/// <summary>Thread-safe one-shot handoff between screens; entries are removed as they are taken.</summary>
 public sealed class NavigationContextService : INavigationContextService
 {
     private readonly ConcurrentDictionary<string, object?> _values = new(StringComparer.Ordinal);
 
+    /// <summary>Stores a value, overwriting any earlier one for the same key.</summary>
     public void Set<T>(string key, T value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);
@@ -15,6 +17,8 @@ public sealed class NavigationContextService : INavigationContextService
 
     [UnconditionalSuppressMessage("Trimming", "IL2026",
         Justification = "Enum types and value types used with TryTake are concretely referenced at call sites.")]
+    /// <summary>Takes a value and removes it, converting string enums and primitives because a route</summary>
+    /// query has already turned the original value into text.</summary>
     public bool TryTake<T>(string key, out T? value)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(key);

@@ -3,14 +3,18 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 
 // Preserve every proven causal episode, including a cleared episode overlapping
 // a still-active restriction on the same original prescription.
+/// <summary>The provenance written when an injury rule changes a plan automatically, so the change is traceable to the rule that made it.</summary>
 internal static class AutomaticInjuryProvenance
 {
+    /// <summary>One slot the automatic change touched, with the identity needed to restore it.</summary>
     internal sealed record Slot(InjuryRestorationSlotIdentity Identity, int OriginalExerciseId, int? AlternativeExerciseId,
         Guid[] EpisodeIds, IReadOnlyDictionary<DateOnly, Guid> OriginsByDate, int Sets, int OptionalSets, int Reps, int? DurationSeconds,
         bool IsOptional, bool IsRemovedByReadiness, int? AlternativeSets, int? AlternativeReps, bool AlternativeIsOptional,
         bool IsRestoredOriginal);
+    /// <summary>The evidence a restore was applied from, so a reconcile can tell whether it is still current.</summary>
     internal sealed record Evidence(string Fingerprint, IReadOnlyList<Slot> Slots);
 
+    /// <summary>The injury provenance recorded for a plan revision.</summary>
     internal static async Task<Evidence?> LoadAsync(PostgresDbContext db, Guid userId, Guid planId,
         DateOnly today, IReadOnlyList<StrengthPlanPreviewSessionV020> proposalSessions,
         StrengthPlanPreviewSourceV020 source, CancellationToken ct)

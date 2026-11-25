@@ -29,6 +29,7 @@ public static class WorkoutGenerationEngineV2
     private const decimal WarmupSetDurationMinutes = 1.0m;
     private const decimal SupersetRestSavingFactor = 0.65m;
 
+    /// <summary>Builds the week from her inputs, reducing load only where a recorded restriction or poor readiness justifies it.</summary>
     public static WorkoutGenerationResultV2 Generate(WorkoutGenerationInputV2? input)
     {
         if (input is null)
@@ -170,6 +171,7 @@ public static class WorkoutGenerationEngineV2
             coachExplanation);
     }
 
+    /// <summary>Caps her stated experience at what the catalogue can actually support.</summary>
     private static TrainingExperienceLevel ResolveEffectiveExperience(WorkoutGenerationInputV2 input)
     {
         var promoted = WorkoutExperiencePromotionRule.Resolve(
@@ -177,6 +179,7 @@ public static class WorkoutGenerationEngineV2
         return promoted == TrainingExperienceLevel.Unknown ? TrainingExperienceLevel.Beginner : promoted;
     }
 
+    /// <summary>True when the exercise passes the version-2 eligibility checks.</summary>
     private static bool IsExerciseEligible(
         ExerciseCatalogItemV2 item,
         WorkoutGenerationInputV2 input,
@@ -218,6 +221,7 @@ public static class WorkoutGenerationEngineV2
         return true;
     }
 
+    /// <summary>How many strength days the week's inputs produce.</summary>
     private static int DetermineStrengthDaysCount(
         int availableDays,
         TrainingExperienceLevel experience,
@@ -241,6 +245,7 @@ public static class WorkoutGenerationEngineV2
         return Math.Min(availableDays, Math.Min(requested, tierMaximum));
     }
 
+    /// <summary>The split the number of strength days implies.</summary>
     private static SplitKindV2 DetermineSplitKind(int strengthDays) => strengthDays switch
     {
         <= 3 => SplitKindV2.FullBody,
@@ -248,6 +253,7 @@ public static class WorkoutGenerationEngineV2
         _ => SplitKindV2.Hybrid
     };
 
+    /// <summary>Chooses weekdays spread apart, so sessions never pile onto consecutive days.</summary>
     private static DayOfWeek[] SelectSpacedWeekdays(DayOfWeek[] orderedAvailable, int count)
     {
         if (count >= orderedAvailable.Length)
@@ -266,11 +272,14 @@ public static class WorkoutGenerationEngineV2
         return selected.Distinct().ToArray();
     }
 
+    /// <summary>The chosen weekdays in training order.</summary>
     private static DayOfWeek[] OrderWeekdays(IReadOnlySet<DayOfWeek> weekdays) =>
         weekdays.OrderBy(DayOrder).ToArray();
 
+    /// <summary>Position of the day in the week, Sunday last.</summary>
     private static int DayOrder(DayOfWeek day) => day == DayOfWeek.Sunday ? 7 : (int)day;
 
+    /// <summary>Picks the session length her answers allow, defaulting to the shortest.</summary>
     private static int ResolveStrengthSessionDurationMinutes(WorkoutGenerationInputV2 input)
     {
         var styleActivity = input.StrengthStyle switch
@@ -289,6 +298,7 @@ public static class WorkoutGenerationEngineV2
         return 60;
     }
 
+    /// <summary>Builds the week's strength sessions from the profile and the split.</summary>
     private static List<PlannedSessionV2> BuildStrengthSessions(
         WorkoutGenerationInputV2 input,
         TrainingExperienceLevel experience,
@@ -483,10 +493,12 @@ public static class WorkoutGenerationEngineV2
         return sessions;
     }
 
+    /// <summary>True when the movement pattern trains the lower body.</summary>
     private static bool IsLowerPattern(MovementPattern pattern) => pattern is MovementPattern.SquatPattern
         or MovementPattern.Lunge or MovementPattern.HipHinge or MovementPattern.HipThrust
         or MovementPattern.KneeFlexion or MovementPattern.HipAbduction;
 
+    /// <summary>Distributes the weekly direct sets across the sessions.</summary>
     private static void AllocateWeeklyDirectVolume(List<PlannedSessionV2> sessions,
         ExerciseCatalogItemV2[] catalog, TrainingExperienceLevel experience, TrainingFocus focus,
         int budgetMinutes, List<string> limitations, List<string> trace, bool allowIncreases)
@@ -584,6 +596,7 @@ public static class WorkoutGenerationEngineV2
         }
     }
 
+    /// <summary>Adds the best-scoring remaining exercise for the session.</summary>
     private static void AddBestCandidate(
         List<ExerciseCatalogItemV2> sessionSlots,
         ExerciseCatalogItemV2[] eligibleCatalog,
@@ -611,6 +624,7 @@ public static class WorkoutGenerationEngineV2
         usedCounts[candidate.ExerciseId] = usedCounts.GetValueOrDefault(candidate.ExerciseId, 0) + 1;
     }
 
+    /// <summary>Turns the chosen exercises into prescriptions with load and progression.</summary>
     private static List<PlannedExercisePrescriptionV2> BuildExercisePrescriptions(
         List<ExerciseCatalogItemV2> slots,
         StrengthStylePrescriptionSpec styleSpec,
@@ -660,6 +674,7 @@ public static class WorkoutGenerationEngineV2
         return list;
     }
 
+    /// <summary>Chooses the starting load and progression for one exercise.</summary>
     private static (SessionLoadStatusV2 Status, decimal? LoadKg, string Reason, int WorkingSets) ResolveInitialLoadAndProgression(
         ExerciseCatalogItemV2 item,
         int workingSets,
@@ -742,6 +757,7 @@ public static class WorkoutGenerationEngineV2
         }
     }
 
+    /// <summary>Trims exercises until the session fits its time budget.</summary>
     private static List<PlannedExercisePrescriptionV2> OptimizeSessionToFitBudget(
         List<PlannedExercisePrescriptionV2> exercises,
         ExerciseCatalogItemV2[] eligibleCatalog,
@@ -847,6 +863,7 @@ public static class WorkoutGenerationEngineV2
         return working;
     }
 
+    /// <summary>Pairs compatible exercises into supersets.</summary>
     private static List<PlannedExercisePrescriptionV2> ApplyCompatibleSupersets(
         List<PlannedExercisePrescriptionV2> exercises,
         Dictionary<int, ExerciseCatalogItemV2> catalogById,
@@ -898,6 +915,7 @@ public static class WorkoutGenerationEngineV2
         return result;
     }
 
+    /// <summary>True when two exercises may be supersetted.</summary>
     private static bool AreSupersetCompatible(
         PlannedExercisePrescriptionV2 a,
         PlannedExercisePrescriptionV2 b,
@@ -920,9 +938,11 @@ public static class WorkoutGenerationEngineV2
         return !directA.Overlaps(directB);
     }
 
+    /// <summary>Minutes the session's prescriptions take.</summary>
     private static decimal CalculateSessionMinutes(IReadOnlyList<PlannedExercisePrescriptionV2> exercises) =>
         WorkoutPolicyV2.DefaultGeneralWarmupMinutes + exercises.Sum(e => e.EstimatedMinutes);
 
+    /// <summary>Minutes one exercise takes for its sets.</summary>
     private static decimal EstimateSingleExerciseMinutes(
         ExerciseCatalogItemV2 item,
         int warmupSets,
@@ -940,6 +960,7 @@ public static class WorkoutGenerationEngineV2
         return Math.Round(item.SetupMinutes + warmupMinutes + executionMinutes + interSetRestMinutes, 2);
     }
 
+    /// <summary>Places the chosen cardio activities on the week.</summary>
     private static List<PlannedSessionV2> ScheduleSelectedCardio(
         WorkoutGenerationInputV2 input,
         List<PlannedSessionV2> strengthSessions,
@@ -1017,6 +1038,7 @@ public static class WorkoutGenerationEngineV2
         return result;
     }
 
+    /// <summary>Whether the day's signals are poor enough that a hard session must not be generated.</summary>
     private static bool HasPoorReadiness(DailyReadinessInputV2? readiness)
     {
         if (readiness is null)
@@ -1032,6 +1054,7 @@ public static class WorkoutGenerationEngineV2
         return lowEnergy || highFatigue || poorSleep || significantCycleSymptoms;
     }
 
+    /// <summary>Applies today's readiness to the plan, reporting whether it changed anything.</summary>
     private static (List<PlannedSessionV2> Adapted, bool Applied, string? Explanation) ApplyReadinessAdaptation(
         List<PlannedSessionV2> originalSessions,
         WorkoutGenerationInputV2 input,
@@ -1074,6 +1097,7 @@ public static class WorkoutGenerationEngineV2
             : (originalSessions, false, null);
     }
 
+    /// <summary>Records the muscles the plan leaves under-covered.</summary>
     private static void CheckCoverageGaps(
         MuscleAccountingSummaryV2 summary,
         WorkoutGenerationInputV2 input,
@@ -1103,6 +1127,7 @@ public static class WorkoutGenerationEngineV2
             advisories.Add("WeeklyCoverageMissing_GluteFocusHipAbduction");
     }
 
+    /// <summary>The calendar date of a weekday in the week being planned, so sessions land on real days.</summary>
     private static DateOnly DateForWeekdayInCurrentWeek(DateOnly referenceDate, DayOfWeek targetWeekday)
     {
         var currentOrder = DayOrder(referenceDate.DayOfWeek);
@@ -1111,6 +1136,7 @@ public static class WorkoutGenerationEngineV2
         return referenceDate.AddDays(delta);
     }
 
+    /// <summary>Stable hash of the inputs and the plan, used to detect a changed plan.</summary>
     private static string ComputeHash(
         IReadOnlyList<PlannedSessionV2> sessions,
         IReadOnlyList<string> limitations,
@@ -1135,6 +1161,7 @@ public static class WorkoutGenerationEngineV2
         return Convert.ToHexString(bytes);
     }
 
+    /// <summary>A result that reports why the inputs could not produce a plan.</summary>
     private static WorkoutGenerationResultV2 InvalidResult(
         WorkoutGenerationStatusV2 status,
         string[] limitations,

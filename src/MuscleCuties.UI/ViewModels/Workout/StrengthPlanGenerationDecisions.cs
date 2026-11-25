@@ -107,6 +107,9 @@ internal static class StrengthPlanGenerationDecisions
     }
 }
 
+/// <summary>Reads the acknowledgment a preview demands. The server's flag is not the only source: an advisory code</summary>
+/// that reduced volume also requires the user to accept it, so a plan never starts on less training than was</summary>
+/// asked for without that being seen.</summary>
 public static class StrengthPlanPreviewExtensions
 {
     private static readonly HashSet<string> ReducedVolumeCodes = new(StringComparer.OrdinalIgnoreCase)
@@ -116,6 +119,8 @@ public static class StrengthPlanPreviewExtensions
         "HighVolumeConservativeStart"
     };
 
+    /// <summary>True when the preview either says so outright or carries a volume-reduction advisory; a preview that</summary>
+    /// failed to load demands nothing.</summary>
     public static bool RequiresReducedVolumeAcknowledgment(this StrengthPlanPreviewResponseV020? preview)
     {
         if (preview is null)

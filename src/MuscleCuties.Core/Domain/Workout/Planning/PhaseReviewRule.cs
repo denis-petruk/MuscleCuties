@@ -3,6 +3,7 @@ using MuscleCuties.Core.Models.Workout.Planning;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>Where a phase review's data came from, so a projection is not treated as measurement.</summary>
 public enum PhaseReviewProvenance
 {
     Estimated,
@@ -11,12 +12,14 @@ public enum PhaseReviewProvenance
     TrackingDisabled
 }
 
+/// <summary>The scale a baseline is measured on, which decides how its change is read.</summary>
 public enum PhaseBaselineScale
 {
     Unknown,
     QuizMappedOneToFive
 }
 
+/// <summary>Whether a review may be shown, is already dismissed, or lacks evidence.</summary>
 public enum PhaseReviewGateStatus
 {
     InvalidInput,
@@ -32,12 +35,14 @@ public enum PhaseReviewGateStatus
     ReadyForAdjustmentPreview
 }
 
+/// <summary>What the review is judged against: her phase, evidence and prior dismissals.</summary>
 public sealed record PhaseReviewContext(
     Guid ContextId,
     CyclePhase Phase,
     PhaseReviewProvenance Provenance,
     DateOnly? NextEstimatedTransitionDate);
 
+/// <summary>One session the review reads its evidence from.</summary>
 public sealed record PhaseReviewSession(
     Guid SessionId,
     DateOnly LocalDate,
@@ -46,6 +51,7 @@ public sealed record PhaseReviewSession(
     bool HasStarted,
     bool HasRecordedWork);
 
+/// <summary>The key a dismissal is stored under, so dismissing holds across devices.</summary>
 public sealed record PhaseReviewDismissalKey(
     Guid ContextId,
     CyclePhase Phase,
@@ -53,6 +59,7 @@ public sealed record PhaseReviewDismissalKey(
     int Energy,
     string PolicyVersion);
 
+/// <summary>The inputs the gate decides from.</summary>
 public sealed record PhaseReviewGateInput(
     Guid PlanId,
     Guid SourceRevisionId,
@@ -71,6 +78,7 @@ public sealed record PhaseReviewGateInput(
     IReadOnlySet<PhaseReviewDismissalKey> Dismissals,
     bool HasCurrentSymptomsOrRestrictions = false);
 
+/// <summary>The gate's verdict with the reason it chose.</summary>
 public sealed record PhaseReviewGateResult(
     PhaseReviewGateStatus Status,
     DateOnly HorizonStart,
@@ -95,6 +103,7 @@ public static class PhaseReviewRule
     public const int MaximumEnergyRating = 5;
     public const int NoEligibleFutureSessions = 0;
 
+    /// <summary>Opens the review only on measured evidence and only when she has not dismissed it.</summary>
     public static PhaseReviewGateResult Evaluate(PhaseReviewGateInput? input)
     {
         if (input is null || input.Context is null || input.Sessions is null ||
@@ -170,6 +179,7 @@ public static class PhaseReviewRule
             input.LocalToday, horizonEnd, Array.AsReadOnly(eligible), dismissalKey);
     }
 
+    /// <summary>A gate result carrying the status and the day it was decided.</summary>
     private static PhaseReviewGateResult Result(PhaseReviewGateStatus status, DateOnly today) =>
         new(status, today, today, Array.Empty<Guid>(), null);
 }

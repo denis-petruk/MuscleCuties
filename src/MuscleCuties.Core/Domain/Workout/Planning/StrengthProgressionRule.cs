@@ -1,26 +1,31 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>The movement category progression treats as one family.</summary>
 public enum ExerciseMovementCategory
 {
     Compound,
     Accessory
 }
 
+/// <summary>One working set that was completed, with its load and reps.</summary>
 public sealed record CompletedWorkingSet(
     int RepsCompleted,
     decimal Load,
     int RirActual,
     bool TechniqueAcceptable = true);
 
+/// <summary>The next load for one set, with the reason it changed or held.</summary>
 public sealed record SingleSetProgressionResult(
     decimal PrescribedLoad,
     string ProgressionAction, // "Increase", "Maintain", "Decrease"
     string ReasonCode);
 
+/// <summary>One week of double-progression performance for an exercise.</summary>
 public sealed record DoubleProgressionWeekPerformance(
     int WeekNumber,
     IReadOnlyList<CompletedWorkingSet> WorkingSets);
 
+/// <summary>An exercise that may progress, with its recent performance.</summary>
 public sealed record MuscleProgressionCandidate(
     MajorMuscleGroup Muscle,
     int ExerciseId,
@@ -31,6 +36,7 @@ public sealed record MuscleProgressionCandidate(
     int CurrentWeeklyVolume,
     int PreviousWeeklyVolume);
 
+/// <summary>Whether the exercise progresses, and by how much.</summary>
 public sealed record MuscleProgressionDecision(
     MajorMuscleGroup Muscle,
     int ExerciseId,
@@ -39,6 +45,7 @@ public sealed record MuscleProgressionDecision(
     string ProgressionStatus,
     string ReasonCode);
 
+/// <summary>Advances load only when the week's target reps were met at the recorded effort.</summary>
 public static class StrengthProgressionRule
 {
     public const int CompoundRepMinimum = 6;
@@ -83,6 +90,7 @@ public static class StrengthProgressionRule
     public const string ConcurrentProgressionCapExceeded = "ConcurrentProgressionCapExceeded";
     public const string IncompleteHistoryMaintainsLoad = "IncompleteHistoryMaintainsLoad";
 
+    /// <summary>Repetition range and effort target for the muscle group, tier and role.</summary>
     public static (int RepMin, int RepMax, int TargetRir) GetEffortPrescription(
         ExerciseMovementCategory category,
         bool useConservativeRir = false)
@@ -135,6 +143,7 @@ public static class StrengthProgressionRule
         return new SingleSetProgressionResult(safePreviousLoad, ActionMaintain, RepRangeAndRirSatisfied);
     }
 
+    /// <summary>How many lifts may progress at once at the given tier.</summary>
     public static int GetConcurrentProgressionLimit(EffectiveExperienceTier tier) => tier switch
     {
         EffectiveExperienceTier.Tier1BeginnerOrNew => Tier1MaxConcurrentMuscleProgressions,
@@ -143,6 +152,7 @@ public static class StrengthProgressionRule
         _ => Tier1MaxConcurrentMuscleProgressions
     };
 
+    /// <summary>Applies double progression to each muscle group's recorded performance.</summary>
     public static IReadOnlyList<MuscleProgressionDecision> ResolveDoubleProgression(
         EffectiveExperienceTier tier,
         IReadOnlyList<MuscleProgressionCandidate> candidates)

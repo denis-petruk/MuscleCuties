@@ -160,7 +160,7 @@ public sealed class V2PainReturnSourcePersistenceTests
             db.ChangeTracker.Clear();
             var observed = await V2ObservedHistory.LoadAsync(db, userId, AccountTimeZone, CancellationToken.None);
             var restrictions = await V2PainReturnSource.LoadAsync(db, userId, observed, CancellationToken.None);
-            return Xunit.Assert.Single(restrictions.Where(restriction => restriction.ExerciseId == target.Id));
+            return Xunit.Assert.Single(restrictions, restriction => restriction.ExerciseId == target.Id);
         }
 
         async Task<int> CompletedConservativeSessionsAsync() =>
@@ -271,8 +271,8 @@ public sealed class V2PainReturnSourcePersistenceTests
             await db.SaveChangesAsync();
             var observed = await V2ObservedHistory.LoadAsync(db, userId, AccountTimeZone, CancellationToken.None);
             var restrictions = await V2PainReturnSource.LoadAsync(db, userId, observed, CancellationToken.None);
-            var noTimestamp = Xunit.Assert.Single(restrictions.Where(restriction =>
-                restriction.SiteFlag == InjuryFlag.Shoulder && !restriction.IsResolved));
+            var noTimestamp = Xunit.Assert.Single(restrictions, restriction =>
+                restriction.SiteFlag == InjuryFlag.Shoulder && !restriction.IsResolved);
             Xunit.Assert.Null(noTimestamp.ReportedAtUtc);
             Xunit.Assert.False(noTimestamp.IsResolved);
             var eligibility = WorkoutProgressionAndRecoveryV2.EvaluatePainReturn(noTimestamp,

@@ -5,6 +5,9 @@ using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Controls.Injury;
 
+/// <summary>
+///     Sheet that records and lists training injuries; sizes itself to its content.
+/// </summary>
 public partial class InjuryLogModal : AnimatedModalView
 {
     public static readonly BindableProperty CloseCommandProperty =
@@ -13,6 +16,7 @@ public partial class InjuryLogModal : AnimatedModalView
     private bool _hasContent;
     private readonly ViewModelSubscription<InjuryLogViewModel> _subscription;
 
+    /// <summary>Hooks the form so its sheet height is recomputed as injuries are added or removed.</summary>
     public InjuryLogModal()
     {
         _subscription = ViewModelSubscriptionBinding.BindToControl<InjuryLogViewModel>(this,
@@ -26,6 +30,7 @@ public partial class InjuryLogModal : AnimatedModalView
         set => SetValue(CloseCommandProperty, value);
     }
 
+    /// <summary>Builds the modal's content the first time it opens.</summary>
     protected override void PrepareForOpen()
     {
         if (_hasContent)
@@ -39,6 +44,7 @@ public partial class InjuryLogModal : AnimatedModalView
             $"[Performance][InjuryLogModal] Deferred view initialized in {Stopwatch.GetElapsedTime(started).TotalMilliseconds:F1} ms.");
     }
 
+    /// <summary>Refits the sheet height after the size changes.</summary>
     protected override void OnSizeAllocated(double width, double height)
     {
         base.OnSizeAllocated(width, height);
@@ -46,6 +52,7 @@ public partial class InjuryLogModal : AnimatedModalView
             UpdateSheetHeight();
     }
 
+    /// <summary>Refreshes the sheet when the injury list state changes.</summary>
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName is nameof(InjuryLogViewModel.IsBusy)
@@ -57,6 +64,8 @@ public partial class InjuryLogModal : AnimatedModalView
             Dispatcher.Dispatch(UpdateSheetHeight);
     }
 
+    /// <summary>Asks the sheet to re-measure after the list changed, so the sheet grows with its content instead of</summary>
+    /// scrolling inside a fixed height.</summary>
     private void UpdateSheetHeight()
     {
         if (!_hasContent || BindingContext is not InjuryLogViewModel vm)

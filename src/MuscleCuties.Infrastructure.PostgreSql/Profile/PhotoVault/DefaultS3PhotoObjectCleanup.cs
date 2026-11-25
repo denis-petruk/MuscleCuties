@@ -28,9 +28,11 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
     private readonly string? _sessionToken;
     private readonly TimeProvider _timeProvider;
 
+    /// <summary>Takes the HTTP client and configuration the S3 requests are signed with.</summary>
     public DefaultS3PhotoObjectCleanup(HttpClient httpClient, IConfiguration configuration)
         : this(httpClient, configuration, TimeProvider.System) { }
 
+    /// <summary>Takes the time provider the signature dates are computed from, so the signing window is testable.</summary>
     internal DefaultS3PhotoObjectCleanup(HttpClient httpClient, IConfiguration configuration, TimeProvider timeProvider)
     {
         _httpClient = httpClient;
@@ -42,6 +44,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         _sessionToken = configuration["Storage:S3:SessionToken"] ?? configuration["AWS_SESSION_TOKEN"];
     }
 
+    /// <summary>Deletes every version of a key, because a versioned bucket keeps a deleted object behind a delete marker.</summary>
     public async Task DeleteAllVersionsAsync(PhotoObjectCleanupTarget target, CancellationToken cancellationToken = default)
     {
         Validate(target);
@@ -51,6 +54,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         await DeleteKeyVersionsAsync(PhotoObjectKeys.Published(target.OwnerId, target.PhotoId), cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Pages through one key's versions and deletes each, so a large history is not truncated by a page limit.</summary>
     private async Task DeleteKeyVersionsAsync(string key, CancellationToken cancellationToken)
     {
         for (var page = 0; page < MaxSweepPasses; page++)
@@ -84,6 +88,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         throw TransientFailure();
     }
 
+    /// <summary>Lists one page of versions, retrying transient failures so a throttled call does not abandon the cleanup.</summary>
     private async Task<ListResult> ListPageWithRetryAsync(string key, string? keyMarker, string? versionMarker, CancellationToken token)
     {
         var query = new SortedDictionary<string, string>(StringComparer.Ordinal)
@@ -105,6 +110,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         { throw ConfigurationFailure(exception); }
     }
 
+    /// <summary>Deletes one version, retrying only the failures that are safe to retry.</summary>
     private async Task DeleteVersionWithRetryAsync(string key, string versionId, CancellationToken token)
     {
         var query = new SortedDictionary<string, string>(StringComparer.Ordinal) { ["versionId"] = versionId };
@@ -113,6 +119,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         throw Classify(response.StatusCode);
     }
 
+    /// <summary>Sends a signed request with bounded backoff, treating 5xx and throttling as retryable and 4xx as final.</summary>
     private async Task<HttpResponseMessage> SendWithRetryAsync(HttpMethod method, string key, SortedDictionary<string, string> query, int? attemptOverride, CancellationToken token)
     {
         for (var attempt = 1; attempt <= (attemptOverride ?? MaxAttempts); attempt++)
@@ -139,6 +146,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         throw TransientFailure();
     }
 
+    /// <summary>Builds a signed request, so the signature and the request it covers are produced together.</summary>
     private HttpRequestMessage CreateRequest(HttpMethod method, string key, SortedDictionary<string, string> query)
     {
         var uri = BuildUri(key, query);
@@ -169,6 +177,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         return request;
     }
 
+    /// <summary>The canonical URI for a request, with the key encoded the way the signature expects.</summary>
     private Uri BuildUri(string key, SortedDictionary<string, string> query)
     {
         var path = string.Join('/', key.Split('/').Select(Encode));
@@ -176,6 +185,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         return new Uri($"https://{_bucket}.s3.{_region}.amazonaws.com/{path}?{queryString}", UriKind.Absolute);
     }
 
+    /// <summary>Refuses a target that is not a key in this bucket and prefix, which is what stops a cleanup from reaching another object.</summary>
     private void Validate(PhotoObjectCleanupTarget target)
     {
         if (target is null || target.OwnerId == Guid.Empty || target.PhotoId == Guid.Empty) throw ConfigurationFailure();
@@ -184,6 +194,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
             target.Key != PhotoObjectKeys.Published(target.OwnerId, target.PhotoId)) throw ConfigurationFailure();
     }
 
+    /// <summary>Parses a version listing, requiring the bucket to be the expected one before any key is used.</summary>
     private static ListResult ParseList(byte[] body, string expectedKey)
     {
         using var stream = new MemoryStream(body, writable: false);
@@ -212,6 +223,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
             root.Element(ns + "NextVersionIdMarker") is { } nextVersion ? Uri.UnescapeDataString(nextVersion.Value) : null);
     }
 
+    /// <summary>Reads one version element, ignoring entries without a key.</summary>
     private static ListedVersion ReadListed(XElement node, XNamespace ns)
     {
         var key = (string?)node.Element(ns + "Key") ?? throw new XmlException();
@@ -219,6 +231,7 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         return new ListedVersion(Uri.UnescapeDataString(key), Uri.UnescapeDataString(version));
     }
 
+    /// <summary>Reads a response body up to a fixed limit, so a hostile or broken response cannot exhaust memory.</summary>
     private static async Task<byte[]> ReadBoundedAsync(HttpResponseMessage response, CancellationToken token)
     {
         if (response.Content.Headers.ContentLength is > MaxResponseBytes) throw ConfigurationFailure();
@@ -234,21 +247,30 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         }
     }
 
+    /// <summary>Reads a required credential, failing with a configuration error rather than sending an unsigned request.</summary>
     private static string ReadCredential(IConfiguration configuration, string key, string environmentKey)
     {
         var value = configuration[key] ?? configuration[environmentKey];
         return string.IsNullOrWhiteSpace(value) ? throw ConfigurationFailure() : value;
     }
 
+    /// <summary>True when the status is worth retrying.</summary>
     private static bool IsRetryable(HttpStatusCode status) => (int)status >= 500 || status == HttpStatusCode.RequestTimeout || (int)status == 429;
+    /// <summary>The failure that matches the status S3 returned.</summary>
     private static S3PhotoObjectCleanupException Classify(HttpStatusCode status) =>
         status is HttpStatusCode.Forbidden or HttpStatusCode.Unauthorized
             ? new(S3PhotoObjectCleanupFailure.Forbidden, "S3 denied photo cleanup access.")
             : IsRetryable(status) ? TransientFailure() : ConfigurationFailure();
+    /// <summary>The failure reported when S3 is not configured.</summary>
     private static S3PhotoObjectCleanupException ConfigurationFailure(Exception? inner = null) => new(S3PhotoObjectCleanupFailure.Configuration, "S3 photo cleanup configuration or response was invalid.", inner);
+    /// <summary>The failure reported when S3 could not be reached.</summary>
     private static S3PhotoObjectCleanupException TransientFailure(Exception? inner = null) => new(S3PhotoObjectCleanupFailure.Transient, "S3 photo cleanup request failed transiently.", inner);
+    /// <summary>URL-encodes a path segment, keeping the tilde readable.</summary>
     private static string Encode(string value) => Uri.EscapeDataString(value).Replace("%7E", "~", StringComparison.Ordinal);
+    /// <summary>Lowercase hex of the bytes.</summary>
     private static string Hex(byte[] value) => Convert.ToHexString(value).ToLowerInvariant();
+    /// <summary>One object version as listed, which is what a delete is issued against.</summary>
     private sealed record ListedVersion(string Key, string VersionId);
+    /// <summary>One page of a version listing, with the bucket name the page is checked against.</summary>
     private sealed record ListResult(List<ListedVersion> Versions, List<ListedVersion> DeleteMarkers, bool IsTruncated, string? NextKeyMarker, string? NextVersionIdMarker);
 }

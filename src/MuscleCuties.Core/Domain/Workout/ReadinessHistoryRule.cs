@@ -3,6 +3,7 @@ using MuscleCuties.Core.Models.Workout.Planning;
 
 namespace MuscleCuties.Core.Domain.Workout;
 
+/// <summary>One day's readiness with the inputs it was computed from.</summary>
 public sealed record ReadinessHistoryObservation(
     DateOnly Date,
     double SleepHours,
@@ -15,8 +16,10 @@ public sealed record ReadinessHistoryObservation(
     int? Soreness,
     double? PreviousDayLoad);
 
+/// <summary>Builds the history readiness is trended over, ignoring days with no inputs.</summary>
 public static class ReadinessHistoryRule
 {
+    /// <summary>Turns the stored lookback records into the readiness inputs.</summary>
     public static DailyInputs? Build(
         IReadOnlyList<ReadinessHistoryObservation>? history,
         DateOnly targetDate,
@@ -81,6 +84,7 @@ public static class ReadinessHistoryRule
             sleepQuality, soreness, previousDayLoad);
     }
 
+    /// <summary>The inputs with history-dependent fields cleared, so her first day still scores.</summary>
     private static DailyInputs WithoutHistory(DateOnly targetDate, DailyInputs todayInputs)
     {
         return DailyInputs.CreateSafe(targetDate, todayInputs.SleepHours,

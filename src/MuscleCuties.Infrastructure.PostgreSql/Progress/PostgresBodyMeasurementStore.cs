@@ -3,6 +3,7 @@ using MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Progress;
 
+/// <summary>Body measurements, stored as one JSON document per account with a receipt list so a replayed command is not applied twice.</summary>
 public sealed class PostgresBodyMeasurementStore(
     PostgresDbContext dbContext,
     TimeProvider timeProvider) : IBodyMeasurementStore
@@ -10,6 +11,7 @@ public sealed class PostgresBodyMeasurementStore(
     private const string MeasurementsStateKey = "state:progress:measurements";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Replays a previously applied create.</summary>
     public async Task<BodyMeasurementOutputDto?> TryReplayCreateAsync(
         Guid ownerId,
         CreateBodyMeasurementInputDto input,
@@ -24,6 +26,7 @@ public sealed class PostgresBodyMeasurementStore(
         return receipt.Output;
     }
 
+    /// <summary>Replays a previously applied correction.</summary>
     public async Task<BodyMeasurementOutputDto?> TryReplayCorrectionAsync(
         Guid ownerId,
         CorrectBodyMeasurementInputDto input,
@@ -38,6 +41,7 @@ public sealed class PostgresBodyMeasurementStore(
         return receipt.Output;
     }
 
+    /// <summary>True when the deletion was already applied.</summary>
     public async Task<bool> WasDeletionAppliedAsync(
         Guid ownerId,
         DeleteBodyMeasurementInputDto input,
@@ -52,6 +56,7 @@ public sealed class PostgresBodyMeasurementStore(
         return true;
     }
 
+    /// <summary>Stores a new measurement.</summary>
     public async Task<BodyMeasurement> CreateAsync(
         Guid ownerId,
         Guid commandId,
@@ -83,6 +88,7 @@ public sealed class PostgresBodyMeasurementStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>One measurement by id, or nothing when it is not the owner's.</summary>
     public async Task<BodyMeasurement?> LoadAsync(Guid ownerId, Guid id, CancellationToken cancellationToken)
     {
         var state = await ReadStateAsync(ownerId, cancellationToken).ConfigureAwait(false);
@@ -90,6 +96,7 @@ public sealed class PostgresBodyMeasurementStore(
         return item is null ? null : RestoreDomain(item);
     }
 
+    /// <summary>Corrects a stored measurement.</summary>
     public async Task<BodyMeasurement> CorrectAsync(
         Guid ownerId,
         Guid commandId,
@@ -124,6 +131,7 @@ public sealed class PostgresBodyMeasurementStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Deletes a measurement.</summary>
     public async Task DeleteAsync(
         Guid ownerId,
         Guid commandId,
@@ -154,6 +162,7 @@ public sealed class PostgresBodyMeasurementStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>The measurement history for the range.</summary>
     public async Task<IReadOnlyList<BodyMeasurement>> LoadHistoryAsync(
         Guid ownerId,
         DateOnly from,
@@ -171,6 +180,7 @@ public sealed class PostgresBodyMeasurementStore(
             .ToArray();
     }
 
+    /// <summary>The stored document, or an empty state when nothing has been recorded.</summary>
     private async Task<PersistedMeasurementState> ReadStateAsync(Guid ownerId, CancellationToken cancellationToken)
     {
         var strategy = dbContext.Database.CreateExecutionStrategy();
@@ -189,6 +199,7 @@ public sealed class PostgresBodyMeasurementStore(
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Runs one idempotent mutation of the stored state.</summary>
     private async Task<T> MutateStateAsync<T>(
         Guid ownerId,
         CancellationToken cancellationToken,
@@ -239,6 +250,7 @@ public sealed class PostgresBodyMeasurementStore(
         }, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Maps a stored measurement onto the domain object.</summary>
     private BodyMeasurement RestoreDomain(PersistedMeasurement item) =>
         BodyMeasurement.Restore(
             item.Id,
@@ -251,9 +263,11 @@ public sealed class PostgresBodyMeasurementStore(
             item.IsDeleted,
             DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime).AddDays(1));
 
+    /// <summary>Maps the domain measurement onto its stored shape.</summary>
     private static PersistedMeasurement ToPersisted(BodyMeasurement m) =>
         new(m.Id, m.Site, m.Side, m.LocalDate, m.EnteredValue, m.EnteredUnit, m.ValueCentimeters, m.Version, m.IsDeleted);
 
+    /// <summary>Maps a measurement onto its output shape.</summary>
     private static BodyMeasurementOutputDto ToOutput(BodyMeasurement m) =>
         new(
             m.Id,
@@ -265,15 +279,19 @@ public sealed class PostgresBodyMeasurementStore(
             m.ValueCentimeters,
             m.Version);
 
+    /// <summary>Signature that identifies a create request.</summary>
     private static string CreateSignature(CreateBodyMeasurementInputDto input) =>
         $"create:{input.Id:N}:{input.Site}:{input.Side}:{input.LocalDate:yyyy-MM-dd}:{Convert.ToDecimal(input.Value).ToString(CultureInfo.InvariantCulture)}:{input.Unit}";
 
+    /// <summary>Signature that identifies a correction request.</summary>
     private static string CorrectSignature(CorrectBodyMeasurementInputDto input) =>
         $"correct:{input.Id:N}:{input.ExpectedVersion}:{input.Site}:{input.Side}:{input.LocalDate:yyyy-MM-dd}:{Convert.ToDecimal(input.Value).ToString(CultureInfo.InvariantCulture)}:{input.Unit}";
 
+    /// <summary>Signature that identifies a delete request.</summary>
     private static string DeleteSignature(DeleteBodyMeasurementInputDto input) =>
         $"delete:{input.Id:N}:{input.ExpectedVersion}";
 
+    /// <summary>One stored measurement, replayed into the measurement the API returns.</summary>
     private sealed record PersistedMeasurement(
         Guid Id,
         BodyMeasurementSite Site,
@@ -285,6 +303,8 @@ public sealed class PostgresBodyMeasurementStore(
         int Version,
         bool IsDeleted);
 
+    /// <summary>A recorded command, so a replay returns the first answer instead of applying twice.</summary>
     private sealed record PersistedReceipt(Guid CommandId, string Signature, BodyMeasurementOutputDto? Output);
+    /// <summary>The whole measurement document for one account.</summary>
     private sealed record PersistedMeasurementState(List<PersistedMeasurement> Items, List<PersistedReceipt> Receipts);
 }

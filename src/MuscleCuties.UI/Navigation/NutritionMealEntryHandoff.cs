@@ -7,9 +7,11 @@ namespace MuscleCuties.UI.Navigation;
 /// </summary>
 internal static class NutritionMealEntryHandoff
 {
+    /// <summary>True when the meal entry editor should open straight away.</summary>
     public static bool IsHandoff(bool editorRequested, bool chooserVisible) =>
         editorRequested && chooserVisible;
 
+    /// <summary>True when the chooser may close because the editor is up.</summary>
     public static bool CanCloseChooser(
         bool editorRequested,
         bool chooserVisible,

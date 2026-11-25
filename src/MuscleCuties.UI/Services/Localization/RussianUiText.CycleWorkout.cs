@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Russian copy for the cycle and workout screens.</summary>
 internal static partial class RussianUiText
 {
+    /// <summary>Registers the Russian labels for the cycle and workout screens.</summary>
     static partial void RegisterCycleWorkoutStrings()
     {
         Values["Injury_PainReassessmentDue"] = "Прошло 72 часа. Нажмите «Изменить», чтобы повторно оценить боль и ограничения перед возвращением к упражнению.";

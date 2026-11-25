@@ -2,10 +2,12 @@ using MuscleCuties.UseCases.Features.Account.Deletion;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 
+/// <summary>Replays a deletion request that was recorded but may not have completed, so a retried request cannot leave a half-deleted account.</summary>
 public sealed class PostgresDeletionReplayService(
     IAccountDeletionAuditStore auditStore,
     IServerAccountPurgeStore purgeStore) : IDeletionReplayService
 {
+    /// <summary>Retries the deletions that were recorded but not completed.</summary>
     public async Task<DeletionReplayResult> ReplayPendingDeletionsAsync(
         CancellationToken cancellationToken = default)
     {

@@ -9,6 +9,8 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
+/// <summary>The workout preferences page: activities, equipment and what the home or gym has, training weekdays and</summary>
+/// excluded exercises — the inputs the plan generator reads.</summary>
 public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPageLoadAware
 {
     public const string OnboardingWeekdaysContextKey = "onboarding-workout-weekdays";
@@ -52,6 +54,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     [ObservableProperty] private string _exerciseExclusionSearchText = string.Empty;
     [ObservableProperty] private bool _isExerciseExclusionCatalogLoaded;
 
+    /// <summary>Takes the preferences use case and the navigation callbacks.</summary>
     public ProfileWorkoutPreferencesViewModel(
         IProfileWorkoutPreferencesUseCase useCase,
         GetReviewedExerciseExclusionCatalogV020UseCase exerciseExclusionCatalog,
@@ -94,6 +97,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     [ObservableProperty]
     private IReadOnlyList<SelectionOption<string>> _equipmentOptions = OfferedEquipmentOptions(null);
 
+    /// <summary>The equipment options the saved level allows.</summary>
     internal static IReadOnlyList<SelectionOption<string>> OfferedEquipmentOptions(string? savedEquipmentLevel) =>
     [
         new(FullGymEquipmentValue, "Profile_WorkoutPrefs_EquipmentFullGym"),
@@ -101,57 +105,86 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         BodyweightEquipmentOption
     ];
 
+    /// <summary>The extra gear toggles only apply to the home option, so they are hidden for a gym or bodyweight setup.</summary>
     public bool ShowHomeEquipmentCapabilities =>
         string.Equals(SelectedEquipmentOption?.Value, HomeDumbbellsBandsEquipmentValue, StringComparison.OrdinalIgnoreCase);
 
+    /// <summary>Whether a full gym was chosen, which decides what still has to be confirmed below.</summary>
     public bool IsFullGymEquipment =>
         string.Equals(SelectedEquipmentOption?.Value, FullGymEquipmentValue, StringComparison.OrdinalIgnoreCase);
 
     // A full gym includes bands, but the anchor is never inferred: the user must confirm it here
     // just as a home user does. Hiding this for FullGym made the planner's anchor requirement
     // impossible to satisfy.
+    /// <summary>A full gym includes bands, but the anchor is never inferred: the confirmation is shown there too, because a</summary>
+    /// planner that needs an anchor cannot proceed without one.</summary>
     public bool ShowBandAnchorConfirmation => IsFullGymEquipment || (ShowHomeEquipmentCapabilities && HasBands);
 
     /// <summary>C1/OD-7: a saved strength style that is no longer offered for this profile.</summary>
     public bool HasIneligibleSavedStyle =>
         WorkoutActivityOptions.Any(option => option.IsSelected && option.HasUnavailableReason);
 
+    /// <summary>Switches the focus back to general strength.</summary>
     public RelayCommand SwitchToGeneralStrengthCommand { get; }
+    /// <summary>Toggles the dumbbell equipment.</summary>
     public RelayCommand ToggleDumbbellsCommand { get; }
+    /// <summary>Toggles the band equipment.</summary>
     public RelayCommand ToggleBandsCommand { get; }
+    /// <summary>Toggles the band anchor.</summary>
     public RelayCommand ToggleBandAnchorCommand { get; }
+    /// <summary>Toggles the sliders.</summary>
     public RelayCommand ToggleSlidersCommand { get; }
+    /// <summary>Toggles the glute focus.</summary>
     public RelayCommand ToggleGluteFocusCommand { get; }
 
+    /// <summary>The activities grouped into the picker's sections.</summary>
     public IReadOnlyList<WorkoutActivityGroupSection> GroupedWorkoutActivityOptions =>
         ProfileWorkoutActivityOptions.BuildGroups(WorkoutActivityOptions);
 
+    /// <summary>How many training days are chosen, shown next to the weekday row.</summary>
     public int SelectedWeekdayCount => AvailableWeekdays.Count(day => day.IsSelected);
+    /// <summary>True while the page loads.</summary>
     public bool IsPageLoading => IsLoadingData;
+    /// <summary>Compares the current inputs with the snapshot taken when they were loaded or saved, so a change and its undo</summary>
+    /// read correctly.</summary>
     public bool HasUnsavedChanges => _hasLoadedPreferences &&
         !string.Equals(_savedPreferencesSnapshot, CapturePreferencesSnapshot(), StringComparison.Ordinal);
+    /// <summary>True when the exclusion search has text.</summary>
     public bool HasExerciseExclusionQuery => !string.IsNullOrWhiteSpace(ExerciseExclusionSearchText);
+    /// <summary>True when the search matched no exercises.</summary>
     public bool HasNoExerciseExclusionMatches => IsExerciseExclusionCatalogLoaded && HasExerciseExclusionQuery &&
         FilteredExerciseExclusionOptions.Count == 0;
+    /// <summary>The search results, listing only exercises not already excluded so the list never offers a duplicate.</summary>
     public IReadOnlyList<WorkoutExerciseExclusionOptionItem> FilteredExerciseExclusionOptions =>
         !HasExerciseExclusionQuery
             ? []
             : ExerciseExclusionOptions.Where(option =>
                     !option.IsSelected && option.Name.Contains(ExerciseExclusionSearchText.Trim(), StringComparison.CurrentCultureIgnoreCase))
                 .ToArray();
+    /// <summary>The exercises currently kept out of generated plans.</summary>
     public IReadOnlyList<WorkoutExerciseExclusionOptionItem> SelectedExerciseExclusions =>
         ExerciseExclusionOptions.Where(option => option.IsSelected).ToArray();
+    /// <summary>True when the preferences can be saved.</summary>
     public bool CanSave => !IsBusy && IsExerciseExclusionCatalogLoaded;
+    /// <summary>The button says what it will do: continue to the plan setup when there are changes to save, otherwise just</summary>
+    /// open it.</summary>
     public string SaveActionText => UiTextCatalog.Get(IsPlanSetupNavigationPending && !HasUnsavedChanges
         ? "Profile_WorkoutPrefs_OpenPlanSetup"
         : "Profile_WorkoutPrefs_ContinueToPlanSetup");
 
+    /// <summary>Returns to the profile.</summary>
     public AsyncRelayCommand BackCommand { get; }
+    /// <summary>Loads the preferences.</summary>
     public AsyncRelayCommand LoadDataCommand { get; }
+    /// <summary>Saves the preferences.</summary>
     public AsyncRelayCommand SaveCommand { get; }
+    /// <summary>Toggles a workout activity.</summary>
     public RelayCommand<WorkoutActivityOptionItem> ToggleWorkoutActivityCommand { get; }
+    /// <summary>Toggles a training weekday.</summary>
     public RelayCommand<WorkoutWeekdayOptionItem> ToggleWeekdayCommand { get; }
 
+    /// <summary>Loads the saved preferences and the exercise catalog together, and keeps the loaded inputs as the baseline for</summary>
+    /// the unsaved-changes flag.</summary>
     private async Task LoadDataAsync()
     {
         IsLoadError = false;
@@ -258,6 +291,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         }
     }
 
+    /// <summary>Saves the preferences, moves the baseline and carries on to the plan setup; refused input stays on the page as</summary>
+    /// errors.</summary>
     private async Task SaveAsync()
     {
         if (IsBusy)
@@ -338,6 +373,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         }
     }
 
+    /// <summary>The reasons the preferences cannot be saved.</summary>
     private List<string> CollectValidationErrors(
         WorkoutActivityOptionItem[] selectedActivities,
         int[] availableWeekdays)
@@ -363,6 +399,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         return errors;
     }
 
+    /// <summary>Opens the plan setup and marks that navigation as pending, so the button keeps the label it was tapped with</summary>
+    /// while the page changes.</summary>
     private async Task OpenPlanSetupAsync()
     {
         IsPlanSetupNavigationPending = true;
@@ -370,6 +408,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         IsPlanSetupNavigationPending = false;
     }
 
+    /// <summary>Refreshes the derived state whenever a property changes.</summary>
     protected override void OnPropertyChanged(System.ComponentModel.PropertyChangedEventArgs e)
     {
         base.OnPropertyChanged(e);
@@ -377,6 +416,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
             OnPropertyChanged(nameof(SaveActionText));
     }
 
+    /// <summary>Adds or removes one activity, keeping the list free of duplicates.</summary>
     private void ToggleWorkoutActivity(WorkoutActivityOptionItem? item)
     {
         if (item is null)
@@ -393,6 +433,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         OnPropertyChanged(nameof(HasIneligibleSavedStyle));
     }
 
+    /// <summary>Falls back to general strength when the saved style is no longer offered for this profile, so the page opens</summary>
+    /// on a style that exists.</summary>
     private void SwitchToGeneralStrength()
     {
         foreach (var option in WorkoutActivityOptions)
@@ -409,6 +451,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         OnPropertyChanged(nameof(HasIneligibleSavedStyle));
     }
 
+    /// <summary>The training experience level the style eligibility needs, or nothing when it cannot be read.</summary>
     private async Task<int?> TryLoadTrainingExperienceLevelAsync()
     {
         if (_personalInfo is null)
@@ -425,6 +468,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         }
     }
 
+    /// <summary>Hides the styles this profile cannot use and switches away from one that is already selected.</summary>
     private void ApplyStyleEligibility()
     {
         foreach (var option in WorkoutActivityOptions.Where(option =>
@@ -436,6 +480,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         OnPropertyChanged(nameof(HasIneligibleSavedStyle));
     }
 
+    /// <summary>Turns one training day on or off.</summary>
     private void ToggleWeekday(WorkoutWeekdayOptionItem? item)
     {
         if (item is null)
@@ -447,6 +492,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         OnPropertyChanged(nameof(HasUnsavedChanges));
     }
 
+    /// <summary>The session length to save for an activity, falling back to the page's current length when the activity has</summary>
+    /// no answer of its own.</summary>
     private int ResolveSessionDurationMinutes(WorkoutActivityDto activityType)
     {
         if (_savedActivitySessionDurationsMinutes.TryGetValue((int)activityType, out var savedDuration) &&
@@ -461,6 +508,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
                WorkoutPreferencesConstraints.DefaultActivitySessionDurationMinutes;
     }
 
+    /// <summary>Every editable input as one canonical string, which is what the unsaved-changes comparison reads.</summary>
     private string CapturePreferencesSnapshot()
     {
         var selectedActivities = string.Join(",", WorkoutActivityOptions
@@ -488,6 +536,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
             excludedExercises);
     }
 
+    /// <summary>The weekdays the picker offers.</summary>
     private static IReadOnlyList<DayOfWeek> CreateWeekdays() =>
     [
         DayOfWeek.Monday,
@@ -499,12 +548,14 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         DayOfWeek.Sunday
     ];
 
+    /// <summary>Follows the activity options when they are replaced.</summary>
     partial void OnWorkoutActivityOptionsChanged(ObservableCollection<WorkoutActivityOptionItem> value)
     {
         OnPropertyChanged(nameof(GroupedWorkoutActivityOptions));
         OnPropertyChanged(nameof(HasIneligibleSavedStyle));
     }
 
+    /// <summary>Follows the exclusion options when they are replaced.</summary>
     partial void OnExerciseExclusionOptionsChanged(ObservableCollection<WorkoutExerciseExclusionOptionItem> value)
     {
         OnPropertyChanged(nameof(FilteredExerciseExclusionOptions));
@@ -512,6 +563,7 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         OnPropertyChanged(nameof(HasNoExerciseExclusionMatches));
     }
 
+    /// <summary>Refreshes the filtered exclusions when the search changes.</summary>
     partial void OnExerciseExclusionSearchTextChanged(string value)
     {
         OnPropertyChanged(nameof(HasExerciseExclusionQuery));
@@ -519,12 +571,16 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         OnPropertyChanged(nameof(HasNoExerciseExclusionMatches));
     }
 
+    /// <summary>Refreshes the save state when busy changes.</summary>
     partial void OnIsBusyChanged(bool value) => OnPropertyChanged(nameof(CanSave));
 
+    /// <summary>Refreshes the save state when the catalog loads.</summary>
     partial void OnIsExerciseExclusionCatalogLoadedChanged(bool value) => OnPropertyChanged(nameof(CanSave));
 
+    /// <summary>Refreshes the loading flag when loading changes.</summary>
     partial void OnIsLoadingDataChanged(bool value) => OnPropertyChanged(nameof(IsPageLoading));
 
+    /// <summary>Applies the chosen equipment level.</summary>
     partial void OnSelectedEquipmentOptionChanged(SelectionOption<string>? value)
     {
         OnPropertyChanged(nameof(ShowHomeEquipmentCapabilities));
@@ -533,9 +589,11 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         OnPropertyChanged(nameof(HasUnsavedChanges));
     }
 
+    /// <summary>Refreshes the anchor state when dumbbells change.</summary>
     partial void OnHasDumbbellsChanged(bool value) =>
         OnPropertyChanged(nameof(HasUnsavedChanges));
 
+    /// <summary>Clears the anchor when the bands are dropped.</summary>
     partial void OnHasBandsChanged(bool value)
     {
         if (!value)
@@ -544,12 +602,15 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         OnPropertyChanged(nameof(HasUnsavedChanges));
     }
 
+    /// <summary>Refreshes the anchor state when it changes.</summary>
     partial void OnHasConfirmedBandAnchorChanged(bool value) =>
         OnPropertyChanged(nameof(HasUnsavedChanges));
 
+    /// <summary>Refreshes the equipment flags when sliders change.</summary>
     partial void OnHasSlidersChanged(bool value) =>
         OnPropertyChanged(nameof(HasUnsavedChanges));
 
+    /// <summary>Refreshes the equipment flags when the focus changes.</summary>
     partial void OnGluteFocusChanged(bool value) =>
         OnPropertyChanged(nameof(HasUnsavedChanges));
 }

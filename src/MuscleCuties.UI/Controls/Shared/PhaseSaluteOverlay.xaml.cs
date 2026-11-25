@@ -1,6 +1,9 @@
 
 namespace MuscleCuties.UI.Controls.Shared;
 
+/// <summary>
+///     Celebration overlay played when a milestone is reached.
+/// </summary>
 public partial class PhaseSaluteOverlay : ContentView
 {
     public static readonly BindableProperty IconSourceProperty = BindableProperty.Create(
@@ -9,6 +12,7 @@ public partial class PhaseSaluteOverlay : ContentView
         typeof(PhaseSaluteOverlay),
         "Animations/Cycle/phase_follicular_plant.json");
 
+    /// <summary>Initializes the overlay declared in its XAML.</summary>
     public PhaseSaluteOverlay()
     {
         InitializeComponent();
@@ -20,6 +24,7 @@ public partial class PhaseSaluteOverlay : ContentView
         set => SetValue(IconSourceProperty, value);
     }
 
+    /// <summary>Plays the celebration once with the given icon, and is safe to call again before the previous one has finished.</summary>
     public async Task PlayAsync(string? iconSource = null)
     {
         if (!string.IsNullOrWhiteSpace(iconSource))
@@ -132,6 +137,7 @@ public partial class PhaseSaluteOverlay : ContentView
         IsVisible = false;
     }
 
+    /// <summary>Puts one spark back at its start, so the animation can replay instead of continuing from where it stopped.</summary>
     private static void ResetSpark(VisualElement spark, double translationX, double translationY, double scale)
     {
         spark.Opacity = AppThemeResources.GetDouble("UiOpacityHidden");
@@ -140,6 +146,7 @@ public partial class PhaseSaluteOverlay : ContentView
         spark.Scale = scale;
     }
 
+    /// <summary>Flies one spark out and fades it as it goes.</summary>
     private static async Task AnimateSparkAsync(VisualElement spark, double translationX, double translationY)
     {
         await Task.WhenAll(

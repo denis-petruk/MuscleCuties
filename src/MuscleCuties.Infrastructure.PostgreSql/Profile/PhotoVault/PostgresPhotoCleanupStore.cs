@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
+/// <summary>One claimed cleanup task, carrying the lease the worker must present when it reports back.</summary>
 public sealed record PhotoObjectCleanupWorkItem(
     Guid Id,
     Guid UserId,
@@ -13,6 +14,7 @@ public sealed record PhotoObjectCleanupWorkItem(
     long LeaseGeneration,
     int AttemptCount);
 
+/// <summary>Why a cleanup attempt failed, kept as a category so retry policy never depends on error text.</summary>
 public enum PhotoCleanupFailureCategory
 {
     Transient,
@@ -25,6 +27,7 @@ public enum PhotoCleanupFailureCategory
 /// <summary>Durable database state only; S3 work is performed by a separately scoped worker.</summary>
 public sealed class PostgresPhotoCleanupStore(PostgresDbContext dbContext)
 {
+    /// <summary>Claims the cleanup work items that are due.</summary>
     public async Task<IReadOnlyList<PhotoObjectCleanupWorkItem>> ClaimDueAsync(
         Guid userId,
         DateTime nowUtc,
@@ -78,6 +81,7 @@ public sealed class PostgresPhotoCleanupStore(PostgresDbContext dbContext)
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Marks a work item complete.</summary>
     public async Task<bool> CompleteAsync(PhotoObjectCleanupWorkItem item, DateTime completedAtUtc, CancellationToken cancellationToken = default) =>
         await FencedUpdateAsync(item, """
             UPDATE app.photo_object_cleanups SET state = 'Completed', completed_at_utc = @completed_at,
@@ -86,6 +90,7 @@ public sealed class PostgresPhotoCleanupStore(PostgresDbContext dbContext)
               AND lease_token = @token AND lease_generation = @generation
             """, completedAtUtc, null, cancellationToken).ConfigureAwait(false);
 
+    /// <summary>Schedules another attempt for a work item.</summary>
     public async Task<bool> RetryAsync(
         PhotoObjectCleanupWorkItem item,
         DateTime attemptedAtUtc,
@@ -102,6 +107,7 @@ public sealed class PostgresPhotoCleanupStore(PostgresDbContext dbContext)
             """, attemptedAtUtc, (retryAtUtc, category.ToString()), cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Updates the work item only when its claim is still current.</summary>
     private async Task<bool> FencedUpdateAsync(
         PhotoObjectCleanupWorkItem item,
         string sql,

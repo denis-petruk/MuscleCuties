@@ -23,8 +23,12 @@ using MuscleCuties.UseCases.Features.Workout.Session;
 
 namespace MuscleCuties.UI.Composition;
 
+/// <summary>Registers plan generation, sessions, account lifecycle and reminders — the services a workout</summary>
+/// day and an account journey need.</summary>
 public static class WorkoutPlanningCompositionExtensions
 {
+    /// <summary>Registers the planning clock, catalogue and safety ports with their defaults, plus the session and</summary>
+    /// proposal clients.</summary>
     public static IServiceCollection RegisterWorkoutPlanningServices(this IServiceCollection services)
     {
         services.AddSingleton<IPlanningClockPort, SystemPlanningClockPort>();

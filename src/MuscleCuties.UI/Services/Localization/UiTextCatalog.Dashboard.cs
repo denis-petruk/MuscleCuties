@@ -1,7 +1,9 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Dashboard copy: calendar labels, check-in questions and the readiness and cycle summaries.</summary>
 public static partial class UiTextCatalog
 {
+    /// <summary>Registers the dashboard strings.</summary>
     static partial void RegisterDashboardStrings()
     {
         English["Dashboard_Calendar_DayFriday"] = "F";

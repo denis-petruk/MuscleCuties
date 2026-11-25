@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>One session as schedule validation sees it, with its day and demand.</summary>
 public sealed record WorkoutScheduleValidationSession(
     DayOfWeek Day,
     WorkoutActivityType Activity,
@@ -36,6 +37,7 @@ public static class WorkoutScheduleValidationRule
     public const int NextConsecutiveDayOffset = 1;
     public const int MinimumMuscleCount = 1;
 
+    /// <summary>Reports why a schedule cannot be used, or nothing when it can.</summary>
     public static IReadOnlyList<string> Validate(
         IReadOnlyCollection<WorkoutScheduleValidationSession> sessions,
         bool requireStrengthMuscles = true)
@@ -107,6 +109,7 @@ public static class WorkoutScheduleValidationRule
         return reasons.OrderBy(reason => reason, StringComparer.Ordinal).ToArray();
     }
 
+    /// <summary>True when two sessions work the same muscle group.</summary>
     private static bool HasMuscleOverlap(
         IReadOnlySet<string> firstMuscles,
         IReadOnlySet<string> secondMuscles)
@@ -115,6 +118,7 @@ public static class WorkoutScheduleValidationRule
             secondMuscles.Any(m2 => string.Equals(m1, m2, StringComparison.OrdinalIgnoreCase)));
     }
 
+    /// <summary>True when the activity is a strength session.</summary>
     private static bool IsStrength(WorkoutActivityType activity) => activity is
         WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
         WorkoutActivityType.StrengthHighIntensity;

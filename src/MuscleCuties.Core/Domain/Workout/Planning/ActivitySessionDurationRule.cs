@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>The session lengths an activity allows, by experience tier.</summary>
 public sealed record ActivitySessionDurationPolicy(
     int MinimumMinutes,
     int MaximumMinutes,
@@ -9,6 +10,7 @@ public sealed record ActivitySessionDurationPolicy(
     int? DefaultMinutes,
     bool RequiresExplicitChoice);
 
+/// <summary>Why her chosen duration was refused, so the picker can say which bound was missed.</summary>
 public enum ActivitySessionDurationSelectionIssue
 {
     UnsupportedActivity,
@@ -115,11 +117,13 @@ public static class ActivitySessionDurationRule
         SwimmingDefaultMinutes,
         false);
 
+    /// <summary>True when the activity is a resistance session.</summary>
     public static bool IsStrengthActivity(WorkoutActivityType activity) => activity is
         WorkoutActivityType.GeneralStrength or
         WorkoutActivityType.HighVolumeStrength or
         WorkoutActivityType.StrengthHighIntensity;
 
+    /// <summary>True when the activity is continuous cardio.</summary>
     public static bool IsCardioActivity(WorkoutActivityType activity) => activity is
         WorkoutActivityType.Hiit or
         WorkoutActivityType.Cycling or
@@ -129,6 +133,7 @@ public static class ActivitySessionDurationRule
         WorkoutActivityType.Rowing or
         WorkoutActivityType.Elliptical;
 
+    /// <summary>Reads the duration from the quiz answer, answering false when it is outside the strength policy.</summary>
     public static bool TryResolveStrengthQuizSessionDurationMinutes(int mappedValue, out int durationMinutes)
     {
         durationMinutes = mappedValue switch
@@ -143,11 +148,13 @@ public static class ActivitySessionDurationRule
         return durationMinutes > ValidIncrementRemainder;
     }
 
+    /// <summary>Session length the quiz answer maps to for strength days.</summary>
     public static int ResolveStrengthQuizSessionDurationMinutes(int mappedValue) =>
         TryResolveStrengthQuizSessionDurationMinutes(mappedValue, out var minutes)
             ? minutes
             : StandardDefaultMinutes;
 
+    /// <summary>The duration policy an activity uses when the user chooses it.</summary>
     public static ActivitySessionDurationPolicy? ForUserPreference(WorkoutActivityType activity, bool isDemandingYoga = false) => activity switch
     {
         WorkoutActivityType.GeneralStrength or WorkoutActivityType.HighVolumeStrength or
@@ -161,15 +168,19 @@ public static class ActivitySessionDurationRule
         _ => null
     };
 
+    /// <summary>True when the activity needs the user to pick a session length.</summary>
     public static bool RequiresUserPreference(WorkoutActivityType activity) =>
         IsStrengthActivity(activity);
 
+    /// <summary>True when the activity cannot fall back to a default length.</summary>
     public static bool RequiresExplicitChoice(WorkoutActivityType activity, bool isDemandingYoga = false) =>
         ForUserPreference(activity, isDemandingYoga)?.RequiresExplicitChoice == true;
 
+    /// <summary>Session length the activity assumes when the user picks none.</summary>
     public static int? DefaultMinutesFor(WorkoutActivityType activity, bool isDemandingYoga = false) =>
         ForUserPreference(activity, isDemandingYoga)?.DefaultMinutes;
 
+    /// <summary>Resolves the yoga duration from her explicit choice first, then the answer, then the default.</summary>
     public static int ResolveYogaPlanDuration(int? explicitMinutes, int? savedMinutes, bool isDemandingYoga)
     {
         if (explicitMinutes.HasValue)
@@ -179,11 +190,13 @@ public static class ActivitySessionDurationRule
         return DefaultMinutesFor(WorkoutActivityType.Yoga, isDemandingYoga)!.Value;
     }
 
+    /// <summary>Whether the chosen minutes are one the activity offers at her tier.</summary>
     public static bool IsValidSelection(WorkoutActivityType activity, int minutes, bool isDemandingYoga = false)
     {
         return GetSelectionIssue(activity, minutes, isDemandingYoga) is null;
     }
 
+    /// <summary>Why the chosen activity cannot be scheduled at the chosen length, if it cannot.</summary>
     public static ActivitySessionDurationSelectionIssue? GetSelectionIssue(
         WorkoutActivityType activity,
         int minutes,
@@ -203,6 +216,7 @@ public static class ActivitySessionDurationRule
             : ActivitySessionDurationSelectionIssue.InvalidIncrement;
     }
 
+    /// <summary>Whether a scheduled session may hold those minutes.</summary>
     public static bool IsValidScheduledDuration(WorkoutActivityType activity, decimal minutes)
     {
         if (decimal.Truncate(minutes) != minutes || minutes > int.MaxValue || minutes < int.MinValue)
@@ -211,6 +225,7 @@ public static class ActivitySessionDurationRule
         return IsValidSelection(activity, decimal.ToInt32(minutes));
     }
 
+    /// <summary>The durations the picker offers for her activity and experience.</summary>
     public static IReadOnlyList<int> ChoicesFor(WorkoutActivityType activity)
     {
         if (activity == WorkoutActivityType.Yoga)
@@ -227,6 +242,7 @@ public static class ActivitySessionDurationRule
         return ChoicesForPolicy(policy);
     }
 
+    /// <summary>The durations the picker offers for her activity and experience.</summary>
     public static IReadOnlyList<int> ChoicesFor(WorkoutActivityType activity, bool isDemandingYoga)
     {
         var policy = ForUserPreference(activity, isDemandingYoga);
@@ -235,6 +251,7 @@ public static class ActivitySessionDurationRule
             : ChoicesForPolicy(policy);
     }
 
+    /// <summary>The durations a policy allows, in picker order.</summary>
     private static int[] ChoicesForPolicy(ActivitySessionDurationPolicy policy)
     {
         var count = (policy.MaximumMinutes - policy.MinimumMinutes) / policy.IncrementMinutes;

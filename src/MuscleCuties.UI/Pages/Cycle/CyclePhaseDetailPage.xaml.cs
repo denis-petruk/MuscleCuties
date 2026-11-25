@@ -7,11 +7,15 @@ using MuscleCuties.UI.ViewModels.Cycle;
 
 namespace MuscleCuties.UI.Pages.Cycle;
 
+/// <summary>
+///     Detail page for one cycle phase, opened from the cycle carousel.
+/// </summary>
 public partial class CyclePhaseDetailPage : ContentPage
 {
     private readonly INavigationContextService _navigationContext;
     private readonly CyclePhaseDetailViewModel _viewModel;
 
+    /// <summary>Initializes the page with its view model and navigation context.</summary>
     public CyclePhaseDetailPage(
         CyclePhaseDetailViewModel vm,
         INavigationContextService navigationContext)
@@ -24,6 +28,7 @@ public partial class CyclePhaseDetailPage : ContentPage
         _viewModel = vm;
     }
 
+    /// <summary>Reads the phase the page was opened for.</summary>
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);

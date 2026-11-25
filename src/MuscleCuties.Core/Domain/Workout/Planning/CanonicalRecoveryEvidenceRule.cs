@@ -1,6 +1,7 @@
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
 // Inputs must come from completed planned sessions with immutable prescriptions and dated check-ins.
+/// <summary>One day's compound work, which is the evidence recovery is judged on.</summary>
 public sealed record ObservedCompoundPerformance(DateOnly LocalDate, int ExerciseId,
     int PrescribedSets, int PrescribedRepetitions, int CompletedSets, int CompletedRepetitions);
 
@@ -10,6 +11,7 @@ public sealed record ObservedCompoundPerformance(DateOnly LocalDate, int Exercis
 /// </summary>
 public sealed record ObservedRecovery(DateOnly LocalDate, int? SleepQuality, int? Energy);
 
+/// <summary>Turns that evidence into a recovery signal, ignoring days with no usable sets.</summary>
 public static class CanonicalRecoveryEvidenceRule
 {
     public const int DaysPerWeek = 7;
@@ -48,6 +50,7 @@ public static class CanonicalRecoveryEvidenceRule
         return DeloadTriggerRule.Evaluate(weeks);
     }
 
+    /// <summary>Averages only the recorded samples, so a missed day never counts as zero performance.</summary>
     private static decimal? AverageValid(IEnumerable<int?> values)
     {
         var valid = values.Where(v => v is >= TodayCheckInScoreRule.ReadinessScaleMinimum and

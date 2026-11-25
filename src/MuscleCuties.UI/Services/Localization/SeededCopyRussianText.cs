@@ -1,5 +1,7 @@
 namespace MuscleCuties.UI.Services.Localization;
 
+/// <summary>Russian for server-seeded text — quiz questions and answers, exercise names, section titles —</summary>
+/// which carries no catalog keys and is therefore matched on the exact English string.</summary>
 public static partial class UiTextCatalog
 {
     /// <summary>

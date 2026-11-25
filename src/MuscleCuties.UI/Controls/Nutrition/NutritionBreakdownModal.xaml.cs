@@ -1,16 +1,17 @@
 
 namespace MuscleCuties.UI.Controls.Nutrition;
 
+/// <summary>
+///     Sheet with the day's micronutrient coverage.
+/// </summary>
 public partial class NutritionBreakdownModal : AnimatedModalView
 {
+    /// <summary>Initializes the modal declared in its XAML.</summary>
     public NutritionBreakdownModal()
     {
         InitializeComponent();
     }
 
-    protected override void OnSizeAllocated(double width, double height)
-    {
-        base.OnSizeAllocated(width, height);
-        BottomSheetSizing.Apply(SheetSurface, height);
-    }
+    /// <summary>Sizes the sheet to fill its host.</summary>
+    protected override SheetSizing SheetSizingPolicy => SheetSizing.Fill;
 }

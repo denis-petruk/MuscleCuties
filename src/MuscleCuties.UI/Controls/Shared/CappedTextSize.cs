@@ -110,90 +110,113 @@ public static class CappedTextSize
     public static bool GetIsSectionHeading(BindableObject view) =>
         (bool)view.GetValue(IsSectionHeadingProperty);
 
+    /// <summary>Sets whether the label is styled as a section heading.</summary>
     public static void SetIsSectionHeading(BindableObject view, bool value) =>
         view.SetValue(IsSectionHeadingProperty, value);
 
+    /// <summary>Keeps a section heading inside its size cap as its text and the user's text size change.</summary>
     public static void AttachSectionTitle(Label label)
     {
         SectionTitleSubscriptions.GetValue(label, static item =>
             Attach(item, "UiFontSize18", "PresentationAccessibilitySectionTitleMaxFontSize"));
     }
 
+    /// <summary>True when the control uses the compact text cap.</summary>
     public static bool GetIsCompactControl(BindableObject view) =>
         (bool)view.GetValue(IsCompactControlProperty);
 
+    /// <summary>Sets whether the control uses the compact text cap.</summary>
     public static void SetIsCompactControl(BindableObject view, bool value) =>
         view.SetValue(IsCompactControlProperty, value);
 
+    /// <summary>The cap for a compact picker, so a long option shrinks instead of wrapping the row.</summary>
     public static void AttachCompactPicker(Picker picker)
     {
         CompactPickerSubscriptions.GetValue(picker, static item =>
             AttachPicker(item, "UiFontSize16", "PresentationAccessibilityCompactControlMaxFontSize"));
     }
 
+    /// <summary>True when the label uses the compact text cap.</summary>
     public static bool GetIsCompactLabel(BindableObject view) =>
         (bool)view.GetValue(IsCompactLabelProperty);
 
+    /// <summary>Sets whether the label uses the compact text cap.</summary>
     public static void SetIsCompactLabel(BindableObject view, bool value) =>
         view.SetValue(IsCompactLabelProperty, value);
 
+    /// <summary>The cap for a compact label, whose row has no room to grow.</summary>
     public static void AttachCompactLabel(Label label)
     {
         CompactLabelSubscriptions.GetValue(label, static item =>
             Attach(item, "UiFontSize17", "PresentationAccessibilityCompactLabelMaxFontSize"));
     }
 
+    /// <summary>True when the label is a compact choice caption.</summary>
     public static bool GetIsCompactChoiceLabel(BindableObject view) =>
         (bool)view.GetValue(IsCompactChoiceLabelProperty);
 
+    /// <summary>Sets whether the label is a compact choice caption.</summary>
     public static void SetIsCompactChoiceLabel(BindableObject view, bool value) =>
         view.SetValue(IsCompactChoiceLabelProperty, value);
 
+    /// <summary>The cap for a choice label inside a chip or segment, where wrapping would break the control's shape.</summary>
     public static void AttachCompactChoiceLabel(Label label)
     {
         CompactChoiceSubscriptions.GetValue(label, static item =>
             Attach(item, "UiFontSize15", "PresentationAccessibilityCompactLabelMaxFontSize"));
     }
 
+    /// <summary>True when the label is a cycle phase pill.</summary>
     public static bool GetIsPhasePill(BindableObject view) =>
         (bool)view.GetValue(IsPhasePillProperty);
 
+    /// <summary>Sets whether the label is a cycle phase pill.</summary>
     public static void SetIsPhasePill(BindableObject view, bool value) =>
         view.SetValue(IsPhasePillProperty, value);
 
+    /// <summary>The cap for the phase pill's text, which is always drawn on one line.</summary>
     public static void AttachPhasePillLabel(Label label)
     {
         PhasePillSubscriptions.GetValue(label, static item =>
             Attach(item, "UiFontSize16", "PresentationAccessibilityPhasePillMaxFontSize"));
     }
 
+    /// <summary>True when the label is an introductory body line.</summary>
     public static bool GetIsBodyLead(BindableObject view) =>
         (bool)view.GetValue(IsBodyLeadProperty);
 
+    /// <summary>Sets whether the label is an introductory body line.</summary>
     public static void SetIsBodyLead(BindableObject view, bool value) =>
         view.SetValue(IsBodyLeadProperty, value);
 
+    /// <summary>The cap for a lead paragraph, which may be large but not turn into a headline at accessibility sizes.</summary>
     public static void AttachBodyLeadLabel(Label label)
     {
         BodyLeadSubscriptions.GetValue(label, static item =>
             Attach(item, "UiFontSize17", "PresentationAccessibilityBodyLeadMaxFontSize"));
     }
 
+    /// <summary>True when the label is a modal title.</summary>
     public static bool GetIsModalTitle(BindableObject view) =>
         (bool)view.GetValue(IsModalTitleProperty);
 
+    /// <summary>Sets whether the label is a modal title.</summary>
     public static void SetIsModalTitle(BindableObject view, bool value) =>
         view.SetValue(IsModalTitleProperty, value);
 
+    /// <summary>The cap for a sheet's title.</summary>
     public static void AttachModalTitle(Label label)
     {
         ModalTitleSubscriptions.GetValue(label, static item =>
             Attach(item, "UiFontSize20", "PresentationAccessibilityModalTitleMaxFontSize"));
     }
 
+    /// <summary>Caps a label's font at the theme's maximum for the token pair.</summary>
     public static IDisposable Attach(Label label, string baseSizeToken, string maximumSizeToken) =>
         Attach(label, baseSizeToken, AppThemeResources.GetDouble(maximumSizeToken));
 
+    /// <summary>Watches a label's text and the user's text size, re-applying the cap on every change and returning the handle</summary>
+    /// that stops watching.</summary>
     public static IDisposable Attach(Label label, string baseSizeToken, double maximumSize)
     {
         var baseSize = AppThemeResources.GetDouble(baseSizeToken);
@@ -209,6 +232,7 @@ public static class CappedTextSize
     }
 
 #if IOS
+    /// <summary>Caps a picker's font and re-applies it when the text size changes.</summary>
     private static NotificationSubscription AttachPicker(Picker picker, string baseSizeToken,
         string maximumSizeToken)
     {
@@ -221,6 +245,7 @@ public static class CappedTextSize
         return new NotificationSubscription(observer);
     }
 #else
+    /// <summary>Caps a picker's font once, as this platform sends no size changes.</summary>
     private static EmptySubscription AttachPicker(Picker picker, string baseSizeToken,
         string maximumSizeToken)
     {
@@ -230,6 +255,7 @@ public static class CappedTextSize
     }
 #endif
 
+    /// <summary>Sets a picker's font size between its base and its cap.</summary>
     private static void ApplyPicker(Picker picker, double baseSize, double maximumSize)
     {
 #if IOS
@@ -249,6 +275,7 @@ public static class CappedTextSize
 #endif
     }
 
+    /// <summary>Sets a label's font size to fit its text between its base and its cap.</summary>
     private static void Apply(Label label, double baseSize, double maximumSize)
     {
 #if IOS
@@ -271,15 +298,19 @@ public static class CappedTextSize
     }
 
 #if IOS
+    /// <summary>Removes the text-size observer when the control that owns it goes away.</summary>
     private sealed class NotificationSubscription(NSObject observer) : IDisposable
     {
+        /// <summary>Stops observing the system text-size notification.</summary>
         public void Dispose() => NSNotificationCenter.DefaultCenter.RemoveObserver(observer);
     }
 #else
+    /// <summary>A handle for a control whose cap needed no observer.</summary>
     private sealed class EmptySubscription : IDisposable
     {
         public static readonly EmptySubscription Instance = new();
 
+        /// <summary>Does nothing because this platform needs no subscription.</summary>
         public void Dispose()
         {
         }

@@ -6,6 +6,8 @@ using MuscleCuties.UseCases.Features.Onboarding.Quiz;
 
 namespace MuscleCuties.UI.ViewModels.Quiz;
 
+/// <summary>The onboarding quiz: one question at a time, including the phase-pain questions the rest of onboarding does</summary>
+/// not ask, and then the hand-off to the created account.</summary>
 public partial class QuizViewModel : ObservableObject
 {
     private const int MinimumAvailableWeekdaySelections = 2;
@@ -54,6 +56,7 @@ public partial class QuizViewModel : ObservableObject
 
     [ObservableProperty] private List<QuizQuestionDto> _questions = new();
 
+    /// <summary>Takes the quiz use case and the navigation callbacks.</summary>
     public QuizViewModel(
         IOnboardingQuizUseCase useCase,
         Func<Task> navigateToDashboardAsync,
@@ -81,42 +84,68 @@ public partial class QuizViewModel : ObservableObject
         EditProfileCommand = new AsyncRelayCommand(EditProfileAsync);
     }
 
+    /// <summary>Loads the quiz questions.</summary>
     public AsyncRelayCommand LoadQuestionsCommand { get; }
+    /// <summary>Retries the failed load.</summary>
     public AsyncRelayCommand RetryLoadQuestionsCommand { get; }
+    /// <summary>Selects an answer.</summary>
     public RelayCommand<SelectableQuizAnswer> SelectAnswerCommand { get; }
+    /// <summary>Moves to the next question.</summary>
     public AsyncRelayCommand NextCommand { get; }
+    /// <summary>Moves to the previous question.</summary>
     public RelayCommand BackCommand { get; }
+    /// <summary>Opens the login page.</summary>
     public AsyncRelayCommand GoToLoginCommand { get; }
+    /// <summary>Opens the profile for editing.</summary>
     public AsyncRelayCommand EditProfileCommand { get; }
 
+    /// <summary>The single answer the standard list treats as chosen — the first one selected, because that list is</summary>
+    /// single-choice.</summary>
     public QuizAnswerDto? FirstSelectedAnswer =>
         CurrentAnswers.FirstOrDefault(answer => answer.IsSelected)?.Answer;
 
-    public QuizAnswerDto? SelectedAnswer => FirstSelectedAnswer;
-
+    /// <summary>Every selected answer for a question that takes more than one, in the order the list shows them.</summary>
     public IReadOnlyList<QuizAnswerDto> SelectedAnswers =>
         CurrentAnswers
             .Where(answer => answer.IsSelected)
             .Select(answer => answer.Answer)
             .ToList();
 
+    /// <summary>True when the quiz has an error.</summary>
     public bool HasError => !string.IsNullOrWhiteSpace(ErrorMessage);
+    /// <summary>True once any answer has been chosen, including choices carried in from an earlier visit, which is what</summary>
+    /// decides whether the quiz is offered as resumable.</summary>
     public bool HasQuizAnswers => _selectedAnswers.Count > 0 || CurrentAnswers.Any(answer => answer.IsSelected);
+    /// <summary>Only the empty and failed states can be fixed by asking again, so they alone offer the retry.</summary>
     public bool CanRetryQuestionsLoad => LoadState is QuizLoadState.Empty or QuizLoadState.Failed;
+    /// <summary>An empty quiz counts as loaded: it is a real answer from the server, not a state still in progress.</summary>
     public bool HasLoadedQuestions => LoadState is QuizLoadState.Ready or QuizLoadState.Empty;
+    /// <summary>True when the quiz has no questions.</summary>
     public bool HasNoQuestions => LoadState is QuizLoadState.Empty;
+    /// <summary>True when a question is shown.</summary>
     public bool HasQuestion => LoadState is QuizLoadState.Ready && CurrentQuestion is not null;
+    /// <summary>The placeholder panel covers both a quiz with no questions and one that failed to load; they differ only in</summary>
+    /// the words it shows.</summary>
     public bool IsEmptyStateVisible => LoadState is QuizLoadState.Empty or QuizLoadState.Failed;
+    /// <summary>The quiz layout only exists once there are questions, so the loading and empty panes never stack on top of</summary>
+    /// a half-built question.</summary>
     public bool IsLayoutVisible => LoadState is QuizLoadState.Ready;
+    /// <summary>The first load is running.</summary>
     public bool IsLoading => LoadState is QuizLoadState.Loading;
+    /// <summary>True when the loading state is shown.</summary>
     public bool IsLoadingVisible => IsLoading;
+    /// <summary>Dietary preference and weekdays accept several answers; every other question takes one.</summary>
     public bool IsCurrentQuestionMultiAnswer => CurrentQuestion?.QuestionType is
         QuizQuestionType.DietaryPreference or QuizQuestionType.AvailableWeekdays;
+    /// <summary>True for the available weekday question.</summary>
     public bool IsCurrentQuestionAvailableWeekdays =>
         CurrentQuestion?.QuestionType == QuizQuestionType.AvailableWeekdays;
+    /// <summary>True for the dietary preference question.</summary>
     public bool IsCurrentQuestionDietaryPreference =>
         CurrentQuestion?.QuestionType == QuizQuestionType.DietaryPreference;
+    /// <summary>True for the goal question.</summary>
     public bool IsCurrentQuestionGoal => CurrentQuestion?.QuestionType == QuizQuestionType.Goal;
+    /// <summary>True for the equipment question.</summary>
     public bool IsCurrentQuestionEquipment => CurrentQuestion?.QuestionType == QuizQuestionType.Equipment;
 
     /// <summary>
@@ -124,32 +153,46 @@ public partial class QuizViewModel : ObservableObject
     /// </summary>
     internal const int BodyweightOnlyEquipmentMappedValue = 3;
 
+    /// <summary>Every answer the quiz offers is selectable.</summary>
     internal static bool IsOfferedAnswer(QuizQuestionType questionType, QuizAnswerDto answer) => true;
+    /// <summary>The pain questions are answered with a pair of sliders rather than an answer list.</summary>
     public bool IsCurrentQuestionPhasePair => IsPainQuestion(CurrentQuestion?.QuestionType);
+    /// <summary>The sliders give way to the sign-in prompt once the account has been created.</summary>
     public bool IsPhasePairVisible => IsCurrentQuestionPhasePair && !AccountCreatedNeedsLogin;
+    /// <summary>The answer list is what replaces both the sliders and the created-account prompt, so it hides for either.</summary>
     public bool IsStandardAnswerListVisible =>
         !IsCurrentQuestionPhasePair && !AccountCreatedNeedsLogin;
+    /// <summary>How many weekdays are chosen; the quiz enforces a minimum of them before it lets the answer stand.</summary>
     public int SelectedWeekdayCount => IsCurrentQuestionAvailableWeekdays
         ? CurrentAnswers.Count(answer => answer.IsSelected)
         : 0;
+    /// <summary>True when no question before this one is shown, so a hidden question cannot make the back action appear</summary>
+    /// part-way through.</summary>
     public bool IsFirstQuestion => FindPreviousVisibleQuestionIndex(CurrentQuestionIndex) < 0;
+    /// <summary>True when the back button is shown.</summary>
     public bool ShowQuizBackButton => !IsFirstQuestion && !AccountCreatedNeedsLogin;
+    /// <summary>True when no shown question follows, so hidden questions cannot end the quiz early.</summary>
     public bool IsLastQuestion => Questions.Count > 0 && FindNextVisibleQuestionIndex(CurrentQuestionIndex) < 0;
 
+    /// <summary>Progress across the questions actually shown, so a skipped question leaves no gap in the bar.</summary>
     public float ProgressValue => VisualQuestionCount == 0
         ? 0f
         : (float)CurrentVisualQuestionNumber / VisualQuestionCount;
 
+    /// <summary>The question as asked; the slider pair carries its own title instead of a question text.</summary>
     public string CurrentQuestionText => IsCurrentQuestionPhasePair
         ? PhasePairTitle
         : CurrentQuestion?.Question ?? string.Empty;
 
+    /// <summary>The action reads as finishing on the last question.</summary>
     public string NextButtonText => IsLastQuestion ? "Finish" : "Next";
 
+    /// <summary>The position among shown questions, empty while there are none.</summary>
     public string ProgressText => VisualQuestionCount == 0
         ? string.Empty
         : $"{CurrentVisualQuestionNumber} / {VisualQuestionCount}";
 
+    /// <summary>The slider pair's title for each pain question.</summary>
     public string PhasePairTitle => CurrentQuestion?.QuestionType switch
     {
         QuizQuestionType.MenstrualPain => "How does your period usually feel?",
@@ -159,6 +202,7 @@ public partial class QuizViewModel : ObservableObject
         _ => string.Empty
     };
 
+    /// <summary>The resource key of the helper line for the pain question being asked.</summary>
     public string CurrentPhasePairHelperText => CurrentQuestion?.QuestionType switch
     {
         QuizQuestionType.MenstrualPain => "Onboarding_Quiz_PhaseHelper_Menstrual",
@@ -168,14 +212,19 @@ public partial class QuizViewModel : ObservableObject
         _ => string.Empty
     };
 
+    /// <summary>The word for the pain step the slider is on, so the number is not left to interpretation.</summary>
     public string PainSliderLabel => GetPainLabel(ToSliderStep(PainSliderValue));
+    /// <summary>The word for the energy step the slider is on.</summary>
     public string EnergySliderLabel => GetEnergyLabel(ToSliderStep(EnergySliderValue));
+    /// <summary>The placeholder's title distinguishes a quiz with no questions from one that failed to load.</summary>
     public string QuestionsStateTitle => HasNoQuestions ? "No quiz questions found" : "Questions could not load";
 
+    /// <summary>The placeholder's message: a seeding hint when the quiz is really empty, otherwise the load error.</summary>
     public string QuestionsStateMessage => HasNoQuestions
         ? "Restart the app once so the starter quiz can seed."
         : ErrorMessage;
 
+    /// <summary>The icon that heads the question being asked.</summary>
     public string CurrentQuestionIconGlyph => CurrentQuestion?.QuestionType switch
     {
         QuizQuestionType.Goal => "Target24",
@@ -197,12 +246,15 @@ public partial class QuizViewModel : ObservableObject
         _ => "CheckmarkCircle24"
     };
 
+    /// <summary>How many questions the user will actually be shown, which is what the progress bar is measured against.</summary>
     private int VisualQuestionCount => Questions.Count(question => !ShouldSkipQuestion(question));
 
+    /// <summary>The shown-question number of the current question, so a skipped one does not inflate the count.</summary>
     private int CurrentVisualQuestionNumber => Questions
         .Take(CurrentQuestionIndex + 1)
         .Count(question => !ShouldSkipQuestion(question));
 
+    /// <summary>Refreshes the page state when the account needs a login.</summary>
     partial void OnAccountCreatedNeedsLoginChanged(bool value)
     {
         OnPropertyChanged(nameof(ShowQuizBackButton));
@@ -210,11 +262,13 @@ public partial class QuizViewModel : ObservableObject
         OnPropertyChanged(nameof(IsPhasePairVisible));
     }
 
+    /// <summary>Refreshes the command states when busy changes.</summary>
     partial void OnIsBusyChanged(bool value)
     {
         BackCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>Loads the quiz only if it is not already there, so returning to the page does not refetch it.</summary>
     public async Task EnsureQuestionsLoadedAsync()
     {
         if (HasLoadedQuestions || IsBusy)
@@ -223,11 +277,14 @@ public partial class QuizViewModel : ObservableObject
         await LoadQuestionsAsync();
     }
 
+    /// <summary>The load command's entry point, which always refetches.</summary>
     private Task LoadQuestionsAsync()
     {
         return LoadQuestionsAsync(false);
     }
 
+    /// <summary>Reads the questions — unless asked not to refresh something already loaded — and puts the page into the</summary>
+    /// ready, empty or failed state that the rest of the page reads.</summary>
     private async Task LoadQuestionsAsync(bool refresh)
     {
         BeginLoading();
@@ -250,11 +307,13 @@ public partial class QuizViewModel : ObservableObject
         }
     }
 
+    /// <summary>Asks again after an empty or failed load.</summary>
     private async Task RetryLoadQuestionsAsync()
     {
         await LoadQuestionsAsync(true);
     }
 
+    /// <summary>Applies a tap on an answer: a single-choice question replaces its choice, a multi-answer one toggles it.</summary>
     private void SelectAnswer(SelectableQuizAnswer? selectable)
     {
         if (selectable is null)
@@ -270,6 +329,7 @@ public partial class QuizViewModel : ObservableObject
         NotifySelectionProperties();
     }
 
+    /// <summary>Moves to the next question, capturing the slider pair first and saving everything on the last one.</summary>
     private async Task NextAsync()
     {
         if (CurrentQuestion is null || IsBusy || AccountCreatedNeedsLogin)
@@ -309,6 +369,7 @@ public partial class QuizViewModel : ObservableObject
         await SaveAnswersAsync();
     }
 
+    /// <summary>Returns to the previous shown question, skipping the ones the quiz hides.</summary>
     private void Back()
     {
         if (IsFirstQuestion)
@@ -317,11 +378,13 @@ public partial class QuizViewModel : ObservableObject
         MoveToQuestion(FindPreviousVisibleQuestionIndex(CurrentQuestionIndex));
     }
 
+    /// <summary>Opens the profile step for editing.</summary>
     private Task EditProfileAsync() =>
         IsBusy || IsPreparingWorkoutPreferences || AccountCreatedNeedsLogin
             ? Task.CompletedTask
             : _navigateToProfileAsync();
 
+    /// <summary>Puts the page in its loading state and clears any previous error, so a retry does not show both.</summary>
     private void BeginLoading()
     {
         IsBusy = true;
@@ -329,6 +392,8 @@ public partial class QuizViewModel : ObservableObject
         LoadState = QuizLoadState.Loading;
     }
 
+    /// <summary>Installs freshly loaded questions and restores the answers already given, so a reload does not restart the</summary>
+    /// quiz.</summary>
     private void ApplyQuestions(IEnumerable<QuizQuestionDto> loadedQuestions)
     {
         var allLoaded = loadedQuestions
@@ -366,12 +431,15 @@ public partial class QuizViewModel : ObservableObject
         LoadState = QuizLoadState.Ready;
     }
 
+    /// <summary>Shows the placeholder, with the wording for either a quiz that has no questions or one that failed to</summary>
+    /// load.</summary>
     private void ShowEmptyState(bool noQuestions)
     {
         LoadState = noQuestions ? QuizLoadState.Empty : QuizLoadState.Failed;
         NotifyComputedProperties();
     }
 
+    /// <summary>Drops the current question's answers before another one is shown, so they cannot leak across.</summary>
     private void ClearQuestionState()
     {
         Questions = [];
@@ -381,6 +449,7 @@ public partial class QuizViewModel : ObservableObject
         NotifySelectionProperties();
     }
 
+    /// <summary>Shows the question at an index and rebuilds its answer list.</summary>
     private void MoveToQuestion(int index)
     {
         CurrentQuestionIndex = Math.Clamp(index, 0, Questions.Count - 1);
@@ -390,6 +459,7 @@ public partial class QuizViewModel : ObservableObject
         NotifyComputedProperties();
     }
 
+    /// <summary>The selectable answers for a question, with any chosen earlier already marked.</summary>
     private void BuildAnswers(QuizQuestionDto question)
     {
         var savedAnswerIds = _selectedAnswers
@@ -412,12 +482,14 @@ public partial class QuizViewModel : ObservableObject
         NotifySelectionProperties();
     }
 
+    /// <summary>Clears the other choices and keeps only the tapped one.</summary>
     private void SelectSingleAnswer(SelectableQuizAnswer selectedAnswer)
     {
         foreach (var answer in CurrentAnswers)
             answer.IsSelected = ReferenceEquals(answer, selectedAnswer);
     }
 
+    /// <summary>Adds or removes one choice without touching the rest.</summary>
     private void ToggleMultiAnswer(SelectableQuizAnswer selectedAnswer)
     {
         var isNoneAnswer = selectedAnswer.QuestionType == QuizQuestionType.DietaryPreference &&
@@ -440,12 +512,15 @@ public partial class QuizViewModel : ObservableObject
         }
     }
 
+    /// <summary>Stores the chosen answer ids for one question, replacing whatever was stored for it.</summary>
     private void RecordSelections(int questionId, IEnumerable<int> answerIds)
     {
         _selectedAnswers.RemoveAll(selection => selection.QuestionId == questionId);
         _selectedAnswers.AddRange(answerIds.Select(answerId => (questionId, answerId)));
     }
 
+    /// <summary>Turns the two sliders into answers for the pain question and its matching energy question, reporting whether</summary>
+    /// the pair was complete enough to keep.</summary>
     private bool RecordPhasePairSelections(QuizQuestionDto painQuestion)
     {
         var energyQuestion = GetPairedEnergyQuestion(painQuestion.QuestionType);
@@ -471,6 +546,7 @@ public partial class QuizViewModel : ObservableObject
         return true;
     }
 
+    /// <summary>Puts previously saved values back on the sliders.</summary>
     private void RestorePhasePairValues(QuizQuestionDto question)
     {
         if (!IsPainQuestion(question.QuestionType))
@@ -483,6 +559,7 @@ public partial class QuizViewModel : ObservableObject
         EnergySliderValue = Math.Clamp(energyValue, 1, 5);
     }
 
+    /// <summary>The mapped value saved for a question's type, or nothing when it was never answered.</summary>
     private int? GetSavedMappedValue(QuizQuestionDto question)
     {
         var answerId = _selectedAnswers
@@ -491,6 +568,7 @@ public partial class QuizViewModel : ObservableObject
         return question.Answers.FirstOrDefault(answer => answer.Id == answerId)?.MappedValue;
     }
 
+    /// <summary>The energy question that belongs to the same phase as a pain question.</summary>
     private QuizQuestionDto? GetPairedEnergyQuestion(QuizQuestionType painType)
     {
         var energyType = painType switch
@@ -506,6 +584,7 @@ public partial class QuizViewModel : ObservableObject
             : Questions.FirstOrDefault(question => question.QuestionType == energyType);
     }
 
+    /// <summary>The next question the quiz will show, or -1 when this is the last one.</summary>
     private int FindNextVisibleQuestionIndex(int currentIndex)
     {
         for (var index = currentIndex + 1; index < Questions.Count; index++)
@@ -515,6 +594,7 @@ public partial class QuizViewModel : ObservableObject
         return -1;
     }
 
+    /// <summary>The previous question the quiz will show, or -1 when this is the first.</summary>
     private int FindPreviousVisibleQuestionIndex(int currentIndex)
     {
         for (var index = currentIndex - 1; index >= 0; index--)
@@ -524,12 +604,16 @@ public partial class QuizViewModel : ObservableObject
         return -1;
     }
 
+    /// <summary>Energy questions are answered inside the pain pair, and the pace question is hidden when the saved goal has no</summary>
+    /// pace — so a question is only asked once.</summary>
     private bool ShouldSkipQuestion(QuizQuestionDto question)
     {
         return IsEnergyQuestion(question.QuestionType) ||
                (question.QuestionType is QuizQuestionType.GoalPace && !ShouldShowGoalPace());
     }
 
+    /// <summary>Pace is asked for fat loss and strength, and also before a goal is saved so the question is not skipped by</summary>
+    /// default.</summary>
     private bool ShouldShowGoalPace()
     {
         var goalQuestion = Questions.FirstOrDefault(question => question.QuestionType is QuizQuestionType.Goal);
@@ -540,6 +624,8 @@ public partial class QuizViewModel : ObservableObject
         return selectedGoal is null || selectedGoal is (int)UserGoal.FatLoss or (int)UserGoal.Strength;
     }
 
+    /// <summary>Drops the answers to every question of one type, which is how an answer that invalidates an earlier one clears</summary>
+    /// it.</summary>
     private void RemoveSelections(QuizQuestionType questionType)
     {
         var questionIds = Questions
@@ -549,23 +635,27 @@ public partial class QuizViewModel : ObservableObject
         _selectedAnswers.RemoveAll(selection => questionIds.Contains(selection.QuestionId));
     }
 
+    /// <summary>The four phase pain questions, which are answered with the slider pair.</summary>
     private static bool IsPainQuestion(QuizQuestionType? type)
     {
         return type is QuizQuestionType.MenstrualPain or QuizQuestionType.FollicularPain or
             QuizQuestionType.OvulatoryPain or QuizQuestionType.LutealPain;
     }
 
+    /// <summary>The four phase energy questions, which ride along with their pain question instead of being asked.</summary>
     private static bool IsEnergyQuestion(QuizQuestionType type)
     {
         return type is QuizQuestionType.MenstrualEnergy or QuizQuestionType.FollicularEnergy or
             QuizQuestionType.OvulatoryEnergy or QuizQuestionType.LutealEnergy;
     }
 
+    /// <summary>Snaps a slider's value to the 1–5 steps its labels describe.</summary>
     private static int ToSliderStep(double value)
     {
         return Math.Clamp((int)Math.Round(value), 1, 5);
     }
 
+    /// <summary>The word for a pain step.</summary>
     private static string GetPainLabel(int value)
     {
         return value switch
@@ -578,6 +668,7 @@ public partial class QuizViewModel : ObservableObject
         };
     }
 
+    /// <summary>The word for an energy step.</summary>
     private static string GetEnergyLabel(int value)
     {
         return value switch
@@ -590,6 +681,8 @@ public partial class QuizViewModel : ObservableObject
         };
     }
 
+    /// <summary>Submits the answers once and turns the result into the created-account state, so the quiz cannot submit twice</summary>
+    /// from a double tap.</summary>
     private async Task SaveAnswersAsync()
     {
         var totalStopwatch = Stopwatch.StartNew();
@@ -668,32 +761,37 @@ public partial class QuizViewModel : ObservableObject
         }
     }
 
+    /// <summary>Refreshes the question state when the question changes.</summary>
     partial void OnCurrentQuestionChanged(QuizQuestionDto? value)
     {
         OnPropertyChanged(nameof(CurrentQuestionText));
         OnPropertyChanged(nameof(CurrentQuestionIconGlyph));
     }
 
+    /// <summary>Stores the pain answer when the slider moves.</summary>
     partial void OnPainSliderValueChanged(double value)
     {
         OnPropertyChanged(nameof(PainSliderLabel));
     }
 
+    /// <summary>Stores the energy answer when the slider moves.</summary>
     partial void OnEnergySliderValueChanged(double value)
     {
         OnPropertyChanged(nameof(EnergySliderLabel));
     }
 
+    /// <summary>Raises the selection properties.</summary>
     private void NotifySelectionProperties()
     {
         OnPropertyChanged(nameof(FirstSelectedAnswer));
-        OnPropertyChanged(nameof(SelectedAnswer));
         OnPropertyChanged(nameof(SelectedAnswers));
         OnPropertyChanged(nameof(SelectedWeekdayCount));
     }
 
+    /// <summary>Records that the glute focus was answered.</summary>
     partial void OnGluteFocusChanged(bool value) => _gluteFocusAnswered = true;
 
+    /// <summary>Raises the computed properties the page binds.</summary>
     private void NotifyComputedProperties()
     {
         OnPropertyChanged(nameof(IsCurrentQuestionMultiAnswer));

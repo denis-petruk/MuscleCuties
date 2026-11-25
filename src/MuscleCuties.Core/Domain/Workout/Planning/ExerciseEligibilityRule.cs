@@ -2,6 +2,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>The equipment an exercise needs, matched against what she has.</summary>
 public enum ExerciseEquipmentKind
 {
     Bodyweight,
@@ -19,6 +20,7 @@ public enum ExerciseEquipmentKind
     BandAnchor
 }
 
+/// <summary>How an exercise's tempo is measured, which the prescription depends on.</summary>
 public enum ExerciseTimingMethod
 {
     StraightSets,
@@ -26,6 +28,7 @@ public enum ExerciseTimingMethod
     Timed
 }
 
+/// <summary>Whether an exercise may be selected, must be swapped, or needs review.</summary>
 public enum ExerciseEligibilityStatus
 {
     Eligible,
@@ -33,6 +36,7 @@ public enum ExerciseEligibilityStatus
     Blocked
 }
 
+/// <summary>The stable code explaining an exercise's eligibility, so the client never parses text.</summary>
 public enum ExerciseEligibilityReason
 {
     MissingCatalogMetadata,
@@ -50,6 +54,7 @@ public enum ExerciseEligibilityReason
     NoEligibleExercise
 }
 
+/// <summary>Why a directed substitution was made, kept so the swap can be explained.</summary>
 public enum DirectedSubstitutionCategory
 {
     CloseProgrammingAlternative,
@@ -57,11 +62,13 @@ public enum DirectedSubstitutionCategory
     RejectedAutomaticSubstitution
 }
 
+/// <summary>A substitution that needs her confirmation before it is used.</summary>
 public sealed record DirectedSubstitutionReview(
     int TargetExerciseId,
     DirectedSubstitutionCategory Category,
     string Conditions);
 
+/// <summary>An exercise with the reviewer's verdict attached.</summary>
 public sealed record ReviewedExerciseCandidate(
     int ExerciseId,
     string CatalogVersion,
@@ -83,6 +90,7 @@ public sealed record ReviewedExerciseCandidate(
     bool UnilateralDoublesTime = false,
     ExerciseEvidenceRanking? EvidenceRanking = null);
 
+/// <summary>What eligibility is judged against: equipment, injuries and reviewed verdicts.</summary>
 public sealed record ExerciseEligibilityContext(
     IReadOnlySet<ExerciseEquipmentKind> AvailableEquipment,
     ActivityExperience Experience,
@@ -95,11 +103,13 @@ public sealed record ExerciseEligibilityContext(
     bool UnknownExperienceAssessmentCompleted = false,
     IReadOnlySet<string>? AcknowledgedSubstitutionPairKeys = null);
 
+/// <summary>The verdict for one exercise with its reason code.</summary>
 public sealed record ExerciseEligibilityDecision(
     ReviewedExerciseCandidate? Candidate,
     ExerciseEligibilityStatus Status,
     IReadOnlyList<ExerciseEligibilityReason> Reasons);
 
+/// <summary>The exercises that passed and those that were refused, kept together so the refusal is explainable.</summary>
 public sealed record ExerciseSelectionResult(
     ExerciseEligibilityStatus Status,
     IReadOnlyList<ReviewedExerciseCandidate> EligibleCandidates,
@@ -108,6 +118,7 @@ public sealed record ExerciseSelectionResult(
 /// <summary>Hard filters only; a generic mapping never certifies individual exercise safety.</summary>
 public static class ExerciseEligibilityRule
 {
+    /// <summary>Selects the exercises that pass the injury and equipment checks.</summary>
     public static ExerciseSelectionResult Filter(
         IReadOnlyList<ReviewedExerciseCandidate>? candidates,
         ExerciseEligibilityContext? context)
@@ -139,6 +150,7 @@ public static class ExerciseEligibilityRule
         return new ExerciseSelectionResult(status, eligible, decisions);
     }
 
+    /// <summary>Decides whether a substitute exercise may replace the original.</summary>
     public static ExerciseEligibilityDecision EvaluateSubstitution(
         ReviewedExerciseCandidate? original,
         ReviewedExerciseCandidate? substitute,
@@ -168,6 +180,7 @@ public static class ExerciseEligibilityRule
             [ExerciseEligibilityReason.MissingReviewedSubstitutionMapping]);
     }
 
+    /// <summary>The eligibility verdict for one exercise under the current restrictions.</summary>
     private static ExerciseEligibilityDecision Evaluate(
         ReviewedExerciseCandidate? candidate,
         ExerciseEligibilityContext? context)

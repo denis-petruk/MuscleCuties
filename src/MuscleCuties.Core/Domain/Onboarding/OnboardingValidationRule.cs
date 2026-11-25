@@ -6,6 +6,7 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Onboarding;
 
+/// <summary>The profile answers staged so far, which onboarding is validated against.</summary>
 public sealed record StagedProfileObservation(
     string Name,
     DateTime BirthDate,
@@ -13,29 +14,36 @@ public sealed record StagedProfileObservation(
     float Weight,
     int CycleLength);
 
+/// <summary>One staged quiz response, with the question it answers.</summary>
 public sealed record QuizResponseObservation(int QuizQuestionId, int QuizAnswerId);
 
+/// <summary>One answer option of a question, as stored.</summary>
 public sealed record QuizAnswerObservation(int Id, int MappedValue);
 
+/// <summary>One question with the answers it accepts.</summary>
 public sealed record QuizQuestionObservation(
     int Id,
     string Question,
     QuizQuestionType QuestionType,
     IReadOnlyList<QuizAnswerObservation> Answers);
 
+/// <summary>Whether onboarding may complete, with every gap named at once so she fixes them together.</summary>
 public sealed record OnboardingValidationResult(bool IsValid, string? ErrorMessage)
 {
+    /// <summary>A passing result with no gaps.</summary>
     public static OnboardingValidationResult Success()
     {
         return new OnboardingValidationResult(true, null);
     }
 
+    /// <summary>A failing result carrying every missing answer.</summary>
     public static OnboardingValidationResult Failure(string message)
     {
         return new OnboardingValidationResult(false, message);
     }
 }
 
+/// <summary>Requires every wrought answer before onboarding completes, so a plan is never generated from gaps.</summary>
 public static class OnboardingValidationRule
 {
     public const float MinimumHeightCentimeters = 50f;
@@ -43,6 +51,7 @@ public static class OnboardingValidationRule
     public const float MinimumWeightKilograms = 20f;
     public const float MaximumWeightKilograms = 400f;
 
+    /// <summary>Validates the profile answers collected before the quiz is finished.</summary>
     public static OnboardingValidationResult ValidateStagedProfile(
         StagedProfileObservation? staged,
         string? username,
@@ -80,6 +89,7 @@ public static class OnboardingValidationRule
         return OnboardingValidationResult.Success();
     }
 
+    /// <summary>Validates the profile fields the setup step submits.</summary>
     public static OnboardingValidationResult ValidateProfileSetup(
         StagedProfileObservation? staged,
         IReadOnlyList<int>? selectedActivityTypes,
@@ -96,6 +106,7 @@ public static class OnboardingValidationRule
         return OnboardingValidationResult.Success();
     }
 
+    /// <summary>Validates the quiz answers against the questions they belong to.</summary>
     public static OnboardingValidationResult ValidateQuizResponses(
         IReadOnlyList<QuizResponseObservation>? responses,
         IReadOnlyList<QuizQuestionObservation>? questions)
@@ -119,6 +130,7 @@ public static class OnboardingValidationRule
         return ValidateGoalPaceAlignment(questions!, responsesByQuestion);
     }
 
+    /// <summary>Checks each quiz question is well formed and has a matching answer.</summary>
     private static OnboardingValidationResult ValidateQuestionStructure(
         IReadOnlyList<QuizResponseObservation>? responses,
         IReadOnlyList<QuizQuestionObservation>? questions,
@@ -145,6 +157,7 @@ public static class OnboardingValidationRule
         return OnboardingValidationResult.Success();
     }
 
+    /// <summary>Checks each answer is one the question offers.</summary>
     private static OnboardingValidationResult ValidateSelectedAnswers(
         Dictionary<int, List<QuizResponseObservation>> responsesByQuestion,
         Dictionary<int, List<QuizQuestionObservation>> questionsById)
@@ -209,6 +222,7 @@ public static class OnboardingValidationRule
         return OnboardingValidationResult.Success();
     }
 
+    /// <summary>Checks every question the flow requires has an answer.</summary>
     private static OnboardingValidationResult ValidateRequiredQuestions(
         IReadOnlyList<QuizQuestionObservation> questions,
         Dictionary<int, List<QuizResponseObservation>> responsesByQuestion)
@@ -245,6 +259,7 @@ public static class OnboardingValidationRule
         return OnboardingValidationResult.Success();
     }
 
+    /// <summary>Refuses a goal and pace combination that cannot be reconciled with the measurements.</summary>
     private static OnboardingValidationResult ValidateGoalPaceAlignment(
         IReadOnlyList<QuizQuestionObservation> questions,
         Dictionary<int, List<QuizResponseObservation>> responsesByQuestion)

@@ -4,8 +4,10 @@ using MuscleCuties.UseCases.Features.Hydration.Contracts;
 namespace MuscleCuties.UseCases.Features.Hydration;
 
 // AccountId must be resolved from the authenticated principal by the server, never trusted from a UI request.
+/// <summary>Her presets in their stored order.</summary>
 public sealed class GetWaterPresetsUseCase(IWaterPresetStore store)
 {
+    /// <summary>Her presets in stored order, seeded with the defaults when the catalogue is empty.</summary>
     public async Task<WaterPresetCatalogOutputDto> ExecuteAsync(GetWaterPresetsInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -14,8 +16,10 @@ public sealed class GetWaterPresetsUseCase(IWaterPresetStore store)
     }
 }
 
+/// <summary>Adds a preset and appends it to the order.</summary>
 public sealed class CreateWaterPresetUseCase(IWaterPresetStore store)
 {
+    /// <summary>Appends the preset and returns the catalogue, so the client shows the new order at once.</summary>
     public Task<WaterPresetCatalogOutputDto> ExecuteAsync(CreateWaterPresetInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -24,8 +28,10 @@ public sealed class CreateWaterPresetUseCase(IWaterPresetStore store)
     }
 }
 
+/// <summary>Changes one preset's label or amount.</summary>
 public sealed class UpdateWaterPresetUseCase(IWaterPresetStore store)
 {
+    /// <summary>Changes one preset, refusing an id that is not in her catalogue.</summary>
     public Task<WaterPresetCatalogOutputDto> ExecuteAsync(UpdateWaterPresetInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -34,8 +40,10 @@ public sealed class UpdateWaterPresetUseCase(IWaterPresetStore store)
     }
 }
 
+/// <summary>Removes a preset and closes the gap in the order.</summary>
 public sealed class DeleteWaterPresetUseCase(IWaterPresetStore store)
 {
+    /// <summary>Removes the preset and closes the gap in the order.</summary>
     public Task<WaterPresetCatalogOutputDto> ExecuteAsync(DeleteWaterPresetInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -44,8 +52,10 @@ public sealed class DeleteWaterPresetUseCase(IWaterPresetStore store)
     }
 }
 
+/// <summary>Stores the order she chose, refusing one that does not name exactly her presets.</summary>
 public sealed class ReorderWaterPresetsUseCase(IWaterPresetStore store)
 {
+    /// <summary>Stores the order she chose, refusing one that does not name exactly her presets.</summary>
     public Task<WaterPresetCatalogOutputDto> ExecuteAsync(ReorderWaterPresetsInputDto input, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(input);
@@ -54,8 +64,10 @@ public sealed class ReorderWaterPresetsUseCase(IWaterPresetStore store)
     }
 }
 
+/// <summary>Builds the stored operation for a preset change.</summary>
 internal static class WaterPresetOperation
 {
+    /// <summary>Reads her catalogue, rejecting one that carries another account's rows.</summary>
     internal static async Task<StoredWaterPresetCatalog> ReadAsync(IWaterPresetStore store, Guid accountId, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(store);
@@ -68,6 +80,7 @@ internal static class WaterPresetOperation
         return stored;
     }
 
+    /// <summary>Applies one preset mutation and returns the resulting catalog.</summary>
     internal static async Task<WaterPresetCatalogOutputDto> ChangeAsync(IWaterPresetStore store, Guid accountId,
         string? expectedVersion, WaterPresetMutation mutation, CancellationToken cancellationToken)
     {
@@ -84,6 +97,7 @@ internal static class WaterPresetOperation
         return Map(committed);
     }
 
+    /// <summary>Maps a stored catalog onto its output shape.</summary>
     internal static WaterPresetCatalogOutputDto Map(StoredWaterPresetCatalog stored) =>
         new(stored.Catalog.AccountId, stored.ConcurrencyToken,
             stored.Catalog.Presets.Select(p => new WaterPresetOutputDto(p.Id, p.Label, p.Portion.Millilitres)).ToArray());

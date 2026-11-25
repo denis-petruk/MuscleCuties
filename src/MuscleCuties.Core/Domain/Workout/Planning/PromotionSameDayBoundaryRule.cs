@@ -2,13 +2,16 @@ using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
+/// <summary>A session already on the day a promotion wants to use.</summary>
 public sealed record PromotionExistingWorkout(WorkoutActivityType? Activity, int? DayOrder,
     bool Completed, bool InProgress, bool BelongsToCurrentPlan);
+/// <summary>The session a promotion would add to that day.</summary>
 public sealed record PromotionProposedWorkout(WorkoutActivityType? Activity, int? DayOrder);
 
 /// <summary>Finds a proven same-day successor; null means defer to a later date.</summary>
 public static class PromotionSameDayBoundaryRule
 {
+    /// <summary>Order of the workout that follows the replaced one on the same day.</summary>
     public static int? FindSuccessorOrder(IReadOnlyCollection<PromotionExistingWorkout> existing,
         IReadOnlyCollection<PromotionProposedWorkout> proposed)
     {

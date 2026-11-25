@@ -6,6 +6,8 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
+/// <summary>The meal draft: its ingredients, the food search behind them, logging or updating the meal, and the</summary>
+/// breakfast preference that decides its share of the day.</summary>
 public partial class NutritionViewModel
 {
     private string? _acceptedSuggestionName;
@@ -13,6 +15,7 @@ public partial class NutritionViewModel
     private MealIngredientItem? _editingIngredient;
     private DateTime _editingMealDate;
 
+    /// <summary>Loads an ingredient's amount back into the amount field so it can be changed and re-added.</summary>
     private void EditIngredient(MealIngredientItem? ingredient)
     {
         if (ingredient is null || !MealIngredients.Contains(ingredient) || IsBusy)
@@ -37,12 +40,14 @@ public partial class NutritionViewModel
         AddFoodMessage = string.Empty;
     }
 
+    /// <summary>Sets which meal the draft belongs to and re-evaluates whether it can be saved.</summary>
     private void SelectMealType(MealType mealType)
     {
         if (!IsMealChoiceLocked)
             SelectedMealType = mealType;
     }
 
+    /// <summary>Reloads the meal when the selected meal changes.</summary>
     partial void OnSelectedMealTypeChanged(MealType value)
     {
         OnPropertyChanged(nameof(IsBreakfastSelected));
@@ -51,6 +56,8 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(IsSnackSelected));
     }
 
+    /// <summary>Adds the chosen food at the entered amount, converting the amount to grams when the serving has a weight</summary>
+    /// and refusing an amount that cannot be read.</summary>
     private void AddSelectedFoodAsIngredient()
     {
         if (SelectedFoodResult is null)
@@ -89,6 +96,7 @@ public partial class NutritionViewModel
         ResetFoodSearchAndSelection();
     }
 
+    /// <summary>Drops an ingredient from the draft and re-evaluates the save state.</summary>
     private void RemoveIngredient(MealIngredientItem? ingredient)
     {
         if (ingredient is null)
@@ -99,6 +107,8 @@ public partial class NutritionViewModel
             IsFoodFinderExpanded = false;
     }
 
+    /// <summary>Saves the draft as an update or a new log depending on how the editor was opened, then reloads the day.</summary>
+    /// Rejected selections and amounts become messages on the editor rather than failures of the page.</summary>
     private async Task LogMealAsync()
     {
         if (MealIngredients.Count == 0)
@@ -184,6 +194,8 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Opens a logged meal for editing with its ingredients loaded; a meal whose ingredients cannot be read is</summary>
+    /// reported instead of opening an empty editor.</summary>
     private async Task EditMealAsync(MealItem? meal)
     {
         if (meal is null)
@@ -224,6 +236,8 @@ public partial class NutritionViewModel
     private int _breakfastPreferenceVersion;
     private bool _breakfastTargetsNeedRefresh;
 
+    /// <summary>Applies a breakfast preference and reloads the targets it changes, ignoring a response that arrives after</summary>
+    /// the preference has been changed again.</summary>
     private async Task SetBreakfastPreferenceAsync(string? preference)
     {
         if (!Enum.TryParse<BreakfastPreference>(preference, true, out var parsed) ||
@@ -238,6 +252,8 @@ public partial class NutritionViewModel
         await RefreshBreakfastPreferenceAsync();
     }
 
+    /// <summary>Reloads the targets for the saved breakfast preference and marks the pending refresh done; a failure keeps</summary>
+    /// the previous targets and only surfaces when the suggestion sheet was waiting on it.</summary>
     private async Task RefreshBreakfastPreferenceAsync()
     {
         var preferenceVersion = ++_breakfastPreferenceVersion;
@@ -294,6 +310,7 @@ public partial class NutritionViewModel
         }
     }
 
+    /// <summary>Raises the meal target properties the page binds.</summary>
     private void NotifyMealTargetProperties()
     {
         OnPropertyChanged(nameof(BreakfastTargetText));
@@ -302,6 +319,7 @@ public partial class NutritionViewModel
         OnPropertyChanged(nameof(SnackTargetText));
     }
 
+    /// <summary>Fills the editor from an existing meal, which is what makes saving update it rather than add another.</summary>
     private void BeginMealEdit(MealItem meal, IReadOnlyList<NutritionMealIngredient> ingredients)
     {
         MealIngredients = new ObservableCollection<MealIngredientItem>(ingredients.Select(i => new MealIngredientItem
@@ -333,6 +351,7 @@ public partial class NutritionViewModel
         NotifyMealIngredientProperties();
     }
 
+    /// <summary>Empties the draft — ingredients, amount, search results and edit identity — before a new meal.</summary>
     private void ResetMealDraft()
     {
         _acceptedSuggestionName = null;
@@ -349,6 +368,7 @@ public partial class NutritionViewModel
         NotifyMealIngredientProperties();
     }
 
+    /// <summary>Adds an ingredient, or replaces the existing one for the same food so a food cannot appear twice.</summary>
     private void AddOrUpdateIngredient(MealIngredientItem ingredient)
     {
         var existing = MealIngredients.FirstOrDefault(i => i.FoodItemId == ingredient.FoodItemId);
@@ -363,6 +383,7 @@ public partial class NutritionViewModel
         NotifyMealIngredientProperties();
     }
 
+    /// <summary>Clears the food search, its paging and the chosen food, returning the finder to its first page.</summary>
     private void ResetFoodSearchAndSelection()
     {
         ResetFoodSource();
@@ -376,6 +397,7 @@ public partial class NutritionViewModel
         IsFoodFinderExpanded = false;
     }
 
+    /// <summary>One ingredient for the meal being built.</summary>
     private static MealIngredientItem BuildMealIngredient(
         int foodId, string name, float calories, float protein, float carbs, float fats, string sourceSummary,
         float grams, float amount, string servingLabel)
@@ -397,6 +419,7 @@ public partial class NutritionViewModel
         };
     }
 
+    /// <summary>The ingredient row for a food and amount.</summary>
     private static MealIngredientItem CreateIngredient(
         FoodSearchResultItem food,
         float amount,
@@ -407,6 +430,7 @@ public partial class NutritionViewModel
             amount * servingOption.Grams, amount, servingOption.Label);
     }
 
+    /// <summary>A copy of an ingredient at a different weight, with its macros scaled to match.</summary>
     private static MealIngredientItem CreateIngredient(MealIngredientItem ingredient, float grams)
     {
         return BuildMealIngredient(ingredient.FoodItemId, ingredient.Name, ingredient.Calories, ingredient.Protein,
@@ -417,12 +441,16 @@ public partial class NutritionViewModel
     /// <summary>D14: the commit's own enabled state, exposed so the button and its hint agree.</summary>
     public bool CanSaveMeal => CanLogMeal();
 
+    /// <summary>True when the log hint should be shown.</summary>
     public bool ShowLogMealHint => IsFoodFinderCollapsed && !CanSaveMeal;
 
+    /// <summary>What the log button is waiting for: a hint to add food while the draft is empty, or what logging will</summary>
+    /// do once it is not.</summary>
     public string LogMealHint => CanSaveMeal
         ? UiTextCatalog.Get("Nutrition_MealEditor_LogHint")
         : UiTextCatalog.Get("Nutrition_MealEditor_AddFoodPrerequisiteHint");
 
+    /// <summary>Raises the ingredient summary properties.</summary>
     private void NotifyMealIngredientProperties()
     {
         OnPropertyChanged(nameof(HasMealIngredients));
@@ -442,6 +470,7 @@ public partial class NutritionViewModel
         LogMealCommand.NotifyCanExecuteChanged();
     }
 
+    /// <summary>An ingredient can be added once a food is chosen and the page is idle.</summary>
     private bool CanAddIngredient()
     {
         return !IsBusy &&
@@ -451,6 +480,7 @@ public partial class NutritionViewModel
                TryParseAmount(FoodGrams, out _);
     }
 
+    /// <summary>The draft can be saved once it has at least one ingredient and the page is idle.</summary>
     private bool CanLogMeal()
     {
         return !IsBusy && MealIngredients.Count > 0;

@@ -73,10 +73,13 @@ using SkiaSharp.Views.Maui.Controls.Hosting;
 
 namespace MuscleCuties.UI;
 
+/// <summary>Builds the MAUI app: fonts and icons, handler tweaks, every service, view model and page, then the</summary>
+/// navigation callbacks the view models are given instead of a navigation service.</summary>
 public static class MauiProgram
 {
     private const string WorkoutPreferencesAfterOnboardingContextKey = "workout-preferences-after-onboarding";
 
+    /// <summary>Composes the app and returns it to the platform entry point.</summary>
     public static MauiApp CreateMauiApp()
     {
         var builder = MauiApp.CreateBuilder();
@@ -106,6 +109,8 @@ public static class MauiProgram
         return builder.Build();
     }
 
+    /// <summary>Registers the view models and the navigation callbacks they call. Each callback decides the route and</summary>
+    /// any context the destination needs, so a view model never names a page.</summary>
     private static void RegisterViewModels(IServiceCollection services)
     {
         services.AddTransient<LoginViewModel>(sp => new LoginViewModel(
@@ -152,6 +157,7 @@ public static class MauiProgram
                 .Set(WorkoutPreferencesAfterOnboardingContextKey, true),
             weekdays => sp.GetRequiredService<INavigationContextService>()
                 .Set(ProfileWorkoutPreferencesViewModel.OnboardingWeekdaysContextKey, weekdays),
+            /// <summary>Saves the glute-focus answer the quiz collected.</summary>
             async gluteFocus =>
             {
                 var preferencesUseCase = sp.GetRequiredService<IProfileWorkoutPreferencesUseCase>();
@@ -215,6 +221,7 @@ public static class MauiProgram
             NavigateToAsync,
             workoutDayId => NavigateWithContextAsync(sp, nameof(WorkoutSessionPage), "workoutDayId", workoutDayId),
             sp.GetRequiredService<IStrengthStyleOfferClient>(),
+            /// <summary>Lets the user pick among the offered strength styles.</summary>
             async offer =>
             {
                 var alternatives = offer.AlternativeStyleIds
@@ -333,6 +340,7 @@ public static class MauiProgram
         services.AddSingleton<IAppPreloadService, AppPreloadCoordinator>();
     }
 
+    /// <summary>Registers the pages with their view models, so a page is constructed already bound.</summary>
     private static void RegisterPages(IServiceCollection services)
     {
         services.AddTransient<WorkoutSessionPage>();
@@ -376,6 +384,8 @@ public static class MauiProgram
         services.AddSingleton<AppShell>();
     }
 
+    /// <summary>Pushes a route, or re-activates the shell root when the route is the sign-in root. Runs on the main</summary>
+    /// thread because Shell navigation requires it.</summary>
     private static Task NavigateToAsync(string route)
     {
         if (ShellNavigationRoute.IsLoginRoot(route))
@@ -388,12 +398,13 @@ public static class MauiProgram
         return MainThread.InvokeOnMainThreadAsync(async () =>
         {
             var shell = Shell.Current ?? throw new InvalidOperationException("Shell is not available.");
-            // Keep the query: the diary reads entryId/addMeal/addAt through IQueryAttributable.
-            // Stripping it here silently drops the requested entry or meal context.
+            // Keep the query: the diary reads entryId through IQueryAttributable.
+            // Stripping it here silently drops the requested entry.
             await shell.GoToAsync(ShellNavigationRoute.ForShell(route), false);
         });
     }
 
+    /// <summary>Navigates to a route with a value passed through the navigation context.</summary>
     private static Task NavigateWithContextAsync<T>(
         IServiceProvider services,
         string route,
@@ -404,6 +415,7 @@ public static class MauiProgram
         return NavigateToAsync(route);
     }
 
+    /// <summary>Opens the dashboard and starts its background preloading.</summary>
     private static async Task NavigateThenPreloadDashboardAsync(
         IServiceProvider services, bool preloadRemaining = true)
     {
@@ -426,6 +438,8 @@ public static class MauiProgram
             services.GetRequiredService<IAppPreloadService>());
     }
 
+    /// <summary>Asks the user whether the saved HIIT answers still hold, showing the recorded history first. Answers</summary>
+    /// missing evidence as "update" rather than assuming a clearance the user never confirmed.</summary>
     private static async Task<HiitConfirmationChoice> ConfirmHiitHistoryAsync(SavedActivityAnswersDto saved)
     {
         var evidence = saved.HiitEligibilityEvidence;
@@ -450,6 +464,7 @@ public static class MauiProgram
             selected == update ? HiitConfirmationChoice.Update : HiitConfirmationChoice.Cancel;
     }
 
+    /// <summary>After onboarding, clears the one-shot weekday context and opens plan generation.</summary>
     private static async Task NavigateAfterOnboardingAsync(IServiceProvider services)
     {
         await NavigateThenPreloadDashboardAsync(services, preloadRemaining: false);
@@ -458,6 +473,8 @@ public static class MauiProgram
         await NavigateToAsync(nameof(StrengthPlanGenerationPage));
     }
 
+    /// <summary>After sign-in, continues to plan generation when onboarding had queued it, otherwise opens the</summary>
+    /// dashboard.</summary>
     private static Task NavigateAfterLoginAsync(IServiceProvider services)
     {
         var navigationContext = services.GetRequiredService<INavigationContextService>();
@@ -467,6 +484,7 @@ public static class MauiProgram
         return NavigateThenPreloadDashboardAsync(services, preloadRemaining: false);
     }
 
+    /// <summary>Drops the queued post-onboarding navigation, because this account still owes its profile setup.</summary>
     private static Task NavigateToProfileSetupAfterLoginAsync(IServiceProvider services)
     {
         services.GetRequiredService<INavigationContextService>()
@@ -474,6 +492,7 @@ public static class MauiProgram
         return NavigateAuthenticatedAsync($"//{nameof(ProfileSetupPage)}");
     }
 
+    /// <summary>Returns to sign-in with the email prefilled, for an account that already exists.</summary>
     private static Task NavigateToExistingLoginAsync(IServiceProvider services, string email)
     {
         services.GetRequiredService<INavigationContextService>()
@@ -481,6 +500,7 @@ public static class MauiProgram
         return NavigateToAsync("..");
     }
 
+    /// <summary>Returns to sign-in with the password-updated banner and the email prefilled.</summary>
     private static Task NavigateToPasswordUpdatedLoginAsync(IServiceProvider services, string email)
     {
         // Route back to LoginPage with the password-updated confirmation banner (PrepareForPasswordUpdated).
@@ -489,6 +509,7 @@ public static class MauiProgram
         return NavigateToAsync("..");
     }
 
+    /// <summary>Runs the remaining preload once the dashboard has loaded.</summary>
     private static async Task PreloadAfterDashboardLoadAsync(
         DashboardPage dashboardPage,
         IAppPreloadService preloadService)
@@ -504,6 +525,7 @@ public static class MauiProgram
         }
     }
 
+    /// <summary>Makes an authenticated route the app root, dropping any query so the root is a plain page.</summary>
     private static Task NavigateAuthenticatedAsync(string route)
     {
         var app = Application.Current as App

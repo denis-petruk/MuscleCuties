@@ -2,11 +2,13 @@ using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Account.Deletion;
 
+/// <summary>The server-side deletion: purge the rows, revoke the Apple tokens, record the outcome.</summary>
 public sealed class ServerAccountDeletionUseCase(
     IServerAccountPurgeStore purgeStore,
     IAccountDeletionAuditStore? auditStore = null,
     IAppleAccountTokenRevoker? appleTokenRevoker = null)
 {
+    /// <summary>Deletes the account and everything it owns for the calling user.</summary>
     public async Task<AccountDeletionResult> DeleteAccountAsync(
         Guid userId,
         CancellationToken cancellationToken = default,

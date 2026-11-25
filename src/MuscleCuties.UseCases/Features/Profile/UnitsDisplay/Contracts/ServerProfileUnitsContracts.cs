@@ -1,5 +1,6 @@
 namespace MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 
+/// <summary>The units as the server stores them.</summary>
 public sealed record ServerProfileUnitsSnapshot(
     bool UseMetricSystem,
     string BodyWeightUnit,
@@ -9,6 +10,7 @@ public sealed record ServerProfileUnitsSnapshot(
     string EnergyUnit,
     int Version);
 
+/// <summary>A units change sent to the server.</summary>
 public sealed record SaveServerProfileUnitsRequest(
     Guid UserId,
     int ExpectedVersion,
@@ -19,6 +21,7 @@ public sealed record SaveServerProfileUnitsRequest(
     string? DistanceUnit,
     string? EnergyUnit);
 
+/// <summary>How the server's units write ended.</summary>
 public enum SaveServerProfileUnitsStatus
 {
     Saved,
@@ -27,8 +30,10 @@ public enum SaveServerProfileUnitsStatus
     InvalidRequest
 }
 
+/// <summary>The outcome of that write.</summary>
 public sealed record SaveServerProfileUnitsResult(SaveServerProfileUnitsStatus Status, int? Version);
 
+/// <summary>The server units persistence.</summary>
 public interface IServerProfileUnitsStore
 {
     Task<ServerProfileUnitsSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken);

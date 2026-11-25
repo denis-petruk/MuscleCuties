@@ -3,6 +3,7 @@ using MuscleCuties.UseCases.Features.Nutrition.CustomFoods.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
 
+/// <summary>Stores a food for one account.</summary>
 public interface ICreateCustomFoodStore
 {
     Task<CustomFoodRecord> CreateAsync(

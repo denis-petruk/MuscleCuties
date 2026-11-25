@@ -10,6 +10,7 @@ using MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
 
 namespace MuscleCuties.Server.Hydration;
 
+/// <summary>The current user and day for the hydration routes, read from the request rather than passed by the client.</summary>
 public sealed class HttpContextBodyMeasurementSession(IHttpContextAccessor httpContextAccessor, TimeProvider timeProvider)
     : IBodyMeasurementSession
 {
@@ -22,11 +23,14 @@ public sealed class HttpContextBodyMeasurementSession(IHttpContextAccessor httpC
         }
     }
 
+    /// <summary>Today in UTC from the server clock, so a request without a date still lands on one day.</summary>
     public DateOnly Today => DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
 }
 
+/// <summary>The hydration, fasting and water-preset routes.</summary>
 public static class HydrationAndFastingEndpointMappings
 {
+    /// <summary>Registers the hydration and fasting endpoints.</summary>
     public static IEndpointRouteBuilder MapHydrationProgressAndFastingEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var hydration = endpoints.MapGroup("/api/v1/hydration").RequireAuthorization();
@@ -298,6 +302,8 @@ public static class HydrationAndFastingEndpointMappings
         return endpoints;
     }
 
+    /// <summary>Runs a hydration operation and turns a thrown failure into a problem response, so one bad request cannot take</summary>
+    /// the endpoint down with a bare 500.</summary>
     private static async Task<IResult> ExecuteSafeAsync<T>(Func<Task<T>> operation)
     {
         try
@@ -319,12 +325,18 @@ public static class HydrationAndFastingEndpointMappings
     }
 
 
+    /// <summary>A new water preset, with the operation id that makes a retried create idempotent.</summary>
     public sealed record CreateWaterPresetBody(string Label, double Millilitres, Guid OperationId, string? ExpectedVersion);
+    /// <summary>An existing preset's new label and volume, with its operation id.</summary>
     public sealed record UpdateWaterPresetBody(string Label, double Millilitres, Guid OperationId, string? ExpectedVersion);
+    /// <summary>The preset order the client wants, with the operation id.</summary>
     public sealed record ReorderWaterPresetsBody(IReadOnlyList<Guid> OrderedIds, Guid OperationId, string? ExpectedVersion);
+    /// <summary>A day's water intake with the version the client read, so two devices cannot silently overwrite each other.</summary>
     public sealed record ChangeWaterIntakeBody(DateOnly Date, string? ExpectedVersion, Guid OperationId, Guid EntryId, WaterIntakeChangeKindDto Kind, int Millilitres);
+    /// <summary>The reminder settings, sent with the version that was read.</summary>
     public sealed record SaveWaterReminderBody(string? ExpectedVersion, bool OptedIn, IReadOnlyList<TimeOnly>? LocalTimes, TimeOnly? QuietStart, TimeOnly? QuietEnd, Guid OperationId);
 
+    /// <summary>The start of a fast, with its planned end and the client's operation id.</summary>
     public sealed record StartFastingBody(
         Guid SessionId,
         Guid CommandId,
@@ -335,6 +347,7 @@ public static class HydrationAndFastingEndpointMappings
         bool EnablePlannedEndReminder,
         bool? IsProfilePregnant);
 
+    /// <summary>An ending or cancelling of the running fast, with the operation id that makes the transition idempotent.</summary>
     public sealed record TransitionFastingBody(
         Guid CommandId,
         int ExpectedVersion,
@@ -342,6 +355,7 @@ public static class HydrationAndFastingEndpointMappings
         FastingEligibilityResponseDto EligibilityResponse = FastingEligibilityResponseDto.YesAllApply,
         bool? IsProfilePregnant = null);
 
+    /// <summary>A correction to a fast's times, which is a separate operation from starting or ending one.</summary>
     public sealed record CorrectFastingBody(
         Guid CommandId,
         int ExpectedVersion,
@@ -349,6 +363,7 @@ public static class HydrationAndFastingEndpointMappings
         DateTimeOffset? CorrectedEndedAtUtc,
         DateTimeOffset CorrectedAtUtc);
 
+    /// <summary>A change to when the running fast is planned to end.</summary>
     public sealed record UpdateFastingPlannedEndBody(
         Guid CommandId,
         int ExpectedVersion,

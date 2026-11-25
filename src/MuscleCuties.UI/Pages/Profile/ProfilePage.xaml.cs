@@ -3,17 +3,22 @@ using MuscleCuties.UI.ViewModels.Profile;
 
 namespace MuscleCuties.UI.Pages.Profile;
 
+/// <summary>
+///     You tab: the profile summary and the settings rows.
+/// </summary>
 public partial class ProfilePage : ContentPage
 {
     private readonly ProfileViewModel _viewModel;
     private IDisposable? _profileNameCapSubscription;
 
+    /// <summary>Initializes the page and its view model.</summary>
     public ProfilePage(ProfileViewModel vm)
     {
         _viewModel = vm;
         this.InitializeAndBind(InitializeComponent, vm);
     }
 
+    /// <summary>Starts the view model's work when the page appears.</summary>
     protected override void OnAppearing()
     {
         base.OnAppearing();
@@ -21,6 +26,7 @@ public partial class ProfilePage : ContentPage
             ProfileNameLabel, "UiFontSize18", "PresentationAccessibilityProfileNameMaxFontSize");
     }
 
+    /// <summary>Pauses the view model when the page goes away.</summary>
     protected override void OnDisappearing()
     {
         _profileNameCapSubscription?.Dispose();
@@ -28,11 +34,13 @@ public partial class ProfilePage : ContentPage
         base.OnDisappearing();
     }
 
+    /// <summary>Translates a runtime string, for the confirmations built on this page rather than in the catalog.</summary>
     private static string T(string text)
     {
         return UiTextCatalog.TranslateRuntimeText(text);
     }
 
+    /// <summary>Refreshes the profile when navigated to.</summary>
     protected override void OnNavigatedTo(NavigatedToEventArgs args)
     {
         base.OnNavigatedTo(args);
@@ -46,6 +54,7 @@ public partial class ProfilePage : ContentPage
         this.BeginDeferredLoad(() => DetailsLazy.LoadIfNeededAsync(true).AsTask());
     }
 
+    /// <summary>Confirms, then signs out.</summary>
     private async void OnLogoutClicked(object? sender, EventArgs e)
     {
         var shouldLogout = await DisplayAlertAsync(
@@ -60,6 +69,7 @@ public partial class ProfilePage : ContentPage
         await _viewModel.LogoutCommand.ExecuteAsync(null);
     }
 
+    /// <summary>Asks twice before deleting the account, then tells the view model to delete it with its data.</summary>
     private async void OnDeleteAccountClicked(object? sender, EventArgs e)
     {
         // First confirmation dialog
@@ -87,6 +97,7 @@ public partial class ProfilePage : ContentPage
         await _viewModel.DeleteAccountAndDataCommand.ExecuteAsync(null);
     }
 
+    /// <summary>Offers a new photo or the app icon, then applies the choice.</summary>
     private async void OnProfileImageTapped(object? sender, EventArgs e)
     {
         var choosePhoto = T("Choose photo");
@@ -109,6 +120,7 @@ public partial class ProfilePage : ContentPage
         }
     }
 
+    /// <summary>Picks and stores a new avatar, reporting a failure on the page.</summary>
     private async Task PickProfileImageAsync(ProfileViewModel viewModel)
     {
         try

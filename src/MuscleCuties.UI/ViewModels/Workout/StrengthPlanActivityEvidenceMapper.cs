@@ -3,8 +3,12 @@ using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
+/// <summary>
+///     Maps the picked activity answers onto the evidence the planner reads.
+/// </summary>
 internal static class StrengthPlanActivityEvidenceMapper
 {
+    /// <summary>The evidence inputs for the selected activities.</summary>
     public static IReadOnlyList<ActivityEligibilityInputV020> Create(
         IReadOnlySet<WorkoutActivityDto> selectedActivities,
         bool? hasSwimmingFacilityAccess,

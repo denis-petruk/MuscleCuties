@@ -4,10 +4,14 @@ using UIKit;
 
 namespace MuscleCuties.UI;
 
+/// <summary>Covers the app's windows with a branded, nearly opaque surface while the app is being</summary>
+/// backgrounded, so the OS task switcher cannot show the previous screen's content.</summary>
 public static class ApplePrivacyShieldHelper
 {
     private const int PrivacyShieldTag = 20491214;
 
+    /// <summary>Covers every window of the scene once; a second call is a no-op on a window that already</summary>
+    /// carries the shield.</summary>
     public static void ShowPrivacyShield(UIScene? scene = null)
     {
         foreach (var window in Windows(scene))
@@ -43,12 +47,14 @@ public static class ApplePrivacyShieldHelper
         }
     }
 
+    /// <summary>Removes the shield from every window of the scene. Safe to call when none is shown.</summary>
     public static void HidePrivacyShield(UIScene? scene = null)
     {
         foreach (var window in Windows(scene))
             window.ViewWithTag(PrivacyShieldTag)?.RemoveFromSuperview();
     }
 
+    /// <summary>The scene's windows, or every connected window scene's windows when no scene is given.</summary>
     private static IEnumerable<UIWindow> Windows(UIScene? scene)
     {
         if (scene is UIWindowScene windowScene)
@@ -59,6 +65,7 @@ public static class ApplePrivacyShieldHelper
             .SelectMany(connectedScene => connectedScene.Windows);
     }
 
+    /// <summary>Reads a theme colour by key and converts it for UIKit, so the shield follows the theme.</summary>
     private static UIColor ResolveColor(string key)
     {
         var color = AppThemeResources.GetRequired<Color>(key);

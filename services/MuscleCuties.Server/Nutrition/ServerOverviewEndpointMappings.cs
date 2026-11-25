@@ -10,6 +10,7 @@ namespace MuscleCuties.Server.Nutrition;
 /// <summary>Separate route module; ApiApplication composition is owned by the coordinator.</summary>
 public static class ServerOverviewEndpointMappings
 {
+    /// <summary>Registers the server overview endpoint, which reports what the deployment is running.</summary>
     public static IEndpointRouteBuilder MapServerOverviewEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var nutrition = endpoints.MapGroup("/api/v1/nutrition").RequireAuthorization();

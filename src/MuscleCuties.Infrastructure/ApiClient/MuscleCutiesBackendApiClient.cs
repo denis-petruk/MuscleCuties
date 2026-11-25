@@ -9,6 +9,7 @@ using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
 namespace MuscleCuties.Infrastructure.ApiClient;
 
+/// <summary>The pair a session is held as: the access token and the refresh token that replaces it.</summary>
 public sealed record BackendSessionTokens(
     Guid AccountId,
     string AccessToken,
@@ -16,6 +17,7 @@ public sealed record BackendSessionTokens(
     DateTimeOffset AccessTokenExpiresAtUtc,
     bool IsOnboardingComplete = true);
 
+/// <summary>Where the session tokens live between calls, so the client itself holds no credentials.</summary>
 public interface IBackendSessionTokenStore
 {
     Task<BackendSessionTokens?> ReadTokensAsync(CancellationToken cancellationToken = default);
@@ -23,20 +25,28 @@ public interface IBackendSessionTokenStore
     Task ClearTokensAsync(CancellationToken cancellationToken = default);
 }
 
+/// <summary>One lock per token store, so two clients sharing a store cannot refresh at the same moment and invalidate each</summary>
+/// other's new token.</summary>
 internal static class BackendSessionLocks
 {
     private const int SingleSessionChange = 1;
+    /// <summary>The per-store session state: the token it belongs to and a version that changes whenever it is replaced.</summary>
     internal sealed class State
     {
+        /// <summary>Gate that serializes session changes.</summary>
         public SemaphoreSlim Semaphore { get; } = new(SingleSessionChange, SingleSessionChange);
         private long version;
+        /// <summary>The state's version, read atomically so a refresh can tell that someone else has already replaced the token.</summary>
         public long Version => Interlocked.Read(ref version);
+        /// <summary>Marks cached responses stale after a session change.</summary>
         public void Invalidate() => Interlocked.Increment(ref version);
     }
     private static readonly ConditionalWeakTable<IBackendSessionTokenStore, State> Locks = new();
+    /// <summary>The state belonging to one token store, created on first use.</summary>
     public static State For(IBackendSessionTokenStore store) => Locks.GetValue(store, _ => new State());
 }
 
+/// <summary>How a call ended: a success, a refusal the caller may act on, a lost session or a transport failure.</summary>
 public enum BackendApiStatus
 {
     Success = 0,
@@ -51,6 +61,7 @@ public enum BackendApiStatus
     Timeout = 9
 }
 
+/// <summary>A call's answer with the status, the body when there was one and the request id for support.</summary>
 public sealed record BackendApiResponse<T>(
     BackendApiStatus Status,
     T? Data,
@@ -61,6 +72,7 @@ public sealed record BackendApiResponse<T>(
     HttpStatusCode? ResponseStatusCode = null,
     string? RequestId = null);
 
+/// <summary>Every backend call the app makes, one method per contract.</summary>
 public interface IMuscleCutiesBackendApiClient
 {
     Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
@@ -80,6 +92,8 @@ public interface IMuscleCutiesBackendApiClient
         CancellationToken cancellationToken = default);
 }
 
+/// <summary>The HTTP client: it attaches the session, refreshes it once when refused, and turns every answer into the</summary>
+/// status the callers switch on.</summary>
 public sealed class MuscleCutiesBackendApiClient(
     HttpClient httpClient,
     IBackendSessionTokenStore tokenStore,
@@ -93,6 +107,7 @@ public sealed class MuscleCutiesBackendApiClient(
     private const string RequestIdHeaderName = "X-Request-Id";
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Sends an authenticated GET and maps the response.</summary>
     public async Task<BackendApiResponse<TResponse>> GetAsync<TResponse>(
         string relativePath,
         CancellationToken cancellationToken = default)
@@ -109,6 +124,7 @@ public sealed class MuscleCutiesBackendApiClient(
         return await MapResponseAsync<TResponse>(response, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Sends an authenticated mutation and maps the response.</summary>
     public async Task<BackendApiResponse<TResponse>> SendMutationAsync<TRequest, TResponse>(
         HttpMethod method,
         string relativePath,
@@ -142,6 +158,7 @@ public sealed class MuscleCutiesBackendApiClient(
         return await MapResponseAsync<TResponse>(response, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Sends an authenticated DELETE and reports success.</summary>
     public async Task<BackendApiResponse<bool>> DeleteAsync(
         string relativePath,
         string? idempotencyKey = null,
@@ -174,6 +191,7 @@ public sealed class MuscleCutiesBackendApiClient(
             RequestId: mapped.RequestId);
     }
 
+    /// <summary>Sends the request, refreshing the session once on an expired token.</summary>
     private async Task<HttpResponseMessage> SendWithRefreshRetryAsync(
         Func<HttpRequestMessage> requestFactory,
         CancellationToken cancellationToken)
@@ -231,6 +249,7 @@ public sealed class MuscleCutiesBackendApiClient(
         return await httpClient.SendAsync(retryRequest, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Refreshes the session tokens, reporting the failure status.</summary>
     private async Task<(BackendSessionTokens? Tokens, HttpStatusCode FailureStatus)> TryRefreshSessionAsync(
         BackendSessionTokens existing,
         BackendSessionLocks.State sessionState,
@@ -272,6 +291,7 @@ public sealed class MuscleCutiesBackendApiClient(
         return (updated, HttpStatusCode.OK);
     }
 
+    /// <summary>Maps the HTTP response onto the client's result type.</summary>
     private static async Task<BackendApiResponse<TResponse>> MapResponseAsync<TResponse>(
         HttpResponseMessage response,
         CancellationToken cancellationToken)
@@ -356,6 +376,7 @@ public sealed class MuscleCutiesBackendApiClient(
         };
     }
 
+    /// <summary>A stand-in response for a call that never reached the server, so callers handle one shape of failure.</summary>
     private static HttpResponseMessage SyntheticFailureResponse(HttpStatusCode status, string? requestId)
     {
         var response = new HttpResponseMessage(status);
@@ -364,6 +385,7 @@ public sealed class MuscleCutiesBackendApiClient(
         return response;
     }
 
+    /// <summary>The server's request id from the response headers, which is what a support report quotes.</summary>
     private static string? ReadRequestId(HttpResponseMessage response)
     {
         if (!response.Headers.TryGetValues(RequestIdHeaderName, out var values))
@@ -376,6 +398,7 @@ public sealed class MuscleCutiesBackendApiClient(
         return null;
     }
 
+    /// <summary>The refresh answer, whose tokens replace the stored pair atomically.</summary>
     private sealed record RefreshTokenDto(
         Guid UserId,
         string AccessToken,
@@ -396,6 +419,7 @@ public sealed class MobileJourneyCloudGateway(
 {
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
+    /// <summary>Loads the cycle overview, falling back to the encrypted offline copy.</summary>
     public async Task<BackendApiResponse<CycleStateSnapshot>> GetCycleOverviewWithOfflineCacheAsync(
         DateOnly localDate,
         CancellationToken cancellationToken = default)
@@ -445,6 +469,7 @@ public sealed class MobileJourneyCloudGateway(
         return new BackendApiResponse<CycleStateSnapshot>(liveResponse.Status, null, liveResponse.ErrorCode, liveResponse.ServerConcurrencyVersion);
     }
 
+    /// <summary>A server cycle payload as the app's snapshot, or nothing when the payload is empty.</summary>
     private static CycleStateSnapshot? MapCycleSnapshot(JsonElement root, DateOnly localDate)
     {
         if (root.ValueKind == JsonValueKind.Object)
@@ -472,6 +497,7 @@ public sealed class MobileJourneyCloudGateway(
         return null;
     }
 
+    /// <summary>Loads the nutrition targets, falling back to the encrypted offline copy.</summary>
     public async Task<BackendApiResponse<DailyNutritionTargetsSnapshot>> GetNutritionTargetsWithOfflineCacheAsync(
         DateOnly localDate,
         CancellationToken cancellationToken = default)
@@ -519,6 +545,7 @@ public sealed class MobileJourneyCloudGateway(
         return new BackendApiResponse<DailyNutritionTargetsSnapshot>(liveResponse.Status, null, liveResponse.ErrorCode, liveResponse.ServerConcurrencyVersion);
     }
 
+    /// <summary>A server targets payload as the app's snapshot; missing values stay unset rather than becoming zero.</summary>
     private static DailyNutritionTargetsSnapshot? MapNutritionTargetsSnapshot(JsonElement root, DateOnly localDate)
     {
         if (root.ValueKind == JsonValueKind.Object)
@@ -546,6 +573,7 @@ public sealed class MobileJourneyCloudGateway(
         return null;
     }
 
+    /// <summary>Loads the active workout, falling back to the encrypted offline copy.</summary>
     public async Task<BackendApiResponse<ActiveWorkoutSessionSnapshot>> GetActiveWorkoutWithOfflineCacheAsync(
         Guid sessionId,
         CancellationToken cancellationToken = default)
@@ -593,6 +621,7 @@ public sealed class MobileJourneyCloudGateway(
         return new BackendApiResponse<ActiveWorkoutSessionSnapshot>(liveResponse.Status, null, liveResponse.ErrorCode, liveResponse.ServerConcurrencyVersion);
     }
 
+    /// <summary>A server session payload as the app's active-session snapshot.</summary>
     private static ActiveWorkoutSessionSnapshot? MapActiveWorkoutSnapshot(JsonElement root, Guid sessionId)
     {
         if (root.ValueKind == JsonValueKind.Object)
@@ -647,6 +676,7 @@ public sealed class MobileJourneyCloudGateway(
         return null;
     }
 
+    /// <summary>Signs in with email and password and stores the session.</summary>
     public async Task<BackendApiResponse<BackendSessionTokens>> SignInWithPasswordAsync(
         string emailOrUsername,
         string password,
@@ -662,6 +692,7 @@ public sealed class MobileJourneyCloudGateway(
         return await ReadSessionResponseAsync(response, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Signs in with an Apple token and stores the session.</summary>
     public async Task<BackendApiResponse<BackendSessionTokens>> SignInWithAppleAsync(
         string identityToken,
         string nonce,
@@ -684,6 +715,7 @@ public sealed class MobileJourneyCloudGateway(
         return await ReadSessionResponseAsync(response, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Reads the tokens from a sign-in response.</summary>
     private async Task<BackendApiResponse<BackendSessionTokens>> ReadSessionResponseAsync(
         BackendApiResponse<JsonElement> response,
         CancellationToken cancellationToken)
@@ -730,6 +762,7 @@ public sealed class MobileJourneyCloudGateway(
         return new BackendApiResponse<BackendSessionTokens>(response.Status, null, response.ErrorCode);
     }
 
+    /// <summary>Records that onboarding finished, so the next launch does not send the user back into it.</summary>
     public async Task MarkOnboardingCompleteAsync(CancellationToken cancellationToken = default)
     {
         var sessionState = BackendSessionLocks.For(tokenStore);
@@ -751,6 +784,7 @@ public sealed class MobileJourneyCloudGateway(
         }
     }
 
+    /// <summary>Loads the dashboard overview.</summary>
     public async Task<BackendApiResponse<DashboardOverviewResponse>> GetDashboardOverviewAsync(
         DateOnly today,
         CancellationToken cancellationToken = default)
@@ -758,6 +792,7 @@ public sealed class MobileJourneyCloudGateway(
         return await GetDashboardOverviewAsync(today, null, cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Loads the dashboard overview for a date.</summary>
     public async Task<BackendApiResponse<DashboardOverviewResponse>> GetDashboardOverviewAsync(
         DateOnly today,
         string? timeZoneId,
@@ -775,6 +810,7 @@ public sealed class MobileJourneyCloudGateway(
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Loads the dashboard calendar for a month.</summary>
     public async Task<BackendApiResponse<DashboardCalendarResponse>> GetDashboardCalendarAsync(
         int year,
         int month,
@@ -790,6 +826,7 @@ public sealed class MobileJourneyCloudGateway(
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Saves a journey mutation and maps its response.</summary>
     public Task<BackendApiResponse<TResponse>> SaveJourneyMutationAsync<TRequest, TResponse>(
         HttpMethod method,
         string relativePath,
@@ -798,6 +835,7 @@ public sealed class MobileJourneyCloudGateway(
         CancellationToken cancellationToken = default) =>
         apiClient.SendMutationAsync<TRequest, TResponse>(method, relativePath, request, idempotencyKey, cancellationToken);
 
+    /// <summary>Signs out and clears the local state in the same operation, so no cached diary or profile survives a logout.</summary>
     public async Task LogoutAndPurgeLocalStateAsync(CancellationToken cancellationToken = default)
     {
         var sessionState = BackendSessionLocks.For(tokenStore);

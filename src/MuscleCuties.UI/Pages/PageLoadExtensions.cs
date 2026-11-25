@@ -9,6 +9,8 @@ using MuscleCuties.UI.ViewModels.Workout;
 
 namespace MuscleCuties.UI.Pages;
 
+/// <summary>Page plumbing shared by every screen: timed construction and binding, deferred and lazy loads that</summary>
+/// report failure on the page, per-page load state, and theme-change observers.</summary>
 internal static class PageLoadExtensions
 {
     private const double InteractionBudgetMilliseconds = 100;
@@ -19,6 +21,7 @@ internal static class PageLoadExtensions
     private static readonly ConditionalWeakTable<LazyView, LazyViewLoadState> LazyViewLoads = new();
     private static readonly ConditionalWeakTable<Page, PageLoadErrorState> PageLoadErrors = new();
 
+    /// <summary>Resolves the view model and creates the page, writing the timings when performance profiling is on.</summary>
     public static TPage CreateWithTiming<TPage, TViewModel>(IServiceProvider services, Func<TViewModel, TPage> create)
         where TPage : Page
         where TViewModel : class
@@ -29,6 +32,7 @@ internal static class PageLoadExtensions
         return create(viewModel);
     }
 
+    /// <summary>Runs the XAML initialisation and writes how long it took.</summary>
     public static void InitializeWithTiming(this Page page, Action initialize)
     {
         var stopwatch = Stopwatch.StartNew();
@@ -36,6 +40,7 @@ internal static class PageLoadExtensions
         WriteTiming(page.GetType().Name, "XAML initialization", stopwatch.Elapsed.TotalMilliseconds);
     }
 
+    /// <summary>Binds the page and writes the whole construction time, from the timestamp the caller captured.</summary>
     public static void BindWithTiming(this Page page, object viewModel, long constructorStarted)
     {
         var started = Stopwatch.GetTimestamp();
@@ -44,6 +49,8 @@ internal static class PageLoadExtensions
         WriteTiming(page.GetType().Name, "constructor", Stopwatch.GetElapsedTime(constructorStarted).TotalMilliseconds);
     }
 
+    /// <summary>Loads a lazy view only when it is needed, and lets concurrent callers await the same pass instead of</summary>
+    /// loading it twice.</summary>
     public static async ValueTask LoadIfNeededAsync(this LazyView view, bool requested)
     {
         if (!requested || view.HasLazyViewLoaded)
@@ -72,6 +79,8 @@ internal static class PageLoadExtensions
         await loadTask;
     }
 
+    /// <summary>The one load of a lazy view, writing its timing and completing the shared task even when the view</summary>
+    /// fails to build.</summary>
     private static async Task LoadLazyViewAsync(LazyView view, LazyViewLoadState state, TaskCompletionSource completion)
     {
         var started = Stopwatch.GetTimestamp();
@@ -106,6 +115,7 @@ internal static class PageLoadExtensions
         _ = RunAfterFirstLayoutSafelyAsync(page, pageName, firstLayout, loadAsync, isCurrent);
     }
 
+    /// <summary>Runs the page's load after its first layout, logging a failure.</summary>
     private static async Task RunAfterFirstLayoutSafelyAsync(
         Page page,
         string pageName,
@@ -129,6 +139,8 @@ internal static class PageLoadExtensions
         });
     }
 
+    /// <summary>Runs a page's below-the-fold load after the first layout, off the navigation path, so the first frame</summary>
+    /// is not delayed by it.</summary>
     public static void BeginDeferredLoad(this Page page, Func<Task> loadAsync)
     {
         var pageName = page.GetType().Name;
@@ -137,6 +149,7 @@ internal static class PageLoadExtensions
         _ = RunDeferredLoadSafelyAsync(page, pageName, firstLayout, loadAsync);
     }
 
+    /// <summary>Runs a deferred load once the page has laid out, logging a failure.</summary>
     private static async Task RunDeferredLoadSafelyAsync(
         Page page,
         string pageName,
@@ -150,6 +163,7 @@ internal static class PageLoadExtensions
         await MainThread.InvokeOnMainThreadAsync(() => RunSafelyAsync(page, pageName, "deferred view load", loadAsync));
     }
 
+    /// <summary>Runs a page operation, logging and swallowing its failure.</summary>
     private static async Task RunSafelyAsync(
         Page page,
         string pageName,
@@ -200,6 +214,7 @@ internal static class PageLoadExtensions
         }
     }
 
+    /// <summary>A task that completes when the page has been laid out, or immediately when it already has been.</summary>
     private static Task GetFirstLayoutTask(Page page, string pageName)
     {
         if (page.Width > 0 && page.Height > 0)
@@ -238,6 +253,7 @@ internal static class PageLoadExtensions
         }
     }
 
+    /// <summary>Writes one timing, marking it as over or within the interaction budget.</summary>
     private static void WriteTiming(string component, string operation, double elapsedMilliseconds)
     {
         var budgetState = elapsedMilliseconds <= InteractionBudgetMilliseconds
@@ -251,6 +267,7 @@ internal static class PageLoadExtensions
             Console.WriteLine(message);
     }
 
+    /// <summary>Shows or hides the injury modal and tracks its load.</summary>
     public static async Task UpdateInjuryModalAsync(
         LazyView injuryModalLazy,
         Func<Task?> getLoadTask,
@@ -285,6 +302,8 @@ internal static class PageLoadExtensions
         modal.IsOpen = isVisible;
     }
 
+    /// <summary>Back closes an open modal and consumes the press; returns false so the page handles it when no modal is</summary>
+    /// open.</summary>
     public static bool TryCloseModalOnBack(bool isModalVisible, ICommand closeCommand)
     {
         if (!isModalVisible)
@@ -294,6 +313,7 @@ internal static class PageLoadExtensions
         return true;
     }
 
+    /// <summary>Initializes the view model, binds it, and returns it.</summary>
     public static TViewModel InitializeAndBind<TViewModel>(
         this Page page,
         Action initialize,
@@ -308,6 +328,7 @@ internal static class PageLoadExtensions
         return viewModel;
     }
 
+    /// <summary>Re-subscribes the handler to a view model whose binding was replaced.</summary>
     public static void ReattachPropertyChanged(
         this INotifyPropertyChanged viewModel,
         PropertyChangedEventHandler handler)
@@ -316,16 +337,20 @@ internal static class PageLoadExtensions
         viewModel.PropertyChanged += handler;
     }
 
+    /// <summary>Whether the app is currently on its dark appearance.</summary>
     public static bool IsDarkTheme()
     {
         return Application.Current?.RequestedTheme == AppTheme.Dark;
     }
 
+    /// <summary>Observes theme changes for the page's lifetime and forwards the new darkness to its colour</summary>
+    /// refresh.</summary>
     public static ThemeChangeObserver CreateThemeObserver(this Page page, Action<bool> refreshThemeColors)
     {
         return new ThemeChangeObserver(theme => refreshThemeColors(theme == AppTheme.Dark));
     }
 
+    /// <summary>Presents a modal, recording a failure on the view model instead of throwing.</summary>
     public static async Task PresentModalSafelyAsync(IPageLoadAware viewModel, string componentName,
         Func<Task> presentAsync)
     {
@@ -340,23 +365,32 @@ internal static class PageLoadExtensions
         }
     }
 
+    /// <summary>Times a page's first layout once, so the deferred work can wait for something on screen.</summary>
     private sealed class FirstLayoutTracker
     {
+        /// <summary>Completes once the modal interaction finishes.</summary>
         public TaskCompletionSource<bool> Completion { get; } =
             new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        /// <summary>Whether the layout event is already wired, so it is attached once.</summary>
         public bool IsSubscribed { get; set; }
+        /// <summary>Timestamp the first layout wait began, for the timing line.</summary>
         public long Started { get; set; }
     }
 
+    /// <summary>The load a lazy view is currently running, so concurrent requests share one pass.</summary>
     private sealed class LazyViewLoadState
     {
+        /// <summary>The load in flight, or null when the view has none.</summary>
         public Task? Task { get; set; }
     }
 
+    /// <summary>Which of a page's two load phases failed, so the retry affordance can name the right one.</summary>
     private sealed class PageLoadErrorState
     {
+        /// <summary>Whether the primary data load failed.</summary>
         public bool DataFailed { get; set; }
+        /// <summary>Whether a deferred card failed to load.</summary>
         public bool DeferredFailed { get; set; }
     }
 }

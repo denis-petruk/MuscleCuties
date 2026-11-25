@@ -5,6 +5,7 @@ using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 
+/// <summary>Deletes every row an account owns, in dependency order, and proves afterwards that nothing remains.</summary>
 public sealed class PostgresAccountPurgeStore(
     PostgresDbContext dbContext) : IServerAccountPurgeStore
 {
@@ -48,6 +49,7 @@ public sealed class PostgresAccountPurgeStore(
         typeof(PhotoObjectCleanupRecord)
     ];
 
+    /// <summary>Deletes the account's records and reports what was removed.</summary>
     public async Task<AccountDeletionResult> PurgeAccountDataAsync(
         Guid userId,
         CancellationToken cancellationToken = default)
@@ -346,6 +348,7 @@ public sealed class PostgresAccountPurgeStore(
         }).ConfigureAwait(false);
     }
 
+    /// <summary>Fails at startup when a tenant table is missing from the purge inventory, so a new table cannot quietly escape deletion.</summary>
     private void AssertTenantPurgeInventoryIsComplete()
     {
         var mappedTenantTypes = dbContext.Model.GetEntityTypes()
@@ -362,6 +365,7 @@ public sealed class PostgresAccountPurgeStore(
         }
     }
 
+    /// <summary>Re-reads every tenant table after the purge and throws if any row survives, which is what makes the deletion trustworthy.</summary>
     private async Task AssertNoTenantRowsRemainAsync(Guid userId, CancellationToken cancellationToken)
     {
         var remaining = await dbContext.UserProfiles.AnyAsync(x => x.UserId == userId, cancellationToken)

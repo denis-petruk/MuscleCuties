@@ -3,6 +3,7 @@ namespace MuscleCuties.UseCases.Features.Profile.PhotoVault;
 /// <summary>Trusted cleanup target loaded from a persisted, leased photo cleanup row.</summary>
 public sealed record PhotoObjectCleanupTarget(Guid OwnerId, Guid PhotoId, string Bucket, string Key);
 
+/// <summary>Why a stored object could not be removed.</summary>
 public enum S3PhotoObjectCleanupFailure
 {
     Transient,
@@ -10,11 +11,13 @@ public enum S3PhotoObjectCleanupFailure
     Configuration
 }
 
+/// <summary>A cleanup that failed, raised so the deletion path can retry rather than report success.</summary>
 public sealed class S3PhotoObjectCleanupException(
     S3PhotoObjectCleanupFailure failure,
     string message,
     Exception? innerException = null) : Exception(message, innerException)
 {
+    /// <summary>Why the object could not be removed.</summary>
     public S3PhotoObjectCleanupFailure Failure { get; } = failure;
 }
 

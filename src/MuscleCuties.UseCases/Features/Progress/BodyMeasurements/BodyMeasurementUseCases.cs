@@ -2,8 +2,10 @@ using MuscleCuties.Core.Domain.Progress;
 
 namespace MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
 
+/// <summary>Records a measurement, refusing a value outside the allowed range.</summary>
 public sealed class CreateBodyMeasurementUseCase(IBodyMeasurementSession session, IBodyMeasurementStore store)
 {
+    /// <summary>Records a new body measurement.</summary>
     public async Task<BodyMeasurementOutputDto> ExecuteAsync(CreateBodyMeasurementInputDto input,
         CancellationToken cancellationToken = default)
     {
@@ -23,8 +25,10 @@ public sealed class CreateBodyMeasurementUseCase(IBodyMeasurementSession session
     }
 }
 
+/// <summary>Corrects a measurement, keeping the original timestamp order.</summary>
 public sealed class CorrectBodyMeasurementUseCase(IBodyMeasurementSession session, IBodyMeasurementStore store)
 {
+    /// <summary>Corrects an existing body measurement.</summary>
     public async Task<BodyMeasurementOutputDto> ExecuteAsync(CorrectBodyMeasurementInputDto input,
         CancellationToken cancellationToken = default)
     {
@@ -46,8 +50,10 @@ public sealed class CorrectBodyMeasurementUseCase(IBodyMeasurementSession sessio
     }
 }
 
+/// <summary>Removes a measurement, refusing one that belongs to another account.</summary>
 public sealed class DeleteBodyMeasurementUseCase(IBodyMeasurementSession session, IBodyMeasurementStore store)
 {
+    /// <summary>Deletes a body measurement.</summary>
     public async Task ExecuteAsync(DeleteBodyMeasurementInputDto input,
         CancellationToken cancellationToken = default)
     {
@@ -65,8 +71,10 @@ public sealed class DeleteBodyMeasurementUseCase(IBodyMeasurementSession session
     }
 }
 
+/// <summary>Reads the measurement history for a range.</summary>
 public sealed class ReadBodyMeasurementHistoryUseCase(IBodyMeasurementSession session, IBodyMeasurementStore store)
 {
+    /// <summary>The measurement history for the requested range.</summary>
     public async Task<BodyMeasurementHistoryOutputDto> ExecuteAsync(BodyMeasurementHistoryInputDto input,
         CancellationToken cancellationToken = default)
     {
@@ -82,13 +90,16 @@ public sealed class ReadBodyMeasurementHistoryUseCase(IBodyMeasurementSession se
     }
 }
 
+/// <summary>Maps between the measurement DTOs and the stored rows.</summary>
 internal static class BodyMeasurementUseCaseMapping
 {
+    /// <summary>The account of the session, refusing when it has none.</summary>
     public static Guid RequireOwner(IBodyMeasurementSession session) =>
         session.CurrentUserId != Guid.Empty
             ? session.CurrentUserId
             : throw new UnauthorizedAccessException("An authenticated account is required.");
 
+    /// <summary>Maps a measurement onto its output shape.</summary>
     public static BodyMeasurementOutputDto ToOutput(BodyMeasurement measurement) => new(
         measurement.Id,
         BodyMeasurementCodes.SiteCode(measurement.Site),
