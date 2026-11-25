@@ -38,6 +38,43 @@ jobs:
     runs-on: xcode-27
     timeout-minutes: 75
     steps:
+      # ci.yml skips this workflow when the Apple secrets are absent, but a manual dispatch has no
+      # gate in front of it: name every missing secret here, before any work starts, instead of
+      # failing at the first step that needs one.
+      - name: Check the TestFlight secrets
+        env:
+          IOS_DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_P12 }}
+          IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_PRIVATE_KEY: ${{ secrets.ASC_API_PRIVATE_KEY }}
+        run: |
+          missing=""
+          for name in IOS_DISTRIBUTION_CERTIFICATE_P12 IOS_DISTRIBUTION_CERTIFICATE_PASSWORD \
+                      IOS_PROVISIONING_PROFILE ASC_API_KEY_ID ASC_API_ISSUER_ID ASC_API_PRIVATE_KEY; do
+            if [ -z "${!name}" ]; then
+              missing="$missing $name"
+            fi
+          done
+          if [ -z "$missing" ]; then
+            exit 0
+          fi
+          {
+            echo "### TestFlight upload blocked"
+            echo
+            echo "This run cannot release because these repository secrets are not set:"
+            echo
+            for name in $missing; do
+              echo "- \`$name\`"
+            done
+            echo
+            echo "Add them under Settings → Secrets and variables → Actions (commands in"
+            echo "\`docs/mobile/ipa-for-transporter.md\` §6), then run this workflow again."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::error::TestFlight upload blocked, missing secrets:${missing}"
+          exit 1
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -60,12 +97,6 @@ jobs:
           CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
         run: |
           set -euo pipefail
-          for name in CERTIFICATE_P12 CERTIFICATE_PASSWORD; do
-            if [ -z "${!name}" ]; then
-              echo "$name is not set: add it as a repository secret." >&2
-              exit 1
-            fi
-          done
           keychain="$RUNNER_TEMP/app-signing.keychain-db"
           password="$(openssl rand -hex 16)"
           echo "KEYCHAIN_PATH=$keychain" >> "$GITHUB_ENV"
@@ -86,10 +117,6 @@ jobs:
           PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
         run: |
           set -euo pipefail
-          if [ -z "$PROFILE" ]; then
-            echo "IOS_PROVISIONING_PROFILE is not set: add it as a repository secret." >&2
-            exit 1
-          fi
           mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
           printf '%s' "$PROFILE" | openssl base64 -d -A -out "$RUNNER_TEMP/release.mobileprovision"
           uuid="$(security cms -D -i "$RUNNER_TEMP/release.mobileprovision" | plutil -extract UUID raw -)"
@@ -103,12 +130,6 @@ jobs:
           KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
         run: |
           set -euo pipefail
-          for name in KEY KEY_ID; do
-            if [ -z "${!name}" ]; then
-              echo "$name is not set: add it as a repository secret." >&2
-              exit 1
-            fi
-          done
           mkdir -p "$RUNNER_TEMP/private_keys"
           printf '%s' "$KEY" | openssl base64 -d -A -out "$RUNNER_TEMP/private_keys/AuthKey_$KEY_ID.p8"
           chmod 600 "$RUNNER_TEMP/private_keys/AuthKey_$KEY_ID.p8"
@@ -156,10 +177,6 @@ jobs:
           ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
         run: |
           set -euo pipefail
-          if [ -z "$ASC_API_ISSUER_ID" ]; then
-            echo "ASC_API_ISSUER_ID is not set: add it as a repository secret." >&2
-            exit 1
-          fi
           xcrun altool --upload-app \
             -f src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/publish/MuscleCuties.UI.ipa \
             -t ios --apiKey "$ASC_API_KEY_ID" --apiIssuer "$ASC_API_ISSUER_ID" 2>&1 \

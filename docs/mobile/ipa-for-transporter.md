@@ -176,6 +176,11 @@ that gate, so the Lambda release runs to completion regardless: the run reads as
 release with one visibly skipped, explained iOS job. Once all six secrets exist, the same
 `mobile-release.yml` job runs and uploads exactly as described above.
 
+A manual **Run workflow** dispatch has no gate in front of it, so `mobile-release.yml` performs the
+same check itself as its first step: every missing secret is listed at once in the run summary and in
+an error annotation, and the run stops before checkout. Fix all six together and dispatch again — you
+do not discover them one failing step at a time.
+
 The backend half reuses the existing repository secrets and variables (`AWS_ARTIFACT_UPLOAD_ROLE_ARN`,
 `AWS_BETA_DEPLOY_ROLE_ARN`, `BETA_SERVER_FUNCTION`, `BETA_SERVER_ALIAS`, `BETA_API_ENDPOINT`). The
 `beta` environment has no required reviewers, so the run is unattended.

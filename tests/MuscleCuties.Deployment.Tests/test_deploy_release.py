@@ -221,26 +221,32 @@ class WorkflowContractTests(unittest.TestCase):
         self.workflow = self.WORKFLOW.read_text()
         self.script = self.SCRIPT.read_text()
         self.ci = (ROOT / '.github' / 'workflows' / 'ci.yml').read_text()
+        self.mobile = (ROOT / '.github' / 'workflows' / 'mobile-release.yml').read_text()
 
     def job_block(self, workflow_text, job):
         match = re.search(r'\n  ' + job + r':\n(.*?)(?=\n  [a-z_]+:|\Z)', workflow_text, re.S)
         self.assertIsNotNone(match, job + ' is not wired into the workflow')
         return match.group(1)
 
-    def gate_script(self):
-        # The gate is shell inside the workflow, so the test extracts and runs that exact shell
+    def step_script(self, workflow_text, step):
+        # The checks are shell inside the workflows, so the tests extract and run that exact shell
         # rather than a copy of its logic that could drift from what Actions executes.
-        body = self.job_block(self.ci, 'release_ios_precondition')
-        lines = body.splitlines()
-        start = lines.index('        run: |') + 1
+        start = workflow_text.index('      - name: ' + step)
+        run_at = workflow_text.index('        run: |\n', start) + len('        run: |\n')
         script = []
-        for line in lines[start:]:
+        for line in workflow_text[run_at:].splitlines():
             if line.strip() and not line.startswith('          '):
                 break
             script.append(line[10:])
         return '\n'.join(script)
 
+    def gate_script(self):
+        return self.step_script(self.ci, 'Check the TestFlight secrets')
+
     def run_gate(self, present):
+        return self.run_script(self.gate_script(), present)
+
+    def run_script(self, script, present):
         with tempfile.TemporaryDirectory() as tmp:
             output = Path(tmp) / 'output'
             summary = Path(tmp) / 'summary'
@@ -254,7 +260,7 @@ class WorkflowContractTests(unittest.TestCase):
                 env[name] = 'set'
             env['GITHUB_OUTPUT'] = str(output)
             env['GITHUB_STEP_SUMMARY'] = str(summary)
-            result = subprocess.run(['bash', '-c', self.gate_script()], env=env,
+            result = subprocess.run(['bash', '-c', script], env=env,
                                     capture_output=True, text=True)
             return result, output.read_text(), summary.read_text()
 
@@ -340,6 +346,37 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn('uses: ./.github/workflows/mobile-release.yml', ios)
         self.assertNotIn('dotnet publish', self.ci)
         self.assertNotIn('altool', self.ci)
+
+    def test_manual_dispatch_reports_every_missing_apple_secret_at_once(self):
+        # A dispatch has no gate job to skip it, so the workflow's own first step must name every
+        # missing secret in one notice rather than fail at the first step that needs one.
+        script = self.step_script(self.mobile, 'Check the TestFlight secrets')
+        self.assertLess(self.mobile.index('- name: Check the TestFlight secrets'),
+                        self.mobile.index('- name: Checkout repository'))
+        result, _, summary = self.run_script(script, ())
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn('::error::TestFlight upload blocked', result.stdout)
+        self.assertIn('docs/mobile/ipa-for-transporter.md', summary)
+        for name in self.SECRETS:
+            self.assertIn(name, summary)
+            self.assertIn(name, result.stdout)
+        result, _, summary = self.run_script(script, self.SECRETS)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(summary.strip(), '')
+        self.assertNotIn('::error::', result.stdout)
+
+    def test_the_apple_secret_list_exists_once_and_matches_the_ci_gate(self):
+        # The new step is the only presence check: the old per-step checks could only ever report
+        # one secret at a time, and both lists must name the same six so they cannot drift apart.
+        self.assertNotIn('is not set: add it as a repository secret', self.mobile)
+        start = self.mobile.index('- name: Check the TestFlight secrets')
+        end = self.mobile.index('- name: Checkout repository')
+        listed = set(re.findall(r'\n          ([A-Z][A-Z0-9_]+): \$\{\{ secrets\.',
+                                self.mobile[start:end]))
+        gate = set(re.findall(r'\n          ([A-Z][A-Z0-9_]+): \$\{\{ secrets\.',
+                              self.job_block(self.ci, 'release_ios_precondition')))
+        self.assertEqual(listed, set(self.SECRETS))
+        self.assertEqual(gate, listed)
 
     def test_oidc_jobs_request_id_token(self):
         for job in ('upload_artifacts', 'deploy_beta', 'rollback_beta'):
