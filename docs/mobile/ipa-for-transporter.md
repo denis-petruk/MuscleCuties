@@ -24,6 +24,12 @@ Needs the Apple Developer team that owns `com.musclecuties.app`.
    passed as `CodesignProvision` below. Without it the build only warns (`MT7139`) and the result
    cannot be distributed.
 
+   A profile is bound to one distribution certificate. When that certificate is revoked the
+   profile shows **Invalid** in the portal and every upload is rejected with
+   `Certificate Revoked … used to sign …`, so recreate the profile against the current
+   certificate before building. `MuscleCuties App Store Connect v2` is such a profile (created
+   against the certificate that expires 2027-11-25).
+
 ## 2. The command
 
 Run from the repository root:
