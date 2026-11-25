@@ -80,6 +80,34 @@ Sign in with Apple, Associated Domains and keychain-access-groups.
 
 ## 5. Upload with Transporter
 
+### Automated upload from the command line
+
+`altool` can do the upload without Transporter's UI, but only with a **team** API key and all
+three values: key ID, Issuer ID and the `.p8`. The key file must sit in `private_keys`,
+`.private_keys`, `.appstoreconnect/private_keys` (or the directory named by `API_PRIVATE_KEYS_DIR`):
+
+```bash
+API_PRIVATE_KEYS_DIR="$HOME/.appstoreconnect/private_keys" \
+xcrun altool --upload-app -f "$ipa" -t ios \
+  --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
+```
+
+The Issuer ID is the UUID shown on App Store Connect → Users and Access → Integrations; it is
+per team and is not stored in the key file. Without it `altool` refuses to start
+(`Either JWT (--api-issuer and --api-key) or username and app password … is required`), and
+`iTMSTransporter` says `The -apiKey option also requires the -apiIssuer option`.
+
+Individual API keys do not carry an Issuer ID at all — their JWT uses `sub: user` — and Apple's
+upload tools do not accept them (`401 NOT_AUTHORIZED`); a build upload needs a team key.
+The username path (`--username`, `--app-password`, `--provider-public-id`) works too, with an
+app-specific password instead of a key.
+
+An individually generated token can be checked against the API before uploading:
+
+```bash
+curl -H "Authorization: Bearer $TOKEN" "https://api.appstoreconnect.apple.com/v1/apps?limit=1"
+```
+
 Bump `<ApplicationVersion>` (currently `6`) in `src/MuscleCuties.UI/MuscleCuties.UI.csproj` for every
 upload — App Store Connect rejects a build number it already holds for version `1.0`. Then open
 Transporter, sign in, drag the `.ipa` from section 3 in and press **Deliver**.
