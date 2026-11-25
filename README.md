@@ -51,4 +51,4 @@ The backend reads PostgreSQL connection and JWT signing settings from configurat
 
 ## CI/CD
 
-GitHub Actions, in `.github/workflows/`: `ci.yml` (build, unit tests), `db-verify.yml` (migration rehearsal on disposable databases), `backend-build.yml` (immutable Lambda packages), `backend-release.yml` (deploy), `db-release.yml` (schema migrations), `mobile-release.yml` (iOS build and packaging).
+GitHub Actions, in `.github/workflows/`: `ci.yml` (build, unit tests), `db-verify.yml` (migration rehearsal on disposable databases), `backend-build.yml` (immutable Lambda packages), `backend-release.yml` (deploy), `db-release.yml` (schema migrations), `mobile-release.yml` (signed TestFlight build). A push to `main` runs `ci.yml` and, once every required check passes, releases the backend to Lambda and the app to TestFlight through the same reusable workflows.

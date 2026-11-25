@@ -1,6 +1,22 @@
 name: Backend Release & Deployment
 
+# Called by ci.yml after its `required` gate on a push to main, and runnable from the Actions tab.
 on:
+  workflow_call:
+    inputs:
+      target_environment:
+        description: 'Target deployment environment (Beta only; Staging is not provisioned as a separate API)'
+        required: true
+        type: string
+      mode:
+        description: 'Deploy the candidate, or roll both aliases back to the versions recorded in a deployment report'
+        required: true
+        type: string
+      report_run_id:
+        description: 'Rollback only: workflow run id that produced beta-deployment-report-<sha>'
+        required: false
+        type: string
+        default: ''
   workflow_dispatch:
     inputs:
       target_environment:

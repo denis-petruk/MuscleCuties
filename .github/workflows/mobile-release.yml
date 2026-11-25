@@ -1,12 +1,18 @@
-name: Mobile iOS Build Verification
+name: iOS Release (TestFlight)
 
-# The signed .ipa that goes to Transporter is built on the owner's Mac with the command in
-# docs/mobile/ipa-for-transporter.md. CI deliberately does not attempt it: MAUI cannot produce a
-# signable .ipa without an Apple Distribution identity and provisioning profile on the runner,
-# and an unsigned .ipa cannot be uploaded at all. Failing every run for a missing identity would
-# be noise, so this workflow only proves the iOS app still compiles.
+# Builds the signed .ipa and uploads it to TestFlight. ci.yml calls this workflow after its
+# `required` gate on a push to main; it can also be run from the Actions tab. The Apple
+# Distribution identity, the App Store provisioning profile and the App Store Connect API key are
+# imported from repository secrets and destroyed afterwards — no signing material lives in this
+# repository. See docs/mobile/ipa-for-transporter.md, "Automated release".
 
 on:
+  workflow_call:
+    inputs:
+      target_environment:
+        description: 'Target environment (beta only; no separate Staging API or database is provisioned)'
+        required: true
+        type: string
   workflow_dispatch:
     inputs:
       target_environment:
@@ -16,23 +22,21 @@ on:
         type: choice
         options:
           - beta
-      build_configuration:
-        description: 'Build configuration'
-        required: true
-        default: 'Release'
-        type: choice
-        options:
-          - Release
-          - Debug
 
 permissions:
   contents: read
 
+concurrency:
+  group: ios-testflight
+  cancel-in-progress: false
+
 jobs:
-  build_ios:
-    name: build_ios_${{ inputs.target_environment }}_simulator
-    # .NET for iOS 27.1 requires Xcode 27, which only the xcode-27 image provides.
+  release_ios:
+    name: release_ios_${{ inputs.target_environment }}
+    if: github.ref == 'refs/heads/main'
+    # .NET for iOS 27.1 requires Xcode 27, which only the arm64 xcode-27 image provides.
     runs-on: xcode-27
+    timeout-minutes: 75
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -40,32 +44,135 @@ jobs:
       - name: Set up .NET SDK 10.0.403 for Xcode 27.1
         uses: actions/setup-dotnet@v4
         with:
-          # Workload set 10.0.403 selects .NET for iOS 27.1.10018, the
-          # supported pairing for the xcode-27 image's Xcode 27.1.
-          # The repository global.json still selects the local 10.0.2xx
+          # Workload set 10.0.403 selects .NET for iOS 27.1.10018, the supported pairing for the
+          # xcode-27 image's Xcode 27.1. The repository global.json still selects the local 10.0.2xx
           # band; latestFeature resolves this explicitly installed 4xx SDK.
           dotnet-version: 10.0.403
 
       - name: Install MAUI iOS workload
-        run: |
-          dotnet workload install maui-ios --version 10.0.403
+        run: dotnet workload install maui-ios --version 10.0.403
 
-      - name: Report Xcode version
-        run: xcodebuild -version
-
-      # Simulator builds are never code signed, so this step cannot fail for want of an Apple
-      # identity. It still compiles the iOS platform code, XAML and the Release AOT path.
-      - name: Build MAUI iOS client (simulator)
+      # Only this temporary keychain is searched, so codesign can only pick the imported identity
+      # and never a runner- or machine-wide certificate.
+      - name: Import the distribution identity
+        env:
+          CERTIFICATE_P12: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_P12 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
         run: |
-          dotnet build src/MuscleCuties.UI/MuscleCuties.UI.csproj \
+          set -euo pipefail
+          for name in CERTIFICATE_P12 CERTIFICATE_PASSWORD; do
+            if [ -z "${!name}" ]; then
+              echo "$name is not set: add it as a repository secret." >&2
+              exit 1
+            fi
+          done
+          keychain="$RUNNER_TEMP/app-signing.keychain-db"
+          password="$(openssl rand -hex 16)"
+          echo "KEYCHAIN_PATH=$keychain" >> "$GITHUB_ENV"
+          echo "KEYCHAIN_PASSWORD=$password" >> "$GITHUB_ENV"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 21600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          printf '%s' "$CERTIFICATE_P12" | openssl base64 -d -A -out "$RUNNER_TEMP/distribution.p12"
+          security import "$RUNNER_TEMP/distribution.p12" \
+            -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain"
+          rm -f "$RUNNER_TEMP/distribution.p12"
+          security find-identity -v -p codesigning "$keychain"
+
+      - name: Install the App Store provisioning profile
+        env:
+          PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+        run: |
+          set -euo pipefail
+          if [ -z "$PROFILE" ]; then
+            echo "IOS_PROVISIONING_PROFILE is not set: add it as a repository secret." >&2
+            exit 1
+          fi
+          mkdir -p "$HOME/Library/MobileDevice/Provisioning Profiles"
+          printf '%s' "$PROFILE" | openssl base64 -d -A -out "$RUNNER_TEMP/release.mobileprovision"
+          uuid="$(security cms -D -i "$RUNNER_TEMP/release.mobileprovision" | plutil -extract UUID raw -)"
+          cp "$RUNNER_TEMP/release.mobileprovision" \
+            "$HOME/Library/MobileDevice/Provisioning Profiles/$uuid.mobileprovision"
+          echo "PROFILE_UUID=$uuid" >> "$GITHUB_ENV"
+
+      - name: Stage the App Store Connect API key
+        env:
+          KEY: ${{ secrets.ASC_API_PRIVATE_KEY }}
+          KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+        run: |
+          set -euo pipefail
+          for name in KEY KEY_ID; do
+            if [ -z "${!name}" ]; then
+              echo "$name is not set: add it as a repository secret." >&2
+              exit 1
+            fi
+          done
+          mkdir -p "$RUNNER_TEMP/private_keys"
+          printf '%s' "$KEY" | openssl base64 -d -A -out "$RUNNER_TEMP/private_keys/AuthKey_$KEY_ID.p8"
+          chmod 600 "$RUNNER_TEMP/private_keys/AuthKey_$KEY_ID.p8"
+          echo "API_PRIVATE_KEYS_DIR=$RUNNER_TEMP/private_keys" >> "$GITHUB_ENV"
+
+      # App Store Connect rejects a build number it already holds for version 1.0, so the commit
+      # number alone cannot be reused across releases: the UTC timestamp is unique per upload and
+      # increases monotonically (YYYYMMDD.SSSSSS).
+      - name: Build the signed .ipa
+        run: |
+          set -euo pipefail
+          build_number="$(date -u +%Y%m%d).$(date -u +%H%M%S)"
+          echo "BUILD_NUMBER=$build_number" >> "$GITHUB_ENV"
+          dotnet publish src/MuscleCuties.UI/MuscleCuties.UI.csproj \
             -f net10.0-ios \
-            -c ${{ inputs.build_configuration }} \
+            -c Release \
+            -p:RuntimeIdentifier=ios-arm64 \
             -p:AppTargetEnvironment=${{ inputs.target_environment }} \
-            -p:RuntimeIdentifier=iossimulator-arm64
+            -p:ApplicationVersion="$build_number" \
+            -p:BuildIpa=true \
+            -p:CodesignProvision="$PROFILE_UUID"
 
-      - name: Archive build output
-        uses: actions/upload-artifact@v4
-        with:
-          name: musclecuties-ios-${{ inputs.target_environment }}-iossimulator-arm64-${{ github.sha }}
-          path: src/MuscleCuties.UI/bin/${{ inputs.build_configuration }}/net10.0-ios/iossimulator-arm64/
-          retention-days: 30
+      - name: Verify the signature before upload
+        run: |
+          set -euo pipefail
+          ipa=src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/publish/MuscleCuties.UI.ipa
+          if [ ! -f "$ipa" ]; then
+            echo "the signed .ipa was not produced at $ipa" >&2
+            exit 1
+          fi
+          rm -rf "$RUNNER_TEMP/ipa"
+          unzip -q "$ipa" -d "$RUNNER_TEMP/ipa"
+          app="$RUNNER_TEMP/ipa/Payload/MuscleCuties.UI.app"
+          codesign --verify --deep --strict "$app"
+          if codesign -dvvv "$app" 2>&1 | grep -q "Certificate Revoked"; then
+            echo "the imported distribution certificate is revoked" >&2
+            exit 1
+          fi
+          test "$(plutil -extract CFBundleVersion raw "$app/Info.plist")" = "$BUILD_NUMBER"
+          shasum -a 256 "$ipa"
+
+      - name: Upload to TestFlight
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "$ASC_API_ISSUER_ID" ]; then
+            echo "ASC_API_ISSUER_ID is not set: add it as a repository secret." >&2
+            exit 1
+          fi
+          xcrun altool --upload-app \
+            -f src/MuscleCuties.UI/bin/Release/net10.0-ios/ios-arm64/publish/MuscleCuties.UI.ipa \
+            -t ios --apiKey "$ASC_API_KEY_ID" --apiIssuer "$ASC_API_ISSUER_ID" 2>&1 \
+            | tee -a "$RUNNER_TEMP/altool.log"
+
+      - name: Remove the signing material
+        if: always()
+        run: |
+          if [ -n "${KEYCHAIN_PATH:-}" ]; then
+            security delete-keychain "$KEYCHAIN_PATH" 2>/dev/null || true
+          fi
+          rm -rf "$RUNNER_TEMP/private_keys" "$RUNNER_TEMP/ipa" \
+            "$RUNNER_TEMP/release.mobileprovision" "$RUNNER_TEMP/altool.log"
+          if [ -n "${PROFILE_UUID:-}" ]; then
+            rm -f "$HOME/Library/MobileDevice/Provisioning Profiles/$PROFILE_UUID.mobileprovision"
+          fi

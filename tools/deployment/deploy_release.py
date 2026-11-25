@@ -13,6 +13,8 @@ Environment:
                  (all optional as a set: when WORKER_FUNCTION is unset the worker is
                   reported as skipped instead of blocking the release)
   REPORT_PATH, SOURCE_SHA (optional), SOURCE_TREE_SHA (optional)
+  GITHUB_EVENT_NAME / GITHUB_REF (set by Actions: only workflow_dispatch, or a push to
+                  refs/heads/main, may mutate a deployed function)
   MC_TEST_AWS_EXECUTABLE (offline tests only)
 
 Usage: deploy_release.py deploy | rollback
@@ -303,8 +305,14 @@ def deploy():
     try:
         require(TARGET_ENV == "beta", "target_environment_must_be_beta", "source")
         require(REGION == "us-east-2", "region_mismatch", "source")
+        # ci.yml calls this deployer only after every required check passed, but the deployer
+        # cannot see that graph: it re-checks the trigger itself. A push to main is the automatic
+        # release; a workflow_dispatch is a manual one. Anything else (a pull request, a push to a
+        # side branch) is refused before the first mutation.
         if os.environ.get("GITHUB_EVENT_NAME"):
-            require(os.environ["GITHUB_EVENT_NAME"] == "workflow_dispatch",
+            event = os.environ["GITHUB_EVENT_NAME"]
+            ref = os.environ.get("GITHUB_REF", "")
+            require(event == "workflow_dispatch" or (event == "push" and ref == "refs/heads/main"),
                     "manual_release_required", "source")
         if os.environ.get("GITHUB_REPOSITORY"):
             require(os.environ["GITHUB_REPOSITORY"] == "denis-petruk/MuscleCuties",

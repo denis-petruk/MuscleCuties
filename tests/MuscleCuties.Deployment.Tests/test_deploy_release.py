@@ -186,6 +186,26 @@ class DeployTests(unittest.TestCase):
         self.assertEqual(report['components']['worker']['status'], 'skipped')
         self.assertEqual(report['components']['worker']['reason'], 'WORKER_FUNCTION is not configured')
 
+    def test_push_to_main_releases_automatically(self):
+        # ci.yml calls the deployer after its required gate on a push to main, so that event must
+        # be accepted; the deployer is the only thing that can see the event itself.
+        self.env['GITHUB_EVENT_NAME'] = 'push'
+        self.env['GITHUB_REF'] = 'refs/heads/main'
+        result = self.run_deploy()
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(self.report()['status'], 'verified')
+
+    def test_other_events_are_refused_before_mutation(self):
+        for event, ref in (('push', 'refs/heads/feature'), ('pull_request', 'refs/heads/main')):
+            with self.subTest(event=event, ref=ref):
+                self.env['GITHUB_EVENT_NAME'] = event
+                self.env['GITHUB_REF'] = ref
+                result = self.run_deploy()
+                self.assertNotEqual(result.returncode, 0)
+                report = self.report()
+                self.assertEqual(report['failure_code'], 'manual_release_required')
+                self.assertFalse(report['mutation_attempted'])
+
 
 class WorkflowContractTests(unittest.TestCase):
     """The workflow YAML and the deployer must agree; they are one system."""
@@ -224,6 +244,20 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIsNotNone(match, name + ' is never supplied')
             base = match.group(1).rsplit('/', 1)[-1]
             self.assertIn(base, produced, base + ' is named but never produced')
+
+    def test_ci_releases_only_after_the_required_gate_on_main(self):
+        # Deploying off a failed CI run is the failure this guards: each release job must wait for
+        # the aggregate `required` job and must never run for a branch push or a pull request.
+        ci = (ROOT / '.github' / 'workflows' / 'ci.yml').read_text()
+        for job, workflow in (('release_backend_beta', 'backend-release.yml'),
+                              ('release_ios_testflight', 'mobile-release.yml')):
+            match = re.search(r'\n  ' + job + r':\n(.*?)(?=\n  [a-z_]+:|\Z)', ci, re.S)
+            self.assertIsNotNone(match, job + ' is not wired into ci.yml')
+            body = match.group(1)
+            self.assertIn('needs: required', body, job)
+            self.assertIn("github.event_name == 'push'", body, job)
+            self.assertIn("github.ref == 'refs/heads/main'", body, job)
+            self.assertIn('uses: ./.github/workflows/' + workflow, body, job)
 
     def test_oidc_jobs_request_id_token(self):
         for job in ('upload_artifacts', 'deploy_beta', 'rollback_beta'):

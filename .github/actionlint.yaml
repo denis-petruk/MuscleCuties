@@ -1,5 +1,5 @@
-# xcode-27 is this repository's self-hosted macOS runner label (the Xcode 27.1 image), which
-# actionlint does not know about. Declaring it here keeps the label linted instead of reported.
+# xcode-27 is GitHub's arm64 macOS image label for Xcode 27.1, which actionlint does not know
+# about. Declaring it here keeps the label linted instead of reported as an unknown runner.
 self-hosted-runner:
   labels:
     - xcode-27

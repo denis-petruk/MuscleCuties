@@ -1,9 +1,10 @@
 # Building the .ipa for Transporter
 
-MuscleCuties ships to TestFlight by hand: build a signed `.ipa` on a Mac with Xcode, then hand
-that single file to Transporter. CI does not build it — without an Apple Distribution identity on
-the runner MAUI can only produce an unsigned `.ipa`, which Transporter rejects. The
-`mobile-release.yml` workflow therefore verifies compilation only.
+MuscleCuties ships to TestFlight from GitHub Actions. A push to `main` runs `ci.yml`, and once
+every required check passes it calls `mobile-release.yml`, which builds the signed `.ipa` and
+uploads it with `altool`; the same run calls `backend-release.yml` to deploy the API to Lambda.
+Sections 1–5 describe a manual build on a Mac, section 6 describes the automated path and the
+one-time secrets it needs.
 
 ## 1. One-time Xcode setup
 
@@ -118,6 +119,57 @@ Bump `<ApplicationVersion>` (currently `6`) in `src/MuscleCuties.UI/MuscleCuties
 upload — App Store Connect rejects a build number it already holds for version `1.0`. Then open
 Transporter, sign in, drag the `.ipa` from section 3 in and press **Deliver**.
 
+## 6. The automated release
+
+`ci.yml` adds two jobs that declare `needs: required` — the aggregate of every test, build and
+database check — and run only for a push to `refs/heads/main`:
+
+| Job | Workflow | Effect |
+|---|---|---|
+| `release_backend_beta` | `backend-release.yml` | packages both Lambdas, uploads them to the immutable bucket, cuts the `beta` alias, then proves the served digest and the `/health/live` and `/health/ready` endpoints |
+| `release_ios_testflight` | `mobile-release.yml` | builds the signed `.ipa` for `ios-arm64` and uploads it with `altool` |
+
+`tools/deployment/deploy_release.py` re-checks the trigger itself: `workflow_dispatch`, or a
+`push` to `refs/heads/main`. A pull request or a side-branch push is refused before the first
+mutation, so the automatic path cannot be reached from unreviewed code.
+
+### Repository secrets the iOS job needs
+
+| Secret | Value |
+|---|---|
+| `IOS_DISTRIBUTION_CERTIFICATE_P12` | base64 of the exported *Apple Distribution* identity (`.p12`) |
+| `IOS_DISTRIBUTION_CERTIFICATE_PASSWORD` | the password chosen when exporting that `.p12` |
+| `IOS_PROVISIONING_PROFILE` | base64 of the App Store profile for `com.musclecuties.app` |
+| `ASC_API_KEY_ID` | the App Store Connect **team** key's Key ID |
+| `ASC_API_ISSUER_ID` | the team's Issuer ID (Users and Access → Integrations) |
+| `ASC_API_PRIVATE_KEY` | base64 of that key's `AuthKey_<KEY_ID>.p8` |
+
+Setting them from this Mac (Keychain Access → *My Certificates* → right-click → *Export* does the
+same job as `security export` and lets you pick the single Apple Distribution identity):
+
+```bash
+security export -t identities -f pkcs12 -k ~/Library/Keychains/login.keychain-db \
+  -o /tmp/distribution.p12                     # choose a password when prompted
+base64 -i /tmp/distribution.p12 | gh secret set IOS_DISTRIBUTION_CERTIFICATE_P12
+gh secret set IOS_DISTRIBUTION_CERTIFICATE_PASSWORD
+base64 -i "$HOME/Library/MobileDevice/Provisioning Profiles/<uuid>.mobileprovision" \
+  | gh secret set IOS_PROVISIONING_PROFILE
+base64 -i ~/.appstoreconnect/private_keys/AuthKey_<KEY_ID>.p8 | gh secret set ASC_API_PRIVATE_KEY
+gh secret set ASC_API_KEY_ID
+gh secret set ASC_API_ISSUER_ID
+rm /tmp/distribution.p12
+```
+
+The job signs with the profile's UUID, so it does not depend on the profile name, and it imports the
+identity into a throwaway keychain that is the only keychain in the search list. It sets the build
+number to `YYYYMMDD.HHMMSS` UTC via `-p:ApplicationVersion`, so every upload is unique without
+editing the project file; bump `<ApplicationVersion>` only for a manual upload. The identity,
+profile, key and `.p8` are deleted in an `always()` step.
+
+The backend half reuses the existing repository secrets and variables (`AWS_ARTIFACT_UPLOAD_ROLE_ARN`,
+`AWS_BETA_DEPLOY_ROLE_ARN`, `BETA_SERVER_FUNCTION`, `BETA_SERVER_ALIAS`, `BETA_API_ENDPOINT`). The
+`beta` environment has no required reviewers, so the run is unattended.
+
 ## Verified vs unverified
 
 Verified on 2026-11-19 (macOS, Xcode 26.3, .NET SDK 10.0.203, Microsoft.iOS.Sdk 26.2):
@@ -144,4 +196,5 @@ Verified on 2026-11-19 (macOS, Xcode 26.3, .NET SDK 10.0.203, Microsoft.iOS.Sdk 
   `CodesignKey`, `CodesignProvision` or `EnableCodeSigning`.
 
 Not verified, because it needs the Apple identity: distribution signing, and the Transporter upload
-itself.
+itself. The automated path in section 6 has not run yet either — it needs the six repository
+secrets above, so its first execution is the first push to `main` afterwards.

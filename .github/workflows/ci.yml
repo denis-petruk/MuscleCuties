@@ -204,3 +204,37 @@ jobs:
             exit 1
           fi
           echo "All required checks passed successfully."
+
+  # Release jobs run only from main and only after `required` succeeded, so a push that fails any
+  # test, build or database check cannot reach either target. Both are reusable workflows, so the
+  # manual (workflow_dispatch) path and this automatic one execute exactly the same steps.
+  release_backend_beta:
+    name: release_backend_beta
+    needs: required
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    concurrency:
+      group: mutation-beta
+      cancel-in-progress: false
+    uses: ./.github/workflows/backend-release.yml
+    secrets: inherit
+    with:
+      target_environment: beta
+      mode: deploy
+
+  release_ios_testflight:
+    name: release_ios_testflight
+    needs: required
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+    concurrency:
+      group: ios-testflight
+      cancel-in-progress: false
+    uses: ./.github/workflows/mobile-release.yml
+    secrets: inherit
+    with:
+      target_environment: beta
