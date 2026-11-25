@@ -136,10 +136,4 @@ public partial class CyclePage : ContentPage
         _themeObserver.Detach();
         base.OnDisappearing();
     }
-
-    /// <summary>Re-applies the theme colours before the page is shown, which avoids a frame of the previous theme.</summary>
-    internal void PrepareTheme()
-    {
-        _viewModel.RefreshThemeColors(PageLoadExtensions.IsDarkTheme());
-    }
 }
