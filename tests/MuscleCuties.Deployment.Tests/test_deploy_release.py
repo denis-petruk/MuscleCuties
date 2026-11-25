@@ -213,9 +213,50 @@ class WorkflowContractTests(unittest.TestCase):
     WORKFLOW = ROOT / '.github' / 'workflows' / 'backend-release.yml'
     SCRIPT = ROOT / 'tools' / 'deployment' / 'deploy_release.py'
 
+    SECRETS = ('IOS_DISTRIBUTION_CERTIFICATE_P12', 'IOS_DISTRIBUTION_CERTIFICATE_PASSWORD',
+               'IOS_PROVISIONING_PROFILE', 'ASC_API_KEY_ID', 'ASC_API_ISSUER_ID',
+               'ASC_API_PRIVATE_KEY')
+
     def setUp(self):
         self.workflow = self.WORKFLOW.read_text()
         self.script = self.SCRIPT.read_text()
+        self.ci = (ROOT / '.github' / 'workflows' / 'ci.yml').read_text()
+
+    def job_block(self, workflow_text, job):
+        match = re.search(r'\n  ' + job + r':\n(.*?)(?=\n  [a-z_]+:|\Z)', workflow_text, re.S)
+        self.assertIsNotNone(match, job + ' is not wired into the workflow')
+        return match.group(1)
+
+    def gate_script(self):
+        # The gate is shell inside the workflow, so the test extracts and runs that exact shell
+        # rather than a copy of its logic that could drift from what Actions executes.
+        body = self.job_block(self.ci, 'release_ios_precondition')
+        lines = body.splitlines()
+        start = lines.index('        run: |') + 1
+        script = []
+        for line in lines[start:]:
+            if line.strip() and not line.startswith('          '):
+                break
+            script.append(line[10:])
+        return '\n'.join(script)
+
+    def run_gate(self, present):
+        with tempfile.TemporaryDirectory() as tmp:
+            output = Path(tmp) / 'output'
+            summary = Path(tmp) / 'summary'
+            output.touch()
+            summary.touch()
+            env = {name: value for name, value in os.environ.items()
+                   if not name.startswith('GITHUB_')}
+            for name in self.SECRETS:
+                env.pop(name, None)
+            for name in present:
+                env[name] = 'set'
+            env['GITHUB_OUTPUT'] = str(output)
+            env['GITHUB_STEP_SUMMARY'] = str(summary)
+            result = subprocess.run(['bash', '-c', self.gate_script()], env=env,
+                                    capture_output=True, text=True)
+            return result, output.read_text(), summary.read_text()
 
     def test_artifact_component_matches_the_key_prefix_the_deployer_requires(self):
         # validate_component expects lambda/<spec name>/<sha>/<digest>/, so the upload step has to
@@ -248,16 +289,57 @@ class WorkflowContractTests(unittest.TestCase):
     def test_ci_releases_only_after_the_required_gate_on_main(self):
         # Deploying off a failed CI run is the failure this guards: each release job must wait for
         # the aggregate `required` job and must never run for a branch push or a pull request.
-        ci = (ROOT / '.github' / 'workflows' / 'ci.yml').read_text()
-        for job, workflow in (('release_backend_beta', 'backend-release.yml'),
-                              ('release_ios_testflight', 'mobile-release.yml')):
-            match = re.search(r'\n  ' + job + r':\n(.*?)(?=\n  [a-z_]+:|\Z)', ci, re.S)
-            self.assertIsNotNone(match, job + ' is not wired into ci.yml')
-            body = match.group(1)
-            self.assertIn('needs: required', body, job)
-            self.assertIn("github.event_name == 'push'", body, job)
-            self.assertIn("github.ref == 'refs/heads/main'", body, job)
-            self.assertIn('uses: ./.github/workflows/' + workflow, body, job)
+        backend = self.job_block(self.ci, 'release_backend_beta')
+        self.assertIn('needs: required', backend)
+        self.assertIn("github.event_name == 'push'", backend)
+        self.assertIn("github.ref == 'refs/heads/main'", backend)
+        self.assertIn('uses: ./.github/workflows/backend-release.yml', backend)
+
+        gate = self.job_block(self.ci, 'release_ios_precondition')
+        self.assertIn('needs: required', gate)
+        self.assertIn("github.event_name == 'push'", gate)
+        self.assertIn("github.ref == 'refs/heads/main'", gate)
+        self.assertIn('ready: ${{ steps.secrets.outputs.ready }}', gate)
+
+        ios = self.job_block(self.ci, 'release_ios_testflight')
+        self.assertIn('needs: [required, release_ios_precondition]', ios)
+        self.assertIn("needs.release_ios_precondition.outputs.ready == 'true'", ios)
+        self.assertIn('uses: ./.github/workflows/mobile-release.yml', ios)
+
+    def test_missing_apple_secrets_skip_only_testflight_with_a_notice(self):
+        # Absent secrets must skip the iOS release with an actionable notice, not fail the run and
+        # not let the Lambda release wait on a gate that has nothing to do with it.
+        for present in ((), self.SECRETS[:-1]):
+            with self.subTest(present=len(present)):
+                result, output, summary = self.run_gate(present)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertEqual(output.strip(), 'ready=false')
+                self.assertIn('skipped', summary)
+                self.assertIn('docs/mobile/ipa-for-transporter.md', summary)
+                self.assertIn('Settings → Secrets and variables → Actions', summary)
+                self.assertIn('::warning::', result.stdout)
+                missing = [name for name in self.SECRETS if name not in present]
+                for name in missing:
+                    self.assertIn(name, summary)
+                if present:
+                    self.assertNotIn(present[0], summary)
+        backend = self.job_block(self.ci, 'release_backend_beta')
+        for reference in ('release_ios_precondition', 'release_ios_testflight'):
+            self.assertNotIn(reference, backend,
+                             'the backend release must not wait on the iOS gate')
+
+    def test_present_apple_secrets_make_the_testflight_job_run(self):
+        result, output, summary = self.run_gate(self.SECRETS)
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(output.strip(), 'ready=true')
+        self.assertEqual(summary.strip(), '')
+        self.assertNotIn('::warning::', result.stdout)
+        # The gate adds nothing to the release itself: the same reusable workflow still builds and
+        # uploads, so the signing logic exists in exactly one place.
+        ios = self.job_block(self.ci, 'release_ios_testflight')
+        self.assertIn('uses: ./.github/workflows/mobile-release.yml', ios)
+        self.assertNotIn('dotnet publish', self.ci)
+        self.assertNotIn('altool', self.ci)
 
     def test_oidc_jobs_request_id_token(self):
         for job in ('upload_artifacts', 'deploy_beta', 'rollback_beta'):

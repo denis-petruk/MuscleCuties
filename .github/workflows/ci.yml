@@ -205,9 +205,59 @@ jobs:
           fi
           echo "All required checks passed successfully."
 
-  # Release jobs run only from main and only after `required` succeeded, so a push that fails any
-  # test, build or database check cannot reach either target. Both are reusable workflows, so the
-  # manual (workflow_dispatch) path and this automatic one execute exactly the same steps.
+  # Everything below runs only from main and only after `required` succeeded, so a push that fails
+  # any test, build or database check cannot reach a target.
+
+  # A job-level `if` cannot read secrets, so the presence of the six Apple secrets is decided in a
+  # step and published as an output. When any is missing the iOS release is skipped with a notice
+  # in the run summary; the Lambda release below never waits on this job.
+  release_ios_precondition:
+    name: release_ios_precondition
+    needs: required
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.secrets.outputs.ready }}
+    steps:
+      - name: Check the TestFlight secrets
+        id: secrets
+        env:
+          IOS_DISTRIBUTION_CERTIFICATE_P12: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_P12 }}
+          IOS_DISTRIBUTION_CERTIFICATE_PASSWORD: ${{ secrets.IOS_DISTRIBUTION_CERTIFICATE_PASSWORD }}
+          IOS_PROVISIONING_PROFILE: ${{ secrets.IOS_PROVISIONING_PROFILE }}
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          ASC_API_PRIVATE_KEY: ${{ secrets.ASC_API_PRIVATE_KEY }}
+        run: |
+          missing=""
+          for name in IOS_DISTRIBUTION_CERTIFICATE_P12 IOS_DISTRIBUTION_CERTIFICATE_PASSWORD \
+                      IOS_PROVISIONING_PROFILE ASC_API_KEY_ID ASC_API_ISSUER_ID ASC_API_PRIVATE_KEY; do
+            if [ -z "${!name}" ]; then
+              missing="$missing $name"
+            fi
+          done
+          if [ -z "$missing" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "ready=false" >> "$GITHUB_OUTPUT"
+          {
+            echo "### TestFlight upload skipped"
+            echo
+            echo "The iOS release did not run because these repository secrets are not set:"
+            echo
+            for name in $missing; do
+              echo "- \`$name\`"
+            done
+            echo
+            echo "Add them under Settings → Secrets and variables → Actions (commands in"
+            echo "\`docs/mobile/ipa-for-transporter.md\` §6), then push to \`main\` again. The Lambda"
+            echo "release ran normally."
+          } >> "$GITHUB_STEP_SUMMARY"
+          echo "::warning::TestFlight upload skipped, missing secrets:${missing}"
+
+  # Both release jobs are reusable workflows, so the manual (workflow_dispatch) path and this
+  # automatic one execute exactly the same steps.
   release_backend_beta:
     name: release_backend_beta
     needs: required
@@ -227,8 +277,10 @@ jobs:
 
   release_ios_testflight:
     name: release_ios_testflight
-    needs: required
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: [required, release_ios_precondition]
+    # The gate resolves the secrets; this job exists only when all six are present, so a missing
+    # secret shows up as a skipped job rather than a green run that uploaded nothing.
+    if: needs.release_ios_precondition.outputs.ready == 'true'
     permissions:
       contents: read
     concurrency:

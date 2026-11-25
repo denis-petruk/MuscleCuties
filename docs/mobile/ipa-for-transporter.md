@@ -166,6 +166,16 @@ number to `YYYYMMDD.HHMMSS` UTC via `-p:ApplicationVersion`, so every upload is 
 editing the project file; bump `<ApplicationVersion>` only for a manual upload. The identity,
 profile, key and `.p8` are deleted in an `always()` step.
 
+### When the secrets are absent
+
+A job-level `if` cannot read secrets, so `ci.yml` checks the six names in a step
+(`release_ios_precondition`) and publishes the result as a job output. If any is missing,
+`release_ios_testflight` is **skipped**, never green, and the gate writes the missing names and where
+to set them into the run summary plus a warning annotation. `release_backend_beta` does not depend on
+that gate, so the Lambda release runs to completion regardless: the run reads as a successful backend
+release with one visibly skipped, explained iOS job. Once all six secrets exist, the same
+`mobile-release.yml` job runs and uploads exactly as described above.
+
 The backend half reuses the existing repository secrets and variables (`AWS_ARTIFACT_UPLOAD_ROLE_ARN`,
 `AWS_BETA_DEPLOY_ROLE_ARN`, `BETA_SERVER_FUNCTION`, `BETA_SERVER_ALIAS`, `BETA_API_ENDPOINT`). The
 `beta` environment has no required reviewers, so the run is unattended.
