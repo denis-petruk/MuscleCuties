@@ -49,6 +49,13 @@ resolves its backend environment, so it cannot be shipped.
 
 `CodesignProvision` selects the profile; the signing identity is taken from the keychain.
 
+If the keychain holds more than one Apple Distribution identity with the same name — for example an
+older certificate plus a freshly created one — detection fails with
+`No iOS signing identities match the specified provisioning profile` even though the profile's own
+certificate is installed and signs fine. In that case name the identity explicitly with
+`-p:CodesignKey=<SHA-1 of the certificate the profile embeds>`; `security find-identity -v -p codesigning`
+lists the SHA-1s, and the newest certificate is not necessarily the one the profile carries.
+
 ## 3. Output — exact path and file name
 
 ```
