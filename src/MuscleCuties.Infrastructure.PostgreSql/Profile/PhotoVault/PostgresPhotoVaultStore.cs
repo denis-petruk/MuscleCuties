@@ -423,17 +423,6 @@ public sealed class PostgresPhotoVaultStore(
             return true;
         }).ConfigureAwait(false);
 
-    /// <summary>The file extension the content type implies.</summary>
-    private static string ResolveExtension(string contentType) => contentType.ToLowerInvariant().Trim() switch
-    {
-        "image/jpeg" or "image/jpg" => ".jpg",
-        "image/png" => ".png",
-        "image/heic" => ".heic",
-        "image/heif" => ".heif",
-        "image/webp" => ".webp",
-        _ => ".jpg"
-    };
-
     /// <summary>Locks the photo rows a write depends on, so a concurrent delete cannot remove one mid-publication.</summary>
     private async Task LockVisiblePhotoRowsAsync(Guid userId, Guid[] photoIds, CancellationToken cancellationToken)
     {

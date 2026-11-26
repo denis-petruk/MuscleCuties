@@ -459,15 +459,4 @@ public partial class ProfilePersonalInfoViewModel : ObservableObject, IPageLoadA
         if (!IsBusy)
             _birthDateWasExplicitlyChanged = true;
     }
-
-    // Body circumference measurements
-    [ObservableProperty] private bool _useMetricCircumferenceUnits = true;
-    /// <summary>The measurements shown under the profile.</summary>
-    [ObservableProperty] private string _circumferenceValueText = string.Empty;
-    public System.Collections.ObjectModel.ObservableCollection<MuscleCuties.UseCases.Features.Progress.BodyMeasurements.BodyMeasurementOutputDto> CircumferenceReadings { get; } = [];
-
-    // Fasting session display state
-    [ObservableProperty] private MuscleCuties.UseCases.Features.Fasting.FastingSessionOutputDto? _activeFastingSession;
-    [ObservableProperty] private DateTimeOffset? _plannedFastingEndUtc;
-    [ObservableProperty] private bool _enablePlannedFastingEndReminder;
 }

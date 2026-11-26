@@ -141,13 +141,10 @@ public static class ActivityPrescriptionRule
     public const int HiitCooldownMinutes = 5;
     public const int HiitTotalSeconds = 1290;
     public const string HiitDeferredInWorkoutEngineV2 = "HiitDeferredInWorkoutEngineV2";
-    private const int GeneralStrengthAccessoryRestSeconds = AccessoryRestSeconds;
     private const int HighVolumeMainRestSeconds = EstablishedMainRestSeconds;
     private const int ClimbingMaximumSessionsPerWeek = 1;
     private const int ContinuousCardioFrequency = ActivityPrescriptionRule.BeginnerCardioSessionsPerWeek;
     private const int EstablishedCardioFrequency = ActivityPrescriptionRule.EstablishedCardioSessionsPerWeekWithoutBaseline;
-    private const int IntervalSecondsPerMinute = 60;
-    private const int NoPrescriptionMinutes = 0;
 
     /// <summary>The fixed HIIT session length every prescription uses.</summary>
     public static TimeSpan HiitSessionDuration => TimeSpan.FromSeconds(HiitTotalSeconds);

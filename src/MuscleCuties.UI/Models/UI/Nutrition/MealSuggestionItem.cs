@@ -47,17 +47,10 @@ public class MealSuggestionItem
     };
 
     /// <summary>Names of the paired spice blends.</summary>
-    public IReadOnlyList<string> SpiceBlendNames => SpiceBlends.Select(s => s.Name).ToList();
-
     /// <summary>Calorie total, formatted.</summary>
     public string CaloriesText => DisplayFormat.Calories(Macros.Calories);
     /// <summary>Macro line for the dish.</summary>
     public string MacrosText => DisplayFormat.Macros(Macros.Protein, Macros.Carbs, Macros.Fats);
-
-    /// <summary>Spice blends joined for a single line; empty when the dish has none.</summary>
-    public string SpiceBlendSummary => SpiceBlends.Count > 0
-        ? string.Join(" | ", SpiceBlendNames)
-        : string.Empty;
 
     /// <summary>True when the suggestion has spice blends listed.</summary>
     public bool HasSpiceBlends => SpiceBlends.Count > 0;
@@ -249,25 +242,6 @@ public class MealSuggestionComponentItem
     /// <summary>Preformatted macro line for the portion.</summary>
     public string NutritionForAmountText { get; set; } = string.Empty;
 
-    /// <summary>Component type as text, for callers that group or log rather than display.</summary>
-    public string TypeLabel => ComponentType.ToString();
-
-    /// <summary>Localized role, which reads as how the food is served.</summary>
-    public string RoleLabel => UiTextCatalog.Get(Role switch
-    {
-        ComponentRole.CarbBase => "Nutrition_ComponentRole_Base",
-        ComponentRole.ProteinBase => "Nutrition_ComponentRole_Protein",
-        ComponentRole.SideSalad => "Nutrition_ComponentRole_SideSalad",
-        ComponentRole.InDishVegetable => "Nutrition_ComponentRole_InDish",
-        ComponentRole.SauceOnSide => "Nutrition_ComponentRole_OnSide",
-        ComponentRole.SaucePairedProtein => "Nutrition_ComponentRole_WithProtein",
-        ComponentRole.InDishSauce => "Nutrition_ComponentRole_MixedIn",
-        _ => "Nutrition_ComponentRole_Item"
-    });
-
-    /// <summary>Portion weight with its short unit.</summary>
-    public string PortionText => DisplayFormat.GramsShort(Grams);
-
     /// <summary>Calories the portion contributes, formatted.</summary>
     public string CaloriesText => DisplayFormat.Calories(CaloriesForAmount);
 
@@ -342,8 +316,6 @@ public sealed record DayMealPlanItem(
     public string MacrosText => Suggestion?.MacrosText ?? string.Empty;
     /// <summary>True when a suggestion is attached.</summary>
     public bool HasSuggestion => Suggestion is not null;
-    /// <summary>True when the suggestion can still be logged.</summary>
-    public bool CanUseSuggestion => !IsAlreadyLogged && Suggestion is not null;
     /// <summary>Another suggestion is worth asking for only while calories remain and nothing is already logged.</summary>
     public bool CanRefresh => !IsAlreadyLogged && !IsRefreshing && Target.Calories >= 50f;
 }

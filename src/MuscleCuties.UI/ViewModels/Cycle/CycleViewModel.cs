@@ -156,7 +156,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     /// <summary>Whether the phase has an animation, which decides whether the animated view is used instead of the still</summary>
     /// one.</summary>
     public bool CurrentPhaseUsesAnimatedVisual => CyclePhaseAssets.UsesAnimatedVisual(CurrentPhase);
-    /// <summary>Today's date.</summary>
+    /// <summary>The date the calendar treats as today in the account's time zone.</summary>
     public DateTime Today => CurrentDate;
     /// <summary>True when a calendar edit hint is shown.</summary>
     public bool HasCalendarEditHint => !string.IsNullOrWhiteSpace(CalendarEditHintText);
@@ -166,8 +166,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     public bool HasSuggestedPhase => _suggestedPhase is not null;
     /// <summary>True when the cycle warning suggests a phase.</summary>
     public bool HasCycleWarningSuggestedPhase => _cycleWarningSuggestedPhase is not null;
-    /// <summary>The phases the user can pick.</summary>
-    public IReadOnlyList<CyclePhase> PhaseOptions { get; } = Enum.GetValues<CyclePhase>();
 
     /// <summary>The current cycle day.</summary>
     public int CycleDay => CurrentDay;

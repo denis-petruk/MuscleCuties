@@ -8,7 +8,7 @@ namespace MuscleCuties.Core.Models.Entities.Users;
 /// for the values that are structures rather than columns.</summary>
 public class UserProfile
 {
-    /// <summary>The stored identity.</summary>
+    /// <summary>Identity of the stored user profile.</summary>
     public int Id { get; set; }
     /// <summary>The account this profile belongs to; one profile per account.</summary>
     public int UserId { get; set; }

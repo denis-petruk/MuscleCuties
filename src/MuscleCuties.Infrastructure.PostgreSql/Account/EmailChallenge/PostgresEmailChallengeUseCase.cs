@@ -19,8 +19,6 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
     private const int MaximumChallengesGloballyPerHour = 1_000;
     private const int ChallengeRetentionDaysAfterCreation = 2;
     private const int ChallengeRateLimitAdvisoryLockKey = 30_304;
-    private const string RegistrationPurposeName = "Registration";
-    private const string PasswordRecoveryPurposeName = "PasswordRecovery";
     private readonly PostgresDbContext dbContext;
     private readonly IEmailChallengeDelivery delivery;
     private readonly IEmailReceiptTokenIssuer receiptIssuer;

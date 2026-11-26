@@ -58,7 +58,7 @@ public partial class LoginPage : ContentPage
 
     /// <summary>Moves to the password field once the address is entered, so the keyboard does not have to be</summary>
     /// dismissed between fields.</summary>
-    private void OnEmailCompleted(object? sender, EventArgs e)
+    private void OnLoginEmailCompleted(object? sender, EventArgs e)
     {
         LoginPassword.Focus();
     }

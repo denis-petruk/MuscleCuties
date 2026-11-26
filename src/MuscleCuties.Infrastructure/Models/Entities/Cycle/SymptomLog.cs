@@ -5,7 +5,7 @@ namespace MuscleCuties.Core.Models.Entities.Cycle;
 /// <summary>One symptom on one day of a cycle, with the severity she reported.</summary>
 public class SymptomLog
 {
-    /// <summary>The stored identity.</summary>
+    /// <summary>Identity of the stored symptom log.</summary>
     public int Id { get; set; }
     /// <summary>The account the log belongs to.</summary>
     public int UserId { get; set; }

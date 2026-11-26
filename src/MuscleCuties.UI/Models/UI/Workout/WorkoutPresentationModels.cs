@@ -15,7 +15,7 @@ public partial class WorkoutItem : ObservableObject
     public string IconGlyph => WorkoutActivityIcons.ForTag(Tag);
     /// <summary>Weekday label shown above the title.</summary>
     public string DayLabel { get; set; } = string.Empty;
-    /// <summary>Session name.</summary>
+    /// <summary>Session name shown as the card title.</summary>
     public string Title { get; set; } = string.Empty;
     /// <summary>Estimated length, already formatted with its unit.</summary>
     public string Duration { get; set; } = string.Empty;

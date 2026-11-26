@@ -9,10 +9,6 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
 {
     private const string ProposedStatus = "Proposed";
     private const string ExpiredStatus = "Expired";
-    private const string FeasibleStatus = "Feasible";
-    private const string StaleStatus = "Stale";
-    private const string ActiveStatus = "Active";
-    private const string ClosedStatus = "Closed";
     private const int InitialAnswerVersion = 0;
     private static readonly JsonSerializerOptions JsonOptions = WorkoutPlanningJson.Create();
 

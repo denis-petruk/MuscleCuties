@@ -28,7 +28,7 @@ public interface IProfileFeedbackComposer
         ProfileFeedbackAttachmentDto? attachment, CancellationToken cancellationToken);
 }
 
-/// <summary>Sending feedback.</summary>
+/// <summary>Opens the user's mail draft with the composed feedback report.</summary>
 public interface IProfileFeedbackUseCase
 {
     Task<ProfileFeedbackResult> OpenDraftAsync(

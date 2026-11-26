@@ -346,11 +346,6 @@ public static class ApiApplication
                 builder.Configuration["AppleSignIn:PrivateKeyPem"]));
         builder.Services.AddScoped<ServerAccountDeletionUseCase>();
         builder.Services.AddScoped<IDeletionReplayService, PostgresDeletionReplayService>();
-        builder.Services.AddSingleton<MuscleCuties.Core.Domain.Workout.IReadinessEngine>(
-            new MuscleCuties.Core.Domain.Workout.ReadinessEngine(
-                MuscleCuties.Core.Models.Workout.Planning.WorkoutPlanningConfig.CreateDefault(),
-                "v1.0-clinical"));
-        builder.Services.AddScoped<MuscleCuties.UseCases.Features.Workout.Readiness.Contracts.IEvaluateReadinessUseCase, MuscleCuties.UseCases.Features.Workout.Readiness.EvaluateReadinessUseCase>();
         var appleKeys = builder.Configuration.GetSection("AppleSignIn:PublicKeys").GetChildren()
             .Where(section => !string.IsNullOrWhiteSpace(section.Value))
             .ToDictionary(section => section.Key, section => section.Value!, StringComparer.Ordinal);

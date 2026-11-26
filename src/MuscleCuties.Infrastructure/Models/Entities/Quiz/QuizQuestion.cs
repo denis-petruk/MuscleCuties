@@ -6,7 +6,7 @@ namespace MuscleCuties.Core.Models.Entities.Quiz;
 /// <summary>One quiz question and the answers it offers.</summary>
 public class QuizQuestion
 {
-    /// <summary>The stored identity.</summary>
+    /// <summary>Identity of the stored quiz question.</summary>
     public int Id { get; set; }
     [Required] public string Question { get; set; } = null!;
     /// <summary>Where the question comes in the quiz.</summary>

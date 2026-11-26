@@ -16,7 +16,6 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
     private const int MinimumRepetitionCount = 1;
     private const int MondayWeekOrderOffset = 1;
     private const decimal MinimumPlannedActivityDurationMinutes = 0m;
-    private const string PlannedDurationMinuteFormat = "0";
     private const string MixedActivityPlanName = "Mixed activity plan";
     private const string RestDayName = "Rest day";
     private const string MixedScheduleInvalidCode = "ProposalMixedScheduleInvalid";

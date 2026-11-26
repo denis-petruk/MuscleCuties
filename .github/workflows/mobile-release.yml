@@ -182,6 +182,25 @@ jobs:
             -t ios --apiKey "$ASC_API_KEY_ID" --apiIssuer "$ASC_API_ISSUER_ID" 2>&1 \
             | tee -a "$RUNNER_TEMP/altool.log"
 
+      # App Store Connect processes an upload asynchronously. Wait for the build to become VALID
+      # and add it to the tester groups before the API key below is deleted. Without
+      # TESTFLIGHT_GROUP every internal group is targeted; name one group to narrow that.
+      - name: Assign the build to TestFlight testers
+        env:
+          ASC_API_KEY_ID: ${{ secrets.ASC_API_KEY_ID }}
+          ASC_API_ISSUER_ID: ${{ secrets.ASC_API_ISSUER_ID }}
+          TESTFLIGHT_GROUP: ${{ vars.TESTFLIGHT_GROUP }}
+        run: |
+          set -euo pipefail
+          args=(--key "$API_PRIVATE_KEYS_DIR/AuthKey_${ASC_API_KEY_ID}.p8"
+                --key-id "$ASC_API_KEY_ID"
+                --issuer "$ASC_API_ISSUER_ID"
+                --build-number "$BUILD_NUMBER")
+          if [ -n "${TESTFLIGHT_GROUP:-}" ]; then
+            args+=(--group "$TESTFLIGHT_GROUP")
+          fi
+          python3 tools/deployment/assign_testflight_build.py "${args[@]}"
+
       - name: Remove the signing material
         if: always()
         run: |

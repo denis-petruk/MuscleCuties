@@ -12,24 +12,31 @@ public sealed class CloudPlannedWorkoutSessionErrorTests
         var store = new CloudWorkoutSessionActionStore(new SessionApi(BackendApiStatus.Conflict,
             WorkoutHiitHistoryConfirmationRequiredException.ErrorCode));
 
-        await Assert.ThrowsAsync<WorkoutHiitHistoryConfirmationRequiredException>(() =>
+        var exception = await Assert.ThrowsAsync<WorkoutHiitHistoryConfirmationRequiredException>(() =>
             store.StartPlannedSessionAsync(1, Guid.NewGuid(), DateTime.UnixEpoch, CancellationToken.None));
+
+        Assert.Contains("HIIT history", exception.Message);
     }
 
     [Fact]
     public async Task OfflineStartIsAConnectionFailure()
     {
         var store = new CloudWorkoutSessionActionStore(new SessionApi(BackendApiStatus.OfflineRejected));
-        await Assert.ThrowsAsync<HttpRequestException>(() =>
+        var exception = await Assert.ThrowsAsync<HttpRequestException>(() =>
             store.StartPlannedSessionAsync(1, Guid.NewGuid(), DateTime.UnixEpoch, CancellationToken.None));
+
+        Assert.Equal("Workout session requires a connection.", exception.Message);
     }
 
     [Fact]
     public async Task ServerConflictIsNotMisreportedAsConnectionFailure()
     {
         var store = new CloudWorkoutSessionActionStore(new SessionApi(BackendApiStatus.Conflict));
-        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() =>
             store.StartPlannedSessionAsync(1, Guid.NewGuid(), DateTime.UnixEpoch, CancellationToken.None));
+
+        Assert.Contains("start planned workout session", exception.Message);
+        Assert.Contains("failed: Conflict", exception.Message);
     }
 
     [Fact]
@@ -49,8 +56,10 @@ public sealed class CloudPlannedWorkoutSessionErrorTests
     {
         var store = new CloudWorkoutSessionActionStore(
             new SessionApi(BackendApiStatus.Conflict, "WorkoutActivityNoLongerSafe"));
-        await Assert.ThrowsAsync<WorkoutActivityNoLongerSafeException>(() =>
+        var exception = await Assert.ThrowsAsync<WorkoutActivityNoLongerSafeException>(() =>
             store.ResumePlannedTimingAsync(Guid.NewGuid(), Guid.NewGuid(), CancellationToken.None));
+
+        Assert.Contains("no longer safe", exception.Message);
     }
 
     [Fact]
@@ -58,9 +67,11 @@ public sealed class CloudPlannedWorkoutSessionErrorTests
     {
         var store = new CloudWorkoutSessionActionStore(
             new SessionApi(BackendApiStatus.Conflict, "WorkoutTimingIntervalExpired"));
-        await Assert.ThrowsAsync<WorkoutTimingIntervalExpiredException>(() =>
+        var exception = await Assert.ThrowsAsync<WorkoutTimingIntervalExpiredException>(() =>
             store.CheckpointPlannedTimingAsync(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), 15, true,
                 CancellationToken.None));
+
+        Assert.Contains("expired", exception.Message);
     }
 
     [Fact]

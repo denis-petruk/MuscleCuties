@@ -924,16 +924,6 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
             new CyclePhaseCountdownInputDto(CurrentCycleDay, PredictedCycleLength, CurrentPhase)).DaysRemaining;
     }
 
-    /// <summary>The first word of a full name, for the greeting.</summary>
-    private static string GetFirstName(string? fullName)
-    {
-        var trimmed = fullName?.Trim();
-        if (string.IsNullOrWhiteSpace(trimmed))
-            return string.Empty;
-
-        return trimmed.Split(' ', StringSplitOptions.RemoveEmptyEntries)[0];
-    }
-
     /// <summary>The first candidate that has content, empty when none of them do.</summary>
     private static string FirstPresent(params string[] values)
     {

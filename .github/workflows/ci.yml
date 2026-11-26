@@ -67,8 +67,8 @@ jobs:
           done
           exit $status
 
-  verify_plan_generation:
-    name: verify_plan_generation
+  verify_tests:
+    name: verify_tests
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -93,6 +93,7 @@ jobs:
           python3 tests/MuscleCuties.Deployment.Tests/test_package_upload.py
           python3 tests/MuscleCuties.Deployment.Tests/test_worker_package.py
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_deploy_release.py'
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_testflight_assignment.py'
 
       - name: Run Core tests
         run: |
@@ -115,20 +116,11 @@ jobs:
             --logger "trx;LogFileName=registration-tests.trx" \
             --results-directory test-results
 
-      - name: Run Server tests (non-latency routes)
+      - name: Run Server tests
         run: |
           dotnet test tests/MuscleCuties.Server.Tests/MuscleCuties.Server.Tests.csproj \
             --configuration Release \
-            --filter "FullyQualifiedName!~EveryMappedRouteHasMeasuredColdAndWarmP95WithinBudget" \
             --logger "trx;LogFileName=server-tests.trx" \
-            --results-directory test-results
-
-      - name: Run model catalog integration checks
-        run: |
-          dotnet test tests/MuscleCuties.Registration.Integration.Tests/MuscleCuties.Registration.Integration.Tests.csproj \
-            --configuration Release \
-            --filter 'FullyQualifiedName~WorkoutModelSnapshotTests|FullyQualifiedName~ReviewedExerciseCatalogV020ImportTests' \
-            --logger "trx;LogFileName=model-catalog-tests.trx" \
             --results-directory test-results
 
       - name: Upload test results
@@ -181,7 +173,7 @@ jobs:
 
   required:
     name: required
-    needs: [verify_source, verify_plan_generation, verify_ios_compile, postgres_verify]
+    needs: [verify_source, verify_tests, verify_ios_compile, postgres_verify]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -191,8 +183,8 @@ jobs:
             echo "verify_source failed: ${{ needs.verify_source.result }}"
             exit 1
           fi
-          if [ "${{ needs.verify_plan_generation.result }}" != "success" ]; then
-            echo "verify_plan_generation failed: ${{ needs.verify_plan_generation.result }}"
+          if [ "${{ needs.verify_tests.result }}" != "success" ]; then
+            echo "verify_tests failed: ${{ needs.verify_tests.result }}"
             exit 1
           fi
           if [ "${{ needs.verify_ios_compile.result }}" != "success" ]; then

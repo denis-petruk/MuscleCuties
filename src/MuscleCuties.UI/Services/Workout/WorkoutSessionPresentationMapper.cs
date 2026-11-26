@@ -76,7 +76,6 @@ internal static class WorkoutSessionPresentationMapper
             RequiresInitialCalibration = source.RequiresInitialCalibration,
             Description = source.Description,
             ImageUrl = source.ImageUrl,
-            VideoUrl = source.VideoUrl,
             TechniqueNotes = source.TechniqueNotes,
             QuickTipsText = source.QuickTipsText,
             TargetText = source.MinRepetitions > 0 && source.MaxRepetitions >= source.MinRepetitions

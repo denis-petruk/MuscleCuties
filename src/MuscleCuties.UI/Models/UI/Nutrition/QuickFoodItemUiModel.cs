@@ -31,7 +31,7 @@ public partial class QuickFoodItemUiModel : ObservableObject
             ? "Nutrition_QuickFood_Selected"
             : "Nutrition_QuickFood_NotSelected");
 
-    /// <summary>The food's name.</summary>
+    /// <summary>Food name shown in the row.</summary>
     public string Name => Item.Name;
     /// <summary>The serving size in the food's unit.</summary>
     public double ServingSize => Item.ServingSize;

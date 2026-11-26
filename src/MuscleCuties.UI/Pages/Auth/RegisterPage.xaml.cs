@@ -25,7 +25,7 @@ public partial class RegisterPage : ContentPage
     }
 
     /// <summary>Moves to the username field.</summary>
-    private void OnEmailCompleted(object? sender, EventArgs e)
+    private void OnRegisterEmailCompleted(object? sender, EventArgs e)
     {
         RegisterUsername.Focus();
     }

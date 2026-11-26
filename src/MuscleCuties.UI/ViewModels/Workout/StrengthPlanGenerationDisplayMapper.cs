@@ -510,12 +510,6 @@ internal static class StrengthPlanGenerationDisplayMapper
             value.Value.ToString(CultureInfo.CurrentCulture));
     }
 
-    /// <summary>The frequency summary for a weekly count.</summary>
-    private static string FrequencySummaryValue(int? value) => value.HasValue
-        ? LocalizedFormat.Format("Workout_Generation_ActivityFrequencyPerWeekFormat",
-            value.Value.ToString(CultureInfo.CurrentCulture))
-        : UiTextCatalog.Get("Workout_Generation_NotSpecified");
-
     /// <summary>The label for a schedule disposition.</summary>
     private static string DispositionLabel(string disposition) => disposition switch
     {

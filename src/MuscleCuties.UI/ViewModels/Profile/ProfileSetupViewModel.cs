@@ -85,7 +85,7 @@ public partial class ProfileSetupViewModel : ObservableObject
     /// <summary>The weight values in pounds.</summary>
     public List<int> ImperialWeightOptions { get; } = Enumerable.Range(66, 375).ToList();
 
-    /// <summary>The goal options.</summary>
+    /// <summary>Selectable goals with their localized labels.</summary>
     public IReadOnlyList<SelectionOption<UserGoal>> GoalOptions { get; } =
     [
         new(UserGoal.FatLoss, "Fat Loss"),
@@ -357,8 +357,6 @@ public partial class ProfileSetupViewModel : ObservableObject
             BirthDateError = string.Empty;
     }
 
-    /// <summary>True only after the user picked a birth date (or one was loaded from a saved profile).</summary>
-    public bool HasSelectedBirthDate => _birthDateWasSelected;
 
     /// <summary>Shows the stored birth date without that counting as a choice.</summary>
     private void ApplyLoadedBirthDate(DateTime birthDate)

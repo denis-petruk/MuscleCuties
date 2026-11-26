@@ -33,7 +33,7 @@ public interface IPlanningSafetyPort
 }
 
 /// <summary>
-/// Default system-backed implementation of <see cref="IPlanningClockPort"/>.
+/// Reads the machine clock and zone so planning dates come from one injectable source.
 /// </summary>
 public sealed class SystemPlanningClockPort(TimeProvider? timeProvider = null) : IPlanningClockPort
 {
@@ -51,7 +51,7 @@ public sealed class SystemPlanningClockPort(TimeProvider? timeProvider = null) :
 }
 
 /// <summary>
-/// Default catalog-backed implementation of <see cref="IPlanningCatalogPort"/>.
+/// Supplies the built-in strength template catalog to the planning rules.
 /// </summary>
 public sealed class DefaultPlanningCatalogPort : IPlanningCatalogPort
 {
@@ -61,7 +61,7 @@ public sealed class DefaultPlanningCatalogPort : IPlanningCatalogPort
 }
 
 /// <summary>
-/// Default rule-backed implementation of <see cref="IPlanningSafetyPort"/> delegating to reviewed safety policies.
+/// Applies the reviewed injury and symptom safety rules to planning requests.
 /// </summary>
 public sealed class DefaultPlanningSafetyPort : IPlanningSafetyPort
 {

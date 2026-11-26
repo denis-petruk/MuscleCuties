@@ -86,7 +86,7 @@ public partial class WorkoutHistoryViewModel : ObservableObject
         _navigateBackAsync = navigateBackAsync;
     }
 
-    /// <summary>The history sessions.</summary>
+    /// <summary>Archived sessions shown in the history list.</summary>
     public ObservableCollection<WorkoutArchiveSummaryDto> Sessions { get; } = [];
 
     /// <summary>The recorded effort as text, or "not recorded" when the session has none.</summary>

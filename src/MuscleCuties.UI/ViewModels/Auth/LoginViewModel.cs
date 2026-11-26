@@ -51,8 +51,6 @@ public partial class LoginViewModel : ObservableObject
     public bool IsPlatformSignInAvailable => _platformSignIn.IsAvailable;
     /// <summary>True when Apple sign-in is available on this device.</summary>
     public bool IsAppleSignInAvailable => IsPlatformSignInAvailable;
-    /// <summary>The label for the platform sign-in button.</summary>
-    public string PlatformLoginButtonText => _platformSignIn.LoginButtonText;
 
     /// <summary>Signs in with the entered credentials.</summary>
     public AsyncRelayCommand LoginCommand { get; }

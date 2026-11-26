@@ -123,7 +123,6 @@ public static class MixedActivityWeekScheduleRule
     private const int MinimumRequestedSessionsPerWeek = 1;
     private const int NoSessionsScheduled = 0;
     private const int OneSessionPerOccurrence = 1;
-    private const decimal NoScheduledMinutes = decimal.Zero;
     private const int MondayOrder = 0;
     private const int TuesdayOrder = 1;
     private const int WednesdayOrder = 2;

@@ -78,8 +78,6 @@ public partial class RegisterViewModel : ObservableObject, IDisposable
     public bool IsPlatformSignInAvailable => _platformSignIn.IsAvailable;
     /// <summary>True when Apple sign-in is available on this device.</summary>
     public bool IsAppleSignInAvailable => IsPlatformSignInAvailable;
-    /// <summary>The label for the platform registration button.</summary>
-    public string PlatformRegisterButtonText => _platformSignIn.RegisterButtonText;
 
     /// <summary>Clears the error when the email changes.</summary>
     partial void OnEmailChanged(string value)

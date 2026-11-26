@@ -30,7 +30,7 @@ public interface IWorkoutPlanningApplicationService
 }
 
 /// <summary>
-/// Implementation of <see cref="IWorkoutPlanningApplicationService"/> coordinating planning use cases over pure domain policies.
+/// Coordinates the planning use cases over the pure domain policies.
 /// </summary>
 public sealed class WorkoutPlanningApplicationService(
     PreviewStrengthPlanV020UseCase previewUseCase,

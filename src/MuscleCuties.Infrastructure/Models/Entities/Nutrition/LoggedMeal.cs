@@ -7,7 +7,7 @@ namespace MuscleCuties.Core.Models.Entities.Nutrition;
 /// <summary>One meal on one day, holding the entries it was made of.</summary>
 public class LoggedMeal
 {
-    /// <summary>The stored identity.</summary>
+    /// <summary>Identity of the stored logged meal.</summary>
     public int Id { get; set; }
     /// <summary>The account the meal belongs to.</summary>
     public int UserId { get; set; }

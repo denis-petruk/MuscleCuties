@@ -6,7 +6,7 @@ namespace MuscleCuties.Core.Models.Entities.Cycle;
 /// <summary>One day's phase record: the phase, the flow when there was any, and the note she added.</summary>
 public class CyclePhaseLog
 {
-    /// <summary>The stored identity.</summary>
+    /// <summary>Identity of the stored cycle phase log.</summary>
     public int Id { get; set; }
     /// <summary>The account the log belongs to.</summary>
     public int UserId { get; set; }

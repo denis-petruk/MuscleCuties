@@ -91,10 +91,6 @@ public static class TimedActivityProgress
     public sealed record State(
         string PhaseKey, int ElapsedSeconds, int? RemainingSeconds, int? TotalSeconds, double Progress)
     {
-        /// <summary>True when the activity has a named phase.</summary>
-        public bool HasPhase => !string.IsNullOrEmpty(PhaseKey);
-        /// <summary>True when the phase has a countdown.</summary>
-        public bool HasCountdown => RemainingSeconds.HasValue;
     }
 
     /// <summary>The progress for the elapsed time against the phase minutes.</summary>

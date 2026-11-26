@@ -57,7 +57,7 @@
                                    Style="{StaticResource FormFieldLabel}" />
                             <Border Grid.Row="1" Style="{StaticResource InputContainer}">
                                 <DatePicker Date="{Binding BirthDate}"
-                                            DateSelected="OnBirthDateSelected"
+                                            DateSelected="OnPersonalInfoBirthDateSelected"
                                             MinimumDate="{Binding MinBirthDate}"
                                             MaximumDate="{Binding MaxBirthDate}"
                                             Format="d"

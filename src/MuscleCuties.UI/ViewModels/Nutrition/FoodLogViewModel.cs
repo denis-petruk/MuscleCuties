@@ -28,7 +28,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     private readonly SemaphoreSlim _dateLoadLock = new(1, 1);
     // F02: hydration writes are serialized and only the confirmed total is trusted. A failed
     // write rolls the visible total back instead of silently claiming the amount was saved.
-    private readonly SemaphoreSlim _waterWriteLock = new(1, 1);
     private int _confirmedWaterIntakeMl;
     private readonly Func<Task>? _navigateBackAsync;
     private Guid _currentLogId;
@@ -147,7 +146,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }
         : MealType.Breakfast;
 
-    [ObservableProperty] private bool _isSavingWater;
 
     [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasWaterSaveError))]
     private string _waterSaveError = string.Empty;
@@ -463,7 +461,7 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         await LoadLogForDateAsync(SelectedDate);
     }
 
-    /// <summary>Selects today.</summary>
+    /// <summary>Moves the log to today and reloads that day's entries.</summary>
     [RelayCommand]
     public async Task JumpToTodayAsync()
     {
@@ -922,68 +920,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         }, () => count == 0 ? "No foods found in yesterday's diary." : $"Copied {count} {(count == 1 ? "food" : "foods")} from yesterday.");
     }
 
-    [ObservableProperty] private TimeSpan _editingConsumptionTime = DateTime.Now.TimeOfDay;
-    [ObservableProperty] private bool _waterReminderOptedIn;
-    [ObservableProperty] private TimeOnly _waterReminderQuietStart = new(22, 0);
-    [ObservableProperty] private TimeOnly _waterReminderQuietEnd = new(7, 0);
-
     /// <summary>The volumes the water buttons offer.</summary>
     public ObservableCollection<int> WaterPresetVolumesMl { get; }
-
-    /// <summary>The entries in timeline order.</summary>
-    public ObservableCollection<FoodLogEntry> TimelineEntries { get; } = [];
-
-    /// <summary>Changes the day's water by a delta under a write lock, so two quick taps cannot lose one of the changes.</summary>
-    private async Task ChangeWaterAsync(int deltaMl)
-    {
-        var date = SelectedDate;
-        await _waterWriteLock.WaitAsync();
-        try
-        {
-            if (date != SelectedDate)
-                return;
-
-            var target = Math.Max(0, WaterIntakeMl + deltaMl);
-            if (target == WaterIntakeMl)
-                return;
-
-            await PersistWaterAsync(date, target);
-        }
-        finally
-        {
-            _waterWriteLock.Release();
-        }
-    }
-
-    /// <summary>Sends the water total, showing it immediately and restoring the confirmed value when the write fails.</summary>
-    private async Task PersistWaterAsync(DateOnly date, int target)
-    {
-        var previous = _confirmedWaterIntakeMl;
-        WaterIntakeMl = target;
-        WaterSaveError = string.Empty;
-        IsSavingWater = true;
-        try
-        {
-            await _dailyLogUseCase.UpdateWaterIntakeAsync(date, target);
-            if (date != SelectedDate)
-                return;
-
-            _confirmedWaterIntakeMl = target;
-            WaterIntakeMl = target;
-        }
-        catch
-        {
-            if (date != SelectedDate)
-                return;
-
-            WaterIntakeMl = previous;
-            WaterSaveError = UiTextCatalog.Get("Nutrition_FoodLog_WaterSaveFailed");
-        }
-        finally
-        {
-            IsSavingWater = false;
-        }
-    }
 
     /// <summary>Returns to the previous page.</summary>
     [RelayCommand]
@@ -1074,16 +1012,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             MealType.Dinner => DinnerSection,
             _ => SnackSection
         };
-    }
-
-    /// <summary>Recomputes the day's totals from the entries on screen, so the header matches the list after an edit.</summary>
-    private void RecalculateTotalsFromUi()
-    {
-        var allItems = MealSections.SelectMany(s => s.Items).ToList();
-        TotalCalories = Math.Round(allItems.Sum(i => i.Calories), 1);
-        TotalProtein = Math.Round(allItems.Sum(i => i.Protein), 1);
-        TotalCarbs = Math.Round(allItems.Sum(i => i.Carbs), 1);
-        TotalFat = Math.Round(allItems.Sum(i => i.Fat), 1);
     }
 
     /// <summary>Shows a transient status line from the diary's own actions.</summary>

@@ -21,7 +21,6 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private const int FirstWeekIndex = 0;
     private const int LastWeekIndex = 3;
     private const int MissingWorkoutDayId = 0;
-    private const int NoScheduledDays = 0;
     private const int SingleActivityCount = 1;
 
     private readonly IWorkoutInjuryUseCase _injuries;

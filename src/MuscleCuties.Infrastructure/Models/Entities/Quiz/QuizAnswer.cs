@@ -5,7 +5,7 @@ namespace MuscleCuties.Core.Models.Entities.Quiz;
 /// <summary>One answer option of a quiz question, with the value it maps to in the profile.</summary>
 public class QuizAnswer
 {
-    /// <summary>The stored identity.</summary>
+    /// <summary>Identity of the stored quiz answer.</summary>
     public int Id { get; set; }
     /// <summary>The question it answers.</summary>
     public int QuestionId { get; set; }

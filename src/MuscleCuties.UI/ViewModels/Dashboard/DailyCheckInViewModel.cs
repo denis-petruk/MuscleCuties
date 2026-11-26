@@ -12,8 +12,6 @@ public partial class DailyCheckInViewModel : ObservableObject
 {
     private const int MinimumPlanningScaleValue = 1;
     private const int MaximumPlanningScaleValue = 5;
-    private readonly IReadOnlyList<int> _planningScaleOptions =
-        Enumerable.Range(MinimumPlanningScaleValue, MaximumPlanningScaleValue - MinimumPlanningScaleValue + 1).ToArray();
 
     private readonly IDailyCheckInUseCase _checkIn;
     private readonly Action _invalidateDashboard;
@@ -143,8 +141,6 @@ public partial class DailyCheckInViewModel : ObservableObject
     public string PlanningSorenessDisplay => FormatPlanningRating(PlanningSoreness);
     /// <summary>The stress rating on the same scale.</summary>
     public string PlanningStressDisplay => FormatPlanningRating(PlanningStress);
-    /// <summary>The scale values the planning questions offer.</summary>
-    public IReadOnlyList<int> PlanningScaleOptions => _planningScaleOptions;
     /// <summary>True when the readiness score is shown.</summary>
     public bool IsReadinessScoreDisplayEnabled => _isReadinessScoreDisplayEnabled;
 

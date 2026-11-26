@@ -50,7 +50,7 @@
                             StrokeThickness="{StaticResource UiStrokeWidth0}"
                             SemanticProperties.Description="{loc:LocalizedText Onboarding_ProfileSetup_ProfilePhotoOptionalDoubleTapTo}">
                             <Border.GestureRecognizers>
-                                <TapGestureRecognizer Tapped="OnProfileImageTapped" />
+                                <TapGestureRecognizer Tapped="OnSetupProfileImageTapped" />
                             </Border.GestureRecognizers>
                             <Grid>
                                 <Image Source="{Binding ProfileImageSource}" IsVisible="{Binding HasProfileImage}"
@@ -101,7 +101,7 @@
                                 AutomationId="ProfileSetupBirthDatePicker"
                                 Date="{Binding BirthDate}"
                                 Focused="OnBirthDatePickerFocused"
-                                DateSelected="OnBirthDateSelected"
+                                DateSelected="OnSetupBirthDateSelected"
                                 Unfocused="OnBirthDatePickerUnfocused"
                                 MinimumDate="{Binding MinBirthDate}"
                                 MaximumDate="{Binding MaxBirthDate}"

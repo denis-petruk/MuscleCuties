@@ -24,7 +24,6 @@ public sealed class PostgresDashboardOverviewStore(
     private const int WeeklyWeightLookbackDays = 84;
     private const int WorkoutProgressLookbackDays = 90;
     private const int InclusiveRangeDayAdjustment = 1;
-    private const int WeeklyVolumeLookbackDays = 6;
     private const int DaysInAWeek = 7;
     private const int MondayOffsetAdjustment = 6;
     private const double GridWeekDivisor = 7.0;

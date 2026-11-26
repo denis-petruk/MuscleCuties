@@ -6,8 +6,6 @@ namespace MuscleCuties.UI.Models.UI.Nutrition;
 /// <summary>One day in the diary's week strip, carrying its own selected state.</summary>
 public partial class DateStripDayItem : ObservableObject
 {
-    [ObservableProperty] private bool _hasData;
-
     [ObservableProperty] private bool _isSelected;
 
     /// <summary>Builds the cell's labels once, so scrolling the strip does not reformat them.</summary>

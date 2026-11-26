@@ -65,8 +65,6 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
     /// <summary>Comparing needs two photos whose files are still on the device, so a missing file cannot open a comparison</summary>
     /// against a blank half.</summary>
     public bool CanComparePhotos => Photos.Count(p => p.IsImageAvailable) >= 2;
-    /// <summary>Loads the photo timeline.</summary>
-    public AsyncRelayCommand LoadPhotosCommand => LoadDataCommand;
     /// <summary>Shows or hides the privacy blur.</summary>
     public RelayCommand TogglePrivacyBlurCommand { get; }
     /// <summary>Reveals or hides one photo.</summary>

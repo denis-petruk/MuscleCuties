@@ -23,13 +23,11 @@ public sealed class PostgresCompleteAccountRegistrationStore(
     private const string EmptyProfileImagePath = "";
     private const string NoNutritionTargetsJson = "{}";
     private const string NoReproductiveContextJson = "{}";
-    private const string NoRequestedActivitySessionsPerWeekJson = "{}";
     private const string InitialSnapshotReason = "Initial";
     private const string OnboardingPhaseNote = "Set from onboarding quiz";
     private const int FullGymChoiceValue = 1;
     private const int HomeEquipmentChoiceValue = 2;
     private const int BodyweightEquipmentChoiceValue = 3;
-    private const int DefaultNutritionActivityDaysPerWeek = 3;
     private const int RegistrationEmailChallengePurpose = 1;
     private const int MaximumPrivacyNoticeVersionCharacters = 64;
     private const int UnknownCycleLength = 0;

@@ -37,8 +37,11 @@ public sealed class CanonicalRegistrationCatalogTests
     {
         using var document = JsonDocument.Parse("\"(int)UserGoal.Unknown\"");
 
-        Xunit.Assert.Throws<InvalidDataException>(() =>
+        var exception = Xunit.Assert.Throws<InvalidDataException>(() =>
             PostgresCanonicalCatalogSeeder.ParseMappedValue(document.RootElement));
+
+        Xunit.Assert.Contains("Unsupported UserGoal quiz answer member", exception.Message);
+        Xunit.Assert.Contains("Unknown", exception.Message);
     }
 
     [PostgresFact]

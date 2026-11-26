@@ -213,7 +213,7 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         _ => string.Empty
     };
 
-    /// <summary>Today's date.</summary>
+    /// <summary>The current date, used as the default for a new injury entry.</summary>
     [SuppressMessage("Performance", "CA1822:Mark members as static",
         Justification = "Bound in Injury XAML / view model contract.")]
     public DateTime Today => DateTime.Today;

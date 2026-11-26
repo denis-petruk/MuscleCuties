@@ -55,7 +55,7 @@ public partial class ProfilePersonalInfoPage : ContentPage
     }
 
     /// <summary>Reports the new birth date so the age rule is re-applied.</summary>
-    private void OnBirthDateSelected(object? sender, DateChangedEventArgs e)
+    private void OnPersonalInfoBirthDateSelected(object? sender, DateChangedEventArgs e)
     {
         ((ProfilePersonalInfoViewModel)BindingContext).MarkBirthDateSelected();
     }

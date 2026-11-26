@@ -7,7 +7,7 @@ public partial class ExerciseSwapOption : ObservableObject
     /// <summary>The exercise the option swaps in.</summary>
     [ObservableProperty] private bool _isSelected;
     public int ExerciseId { get; init; }
-    /// <summary>Movement name.</summary>
+    /// <summary>Candidate movement name shown in the swap sheet.</summary>
     public string Name { get; init; } = string.Empty;
     /// <summary>How well the candidate matches the target muscles, as shown on the row.</summary>
     public string MuscleMatch { get; init; } = string.Empty;

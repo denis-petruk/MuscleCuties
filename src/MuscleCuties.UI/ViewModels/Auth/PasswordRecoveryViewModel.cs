@@ -126,12 +126,8 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
     partial void OnOtpCodeChanged(string value)
     {
         ErrorMessage = string.Empty;
-        if (string.IsNullOrEmpty(value))
-            return;
-
-        var digitsOnly = OtpCodeRules.DigitsOnly(value);
-        if (!string.Equals(digitsOnly, value, StringComparison.Ordinal))
-            OtpCode = digitsOnly;
+        if (OtpCodeRules.RewriteToDigits(value) is { } digits)
+            OtpCode = digits;
     }
 
     /// <summary>Checks the new password as it is typed.</summary>

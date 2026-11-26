@@ -31,7 +31,7 @@ public partial class WorkoutActivityOptionItem : ObservableObject
     public string GroupTitle { get; init; } = string.Empty;
     /// <summary>Explanation shown once under the group heading.</summary>
     public string GroupDescription { get; init; } = string.Empty;
-    /// <summary>The activity tag.</summary>
+    /// <summary>Tag that selects the activity's icon and colour.</summary>
     public string Tag { get; init; } = string.Empty;
     /// <summary>The glyph used when no image is set.</summary>
     public string IconGlyph { get; init; } = string.Empty;
@@ -43,8 +43,6 @@ public partial class WorkoutActivityOptionItem : ObservableObject
     public bool HasGlyphIcon => !HasIconImage;
     /// <summary>True when the activity is part of the plan.</summary>
     public bool IsRequired { get; init; }
-    /// <summary>True when the activity is an optional extra.</summary>
-    public bool IsExtra => !IsRequired;
     /// <summary>True when the activity can still be chosen.</summary>
     public bool IsOffered => string.IsNullOrEmpty(UnavailableReason);
     /// <summary>True when the activity is unavailable, with a reason.</summary>

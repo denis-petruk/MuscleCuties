@@ -8,7 +8,7 @@ namespace MuscleCuties.Core.Models.Entities.Nutrition;
 /// serving choices.</summary>
 public class FoodItem
 {
-    /// <summary>The stored identity.</summary>
+    /// <summary>Identity of the stored food item.</summary>
     public int Id { get; set; }
     [Required] public string Name { get; set; } = null!;
     /// <summary>Energy per 100 g, as stored for 100 g, which is what every scaling in the app assumes.</summary>

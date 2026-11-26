@@ -130,7 +130,7 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
         IsStatusError = false;
     }
 
-    /// <summary>The goal options.</summary>
+    /// <summary>Selectable goals with their localized labels.</summary>
     public IReadOnlyList<SelectionOption<UserGoal>> GoalOptions { get; } =
     [
         new(UserGoal.FatLoss, "Fat Loss"),

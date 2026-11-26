@@ -3,7 +3,7 @@ namespace MuscleCuties.Core.Models.Entities.Nutrition;
 /// <summary>One past snapshot of a food's nutrient values, kept so a change can be traced back.</summary>
 public class FoodItemVersion
 {
-    /// <summary>The stored identity.</summary>
+    /// <summary>Identity of the stored food item version.</summary>
     public int Id { get; set; }
     /// <summary>The food this snapshot belongs to.</summary>
     public int FoodItemId { get; set; }

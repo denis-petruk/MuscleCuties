@@ -14,7 +14,7 @@ public sealed record LambdaRdsProxyPoolOptions(
     bool RunMigrationsOnColdStart);
 
 /// <summary>
-/// PG10-02: AWS Lambda (.NET 10) hosting &amp; RDS Proxy connection-pool configuration helper.
+/// Configures AWS Lambda (.NET 10) hosting and RDS Proxy connection pooling.
 /// Ensures bounded Npgsql connection pooling for Lambda concurrency, enforces TLS when targeting
 /// RDS Proxy, and strictly forbids automatic schema migrations or seed ingestion on Lambda cold start.
 /// </summary>

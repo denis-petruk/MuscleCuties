@@ -146,7 +146,7 @@ public static class DisplayFormat
     /// <summary>The full date, spelled out.</summary>
     public static string FullDate(DateTime value) => value.ToString("D", CultureInfo.CurrentCulture);
 
-    /// <summary>The short date.</summary>
+    /// <summary>Date in the current culture's short pattern.</summary>
     public static string ShortDate(DateTime value) => value.ToString("d", CultureInfo.CurrentCulture);
 
     /// <summary>The short weekday name.</summary>

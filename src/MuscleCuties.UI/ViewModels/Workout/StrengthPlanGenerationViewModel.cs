@@ -50,14 +50,10 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
     private const string CreateFailedKey = "Workout_Generation_CreateFailed";
     private const string OptionalActivitiesSkippedKey = "Workout_Generation_OptionalActivitiesSkipped";
     private const string PreviewNotSavedKey = "Workout_Generation_PreviewNotSaved";
-    private const string ReplacementTitleKey = "Workout_Generation_ReplacementTitle";
     private const string ReplacementSummaryKey = "Workout_Generation_ReplacementSummary";
-    private const string ReplacementCancelKey = "Workout_Generation_ReplacementCancel";
     private const string ReplacementDisclosureKey = "Workout_Generation_ReplacesActivePlanNotice";
     private const string ReplacementApplyNoticeKey = "Workout_Generation_ApplyReplacesActivePlan";
     private const string SwitchStyleFailedKey = "Workout_Generation_SwitchStyleFailed";
-    private const string ApplyPlanKey = "Workout_Generation_ApplyPlan";
-    private const string CommonCancelKey = "Common_Cancel";
     private const string ReducedVolumeNoticeKey = "Workout_Generation_ReducedVolumeNotice";
     private const string ExploreOtherFeaturesKey = "Workout_Generation_ExploreOtherFeatures";
     private const string NoSavedWorkoutHistoryKey = "Workout_Generation_NoSavedWorkoutHistory";

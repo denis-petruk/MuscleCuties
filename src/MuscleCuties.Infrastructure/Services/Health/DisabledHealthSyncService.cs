@@ -4,7 +4,7 @@ namespace MuscleCuties.Core.Services.Health;
 /// platform checks.</summary>
 public sealed class DisabledHealthSyncService : IHealthSyncService
 {
-    // TODO(DEFERRED-NATIVE-HEALTH): This is an intentional V1 boundary. Enable a native adapter only after explicit owner authorization, permission design and device review.
+    // Intentional V1 boundary: a native adapter needs owner authorization, permission design and a device review.
     /// <summary>Reports no source, because there is nothing to read from.</summary>
     public HealthDataSource DeviceHealthSource =>
         OperatingSystem.IsAndroid() ? HealthDataSource.HealthConnect : HealthDataSource.AppleHealth;
@@ -14,7 +14,7 @@ public sealed class DisabledHealthSyncService : IHealthSyncService
     /// <summary>Always false: this build cannot read device health data.</summary>
     public bool IsAvailable => false;
 
-    /// <summary>Always disconnected.</summary>
+    /// <summary>Reports every metric as unavailable because this build has no health source.</summary>
     public Task<HealthSyncStatus> GetStatusAsync(int userId)
     {
         return Task.FromResult(new HealthSyncStatus(

@@ -415,9 +415,9 @@ public sealed class DailyReadinessLogRecord : ITenantRecord
     public bool? Bloating { get; set; }
     /// <summary>Body weight that day in kilograms, which the trend is computed from.</summary>
     public decimal? WeightKg { get; set; }
-    /// <summary>Self-reported sleep quality.</summary>
+    /// <summary>Sleep quality she reported, on the app's fixed scale.</summary>
     public int? SleepQuality { get; set; }
-    /// <summary>Self-reported soreness.</summary>
+    /// <summary>Soreness she reported, on the app's fixed scale.</summary>
     public int? Soreness { get; set; }
     /// <summary>The sleep quality the plan actually used, kept separate from what she edited later.</summary>
     public int? PlanningSleepQuality { get; set; }
@@ -646,7 +646,7 @@ public sealed class WorkoutDayExerciseRecord : ITenantRecord
     public DateOnly? InjuryRestorationRequiredFromDate { get; set; }
     /// <summary>For a derived row, the row it came from.</summary>
     public Guid? OriginWorkoutDayExerciseId { get; set; }
-    /// <summary>Working sets prescribed.</summary>
+    /// <summary>Number of working sets the prescription asks her to complete.</summary>
     public int Sets { get; set; }
     /// <summary>Sets that may be skipped without the session counting as incomplete.</summary>
     public int OptionalSets { get; set; }
@@ -713,7 +713,7 @@ public sealed class WorkoutSessionLogRecord : ITenantRecord
     public int? RpeRating { get; set; }
     /// <summary>Distance for a distance-based session, in kilometres.</summary>
     public decimal? DistanceKm { get; set; }
-    /// <summary>Soft-delete flag.</summary>
+    /// <summary>Whether the row is hidden without being erased.</summary>
     public bool IsDeleted { get; set; }
     /// <summary>When it was soft-deleted; rows are kept so history stays readable.</summary>
     public DateTime? DeletedAt { get; set; }
@@ -740,7 +740,7 @@ public sealed class ExerciseSetLogRecord : ITenantRecord
     public int SetNumber { get; set; }
     /// <summary>Load in kilograms; null for bodyweight work.</summary>
     public decimal WeightKg { get; set; }
-    /// <summary>Reps actually completed.</summary>
+    /// <summary>Reps she actually completed, against the prescription.</summary>
     public int RepsCompleted { get; set; }
     /// <summary>Effort reported, on the app's fixed scale.</summary>
     public decimal? Rpe { get; set; }
@@ -758,7 +758,7 @@ public sealed class ExerciseSetLogRecord : ITenantRecord
     public int? RightSideReps { get; set; }
     /// <summary>Rest taken after the set, in seconds.</summary>
     public int RestTimeSeconds { get; set; }
-    /// <summary>Soft-delete flag.</summary>
+    /// <summary>Whether the row is hidden without being erased.</summary>
     public bool IsDeleted { get; set; }
     /// <summary>When it was soft-deleted; rows are kept so history stays readable.</summary>
     public DateTime? DeletedAt { get; set; }
@@ -783,7 +783,7 @@ public sealed class WorkoutLogRecord : ITenantRecord
     public DateOnly Date { get; set; }
     /// <summary>How much of the day was completed, kept because the exercises may since have changed.</summary>
     public int CompletionPercent { get; set; }
-    /// <summary>Her notes.</summary>
+    /// <summary>Notes she added about the session.</summary>
     public string? Notes { get; set; }
     /// <summary>When the log was written.</summary>
     public DateTime CreatedAt { get; set; }
@@ -802,7 +802,7 @@ public sealed class WorkoutExerciseLogRecord : ITenantRecord
     public Guid WorkoutDayExerciseId { get; set; }
     /// <summary>The exercise performed.</summary>
     public int ExerciseId { get; set; }
-    /// <summary>Sets completed.</summary>
+    /// <summary>Sets she completed out of the prescription.</summary>
     public int CompletedSets { get; set; }
     /// <summary>Reps completed in total.</summary>
     public int CompletedReps { get; set; }
@@ -889,7 +889,7 @@ public sealed class DailyNutritionLogRecord : ITenantRecord
     public decimal TotalFat { get; set; }
     /// <summary>Her notes for the day.</summary>
     public string? Notes { get; set; }
-    /// <summary>Soft-delete flag.</summary>
+    /// <summary>Whether the row is hidden without being erased.</summary>
     public bool IsDeleted { get; set; }
     /// <summary>When it was soft-deleted; rows are kept so history stays readable.</summary>
     public DateTime? DeletedAt { get; set; }
@@ -930,7 +930,7 @@ public sealed class FoodItemEntryRecord : ITenantRecord
     public decimal Fat { get; set; }
     /// <summary>When it was logged, which orders the day's entries.</summary>
     public DateTime LoggedAtTimestamp { get; set; }
-    /// <summary>Soft-delete flag.</summary>
+    /// <summary>Whether the row is hidden without being erased.</summary>
     public bool IsDeleted { get; set; }
     /// <summary>When it was soft-deleted; rows are kept so history stays readable.</summary>
     public DateTime? DeletedAt { get; set; }
@@ -1014,13 +1014,13 @@ public sealed class UserMealTemplateRecord : ITenantRecord
     public Guid Id { get; set; }
     /// <summary>The owning account; every read is filtered by it.</summary>
     public Guid UserId { get; set; }
-    /// <summary>The template's name.</summary>
+    /// <summary>Name shown when she picks this template.</summary>
     public string Name { get; set; } = string.Empty;
-    /// <summary>A short description.</summary>
+    /// <summary>Optional description shown under the template name.</summary>
     public string? Description { get; set; }
     /// <summary>Which meal it is meant to be logged as, stored as text.</summary>
     public string MealType { get; set; } = string.Empty;
-    /// <summary>Comma-separated dietary tags.</summary>
+    /// <summary>Dietary tags stored comma-separated for filtering.</summary>
     public string DietaryTags { get; set; } = string.Empty;
     /// <summary>Comma-separated cycle phases it suits.</summary>
     public string PhaseTags { get; set; } = string.Empty;

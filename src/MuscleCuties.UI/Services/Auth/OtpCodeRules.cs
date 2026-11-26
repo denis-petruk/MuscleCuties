@@ -17,4 +17,15 @@ public static class OtpCodeRules
 
         return new string(value.Where(char.IsDigit).Take(CodeLength).ToArray());
     }
+
+    /// <summary>Returns the rewritten digits when the input differs from them, or null when it is already clean,
+    /// so both OTP screens normalize a pasted code without duplicating the comparison.</summary>
+    public static string? RewriteToDigits(string? value)
+    {
+        if (string.IsNullOrEmpty(value))
+            return null;
+
+        var digits = DigitsOnly(value);
+        return string.Equals(digits, value, StringComparison.Ordinal) ? null : digits;
+    }
 }

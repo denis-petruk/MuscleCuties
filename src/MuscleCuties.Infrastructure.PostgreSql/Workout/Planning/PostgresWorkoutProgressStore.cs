@@ -85,11 +85,6 @@ public sealed class PostgresWorkoutProgressStore(PostgresDbContext context) : IW
             return result;
         }).ConfigureAwait(false);
 
-    /// <summary>Called only by the verified planned-workout completion transaction, never manual archive writes.</summary>
-    internal static async Task CreditPlannedCompletionAsync(PostgresDbContext context, Guid userId,
-        WorkoutLogRecord log, DateTime nowUtc, CancellationToken cancellationToken) =>
-        await CreditAsync(context, userId, log.Date, log.Id, null, nowUtc, cancellationToken).ConfigureAwait(false);
-
     /// <summary>Credits a finished planned session to the progress figures.</summary>
     internal static async Task CreditPlannedSessionAsync(PostgresDbContext context, Guid userId,
         WorkoutSessionLogRecord session, DateTime nowUtc, CancellationToken cancellationToken) =>

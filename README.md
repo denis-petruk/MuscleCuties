@@ -25,7 +25,7 @@ The SDK is pinned by `global.json` (.NET 10).
 | Suite | Covers | Needs PostgreSQL |
 | --- | --- | --- |
 | `MuscleCuties.Core.Tests` | Domain rules, use cases, architecture and UI guard tests | No |
-| `MuscleCuties.Server.Tests` | Route parity and HTTP contracts; all-route latency gate | Latency gate only |
+| `MuscleCuties.Server.Tests` | HTTP contract and authentication route tests | No |
 | `MuscleCuties.Registration.Tests` | Registration and onboarding contracts | No |
 | `MuscleCuties.Mobile.Contracts.Tests` | Client and backend contract shapes | No |
 | `MuscleCuties.Registration.Integration.Tests` | Database-backed flows | Yes |

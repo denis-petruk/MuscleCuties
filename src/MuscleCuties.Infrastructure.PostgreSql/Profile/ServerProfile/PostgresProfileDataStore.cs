@@ -21,10 +21,8 @@ public sealed class PostgresProfileDataStore(
     private const string EmptyJsonObject = "{}";
     private const int MinimumQuizIdentifier = 1;
     private const int MinimumExpectedProfileVersion = 1;
-    private const string ClearedInjuryStatus = "Cleared";
     private const string ProposedWorkoutPreviewStatus = "Proposed";
     private const string ExpiredWorkoutPreviewStatus = "Expired";
-    private const int DefaultBaselineSteps = 8000;
 
     /// <summary>The account's profile snapshot, or nothing when the account has not completed onboarding.</summary>
     public async Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken)

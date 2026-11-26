@@ -5,7 +5,7 @@ namespace MuscleCuties.Core.Models.Entities.Cycle;
 /// <summary>One recorded cycle: its start, its optional end and the length it turned out to be.</summary>
 public class CycleLog
 {
-    /// <summary>The stored identity.</summary>
+    /// <summary>Identity of the stored cycle log.</summary>
     public int Id { get; set; }
     /// <summary>The account the cycle belongs to.</summary>
     public int UserId { get; set; }

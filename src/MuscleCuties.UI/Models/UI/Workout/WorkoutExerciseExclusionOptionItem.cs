@@ -6,7 +6,7 @@ public sealed partial class WorkoutExerciseExclusionOptionItem(int exerciseId, s
 {
     /// <summary>The exercise the option excludes.</summary>
     public int ExerciseId { get; } = exerciseId;
-    /// <summary>The exercise's name.</summary>
+    /// <summary>Exercise name shown beside the checkbox.</summary>
     public string Name { get; } = name;
 
     [ObservableProperty] private bool _isSelected;

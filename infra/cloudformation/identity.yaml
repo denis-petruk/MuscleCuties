@@ -228,7 +228,7 @@ Resources:
 #       permission widening, not a reconciliation;
 #     - deleting the role needs `aws iam delete-role` against live IAM, which is destructive
 #       and outside "describe production truthfully".
-#   Either choice is one update-stack (or one delete) and is recorded in private-docs/STATUS.md.
+#   Either choice is one update-stack (or one delete) and is recorded in docs/STATUS.md.
 #
 # The S3ArtifactPutOnly resource above already names the live bucket, so the earlier item 1 is
 # closed: no template references musclecuties-staging-release-artifacts-*.

@@ -16,9 +16,9 @@ public partial class StrengthPlanActivityChoice : ObservableObject
 
     /// <summary>The activity the choice stands for.</summary>
     public WorkoutActivityDto Activity { get; }
-    /// <summary>The choice's label.</summary>
+    /// <summary>Localized label shown for the choice.</summary>
     public string Label { get; }
-    /// <summary>The choice's description.</summary>
+    /// <summary>Localized supporting line shown under the label.</summary>
     public string Description { get; }
 
     [ObservableProperty] private bool _isSelected;

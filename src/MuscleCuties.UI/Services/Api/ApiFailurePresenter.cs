@@ -56,12 +56,6 @@ public sealed class ApiFailureNotice
     /// <summary>True when repeating the same request is allowed for this outcome.</summary>
     public bool IsRetryable =>
         Action is ApiFailureAction.Retry or ApiFailureAction.WaitAndRetry or ApiFailureAction.Offline;
-
-    /// <summary>
-    /// True when the outcome means the request has to change before it can succeed, so the screen must
-    /// point at editable details instead of offering the same request again.
-    /// </summary>
-    public bool RequiresDetailsChange => Action == ApiFailureAction.None;
 }
 
 /// <summary>

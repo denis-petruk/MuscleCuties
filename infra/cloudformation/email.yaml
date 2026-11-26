@@ -24,7 +24,7 @@ Description: >-
 # NOT ADOPTED: these resources already exist live and no stack describes them yet. This
 # template describes the same names and values so a fresh environment reproduces them; it
 # does not claim the live ones belong to a stack. Adoption is a separate stack-import
-# step, documented in private-docs/STATUS.md, and it is not performed by deploying this
+# step, documented in docs/STATUS.md, and it is not performed by deploying this
 # file.
 # ---------------------------------------------------------------------------------------
 

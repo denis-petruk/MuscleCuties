@@ -58,7 +58,6 @@ public sealed class SignedEmailReceiptTokenIssuer(
     private const int RegistrationPurpose = 1;
     private const int PasswordRecoveryPurpose = 2;
     private const int MinimumRsaKeyBits = 2_048;
-    private const long AllowedIssueTimeFutureSeconds = 60;
 
     /// <summary>Signs a receipt for one address and purpose, with the expiry the verifier enforces.</summary>
     public string Issue(string normalizedEmail, int purpose, string challengeId, string receiptId, DateTimeOffset expiresAtUtc)

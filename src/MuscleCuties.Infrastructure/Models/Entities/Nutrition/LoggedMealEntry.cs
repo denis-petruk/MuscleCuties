@@ -3,7 +3,7 @@ namespace MuscleCuties.Core.Models.Entities.Nutrition;
 /// <summary>One food inside a logged meal, with the weight it was eaten at.</summary>
 public class LoggedMealEntry
 {
-    /// <summary>The stored identity.</summary>
+    /// <summary>Identity of the stored logged meal entry.</summary>
     public int Id { get; set; }
     /// <summary>The meal the entry belongs to.</summary>
     public int LoggedMealId { get; set; }

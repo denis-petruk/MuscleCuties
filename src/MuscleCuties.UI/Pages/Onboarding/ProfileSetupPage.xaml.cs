@@ -25,7 +25,7 @@ public partial class ProfileSetupPage : ContentPage
     }
 
     /// <summary>Offers the photo choices for the avatar.</summary>
-    private async void OnProfileImageTapped(object? sender, TappedEventArgs e)
+    private async void OnSetupProfileImageTapped(object? sender, TappedEventArgs e)
     {
         await ShowProfileImageActionsAsync();
     }
@@ -37,7 +37,7 @@ public partial class ProfileSetupPage : ContentPage
     }
 
     /// <summary>Reports the change so the age rule is applied to the newly picked date.</summary>
-    private void OnBirthDateSelected(object? sender, DateChangedEventArgs e)
+    private void OnSetupBirthDateSelected(object? sender, DateChangedEventArgs e)
     {
         ((ProfileSetupViewModel)BindingContext).MarkBirthDateSelected(e.OldDate, e.NewDate);
     }

@@ -42,11 +42,11 @@ dotnet publish src/MuscleCuties.UI/MuscleCuties.UI.csproj \
   -p:RuntimeIdentifier=ios-arm64 \
   -p:AppTargetEnvironment=beta \
   -p:BuildIpa=true \
-  -p:CodesignProvision="<your App Store profile name>"
+  -p:CodesignProvision="MuscleCuties App Store Connect v2"
 ```
 
-`-p:BuildIpa=true` is required: the project file sets `BuildIpa` to `false` for **Debug** only, and
-Release leaves it unset.
+`-p:BuildIpa=true` is required: no configuration sets `BuildIpa`, so Release produces an `.ipa` only
+when the property is passed.
 
 `-p:AppTargetEnvironment=beta` is required, not cosmetic: in Release
 `AppEndpointConfiguration.ActiveEnvironment` throws unless `APP_ENV_BETA` is defined, and
@@ -54,14 +54,17 @@ Release leaves it unset.
 the property still compiles and still produces an `.ipa`, but that build throws as soon as it
 resolves its backend environment, so it cannot be shipped.
 
-`CodesignProvision` selects the profile; the signing identity is taken from the keychain.
+`CodesignProvision` selects the profile. Release device builds set `CodesignKey` to the
+certificate class `Apple Distribution` in `MuscleCuties.UI.csproj`; the SDK then pairs the profile
+with the certificate it embeds, matching by thumbprint. That is why the command needs no SHA-1:
+an empty `CodesignKey` means "developer automatic" to the SDK, which only considers Apple
+Development certificates and so can never match an App Store profile. Multiple distribution
+certificates in the keychain are harmless — the profile's own thumbprint decides.
 
-If the keychain holds more than one Apple Distribution identity with the same name — for example an
-older certificate plus a freshly created one — detection fails with
-`No iOS signing identities match the specified provisioning profile` even though the profile's own
-certificate is installed and signs fine. In that case name the identity explicitly with
-`-p:CodesignKey=<SHA-1 of the certificate the profile embeds>`; `security find-identity -v -p codesigning`
-lists the SHA-1s, and the newest certificate is not necessarily the one the profile carries.
+Simulator builds (`iossimulator-arm64`/`iossimulator-x64`) are ad-hoc signed in both
+configurations and never consult the keychain. Debug device builds keep the default development
+path. Without an installed identity a device build stops with `No valid iOS code signing keys
+found in keychain`, so it cannot silently produce an unsigned artifact.
 
 ## 3. Output — exact path and file name
 
@@ -166,6 +169,18 @@ number to `YYYYMMDD.HHMMSS` UTC via `-p:ApplicationVersion`, so every upload is 
 editing the project file; bump `<ApplicationVersion>` only for a manual upload. The identity,
 profile, key and `.p8` are deleted in an `always()` step.
 
+### Assigning the build to testers
+
+`altool` only uploads; it does not make the build visible to testers. Once the upload returns,
+`tools/deployment/assign_testflight_build.py` resolves `com.musclecuties.app`, waits for App Store
+Connect to finish processing the build number, and adds the build to the tester groups while the
+API key is still staged.
+
+Without configuration it targets **every internal beta group**. To target one group instead, set
+the repository variable `TESTFLIGHT_GROUP` (Settings → Secrets and variables → Actions →
+Variables) to its exact name; an unknown name fails the job and lists the available groups.
+External groups additionally need Beta App Review before their testers are notified.
+
 ### When the secrets are absent
 
 A job-level `if` cannot read secrets, so `ci.yml` checks the six names in a step
@@ -204,12 +219,23 @@ Verified on 2026-11-19 (macOS, Xcode 26.3, .NET SDK 10.0.203, Microsoft.iOS.Sdk 
 - Dropping `-p:AppTargetEnvironment=beta` leaves `APP_ENV_BETA` undefined in Release
   (`dotnet msbuild … -getProperty:DefineConstants` shows it absent), which is exactly what the
   runtime guard in `AppEndpointConfiguration.ActiveEnvironment` rejects.
-- MSBuild resolves `BuildIpa=true` in Release when it is passed, and no Release path sets it false
-  (`dotnet msbuild … -getProperty:BuildIpa` → `true` for Release, `false` for Debug).
-  `EnableCodeSigning` stays `true` in Release, so signing is never silently dropped.
+- MSBuild resolves `BuildIpa=true` in Release when it is passed, and no configuration sets it
+  (`dotnet msbuild … -getProperty:BuildIpa` → empty for both Release and Debug).
+- `EnableCodeSigning` stays `true` for device builds; only the simulator runtime identifiers
+  select ad-hoc signing (`CodesignKey` → `-`). A device artifact therefore cannot be produced
+  unsigned: the build fails at signing detection when no identity is installed.
 - No `Directory.Build.props`/`Directory.Build.targets` in this repository touches `BuildIpa`,
   `CodesignKey`, `CodesignProvision` or `EnableCodeSigning`.
 
-Not verified, because it needs the Apple identity: distribution signing, and the Transporter upload
-itself. The automated path in section 6 has not run yet either — it needs the six repository
-secrets above, so its first execution is the first push to `main` afterwards.
+- Verified on 2026-11-25: the section 2 command with no `-p:CodesignKey` at all exits **0**, and
+  the build reports `Code Signing Key: "Apple Distribution: DENIS PETRUK (N23Z94V7G6)"
+  (FF0B2A5614DEE22BE3FE3CD58B5F2F76B4217CCC)` and `Provisioning Profile: "MuscleCuties App Store
+  Connect v2" (c94aea32-84c6-40ab-b433-b5d6b49852a9) - 46 entitlements`. The same Mac previously
+  failed with `No iOS signing identities match the specified provisioning profile`; the cause was
+  the empty key, not duplicate identities. The packaged `.ipa` passes
+  `codesign --verify --deep --strict`, and its authority is the same Apple Distribution
+  identity. Simulator signing is unchanged (`CodesignKey=-`).
+
+Not verified, because it needs the App Store Connect credentials: the Transporter upload itself.
+The automated path in section 6 has not run yet either — it needs the six repository secrets above,
+so its first execution is the first push to `main` afterwards.

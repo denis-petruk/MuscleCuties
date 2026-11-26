@@ -14,7 +14,7 @@ public readonly record struct NutritionMacros(
 {
     /// <summary>Calories with their unit.</summary>
     public string CaloriesText => DisplayFormat.Calories(Calories);
-    /// <summary>Macro line.</summary>
+    /// <summary>Protein, carbohydrate and fat formatted as one line.</summary>
     public string MacrosText => DisplayFormat.Macros(Protein, Carbs, Fats);
     /// <summary>Same macro line, under the name the meal card binds to.</summary>
     public string MacroText => DisplayFormat.Macros(Protein, Carbs, Fats);

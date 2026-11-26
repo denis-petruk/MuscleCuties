@@ -14,15 +14,6 @@ public class WorkoutActivitySectionItem : ObservableObject, IEnumerable<WorkoutE
     /// <summary>How many blocks the session has, which decides the start/finish wording.</summary>
     public int TotalActivities { get; init; }
 
-    /// <summary>Where to start and finish: a solo block, the first, a middle one, or the last.</summary>
-    public string OrderText => TotalActivities <= 1
-        ? "Activity block"
-        : OrderIndex <= 1
-            ? "Start here"
-            : OrderIndex >= TotalActivities
-                ? "Finish here"
-                : "Then continue";
-
     /// <summary>Activity tag, which selects the glyph and the routing rule.</summary>
     public string Tag { get; init; } = string.Empty;
 

@@ -37,7 +37,7 @@
                             ClearButtonVisibility="WhileEditing"
                             IsEnabled="{Binding IsBusy, Converter={StaticResource InvertedBoolConverter}}"
                             ReturnType="Next"
-                            Completed="OnEmailCompleted"
+                            Completed="OnRegisterEmailCompleted"
                             SemanticProperties.Description="{loc:LocalizedText Auth_EmailAddress}"
                             SemanticProperties.Hint="{loc:LocalizedText Auth_Register_EnterYourEmailThenPressNext}" />
                     </Border>

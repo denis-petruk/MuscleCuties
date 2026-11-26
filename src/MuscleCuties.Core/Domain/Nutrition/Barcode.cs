@@ -40,7 +40,6 @@ public sealed class Barcode : IEquatable<Barcode>
     private const char TwoChar = '2';
     private const char ThreeChar = '3';
     private const char FourChar = '4';
-    private const char FiveChar = '5';
     private const char NineChar = '9';
 
     /// <summary>Stores a parsed barcode together with the outcome of its validation.</summary>

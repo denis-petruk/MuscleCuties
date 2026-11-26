@@ -60,16 +60,22 @@
         <AotCompileMaxDegreeOfParallelism>2</AotCompileMaxDegreeOfParallelism>
     </PropertyGroup>
 
-    <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">
-        <BuildIpa>false</BuildIpa>
-    </PropertyGroup>
-
-    <PropertyGroup Condition="'$(Configuration)' == 'Debug' and $([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and ('$(RuntimeIdentifier)' == 'iossimulator-arm64' or '$(RuntimeIdentifier)' == 'iossimulator-x64')">
+    <!-- Simulator apps are ad-hoc signed in every configuration, so compile checks never need an
+         Apple identity. Device builds fail without credentials instead of producing an unsigned
+         artifact. -->
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and ('$(RuntimeIdentifier)' == 'iossimulator-arm64' or '$(RuntimeIdentifier)' == 'iossimulator-x64')">
         <CodesignKey>-</CodesignKey>
         <CodesignEntitlements>Platforms/iOS/Entitlements.plist</CodesignEntitlements>
     </PropertyGroup>
 
-
+    <!-- Release device builds are signed for the App Store. The iOS SDK reads an empty
+         CodesignKey as "developer automatic" and only considers Apple Development certificates,
+         so it can never match the distribution certificate inside an App Store profile. Naming
+         the certificate class lets detection pair the profile with its own certificate by
+         thumbprint, however many distribution identities the keychain holds. -->
+    <PropertyGroup Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios' and '$(Configuration)' == 'Release' and '$(RuntimeIdentifier)' != 'iossimulator-arm64' and '$(RuntimeIdentifier)' != 'iossimulator-x64'">
+        <CodesignKey>Apple Distribution</CodesignKey>
+    </PropertyGroup>
 
     <ItemGroup>
         <MauiIcon Include="Resources\AppIcon\appicon.png" Color="#FFF8FB" Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) != 'ios'"/>

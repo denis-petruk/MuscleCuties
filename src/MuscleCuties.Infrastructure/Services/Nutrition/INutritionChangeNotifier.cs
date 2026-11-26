@@ -27,7 +27,7 @@ public interface INutritionChangeNotifier
     void NotifyNutritionChanged(int userId, DateOnly date);
 }
 
-/// <summary>The notifier implementation both layers share.</summary>
+/// <summary>Publishes diary changes so open nutrition pages reload the affected day.</summary>
 public class NutritionChangeNotifier(Action<Action>? dispatch = null) : INutritionChangeNotifier
 {
     /// <summary>Raised for every diary change.</summary>

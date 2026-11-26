@@ -16,4 +16,16 @@ public sealed class OtpCodeRulesTests
     {
         Assert.Equal(expected, OtpCodeRules.DigitsOnly(input));
     }
+
+    [Theory]
+    [InlineData("123456", null)]
+    [InlineData("12 34-56", "123456")]
+    [InlineData("1234567", "123456")]
+    [InlineData("abc", "")]
+    [InlineData("", null)]
+    [InlineData(null, null)]
+    public void RewriteToDigitsReturnsOnlyWhenInputChanges(string? input, string? expected)
+    {
+        Assert.Equal(expected, OtpCodeRules.RewriteToDigits(input));
+    }
 }

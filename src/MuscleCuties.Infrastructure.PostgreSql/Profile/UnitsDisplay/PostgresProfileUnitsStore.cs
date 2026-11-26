@@ -9,8 +9,6 @@ public sealed class PostgresProfileUnitsStore(PostgresDbContext dbContext, TimeP
     : IServerProfileUnitsStore
 {
     private const string SnapshotReason = "UnitsDisplayUpdate";
-    private const string MetricUnitSystem = "Metric";
-    private const string ImperialUnitSystem = "Imperial";
 
     /// <summary>Loads the stored unit preference.</summary>
     public async Task<ServerProfileUnitsSnapshot?> LoadAsync(

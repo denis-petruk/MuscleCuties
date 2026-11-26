@@ -239,8 +239,6 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     public string CurrentPhaseIconGlyph =>
         MacroProgressFormatter.GetPhaseIconGlyph(NutritionPresentationMapper.ToPresentationCyclePhase(CurrentPhase));
 
-    /// <summary>The meals the day is split into.</summary>
-    public IReadOnlyList<MealType> MealTypes { get; } = Enum.GetValues<MealType>();
 
     /// <summary>The serving units a custom food can use.</summary>
     [SuppressMessage("Performance", "CA1822:Mark members as static",

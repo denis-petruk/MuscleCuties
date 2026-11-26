@@ -49,7 +49,6 @@ public partial class WorkoutExerciseItem : ObservableObject
     [ObservableProperty] private string _loggedWeightText = string.Empty;
     /// <summary>True when the exercise has movement notes.</summary>
     [ObservableProperty] private string _movementNotes = string.Empty;
-    public bool HasMovementNotes => !string.IsNullOrWhiteSpace(MovementNotes);
 
     /// <summary>Identity of this exercise within the planned day, used when logging against the plan.</summary>
     public int WorkoutDayExerciseId { get; set; }
@@ -80,8 +79,6 @@ public partial class WorkoutExerciseItem : ObservableObject
     public string Description { get; set; } = string.Empty;
     /// <summary>Illustration for the movement, when one is cached locally.</summary>
     public string ImageUrl { get; set; } = string.Empty;
-    /// <summary>Technique video for the movement, when one is cached locally.</summary>
-    public string VideoUrl { get; set; } = string.Empty;
     /// <summary>Coaching cues from the catalog, shown in the expanded card.</summary>
     public string TechniqueNotes { get; set; } = string.Empty;
     /// <summary>Short tips shown while the card is collapsed.</summary>
@@ -195,10 +192,6 @@ public partial class WorkoutExerciseItem : ObservableObject
     public string LogButtonText => IsLogged ? "Update" : "Log";
     /// <summary>Status line under the log action.</summary>
     public string LogStatusText => IsLogged ? "Logged today" : "Not logged yet";
-    /// <summary>True when the exercise has a video.</summary>
-    public bool HasVideo => !string.IsNullOrWhiteSpace(VideoUrl);
-    /// <summary>Confirms a saved technique video; empty when the movement has none.</summary>
-    public string VideoStatusText => HasVideo ? "Technique video saved" : string.Empty;
 
     /// <summary>Why this movement is in the session, with a generic line when the catalog gives no reason.</summary>
     public string WhyText => string.IsNullOrWhiteSpace(Description)

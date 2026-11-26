@@ -35,8 +35,6 @@ public class CycleDayItem
     public bool IsEstimated { get; set; }
     /// <summary>The day is after today, so its phase is a forecast.</summary>
     public bool IsPredictedFuture { get; set; }
-    /// <summary>True when the day's phase is a prediction.</summary>
-    public bool IsPredicted => IsPredictedFuture;
     /// <summary>Cell fill for the day's phase, or transparent for a neutral cell.</summary>
     public Color BackgroundColor { get; set; } = AppThemeResources.GetRequired<Color>("Transparent");
     /// <summary>Colour of the day number, chosen to stay readable on the cell fill.</summary>
