@@ -171,15 +171,17 @@ profile, key and `.p8` are deleted in an `always()` step.
 
 ### Assigning the build to testers
 
-`altool` only uploads; it does not make the build visible to testers. Once the upload returns,
-`tools/deployment/assign_testflight_build.py` resolves `com.musclecuties.app`, waits for App Store
-Connect to finish processing the build number, and adds the build to the tester groups while the
-API key is still staged.
+`altool` only uploads; it does not make the build visible to external testers. Once the upload
+returns, `tools/deployment/assign_testflight_build.py` resolves `com.musclecuties.app`, waits for
+App Store Connect to finish processing the build number, and assigns external groups while the API
+key is still staged. Internal beta groups receive every build automatically and App Store Connect
+rejects explicit attempts to add a build to them, so the tool reports those groups without a POST.
 
-Without configuration it targets **every internal beta group**. To target one group instead, set
-the repository variable `TESTFLIGHT_GROUP` (Settings → Secrets and variables → Actions →
-Variables) to its exact name; an unknown name fails the job and lists the available groups.
-External groups additionally need Beta App Review before their testers are notified.
+Without configuration it selects **every internal beta group** (automatic, no assignment call).
+To target one group instead, set the repository variable `TESTFLIGHT_GROUP` (Settings → Secrets and
+variables → Actions → Variables) to its exact name; an internal name is reported as automatic,
+an external name is explicitly assigned, and an unknown name fails the job and lists the available
+groups. External groups additionally need Beta App Review before their testers are notified.
 
 ### When the secrets are absent
 

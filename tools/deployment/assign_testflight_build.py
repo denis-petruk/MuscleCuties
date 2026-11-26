@@ -3,9 +3,10 @@
 
 The mobile release workflow uploads the signed .ipa with altool, then runs this tool with
 the same App Store Connect API key. It resolves the app by bundle id, waits until App Store
-Connect finishes processing the build number, and adds the build to every internal beta
-group. Setting TESTFLIGHT_GROUP (or --group) targets one named group instead; external
-groups also require Beta App Review before their testers receive the build.
+Connect finishes processing the build number, and reports the selected beta groups. Internal
+groups receive every build automatically, so only external groups are explicitly assigned;
+external groups also require Beta App Review before their testers receive the build. Setting
+TESTFLIGHT_GROUP (or --group) targets one named group instead.
 """
 
 import argparse
@@ -131,21 +132,24 @@ def list_groups(base, token, app_id):
 
 
 def choose_groups(groups, name):
-    """Return the target group ids: the named group, or every internal group by default."""
+    """Return the target beta groups: the named group, or every internal group by default.
+
+    Internal groups receive every build automatically, so assignment only posts external groups.
+    """
     if name:
         wanted = name.strip().casefold()
         matches = [g for g in groups if g.get("attributes", {}).get("name", "").strip().casefold() == wanted]
         if not matches:
             available = ", ".join(sorted(g.get("attributes", {}).get("name", "") for g in groups)) or "none"
             raise SystemExit(f"TESTFLIGHT_GROUP '{name}' does not match a beta group; available: {available}")
-        return [g["id"] for g in matches]
+        return matches
     internal = [g for g in groups if g.get("attributes", {}).get("isInternalGroup")]
     if not internal:
         raise SystemExit(
             "the app has no internal beta group; set the repository variable "
             "TESTFLIGHT_GROUP to the group name that should receive the build"
         )
-    return [g["id"] for g in internal]
+    return internal
 
 
 def wait_for_build(base, token_provider, app_id, build_number, timeout_seconds, poll_seconds):
@@ -180,21 +184,30 @@ def wait_for_build(base, token_provider, app_id, build_number, timeout_seconds, 
     raise SystemExit(f"timed out after {timeout_seconds}s waiting for build {build_number} to process")
 
 
-def assign_build(base, token, group_ids, build_id):
-    """Add the build to each group; an already-assigned build is not an error."""
-    for group_id in group_ids:
+def assign_build(base, token, groups, build_id):
+    """Add the build to each external group; internal groups already receive every build."""
+    assigned = 0
+    for group in groups:
+        group_id = group["id"]
+        attributes = group.get("attributes", {})
+        name = attributes.get("name", group_id)
+        if attributes.get("isInternalGroup"):
+            print(f"internal group '{name}' receives every build automatically; nothing to assign", flush=True)
+            continue
         try:
             api_request(
                 base, token, "POST",
                 f"/v1/betaGroups/{group_id}/relationships/builds",
                 body={"data": [{"type": "builds", "id": build_id}]},
             )
-            print(f"assigned build {build_id} to group {group_id}", flush=True)
+            assigned += 1
+            print(f"assigned build {build_id} to group '{name}' ({group_id})", flush=True)
         except ApiError as error:
             if error.status == 409:
-                print(f"build {build_id} is already assigned to group {group_id}", flush=True)
+                print(f"build {build_id} is already assigned to group '{name}' ({group_id})", flush=True)
                 continue
             raise
+    return assigned
 
 
 def parse_args(argv=None):
@@ -225,12 +238,17 @@ def main(argv=None):
     token = token_provider()
     app_id = resolve_app_id(args.api_base, token, args.bundle_id)
     groups = list_groups(args.api_base, token, app_id)
-    group_ids = choose_groups(groups, args.group)
+    selected = choose_groups(groups, args.group)
     build_id = wait_for_build(
         args.api_base, token_provider, app_id, args.build_number, args.timeout_seconds, args.poll_seconds
     )
-    assign_build(args.api_base, token_provider(), group_ids, build_id)
-    print(f"build {args.build_number} is available to {len(group_ids)} tester group(s)", flush=True)
+    assigned = assign_build(args.api_base, token_provider(), selected, build_id)
+    internal = sum(1 for group in selected if group.get("attributes", {}).get("isInternalGroup"))
+    print(
+        f"build {args.build_number} is available to {len(selected)} tester group(s): "
+        f"{internal} internal automatically; {assigned} external assignment(s) made",
+        flush=True,
+    )
 
 
 if __name__ == "__main__":
