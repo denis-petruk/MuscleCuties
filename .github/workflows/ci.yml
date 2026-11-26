@@ -91,6 +91,7 @@ jobs:
           python3 tests/MuscleCuties.Deployment.Tests/test_package_upload.py
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_deploy_release.py'
           PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_testflight_assignment.py'
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/MuscleCuties.Deployment.Tests -p 'test_oidc_policy.py'
 
       - name: Run Core tests
         run: |
