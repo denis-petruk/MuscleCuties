@@ -2,7 +2,8 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   MuscleCuties staging identity plane: GitHub Actions OIDC federation and the three
   least-privilege deploy roles. Faithful to live state as of 2026-11-19 plus the
-  2026-11-20 s3:ListBucket correction; the remaining known defects are documented below.
+  2026-11-20 s3:ListBucket and 2026-11-26 BetaDeploy corrections; the remaining known
+  defects are documented below.
 
 # ---------------------------------------------------------------------------------------
 # FAITHFULNESS RECORD — every property compared against `aws iam get-role`,
@@ -208,11 +209,24 @@ Resources:
                   - lambda:UpdateFunctionCode
                   - lambda:PublishVersion
                   - lambda:UpdateAlias
+                  # deploy_release.py reads the alias revision before the cutover and confirms
+                  # it afterwards; without get-alias the deploy stops at alias_unavailable.
+                  - lambda:GetAlias
                   - lambda:GetFunction
                   - lambda:GetFunctionConfiguration
                 Resource:
                   - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:musclecuties-backend-api"
                   - !Sub "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:musclecuties-backend-api:*"
+              - Sid: ReadReleaseArtifacts
+                Effect: Allow
+                # update-function-code names an exact S3 object version, and IAM authorizes that
+                # call against the caller's own read access to the object and version. The grant
+                # is reproduced at the live scope, the whole release bucket, so update-stack
+                # neither widens nor narrows what the 2026-11-26 release already proved.
+                Action:
+                  - s3:GetObject
+                  - s3:GetObjectVersion
+                Resource: !Sub "arn:aws:s3:::${ReleaseArtifactsBucket}/*"
 
 # ---------------------------------------------------------------------------------------
 # REMAINING MISMATCH — checked again 2026-11-24, deliberately not changed:
@@ -235,7 +249,8 @@ Resources:
 #
 # BetaDeploy is correct: the only function in the account is musclecuties-backend-api, and
 # tools/deployment/deploy_release.py drives it through update-function-code, publish-version,
-# update-alias and get-function(-configuration).
+# get-alias, update-alias and get-function(-configuration), deploying an exact S3 object
+# version that the caller must be allowed to read.
 #
 # The GitLab OIDC provider (gitlab.com) that used to sit here unmanaged was deleted on
 # 2026-11-19. No role ever trusted it, so removing it changed nothing at runtime; GitHub
