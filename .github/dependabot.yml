@@ -1,0 +1,10 @@
+version: 2
+
+# Workflow actions are pinned to commit SHAs, so only Dependabot knows when a pin
+# should move. It rewrites both the SHA and the trailing version comment.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5

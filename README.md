@@ -11,7 +11,6 @@ iOS fitness, nutrition and cycle-tracking app. The client is .NET MAUI (iOS only
 - `src/MuscleCuties.UI` — MAUI iOS presentation.
 - `src/MuscleCuties.DbMaintenance` — operator CLI: `migrate`, `seed`, `dbcheck`.
 - `services/MuscleCuties.Server` — API composition, auth, Lambda host.
-- `services/MuscleCuties.WorkoutReconciliation` — scheduled worker for pending workout revisions.
 - `tests/` — xUnit suites. `artifacts/` — packaging output, ignored by Git.
 
 ## Build and test

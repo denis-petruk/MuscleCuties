@@ -76,10 +76,10 @@ jobs:
           exit 1
 
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up .NET SDK 10.0.403 for Xcode 27.1
-        uses: actions/setup-dotnet@v4
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
         with:
           # Workload set 10.0.403 selects .NET for iOS 27.1.10018, the supported pairing for the
           # xcode-27 image's Xcode 27.1. The repository global.json still selects the local 10.0.2xx
@@ -105,7 +105,26 @@ jobs:
           security set-keychain-settings -lut 21600 "$keychain"
           security unlock-keychain -p "$password" "$keychain"
           printf '%s' "$CERTIFICATE_P12" | openssl base64 -d -A -out "$RUNNER_TEMP/distribution.p12"
-          security import "$RUNNER_TEMP/distribution.p12" \
+          p12="$RUNNER_TEMP/distribution.p12"
+          # An empty secret decodes to an empty file, and security import then fails with a
+          # message that never names the secret, so both conditions are checked before import.
+          if [ ! -s "$p12" ]; then
+            echo "::error::IOS_DISTRIBUTION_CERTIFICATE_P12 decoded to an empty file; the secret is set but has no content." >&2
+            exit 1
+          fi
+          if ! openssl pkcs12 -in "$p12" -noout -passin "env:CERTIFICATE_PASSWORD" 2>/dev/null; then
+            echo "::error::IOS_DISTRIBUTION_CERTIFICATE_P12 is not a valid PKCS#12 file for IOS_DISTRIBUTION_CERTIFICATE_PASSWORD." >&2
+            exit 1
+          fi
+          # Non-secret metadata only: the identity and the date it stops being usable.
+          openssl pkcs12 -in "$p12" -clcerts -nokeys -passin "env:CERTIFICATE_PASSWORD" \
+            | openssl x509 -noout -subject -enddate
+          if ! openssl pkcs12 -in "$p12" -clcerts -nokeys -passin "env:CERTIFICATE_PASSWORD" \
+            | openssl x509 -noout -checkend 0; then
+            echo "::error::The distribution certificate has expired; export a current Apple Distribution identity and update both certificate secrets." >&2
+            exit 1
+          fi
+          security import "$p12" \
             -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain" >/dev/null
           security list-keychains -d user -s "$keychain"

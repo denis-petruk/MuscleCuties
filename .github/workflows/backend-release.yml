@@ -65,16 +65,16 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Download backend artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: ${{ needs.package.outputs.artifact-name }}
           path: artifacts
 
       - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: ${{ secrets.AWS_ARTIFACT_UPLOAD_ROLE_ARN }}
           aws-region: us-east-2
@@ -93,24 +93,11 @@ jobs:
             artifacts/build-manifest.json \
             artifacts/server-release-object.json
 
-      - name: Upload Worker Lambda artifact to immutable S3 bucket
-        env:
-          AWS_RELEASE_BUCKET: musclecuties-release-artifacts-028417007003
-          AWS_REGION: us-east-2
-          ARTIFACT_COMPONENT: WorkoutReconciliation
-        run: |
-          bash tools/deployment/upload-artifact.sh \
-            artifacts/MuscleCuties.WorkoutReconciliation.zip \
-            artifacts/worker-build-manifest.json \
-            artifacts/worker-release-object.json
-
       - name: Upload release object manifests
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: release-object-${{ github.sha }}
-          path: |
-            artifacts/server-release-object.json
-            artifacts/worker-release-object.json
+          path: artifacts/server-release-object.json
 
   deploy_beta:
     name: deploy_beta
@@ -123,22 +110,22 @@ jobs:
       contents: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Download backend artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: ${{ needs.package.outputs.artifact-name }}
           path: artifacts
 
       - name: Download release objects
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           name: release-object-${{ github.sha }}
           path: artifacts
 
       - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: ${{ secrets.AWS_BETA_DEPLOY_ROLE_ARN }}
           aws-region: us-east-2
@@ -146,9 +133,6 @@ jobs:
 
       # Required repository/environment variables:
       #   BETA_SERVER_FUNCTION, BETA_SERVER_ALIAS (an alias is required so rollback has a target)
-      # Optional, and only when a reconciliation worker actually exists:
-      #   BETA_WORKER_FUNCTION, BETA_WORKER_ALIAS. When BETA_WORKER_FUNCTION is unset the worker
-      #   is reported as skipped instead of failing the release.
       #   BETA_API_ENDPOINT (required; /health/live and /health/ready must return 200)
       #   AWS_ACCOUNT_ID (optional; when set, STS identity must match)
       # The report is written only after each serving CodeSha256 matches the candidate digests.
@@ -168,14 +152,9 @@ jobs:
           AWS_ACCOUNT_ID: ${{ vars.AWS_ACCOUNT_ID }}
           SERVER_FUNCTION: ${{ vars.BETA_SERVER_FUNCTION }}
           SERVER_ALIAS: ${{ vars.BETA_SERVER_ALIAS }}
-          WORKER_FUNCTION: ${{ vars.BETA_WORKER_FUNCTION }}
-          WORKER_ALIAS: ${{ vars.BETA_WORKER_ALIAS }}
           SERVER_ZIP: artifacts/MuscleCuties.Server.zip
           SERVER_MANIFEST: artifacts/build-manifest.json
           SERVER_OBJECT: artifacts/server-release-object.json
-          WORKER_ZIP: artifacts/MuscleCuties.WorkoutReconciliation.zip
-          WORKER_MANIFEST: artifacts/worker-build-manifest.json
-          WORKER_OBJECT: artifacts/worker-release-object.json
           REPORT_PATH: artifacts/deployment-report.json
           HEALTH_URL: ${{ vars.BETA_API_ENDPOINT }}
         run: |
@@ -183,7 +162,7 @@ jobs:
 
       - name: Upload deployment report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: beta-deployment-report-${{ github.sha }}
           path: artifacts/deployment-report.json
@@ -200,7 +179,7 @@ jobs:
       actions: read
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Require the report run id
         run: |
@@ -212,7 +191,7 @@ jobs:
       # The report carries the previous alias version and digest for each function. Rollback
       # refuses to run without those recorded targets rather than guessing.
       - name: Download the deployment report from that run
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
           pattern: beta-deployment-report-*
           path: artifacts
@@ -221,13 +200,13 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Configure AWS Credentials (OIDC)
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@7474bc4690e29a8392af63c5b98e7449536d5c3a # v4
         with:
           role-to-assume: ${{ secrets.AWS_BETA_DEPLOY_ROLE_ARN }}
           aws-region: us-east-2
           role-session-name: github-actions-beta-rollback-${{ github.run_id }}
 
-      - name: Roll both aliases back and verify the restored digests
+      - name: Roll the alias back and verify the restored digest
         env:
           TARGET_ENV: beta
           AWS_REGION: us-east-2
@@ -238,7 +217,7 @@ jobs:
 
       - name: Upload rollback report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: beta-rollback-report-${{ github.run_id }}
           path: artifacts/deployment-report.json
