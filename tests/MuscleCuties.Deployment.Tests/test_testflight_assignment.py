@@ -13,6 +13,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "tools" / "deployment"))
@@ -41,15 +42,15 @@ class DerEncodingTests(unittest.TestCase):
 
 
 class GroupSelectionTests(unittest.TestCase):
-    """Without configuration every internal group is targeted; a name overrides that."""
+    """Without configuration every internal group is selected; a name overrides that."""
 
     def test_defaults_to_every_internal_group(self):
         groups = [group("1", "Internal", True), group("2", "External", False), group("3", "Team", True)]
-        self.assertEqual(["1", "3"], tool.choose_groups(groups, None))
+        self.assertEqual(["1", "3"], [g["id"] for g in tool.choose_groups(groups, None)])
 
     def test_named_group_matches_case_insensitively(self):
         groups = [group("1", "Internal", True), group("2", "External", False)]
-        self.assertEqual(["2"], tool.choose_groups(groups, "  external "))
+        self.assertEqual(["2"], [g["id"] for g in tool.choose_groups(groups, "  external ")])
 
     def test_unknown_name_lists_available_groups(self):
         groups = [group("1", "Internal", True)]
@@ -61,6 +62,40 @@ class GroupSelectionTests(unittest.TestCase):
         with self.assertRaises(SystemExit) as caught:
             tool.choose_groups([group("2", "External", False)], None)
         self.assertIn("TESTFLIGHT_GROUP", str(caught.exception))
+
+
+class AssignmentTests(unittest.TestCase):
+    """Internal groups receive every build automatically; only external groups need a POST."""
+
+    def test_internal_group_is_not_posted(self):
+        with mock.patch.object(tool, "api_request") as request:
+            assigned = tool.assign_build(
+                "https://api.example", "token", [group("1", "Internal", True)], "build-1"
+            )
+        self.assertEqual(0, assigned)
+        request.assert_not_called()
+
+    def test_external_group_is_posted(self):
+        with mock.patch.object(tool, "api_request", return_value=(200, None)) as request:
+            assigned = tool.assign_build(
+                "https://api.example", "token", [group("2", "External", False)], "build-1"
+            )
+        self.assertEqual(1, assigned)
+        request.assert_called_once()
+        args, kwargs = request.call_args
+        self.assertEqual("/v1/betaGroups/2/relationships/builds", args[3])
+        self.assertEqual({"data": [{"type": "builds", "id": "build-1"}]}, kwargs["body"])
+
+    def test_mixed_groups_only_post_external(self):
+        with mock.patch.object(tool, "api_request", return_value=(200, None)) as request:
+            assigned = tool.assign_build(
+                "https://api.example", "token",
+                [group("1", "Internal", True), group("2", "External", False)], "build-1",
+            )
+        self.assertEqual(1, assigned)
+        self.assertEqual(1, request.call_count)
+        args, _ = request.call_args
+        self.assertEqual("/v1/betaGroups/2/relationships/builds", args[3])
 
 
 @unittest.skipUnless(shutil.which("openssl"), "openssl is required to sign the App Store Connect token")
