@@ -136,7 +136,7 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
                 return (limit, Guid.Empty, null);
             }
 
-            (newChallengeId, code) = CreateChallenge(normalizedEmail, purpose, now);
+            (newChallengeId, code) = CreateChallenge();
             var previousConsent = purpose == RegistrationPurpose
                 ? await dbContext.EmailChallengeSessions.AsNoTracking()
                     .Where(item => item.Id == challengeId && item.Purpose == RegistrationPurpose)
@@ -145,7 +145,9 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
                 : null;
             dbContext.EmailChallengeSessions.Add(new EmailChallengeSessionRecord
             {
-                Id = newChallengeId, NormalizedEmail = normalizedEmail, Purpose = purpose,
+                Id = newChallengeId,
+                NormalizedEmail = normalizedEmail,
+                Purpose = purpose,
                 HmacKeyId = activeHmacKeyId,
                 CodeMac = ComputeCodeMac(activeHmacKeyId, normalizedEmail, purpose, newChallengeId, code),
                 CreatedAtUtc = now,
@@ -245,12 +247,15 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
                 await transaction.RollbackAsync(cancellationToken).ConfigureAwait(false);
                 return (Status: limit, ChallengeId: Guid.Empty, Code: (string?)null);
             }
-            var created = CreateChallenge(normalizedEmail, purpose, now);
+            var created = CreateChallenge();
             dbContext.EmailChallengeSessions.Add(new EmailChallengeSessionRecord
             {
-                Id = created.ChallengeId, NormalizedEmail = normalizedEmail, Purpose = purpose,
+                Id = created.ChallengeId,
+                NormalizedEmail = normalizedEmail,
+                Purpose = purpose,
                 HmacKeyId = activeHmacKeyId,
-                CodeMac = ComputeCodeMac(activeHmacKeyId, normalizedEmail, purpose, created.ChallengeId, created.Code), CreatedAtUtc = now,
+                CodeMac = ComputeCodeMac(activeHmacKeyId, normalizedEmail, purpose, created.ChallengeId, created.Code),
+                CreatedAtUtc = now,
                 ExpiresAtUtc = timeProvider.GetUtcNow().AddMinutes(CodeLifetimeMinutes).UtcDateTime,
                 ResendAvailableAtUtc = timeProvider.GetUtcNow().AddSeconds(ResendCooldownSeconds).UtcDateTime,
                 PrivacyNoticeVersion = privacyConsent?.NoticeVersion,
@@ -327,7 +332,7 @@ public sealed class PostgresEmailChallengeUseCase : IEmailChallengeUseCase
     }
 
     /// <summary>Builds the challenge id and code; only the keyed hash of the code is persisted.</summary>
-    private (Guid ChallengeId, string Code) CreateChallenge(string email, int purpose, DateTime nowUtc)
+    private (Guid ChallengeId, string Code) CreateChallenge()
     {
         var value = RandomNumberGenerator.GetInt32(0, MaximumOtpCodeValueExclusive);
         return (Guid.CreateVersion7(), value.ToString($"D{OtpCodeDigits}", CultureInfo.InvariantCulture));

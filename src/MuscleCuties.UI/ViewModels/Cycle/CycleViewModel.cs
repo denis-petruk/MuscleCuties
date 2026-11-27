@@ -1,17 +1,17 @@
+using System.Diagnostics.CodeAnalysis;
 using Microsoft.Maui.Graphics;
-using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
-using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
-using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Cycle;
 using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
-using System.Diagnostics.CodeAnalysis;
 using MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
 using MuscleCuties.UseCases.Features.Dashboard.Overview;
 using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
 
@@ -22,7 +22,6 @@ namespace MuscleCuties.UI.ViewModels.Cycle;
 public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposable
 {
     private readonly Func<DateTime> _currentDateProvider;
-    private readonly List<CycleHistoryItem> _cycleHistory = new();
     private readonly ICycleDailyLogUseCase _dailyLog;
     private readonly ICyclePhaseProjectionUseCase _phaseProjection;
     private readonly AppPageLoadGate _loadGate = new(AppPageLoadGate.PageFreshnessWindow);
@@ -32,9 +31,7 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     private readonly ICycleOverviewUseCase _overview;
     private readonly ICyclePhaseEditUseCase _phaseEdit;
     private readonly IDashboardOverviewUseCase _dashboardOverview;
-    private readonly List<CyclePhaseEntry> _phaseLogs = new();
     private readonly IProfileRefreshNotifier _refreshNotifier;
-    private readonly List<CycleSymptomEntry> _symptomLogs = new();
     private CyclePredictionSummary? _cachedPrediction;
     [ObservableProperty] private ObservableCollection<CycleDayItem> _calendarDays = new();
     [ObservableProperty] private string _calendarEditHintText = string.Empty;
@@ -42,7 +39,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
 
     [ObservableProperty] private CyclePhase _currentPhase = CyclePhase.Unknown;
     [ObservableProperty] private int _cycleLength;
-    [ObservableProperty] private string _cycleWarningSuggestedActionText =
+    [ObservableProperty]
+    private string _cycleWarningSuggestedActionText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Warning_UseNextPhase");
     private CyclePhase? _cycleWarningSuggestedPhase;
     [ObservableProperty] private string _cycleWarningText = string.Empty;
@@ -51,7 +49,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     [ObservableProperty] private bool _hasActiveCycle;
     [ObservableProperty] private bool _hasPhaseJumpWarning;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
 
     [ObservableProperty] private bool _isCycleWarningPopupVisible;
@@ -59,7 +58,8 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
     [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private bool _isRefreshing;
     private Services.Api.ApiFailureNotice? _lastLoadFailure;
-    [ObservableProperty] private string _lastPhaseLogText =
+    [ObservableProperty]
+    private string _lastPhaseLogText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Cycle_Phase_NoShiftLogged");
     [ObservableProperty] private ObservableCollection<CyclePhaseOptionItem> _phaseEditOptions = new();
     [ObservableProperty] private string _phaseEditStatusText = string.Empty;
@@ -340,9 +340,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
             DaysUntilPeriod = 0;
             _cachedPrediction = null;
             CalendarDays.Clear();
-            _phaseLogs.Clear();
-            _cycleHistory.Clear();
-            _symptomLogs.Clear();
             return;
         }
 
@@ -367,13 +364,6 @@ public partial class CycleViewModel : ObservableObject, IPageLoadAware, IDisposa
         var phaseLogs = overview.PhaseLogs;
         var symptomLogs = overview.Symptoms;
         var cycleHistory = overview.History;
-
-        _phaseLogs.Clear();
-        _phaseLogs.AddRange(phaseLogs);
-        _cycleHistory.Clear();
-        _cycleHistory.AddRange(cycleHistory);
-        _symptomLogs.Clear();
-        _symptomLogs.AddRange(symptomLogs);
 
         var latestPhaseLog = phaseLogs.LastOrDefault(log => log.LoggedAt.Date <= today);
         CalendarDays = BuildCalendarDays(prediction, phaseLogs, cycleHistory, displayedMonth, today, SelectedDate,

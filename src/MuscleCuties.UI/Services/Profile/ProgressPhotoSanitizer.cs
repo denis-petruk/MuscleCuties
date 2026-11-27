@@ -13,7 +13,6 @@ internal static class ProgressPhotoSanitizer
 {
     internal const int MaximumUploadBytes = 15 * 1024 * 1024;
     internal const string OutputExtension = ".jpg";
-    internal const string OutputMimeType = "image/jpeg";
     private const int MaximumSourceBytes = 60 * 1024 * 1024;
     private const int FourCharacterBrandLength = 4;
     private const int FileTypeBoxSizeFieldOffset = 0;

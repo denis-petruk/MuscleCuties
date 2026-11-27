@@ -43,7 +43,7 @@ internal static class MixedActivitySessionDurationRule
         if (ActivitySessionDurationRule.IsCardioActivity(activity))
             return new SessionDurationPreferenceReadResult(true, null, null);
 
-        var duration = decimal.Zero;
+        decimal duration;
         if (savedDurations is null || !savedDurations.TryGetValue(activity, out duration))
         {
             if (WorkoutPreferencesRule.RequiresSessionDuration(activity))

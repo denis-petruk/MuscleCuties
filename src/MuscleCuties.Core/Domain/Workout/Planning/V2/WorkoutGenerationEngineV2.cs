@@ -146,7 +146,7 @@ public static class WorkoutGenerationEngineV2
 
         // Gate 84, 89, 90, 92: Readiness adaptation (DOMS and phase alone never alter dose)
         var (adaptedSessions, readinessApplied, coachExplanation) = ApplyReadinessAdaptation(
-            sessions, input, catalogById, trace);
+            sessions, input, trace);
 
         var finalStatus = limitations.Count == 0
             ? WorkoutGenerationStatusV2.Feasible
@@ -451,14 +451,18 @@ public static class WorkoutGenerationEngineV2
             }
 
             var prescribed = BuildExercisePrescriptions(
-                slots, styleSpec, input, activeRestrictions, nowUtc, trace);
+                slots, styleSpec, input, nowUtc, trace);
 
             if (i == 0 && upperFirst && !alternatingSplit)
             {
                 prescribed = prescribed.Select(exercise => IsLowerPattern(exercise.Pattern)
-                    ? exercise with { WorkingSets = 1, EstimatedMinutes = EstimateSingleExerciseMinutes(
+                    ? exercise with
+                    {
+                        WorkingSets = 1,
+                        EstimatedMinutes = EstimateSingleExerciseMinutes(
                         eligibleCatalog.Single(item => item.ExerciseId == exercise.ExerciseId), exercise.WarmUpSets,
-                        1, exercise.MaxRepetitions, exercise.RestSeconds, 1m) }
+                        1, exercise.MaxRepetitions, exercise.RestSeconds, 1m)
+                    }
                     : exercise).ToList();
                 trace.Add("Rolling7DayInitialLowerVolumeCapped");
             }
@@ -538,9 +542,12 @@ public static class WorkoutGenerationEngineV2
                     }
                     var remaining = removable.session.Exercises.Where((_, index) => index != removable.exerciseIndex)
                         .Select((exercise, index) => exercise with { OrderIndex = index }).ToArray();
-                    sessions[removable.sessionIndex] = removable.session with { Exercises = remaining,
+                    sessions[removable.sessionIndex] = removable.session with
+                    {
+                        Exercises = remaining,
                         PhysicalWorkingSets = remaining.Sum(exercise => exercise.WorkingSets),
-                        EstimatedTotalMinutes = CalculateSessionMinutes(remaining) };
+                        EstimatedTotalMinutes = CalculateSessionMinutes(remaining)
+                    };
                     trace.Add($"WeeklyDirectAccessoryOccurrenceRemoved:{muscle}:{removable.exercise.ExerciseId}");
                     continue;
                 }
@@ -549,11 +556,17 @@ public static class WorkoutGenerationEngineV2
                 var minutes = EstimateSingleExerciseMinutes(byId[exercise.ExerciseId], exercise.WarmUpSets,
                     exercise.WorkingSets - 1, exercise.MaxRepetitions, exercise.RestSeconds, 1m);
                 if (exercise.SupersetGroupId is not null) minutes = Math.Round(minutes * SupersetRestSavingFactor, 2);
-                exercises[candidate.exerciseIndex] = exercise with { WorkingSets = exercise.WorkingSets - 1,
-                    EstimatedMinutes = minutes };
-                sessions[candidate.sessionIndex] = candidate.session with { Exercises = exercises,
+                exercises[candidate.exerciseIndex] = exercise with
+                {
+                    WorkingSets = exercise.WorkingSets - 1,
+                    EstimatedMinutes = minutes
+                };
+                sessions[candidate.sessionIndex] = candidate.session with
+                {
+                    Exercises = exercises,
                     PhysicalWorkingSets = exercises.Sum(item => item.WorkingSets),
-                    EstimatedTotalMinutes = CalculateSessionMinutes(exercises) };
+                    EstimatedTotalMinutes = CalculateSessionMinutes(exercises)
+                };
                 trace.Add($"WeeklyDirectVolumeCapped:{muscle}:{exercise.ExerciseId}");
             }
             if (!allowIncreases) continue;
@@ -580,11 +593,17 @@ public static class WorkoutGenerationEngineV2
                     if (candidate.session.EstimatedTotalMinutes - exercise.EstimatedMinutes + minutes > budgetMinutes)
                         continue;
                     var exercises = candidate.session.Exercises.ToArray();
-                    exercises[candidate.exerciseIndex] = exercise with { WorkingSets = exercise.WorkingSets + 1,
-                        EstimatedMinutes = minutes };
-                    sessions[candidate.sessionIndex] = candidate.session with { Exercises = exercises,
+                    exercises[candidate.exerciseIndex] = exercise with
+                    {
+                        WorkingSets = exercise.WorkingSets + 1,
+                        EstimatedMinutes = minutes
+                    };
+                    sessions[candidate.sessionIndex] = candidate.session with
+                    {
+                        Exercises = exercises,
                         PhysicalWorkingSets = exercises.Sum(item => item.WorkingSets),
-                        EstimatedTotalMinutes = CalculateSessionMinutes(exercises) };
+                        EstimatedTotalMinutes = CalculateSessionMinutes(exercises)
+                    };
                     added = true;
                     trace.Add($"WeeklyDirectSetAdded:{muscle}:{exercise.ExerciseId}");
                     break;
@@ -629,7 +648,6 @@ public static class WorkoutGenerationEngineV2
         List<ExerciseCatalogItemV2> slots,
         StrengthStylePrescriptionSpec styleSpec,
         WorkoutGenerationInputV2 input,
-        PainRestrictionV2[] activeRestrictions,
         DateTimeOffset nowUtc,
         List<string> trace)
     {
@@ -1058,7 +1076,6 @@ public static class WorkoutGenerationEngineV2
     private static (List<PlannedSessionV2> Adapted, bool Applied, string? Explanation) ApplyReadinessAdaptation(
         List<PlannedSessionV2> originalSessions,
         WorkoutGenerationInputV2 input,
-        Dictionary<int, ExerciseCatalogItemV2> catalogById,
         List<string> trace)
     {
         if (!HasPoorReadiness(input.DailyReadiness))

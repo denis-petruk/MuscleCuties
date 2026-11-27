@@ -1,7 +1,7 @@
+using MuscleCuties.UseCases.Features.Cycle.Overview;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
-using MuscleCuties.UseCases.Features.Cycle.Overview;
 
 namespace MuscleCuties.UI.Services.Notifications;
 
@@ -39,7 +39,7 @@ public sealed class CyclePhaseNotificationService : ICyclePhaseNotificationServi
         await _localNotificationService.CancelAsync(BuildNextNotificationId(userId));
 
         CyclePhase currentPhase;
-        CyclePredictionSummary? predictionSummary = null;
+        CyclePredictionSummary predictionSummary;
 
         var todayDate = DateTime.Today;
         var overview = await _cycleOverview.LoadAsync(

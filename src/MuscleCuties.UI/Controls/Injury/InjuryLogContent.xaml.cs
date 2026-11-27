@@ -9,13 +9,12 @@ namespace MuscleCuties.UI.Controls.Injury;
 /// </summary>
 public partial class InjuryLogContent : ContentView
 {
-    private readonly ViewModelSubscription<InjuryLogViewModel> _subscription;
 
     /// <summary>Binds the injury list to its view model.</summary>
     public InjuryLogContent()
     {
         InitializeComponent();
-        _subscription = ViewModelSubscriptionBinding.BindToControl<InjuryLogViewModel>(this,
+        _ = ViewModelSubscriptionBinding.BindToControl<InjuryLogViewModel>(this,
             OnViewModelPropertyChanged);
     }
 

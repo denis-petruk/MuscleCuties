@@ -148,11 +148,6 @@ public partial class QuizViewModel : ObservableObject
     /// <summary>True for the equipment question.</summary>
     public bool IsCurrentQuestionEquipment => CurrentQuestion?.QuestionType == QuizQuestionType.Equipment;
 
-    /// <summary>
-    /// Gate 60: All equipment tiers (Full gym, Home dumbbells/bands, and Bodyweight only) are selectable in onboarding.
-    /// </summary>
-    internal const int BodyweightOnlyEquipmentMappedValue = 3;
-
     /// <summary>Every answer the quiz offers is selectable.</summary>
     internal static bool IsOfferedAnswer(QuizQuestionType questionType, QuizAnswerDto answer) => true;
     /// <summary>The pain questions are answered with a pair of sliders rather than an answer list.</summary>

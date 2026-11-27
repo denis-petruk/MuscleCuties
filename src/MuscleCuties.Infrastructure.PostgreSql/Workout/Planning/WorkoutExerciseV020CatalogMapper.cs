@@ -31,7 +31,7 @@ public static class WorkoutExerciseV020CatalogMapper
             gaps.Add("DemandTagsNotReviewed");
         if (definition.RestrictionMappingsReviewedV020 is not true)
             gaps.Add("RestrictionMappingsNotReviewed");
-        var conditions = ReadReviewConditions(definition.ReviewEvidenceV020Json, gaps);
+        var conditions = ReadReviewConditions(definition.ReviewEvidenceV020Json);
         if (definition.SecondsPerRep == 0 &&
             timingMethods?.Contains(ExerciseTimingMethod.Timed) == true)
             gaps.Add("TimedHoldOrCarryDurationMissing");
@@ -68,7 +68,7 @@ public static class WorkoutExerciseV020CatalogMapper
 
     private static (string? Experience, string? General, bool Present,
         IReadOnlyList<DirectedSubstitutionReview>? Substitutions) ReadReviewConditions(
-        string? json, ICollection<string> gaps)
+        string? json)
     {
         if (string.IsNullOrWhiteSpace(json))
         {

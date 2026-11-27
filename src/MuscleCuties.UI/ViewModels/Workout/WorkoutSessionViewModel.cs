@@ -1,17 +1,17 @@
 using System.Text.RegularExpressions;
+using MuscleCuties.Infrastructure.Services.Workout;
+using MuscleCuties.UI.Models.UI.Workout;
+using MuscleCuties.UI.Services.Api;
+using MuscleCuties.UI.Services.Workout;
+using MuscleCuties.UseCases.Features.Cycle.Overview;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.Session;
+using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
-using MuscleCuties.Infrastructure.Services.Workout;
-using MuscleCuties.UI.Models.UI.Workout;
-using MuscleCuties.UI.Services.Workout;
-using MuscleCuties.UI.Services.Api;
-using MuscleCuties.UseCases.Features.Cycle.Overview;
-using MuscleCuties.UseCases.Features.Workout.Session;
-using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
-using MuscleCuties.UseCases.Features.Workout.ActiveSession;
-using MuscleCuties.UseCases.Features.Workout.Planning;
-using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
@@ -60,22 +60,26 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isPainReportVisible;
     public bool HasPainReports => _painReportedIds.Count > 0;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivities), nameof(HasActivityChoices))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoActivities), nameof(HasActivityChoices))]
     private ObservableCollection<WorkoutActivitySectionItem> _activityCards = [];
 
     [ObservableProperty] private string _activityIntroIntensity = string.Empty;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasNoActivityPrescription))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoActivityPrescription))]
     private string _activityPrescriptionText = string.Empty;
     private string _sessionWarmupText = string.Empty;
     private string _sessionFinisherText = string.Empty;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasCelebration))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCelebration))]
     private CelebrationType _celebration;
 
     [ObservableProperty] private string _celebrationText = string.Empty;
     [ObservableProperty] private WorkoutExerciseItem? _currentExercise;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ExercisePositionText))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExercisePositionText))]
     private int _currentExerciseIndex;
 
     [ObservableProperty]
@@ -86,20 +90,23 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     private SessionScreen _currentScreen;
 
     [ObservableProperty] private string _cyclePhaseNote = string.Empty;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasDoseAdjustmentNote))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasDoseAdjustmentNote))]
     private string _doseAdjustmentNote = string.Empty;
     /// <summary>True when a dose adjustment note is shown.</summary>
     public bool HasDoseAdjustmentNote => !string.IsNullOrWhiteSpace(DoseAdjustmentNote);
     [ObservableProperty] private string _dayTitle = "Workout";
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError), nameof(CanRetryLoad), nameof(HasNoActivities),
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError), nameof(CanRetryLoad), nameof(HasNoActivities),
         nameof(HasActivityChoices))]
     private string _errorText = string.Empty;
 
     [ObservableProperty] private ObservableCollection<string> _exercisePreviewNames = [];
     [ObservableProperty] private ObservableCollection<SessionExerciseProgress> _exerciseProgress = [];
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanInteract), nameof(CanAbandonPlannedSession), nameof(HasNoActivities),
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanInteract), nameof(CanAbandonPlannedSession), nameof(HasNoActivities),
         nameof(HasActivityChoices), nameof(CanPauseTimedActivity), nameof(CanResumeTimedActivity))]
     private bool _isBusy;
     [ObservableProperty] private bool _isActivityComplete;
@@ -107,20 +114,23 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [ObservableProperty] private bool _isRestTimerRunning;
     [ObservableProperty] private bool _isRestTimerVisible;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowNoSwapCandidates))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowNoSwapCandidates))]
     private bool _isSwapLoading;
 
     [ObservableProperty] private string _swapEmptyTextKey = "Workout_Swap_NoAlternativesAvailable";
 
     [ObservableProperty] private bool _isSwapPanelVisible;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(TipsButtonText))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TipsButtonText))]
     private bool _isTipsExpanded;
 
     private int _loadVersion;
     private CancellationTokenSource? _restTimerCancellation;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(RestTimerDisplay), nameof(RestTimerProgress))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RestTimerDisplay), nameof(RestTimerProgress))]
     private int _restTimerRemainingSeconds;
 
     [ObservableProperty] private int _restTimerTotalSeconds;
@@ -139,29 +149,35 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _summaryTitle = "Workout_Session_SummaryCompleteTitle";
     [ObservableProperty] private string _summaryTotalVolume = "0 kg";
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasSwapCandidates), nameof(ShowNoSwapCandidates))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSwapCandidates), nameof(ShowNoSwapCandidates))]
     private ObservableCollection<ExerciseSwapOption> _swapCandidates = [];
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasSwapError), nameof(ShowNoSwapCandidates))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSwapError), nameof(ShowNoSwapCandidates))]
     private string _swapErrorText = string.Empty;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanDismissSwap), nameof(SwapConfirmText))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanDismissSwap), nameof(SwapConfirmText))]
     private bool _swapNeedsReload;
 
     [ObservableProperty] private string _swapTargetName = string.Empty;
     private int _swapVersion;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ExercisePositionText))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ExercisePositionText))]
     private int _totalExercisesInActivity;
 
     [ObservableProperty] private bool _isMovementNoteOpen;
     [ObservableProperty] private bool _isMovementNoteBusy;
     [ObservableProperty] private string _movementNoteText = string.Empty;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasMovementNoteError))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMovementNoteError))]
     private string _movementNoteErrorText = string.Empty;
     /// <summary>True when saving the movement note failed.</summary>
     public bool HasMovementNoteError => !string.IsNullOrWhiteSpace(MovementNoteErrorText);
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasMovementNoteStatus))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasMovementNoteStatus))]
     private string _movementNoteStatusText = string.Empty;
     /// <summary>True when a movement note status is shown.</summary>
     public bool HasMovementNoteStatus => !string.IsNullOrWhiteSpace(MovementNoteStatusText);
@@ -191,7 +207,8 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
     [NotifyPropertyChangedFor(nameof(IsTimedActivityActive), nameof(CanPauseTimedActivity),
         nameof(CanResumeTimedActivity), nameof(TimedActivityStateKey))]
     private bool _isTimedActivityRunning;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanStartActivity))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanStartActivity))]
     private bool _isActivityUnsafe;
 
     // Timed running surface. One timing authority stays behind these values: confirmed server time
@@ -1319,16 +1336,16 @@ public partial class WorkoutSessionViewModel : ObservableObject, IDisposable
 
     /// <summary>Completes the session under a gate that refuses to run twice, so a double tap cannot post two</summary>
     /// completions.</summary>
-    private async Task<bool> CompletePlannedSessionAsync(int? timedActivitySeconds = null)
+    private async Task<bool> CompletePlannedSessionAsync()
     {
         if (!await _completionGate.WaitAsync(NoCompletionWaitMilliseconds)) return false;
-        try { return await CompletePlannedSessionCoreAsync(timedActivitySeconds); }
+        try { return await CompletePlannedSessionCoreAsync(); }
         finally { _completionGate.Release(); }
     }
 
     /// <summary>Posts the completion, records the celebration and leaves the page; refuses while busy or without a</summary>
     /// session to complete.</summary>
-    private async Task<bool> CompletePlannedSessionCoreAsync(int? timedActivitySeconds = null)
+    private async Task<bool> CompletePlannedSessionCoreAsync()
     {
         if (IsBusy || _plannedSessionId is not { } sessionId) return false;
         _timingLoopCancellation?.Cancel();

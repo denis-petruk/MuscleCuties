@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Text.Json;
-using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using MuscleCuties.DbMaintenance;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
@@ -392,7 +392,7 @@ public static class DatabaseMaintenance
         using var process = Process.Start(psi)
             ?? throw new InvalidOperationException($"Failed to start child command: {childCmd}");
 
-        ConsoleCancelEventHandler cancelHandler = (s, e) =>
+        ConsoleCancelEventHandler cancelHandler = (_, _) =>
         {
             try { if (!process.HasExited) process.Kill(true); } catch { }
         };

@@ -65,13 +65,12 @@ public partial class PageLoadingOverlay : ContentView
 
     private const string DefaultErrorMessageKey = "Dashboard_Shared_CouldNotLoadData";
 
-    private readonly ViewModelSubscription<INotifyPropertyChanged> _subscription;
 
     /// <summary>Initializes the overlay and follows its view model's loading state.</summary>
     public PageLoadingOverlay()
     {
         InitializeComponent();
-        _subscription = ViewModelSubscriptionBinding.BindToControl<INotifyPropertyChanged>(this,
+        _ = ViewModelSubscriptionBinding.BindToControl<INotifyPropertyChanged>(this,
             OnViewModelPropertyChanged);
         BindingContextChanged += (_, _) =>
         {
