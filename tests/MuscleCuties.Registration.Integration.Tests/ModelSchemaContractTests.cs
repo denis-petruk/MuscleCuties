@@ -1,3 +1,4 @@
+using System.Text;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using Xunit;
@@ -60,20 +61,31 @@ public sealed class ModelSchemaContractTests
     [PostgresFact]
     public async Task MigrationChain_ContainsBaseSchemaFingerprintAndScheduleSeam()
     {
-        var rehearsal = await PostgresSchemaMigrations.RehearseChainAsync();
-        Assert.Equal(12, rehearsal.Count);
-        Assert.Equal("001_base_schema.sql", rehearsal[0].ScriptName);
-        Assert.Equal("002_schema_fingerprint.sql", rehearsal[1].ScriptName);
-        Assert.Equal("003_schedule_seam.sql", rehearsal[2].ScriptName);
-        Assert.Equal("004_session_distance.sql", rehearsal[3].ScriptName);
-        Assert.Equal("005_observed_set_actuals.sql", rehearsal[4].ScriptName);
-        Assert.Equal("006_exercise_definition_source_id.sql", rehearsal[5].ScriptName);
-        Assert.Equal("007_deload_offer_idempotency.sql", rehearsal[6].ScriptName);
-        Assert.Equal("008_glute_focus.sql", rehearsal[7].ScriptName);
-        Assert.Equal("009_checkin_fatigue.sql", rehearsal[8].ScriptName);
-        Assert.Equal("010_unilateral_observed_sets.sql", rehearsal[9].ScriptName);
-        Assert.Equal("011_pain_reassessment_timestamps.sql", rehearsal[10].ScriptName);
-        Assert.Equal("012_drop_food_sync_logs.sql", rehearsal[11].ScriptName);
+        var chain = PostgresSchemaMigrations.Scripts;
+        Assert.Equal(12, chain.Count);
+        Assert.Equal("001_base_schema.sql", chain[0].ScriptName);
+        Assert.Equal("002_schema_fingerprint.sql", chain[1].ScriptName);
+        Assert.Equal("003_schedule_seam.sql", chain[2].ScriptName);
+        Assert.Equal("004_session_distance.sql", chain[3].ScriptName);
+        Assert.Equal("005_observed_set_actuals.sql", chain[4].ScriptName);
+        Assert.Equal("006_exercise_definition_source_id.sql", chain[5].ScriptName);
+        Assert.Equal("007_deload_offer_idempotency.sql", chain[6].ScriptName);
+        Assert.Equal("008_glute_focus.sql", chain[7].ScriptName);
+        Assert.Equal("009_checkin_fatigue.sql", chain[8].ScriptName);
+        Assert.Equal("010_unilateral_observed_sets.sql", chain[9].ScriptName);
+        Assert.Equal("011_pain_reassessment_timestamps.sql", chain[10].ScriptName);
+        Assert.Equal("012_drop_food_sync_logs.sql", chain[11].ScriptName);
+
+        // Every script is reachable, strictly ordered and non-empty: the chain a deployed environment walks.
+        var assembly = typeof(PostgresSchemaMigrations).Assembly;
+        for (var index = 0; index < chain.Count; index++)
+        {
+            Assert.Equal(index + 1, chain[index].Version);
+            await using var stream = assembly.GetManifestResourceStream(chain[index].ResourceName);
+            Assert.NotNull(stream);
+            using var reader = new StreamReader(stream!, Encoding.UTF8);
+            Assert.False(string.IsNullOrWhiteSpace(await reader.ReadToEndAsync()));
+        }
     }
 
     private static PostgresDbContext CreateContext()

@@ -46,18 +46,18 @@ public sealed class StrengthStyleOfferStoreIntegrationTests
             await store.CreateInCurrentTransactionAsync(userId, planId, Guid.NewGuid(), CurrentStyleId,
                 [AlternativeStyleId], CancellationToken.None);
 
-            var active = await database.StrengthStyleOffers.AsNoTracking()
+            var active = await database.Set<StrengthStyleOfferRecord>().AsNoTracking()
                 .Where(row => row.UserId == userId && row.DismissedAtUtc == null).ToListAsync();
             Assert.Single(active);
             Assert.Equal(firstRevision, active[0].RevisionId);
 
             // Dismissing the offer frees the plan for a genuinely new prompt.
-            var stored = await database.StrengthStyleOffers.SingleAsync(row => row.Id == active[0].Id);
+            var stored = await database.Set<StrengthStyleOfferRecord>().SingleAsync(row => row.Id == active[0].Id);
             stored.DismissedAtUtc = now;
             await database.SaveChangesAsync();
             await store.CreateInCurrentTransactionAsync(userId, planId, Guid.NewGuid(), CurrentStyleId,
                 [AlternativeStyleId], CancellationToken.None);
-            Assert.Equal(2, await database.StrengthStyleOffers.AsNoTracking()
+            Assert.Equal(2, await database.Set<StrengthStyleOfferRecord>().AsNoTracking()
                 .CountAsync(row => row.UserId == userId));
 
             // A different plan keeps its own single active offer.
@@ -66,7 +66,7 @@ public sealed class StrengthStyleOfferStoreIntegrationTests
                 [AlternativeStyleId], CancellationToken.None);
             await store.CreateInCurrentTransactionAsync(userId, otherPlanId, Guid.NewGuid(), CurrentStyleId,
                 [AlternativeStyleId], CancellationToken.None);
-            Assert.Single(await database.StrengthStyleOffers.AsNoTracking()
+            Assert.Single(await database.Set<StrengthStyleOfferRecord>().AsNoTracking()
                 .Where(row => row.UserId == userId && row.PlanId == otherPlanId && row.DismissedAtUtc == null)
                 .ToListAsync());
         }

@@ -48,9 +48,6 @@ public sealed class BarcodeScanCoordinator : IDisposable
     /// <summary>True when the device has a camera.</summary>
     public bool HasCamera => _hardware is not null;
 
-    /// <summary>The current scan revision, bumped for each scan.</summary>
-    public int Revision => _revision;
-
     /// <summary>True when the revision is still the current scan.</summary>
     public bool IsCurrent(int revision) => revision == _revision;
 

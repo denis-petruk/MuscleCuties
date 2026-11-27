@@ -150,31 +150,6 @@ public static class PostgresSchemaMigrations
     /// </summary>
     public static IReadOnlyList<MigrationScriptDefinition> Scripts => OrderedScripts;
 
-    /// <summary>
-    /// Rehearses and verifies the versioned evolution chain offline, validating that all
-    /// embedded scripts exist, are non-empty, follow strict monotonic ordering, and yield valid SHA-256 checksums.
-    /// </summary>
-    public static async Task<IReadOnlyList<MigrationExecutionResult>> RehearseChainAsync(
-        CancellationToken cancellationToken = default)
-    {
-        var results = new List<MigrationExecutionResult>();
-        for (var i = 0; i < OrderedScripts.Count; i++)
-        {
-            var script = OrderedScripts[i];
-            if (script.Version != i + 1)
-                throw new InvalidOperationException($"Migration script {script.ScriptName} has non-monotonic version {script.Version}. Expected {i + 1}.");
-
-            var sqlContent = await ReadScriptAsync(script.ResourceName, cancellationToken).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(sqlContent))
-                throw new InvalidOperationException($"Migration script {script.ScriptName} is empty or whitespace.");
-
-            var checksum = ComputeSha256Hex(sqlContent);
-            results.Add(new MigrationExecutionResult(script.Version, script.ScriptName, checksum, AlreadyApplied: false));
-        }
-
-        return results;
-    }
-
     /// <summary>Applies the pending schema migrations.</summary>
     public static async Task<SchemaMigrationSummary> ApplyMigrationsAsync(
         PostgresDbContext context,
