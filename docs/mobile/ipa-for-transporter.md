@@ -177,11 +177,14 @@ App Store Connect to finish processing the build number, and assigns external gr
 key is still staged. Internal beta groups receive every build automatically and App Store Connect
 rejects explicit attempts to add a build to them, so the tool reports those groups without a POST.
 
-Without configuration it selects **every internal beta group** (automatic, no assignment call).
-To target one group instead, set the repository variable `TESTFLIGHT_GROUP` (Settings → Secrets and
-variables → Actions → Variables) to its exact name; an internal name is reported as automatic,
-an external name is explicitly assigned, and an unknown name fails the job and lists the available
-groups. External groups additionally need Beta App Review before their testers are notified.
+Without configuration it selects **every beta group of the app**: internal groups are reported as
+automatic (no assignment call, since App Store Connect adds every build to them itself), external
+groups get the build assigned and the same build is submitted for Beta App Review — external
+testers cannot install it before Apple approves it. An existing review submission is reported
+rather than repeated. To target one group instead, set the repository variable
+`TESTFLIGHT_GROUP` (Settings → Secrets and variables → Actions → Variables) to its exact name; an
+internal name is reported as automatic, an external name is assigned and submitted, and an
+unknown name fails the job and lists the available groups.
 
 ### When the secrets are absent
 
