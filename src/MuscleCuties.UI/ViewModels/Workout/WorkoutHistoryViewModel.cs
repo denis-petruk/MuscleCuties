@@ -64,7 +64,8 @@ public partial class WorkoutHistoryViewModel : ObservableObject
 
     [ObservableProperty] private bool _isStatusVisible;
 
-    [ObservableProperty] private string _lifetimeVolumeFormatted =
+    [ObservableProperty]
+    private string _lifetimeVolumeFormatted =
         UiTextCatalog.Format("Workout_History_ValueKgFormat", "0");
 
     [ObservableProperty] private double _lifetimeVolumeKg;
@@ -127,7 +128,8 @@ public partial class WorkoutHistoryViewModel : ObservableObject
             if (AvailableMonths.Count == 0)
             {
                 var allItem = new MonthFilterItem(
-                    0, 0, UiTextCatalog.Get("Workout_History_AllMonths"), true) { IsSelected = true };
+                    0, 0, UiTextCatalog.Get("Workout_History_AllMonths"), true)
+                { IsSelected = true };
                 AvailableMonths.Add(allItem);
                 SelectedMonth = allItem;
 

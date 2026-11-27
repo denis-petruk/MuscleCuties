@@ -1,11 +1,11 @@
+using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Domain.Workout.Planning.Catalog;
-using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Workout.Planning;
 

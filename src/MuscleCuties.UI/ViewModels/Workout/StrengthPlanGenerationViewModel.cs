@@ -5,15 +5,15 @@ using MuscleCuties.UI.Pages.Profile;
 using MuscleCuties.UI.Services.Api;
 using MuscleCuties.UI.Services.Navigation;
 using MuscleCuties.UI.Services.Workout;
-using MuscleCuties.UI.ViewModels.Profile;
 using MuscleCuties.UI.ViewModels.Common;
-using MuscleCuties.UseCases.Features.Workout.Archive;
+using MuscleCuties.UI.ViewModels.Profile;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
+using MuscleCuties.UseCases.Features.Workout.Archive;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
@@ -506,8 +506,11 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
               ShouldShowHiitUnderlyingCardioChoice || HasFittingStrengthStyleChoices
             : HasNoSafeActivityPreview);
     /// <summary>A preview the plan refused for safety or missing answers, but not one that is merely infeasible.</summary>
-    public bool HasNoSafeActivityPreview => Preview is { Status: not "Feasible" and not "RequiredAnswersMissing" and
-        not "StrengthStyleChoiceRequired" } preview &&
+    public bool HasNoSafeActivityPreview => Preview is
+    {
+        Status: not "Feasible" and not "RequiredAnswersMissing" and
+        not "StrengthStyleChoiceRequired"
+    } preview &&
         (preview.MixedActivitySchedule?.Sessions.Count ?? NoPolicyReasons) == NoPolicyReasons;
     /// <summary>Whether applying would replace a plan the user already trains with, which needs saying before it happens.</summary>
     public bool HasExistingPlan => _hasExistingPlan || (_proposal?.ReplacesExistingPlan == true);
@@ -1299,30 +1302,30 @@ public partial class StrengthPlanGenerationViewModel : ObservableObject, IPageLo
             ? LocalizedFormat.Format(
                 "Workout_Generation_RestDaysSummaryFormat", string.Join(" · ", restDays))
             : NoStatusMessage;
-            ActivityDecisions = new ObservableCollection<MixedActivityDecisionDisplay>(
-                mixedSchedule?.Activities
-                    .Where(decision => decision.ActivityTypeId != (int)WorkoutActivityDto.RestDay)
-                    .Select(StrengthPlanGenerationDisplayMapper.ToMixedActivityDecisionDisplay) ??
-                Array.Empty<MixedActivityDecisionDisplay>());
-            ScheduleInputReasons = new ObservableCollection<string>(
-                mixedSchedule?.InputReasonCodes
-                    .Where(code => !StrengthPlanGenerationDisplayMapper.IsInformationalDiagnosticCode(code))
-                    .Select(StrengthPlanGenerationDisplayMapper.ScheduleReasonMessage)
-                    .Distinct() ??
-                Array.Empty<string>());
-            PreviewLimitations = new ObservableCollection<string>(HasLimitation
-                ? [PreviewLimitationMessage]
-                : []);
-            PreviewNotes = new ObservableCollection<string>(BuildPreviewNotes());
-            StatusMessage = preview.Status == "Feasible" && (_proposal?.IsPersisted ?? false)
-            ? preview.AdvisoryCodes.Contains("NoSafeStrengthStyleFit")
-                ? UiTextCatalog.Get("Workout_Generation_Reason_NoSafeStrengthContentRemaining")
-                : HasOptionalOmissions
-                ? UiTextCatalog.Get(OptionalActivitiesSkippedKey)
-                : NoStatusMessage
-            : preview.Status == "Feasible"
-                ? UiTextCatalog.Get(PreviewNotSavedKey)
-                : NoStatusMessage;
+        ActivityDecisions = new ObservableCollection<MixedActivityDecisionDisplay>(
+            mixedSchedule?.Activities
+                .Where(decision => decision.ActivityTypeId != (int)WorkoutActivityDto.RestDay)
+                .Select(StrengthPlanGenerationDisplayMapper.ToMixedActivityDecisionDisplay) ??
+            Array.Empty<MixedActivityDecisionDisplay>());
+        ScheduleInputReasons = new ObservableCollection<string>(
+            mixedSchedule?.InputReasonCodes
+                .Where(code => !StrengthPlanGenerationDisplayMapper.IsInformationalDiagnosticCode(code))
+                .Select(StrengthPlanGenerationDisplayMapper.ScheduleReasonMessage)
+                .Distinct() ??
+            Array.Empty<string>());
+        PreviewLimitations = new ObservableCollection<string>(HasLimitation
+            ? [PreviewLimitationMessage]
+            : []);
+        PreviewNotes = new ObservableCollection<string>(BuildPreviewNotes());
+        StatusMessage = preview.Status == "Feasible" && (_proposal?.IsPersisted ?? false)
+        ? preview.AdvisoryCodes.Contains("NoSafeStrengthStyleFit")
+            ? UiTextCatalog.Get("Workout_Generation_Reason_NoSafeStrengthContentRemaining")
+            : HasOptionalOmissions
+            ? UiTextCatalog.Get(OptionalActivitiesSkippedKey)
+            : NoStatusMessage
+        : preview.Status == "Feasible"
+            ? UiTextCatalog.Get(PreviewNotSavedKey)
+            : NoStatusMessage;
 
         NotifyPreviewChanged();
     }

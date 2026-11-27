@@ -331,8 +331,11 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
                 item => item.UserId == userId, cancellationToken).ConfigureAwait(false);
             dbContext.UserProfileSnapshots.Add(new UserProfileSnapshotRecord
             {
-                Id = Guid.CreateVersion7(), UserId = userId, SnapshotReason = "WorkoutPreferencesApply",
-                ProfileJson = JsonSerializer.Serialize(profile), CreatedAt = nowUtc
+                Id = Guid.CreateVersion7(),
+                UserId = userId,
+                SnapshotReason = "WorkoutPreferencesApply",
+                ProfileJson = JsonSerializer.Serialize(profile),
+                CreatedAt = nowUtc
             });
             profile.PreferredWorkoutActivityTypes = string.Join(',', draft.ActivityTypes
                 .Select(value => ((WorkoutActivityType)value).ToString()).OrderBy(value => value, StringComparer.Ordinal));
@@ -400,60 +403,74 @@ public sealed class PostgresAcceptStrengthPlanProposalStoreV020(PostgresDbContex
             (DaysPerWeek + scheduleSessions.Length));
         var exercises = new List<WorkoutDayExerciseRecord>();
         for (var weekIndex = 0; weekIndex < OverviewScheduleWeeks; weekIndex++)
-        for (var dayOffset = 0; dayOffset < DaysPerWeek; dayOffset++)
-        {
-            var date = weekStart.AddDays(weekIndex * DaysPerWeek + dayOffset);
-            if (date < firstDate.Value) continue;
-            var weekday = date.DayOfWeek;
-            if (!sessionsByWeekday.TryGetValue(weekday, out var sessionsForDay))
+            for (var dayOffset = 0; dayOffset < DaysPerWeek; dayOffset++)
             {
-                planDays.Add(new WorkoutDayRecord
+                var date = weekStart.AddDays(weekIndex * DaysPerWeek + dayOffset);
+                if (date < firstDate.Value) continue;
+                var weekday = date.DayOfWeek;
+                if (!sessionsByWeekday.TryGetValue(weekday, out var sessionsForDay))
                 {
-                    Id = Guid.CreateVersion7(), UserId = userId, WorkoutPlanId = plan.Id,
-                    DayOfWeek = (int)weekday, WorkoutType = nameof(WorkoutType.Rest),
-                    Name = RestDayName, WeekIndex = weekIndex, Date = date
-                });
-                continue;
-            }
-
-            foreach (var scheduledSession in sessionsForDay)
-            {
-                if (date == today && sameDayStartOrder is { } startOrder &&
-                    scheduledSession.DayOrder < startOrder) continue;
-                var activity = (WorkoutActivityType)scheduledSession.ActivityTypeId;
-                var dayId = Guid.CreateVersion7();
-                planDays.Add(new WorkoutDayRecord
-                {
-                    Id = dayId, UserId = userId, WorkoutPlanId = plan.Id,
-                    DayOfWeek = (int)weekday, WorkoutType = ToWorkoutType(activity),
-                    ActivityTypeId = scheduledSession.ActivityTypeId, DayOrder = scheduledSession.DayOrder,
-                    Name = ActivityName(activity), WeekIndex = weekIndex, Date = date,
-                    PlannedMainDurationMinutes = scheduledSession.DurationMinutes,
-                    PlannedActivityPrescriptionJson = ActivityOccurrencePrescription.Serialize(
-                        scheduledSession.OccurrencePrescription ?? proposalSnapshot.MixedActivitySchedule!.Activities
-                            .Single(decision => decision.ActivityTypeId == scheduledSession.ActivityTypeId).OriginalPrescription)
-                });
-
-                if (!IsStrengthActivity(activity) ||
-                    !strengthSessions.TryGetValue(weekday, out var strengthSession)) continue;
-
-                foreach (var slot in strengthSession.Slots.Where(slot => slot.ExerciseId.HasValue &&
-                    slot.Sets is >= MinimumExerciseSetCount &&
-                    slot.MinimumRepetitions is >= MinimumRepetitionCount))
-                    exercises.Add(new WorkoutDayExerciseRecord
+                    planDays.Add(new WorkoutDayRecord
                     {
-                        Id = Guid.CreateVersion7(), UserId = userId, WorkoutDayId = dayId,
-                        ExerciseId = slot.ExerciseId!.Value,
-                        PlanningTemplateId = strengthSession.TemplateId,
-                        PlanningTemplateVersion = strengthSession.TemplateVersion,
-                        PlanningSlotId = slot.SlotId,
-                        PlanningSessionIndex = strengthSession.SessionIndex,
-                        Sets = slot.Sets!.Value, Reps = slot.MinimumRepetitions!.Value,
-                        TargetRepetitionsInReserve = slot.RepetitionsInReserve,
-                        IsOptional = !slot.IsRequired
+                        Id = Guid.CreateVersion7(),
+                        UserId = userId,
+                        WorkoutPlanId = plan.Id,
+                        DayOfWeek = (int)weekday,
+                        WorkoutType = nameof(WorkoutType.Rest),
+                        Name = RestDayName,
+                        WeekIndex = weekIndex,
+                        Date = date
                     });
+                    continue;
+                }
+
+                foreach (var scheduledSession in sessionsForDay)
+                {
+                    if (date == today && sameDayStartOrder is { } startOrder &&
+                        scheduledSession.DayOrder < startOrder) continue;
+                    var activity = (WorkoutActivityType)scheduledSession.ActivityTypeId;
+                    var dayId = Guid.CreateVersion7();
+                    planDays.Add(new WorkoutDayRecord
+                    {
+                        Id = dayId,
+                        UserId = userId,
+                        WorkoutPlanId = plan.Id,
+                        DayOfWeek = (int)weekday,
+                        WorkoutType = ToWorkoutType(activity),
+                        ActivityTypeId = scheduledSession.ActivityTypeId,
+                        DayOrder = scheduledSession.DayOrder,
+                        Name = ActivityName(activity),
+                        WeekIndex = weekIndex,
+                        Date = date,
+                        PlannedMainDurationMinutes = scheduledSession.DurationMinutes,
+                        PlannedActivityPrescriptionJson = ActivityOccurrencePrescription.Serialize(
+                            scheduledSession.OccurrencePrescription ?? proposalSnapshot.MixedActivitySchedule!.Activities
+                                .Single(decision => decision.ActivityTypeId == scheduledSession.ActivityTypeId).OriginalPrescription)
+                    });
+
+                    if (!IsStrengthActivity(activity) ||
+                        !strengthSessions.TryGetValue(weekday, out var strengthSession)) continue;
+
+                    foreach (var slot in strengthSession.Slots.Where(slot => slot.ExerciseId.HasValue &&
+                        slot.Sets is >= MinimumExerciseSetCount &&
+                        slot.MinimumRepetitions is >= MinimumRepetitionCount))
+                        exercises.Add(new WorkoutDayExerciseRecord
+                        {
+                            Id = Guid.CreateVersion7(),
+                            UserId = userId,
+                            WorkoutDayId = dayId,
+                            ExerciseId = slot.ExerciseId!.Value,
+                            PlanningTemplateId = strengthSession.TemplateId,
+                            PlanningTemplateVersion = strengthSession.TemplateVersion,
+                            PlanningSlotId = slot.SlotId,
+                            PlanningSessionIndex = strengthSession.SessionIndex,
+                            Sets = slot.Sets!.Value,
+                            Reps = slot.MinimumRepetitions!.Value,
+                            TargetRepetitionsInReserve = slot.RepetitionsInReserve,
+                            IsOptional = !slot.IsRequired
+                        });
+                }
             }
-        }
 
         await PostgresCanonicalOccurrenceAdjustment.ApplyAsync(dbContext, userId, activePlanId,
             today, firstDate.Value, zone, proposalSnapshot.Sessions, planDays, exercises,

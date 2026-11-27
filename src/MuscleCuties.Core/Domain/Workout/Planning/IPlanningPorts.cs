@@ -1,5 +1,3 @@
-using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Workout.Planning;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
@@ -20,16 +18,6 @@ public interface IPlanningClockPort
 public interface IPlanningCatalogPort
 {
     IReadOnlyList<StrengthTemplateDefinition> GetTemplatesForSchedule(int strengthDaysPerWeek);
-}
-
-/// <summary>
-/// Explicit injury and clinical safety port validating activity contraindications and movement clearance.
-/// </summary>
-public interface IPlanningSafetyPort
-{
-    IReadOnlySet<WorkoutActivityType> EvaluateRestrictedActivities(IEnumerable<Injury>? injuries);
-    bool IsMovementPatternAllowed(MovementPattern pattern, IReadOnlySet<MovementPattern>? blockedPatterns);
-    bool IsActivityRestricted(WorkoutActivityType activity, IReadOnlySet<WorkoutActivityType>? restrictedActivities, bool hasCurrentSymptoms);
 }
 
 /// <summary>
@@ -58,22 +46,4 @@ public sealed class DefaultPlanningCatalogPort : IPlanningCatalogPort
     /// <summary>Strength templates for a week with the given number of strength days.</summary>
     public IReadOnlyList<StrengthTemplateDefinition> GetTemplatesForSchedule(int strengthDaysPerWeek) =>
         StrengthTemplateCatalog.ForSchedule(strengthDaysPerWeek);
-}
-
-/// <summary>
-/// Applies the reviewed injury and symptom safety rules to planning requests.
-/// </summary>
-public sealed class DefaultPlanningSafetyPort : IPlanningSafetyPort
-{
-    /// <summary>Activities the current injuries rule out.</summary>
-    public IReadOnlySet<WorkoutActivityType> EvaluateRestrictedActivities(IEnumerable<Injury>? injuries) =>
-        InjuryActivityRestrictionRule.GetBlockedActivities(injuries);
-
-    /// <summary>True when the movement pattern is not blocked by the current restrictions.</summary>
-    public bool IsMovementPatternAllowed(MovementPattern pattern, IReadOnlySet<MovementPattern>? blockedPatterns) =>
-        blockedPatterns is null || !blockedPatterns.Contains(pattern);
-
-    /// <summary>True when the activity is restricted for this profile.</summary>
-    public bool IsActivityRestricted(WorkoutActivityType activity, IReadOnlySet<WorkoutActivityType>? restrictedActivities, bool hasCurrentSymptoms) =>
-        restrictedActivities?.Contains(activity) ?? hasCurrentSymptoms;
 }

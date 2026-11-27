@@ -41,31 +41,6 @@ internal static class DatabaseOperationGate
         }
     }
 
-    /// <summary>Runs an operation that leaves the database — a network read — with the gate released around the wait.</summary>
-    internal static async Task<T> AwaitExternalAsync<T>(Func<Task<T>> operation)
-    {
-        var lease = CurrentLease.Value;
-        if (lease is null)
-            return await operation().ConfigureAwait(false);
-
-        if (Volatile.Read(ref lease.Active) != 1)
-            throw new InvalidOperationException("A completed database operation cannot yield its gate.");
-
-        if (Interlocked.Exchange(ref lease.Held, 0) != 1)
-            throw new InvalidOperationException("The database gate has already been yielded.");
-
-        Gate.Release();
-        try
-        {
-            return await operation().ConfigureAwait(false);
-        }
-        finally
-        {
-            await Gate.WaitAsync().ConfigureAwait(false);
-            Volatile.Write(ref lease.Held, 1);
-        }
-    }
-
     /// <summary>The gate's lease, which is what lets the external wait release and re-acquire in order.</summary>
     private sealed class Lease
     {

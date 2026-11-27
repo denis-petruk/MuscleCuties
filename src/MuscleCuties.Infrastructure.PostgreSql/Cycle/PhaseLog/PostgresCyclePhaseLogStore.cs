@@ -3,8 +3,8 @@ using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
-using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 using MuscleCuties.UseCases.Features.Cycle.Contracts;
+using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
 

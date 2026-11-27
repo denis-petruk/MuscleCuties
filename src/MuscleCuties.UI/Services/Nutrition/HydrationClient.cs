@@ -92,6 +92,13 @@ public sealed class HydrationClient(IMuscleCutiesBackendApiClient api, IBackendS
     internal Task<HydrationReminder> SaveReminderAsync(string? version, bool optedIn, IReadOnlyList<TimeOnly> times,
         TimeOnly? quietStart, TimeOnly? quietEnd, Guid operationId, CancellationToken ct) =>
         NutritionPresentationMapper.SaveHydrationReminderAsync(api, RemindersRoute,
-            new { ExpectedVersion = version, OptedIn = optedIn, LocalTimes = times, QuietStart = quietStart,
-                QuietEnd = quietEnd, OperationId = operationId }, operationId, ct);
+            new
+            {
+                ExpectedVersion = version,
+                OptedIn = optedIn,
+                LocalTimes = times,
+                QuietStart = quietStart,
+                QuietEnd = quietEnd,
+                OperationId = operationId
+            }, operationId, ct);
 }

@@ -480,7 +480,7 @@ public sealed class OpenSourceMealGenerator(
         string? excludeConceptName,
         int seedIndex)
     {
-        var startIndex = 0;
+        int startIndex;
         if (!string.IsNullOrWhiteSpace(excludeConceptName))
         {
             var matchedIndex = Array.FindIndex(blueprints, blueprint =>

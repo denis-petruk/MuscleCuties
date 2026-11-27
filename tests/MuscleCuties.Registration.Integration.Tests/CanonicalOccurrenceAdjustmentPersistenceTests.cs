@@ -54,39 +54,89 @@ public sealed class CanonicalOccurrenceAdjustmentPersistenceTests
         var endExclusive = DeloadStart.AddDays(CanonicalOccurrenceAdjustmentRule.DeloadDurationDays);
         database.Users.Add(new UserRecord
         {
-            Id = userId, Email = $"deload-{userId:N}@example.invalid",
+            Id = userId,
+            Email = $"deload-{userId:N}@example.invalid",
             Username = $"deload_{userId.ToString("N")[..SyntheticUsernameIdentifierLength]}",
-            CredentialType = SyntheticCredentialType, PasswordHash = SyntheticPasswordHash,
-            CreatedAt = now, UpdatedAt = now
+            CredentialType = SyntheticCredentialType,
+            PasswordHash = SyntheticPasswordHash,
+            CreatedAt = now,
+            UpdatedAt = now
         });
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = TimeZoneInfo.Utc.Id,
             DeloadEvidenceThroughExclusive = DeloadStart,
-            DeloadStartDate = DeloadStart, DeloadEndExclusive = endExclusive
+            DeloadStartDate = DeloadStart,
+            DeloadEndExclusive = endExclusive
         });
         database.WorkoutPlans.AddRange(
-            new WorkoutPlanRecord { Id = previousPlanId, UserId = userId, Name = SyntheticPlanName,
-                IsActive = false, CyclePhaseTarget = SyntheticCyclePhase, CreatedAt = now },
-            new WorkoutPlanRecord { Id = newPlanId, UserId = userId, Name = SyntheticPlanName,
-                IsActive = true, CyclePhaseTarget = SyntheticCyclePhase, CreatedAt = now });
+            new WorkoutPlanRecord
+            {
+                Id = previousPlanId,
+                UserId = userId,
+                Name = SyntheticPlanName,
+                IsActive = false,
+                CyclePhaseTarget = SyntheticCyclePhase,
+                CreatedAt = now
+            },
+            new WorkoutPlanRecord
+            {
+                Id = newPlanId,
+                UserId = userId,
+                Name = SyntheticPlanName,
+                IsActive = true,
+                CyclePhaseTarget = SyntheticCyclePhase,
+                CreatedAt = now
+            });
         await database.SaveChangesAsync();
         var exerciseId = await database.WorkoutExerciseDefinitions.AsNoTracking()
             .Select(exercise => exercise.Id).FirstAsync();
 
-        var withinDay = new WorkoutDayRecord { Id = withinDayId, UserId = userId, WorkoutPlanId = newPlanId,
-            Date = DeloadStart, DayOfWeek = (int)DeloadStart.DayOfWeek,
-            WorkoutType = StrengthWorkoutType, Name = SyntheticDayName };
+        var withinDay = new WorkoutDayRecord
+        {
+            Id = withinDayId,
+            UserId = userId,
+            WorkoutPlanId = newPlanId,
+            Date = DeloadStart,
+            DayOfWeek = (int)DeloadStart.DayOfWeek,
+            WorkoutType = StrengthWorkoutType,
+            Name = SyntheticDayName
+        };
         var laterDate = DeloadStart.AddDays(LaterDayOffset);
-        var laterDay = new WorkoutDayRecord { Id = laterDayId, UserId = userId, WorkoutPlanId = newPlanId,
-            Date = laterDate, DayOfWeek = (int)laterDate.DayOfWeek,
-            WorkoutType = StrengthWorkoutType, Name = SyntheticDayName };
-        var within = new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
-            WorkoutDayId = withinDayId, ExerciseId = exerciseId, Sets = OriginalSets, Reps = OriginalReps,
-            OptionalSets = OriginalOptionalSets, TargetRepetitionsInReserve = OriginalTargetRir };
-        var later = new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
-            WorkoutDayId = laterDayId, ExerciseId = exerciseId, Sets = OriginalSets, Reps = OriginalReps,
-            OptionalSets = OriginalOptionalSets, TargetRepetitionsInReserve = OriginalTargetRir };
+        var laterDay = new WorkoutDayRecord
+        {
+            Id = laterDayId,
+            UserId = userId,
+            WorkoutPlanId = newPlanId,
+            Date = laterDate,
+            DayOfWeek = (int)laterDate.DayOfWeek,
+            WorkoutType = StrengthWorkoutType,
+            Name = SyntheticDayName
+        };
+        var within = new WorkoutDayExerciseRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            WorkoutDayId = withinDayId,
+            ExerciseId = exerciseId,
+            Sets = OriginalSets,
+            Reps = OriginalReps,
+            OptionalSets = OriginalOptionalSets,
+            TargetRepetitionsInReserve = OriginalTargetRir
+        };
+        var later = new WorkoutDayExerciseRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            WorkoutDayId = laterDayId,
+            ExerciseId = exerciseId,
+            Sets = OriginalSets,
+            Reps = OriginalReps,
+            OptionalSets = OriginalOptionalSets,
+            TargetRepetitionsInReserve = OriginalTargetRir
+        };
 
         await PostgresCanonicalOccurrenceAdjustment.ApplyAsync(database, userId, previousPlanId,
             DeloadStart, DeloadStart, TimeZoneInfo.Utc, [], [withinDay, laterDay], [within, later],
@@ -130,32 +180,67 @@ public sealed class CanonicalOccurrenceAdjustmentPersistenceTests
         var endExclusive = DeloadStart.AddDays(CanonicalOccurrenceAdjustmentRule.DeloadDurationDays);
         database.Users.Add(new UserRecord
         {
-            Id = userId, Email = $"deload-retry-{userId:N}@example.invalid",
+            Id = userId,
+            Email = $"deload-retry-{userId:N}@example.invalid",
             Username = $"deload_{userId.ToString("N")[..SyntheticUsernameIdentifierLength]}",
-            CredentialType = SyntheticCredentialType, PasswordHash = SyntheticPasswordHash,
-            CreatedAt = now, UpdatedAt = now
+            CredentialType = SyntheticCredentialType,
+            PasswordHash = SyntheticPasswordHash,
+            CreatedAt = now,
+            UpdatedAt = now
         });
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = TimeZoneInfo.Utc.Id,
             DeloadEvidenceThroughExclusive = DeloadStart,
-            DeloadStartDate = DeloadStart, DeloadEndExclusive = endExclusive
+            DeloadStartDate = DeloadStart,
+            DeloadEndExclusive = endExclusive
         });
         database.WorkoutPlans.AddRange(
-            new WorkoutPlanRecord { Id = previousPlanId, UserId = userId, Name = SyntheticPlanName,
-                IsActive = false, CyclePhaseTarget = SyntheticCyclePhase, CreatedAt = now },
-            new WorkoutPlanRecord { Id = planId, UserId = userId, Name = SyntheticPlanName,
-                IsActive = true, CyclePhaseTarget = SyntheticCyclePhase, CreatedAt = now });
+            new WorkoutPlanRecord
+            {
+                Id = previousPlanId,
+                UserId = userId,
+                Name = SyntheticPlanName,
+                IsActive = false,
+                CyclePhaseTarget = SyntheticCyclePhase,
+                CreatedAt = now
+            },
+            new WorkoutPlanRecord
+            {
+                Id = planId,
+                UserId = userId,
+                Name = SyntheticPlanName,
+                IsActive = true,
+                CyclePhaseTarget = SyntheticCyclePhase,
+                CreatedAt = now
+            });
         await database.SaveChangesAsync();
         var exerciseId = await database.WorkoutExerciseDefinitions.AsNoTracking()
             .Select(exercise => exercise.Id).FirstAsync();
 
-        var day = new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
-            Date = DeloadStart, DayOfWeek = (int)DeloadStart.DayOfWeek,
-            WorkoutType = StrengthWorkoutType, Name = SyntheticDayName };
-        var dose = new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
-            WorkoutDayId = dayId, ExerciseId = exerciseId, Sets = OriginalSets, Reps = OriginalReps,
-            OptionalSets = OriginalOptionalSets, TargetRepetitionsInReserve = OriginalTargetRir };
+        var day = new WorkoutDayRecord
+        {
+            Id = dayId,
+            UserId = userId,
+            WorkoutPlanId = planId,
+            Date = DeloadStart,
+            DayOfWeek = (int)DeloadStart.DayOfWeek,
+            WorkoutType = StrengthWorkoutType,
+            Name = SyntheticDayName
+        };
+        var dose = new WorkoutDayExerciseRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            WorkoutDayId = dayId,
+            ExerciseId = exerciseId,
+            Sets = OriginalSets,
+            Reps = OriginalReps,
+            OptionalSets = OriginalOptionalSets,
+            TargetRepetitionsInReserve = OriginalTargetRir
+        };
 
         await PostgresCanonicalOccurrenceAdjustment.ApplyAsync(database, userId, previousPlanId,
             DeloadStart, DeloadStart, TimeZoneInfo.Utc, [], [day], [dose], CancellationToken.None);

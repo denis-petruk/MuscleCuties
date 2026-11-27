@@ -1,13 +1,13 @@
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Core.Models.Nutrition;
 using MuscleCuties.UI.Services.Nutrition;
+using MuscleCuties.UseCases.Features.Hydration.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
-using MuscleCuties.UseCases.Features.Hydration.Contracts;
 
 namespace MuscleCuties.UI.ViewModels.Nutrition;
 
@@ -28,7 +28,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     private readonly SemaphoreSlim _dateLoadLock = new(1, 1);
     // F02: hydration writes are serialized and only the confirmed total is trusted. A failed
     // write rolls the visible total back instead of silently claiming the amount was saved.
-    private int _confirmedWaterIntakeMl;
     private readonly Func<Task>? _navigateBackAsync;
     private Guid _currentLogId;
     private int _dateLoadVersion;
@@ -48,7 +47,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     [ObservableProperty] private string _editingItemName = string.Empty;
 
-    private DateTime _editingLoggedAtTimestamp;
 
     [ObservableProperty] private MealType _editingMealType;
 
@@ -70,21 +68,26 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
     // Modal state
     [ObservableProperty] private bool _isEditModalVisible;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPlainFoodEditor))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPlainFoodEditor))]
     private bool _isGroupedEditor;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanChangeHydration))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanChangeHydration))]
     private bool _isLoadError;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanChangeHydration))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanChangeHydration))]
     private bool _isLoading;
 
     [ObservableProperty] private bool _isStatusVisible;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanChangeHydration), nameof(CanSaveNotes))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanChangeHydration), nameof(CanSaveNotes))]
     private bool _isWriting;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanSaveNotes))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanSaveNotes))]
     private string _notesText = string.Empty;
 
     private string _savedNotes = string.Empty;
@@ -98,36 +101,46 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
 
     private QuickFood? _quickDraft;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FormattedSelectedDate), nameof(IsSelectedDateToday))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FormattedSelectedDate), nameof(IsSelectedDateToday))]
     private DateOnly _selectedDate;
 
     [ObservableProperty] private string _statusMessage = string.Empty;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CalorieProgressRatio), nameof(CalorieRemainingText))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CalorieProgressRatio), nameof(CalorieRemainingText))]
     private double _targetCalories = 2000;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CarbsProgressRatio))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CarbsProgressRatio))]
     private double _targetCarbs = 220;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FatProgressRatio))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FatProgressRatio))]
     private double _targetFat = 65;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ProteinProgressRatio))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ProteinProgressRatio))]
     private double _targetProtein = 130;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CalorieProgressRatio), nameof(CalorieRemainingText))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CalorieProgressRatio), nameof(CalorieRemainingText))]
     private double _totalCalories;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CarbsProgressRatio))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CarbsProgressRatio))]
     private double _totalCarbs;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(FatProgressRatio))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(FatProgressRatio))]
     private double _totalFat;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ProteinProgressRatio))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ProteinProgressRatio))]
     private double _totalProtein;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(WaterSummaryAccessibility))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(WaterSummaryAccessibility))]
     private int _waterIntakeMl;
 
     /// <summary>The water total as it is read aloud, with its unit and not just the number.</summary>
@@ -147,7 +160,8 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         : MealType.Breakfast;
 
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasWaterSaveError))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasWaterSaveError))]
     private string _waterSaveError = string.Empty;
 
     /// <summary>True when saving the water entry failed.</summary>
@@ -571,7 +585,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         SetIngredients([]);
         IsEditingExisting = false;
         EditingItemId = Guid.NewGuid();
-        _editingLoggedAtTimestamp = default;
         EditingMealType = mealType;
         EditingItemName = string.Empty;
         EditingServingSize = 100;
@@ -645,7 +658,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
         IsEditingExisting = true;
         IsMealContextLocked = lockContext || item.LoggedMealId is > 0;
         EditingItemId = item.Id;
-        _editingLoggedAtTimestamp = item.LoggedAtTimestamp;
         EditingMealType = item.MealType;
         EditingItemName = item.Name;
         EditingServingSize = item.ServingSize;
@@ -954,7 +966,6 @@ public partial class FoodLogViewModel : ObservableObject, IDisposable
             TargetFat = log.TargetFat > 0 ? log.TargetFat : 65;
             if (_hydrationDay is null)
                 WaterIntakeMl = log.WaterIntakeMl;
-            _confirmedWaterIntakeMl = log.WaterIntakeMl;
             WaterSaveError = string.Empty;
             _savedNotes = log.Notes ?? string.Empty;
             NotesText = _savedNotes;

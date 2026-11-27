@@ -16,13 +16,19 @@ internal static class AcceptedGenerationPlanV2
             exercises.Select(exercise => exercise.ExerciseId).Distinct().Count() != exercises.Count)
             throw new InvalidOperationException("The V2 occurrence dose does not match its accepted prescription.");
         var doses = exercises.ToDictionary(exercise => exercise.ExerciseId);
-        return generation with { Exercises = generation.Exercises.Select(exercise =>
+        return generation with
+        {
+            Exercises = generation.Exercises.Select(exercise =>
         {
             if (!doses.TryGetValue(exercise.ExerciseId, out var dose) || dose.Sets <= 0)
                 throw new InvalidOperationException("The V2 occurrence dose is unavailable.");
-            return exercise with { WorkingSets = dose.Sets,
-                TargetRir = dose.TargetRepetitionsInReserve ?? exercise.TargetRir };
-        }).ToArray() };
+            return exercise with
+            {
+                WorkingSets = dose.Sets,
+                TargetRir = dose.TargetRepetitionsInReserve ?? exercise.TargetRir
+            };
+        }).ToArray()
+        };
     }
 
     /// <summary>Loads one accepted plan session for the user.</summary>
@@ -64,11 +70,19 @@ internal static class AcceptedGenerationPlanV2
                     WorkoutInjuryClearanceRule.ComputeConservativeReturnLoad(item.ReturnBaselineLoadKg!.Value,
                         item.ConservativeReturnSessionsCompleted)).ToArray();
                 if (caps.Length > 0)
-                    return exercise with { LoadStatus = "ConservativeReturnLoad", PrescribedLoadKg =
-                        Math.Min(exercise.PrescribedLoadKg ?? caps.Min(), caps.Min()) };
+                    return exercise with
+                    {
+                        LoadStatus = "ConservativeReturnLoad",
+                        PrescribedLoadKg =
+                        Math.Min(exercise.PrescribedLoadKg ?? caps.Min(), caps.Min())
+                    };
                 if (exercise.LoadStatus == "ConservativeReturnLoad" && related.Length > 0)
-                    return exercise with { LoadStatus = "PrescribedLoad", PrescribedLoadKg =
-                        related.Min(item => item.ReturnBaselineLoadKg!.Value) };
+                    return exercise with
+                    {
+                        LoadStatus = "PrescribedLoad",
+                        PrescribedLoadKg =
+                        related.Min(item => item.ReturnBaselineLoadKg!.Value)
+                    };
                 return exercise;
             }).ToArray()
         };

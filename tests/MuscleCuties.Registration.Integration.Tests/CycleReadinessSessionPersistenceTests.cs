@@ -1,17 +1,17 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
+using MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
+using MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
-using MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
-using MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
-using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
-using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 using MuscleCuties.UseCases.Features.Cycle.Contracts;
+using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 using Npgsql;
@@ -50,15 +50,31 @@ public sealed class CycleReadinessSessionPersistenceTests
         var now = DateTime.UtcNow;
         var today = DateOnly.FromDateTime(now);
         await SyntheticTenantSession.SetAsync(db, userId);
-        db.Users.Add(new UserRecord { Id = userId, Email = $"cycle-write-{userId:N}@example.invalid",
+        db.Users.Add(new UserRecord
+        {
+            Id = userId,
+            Email = $"cycle-write-{userId:N}@example.invalid",
             Username = $"cw_{userId.ToString("N")[..SyntheticUsernameIdentifierLength]}",
-            CredentialType = "Password", PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now });
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now
+        });
         db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
-            { Id = Guid.NewGuid(), UserId = userId, TimeZoneId = "UTC" });
+        { Id = Guid.NewGuid(), UserId = userId, TimeZoneId = "UTC" });
         var proposalId = Guid.NewGuid();
-        db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record { Id = proposalId, UserId = userId,
-            PlanId = Guid.NewGuid(), Status = "Proposed", RulesetVersion = "synthetic", TrainingPolicyVersion = "synthetic",
-            LeaseId = Guid.NewGuid(), LeaseExpiresAtUtc = now.AddMinutes(PreviewMinutes), CreatedAtUtc = now });
+        db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
+        {
+            Id = proposalId,
+            UserId = userId,
+            PlanId = Guid.NewGuid(),
+            Status = "Proposed",
+            RulesetVersion = "synthetic",
+            TrainingPolicyVersion = "synthetic",
+            LeaseId = Guid.NewGuid(),
+            LeaseExpiresAtUtc = now.AddMinutes(PreviewMinutes),
+            CreatedAtUtc = now
+        });
         await db.SaveChangesAsync();
         try
         {
@@ -98,17 +114,46 @@ public sealed class CycleReadinessSessionPersistenceTests
             var planId = Guid.NewGuid();
             var dayId = Guid.NewGuid();
             var exerciseId = await db.WorkoutExerciseDefinitions.AsNoTracking().Select(x => x.Id).FirstAsync();
-            db.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = userId, Name = "Synthetic",
+            db.UserProfiles.Add(new UserProfileRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Name = "Synthetic",
                 ReproductiveContextJson = ReproductiveContextCodec.Serialize(new ReproductiveContext(PregnancyStatus.No, ContraceptionStatus.No)),
                 PhaseBaselinesJson = "{\"Menstrual\":{\"Pain\":5,\"Energy\":1},\"Follicular\":{\"Pain\":1,\"Energy\":5},\"Ovulatory\":{\"Pain\":1,\"Energy\":5},\"Luteal\":{\"Pain\":1,\"Energy\":5}}",
-                UpdatedAt = now });
-            db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic",
-                IsActive = true, CyclePhaseTarget = "Menstrual", CreatedAt = now });
-            db.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
-                Date = today, DayOfWeek = (int)today.DayOfWeek, WorkoutType = "Strength", Name = "Synthetic" });
-            db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
-                WorkoutDayId = dayId, ExerciseId = exerciseId, PlanningSlotId = "synthetic-accessory",
-                Sets = OriginalSets, OptionalSets = OriginalOptionalSets, Reps = Repetitions, IsOptional = true });
+                UpdatedAt = now
+            });
+            db.WorkoutPlans.Add(new WorkoutPlanRecord
+            {
+                Id = planId,
+                UserId = userId,
+                Name = "Synthetic",
+                IsActive = true,
+                CyclePhaseTarget = "Menstrual",
+                CreatedAt = now
+            });
+            db.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = dayId,
+                UserId = userId,
+                WorkoutPlanId = planId,
+                Date = today,
+                DayOfWeek = (int)today.DayOfWeek,
+                WorkoutType = "Strength",
+                Name = "Synthetic"
+            });
+            db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                WorkoutDayId = dayId,
+                ExerciseId = exerciseId,
+                PlanningSlotId = "synthetic-accessory",
+                Sets = OriginalSets,
+                OptionalSets = OriginalOptionalSets,
+                Reps = Repetitions,
+                IsOptional = true
+            });
             await db.SaveChangesAsync();
             var immediatePhase = await new PostgresCyclePhaseLogStore(db, TimeProvider.System).UpsertAsync(
                 new SaveCyclePhaseLogInput(userId.ToString(), today, CyclePhaseDto.Menstrual), CancellationToken.None);
@@ -132,8 +177,16 @@ public sealed class CycleReadinessSessionPersistenceTests
             var symptomId = Guid.NewGuid();
             var cycleId = await db.CycleLogs.AsNoTracking().Where(x => x.UserId == userId && x.StartDate == today)
                 .Select(x => x.Id).SingleAsync();
-            db.SymptomLogs.Add(new SymptomLogRecord { Id = symptomId, UserId = userId, Date = today,
-                CycleLogId = cycleId, SymptomType = "synthetic", Severity = ReportedPain, CreatedAt = now });
+            db.SymptomLogs.Add(new SymptomLogRecord
+            {
+                Id = symptomId,
+                UserId = userId,
+                Date = today,
+                CycleLogId = cycleId,
+                SymptomType = "synthetic",
+                Severity = ReportedPain,
+                CreatedAt = now
+            });
             await db.SaveChangesAsync();
             var cardio = new PlannedPrescriptionSnapshot(dayId, "Synthetic cardio", "Cardio", null, null, []);
             var cardioResult = await PostgresCycleReadinessPrescription.ApplyAsync(db, userId, today, "UTC",
@@ -143,8 +196,17 @@ public sealed class CycleReadinessSessionPersistenceTests
             await AssertStartBlockedForSafetyReviewAsync(() => sessions.StartSessionAsync(userId, command, CancellationToken.None));
             var symptom = await db.SymptomLogs.SingleAsync(x => x.UserId == userId && x.Id == symptomId);
             db.SymptomLogs.Remove(symptom);
-            db.WorkoutInjuryLogs.Add(new WorkoutInjuryLogRecord { Id = Guid.NewGuid(), UserId = userId,
-                Status = "Acute", SiteFlag = ReportedPain, Since = today, Date = today, Pain = ReportedPain, CreatedAt = now });
+            db.WorkoutInjuryLogs.Add(new WorkoutInjuryLogRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Status = "Acute",
+                SiteFlag = ReportedPain,
+                Since = today,
+                Date = today,
+                Pain = ReportedPain,
+                CreatedAt = now
+            });
             await db.SaveChangesAsync();
             await sessions.StartSessionAsync(userId, command, CancellationToken.None);
             await sessions.StartSessionAsync(userId, command, CancellationToken.None);
@@ -189,33 +251,99 @@ public sealed class CycleReadinessSessionPersistenceTests
         var futureDate = date.AddDays(FutureDateOffsetDays);
         var futureDayId = Guid.NewGuid();
         await SyntheticTenantSession.SetAsync(db, userId);
-        db.Users.Add(new UserRecord { Id = userId, Email = $"cycle-{userId:N}@example.invalid",
-            Username = $"cycle_{userId.ToString("N")[..SyntheticUsernameIdentifierLength]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-            CreatedAt = now, UpdatedAt = now });
-        db.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = userId, Name = "Synthetic",
+        db.Users.Add(new UserRecord
+        {
+            Id = userId,
+            Email = $"cycle-{userId:N}@example.invalid",
+            Username = $"cycle_{userId.ToString("N")[..SyntheticUsernameIdentifierLength]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        db.UserProfiles.Add(new UserProfileRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Name = "Synthetic",
             ReproductiveContextJson = ReproductiveContextCodec.Serialize(new ReproductiveContext(PregnancyStatus.No, ContraceptionStatus.No)),
             PhaseBaselinesJson = "{\"Menstrual\":{\"Pain\":5,\"Energy\":1},\"Follicular\":{\"Pain\":1,\"Energy\":5},\"Ovulatory\":{\"Pain\":1,\"Energy\":5},\"Luteal\":{\"Pain\":1,\"Energy\":5}}",
-            UpdatedAt = now });
-        db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic",
-            IsActive = true, CyclePhaseTarget = "Menstrual", CreatedAt = now });
-        var state = new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = userId,
-            TimeZoneId = "UTC", CycleReadinessPending = true };
+            UpdatedAt = now
+        });
+        db.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = planId,
+            UserId = userId,
+            Name = "Synthetic",
+            IsActive = true,
+            CyclePhaseTarget = "Menstrual",
+            CreatedAt = now
+        });
+        var state = new WorkoutAccountPlanningStateRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = "UTC",
+            CycleReadinessPending = true
+        };
         db.WorkoutAccountPlanningStates.Add(state);
-        db.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
-            Date = date, DayOfWeek = (int)date.DayOfWeek, WorkoutType = "Strength", Name = "Synthetic" });
-        db.WorkoutDays.Add(new WorkoutDayRecord { Id = futureDayId, UserId = userId, WorkoutPlanId = planId,
-            Date = futureDate, DayOfWeek = (int)futureDate.DayOfWeek, WorkoutType = "Strength", Name = "Future synthetic" });
+        db.WorkoutDays.Add(new WorkoutDayRecord
+        {
+            Id = dayId,
+            UserId = userId,
+            WorkoutPlanId = planId,
+            Date = date,
+            DayOfWeek = (int)date.DayOfWeek,
+            WorkoutType = "Strength",
+            Name = "Synthetic"
+        });
+        db.WorkoutDays.Add(new WorkoutDayRecord
+        {
+            Id = futureDayId,
+            UserId = userId,
+            WorkoutPlanId = planId,
+            Date = futureDate,
+            DayOfWeek = (int)futureDate.DayOfWeek,
+            WorkoutType = "Strength",
+            Name = "Future synthetic"
+        });
         await db.SaveChangesAsync();
         var exerciseId = await db.WorkoutExerciseDefinitions.AsNoTracking().Select(row => row.Id).FirstAsync();
-        var exercise = new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
-            WorkoutDayId = dayId, ExerciseId = exerciseId, PlanningSlotId = "synthetic-accessory",
-            Sets = OriginalSets, OptionalSets = OriginalOptionalSets, Reps = Repetitions, IsOptional = true };
-        var phase = new CyclePhaseLogRecord { Id = Guid.NewGuid(), UserId = userId, LocalDate = date,
-            Phase = "Menstrual", LoggedAt = now, CreatedAt = now, Note = "Set from onboarding quiz" };
+        var exercise = new WorkoutDayExerciseRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            WorkoutDayId = dayId,
+            ExerciseId = exerciseId,
+            PlanningSlotId = "synthetic-accessory",
+            Sets = OriginalSets,
+            OptionalSets = OriginalOptionalSets,
+            Reps = Repetitions,
+            IsOptional = true
+        };
+        var phase = new CyclePhaseLogRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            LocalDate = date,
+            Phase = "Menstrual",
+            LoggedAt = now,
+            CreatedAt = now,
+            Note = "Set from onboarding quiz"
+        };
         db.WorkoutDayExercises.Add(exercise);
-        db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
-            WorkoutDayId = futureDayId, ExerciseId = exerciseId, PlanningSlotId = "future-synthetic-accessory",
-            Sets = OriginalSets, OptionalSets = OriginalOptionalSets, Reps = Repetitions, IsOptional = true });
+        db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            WorkoutDayId = futureDayId,
+            ExerciseId = exerciseId,
+            PlanningSlotId = "future-synthetic-accessory",
+            Sets = OriginalSets,
+            OptionalSets = OriginalOptionalSets,
+            Reps = Repetitions,
+            IsOptional = true
+        });
         db.CyclePhaseLogs.Add(phase);
         await db.SaveChangesAsync();
         var snapshot = new PlannedPrescriptionSnapshot(dayId, "Synthetic", "Strength", null, null,
@@ -224,20 +352,36 @@ public sealed class CycleReadinessSessionPersistenceTests
             new DateTimeOffset(now), snapshot, CancellationToken.None);
         Assert.Equal(OriginalSets, onboarding.Exercises[0].Sets);
 
-        var cycle = new CycleLogRecord { Id = Guid.NewGuid(), UserId = userId, StartDate = date,
-            CycleLength = CycleLengthDays, CreatedAt = now };
+        var cycle = new CycleLogRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            StartDate = date,
+            CycleLength = CycleLengthDays,
+            CreatedAt = now
+        };
         db.CycleLogs.Add(cycle);
         phase.CycleLogId = cycle.Id;
         phase.Note = null;
         var historicalCycles = Enumerable.Range(1, HistoricalCycleCountForReliableEstimate)
-            .Select(index => new CycleLogRecord { Id = Guid.NewGuid(), UserId = userId,
+            .Select(index => new CycleLogRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
                 StartDate = date.AddDays(-CycleLengthDays * index),
                 EndDate = date.AddDays(-CycleLengthDays * (index - 1)),
-                CycleLength = CycleLengthDays, CreatedAt = now }).ToArray();
+                CycleLength = CycleLengthDays,
+                CreatedAt = now
+            }).ToArray();
         var historicalAnchors = historicalCycles.Select(previous => new CyclePhaseLogRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, CycleLogId = previous.Id,
-            LocalDate = previous.StartDate, Phase = "Menstrual", LoggedAt = now, CreatedAt = now
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            CycleLogId = previous.Id,
+            LocalDate = previous.StartDate,
+            Phase = "Menstrual",
+            LoggedAt = now,
+            CreatedAt = now
         }).ToArray();
         db.CycleLogs.AddRange(historicalCycles);
         db.CyclePhaseLogs.AddRange(historicalAnchors);
@@ -272,9 +416,18 @@ public sealed class CycleReadinessSessionPersistenceTests
         Assert.Equal(OriginalSets, PlannedPrescriptionSnapshot.Deserialize(occurrence.PrescriptionJson)!.Exercises[0].Sets);
 
         state.CycleReadinessPending = true;
-        var preview = new WorkoutPlanProposalV02Record { Id = Guid.NewGuid(), UserId = userId, PlanId = planId,
-            Status = "Proposed", RulesetVersion = "synthetic", TrainingPolicyVersion = "synthetic",
-            LeaseId = Guid.NewGuid(), LeaseExpiresAtUtc = now.AddMinutes(PreviewMinutes), CreatedAtUtc = now };
+        var preview = new WorkoutPlanProposalV02Record
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PlanId = planId,
+            Status = "Proposed",
+            RulesetVersion = "synthetic",
+            TrainingPolicyVersion = "synthetic",
+            LeaseId = Guid.NewGuid(),
+            LeaseExpiresAtUtc = now.AddMinutes(PreviewMinutes),
+            CreatedAtUtc = now
+        };
         db.WorkoutPlanProposalsV02.Add(preview);
         await db.SaveChangesAsync();
         Assert.False(await PostgresCycleReadinessReconciler.ReconcileAsync(db, userId, new DateTimeOffset(now), CancellationToken.None));

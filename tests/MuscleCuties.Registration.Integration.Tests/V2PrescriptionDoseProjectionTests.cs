@@ -14,7 +14,7 @@ public sealed class V2PrescriptionDoseProjectionTests
             0, 5, 40m, [new GenerationExerciseV2(0, 17, "Synthetic exercise", 1, 3, 8, 12,
                 2, 90, "CalibrationRequired", null, 1, true, "InitialLoadCalibrationRequired")]);
         var adjusted = new PlannedExerciseSnapshot(Guid.NewGuid(), 17, 2, 0, 8, null, true)
-            { TargetRepetitionsInReserve = 4 };
+        { TargetRepetitionsInReserve = 4 };
 
         var result = AcceptedGenerationPlanV2.ApplyOccurrenceDose(original, [adjusted]);
         var exercise = Xunit.Assert.Single(result!.Exercises);

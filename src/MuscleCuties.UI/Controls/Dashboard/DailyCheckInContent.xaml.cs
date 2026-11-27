@@ -15,14 +15,13 @@ public partial class DailyCheckInContent : ContentView
     private const string UnselectedVisualState = "Unselected";
 
     private readonly AppThemeSubscription _themeSubscription;
-    private readonly ViewModelSubscription<DailyCheckInViewModel> _subscription;
 
     /// <summary>Binds the check-in content to its view model and theme.</summary>
     public DailyCheckInContent()
     {
         InitializeComponent();
         _themeSubscription = new AppThemeSubscription(UpdateChipGroups);
-        _subscription = ViewModelSubscriptionBinding.BindToControl<DailyCheckInViewModel>(this,
+        _ = ViewModelSubscriptionBinding.BindToControl<DailyCheckInViewModel>(this,
             OnViewModelPropertyChanged,
             onAttached: () =>
             {

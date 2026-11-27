@@ -11,9 +11,9 @@ using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 using Npgsql;
 using Xunit;
@@ -97,9 +97,14 @@ public sealed class V2CompletionAndHistoryTests
     {
         await using var fixture = await Fixture.CreateAsync();
         fixture.Db.WorkoutCompletionDayCredits.AddRange(Enumerable.Range(0, 20).Select(index =>
-            new WorkoutCompletionDayCreditRecord { Id = Guid.NewGuid(), UserId = fixture.UserId,
-                LocalDate = fixture.Today.AddDays(-29 - index), AcceptedAtUtc = fixture.Now.AddDays(-29 - index),
-                TimeZoneId = "UTC" }));
+            new WorkoutCompletionDayCreditRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = fixture.UserId,
+                LocalDate = fixture.Today.AddDays(-29 - index),
+                AcceptedAtUtc = fixture.Now.AddDays(-29 - index),
+                TimeZoneId = "UTC"
+            }));
         await fixture.Db.SaveChangesAsync();
         var source = await new PostgresStrengthPlanPreviewSourceV020(fixture.Db).LoadAsync(fixture.UserId, CancellationToken.None);
         Assert.NotNull(source);
@@ -123,10 +128,20 @@ public sealed class V2CompletionAndHistoryTests
         await fixture.Db.WorkoutSessionLogs.Where(row => row.Id == fixture.SessionId)
             .ExecuteUpdateAsync(update => update.SetProperty(row => row.CompletedAt, completedAt)
                 .SetProperty(row => row.StartedAt, completedAt.AddMinutes(-30)));
-        fixture.Db.ExerciseSetLogs.Add(new ExerciseSetLogRecord { Id = Guid.NewGuid(), UserId = fixture.UserId,
-            WorkoutSessionLogId = fixture.SessionId, ExerciseId = fixture.ExerciseId.ToString(CultureInfo.InvariantCulture),
-            ExerciseName = "Synthetic historical observation", IsObserved = true, SetNumber = 1,
-            RepsCompleted = 10, WeightKg = 25m, CreatedAt = completedAt, UpdatedAt = completedAt });
+        fixture.Db.ExerciseSetLogs.Add(new ExerciseSetLogRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = fixture.UserId,
+            WorkoutSessionLogId = fixture.SessionId,
+            ExerciseId = fixture.ExerciseId.ToString(CultureInfo.InvariantCulture),
+            ExerciseName = "Synthetic historical observation",
+            IsObserved = true,
+            SetNumber = 1,
+            RepsCompleted = 10,
+            WeightKg = 25m,
+            CreatedAt = completedAt,
+            UpdatedAt = completedAt
+        });
         await fixture.Db.SaveChangesAsync();
         var source = await new PostgresStrengthPlanPreviewSourceV020(fixture.Db).LoadAsync(fixture.UserId, CancellationToken.None);
         Assert.NotNull(source);
@@ -141,8 +156,14 @@ public sealed class V2CompletionAndHistoryTests
     {
         await using var fixture = await Fixture.CreateAsync();
         fixture.Db.WorkoutCompletionDayCredits.AddRange(Enumerable.Range(0, 130).Select(index =>
-            new WorkoutCompletionDayCreditRecord { Id = Guid.NewGuid(), UserId = fixture.UserId,
-                LocalDate = fixture.Today.AddDays(-index), AcceptedAtUtc = fixture.Now.AddDays(-index), TimeZoneId = "UTC" }));
+            new WorkoutCompletionDayCreditRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = fixture.UserId,
+                LocalDate = fixture.Today.AddDays(-index),
+                AcceptedAtUtc = fixture.Now.AddDays(-index),
+                TimeZoneId = "UTC"
+            }));
         await fixture.Db.SaveChangesAsync();
         var source = await new PostgresStrengthPlanPreviewSourceV020(fixture.Db).LoadAsync(fixture.UserId, CancellationToken.None);
         Assert.NotNull(source);
@@ -168,8 +189,15 @@ public sealed class V2CompletionAndHistoryTests
         var crunch = await fixture.Db.Exercises.AsNoTracking().FirstAsync(exercise => exercise.Name == "Cable Crunch");
         var hip = await fixture.Db.Exercises.AsNoTracking().SingleAsync(exercise => exercise.Id == fixture.ExerciseId);
         var crunchRow = Guid.NewGuid();
-        fixture.Db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = crunchRow, UserId = fixture.UserId,
-            WorkoutDayId = fixture.DayId, ExerciseId = crunch.Id, Sets = 2, Reps = 10 });
+        fixture.Db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+        {
+            Id = crunchRow,
+            UserId = fixture.UserId,
+            WorkoutDayId = fixture.DayId,
+            ExerciseId = crunch.Id,
+            Sets = 2,
+            Reps = 10
+        });
         var generation = new GenerationSessionV2(0, fixture.Today.DayOfWeek, fixture.Today,
             (int)WorkoutActivityType.GeneralStrength, 6, 30m,
             [new GenerationExerciseV2(0, hip.Id, hip.Name, 1, 2, 8, 12, 3, 120, "CalibrationRequired", null, null, false, "InitialLoadCalibrationRequired"),
@@ -178,7 +206,8 @@ public sealed class V2CompletionAndHistoryTests
         var snapshot = new PlannedPrescriptionSnapshot(fixture.DayId, "Synthetic V2 session", "Strength",
             (int)WorkoutActivityType.GeneralStrength, null,
             [new PlannedExerciseSnapshot(crunchRow, crunch.Id, 2, 0, 10, null, false),
-             new PlannedExerciseSnapshot(fixture.ExerciseRowId, hip.Id, 2, 0, 8, null, false)]) { GenerationV2 = generation };
+             new PlannedExerciseSnapshot(fixture.ExerciseRowId, hip.Id, 2, 0, 8, null, false)])
+        { GenerationV2 = generation };
         await fixture.Db.SaveChangesAsync();
         await fixture.Db.WorkoutSessionLogs.Where(row => row.Id == fixture.SessionId)
             .ExecuteUpdateAsync(update => update.SetProperty(row => row.PlannedPrescriptionSnapshotJson, snapshot.Serialize()));
@@ -226,27 +255,77 @@ public sealed class V2CompletionAndHistoryTests
             var plan = Guid.NewGuid();
             await SyntheticTenantSession.SetAsync(db, user);
             fixture.ExerciseId = await db.WorkoutExerciseDefinitions.OrderBy(item => item.Id).Select(item => item.Id).FirstAsync();
-            db.Users.Add(new UserRecord { Id = user, Email = $"v2-terminal-{user:N}@example.invalid",
-                Username = $"v2_{user:N}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-                CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
-            db.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = user, Name = "Synthetic V2",
-                DateOfBirth = new DateOnly(1990, 1, 1), Height = 170m, Weight = 65m, Goal = "Strength",
-                EquipmentLevel = "FullGym", TrainingExperienceLevel = "Beginner", UpdatedAt = now });
-            db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = user,
-                TimeZoneId = "UTC", BaselineExperience = TrainingExperienceLevel.Beginner, EffectiveExperience = TrainingExperienceLevel.Beginner });
+            db.Users.Add(new UserRecord
+            {
+                Id = user,
+                Email = $"v2-terminal-{user:N}@example.invalid",
+                Username = $"v2_{user:N}",
+                CredentialType = "Password",
+                PasswordHash = "synthetic-hash",
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsOnboardingComplete = true
+            });
+            db.UserProfiles.Add(new UserProfileRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = user,
+                Name = "Synthetic V2",
+                DateOfBirth = new DateOnly(1990, 1, 1),
+                Height = 170m,
+                Weight = 65m,
+                Goal = "Strength",
+                EquipmentLevel = "FullGym",
+                TrainingExperienceLevel = "Beginner",
+                UpdatedAt = now
+            });
+            db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = user,
+                TimeZoneId = "UTC",
+                BaselineExperience = TrainingExperienceLevel.Beginner,
+                EffectiveExperience = TrainingExperienceLevel.Beginner
+            });
             db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = plan, UserId = user, Name = "Synthetic V2 plan", IsActive = true, CreatedAt = now });
-            db.WorkoutDays.Add(new WorkoutDayRecord { Id = fixture.DayId, UserId = user, WorkoutPlanId = plan,
-                Date = fixture.Today, DayOfWeek = (int)fixture.Today.DayOfWeek, Name = "Synthetic V2 session",
-                WorkoutType = "Strength", ActivityTypeId = (int)WorkoutActivityType.GeneralStrength });
-            db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = fixture.ExerciseRowId, UserId = user,
-                WorkoutDayId = fixture.DayId, ExerciseId = fixture.ExerciseId, Sets = 2, Reps = 10 });
+            db.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = fixture.DayId,
+                UserId = user,
+                WorkoutPlanId = plan,
+                Date = fixture.Today,
+                DayOfWeek = (int)fixture.Today.DayOfWeek,
+                Name = "Synthetic V2 session",
+                WorkoutType = "Strength",
+                ActivityTypeId = (int)WorkoutActivityType.GeneralStrength
+            });
+            db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+            {
+                Id = fixture.ExerciseRowId,
+                UserId = user,
+                WorkoutDayId = fixture.DayId,
+                ExerciseId = fixture.ExerciseId,
+                Sets = 2,
+                Reps = 10
+            });
             var snapshot = new PlannedPrescriptionSnapshot(fixture.DayId, "Synthetic V2 session", "Strength",
                 (int)WorkoutActivityType.GeneralStrength, null,
                 [new PlannedExerciseSnapshot(fixture.ExerciseRowId, fixture.ExerciseId, 2, 0, 10, null, false)]);
-            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = fixture.SessionId, UserId = user,
-                PlannedWorkoutDayId = fixture.DayId, WorkoutName = "Synthetic V2 session", StartedAt = now.AddMinutes(-2),
-                PlannedLocalDate = fixture.Today, PlannedTimeZoneId = "UTC", PlannedTimeZoneVersion = 0,
-                ConfirmedActiveSeconds = 60, PlannedPrescriptionSnapshotJson = snapshot.Serialize(), CreatedAt = now, UpdatedAt = now });
+            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+            {
+                Id = fixture.SessionId,
+                UserId = user,
+                PlannedWorkoutDayId = fixture.DayId,
+                WorkoutName = "Synthetic V2 session",
+                StartedAt = now.AddMinutes(-2),
+                PlannedLocalDate = fixture.Today,
+                PlannedTimeZoneId = "UTC",
+                PlannedTimeZoneVersion = 0,
+                ConfirmedActiveSeconds = 60,
+                PlannedPrescriptionSnapshotJson = snapshot.Serialize(),
+                CreatedAt = now,
+                UpdatedAt = now
+            });
             await db.SaveChangesAsync();
             return fixture;
         }

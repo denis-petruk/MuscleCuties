@@ -501,7 +501,7 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
         var groups = result.GroupBy(item => (item.Weekday, item.Template, item.Version, item.SessionIndex, item.Slot)).ToArray();
         if (groups.Any(group => group.SelectMany(item => item.OriginsByDate.Keys).Distinct().Count() != group.Count())) return null;
         return groups.Select(group => group.First() with
-            { OriginsByDate = group.SelectMany(item => item.OriginsByDate).ToDictionary(pair => pair.Key, pair => pair.Value) }).ToList();
+        { OriginsByDate = group.SelectMany(item => item.OriginsByDate).ToDictionary(pair => pair.Key, pair => pair.Value) }).ToList();
     }
 
     /// <summary>Moves the deferred omissions onto the new plan.</summary>
@@ -535,12 +535,22 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                 foreach (var item in source)
                     context.Set<WorkoutInjuryOmittedSlotRecord>().Add(new WorkoutInjuryOmittedSlotRecord
                     {
-                        Id = Guid.NewGuid(), UserId = userId, PlanId = planId, ScheduledDate = date,
-                        TemplateId = item.TemplateId, TemplateVersion = item.TemplateVersion, SessionIndex = item.SessionIndex,
-                        SlotId = item.SlotId, EpisodeId = item.EpisodeId, OriginWorkoutDayExerciseId = item.OriginWorkoutDayExerciseId,
-                        OriginalExerciseId = item.OriginalExerciseId, OriginalSets = item.OriginalSets,
-                        OriginalOptionalSets = item.OriginalOptionalSets, OriginalReps = item.OriginalReps,
-                        OriginalDurationSeconds = item.OriginalDurationSeconds, OriginalIsOptional = item.OriginalIsOptional,
+                        Id = Guid.NewGuid(),
+                        UserId = userId,
+                        PlanId = planId,
+                        ScheduledDate = date,
+                        TemplateId = item.TemplateId,
+                        TemplateVersion = item.TemplateVersion,
+                        SessionIndex = item.SessionIndex,
+                        SlotId = item.SlotId,
+                        EpisodeId = item.EpisodeId,
+                        OriginWorkoutDayExerciseId = item.OriginWorkoutDayExerciseId,
+                        OriginalExerciseId = item.OriginalExerciseId,
+                        OriginalSets = item.OriginalSets,
+                        OriginalOptionalSets = item.OriginalOptionalSets,
+                        OriginalReps = item.OriginalReps,
+                        OriginalDurationSeconds = item.OriginalDurationSeconds,
+                        OriginalIsOptional = item.OriginalIsOptional,
                         OriginalIsRemovedByReadiness = item.OriginalIsRemovedByReadiness
                     });
             }
@@ -580,12 +590,22 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                     foreach (var episodeId in slot.EpisodeIds)
                         context.Set<WorkoutInjuryOmittedSlotRecord>().Add(new WorkoutInjuryOmittedSlotRecord
                         {
-                            Id = Guid.NewGuid(), UserId = userId, PlanId = planId, ScheduledDate = date,
-                            TemplateId = slot.Identity.TemplateId, TemplateVersion = slot.Identity.TemplateVersion,
-                            SessionIndex = slot.Identity.SessionIndex, SlotId = slot.Identity.SlotId, EpisodeId = episodeId,
-                            OriginWorkoutDayExerciseId = originId, OriginalExerciseId = slot.OriginalExerciseId,
-                            OriginalSets = slot.Sets, OriginalOptionalSets = slot.OptionalSets, OriginalReps = slot.Reps,
-                            OriginalDurationSeconds = slot.DurationSeconds, OriginalIsOptional = slot.IsOptional,
+                            Id = Guid.NewGuid(),
+                            UserId = userId,
+                            PlanId = planId,
+                            ScheduledDate = date,
+                            TemplateId = slot.Identity.TemplateId,
+                            TemplateVersion = slot.Identity.TemplateVersion,
+                            SessionIndex = slot.Identity.SessionIndex,
+                            SlotId = slot.Identity.SlotId,
+                            EpisodeId = episodeId,
+                            OriginWorkoutDayExerciseId = originId,
+                            OriginalExerciseId = slot.OriginalExerciseId,
+                            OriginalSets = slot.Sets,
+                            OriginalOptionalSets = slot.OptionalSets,
+                            OriginalReps = slot.Reps,
+                            OriginalDurationSeconds = slot.DurationSeconds,
+                            OriginalIsOptional = slot.IsOptional,
                             OriginalIsRemovedByReadiness = slot.IsRemovedByReadiness
                         });
                 }
@@ -630,11 +650,19 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                     { Id = Guid.NewGuid(), UserId = userId, WorkoutDayExerciseId = exercise.Id, InjuryEpisodeId = episodeId, OriginalExerciseId = slot.OriginalExerciseId });
                     context.WorkoutInjuryPrescriptions.Add(new MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryPrescriptionRecord
                     {
-                        Id = Guid.NewGuid(), UserId = userId, EpisodeId = episodeId, WorkoutDayId = exercise.WorkoutDayId,
-                        OriginalWorkoutDayExerciseId = exercise.Id, OriginalExerciseId = slot.OriginalExerciseId,
-                        OriginalPlanningSlotId = slot.Identity.SlotId, OriginalOriginWorkoutDayExerciseId = originId,
-                        OriginalSets = slot.Sets, OriginalOptionalSets = slot.OptionalSets, OriginalReps = slot.Reps,
-                        OriginalDurationSeconds = slot.DurationSeconds, OriginalIsOptional = slot.IsOptional,
+                        Id = Guid.NewGuid(),
+                        UserId = userId,
+                        EpisodeId = episodeId,
+                        WorkoutDayId = exercise.WorkoutDayId,
+                        OriginalWorkoutDayExerciseId = exercise.Id,
+                        OriginalExerciseId = slot.OriginalExerciseId,
+                        OriginalPlanningSlotId = slot.Identity.SlotId,
+                        OriginalOriginWorkoutDayExerciseId = originId,
+                        OriginalSets = slot.Sets,
+                        OriginalOptionalSets = slot.OptionalSets,
+                        OriginalReps = slot.Reps,
+                        OriginalDurationSeconds = slot.DurationSeconds,
+                        OriginalIsOptional = slot.IsOptional,
                         OriginalIsRemovedByReadiness = slot.IsRemovedByReadiness,
                         ReplacementWorkoutDayExerciseId = slot.IsRestoredOriginal ? null : exercise.Id,
                         ReplacementExerciseId = slot.IsRestoredOriginal ? null : slot.AlternativeExerciseId
@@ -695,12 +723,21 @@ public sealed class PostgresWorkoutPlanReconciler(PostgresDbContext context) : I
                     { Id = Guid.NewGuid(), UserId = userId, WorkoutDayExerciseId = exercise.Id, InjuryEpisodeId = episodeId, OriginalExerciseId = item.ExerciseId });
                     context.WorkoutInjuryPrescriptions.Add(new MuscleCuties.Infrastructure.PostgreSql.Models.App.WorkoutInjuryPrescriptionRecord
                     {
-                        Id = Guid.NewGuid(), UserId = userId, EpisodeId = episodeId, WorkoutDayId = exercise.WorkoutDayId,
-                        OriginalWorkoutDayExerciseId = exercise.Id, OriginalExerciseId = item.ExerciseId,
-                        OriginalPlanningSlotId = item.Slot, OriginalOriginWorkoutDayExerciseId = originId,
-                        OriginalSets = item.Sets, OriginalOptionalSets = 0, OriginalReps = item.Reps,
-                        OriginalDurationSeconds = null, OriginalIsOptional = item.OriginallyOptional,
-                        OriginalIsRemovedByReadiness = false, ReplacementWorkoutDayExerciseId = item.TargetExerciseId == item.ExerciseId ? null : exercise.Id,
+                        Id = Guid.NewGuid(),
+                        UserId = userId,
+                        EpisodeId = episodeId,
+                        WorkoutDayId = exercise.WorkoutDayId,
+                        OriginalWorkoutDayExerciseId = exercise.Id,
+                        OriginalExerciseId = item.ExerciseId,
+                        OriginalPlanningSlotId = item.Slot,
+                        OriginalOriginWorkoutDayExerciseId = originId,
+                        OriginalSets = item.Sets,
+                        OriginalOptionalSets = 0,
+                        OriginalReps = item.Reps,
+                        OriginalDurationSeconds = null,
+                        OriginalIsOptional = item.OriginallyOptional,
+                        OriginalIsRemovedByReadiness = false,
+                        ReplacementWorkoutDayExerciseId = item.TargetExerciseId == item.ExerciseId ? null : exercise.Id,
                         ReplacementExerciseId = item.TargetExerciseId == item.ExerciseId ? null : item.TargetExerciseId
                     });
                 }

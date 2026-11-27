@@ -1,5 +1,3 @@
-using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Workout;
@@ -8,9 +6,11 @@ using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
-using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
@@ -163,7 +163,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     if (day is null || day.Date != overlay.LocalDate) continue;
                     var baseline = new PlannedPrescriptionSnapshot(day.Id, day.Name, day.WorkoutType, day.ActivityTypeId,
                         day.PlannedMainDurationMinutes, dayExercises.Where(item => item.WorkoutDayId == day.Id)
-                            .Select(PlannedExerciseSnapshot.FromRecord).ToArray()) { ActivityPrescriptionJson = day.PlannedActivityPrescriptionJson };
+                            .Select(PlannedExerciseSnapshot.FromRecord).ToArray())
+                    { ActivityPrescriptionJson = day.PlannedActivityPrescriptionJson };
                     if (!PostgresCycleReadinessReconciler.MatchesBaseline(baseline, saved)) continue;
                     var doses = saved!.Exercises.ToDictionary(exercise => exercise.Id);
                     foreach (var exercise in dayExercises.Where(item => item.WorkoutDayId == overlay.WorkoutDayId))
@@ -432,7 +433,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     var saved = PlannedPrescriptionSnapshot.Deserialize(overlay?.PrescriptionJson);
                     var baseline = new PlannedPrescriptionSnapshot(day.Id, day.Name, day.WorkoutType, day.ActivityTypeId,
                         day.PlannedMainDurationMinutes, orderedExercises.Select(PlannedExerciseSnapshot.FromRecord).ToArray())
-                        { ActivityPrescriptionJson = day.PlannedActivityPrescriptionJson };
+                    { ActivityPrescriptionJson = day.PlannedActivityPrescriptionJson };
                     if (PostgresCycleReadinessReconciler.MatchesBaseline(baseline, saved))
                     {
                         prescription = saved;
@@ -794,7 +795,6 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             if (validInputs.Count == 0 && !hasActivityActuals)
                 throw new InvalidOperationException("Log at least one exercise or activity before saving this workout.");
 
-            var exerciseIds = dayExercises.Select(e => e.ExerciseId).Distinct().ToArray();
             var catalogExercises = await LoadSessionCatalogAsync(dayExercises, cancellationToken);
 
             foreach (var (dayExercise, input) in validInputs)
@@ -1202,7 +1202,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
         }).ConfigureAwait(false);
 
-        /// <summary>The workout day the request refers to.</summary>
+    /// <summary>The workout day the request refers to.</summary>
     private async Task<WorkoutDayRecord?> ResolveWorkoutDayAsync(
         Guid userId,
         int workoutDayId,
@@ -1581,7 +1581,8 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
                     false,
                     latestLog?.CompletionPercent >= 100,
                     exList.Count,
-                    activityCount) { IsOptional = day.IsOptional, IsEasierAlternative = day.IsEasierAlternative, DayOrder = day.DayOrder });
+                    activityCount)
+                { IsOptional = day.IsOptional, IsEasierAlternative = day.IsEasierAlternative, DayOrder = day.DayOrder });
             }
         }
 
@@ -1885,7 +1886,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             ? actualWarmups.Select((set, index) => new WorkoutSetDetailDto(index + 1,
                 (double)set.WeightKg, set.RepsCompleted, (double?)set.Rpe, true, set.RestTimeSeconds,
                 set.LeftSideReps, set.RightSideReps)
-                { IsObserved = true, TechniqueAcceptable = set.TechniqueAcceptable }).ToArray()
+            { IsObserved = true, TechniqueAcceptable = set.TechniqueAcceptable }).ToArray()
             : Enumerable.Range(1, Math.Max(0, plannedWarmupSets))
                 .Select(number => new WorkoutSetDetailDto(number, plannedWeightKg, plannedRepetitions,
                     null, true, restSeconds)).ToArray();
@@ -1893,7 +1894,7 @@ public sealed class PostgresWorkoutPlanAndSessionStore(PostgresDbContext dbConte
             ? actualWorking.Select((set, index) => new WorkoutSetDetailDto(warmups.Length + index + 1,
                 (double)set.WeightKg, set.RepsCompleted, (double?)set.Rpe, false, set.RestTimeSeconds,
                 set.LeftSideReps, set.RightSideReps)
-                { IsObserved = true, TechniqueAcceptable = set.TechniqueAcceptable }).ToArray()
+            { IsObserved = true, TechniqueAcceptable = set.TechniqueAcceptable }).ToArray()
             : Enumerable.Range(1, Math.Max(1, plannedWorkingSets))
                 .Select(number => new WorkoutSetDetailDto(warmups.Length + number, plannedWeightKg,
                     plannedRepetitions, null, false, restSeconds)).ToArray();

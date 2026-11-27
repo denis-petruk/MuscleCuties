@@ -1,6 +1,6 @@
 global using ProfileSetupDraft = MuscleCuties.Contracts.Onboarding.ProfileSetupDraft;
-global using ProfileSetupLoadResult = MuscleCuties.Contracts.Onboarding.ProfileSetupLoadResult;
 global using ProfileSetupError = MuscleCuties.Contracts.Onboarding.ProfileSetupError;
+global using ProfileSetupLoadResult = MuscleCuties.Contracts.Onboarding.ProfileSetupLoadResult;
 global using ProfileSetupResult = MuscleCuties.Contracts.Onboarding.ProfileSetupResult;
 
 namespace MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;

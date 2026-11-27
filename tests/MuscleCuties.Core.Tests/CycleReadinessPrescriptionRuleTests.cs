@@ -82,7 +82,8 @@ public sealed class CycleReadinessPrescriptionRuleTests
     public void Sleep_without_current_check_in_does_not_create_readiness()
     {
         var decision = CycleReadinessPrescriptionRule.Evaluate(Input(CyclePhase.Unknown,
-            PhaseReviewProvenance.Unknown, null) with { SleepHours = CycleReadinessPrescriptionRule.ShortSleepThresholdHours - OneOptionalSet });
+            PhaseReviewProvenance.Unknown, null) with
+        { SleepHours = CycleReadinessPrescriptionRule.ShortSleepThresholdHours - OneOptionalSet });
         Assert.Null(decision.AdjustedSets);
     }
 
@@ -125,7 +126,7 @@ public sealed class CycleReadinessPrescriptionRuleTests
     {
         var decision = CycleReadinessPrescriptionRule.Evaluate(Input(CyclePhase.Unknown,
             PhaseReviewProvenance.Unknown, null, CheckInScoreBand.ConsiderEasierDay) with
-            { HasNewPainOrSafetyConcern = true });
+        { HasNewPainOrSafetyConcern = true });
 
         Assert.Null(decision.AdjustedPrescriptionId);
         Assert.Equal(CycleReadinessPrescriptionRule.SafetyReviewRequired, decision.ReasonCode);

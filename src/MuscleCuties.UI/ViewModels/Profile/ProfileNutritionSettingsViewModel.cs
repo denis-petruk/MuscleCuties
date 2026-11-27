@@ -40,7 +40,8 @@ public partial class ProfileNutritionSettingsViewModel : ObservableObject, IPage
     [ObservableProperty] private UserGoal _goal;
     private bool _hasSavedCustomGoals;
     [ObservableProperty] private string _ironGoal = string.Empty;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
     [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private bool _isStatusError;

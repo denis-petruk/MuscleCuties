@@ -64,15 +64,26 @@ internal sealed record PlannedExerciseSnapshot(Guid Id, int ExerciseId, int Sets
     /// <summary>Builds the snapshot from a stored workout day exercise.</summary>
     public static PlannedExerciseSnapshot FromRecord(WorkoutDayExerciseRecord exercise) =>
         new(exercise.Id, exercise.ExerciseId, exercise.Sets, exercise.OptionalSets, exercise.Reps,
-            exercise.DurationSeconds, exercise.IsOptional) { TargetRepetitionsInReserve = exercise.TargetRepetitionsInReserve,
-                PlanningSlotId = exercise.PlanningSlotId };
+            exercise.DurationSeconds, exercise.IsOptional)
+        {
+            TargetRepetitionsInReserve = exercise.TargetRepetitionsInReserve,
+            PlanningSlotId = exercise.PlanningSlotId
+        };
 
     /// <summary>The live row this snapshot prescribes, rebuilt under the given owner and day; only the fields the snapshot
     /// carries are restored.</summary>
     public WorkoutDayExerciseRecord ToRecord(Guid userId, Guid dayId) => new()
     {
-        Id = Id, UserId = userId, WorkoutDayId = dayId, ExerciseId = ExerciseId, Sets = Sets,
-        OptionalSets = OptionalSets, Reps = Reps, DurationSeconds = DurationSeconds, IsOptional = IsOptional,
-        TargetRepetitionsInReserve = TargetRepetitionsInReserve, PlanningSlotId = PlanningSlotId
+        Id = Id,
+        UserId = userId,
+        WorkoutDayId = dayId,
+        ExerciseId = ExerciseId,
+        Sets = Sets,
+        OptionalSets = OptionalSets,
+        Reps = Reps,
+        DurationSeconds = DurationSeconds,
+        IsOptional = IsOptional,
+        TargetRepetitionsInReserve = TargetRepetitionsInReserve,
+        PlanningSlotId = PlanningSlotId
     };
 }

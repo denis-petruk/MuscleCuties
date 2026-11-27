@@ -82,7 +82,7 @@ internal static class PostgresCycleReadinessReconciler
                 x.WorkoutDayId == day.Id && !x.IsRemovedByReadiness).OrderBy(x => x.Id).ToListAsync(ct).ConfigureAwait(false);
             var baseline = new PlannedPrescriptionSnapshot(day.Id, day.Name, day.WorkoutType, day.ActivityTypeId,
                 day.PlannedMainDurationMinutes, exercises.Select(PlannedExerciseSnapshot.FromRecord).ToArray())
-                { ActivityPrescriptionJson = day.PlannedActivityPrescriptionJson };
+            { ActivityPrescriptionJson = day.PlannedActivityPrescriptionJson };
             var result = await PostgresCycleReadinessPrescription.ApplyAsync(db, userId, targetDate, zoneId, now, baseline, ct).ConfigureAwait(false);
             var checkIn = await db.DailyReadinessLogs.AsNoTracking().Where(x => x.UserId == userId && x.Date == targetDate)
                 .OrderByDescending(x => x.PlanningRevision).FirstOrDefaultAsync(ct).ConfigureAwait(false);
@@ -106,10 +106,25 @@ internal static class PostgresCycleReadinessReconciler
             var history = await PostgresCyclePersonalizationEvidence.LoadAsync(db, userId, targetDate, zoneId, ct).ConfigureAwait(false);
             var revisionId = await db.WorkoutPlanRevisionsV02.AsNoTracking().Where(x => x.UserId == userId && x.PlanId == day.WorkoutPlanId)
                 .OrderByDescending(x => x.RevisionNumber).Select(x => (Guid?)x.Id).FirstOrDefaultAsync(ct).ConfigureAwait(false);
-            var fingerprint = PlanningInputFingerprint.Hash(new { PlanId = day.WorkoutPlanId, RevisionId = revisionId, TargetDate = targetDate,
-                PolicyVersion = CycleReadinessPrescriptionRule.PolicyVersion, Baseline = baseline, CheckIn = checkIn, Phase = phase, Cycle = cycle, Anchor = anchor,
-                Profile = profile, Injuries = injuries, Symptoms = symptoms, PreviousPain = previousPain,
-                state.CycleReadinessPainReviewDate, History = history, Zone = zoneId });
+            var fingerprint = PlanningInputFingerprint.Hash(new
+            {
+                PlanId = day.WorkoutPlanId,
+                RevisionId = revisionId,
+                TargetDate = targetDate,
+                PolicyVersion = CycleReadinessPrescriptionRule.PolicyVersion,
+                Baseline = baseline,
+                CheckIn = checkIn,
+                Phase = phase,
+                Cycle = cycle,
+                Anchor = anchor,
+                Profile = profile,
+                Injuries = injuries,
+                Symptoms = symptoms,
+                PreviousPain = previousPain,
+                state.CycleReadinessPainReviewDate,
+                History = history,
+                Zone = zoneId
+            });
             var row = await db.WorkoutCycleReadinessOccurrences.SingleOrDefaultAsync(x => x.UserId == userId && x.WorkoutDayId == day.Id, ct).ConfigureAwait(false);
             if (row is null)
             {

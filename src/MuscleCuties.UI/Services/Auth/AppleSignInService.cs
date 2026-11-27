@@ -30,8 +30,8 @@ public sealed class AppleSignInService(
         if (_activeController is not null)
             return null;
 
-        string? rawNonce = null;
-        string? nonceChallengeId = null;
+        string? rawNonce;
+        string? nonceChallengeId;
 
         if (apiClient is null)
             throw new InvalidOperationException("Apple sign in requires the account service.");

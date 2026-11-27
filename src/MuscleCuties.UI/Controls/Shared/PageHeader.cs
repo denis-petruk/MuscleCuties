@@ -66,7 +66,6 @@ public class PageHeader : ContentView
     private ContentView? _statusHost;
     private ContentView? _eyebrowHost;
     private ContentView? _titleIconHost;
-    private bool _builtWithBack;
 
     /// <summary>Builds the header once and keeps its text, status and action in step with what the page binds.</summary>
     public PageHeader()
@@ -201,7 +200,6 @@ public class PageHeader : ContentView
         _eyebrowHost = null;
         _titleIconHost = null;
         _backButton = null;
-        _builtWithBack = ShowBack;
 
         var hasEyebrow = EyebrowContent is not null;
         var hasTitleIcon = TitleIcon is not null;

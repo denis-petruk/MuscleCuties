@@ -33,15 +33,27 @@ public sealed class PlanningLeasePersistenceTests
         await SyntheticTenantSession.SetAsync(setup, userId);
         setup.Users.Add(new UserRecord
         {
-            Id = userId, Email = $"lease-{userId:N}@example.invalid",
-            Username = $"lease_{userId.ToString("N")[..10]}", CredentialType = "Password",
-            PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true
+            Id = userId,
+            Email = $"lease-{userId:N}@example.invalid",
+            Username = $"lease_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
         });
         setup.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
         {
-            Id = proposalId, UserId = userId, PlanId = Guid.NewGuid(), ExpectedRevisionId = Guid.NewGuid(),
-            RulesetVersion = SyntheticRuleset, TrainingPolicyVersion = SyntheticPolicy,
-            Status = "Proposed", CreatedAtUtc = now, LeaseId = initialLease, LeaseFence = InitialFence,
+            Id = proposalId,
+            UserId = userId,
+            PlanId = Guid.NewGuid(),
+            ExpectedRevisionId = Guid.NewGuid(),
+            RulesetVersion = SyntheticRuleset,
+            TrainingPolicyVersion = SyntheticPolicy,
+            Status = "Proposed",
+            CreatedAtUtc = now,
+            LeaseId = initialLease,
+            LeaseFence = InitialFence,
             LeaseExpiresAtUtc = now.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration),
             ConcurrencyVersion = InitialProposalVersion
         });

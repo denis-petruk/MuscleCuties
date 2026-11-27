@@ -93,8 +93,11 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
     {
         var query = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {
-            ["encoding-type"] = "url", ["key-marker"] = keyMarker ?? "", ["max-keys"] = PageSize.ToString(CultureInfo.InvariantCulture),
-            ["prefix"] = key, ["versions"] = ""
+            ["encoding-type"] = "url",
+            ["key-marker"] = keyMarker ?? "",
+            ["max-keys"] = PageSize.ToString(CultureInfo.InvariantCulture),
+            ["prefix"] = key,
+            ["versions"] = ""
         };
         if (versionMarker is not null) query["version-id-marker"] = versionMarker;
         using var response = await SendWithRetryAsync(HttpMethod.Get, key, query, null, token).ConfigureAwait(false);
@@ -159,7 +162,9 @@ public sealed class DefaultS3PhotoObjectCleanup : IS3PhotoObjectCleanup
         if (!string.IsNullOrEmpty(_sessionToken)) request.Headers.TryAddWithoutValidation("x-amz-security-token", _sessionToken);
         var headers = new SortedDictionary<string, string>(StringComparer.Ordinal)
         {
-            ["host"] = uri.Host, ["x-amz-content-sha256"] = EmptyPayloadHash, ["x-amz-date"] = amzDate
+            ["host"] = uri.Host,
+            ["x-amz-content-sha256"] = EmptyPayloadHash,
+            ["x-amz-date"] = amzDate
         };
         if (!string.IsNullOrEmpty(_sessionToken)) headers["x-amz-security-token"] = _sessionToken;
         var signed = string.Join(';', headers.Keys);

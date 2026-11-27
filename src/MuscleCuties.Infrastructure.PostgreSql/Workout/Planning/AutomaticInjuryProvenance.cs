@@ -132,9 +132,12 @@ internal static class AutomaticInjuryProvenance
                 .Distinct().Order().ToArray();
             var snapshot = new Models.App.WorkoutInjuryPrescriptionRecord
             {
-                OriginalExerciseId = first.OriginalExerciseId, OriginalSets = first.OriginalSets,
-                OriginalOptionalSets = first.OriginalOptionalSets, OriginalReps = first.OriginalReps,
-                OriginalDurationSeconds = first.OriginalDurationSeconds, OriginalIsOptional = first.OriginalIsOptional,
+                OriginalExerciseId = first.OriginalExerciseId,
+                OriginalSets = first.OriginalSets,
+                OriginalOptionalSets = first.OriginalOptionalSets,
+                OriginalReps = first.OriginalReps,
+                OriginalDurationSeconds = first.OriginalDurationSeconds,
+                OriginalIsOptional = first.OriginalIsOptional,
                 OriginalIsRemovedByReadiness = first.OriginalIsRemovedByReadiness
             };
             rows.Add((new InjuryRestorationSlotIdentity(first.ScheduledDate.DayOfWeek, first.TemplateId,
@@ -212,10 +215,19 @@ internal static class AutomaticInjuryProvenance
             .ThenBy(slot => slot.Identity.SlotId, StringComparer.Ordinal).ToArray();
         var provenance = snapshots.OrderBy(row => row.Id).Select(row => new
         {
-            row.Id, row.EpisodeId, row.WorkoutDayId, row.OriginalWorkoutDayExerciseId,
-            row.OriginalExerciseId, row.OriginalPlanningSlotId, row.OriginalOriginWorkoutDayExerciseId,
-            row.OriginalSets, row.OriginalOptionalSets, row.OriginalReps, row.OriginalDurationSeconds,
-            row.OriginalIsOptional, row.OriginalIsRemovedByReadiness
+            row.Id,
+            row.EpisodeId,
+            row.WorkoutDayId,
+            row.OriginalWorkoutDayExerciseId,
+            row.OriginalExerciseId,
+            row.OriginalPlanningSlotId,
+            row.OriginalOriginWorkoutDayExerciseId,
+            row.OriginalSets,
+            row.OriginalOptionalSets,
+            row.OriginalReps,
+            row.OriginalDurationSeconds,
+            row.OriginalIsOptional,
+            row.OriginalIsRemovedByReadiness
         }).ToArray();
         return new Evidence(PlanningInputFingerprint.Hash(new { Slots = sorted, Snapshots = provenance, Omitted = omitted }), sorted);
     }

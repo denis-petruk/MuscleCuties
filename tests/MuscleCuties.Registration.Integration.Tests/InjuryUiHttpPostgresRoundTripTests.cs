@@ -56,13 +56,20 @@ public sealed class InjuryUiHttpPostgresRoundTripTests
         await SyntheticTenantSession.SetAsync(db, owner);
         db.Users.Add(new UserRecord
         {
-            Id = owner, Email = $"injury-{owner:N}@example.invalid",
-            Username = $"inj_{owner.ToString("N")[..10]}", CredentialType = "Password",
-            PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true
+            Id = owner,
+            Email = $"injury-{owner:N}@example.invalid",
+            Username = $"inj_{owner.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
         });
         db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = owner, TimeZoneId = "UTC"
+            Id = Guid.NewGuid(),
+            UserId = owner,
+            TimeZoneId = "UTC"
         });
         await db.SaveChangesAsync();
         try

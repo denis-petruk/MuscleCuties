@@ -10,8 +10,15 @@ internal static class PlanningInputFingerprint
         var bytes = JsonSerializer.SerializeToUtf8Bytes(injuries.OrderBy(item => item.Id).Select(item =>
             new
             {
-                item.Id, item.SiteFlag, item.Status, item.Since, item.Pain, item.Date, item.ClearedDate,
-                item.WorseningTrigger, item.ClinicianAdvisedAvoid
+                item.Id,
+                item.SiteFlag,
+                item.Status,
+                item.Since,
+                item.Pain,
+                item.Date,
+                item.ClearedDate,
+                item.WorseningTrigger,
+                item.ClinicianAdvisedAvoid
             }).ToArray());
         return Convert.ToHexString(SHA256.HashData(bytes));
     }

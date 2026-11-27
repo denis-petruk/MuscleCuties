@@ -47,26 +47,61 @@ public sealed class AutomaticAcceptanceTransactionTests
         var walking = (int)WorkoutActivityType.Walking;
         var strength = (int)WorkoutActivityType.GeneralStrength;
         await SyntheticTenantSession.SetAsync(db, userId);
-        db.Users.Add(new UserRecord { Id = userId, Email = $"auto-accept-{userId:N}@example.invalid",
-            Username = $"aa_{userId.ToString("N")[..10]}", CredentialType = "Password",
-            PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
-        db.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = userId, Name = "Synthetic",
+        db.Users.Add(new UserRecord
+        {
+            Id = userId,
+            Email = $"auto-accept-{userId:N}@example.invalid",
+            Username = $"aa_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
+        });
+        db.UserProfiles.Add(new UserProfileRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Name = "Synthetic",
             DateOfBirth = SyntheticBirthDate,
-            Height = 170m, Weight = 64m, Goal = "BuildMuscle", WeightGoalPace = "Maintain",
-            TrainingExperienceLevel = "Beginner", WorkoutDaysPerWeek = WorkoutDays, CycleLength = CycleDays,
-            EquipmentLevel = "FullGym", ConcurrencyVersion = ProfileVersion, UpdatedAt = now });
+            Height = 170m,
+            Weight = 64m,
+            Goal = "BuildMuscle",
+            WeightGoalPace = "Maintain",
+            TrainingExperienceLevel = "Beginner",
+            WorkoutDaysPerWeek = WorkoutDays,
+            CycleLength = CycleDays,
+            EquipmentLevel = "FullGym",
+            ConcurrencyVersion = ProfileVersion,
+            UpdatedAt = now
+        });
         db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
-            { Id = Guid.NewGuid(), UserId = userId, TimeZoneId = "UTC", PromotionPending = true });
-        db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = priorPlanId, UserId = userId, Name = "Synthetic previous",
-            IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-        db.WorkoutDays.Add(new WorkoutDayRecord { Id = Guid.NewGuid(), UserId = userId, WorkoutPlanId = priorPlanId,
-            Date = start, DayOfWeek = (int)start.DayOfWeek, WorkoutType = "Cardio", Name = "Synthetic walking",
-            ActivityTypeId = walking });
+        { Id = Guid.NewGuid(), UserId = userId, TimeZoneId = "UTC", PromotionPending = true });
+        db.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = priorPlanId,
+            UserId = userId,
+            Name = "Synthetic previous",
+            IsActive = true,
+            CyclePhaseTarget = "Follicular",
+            CreatedAt = now
+        });
+        db.WorkoutDays.Add(new WorkoutDayRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            WorkoutPlanId = priorPlanId,
+            Date = start,
+            DayOfWeek = (int)start.DayOfWeek,
+            WorkoutType = "Cardio",
+            Name = "Synthetic walking",
+            ActivityTypeId = walking
+        });
         await db.SaveChangesAsync();
         var draft = new WorkoutPreferencesDto([strength, walking], [(int)today.DayOfWeek, (int)start.DayOfWeek],
             new Dictionary<int, int> { [strength] = StrengthMinutes }, "FullGym");
         var request = new StrengthPlanPreviewRequestV020(WorkoutActivityDto.GeneralStrength, today, null)
-            { DraftPreferences = draft };
+        { DraftPreferences = draft };
         var strengthExercise = await db.WorkoutExerciseDefinitions.AsNoTracking()
             .Include(row => row.MuscleContributions).ThenInclude(row => row.MuscleGroup)
             .FirstAsync(row => row.MuscleContributions.Any(contribution =>
@@ -85,34 +120,60 @@ public sealed class AutomaticAcceptanceTransactionTests
                 SyntheticStrengthMinimumReps, SyntheticStrengthMaximumReps,
                 SyntheticStrengthRepsInReserve, SyntheticStrengthRestSeconds, [])],
             [], new Dictionary<string, string>(), start.DayOfWeek);
-        var input = new { Request = request, ProfileVersion, BaselineActivePlanId = priorPlanId,
-            BaselineRevisionId = (Guid?)null, AutomaticOrigin = true, AutomaticStartDate = start };
+        var input = new
+        {
+            Request = request,
+            ProfileVersion,
+            BaselineActivePlanId = priorPlanId,
+            BaselineRevisionId = (Guid?)null,
+            AutomaticOrigin = true,
+            AutomaticStartDate = start
+        };
         var schedule = new MixedActivityScheduleV020(
             [new MixedActivityScheduleSessionV020(walking, start.DayOfWeek, WalkingMinutes, false),
              new MixedActivityScheduleSessionV020(strength, start.DayOfWeek, StrengthMinutes, true)],
             [new MixedActivityScheduleDecisionV020(walking, "Scheduled", null, null, null, 1, []),
              new MixedActivityScheduleDecisionV020(strength, "Scheduled", null, null, null, 1, [])], []);
-        var proposalSnapshot = new { PolicyId = StrengthPlanPreviewRule.PolicyId,
-            PolicyVersion = StrengthPlanPreviewRule.Version, RulesetVersion = StrengthPlanPreviewRule.RulesetVersion,
-            Status = "Feasible", Sessions = new[] { strengthSession }, MixedActivitySchedule = schedule,
+        var proposalSnapshot = new
+        {
+            PolicyId = StrengthPlanPreviewRule.PolicyId,
+            PolicyVersion = StrengthPlanPreviewRule.Version,
+            RulesetVersion = StrengthPlanPreviewRule.RulesetVersion,
+            Status = "Feasible",
+            Sessions = new[] { strengthSession },
+            MixedActivitySchedule = schedule,
             SourceMuscleGroupsByExerciseId = new Dictionary<int, string[]> { [strengthExercise.Id] = strengthMuscleGroups },
             SourceHistoryFingerprint = PlanningInputFingerprint.Hash(Array.Empty<object>()),
             SourceInjuryFingerprint = PlanningInputFingerprint.Injuries(Array.Empty<WorkoutInjuryLogRecord>()),
             SourceCatalogFingerprint = await PlanningCatalogFingerprint.LoadAsync(db, userId, CancellationToken.None),
-            SourceTimeZoneVersion = 0, SourceExperienceVersion = 0, SourceAnswerVersion = 0 };
-        db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record { Id = proposalId, UserId = userId,
-            PlanId = newPlanId, ExpectedRevisionId = Guid.Empty, RulesetVersion = StrengthPlanPreviewRule.RulesetVersion,
-            TrainingPolicyVersion = StrengthPlanPreviewRule.Version, Status = "Proposed", CreatedAtUtc = now,
+            SourceTimeZoneVersion = 0,
+            SourceExperienceVersion = 0,
+            SourceAnswerVersion = 0
+        };
+        db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
+        {
+            Id = proposalId,
+            UserId = userId,
+            PlanId = newPlanId,
+            ExpectedRevisionId = Guid.Empty,
+            RulesetVersion = StrengthPlanPreviewRule.RulesetVersion,
+            TrainingPolicyVersion = StrengthPlanPreviewRule.Version,
+            Status = "Proposed",
+            CreatedAtUtc = now,
             InputSnapshotJson = JsonSerializer.Serialize(input, JsonOptions),
-            ProposalJson = JsonSerializer.Serialize(proposalSnapshot, JsonOptions) });
+            ProposalJson = JsonSerializer.Serialize(proposalSnapshot, JsonOptions)
+        });
         await db.SaveChangesAsync();
         var store = new PostgresAcceptStrengthPlanProposalStoreV020(db);
         var state = await db.WorkoutAccountPlanningStates.SingleAsync(row => row.UserId == userId);
         state.SafetyRegenerationPending = true;
         var episode = new WorkoutInjuryEpisodeRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, InjuryLogId = Guid.NewGuid(),
-            SiteFlag = SyntheticInjurySiteFlag, StartedOn = today
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            InjuryLogId = Guid.NewGuid(),
+            SiteFlag = SyntheticInjurySiteFlag,
+            StartedOn = today
         };
         db.WorkoutInjuryEpisodes.Add(episode);
         await db.SaveChangesAsync();

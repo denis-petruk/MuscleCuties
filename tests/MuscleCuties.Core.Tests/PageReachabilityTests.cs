@@ -226,43 +226,43 @@ public sealed class PageReachabilityTests
                 .ToArray();
 
             foreach (var text in sources)
-            foreach (Match match in RouteConstantRegex.Matches(text))
-                routeConstants[match.Groups["name"].Value] = match.Groups["value"].Value;
+                foreach (Match match in RouteConstantRegex.Matches(text))
+                    routeConstants[match.Groups["name"].Value] = match.Groups["value"].Value;
 
             foreach (var text in sources)
-            foreach (Match call in NavigationCallRegex.Matches(text))
-            {
-                if (IsCommented(text, call.Index))
-                    continue;
-
-                var argument = ReadArguments(text, call.Index + call.Length);
-
-                foreach (Match nameOf in NameOfRegex.Matches(argument))
-                    NavigationTargets.Add(nameOf.Groups["name"].Value);
-
-                foreach (Match literal in LiteralRegex.Matches(argument))
+                foreach (Match call in NavigationCallRegex.Matches(text))
                 {
-                    var raw = literal.Groups["route"].Value;
-
-                    // Interpolated routes are resolved through their nameof parts; query keys and prose are not routes.
-                    if (raw.Contains('{') || raw.Contains('}'))
+                    if (IsCommented(text, call.Index))
                         continue;
 
-                    var route = NormalizeRoute(raw);
-                    var looksLikeRoute = route.Contains("Page", StringComparison.Ordinal) ||
-                                         route is ".." or "." ||
-                                         raw.StartsWith('/');
-                    if (looksLikeRoute)
-                        NavigationTargets.Add(route);
+                    var argument = ReadArguments(text, call.Index + call.Length);
+
+                    foreach (Match nameOf in NameOfRegex.Matches(argument))
+                        NavigationTargets.Add(nameOf.Groups["name"].Value);
+
+                    foreach (Match literal in LiteralRegex.Matches(argument))
+                    {
+                        var raw = literal.Groups["route"].Value;
+
+                        // Interpolated routes are resolved through their nameof parts; query keys and prose are not routes.
+                        if (raw.Contains('{') || raw.Contains('}'))
+                            continue;
+
+                        var route = NormalizeRoute(raw);
+                        var looksLikeRoute = route.Contains("Page", StringComparison.Ordinal) ||
+                                             route is ".." or "." ||
+                                             raw.StartsWith('/');
+                        if (looksLikeRoute)
+                            NavigationTargets.Add(route);
+                    }
+
+                    // A route that is only ever named through a shared constant still counts as navigated.
+                    foreach (var constant in routeConstants.Where(constant => argument.Contains(constant.Key)))
+                        NavigationTargets.Add(constant.Value);
+
+                    foreach (Match identifier in IdentifierRegex.Matches(argument))
+                        NavigationTargets.Add(identifier.Groups["name"].Value);
                 }
-
-                // A route that is only ever named through a shared constant still counts as navigated.
-                foreach (var constant in routeConstants.Where(constant => argument.Contains(constant.Key)))
-                    NavigationTargets.Add(constant.Value);
-
-                foreach (Match identifier in IdentifierRegex.Matches(argument))
-                    NavigationTargets.Add(identifier.Groups["name"].Value);
-            }
         }
 
         private void ReadXamlRouteParameters()

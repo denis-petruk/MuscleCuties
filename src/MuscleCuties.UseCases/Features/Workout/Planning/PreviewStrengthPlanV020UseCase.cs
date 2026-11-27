@@ -154,7 +154,7 @@ public sealed class PreviewStrengthPlanV020UseCase(IStrengthPlanPreviewSourceV02
 
         StrengthPlanPreviewResult result;
         var chosenStrengthActivity = request.Activity;
-        var requiresReducedVolume = false;
+        bool requiresReducedVolume;
         var multipleStylesIdentified = false;
 
         if (automaticStyle is { } retainedStyle)

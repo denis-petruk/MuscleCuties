@@ -84,7 +84,11 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
             var planId = Guid.CreateVersion7();
             database.WorkoutPlans.Add(new WorkoutPlanRecord
             {
-                Id = planId, UserId = userId, Name = "Synthetic plan", IsActive = true, CreatedAt = DateTime.UtcNow
+                Id = planId,
+                UserId = userId,
+                Name = "Synthetic plan",
+                IsActive = true,
+                CreatedAt = DateTime.UtcNow
             });
             var strength = Day(userId, planId, today, WorkoutActivityType.GeneralStrength, 1);
             var walking = Day(userId, planId, today.AddDays(1), WorkoutActivityType.Walking, 1);
@@ -97,8 +101,12 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
             // Strength muscles must be readable, or the reschedule fails closed.
             database.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
             {
-                Id = Guid.CreateVersion7(), UserId = userId, WorkoutDayId = strength.Id,
-                ExerciseId = strengthExerciseId, Sets = 2, Reps = 10
+                Id = Guid.CreateVersion7(),
+                UserId = userId,
+                WorkoutDayId = strength.Id,
+                ExerciseId = strengthExerciseId,
+                Sets = 2,
+                Reps = 10
             });
             await database.SaveChangesAsync();
             var store = new PostgresWorkoutPlanAndSessionStore(database);
@@ -133,13 +141,20 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
 
     private static WorkoutDayRecord Day(Guid userId, Guid planId, DateOnly date, WorkoutActivityType activity,
         int order) => new()
-    {
-        Id = Guid.CreateVersion7(), UserId = userId, WorkoutPlanId = planId, DayOfWeek = (int)date.DayOfWeek,
-        WeekIndex = 0, Date = date, ActivityTypeId = (int)activity, DayOrder = order,
-        WorkoutType = WorkoutPreferencesRule.IsStrengthStyle(activity) ? "Strength" : "Cardio",
-        Name = activity.ToString(), PlannedMainDurationMinutes = 30m,
-        PlannedActivityPrescriptionJson = $"{{\"synthetic\":\"{activity}\"}}"
-    };
+        {
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            WorkoutPlanId = planId,
+            DayOfWeek = (int)date.DayOfWeek,
+            WeekIndex = 0,
+            Date = date,
+            ActivityTypeId = (int)activity,
+            DayOrder = order,
+            WorkoutType = WorkoutPreferencesRule.IsStrengthStyle(activity) ? "Strength" : "Cardio",
+            Name = activity.ToString(),
+            PlannedMainDurationMinutes = 30m,
+            PlannedActivityPrescriptionJson = $"{{\"synthetic\":\"{activity}\"}}"
+        };
 
     private static async Task<int> DefinitionIdAsync(PostgresDbContext database, int planningId) =>
         await database.WorkoutExerciseDefinitions.AsNoTracking()
@@ -156,17 +171,31 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         database.WorkoutPlans.Add(new WorkoutPlanRecord
         {
-            Id = planId, UserId = userId, Name = "Synthetic plan", IsActive = true, CreatedAt = DateTime.UtcNow
+            Id = planId,
+            UserId = userId,
+            Name = "Synthetic plan",
+            IsActive = true,
+            CreatedAt = DateTime.UtcNow
         });
         database.WorkoutDays.Add(new WorkoutDayRecord
         {
-            Id = dayId, UserId = userId, WorkoutPlanId = planId, DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0,
-            Date = today, WorkoutType = "Strength", Name = "Synthetic strength",
+            Id = dayId,
+            UserId = userId,
+            WorkoutPlanId = planId,
+            DayOfWeek = (int)today.DayOfWeek,
+            WeekIndex = 0,
+            Date = today,
+            WorkoutType = "Strength",
+            Name = "Synthetic strength",
             ActivityTypeId = (int)WorkoutActivityType.GeneralStrength
         });
         var dayExercise = new WorkoutDayExerciseRecord
         {
-            Id = Guid.CreateVersion7(), UserId = userId, WorkoutDayId = dayId, ExerciseId = exerciseId, Sets = 2,
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            WorkoutDayId = dayId,
+            ExerciseId = exerciseId,
+            Sets = 2,
             Reps = 10
         };
         database.WorkoutDayExercises.Add(dayExercise);
@@ -181,21 +210,39 @@ public sealed class WorkoutSwapAndRescheduleSafetyTests
         await SyntheticTenantSession.SetAsync(database, userId);
         database.Users.Add(new UserRecord
         {
-            Id = userId, Email = $"swap-{userId:N}@example.invalid", Username = $"swp_{userId.ToString("N")[..10]}",
-            CredentialType = "Password", PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now,
+            Id = userId,
+            Email = $"swap-{userId:N}@example.invalid",
+            Username = $"swp_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
             IsOnboardingComplete = true
         });
         database.UserProfiles.Add(new UserProfileRecord
         {
-            Id = Guid.CreateVersion7(), UserId = userId, Name = "Swap Tester", Height = 170m, Weight = 64m,
-            Goal = "BuildMuscle", WeightGoalPace = "Maintain", TrainingExperienceLevel = "Beginner",
-            WorkoutDaysPerWeek = 3, CycleLength = 28, EquipmentLevel = equipment,
-            PreferredWorkoutActivityTypes = nameof(WorkoutActivityType.GeneralStrength), UpdatedAt = now
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            Name = "Swap Tester",
+            Height = 170m,
+            Weight = 64m,
+            Goal = "BuildMuscle",
+            WeightGoalPace = "Maintain",
+            TrainingExperienceLevel = "Beginner",
+            WorkoutDaysPerWeek = 3,
+            CycleLength = 28,
+            EquipmentLevel = equipment,
+            PreferredWorkoutActivityTypes = nameof(WorkoutActivityType.GeneralStrength),
+            UpdatedAt = now
         });
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id, TimeZoneVersion = 1,
-            BaselineExperience = TrainingExperienceLevel.Beginner, EffectiveExperience = TrainingExperienceLevel.Beginner
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = TimeZoneInfo.Utc.Id,
+            TimeZoneVersion = 1,
+            BaselineExperience = TrainingExperienceLevel.Beginner,
+            EffectiveExperience = TrainingExperienceLevel.Beginner
         });
         await database.SaveChangesAsync();
         return userId;

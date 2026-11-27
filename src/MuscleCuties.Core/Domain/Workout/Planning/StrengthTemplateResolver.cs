@@ -1,5 +1,5 @@
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Enums.Workout;
 
 namespace MuscleCuties.Core.Domain.Workout.Planning;
 
@@ -276,11 +276,11 @@ public static class StrengthTemplateResolver
     /// <summary>The prescription role a template slot plays.</summary>
     private static StrengthPrescriptionRole RoleFor(StrengthTemplateSlot slot,
         WorkoutActivityType activity) => activity switch
-    {
-        WorkoutActivityType.HighVolumeStrength => slot.HighVolumeRole,
-        WorkoutActivityType.StrengthHighIntensity => slot.HighIntensityRole,
-        _ => slot.GeneralRole
-    };
+        {
+            WorkoutActivityType.HighVolumeStrength => slot.HighVolumeRole,
+            WorkoutActivityType.StrengthHighIntensity => slot.HighIntensityRole,
+            _ => slot.GeneralRole
+        };
 
     /// <summary>True when the slot is a heavy main lift for the activity.</summary>
     private static bool IsHeavyMain(StrengthTemplateSlot slot, WorkoutActivityType activity) =>
@@ -338,7 +338,7 @@ public static class StrengthTemplateResolver
             return 0;
 
         var isMainSlot = slot.IsRequired || slot.IsHeavyMainInHighIntensity;
-        var roleMatchScore = 0;
+        int roleMatchScore;
         if (isMainSlot)
             roleMatchScore = ranking.IsCompound ? 100 : 0;
         else

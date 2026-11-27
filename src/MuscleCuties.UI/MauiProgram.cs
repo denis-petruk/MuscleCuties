@@ -198,7 +198,7 @@ public static class MauiProgram
             () => DateTime.Today,
             () => NavigateToAsync(nameof(ProfilePersonalInfoPage))));
 
-        services.AddTransient<CyclePhaseDetailViewModel>(sp =>
+        services.AddTransient<CyclePhaseDetailViewModel>(_ =>
             new CyclePhaseDetailViewModel(() => NavigateToAsync("..")));
 
         services.AddSingleton<NutritionViewModel>(sp => new NutritionViewModel(
@@ -322,7 +322,6 @@ public static class MauiProgram
         services.AddTransient<ProfileWorkoutPreferencesViewModel>(sp => new ProfileWorkoutPreferencesViewModel(
             sp.GetRequiredService<IProfileWorkoutPreferencesUseCase>(),
             sp.GetRequiredService<GetReviewedExerciseExclusionCatalogV020UseCase>(),
-            sp.GetRequiredService<IProfileRefreshNotifier>(),
             () => NavigateToAsync(".."),
             () => NavigateToAsync(nameof(StrengthPlanGenerationPage)),
             sp.GetRequiredService<INavigationContextService>(),

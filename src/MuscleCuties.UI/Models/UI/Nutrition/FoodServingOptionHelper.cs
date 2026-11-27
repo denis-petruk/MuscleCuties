@@ -25,7 +25,7 @@ public static class FoodServingOptionHelper
 
         if (food.ServingSize is { } servingSize && float.IsFinite(servingSize) && servingSize > 0f &&
             portionUseCase.ConvertMassToGrams(servingSize, food.ServingSizeUnit) is
-                { Succeeded: true, Grams: { } servingGrams })
+            { Succeeded: true, Grams: { } servingGrams })
             FoodServingOptions.AddDistinctOption(options, new StoredServingOption
             {
                 Label = "serving",

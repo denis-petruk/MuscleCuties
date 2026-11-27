@@ -2,8 +2,8 @@
 // Second half of FoodLogViewModel; see its declaration for the full contract.
 
 using System.Collections.Concurrent;
-using System.Text;
 using System.ComponentModel;
+using System.Text;
 using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;

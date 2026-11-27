@@ -290,19 +290,33 @@ public sealed class Gate60EndToEndPersistenceTests
             db.WorkoutLogs.Add(new WorkoutLogRecord { Id = priorLogId, UserId = user, WorkoutDayId = priorDayId, Date = today.AddDays(-7), CompletionPercent = 100, CreatedAt = now.AddDays(-7) });
             db.WorkoutExerciseLogs.Add(new WorkoutExerciseLogRecord
             {
-                Id = Guid.NewGuid(), UserId = user, WorkoutLogId = priorLogId, WorkoutDayExerciseId = bandRowDayExId,
-                ExerciseId = bandExercise.Id, CompletedSets = 3, CompletedReps = 12, WeightKg = 5m, CreatedAt = now.AddDays(-7)
+                Id = Guid.NewGuid(),
+                UserId = user,
+                WorkoutLogId = priorLogId,
+                WorkoutDayExerciseId = bandRowDayExId,
+                ExerciseId = bandExercise.Id,
+                CompletedSets = 3,
+                CompletedReps = 12,
+                WeightKg = 5m,
+                CreatedAt = now.AddDays(-7)
             });
             var generation = new GenerationSessionV2(0, today.DayOfWeek, today, (int)WorkoutActivityType.GeneralStrength, 6, 30m,
                 [new GenerationExerciseV2(0, bandExercise.Id, bandExercise.Name, 1, 3, 10, 15, 2, 90, "CalibrationRequired", null, null, false, "InitialLoadCalibrationRequired"),
                  new GenerationExerciseV2(1, sliderExercise.Id, sliderExercise.Name, 0, 3, 8, 12, 2, 90, "CalibrationRequired", null, null, true, "InitialLoadCalibrationRequired")]);
             var snapshot = new PlannedPrescriptionSnapshot(dayId, "Today", "Strength", (int)WorkoutActivityType.GeneralStrength, null,
                 [new PlannedExerciseSnapshot(bandRowDayExId, bandExercise.Id, 3, 1, 12, null, false),
-                 new PlannedExerciseSnapshot(sliderDayExId, sliderExercise.Id, 3, 0, 10, null, false)]) { GenerationV2 = generation };
+                 new PlannedExerciseSnapshot(sliderDayExId, sliderExercise.Id, 3, 0, 10, null, false)])
+            { GenerationV2 = generation };
             db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
             {
-                Id = sessionId, UserId = user, PlannedWorkoutDayId = dayId, PlannedPrescriptionSnapshotJson = snapshot.Serialize(),
-                WorkoutName = "Today", StartedAt = now, CreatedAt = now, UpdatedAt = now
+                Id = sessionId,
+                UserId = user,
+                PlannedWorkoutDayId = dayId,
+                PlannedPrescriptionSnapshotJson = snapshot.Serialize(),
+                WorkoutName = "Today",
+                StartedAt = now,
+                CreatedAt = now,
+                UpdatedAt = now
             });
             await db.SaveChangesAsync();
 

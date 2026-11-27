@@ -596,8 +596,11 @@ public static class StrengthPlanPreviewRule
 
     /// <summary>True when the chosen weekdays can host a plan.</summary>
     private static bool ValidWeekdays(IReadOnlySet<DayOfWeek>? weekdays) =>
-        weekdays is { Count: >= MixedActivityWeekScheduleRule.MinimumAvailableWeekdays and
-            <= WorkoutPreferencesRule.MaximumDaysPerWeek } && weekdays.All(Enum.IsDefined);
+        weekdays is
+        {
+            Count: >= MixedActivityWeekScheduleRule.MinimumAvailableWeekdays and
+            <= WorkoutPreferencesRule.MaximumDaysPerWeek
+        } && weekdays.All(Enum.IsDefined);
 
     /// <summary>True when the length is one the activity allows.</summary>
     private static bool IsValidActivityDuration(WorkoutActivityType activity, int minutes) =>
@@ -678,13 +681,13 @@ public static class StrengthPlanPreviewRule
     /// <summary>Working exercises one session may prescribe for the activity.</summary>
     private static int MaximumWorkingExercises(WorkoutActivityType activity,
         StrengthTemplateDefinition template) => activity switch
-    {
-        WorkoutActivityType.HighVolumeStrength =>
-            ActivityPrescriptionRule.HighVolumeMaximumWorkingExercisesPerSession,
-        WorkoutActivityType.StrengthHighIntensity =>
-            ActivityPrescriptionRule.StrengthHighIntensityMaximumWorkingExercisesPerSession,
-        _ => template.Slots.Count
-    };
+        {
+            WorkoutActivityType.HighVolumeStrength =>
+                ActivityPrescriptionRule.HighVolumeMaximumWorkingExercisesPerSession,
+            WorkoutActivityType.StrengthHighIntensity =>
+                ActivityPrescriptionRule.StrengthHighIntensityMaximumWorkingExercisesPerSession,
+            _ => template.Slots.Count
+        };
 
     /// <summary>
     /// Experience used for exercise eligibility. In-session swaps reuse it so a swap can never

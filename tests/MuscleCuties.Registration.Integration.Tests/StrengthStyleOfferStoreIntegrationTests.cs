@@ -27,8 +27,13 @@ public sealed class StrengthStyleOfferStoreIntegrationTests
         var now = DateTime.UtcNow;
         database.Users.Add(new UserRecord
         {
-            Id = userId, Email = $"offer-{userId:N}@example.invalid", Username = $"off_{userId.ToString("N")[..10]}",
-            CredentialType = "Password", PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now
+            Id = userId,
+            Email = $"offer-{userId:N}@example.invalid",
+            Username = $"off_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now
         });
         await database.SaveChangesAsync();
         try

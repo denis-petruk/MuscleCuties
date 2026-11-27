@@ -296,46 +296,46 @@ public static class PhaseAdjustmentRule
             switch (change.Field)
             {
                 case PhaseAdjustmentField.ExerciseSets:
-                {
-                    if (change.PrescriptionId is not { } prescriptionId || change.ExerciseId is null ||
-                        change.ProposedValue != decimal.Truncate(change.ProposedValue) ||
-                        change.ProposedValue < MinimumExerciseSetCount ||
-                        change.ProposedValue >= change.AcceptedValue)
-                        return Application(PhaseAdjustmentApplicationStatus.InvalidInput,
-                            acceptedSessions, false, "PhaseAdjustmentSetChangeInvalid");
-                    var current = changedSessions.GetValueOrDefault(session.SessionId, session);
-                    var exerciseIndex = current.Exercises.ToList().FindIndex(exercise =>
-                        exercise.PrescriptionId == prescriptionId &&
-                        exercise.ExerciseId == change.ExerciseId &&
-                        exercise.AcceptedSets == change.AcceptedValue);
-                    if (exerciseIndex == MissingItemIndex)
-                        return Application(PhaseAdjustmentApplicationStatus.InvalidInput,
-                            acceptedSessions, false, "PhaseAdjustmentAcceptedPrescriptionChanged");
-                    var updatedExercises = current.Exercises.ToArray();
-                    updatedExercises[exerciseIndex] = updatedExercises[exerciseIndex] with
                     {
-                        AcceptedSets = decimal.ToInt32(change.ProposedValue)
-                    };
-                    changedSessions[session.SessionId] = current with
-                    {
-                        Exercises = Array.AsReadOnly(updatedExercises)
-                    };
-                    break;
-                }
+                        if (change.PrescriptionId is not { } prescriptionId || change.ExerciseId is null ||
+                            change.ProposedValue != decimal.Truncate(change.ProposedValue) ||
+                            change.ProposedValue < MinimumExerciseSetCount ||
+                            change.ProposedValue >= change.AcceptedValue)
+                            return Application(PhaseAdjustmentApplicationStatus.InvalidInput,
+                                acceptedSessions, false, "PhaseAdjustmentSetChangeInvalid");
+                        var current = changedSessions.GetValueOrDefault(session.SessionId, session);
+                        var exerciseIndex = current.Exercises.ToList().FindIndex(exercise =>
+                            exercise.PrescriptionId == prescriptionId &&
+                            exercise.ExerciseId == change.ExerciseId &&
+                            exercise.AcceptedSets == change.AcceptedValue);
+                        if (exerciseIndex == MissingItemIndex)
+                            return Application(PhaseAdjustmentApplicationStatus.InvalidInput,
+                                acceptedSessions, false, "PhaseAdjustmentAcceptedPrescriptionChanged");
+                        var updatedExercises = current.Exercises.ToArray();
+                        updatedExercises[exerciseIndex] = updatedExercises[exerciseIndex] with
+                        {
+                            AcceptedSets = decimal.ToInt32(change.ProposedValue)
+                        };
+                        changedSessions[session.SessionId] = current with
+                        {
+                            Exercises = Array.AsReadOnly(updatedExercises)
+                        };
+                        break;
+                    }
                 case PhaseAdjustmentField.ContinuousMainMinutes:
-                {
-                    var current = changedSessions.GetValueOrDefault(session.SessionId, session);
-                    if (current.ContinuousMainMinutes != change.AcceptedValue ||
-                        change.ProposedValue < MinimumContinuousMainMinutes ||
-                        change.ProposedValue >= change.AcceptedValue)
-                        return Application(PhaseAdjustmentApplicationStatus.InvalidInput,
-                            acceptedSessions, false, "PhaseAdjustmentDurationChangeInvalid");
-                    changedSessions[session.SessionId] = current with
                     {
-                        ContinuousMainMinutes = change.ProposedValue
-                    };
-                    break;
-                }
+                        var current = changedSessions.GetValueOrDefault(session.SessionId, session);
+                        if (current.ContinuousMainMinutes != change.AcceptedValue ||
+                            change.ProposedValue < MinimumContinuousMainMinutes ||
+                            change.ProposedValue >= change.AcceptedValue)
+                            return Application(PhaseAdjustmentApplicationStatus.InvalidInput,
+                                acceptedSessions, false, "PhaseAdjustmentDurationChangeInvalid");
+                        changedSessions[session.SessionId] = current with
+                        {
+                            ContinuousMainMinutes = change.ProposedValue
+                        };
+                        break;
+                    }
                 default:
                     return Application(PhaseAdjustmentApplicationStatus.InvalidInput,
                         acceptedSessions, false, "PhaseAdjustmentFieldUnsupported");

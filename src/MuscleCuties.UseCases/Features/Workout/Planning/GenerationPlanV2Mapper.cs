@@ -1,8 +1,8 @@
+using System.Security.Cryptography;
+using System.Text.Json;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Models.Enums.Workout;
-using System.Security.Cryptography;
-using System.Text.Json;
 
 namespace MuscleCuties.UseCases.Features.Workout.Planning;
 
@@ -27,8 +27,11 @@ public static class GenerationPlanV2Mapper
                 session.Weekday, plan.Sessions.FirstOrDefault()?.LocalDate ?? default,
                 session.ActivityTypeId, 0, session.DurationMinutes, [])).ToArray();
         if (retainedActivities.Length > 0)
-            plan = plan with { Sessions = plan.Sessions.Concat(retainedActivities).ToArray(),
-                SessionCount = plan.Sessions.Count + retainedActivities.Length };
+            plan = plan with
+            {
+                Sessions = plan.Sessions.Concat(retainedActivities).ToArray(),
+                SessionCount = plan.Sessions.Count + retainedActivities.Length
+            };
         var beforeCapacity = plan;
         plan = LimitWeekToCapacity(plan);
         var reducedActivities = beforeCapacity.Sessions.GroupBy(session => session.ActivityTypeId)
@@ -42,8 +45,6 @@ public static class GenerationPlanV2Mapper
         {
             var previous = preview.MixedActivitySchedule?.Sessions.FirstOrDefault(item =>
                 item.ActivityTypeId == session.ActivityTypeId && item.Weekday == session.Weekday);
-            var original = preview.MixedActivitySchedule?.Activities.FirstOrDefault(item =>
-                item.ActivityTypeId == session.ActivityTypeId)?.OriginalPrescription;
             return new MixedActivityScheduleSessionV020(session.ActivityTypeId, session.Weekday,
                 session.EstimatedTotalMinutes + (session.AttachedFinisher?.DurationMinutes ?? 0),
                 session.Exercises.Count > 0 || previous?.IsHardSession == true,
@@ -65,9 +66,19 @@ public static class GenerationPlanV2Mapper
                 }
                 : decision;
         }).ToArray();
-        plan = plan with { PrescriptionHash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new
-            { plan.PolicyVersion, plan.InputContractVersion, plan.CatalogVersion, plan.Sessions,
-                plan.LimitationCodes, plan.AdvisoryCodes, plan.ReadinessAdaptationApplied }))) };
+        plan = plan with
+        {
+            PrescriptionHash = Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(new
+            {
+                plan.PolicyVersion,
+                plan.InputContractVersion,
+                plan.CatalogVersion,
+                plan.Sessions,
+                plan.LimitationCodes,
+                plan.AdvisoryCodes,
+                plan.ReadinessAdaptationApplied
+            })))
+        };
         var usable = strength.Count > 0 && strength.All(session => session.Slots.Count > 0) &&
             plan.Status is nameof(WorkoutGenerationStatusV2.Feasible) or nameof(WorkoutGenerationStatusV2.Limited);
         return preview with
@@ -161,12 +172,13 @@ public static class GenerationPlanV2Mapper
                     exercise.TargetRir, exercise.RestSeconds, exercise.LoadStatus.ToString(),
                     exercise.PrescribedLoadKg, exercise.SupersetGroupId,
                     unilateralIds.Contains(exercise.ExerciseId), exercise.SelectionReasonCode)
-                    {
-                        IsOptional = !exercise.IsPriorityOrCompound, Pattern = exercise.Pattern.ToString(),
-                        SlotId = $"v2-{LogicalSlotKey(exercise.Pattern.ToString())}-{session.Exercises.Count(other =>
-                            LogicalSlotKey(other.Pattern.ToString()) == LogicalSlotKey(exercise.Pattern.ToString()) &&
-                            other.OrderIndex < exercise.OrderIndex)}"
-                    }).ToArray(),
+                {
+                    IsOptional = !exercise.IsPriorityOrCompound,
+                    Pattern = exercise.Pattern.ToString(),
+                    SlotId = $"v2-{LogicalSlotKey(exercise.Pattern.ToString())}-{session.Exercises.Count(other =>
+                        LogicalSlotKey(other.Pattern.ToString()) == LogicalSlotKey(exercise.Pattern.ToString()) &&
+                        other.OrderIndex < exercise.OrderIndex)}"
+                }).ToArray(),
                 session.AttachedFinisher is { } finisher ? new GenerationFinisherV2(
                     (int)finisher.Activity, finisher.DurationMinutes, finisher.IntensityBand.ToString(),
                     finisher.TargetRpeMin, finisher.TargetRpeMax) : null)).ToArray(),

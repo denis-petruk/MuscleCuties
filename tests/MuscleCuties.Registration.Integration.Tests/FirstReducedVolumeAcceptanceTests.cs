@@ -30,16 +30,40 @@ public sealed class FirstReducedVolumeAcceptanceTests
         await SyntheticTenantSession.SetAsync(db, user);
         try
         {
-            db.Users.Add(new UserRecord { Id = user, Email = $"reduced-{user:N}@example.invalid",
-                Username = $"reduced_{user.ToString("N")[..10]}", CredentialType = "Password",
-                PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
-            db.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = user, Name = "Synthetic",
-                DateOfBirth = new DateOnly(1990, 1, 1), Goal = "MuscleTone", TrainingExperienceLevel = "Beginner",
-                EquipmentLevel = "FullGym", Height = 168m, Weight = 62m, WorkoutDaysPerWeek = 1,
-                CycleLength = 28, UpdatedAt = now });
-            db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = user,
-                TimeZoneId = TimeZoneInfo.Utc.Id, BaselineExperience = TrainingExperienceLevel.Beginner,
-                EffectiveExperience = TrainingExperienceLevel.Beginner });
+            db.Users.Add(new UserRecord
+            {
+                Id = user,
+                Email = $"reduced-{user:N}@example.invalid",
+                Username = $"reduced_{user.ToString("N")[..10]}",
+                CredentialType = "Password",
+                PasswordHash = "synthetic-hash",
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsOnboardingComplete = true
+            });
+            db.UserProfiles.Add(new UserProfileRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = user,
+                Name = "Synthetic",
+                DateOfBirth = new DateOnly(1990, 1, 1),
+                Goal = "MuscleTone",
+                TrainingExperienceLevel = "Beginner",
+                EquipmentLevel = "FullGym",
+                Height = 168m,
+                Weight = 62m,
+                WorkoutDaysPerWeek = 1,
+                CycleLength = 28,
+                UpdatedAt = now
+            });
+            db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = user,
+                TimeZoneId = TimeZoneInfo.Utc.Id,
+                BaselineExperience = TrainingExperienceLevel.Beginner,
+                EffectiveExperience = TrainingExperienceLevel.Beginner
+            });
             await db.SaveChangesAsync();
 
             var strength = (int)WorkoutActivityType.GeneralStrength;
@@ -47,7 +71,7 @@ public sealed class FirstReducedVolumeAcceptanceTests
             var draft = new WorkoutPreferencesDto([strength], [(int)day],
                 new Dictionary<int, int> { [strength] = 30 }, "FullGym");
             var request = new StrengthPlanPreviewRequestV020(WorkoutActivityDto.GeneralStrength, today, null)
-                { DraftPreferences = draft };
+            { DraftPreferences = draft };
             async Task<StrengthPlanProposalCreatedV020> CreateProposal()
             {
                 var source = Xunit.Assert.IsType<StrengthPlanPreviewSourceV020>(
@@ -67,10 +91,14 @@ public sealed class FirstReducedVolumeAcceptanceTests
                     [session], [], [], [], schedule)
                 {
                     RequiresReducedVolumeAcknowledgment = true,
-                    SourceProfileVersion = source.ProfileVersion, SourceInjuryFingerprint = source.InjuryFingerprint,
-                    SourceActivePlanId = source.ActivePlanId, SourceActiveRevisionId = source.ActiveRevisionId,
-                    SourceHistoryFingerprint = source.HistoryFingerprint, SourceCatalogFingerprint = source.CatalogFingerprint,
-                    SourceTimeZoneVersion = source.TimeZoneVersion, SourceExperienceVersion = source.ExperienceVersion,
+                    SourceProfileVersion = source.ProfileVersion,
+                    SourceInjuryFingerprint = source.InjuryFingerprint,
+                    SourceActivePlanId = source.ActivePlanId,
+                    SourceActiveRevisionId = source.ActiveRevisionId,
+                    SourceHistoryFingerprint = source.HistoryFingerprint,
+                    SourceCatalogFingerprint = source.CatalogFingerprint,
+                    SourceTimeZoneVersion = source.TimeZoneVersion,
+                    SourceExperienceVersion = source.ExperienceVersion,
                     SourceAnswerVersion = source.AnswerVersion,
                     SourceMuscleGroupsByExerciseId = source.MuscleGroupsByExerciseId?.ToDictionary(
                         pair => pair.Key, pair => pair.Value.ToArray())

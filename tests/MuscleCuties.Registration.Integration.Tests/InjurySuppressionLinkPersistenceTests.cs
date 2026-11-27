@@ -43,31 +43,52 @@ public sealed class InjurySuppressionLinkPersistenceTests
         var seedCode = $"synthetic-{token}";
         try
         {
-        await SyntheticTenantSession.SetAsync(db, owner);
-        db.Users.Add(new UserRecord { Id = owner, Email = $"injury-link-{token}@example.invalid",
-            Username = $"il_{token[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
-        db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+            await SyntheticTenantSession.SetAsync(db, owner);
+            db.Users.Add(new UserRecord
+            {
+                Id = owner,
+                Email = $"injury-link-{token}@example.invalid",
+                Username = $"il_{token[..10]}",
+                CredentialType = "Password",
+                PasswordHash = "synthetic-hash",
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsOnboardingComplete = true
+            });
+            db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
             { Id = Guid.NewGuid(), UserId = owner, TimeZoneId = "UTC" });
-        var exercise = new Exercise { Id = Random.Shared.Next(MinimumSyntheticCatalogId, MaximumSyntheticCatalogId),
-            SeedCode = seedCode, Code = $"test-{token[..10]}",
-            Name = "Synthetic exercise", Description = "Synthetic exercise", JointAreas = "synthetic" };
-        db.Exercises.Add(exercise);
-        await db.SaveChangesAsync();
-        var definition = new WorkoutExerciseDefinition
-        {
-            Id = exercise.Id, SeedCode = seedCode, Name = "Synthetic exercise",
-            Pattern = MovementPattern.SquatPattern, Required = EquipmentSet.None,
-            Contraindications = InjuryFlag.Knee | InjuryFlag.Shoulder,
-            TrainingCatalogVersionV020 = Ruleset, SupportedExperiencesV020Json = "[\"Beginner\"]",
-            DemandTagsV020Json = "[]", DemandTagsReviewedV020 = true,
-            RestrictionConflictTagsV020Json = "[]", RestrictionMappingsReviewedV020 = true,
-            SupportedTimingMethodsV020Json = "[\"StraightSets\"]", ReviewedSubstituteExerciseIdsV020Json = "[]",
-            ReviewEvidenceV020Json = Evidence
-        };
-        db.WorkoutExerciseDefinitions.Add(definition);
-        await db.SaveChangesAsync();
-        Xunit.Assert.Empty(WorkoutExerciseV020CatalogMapper.Map(definition).MetadataGaps);
+            var exercise = new Exercise
+            {
+                Id = Random.Shared.Next(MinimumSyntheticCatalogId, MaximumSyntheticCatalogId),
+                SeedCode = seedCode,
+                Code = $"test-{token[..10]}",
+                Name = "Synthetic exercise",
+                Description = "Synthetic exercise",
+                JointAreas = "synthetic"
+            };
+            db.Exercises.Add(exercise);
+            await db.SaveChangesAsync();
+            var definition = new WorkoutExerciseDefinition
+            {
+                Id = exercise.Id,
+                SeedCode = seedCode,
+                Name = "Synthetic exercise",
+                Pattern = MovementPattern.SquatPattern,
+                Required = EquipmentSet.None,
+                Contraindications = InjuryFlag.Knee | InjuryFlag.Shoulder,
+                TrainingCatalogVersionV020 = Ruleset,
+                SupportedExperiencesV020Json = "[\"Beginner\"]",
+                DemandTagsV020Json = "[]",
+                DemandTagsReviewedV020 = true,
+                RestrictionConflictTagsV020Json = "[]",
+                RestrictionMappingsReviewedV020 = true,
+                SupportedTimingMethodsV020Json = "[\"StraightSets\"]",
+                ReviewedSubstituteExerciseIdsV020Json = "[]",
+                ReviewEvidenceV020Json = Evidence
+            };
+            db.WorkoutExerciseDefinitions.Add(definition);
+            await db.SaveChangesAsync();
+            Xunit.Assert.Empty(WorkoutExerciseV020CatalogMapper.Map(definition).MetadataGaps);
             var planId = Guid.NewGuid();
             var proposalId = Guid.NewGuid();
             var revisionId = Guid.NewGuid();
@@ -77,35 +98,100 @@ public sealed class InjurySuppressionLinkPersistenceTests
             var prescriptionIds = new[] { Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid() };
             var dates = new[] { future, future.AddDays(FutureWeek), future.AddDays(FutureWeek * 2) };
             var days = new[] { freshDay, loggedDay, completedDay };
-            db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = owner, Name = "Synthetic plan",
-                IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-            db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record { Id = proposalId, UserId = owner,
-                PlanId = planId, ExpectedRevisionId = Guid.NewGuid(), RulesetVersion = Ruleset,
-                TrainingPolicyVersion = Policy, Status = "Accepted", CreatedAtUtc = now,
-                DecidedAtUtc = now, AcceptedRevisionId = revisionId });
+            db.WorkoutPlans.Add(new WorkoutPlanRecord
+            {
+                Id = planId,
+                UserId = owner,
+                Name = "Synthetic plan",
+                IsActive = true,
+                CyclePhaseTarget = "Follicular",
+                CreatedAt = now
+            });
+            db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
+            {
+                Id = proposalId,
+                UserId = owner,
+                PlanId = planId,
+                ExpectedRevisionId = Guid.NewGuid(),
+                RulesetVersion = Ruleset,
+                TrainingPolicyVersion = Policy,
+                Status = "Accepted",
+                CreatedAtUtc = now,
+                DecidedAtUtc = now,
+                AcceptedRevisionId = revisionId
+            });
             var planJson = knownSnapshot ? JsonSerializer.Serialize(new
             {
-                proposal = new { sessions = new[] { new { sessionIndex = SessionIndex,
-                    slots = new[] { new { exerciseId = exercise.Id } } } } },
+                proposal = new
+                {
+                    sessions = new[] { new { sessionIndex = SessionIndex,
+                    slots = new[] { new { exerciseId = exercise.Id } } } }
+                },
                 weekdayAssignments = new[] { new { sessionIndex = SessionIndex, weekday = (int)future.DayOfWeek } }
             }) : "{}";
-            db.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record { Id = revisionId, UserId = owner,
-                PlanId = planId, RevisionNumber = InitialRevision, SourceProposalId = proposalId,
-                RulesetVersion = Ruleset, TrainingPolicyVersion = Policy, PlanJson = planJson, AcceptedAtUtc = now });
+            db.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record
+            {
+                Id = revisionId,
+                UserId = owner,
+                PlanId = planId,
+                RevisionNumber = InitialRevision,
+                SourceProposalId = proposalId,
+                RulesetVersion = Ruleset,
+                TrainingPolicyVersion = Policy,
+                PlanJson = planJson,
+                AcceptedAtUtc = now
+            });
             for (var i = 0; i < days.Length; i++)
             {
-                db.WorkoutDays.Add(new WorkoutDayRecord { Id = days[i], UserId = owner, WorkoutPlanId = planId,
-                    Date = dates[i], DayOfWeek = (int)dates[i].DayOfWeek, WorkoutType = "Strength", Name = "Synthetic strength" });
-                db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = prescriptionIds[i], UserId = owner,
-                    WorkoutDayId = days[i], ExerciseId = exercise.Id, Sets = SyntheticSetCount, Reps = SyntheticRepCount });
+                db.WorkoutDays.Add(new WorkoutDayRecord
+                {
+                    Id = days[i],
+                    UserId = owner,
+                    WorkoutPlanId = planId,
+                    Date = dates[i],
+                    DayOfWeek = (int)dates[i].DayOfWeek,
+                    WorkoutType = "Strength",
+                    Name = "Synthetic strength"
+                });
+                db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+                {
+                    Id = prescriptionIds[i],
+                    UserId = owner,
+                    WorkoutDayId = days[i],
+                    ExerciseId = exercise.Id,
+                    Sets = SyntheticSetCount,
+                    Reps = SyntheticRepCount
+                });
             }
-            db.WorkoutLogs.Add(new WorkoutLogRecord { Id = Guid.NewGuid(), UserId = owner, WorkoutDayId = loggedDay,
-                Date = dates[1], CompletionPercent = CompletePercent, CreatedAt = now });
-            db.WorkoutLogs.Add(new WorkoutLogRecord { Id = Guid.NewGuid(), UserId = owner, WorkoutDayId = completedDay,
-                Date = dates[2], CompletionPercent = CompletePercent, CreatedAt = now });
-            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = Guid.NewGuid(), UserId = owner,
-                PlannedWorkoutDayId = completedDay, WorkoutName = "Synthetic completed session",
-                StartedAt = now, CompletedAt = now, CreatedAt = now, UpdatedAt = now });
+            db.WorkoutLogs.Add(new WorkoutLogRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = owner,
+                WorkoutDayId = loggedDay,
+                Date = dates[1],
+                CompletionPercent = CompletePercent,
+                CreatedAt = now
+            });
+            db.WorkoutLogs.Add(new WorkoutLogRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = owner,
+                WorkoutDayId = completedDay,
+                Date = dates[2],
+                CompletionPercent = CompletePercent,
+                CreatedAt = now
+            });
+            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = owner,
+                PlannedWorkoutDayId = completedDay,
+                WorkoutName = "Synthetic completed session",
+                StartedAt = now,
+                CompletedAt = now,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
             await db.SaveChangesAsync();
             var store = new PostgresCheckInAndInjuryStore(db, TimeProvider.System);
             foreach (var site in new[] { InjuryFlag.Knee, InjuryFlag.Shoulder })

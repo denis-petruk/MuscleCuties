@@ -257,8 +257,11 @@ public static class MixedActivityWeekScheduleRule
                 var adjusted = SameDayDemandAdjustmentRule.Adjust(original);
                 if (adjusted is null) continue;
                 var index = Array.IndexOf(sessions, session);
-                sessions[index] = session with { DurationMinutes = SameDayDemandAdjustmentRule.TotalMinutes(adjusted),
-                    OccurrencePrescription = adjusted };
+                sessions[index] = session with
+                {
+                    DurationMinutes = SameDayDemandAdjustmentRule.TotalMinutes(adjusted),
+                    OccurrencePrescription = adjusted
+                };
                 break;
             }
         }

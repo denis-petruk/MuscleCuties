@@ -1,6 +1,5 @@
 using MuscleCuties.Core.Services;
 using MuscleCuties.Core.Services.Auth;
-using MuscleCuties.Core.Services.ExerciseMedia;
 using MuscleCuties.Core.Services.Nutrition;
 using MuscleCuties.Core.Services.Profile;
 using MuscleCuties.Infrastructure.ApiClient;
@@ -8,8 +7,6 @@ using MuscleCuties.Infrastructure.Caching;
 using MuscleCuties.Infrastructure.Cloud;
 using MuscleCuties.Infrastructure.Nutrition.DailyLog;
 using MuscleCuties.Infrastructure.Nutrition.Recipes;
-using MuscleCuties.Infrastructure.Workout.Media;
-using MuscleCuties.UI.Infrastructure.Network;
 using MuscleCuties.UI.Services;
 using MuscleCuties.UI.Services.Auth;
 using MuscleCuties.UI.Services.Configuration;
@@ -19,8 +16,7 @@ using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 
 namespace MuscleCuties.UI.Composition;
 
-/// <summary>Registers the HTTP layer: the backend client with its timeout and retry handlers, and the two</summary>
-/// remote exercise catalogues.</summary>
+/// <summary>Registers the HTTP layer: the backend client with its timeout and retry handlers.</summary>
 public static class TransportCompositionExtensions
 {
 #if DEBUG
@@ -32,24 +28,6 @@ public static class TransportCompositionExtensions
     /// address can be overridden from preferences in debug builds only.</summary>
     public static IServiceCollection RegisterTransportServices(this IServiceCollection services)
     {
-
-
-        services.AddHttpClient<IWgerApiClient, WgerApiClient>(client =>
-        {
-            client.BaseAddress = WgerApiClient.BaseUri;
-            client.Timeout = TimeSpan.FromSeconds(15);
-        });
-
-        services.AddHttpClient<IExerciseDbClient, ExerciseDbClient>(client =>
-        {
-            client.BaseAddress = ExerciseDbClient.BaseUri;
-            client.Timeout = TimeSpan.FromSeconds(15);
-        });
-
-        services.AddSingleton<IExerciseMediaStore>(_ =>
-            new LocalExerciseMediaStore(Path.Combine(FileSystem.AppDataDirectory, "exercises")));
-
-        services.AddSingleton<IPasswordHasher, PasswordHasher>();
         services.AddScoped<IAuthService, CloudAuthService>();
         services.AddSingleton<IPendingRegistrationService, PendingRegistrationService>();
 

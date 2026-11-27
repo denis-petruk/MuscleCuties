@@ -1,6 +1,6 @@
 using MuscleCuties.Core.Domain.Workout;
-using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Workout.Session;
 

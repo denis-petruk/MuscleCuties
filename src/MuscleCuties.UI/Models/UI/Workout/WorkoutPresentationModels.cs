@@ -35,9 +35,11 @@ public partial class WorkoutItem : ObservableObject
     public string SessionProgressText { get; set; } = "Upcoming";
     /// <summary>Whether the session has been finished, which switches the card to its completed state.</summary>
     public bool IsCompleted { get; set; }
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(EasierAlternativeStatusText))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(EasierAlternativeStatusText))]
     private bool _isEasierAlternative;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(OptionalStatusText), nameof(CanMarkEasierAlternative))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(OptionalStatusText), nameof(CanMarkEasierAlternative))]
     private bool _isOptional;
     /// <summary>Resource key naming the session as optional or required (the view localizes it).</summary>
     public string OptionalStatusText => IsOptional ? "Workout_Readiness_OptionalSession" : "Workout_Readiness_RequiredSession";

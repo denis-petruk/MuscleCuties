@@ -177,16 +177,28 @@ public sealed class PostgresDashboardOverviewStore(
                     from entry in dbContext.LoggedMealEntries.AsNoTracking()
                     join food in dbContext.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
                     where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
-                    select new { entry.Grams, Calories = (float)(food.Calories ?? 0), Protein = (float)(food.Protein ?? 0),
-                        Carbs = (float)(food.Carbs ?? 0), Fats = (float)(food.Fats ?? 0) })
+                    select new
+                    {
+                        entry.Grams,
+                        Calories = (float)(food.Calories ?? 0),
+                        Protein = (float)(food.Protein ?? 0),
+                        Carbs = (float)(food.Carbs ?? 0),
+                        Fats = (float)(food.Fats ?? 0)
+                    })
                     .ToListAsync(cancellationToken).ConfigureAwait(false);
                 var userMealRows = await (
                     from entry in dbContext.LoggedMealEntries.AsNoTracking()
                     join food in dbContext.UserFoodItems.AsNoTracking()
                         on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
                     where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
-                    select new { entry.Grams, Calories = (float)(food.Calories ?? 0), Protein = (float)(food.Protein ?? 0),
-                        Carbs = (float)(food.Carbs ?? 0), Fats = (float)(food.Fats ?? 0) })
+                    select new
+                    {
+                        entry.Grams,
+                        Calories = (float)(food.Calories ?? 0),
+                        Protein = (float)(food.Protein ?? 0),
+                        Carbs = (float)(food.Carbs ?? 0),
+                        Fats = (float)(food.Fats ?? 0)
+                    })
                     .ToListAsync(cancellationToken).ConfigureAwait(false);
                 foreach (var row in catalogMealRows.Concat(userMealRows))
                 {
@@ -388,9 +400,15 @@ public sealed class PostgresDashboardOverviewStore(
             from catalogExercise in catalogMatches.DefaultIfEmpty()
             where exercise.UserId == userId && log.UserId == userId && day.UserId == userId &&
                   log.Date >= workoutLogStart && log.Date <= today
-            select new { day.WorkoutType, exercise.WeightKg, exercise.CompletedDurationSeconds,
-                exercise.DistanceKm, exercise.PaceSecondsPerKm,
-                ExerciseName = catalogExercise == null ? null : catalogExercise.Name })
+            select new
+            {
+                day.WorkoutType,
+                exercise.WeightKg,
+                exercise.CompletedDurationSeconds,
+                exercise.DistanceKm,
+                exercise.PaceSecondsPerKm,
+                ExerciseName = catalogExercise == null ? null : catalogExercise.Name
+            })
             .ToListAsync(cancellationToken).ConfigureAwait(false);
         workoutObservations.AddRange(exerciseRows.Select(row => new DashboardWorkoutProgressObservation(
             row.WorkoutType.Equals("Rest", StringComparison.OrdinalIgnoreCase) ||

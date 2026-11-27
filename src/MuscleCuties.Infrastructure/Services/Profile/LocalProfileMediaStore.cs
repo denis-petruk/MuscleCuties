@@ -22,7 +22,9 @@ public sealed class LocalProfileMediaStore(string rootDirectory, Action<string> 
         {
             var options = new FileStreamOptions
             {
-                Mode = FileMode.CreateNew, Access = FileAccess.Write, Share = FileShare.None,
+                Mode = FileMode.CreateNew,
+                Access = FileAccess.Write,
+                Share = FileShare.None,
                 Options = FileOptions.Asynchronous
             };
             if (!OperatingSystem.IsWindows())

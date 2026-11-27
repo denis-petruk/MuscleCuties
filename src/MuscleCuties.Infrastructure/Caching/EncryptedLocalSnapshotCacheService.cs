@@ -1,9 +1,8 @@
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using MuscleCuties.UseCases.Features.Caching;
-
 using MuscleCuties.Infrastructure.Caching;
+using MuscleCuties.UseCases.Features.Caching;
 
 namespace MuscleCuties.Infrastructure.Caching;
 

@@ -1,5 +1,5 @@
-using Microsoft.EntityFrameworkCore;
 using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
@@ -22,9 +22,14 @@ public sealed class ReviewedTemplateFloorDatabaseTests
     public void ExplicitSyntheticFloorNeedsCompleteVersionedSlotsButNoAttribution()
     {
         var template = StrengthTemplateCatalog.Templates.First();
-        var row = new ReviewedTemplateFloorRow { TemplateId = template.TemplateId, TemplateVersion = template.Version,
-            MinimumWorkingSets = InitialMinimum, MinimumExercises = InitialMinimum,
-            SlotFloorsJson = JsonSerializer.Serialize(template.Slots.ToDictionary(slot => slot.SlotId, _ => 0)) };
+        var row = new ReviewedTemplateFloorRow
+        {
+            TemplateId = template.TemplateId,
+            TemplateVersion = template.Version,
+            MinimumWorkingSets = InitialMinimum,
+            MinimumExercises = InitialMinimum,
+            SlotFloorsJson = JsonSerializer.Serialize(template.Slots.ToDictionary(slot => slot.SlotId, _ => 0))
+        };
         Xunit.Assert.True(ReviewedTemplateFloorSource.Map([row]).ContainsKey(template.TemplateId));
         row.TemplateVersion = "synthetic-wrong-version";
         Xunit.Assert.Empty(ReviewedTemplateFloorSource.Map([row]));

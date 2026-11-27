@@ -1,7 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
-using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 using MuscleCuties.UseCases.Features.Cycle.Contracts;
+using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
 
 namespace MuscleCuties.Server.Cycle;
 

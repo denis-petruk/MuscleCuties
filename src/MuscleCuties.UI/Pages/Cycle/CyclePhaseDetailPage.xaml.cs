@@ -1,9 +1,9 @@
 using MauiIcons.Core;
+using MuscleCuties.UI.Services.Navigation;
+using MuscleCuties.UI.ViewModels.Cycle;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
-using MuscleCuties.UI.Services.Navigation;
-using MuscleCuties.UI.ViewModels.Cycle;
 
 namespace MuscleCuties.UI.Pages.Cycle;
 

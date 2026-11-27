@@ -1,6 +1,7 @@
 using System.Diagnostics.CodeAnalysis;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
+using MuscleCuties.Core.Services.Health;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Navigation;
 using MuscleCuties.UI.Services.Dashboard;
@@ -8,11 +9,10 @@ using MuscleCuties.UI.Services.Nutrition;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
-using MuscleCuties.UseCases.Features.Nutrition.Recipes;
-using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
-using MuscleCuties.Core.Services.Health;
 using MuscleCuties.UseCases.Features.Nutrition.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 
@@ -67,7 +67,8 @@ public partial class NutritionViewModel : ObservableObject, IPageLoadAware, IDis
     // Suppresses per-field On*Changed storms during batch macro/target assignment.
     private bool _isBulkLoading;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
 
     [ObservableProperty] private bool _isCustomFoodPanelVisible;

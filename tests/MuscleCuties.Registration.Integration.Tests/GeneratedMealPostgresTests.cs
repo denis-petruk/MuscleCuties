@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
-using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.CatalogSearch;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Targets;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
@@ -36,8 +36,13 @@ public sealed class GeneratedMealPostgresTests
         await SyntheticTenantSession.SetAsync(database, userId);
         database.Users.Add(new UserRecord
         {
-            Id = userId, Email = $"nutrition-oil-{userId:N}@example.invalid", Username = $"oil_{userId:N}",
-            CredentialType = "Password", PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now,
+            Id = userId,
+            Email = $"nutrition-oil-{userId:N}@example.invalid",
+            Username = $"oil_{userId:N}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
             IsOnboardingComplete = true
         });
         await database.SaveChangesAsync();

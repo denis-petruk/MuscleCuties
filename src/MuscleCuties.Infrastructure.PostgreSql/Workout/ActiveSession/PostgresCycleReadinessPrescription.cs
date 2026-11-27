@@ -10,7 +10,6 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 internal static class PostgresCycleReadinessPrescription
 {
     private const int RequiredWorkingSets = 1;
-    private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
 
     /// <summary>Applies the cycle readiness adjustment to a stored prescription.</summary>
     public static async Task<PlannedPrescriptionSnapshot> ApplyAsync(PostgresDbContext db,
@@ -18,8 +17,11 @@ internal static class PostgresCycleReadinessPrescription
         PlannedPrescriptionSnapshot prescription, CancellationToken cancellationToken)
     {
         DateOnly observedThrough;
-        try { observedThrough = WorkoutAccountCalendarRule.LocalDate(nowUtc,
-            TimeZoneInfo.FindSystemTimeZoneById(timeZoneId)); }
+        try
+        {
+            observedThrough = WorkoutAccountCalendarRule.LocalDate(nowUtc,
+            TimeZoneInfo.FindSystemTimeZoneById(timeZoneId));
+        }
         catch (TimeZoneNotFoundException) { observedThrough = DateOnly.MinValue; }
         catch (InvalidTimeZoneException) { observedThrough = DateOnly.MinValue; }
         var isCurrentDay = localDate == observedThrough;

@@ -89,8 +89,11 @@ public static class CycleReadinessPrescriptionRule
             return new(null, null, PolicyReviewMissing, null, null);
 
         var score = input.TodayCheckIn;
-        var currentCheckIn = score is { Status: CheckInScoreStatus.Available,
-            Band: { }, Observation: { } };
+        var currentCheckIn = score is
+        {
+            Status: CheckInScoreStatus.Available,
+            Band: { }, Observation: { }
+        };
         // This threshold is a conservative product choice, not a clinical diagnosis.
         var shortSleep = input.SleepHours is >= 0m and < ShortSleepThresholdHours;
         var dailyReduction = currentCheckIn && (shortSleep ||

@@ -35,14 +35,20 @@ public sealed class InjuryClearancePersistenceTests
         await SyntheticTenantSession.SetAsync(database, userId);
         database.Users.Add(new UserRecord
         {
-            Id = userId, Email = $"injury-{userId:N}@example.invalid",
-            Username = $"inj_{userId.ToString("N")[..10]}", CredentialType = "Password",
-            PasswordHash = "synthetic-hash", CreatedAt = FirstClearanceInstant.UtcDateTime,
-            UpdatedAt = FirstClearanceInstant.UtcDateTime, IsOnboardingComplete = true
+            Id = userId,
+            Email = $"injury-{userId:N}@example.invalid",
+            Username = $"inj_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = FirstClearanceInstant.UtcDateTime,
+            UpdatedAt = FirstClearanceInstant.UtcDateTime,
+            IsOnboardingComplete = true
         });
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = AccountTimeZone
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = AccountTimeZone
         });
         await database.SaveChangesAsync();
         try
@@ -97,14 +103,20 @@ public sealed class InjuryClearancePersistenceTests
         await SyntheticTenantSession.SetAsync(database, userId);
         database.Users.Add(new UserRecord
         {
-            Id = userId, Email = $"injury-{userId:N}@example.invalid",
-            Username = $"inj_{userId.ToString("N")[..10]}", CredentialType = "Password",
-            PasswordHash = "synthetic-hash", CreatedAt = FirstClearanceInstant.UtcDateTime,
-            UpdatedAt = FirstClearanceInstant.UtcDateTime, IsOnboardingComplete = true
+            Id = userId,
+            Email = $"injury-{userId:N}@example.invalid",
+            Username = $"inj_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = FirstClearanceInstant.UtcDateTime,
+            UpdatedAt = FirstClearanceInstant.UtcDateTime,
+            IsOnboardingComplete = true
         });
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = AccountTimeZone
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = AccountTimeZone
         });
         await database.SaveChangesAsync();
         try

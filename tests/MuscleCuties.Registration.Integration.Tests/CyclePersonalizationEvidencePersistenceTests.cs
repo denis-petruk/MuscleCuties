@@ -49,12 +49,26 @@ public sealed class CyclePersonalizationEvidencePersistenceTests
         var now = DateTime.UtcNow;
         var today = DateOnly.FromDateTime(now);
         await SyntheticTenantSession.SetAsync(db, userId);
-        db.Users.Add(new UserRecord { Id = userId, Email = $"pattern-{userId:N}@example.invalid",
-            Username = $"pt_{userId.ToString("N")[..IdentifierLength]}", CredentialType = "Password",
-            PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now });
+        db.Users.Add(new UserRecord
+        {
+            Id = userId,
+            Email = $"pattern-{userId:N}@example.invalid",
+            Username = $"pt_{userId.ToString("N")[..IdentifierLength]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now
+        });
         var planId = Guid.NewGuid();
-        db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic",
-            IsActive = true, CyclePhaseTarget = "Luteal", CreatedAt = now });
+        db.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = planId,
+            UserId = userId,
+            Name = "Synthetic",
+            IsActive = true,
+            CyclePhaseTarget = "Luteal",
+            CreatedAt = now
+        });
         await db.SaveChangesAsync();
         var anchors = new List<CyclePhaseLogRecord>();
         var checks = new List<DailyReadinessLogRecord>();
@@ -67,29 +81,80 @@ public sealed class CyclePersonalizationEvidencePersistenceTests
             var dayId = Guid.NewGuid();
             var sessionId = Guid.NewGuid();
             db.CycleLogs.Add(new CycleLogRecord { Id = cycleId, UserId = userId, StartDate = cycleStart, CreatedAt = sessionStarted.AddDays(-ObservationOffsetDays) });
-            var anchor = new CyclePhaseLogRecord { Id = Guid.NewGuid(), UserId = userId, CycleLogId = cycleId,
-                LocalDate = cycleStart, Phase = "Menstrual", LoggedAt = sessionStarted.AddDays(-ObservationOffsetDays), CreatedAt = sessionStarted.AddDays(-ObservationOffsetDays) };
+            var anchor = new CyclePhaseLogRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                CycleLogId = cycleId,
+                LocalDate = cycleStart,
+                Phase = "Menstrual",
+                LoggedAt = sessionStarted.AddDays(-ObservationOffsetDays),
+                CreatedAt = sessionStarted.AddDays(-ObservationOffsetDays)
+            };
             anchors.Add(anchor);
             db.CyclePhaseLogs.Add(anchor);
-            db.CyclePhaseLogs.Add(new CyclePhaseLogRecord { Id = Guid.NewGuid(), UserId = userId, CycleLogId = cycleId,
-                LocalDate = observationDate, Phase = "Luteal", LoggedAt = sessionStarted.AddHours(-CheckInLeadHours), CreatedAt = sessionStarted.AddHours(-CheckInLeadHours) });
-            var check = new DailyReadinessLogRecord { Id = Guid.NewGuid(), UserId = userId, Date = observationDate,
-                PlanningTimeZoneId = "UTC", PlanningRevision = InitialRevision, PlanningRecordedAtUtc = sessionStarted.AddHours(-CheckInLeadHours),
-                PlanningSleepQuality = LowReadinessValue, Energy = LowReadinessValue, PlanningSoreness = HighSorenessAndStress,
-                PlanningStress = HighSorenessAndStress, CreatedAt = sessionStarted.AddHours(-CheckInLeadHours) };
+            db.CyclePhaseLogs.Add(new CyclePhaseLogRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                CycleLogId = cycleId,
+                LocalDate = observationDate,
+                Phase = "Luteal",
+                LoggedAt = sessionStarted.AddHours(-CheckInLeadHours),
+                CreatedAt = sessionStarted.AddHours(-CheckInLeadHours)
+            });
+            var check = new DailyReadinessLogRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Date = observationDate,
+                PlanningTimeZoneId = "UTC",
+                PlanningRevision = InitialRevision,
+                PlanningRecordedAtUtc = sessionStarted.AddHours(-CheckInLeadHours),
+                PlanningSleepQuality = LowReadinessValue,
+                Energy = LowReadinessValue,
+                PlanningSoreness = HighSorenessAndStress,
+                PlanningStress = HighSorenessAndStress,
+                CreatedAt = sessionStarted.AddHours(-CheckInLeadHours)
+            };
             checks.Add(check);
             db.DailyReadinessLogs.Add(check);
-            db.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
-                Date = observationDate, DayOfWeek = (int)observationDate.DayOfWeek, WorkoutType = "Strength", Name = "Synthetic" });
+            db.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = dayId,
+                UserId = userId,
+                WorkoutPlanId = planId,
+                Date = observationDate,
+                DayOfWeek = (int)observationDate.DayOfWeek,
+                WorkoutType = "Strength",
+                Name = "Synthetic"
+            });
             var snapshot = new PlannedPrescriptionSnapshot(dayId, "Synthetic", "Strength", null, null,
                 [new PlannedExerciseSnapshot(Guid.NewGuid(), InitialRevision, SyntheticSets, 0, SyntheticRepetitions, null, false)]);
-            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = sessionId, UserId = userId, PlannedWorkoutDayId = dayId,
-                PlannedLocalDate = observationDate, PlannedTimeZoneId = "UTC", StartedAt = sessionStarted,
-                CompletedAt = sessionStarted.AddHours(CheckInLeadHours), PlannedPrescriptionSnapshotJson = snapshot.Serialize(),
-                WorkoutName = "Synthetic", CreatedAt = sessionStarted, UpdatedAt = sessionStarted.AddHours(CheckInLeadHours) });
-            db.WorkoutCompletionDayCredits.Add(new WorkoutCompletionDayCreditRecord { Id = Guid.NewGuid(), UserId = userId,
-                LocalDate = observationDate, SourceSessionId = sessionId, TimeZoneId = "UTC", TimeZoneVersion = InitialRevision,
-                AcceptedAtUtc = sessionStarted.AddHours(CheckInLeadHours) });
+            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+            {
+                Id = sessionId,
+                UserId = userId,
+                PlannedWorkoutDayId = dayId,
+                PlannedLocalDate = observationDate,
+                PlannedTimeZoneId = "UTC",
+                StartedAt = sessionStarted,
+                CompletedAt = sessionStarted.AddHours(CheckInLeadHours),
+                PlannedPrescriptionSnapshotJson = snapshot.Serialize(),
+                WorkoutName = "Synthetic",
+                CreatedAt = sessionStarted,
+                UpdatedAt = sessionStarted.AddHours(CheckInLeadHours)
+            });
+            db.WorkoutCompletionDayCredits.Add(new WorkoutCompletionDayCreditRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                LocalDate = observationDate,
+                SourceSessionId = sessionId,
+                TimeZoneId = "UTC",
+                TimeZoneVersion = InitialRevision,
+                AcceptedAtUtc = sessionStarted.AddHours(CheckInLeadHours)
+            });
         }
         await db.SaveChangesAsync();
         var result = await PostgresCyclePersonalizationEvidence.LoadAsync(db, userId, today, "UTC", CancellationToken.None);

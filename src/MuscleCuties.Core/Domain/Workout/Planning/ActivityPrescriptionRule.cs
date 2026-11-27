@@ -165,11 +165,11 @@ public static class ActivityPrescriptionRule
         {
             WorkoutActivityType.GeneralStrength => GeneralStrength(context),
             WorkoutActivityType.HighVolumeStrength => HighVolumeStrength(context),
-            WorkoutActivityType.StrengthHighIntensity => HighIntensityStrength(context),
+            WorkoutActivityType.StrengthHighIntensity => HighIntensityStrength(),
             WorkoutActivityType.Cycling or WorkoutActivityType.Running or WorkoutActivityType.Walking or
                 WorkoutActivityType.Rowing or WorkoutActivityType.Elliptical => ContinuousCardio(context),
             WorkoutActivityType.Swimming => Swimming(context),
-            WorkoutActivityType.Hiit => Hiit(context),
+            WorkoutActivityType.Hiit => Hiit(),
             WorkoutActivityType.RockClimbing => Climbing(context),
             WorkoutActivityType.Yoga => Yoga(context),
             WorkoutActivityType.Mobility => OptionalDuration(context,
@@ -243,7 +243,7 @@ public static class ActivityPrescriptionRule
     }
 
     /// <summary>Prescribes high-intensity strength with heavier effort and fewer reps.</summary>
-    private static ActivityPrescriptionResult HighIntensityStrength(ActivityPrescriptionContext context)
+    private static ActivityPrescriptionResult HighIntensityStrength()
     {
         return Result(ActivityPrescriptionStatus.Unsupported, HighIntensitySaferAlternativeReviewMissing);
     }
@@ -298,7 +298,7 @@ public static class ActivityPrescriptionRule
     }
 
     /// <summary>Prescribes HIIT only when her evidence clears it, with its fixed session length.</summary>
-    private static ActivityPrescriptionResult Hiit(ActivityPrescriptionContext context)
+    private static ActivityPrescriptionResult Hiit()
     {
         // Gate 80: HIIT is deferred for new active generation/selection in Workout Engine 2.0.
         // Historical HIIT constants and DTO enum values remain intact for persisted data compatibility.

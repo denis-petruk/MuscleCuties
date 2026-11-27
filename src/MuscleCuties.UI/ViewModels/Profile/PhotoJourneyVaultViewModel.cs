@@ -1,9 +1,9 @@
-using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
-using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
-using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Profile;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
@@ -20,7 +20,8 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
     private int _privacyRevision;
     [ObservableProperty] private CyclePhase _currentPhase = CyclePhase.Unknown;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
 
     [ObservableProperty] private bool _isEmpty;
@@ -34,7 +35,8 @@ public partial class PhotoJourneyVaultViewModel : ObservableObject, IPageLoadAwa
     [ObservableProperty] private string? _comparisonSecondImagePath;
     [ObservableProperty] private string _comparisonFirstDateText = string.Empty;
     [ObservableProperty] private string _comparisonSecondDateText = string.Empty;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasStatusMessage))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasStatusMessage))]
     private string _statusMessage = string.Empty;
     [ObservableProperty] private bool _isStatusError;
     [ObservableProperty] private string _comparisonSelectionBannerText = string.Empty;

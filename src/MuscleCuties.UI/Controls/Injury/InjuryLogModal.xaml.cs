@@ -14,12 +14,11 @@ public partial class InjuryLogModal : AnimatedModalView
         BindableProperty.Create(nameof(CloseCommand), typeof(ICommand), typeof(InjuryLogModal));
 
     private bool _hasContent;
-    private readonly ViewModelSubscription<InjuryLogViewModel> _subscription;
 
     /// <summary>Hooks the form so its sheet height is recomputed as injuries are added or removed.</summary>
     public InjuryLogModal()
     {
-        _subscription = ViewModelSubscriptionBinding.BindToControl<InjuryLogViewModel>(this,
+        _ = ViewModelSubscriptionBinding.BindToControl<InjuryLogViewModel>(this,
             OnViewModelPropertyChanged);
         BindingContextChanged += (_, _) => UpdateSheetHeight();
     }

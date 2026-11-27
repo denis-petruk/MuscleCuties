@@ -1,8 +1,8 @@
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UI.Models.UI.Common;
 using MuscleCuties.UI.Services.Auth;
-using MuscleCuties.UI.Services.Units;
 using MuscleCuties.UI.Services.Profile;
+using MuscleCuties.UI.Services.Units;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;

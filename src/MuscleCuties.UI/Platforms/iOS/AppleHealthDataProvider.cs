@@ -246,7 +246,7 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
 
         var tcs = new TaskCompletionSource<double?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        var query = new HKStatisticsQuery(quantityType, predicate, HKStatisticsOptions.CumulativeSum, (q, result, error) =>
+        var query = new HKStatisticsQuery(quantityType, predicate, HKStatisticsOptions.CumulativeSum, (_, result, error) =>
         {
             var sum = result?.SumQuantity();
             if (error != null || sum == null)
@@ -309,7 +309,7 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
 
         var tcs = new TaskCompletionSource<HKSample[]?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        var query = new HKSampleQuery(sampleType, predicate, limit, sortDescriptors, (q, results, error) =>
+        var query = new HKSampleQuery(sampleType, predicate, limit, sortDescriptors, (_, results, error) =>
         {
             if (error != null || results == null)
             {
@@ -356,7 +356,7 @@ public sealed class AppleHealthDataProvider : IHealthDataProvider, IHealthAuthor
         var tcs = new TaskCompletionSource<double?>(TaskCreationOptions.RunContinuationsAsynchronously);
 
         var sortDescriptor = new NSSortDescriptor(HKSample.SortIdentifierEndDate, false);
-        var query = new HKSampleQuery(quantityType, predicate, (nuint)1, new[] { sortDescriptor }, (q, results, error) =>
+        var query = new HKSampleQuery(quantityType, predicate, (nuint)1, new[] { sortDescriptor }, (_, results, error) =>
         {
             if (error != null || results == null || results.Length == 0)
             {
