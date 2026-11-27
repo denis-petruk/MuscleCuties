@@ -35,12 +35,18 @@ public sealed class PostgresWorkoutProgressStore(PostgresDbContext context) : IW
             {
                 var baselineText = await context.UserProfiles.Where(row => row.UserId == userId)
                     .Select(row => row.TrainingExperienceLevel).SingleOrDefaultAsync(cancellationToken).ConfigureAwait(false);
-                if (!Enum.TryParse<TrainingExperienceLevel>(baselineText, out var baseline) || !Enum.IsDefined(baseline) ||
-                    baseline == TrainingExperienceLevel.Unknown)
-                    return await SnapshotAsync(userId, UninitializedStatus, cancellationToken).ConfigureAwait(false);
+                // A legacy account can predate the experience answer. Planning already resolves a
+                // missing level to the beginner floor, so establish that floor here instead of
+                // leaving the calendar unset and blocking every later generation request.
+                _ = Enum.TryParse<TrainingExperienceLevel>(baselineText, true, out var storedLevel);
+                var baseline = WorkoutExperiencePromotionRule.Resolve(storedLevel,
+                    WorkoutExperiencePromotionRule.MinimumCreditedDays);
                 state = new WorkoutAccountPlanningStateRecord
                 {
-                    Id = Guid.NewGuid(), UserId = userId, BaselineExperience = baseline, EffectiveExperience = baseline
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    BaselineExperience = baseline,
+                    EffectiveExperience = baseline
                 };
                 context.WorkoutAccountPlanningStates.Add(state);
             }
@@ -106,9 +112,14 @@ public sealed class PostgresWorkoutProgressStore(PostgresDbContext context) : IW
             return;
         context.WorkoutCompletionDayCredits.Add(new WorkoutCompletionDayCreditRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, LocalDate = localDate, SourceWorkoutLogId = sourceWorkoutLogId,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            LocalDate = localDate,
+            SourceWorkoutLogId = sourceWorkoutLogId,
             SourceSessionId = sourceSessionId,
-            AcceptedAtUtc = nowUtc, TimeZoneId = zoneId, TimeZoneVersion = state.TimeZoneVersion
+            AcceptedAtUtc = nowUtc,
+            TimeZoneId = zoneId,
+            TimeZoneVersion = state.TimeZoneVersion
         });
         await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         var days = await context.WorkoutCompletionDayCredits.CountAsync(row => row.UserId == userId, cancellationToken)
