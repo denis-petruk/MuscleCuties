@@ -383,6 +383,18 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertNotIn('is not a valid PKCS#12 file for', step)
         self.assertLess(step.index('od -An -tx1 -N1'), step.index('security import "$p12"'))
 
+    def test_a_failed_openssl_parse_is_not_fatal_before_the_import(self):
+        # The runner's openssl is LibreSSL, which reports "Error outputting keys and
+        # certificates" for containers security import still accepts, so that message alone
+        # must not block a release. Only a password complaint is decisive there; a real import
+        # failure and an empty identity set are reported by security itself.
+        start = self.mobile.index('- name: Import the distribution identity')
+        end = self.mobile.index('- name: Install the App Store provisioning profile')
+        step = self.mobile[start:end]
+        self.assertIn('::notice::openssl cannot read this .p12', step)
+        self.assertIn('security import could not add IOS_DISTRIBUTION_CERTIFICATE_P12', step)
+        self.assertIn('0 valid identities found', step)
+
     def test_backend_release_checks_the_database_schema_before_the_alias_moves(self):
         # A model change without its migration let the deploy cut the alias over and then fail
         # readiness (release_status=partial, manual rollback required). The schema is now proven

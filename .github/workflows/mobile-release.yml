@@ -122,33 +122,48 @@ jobs:
           fi
           # openssl never echoes key material and its own wording is the only thing that tells the
           # remaining causes apart, so its message is kept instead of being sent to /dev/null.
+          # A parse failure is not proof that the secret is bad, though: the runner's /usr/bin/openssl
+          # is LibreSSL, which cannot read the PBES2/AES container Keychain's export produces. Only
+          # the password complaint is decisive here; `security import` below decides the rest.
           if ! openssl_error="$(openssl pkcs12 -in "$p12" -noout -passin "env:CERTIFICATE_PASSWORD" 2>&1)"; then
             detail="$(printf '%s\n' "$openssl_error" | head -1)"
             [ -n "$detail" ] || detail="no diagnostic output"
             case "$detail" in
               *"ac verify"*|*"nvalid password"*)
                 echo "::error::IOS_DISTRIBUTION_CERTIFICATE_PASSWORD does not open IOS_DISTRIBUTION_CERTIFICATE_P12 (openssl: $detail). Both secrets come from the same export; set them together." >&2
+                exit 1
                 ;;
               *)
-                echo "::error::IOS_DISTRIBUTION_CERTIFICATE_P12 could not be read as PKCS#12 (openssl: $detail)." >&2
+                echo "::notice::openssl cannot read this .p12 ($detail); LibreSSL does not parse PBES2/AES exports. security import below decides whether the identity is usable."
                 ;;
             esac
+          else
+            # Non-secret metadata only: the identity and the date it stops being usable.
+            openssl pkcs12 -in "$p12" -clcerts -nokeys -passin "env:CERTIFICATE_PASSWORD" \
+              | openssl x509 -noout -subject -enddate
+            if ! openssl pkcs12 -in "$p12" -clcerts -nokeys -passin "env:CERTIFICATE_PASSWORD" \
+              | openssl x509 -noout -checkend 0; then
+              echo "::error::The distribution certificate has expired; export a current Apple Distribution identity and update both certificate secrets." >&2
+              exit 1
+            fi
+          fi
+          if ! import_error="$(security import "$p12" \
+            -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign 2>&1)"; then
+            printf '%s\n' "$import_error" >&2
+            echo "::error::security import could not add IOS_DISTRIBUTION_CERTIFICATE_P12 to the keychain. The secret must be the single-line base64 of the Apple Distribution .p12 itself, opened by IOS_DISTRIBUTION_CERTIFICATE_PASSWORD." >&2
             exit 1
           fi
-          # Non-secret metadata only: the identity and the date it stops being usable.
-          openssl pkcs12 -in "$p12" -clcerts -nokeys -passin "env:CERTIFICATE_PASSWORD" \
-            | openssl x509 -noout -subject -enddate
-          if ! openssl pkcs12 -in "$p12" -clcerts -nokeys -passin "env:CERTIFICATE_PASSWORD" \
-            | openssl x509 -noout -checkend 0; then
-            echo "::error::The distribution certificate has expired; export a current Apple Distribution identity and update both certificate secrets." >&2
-            exit 1
-          fi
-          security import "$p12" \
-            -k "$keychain" -P "$CERTIFICATE_PASSWORD" -T /usr/bin/codesign
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$password" "$keychain" >/dev/null
           security list-keychains -d user -s "$keychain"
           rm -f "$RUNNER_TEMP/distribution.p12"
-          security find-identity -v -p codesigning "$keychain"
+          # An import that leaves no valid identity — expired, revoked or not a distribution
+          # identity — cannot sign, so it is reported here instead of at the build.
+          identities="$(security find-identity -v -p codesigning "$keychain")"
+          printf '%s\n' "$identities"
+          if printf '%s\n' "$identities" | grep -q " 0 valid identities found"; then
+            echo "::error::IOS_DISTRIBUTION_CERTIFICATE_P12 imported no valid Apple Distribution identity: the certificate is expired, revoked, or the secret does not hold a distribution identity." >&2
+            exit 1
+          fi
 
       - name: Install the App Store provisioning profile
         env:
