@@ -20,14 +20,6 @@ public sealed class ServerProfileUseCase(
     public Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken) =>
         store.LoadAsync(userId, cancellationToken);
 
-    /// <summary>The user's profile change history.</summary>
-    public Task<IReadOnlyList<ServerProfileHistoryEntry>> LoadHistoryAsync(Guid userId, CancellationToken cancellationToken) =>
-        store.LoadHistoryAsync(userId, cancellationToken);
-
-    /// <summary>The user's stored quiz answers.</summary>
-    public Task<IReadOnlyList<ServerQuizResponse>> LoadQuizResponsesAsync(Guid userId, CancellationToken cancellationToken) =>
-        store.LoadQuizResponsesAsync(userId, cancellationToken);
-
     /// <summary>Saves a profile update, reporting conflicts.</summary>
     public Task<ServerProfileWriteResult> UpdateProfileAsync(UpdateServerProfileRequest request, CancellationToken cancellationToken) =>
         request.ExpectedVersion <= 0 || request.UserId == Guid.Empty
@@ -41,12 +33,6 @@ public sealed class ServerProfileUseCase(
                 DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime))
                 ? Invalid()
             : store.UpdateProfileAsync(request, cancellationToken);
-
-    /// <summary>Corrects one stored quiz answer.</summary>
-    public Task<ServerProfileWriteResult> CorrectQuizResponseAsync(CorrectServerQuizResponseRequest request, CancellationToken cancellationToken) =>
-        request.ExpectedVersion <= 0 || request.UserId == Guid.Empty || request.QuestionId <= 0 || request.AnswerId <= 0
-            ? Invalid()
-            : store.CorrectQuizResponseAsync(request, cancellationToken);
 
     /// <summary>Saves the nutrition preferences.</summary>
     public Task<ServerProfileWriteResult> UpdateNutritionPreferencesAsync(UpdateServerNutritionPreferencesRequest request, CancellationToken cancellationToken) =>

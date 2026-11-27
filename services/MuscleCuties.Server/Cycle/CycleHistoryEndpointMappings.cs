@@ -13,12 +13,6 @@ public static class CycleHistoryEndpointMappings
     public static IEndpointRouteBuilder MapCycleHistoryEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var group = endpoints.MapGroup(Route).RequireAuthorization();
-        group.MapGet("/prediction", async (DateOnly today, ClaimsPrincipal principal, [FromServices] CycleHistoryUseCase useCase, CancellationToken ct) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            try { return Results.Ok(await useCase.ProjectPredictionAsync(userId, today, ct).ConfigureAwait(false)); }
-            catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
-        });
         group.MapGet("", async (DateOnly from, DateOnly through, ClaimsPrincipal principal, [FromServices] CycleHistoryUseCase useCase, CancellationToken ct) =>
         {
             if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
@@ -47,11 +41,6 @@ public static class CycleHistoryEndpointMappings
             }
             catch (CycleHistoryIdConflictException) { return Results.Conflict(); }
             catch (ArgumentOutOfRangeException) { return Results.BadRequest(); }
-        });
-        group.MapDelete("/cycles/{id:guid}", async (Guid id, ClaimsPrincipal principal, [FromServices] CycleHistoryUseCase useCase, CancellationToken ct) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            return await useCase.DeleteCycleAsync(userId, id, ct).ConfigureAwait(false) ? Results.NoContent() : Results.NotFound();
         });
         group.MapPut("/symptoms", async (SaveSymptomBody body, ClaimsPrincipal principal, [FromServices] CycleHistoryUseCase useCase, CancellationToken ct) =>
         {

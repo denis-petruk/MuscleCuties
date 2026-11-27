@@ -54,22 +54,3 @@ public sealed record WorkoutInjuryImpactDto(
     IReadOnlyList<string> BlockedExercises,
     IReadOnlyList<string> RehabExercises,
     IReadOnlyList<string> BlockedActivities);
-
-/// <summary>Whether an exercise is safe given the recorded injuries.</summary>
-public sealed record ExerciseContraindicationCheckDto(
-    int ExerciseDefinitionId,
-    string ExerciseName,
-    bool IsContraindicated,
-    IReadOnlyList<string> ActiveInjurySites,
-    string? Reason);
-
-/// <summary>A request to replace one exercise in a session.</summary>
-public sealed record SwapExerciseRequest(
-    Guid WorkoutDayExerciseId,
-    int NewExerciseDefinitionId,
-    bool SavePreference);
-
-/// <summary>The exercise that replaced it, with the reason the original was refused.</summary>
-public sealed record SwapExerciseResponse(
-    bool Success,
-    string Message);

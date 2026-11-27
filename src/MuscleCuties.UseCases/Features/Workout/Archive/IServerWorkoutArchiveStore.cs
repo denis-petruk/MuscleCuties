@@ -49,8 +49,4 @@ public interface IServerWorkoutArchiveStore
         int year,
         int month,
         CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<ExercisePersonalRecordDto>> GetPersonalRecordsAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default);
 }

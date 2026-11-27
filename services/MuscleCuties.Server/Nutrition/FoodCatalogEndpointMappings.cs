@@ -2,8 +2,6 @@ using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
-using MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
-using MuscleCuties.UseCases.Features.Nutrition.CustomFoods.Contracts;
 
 namespace MuscleCuties.Server.Nutrition;
 
@@ -44,24 +42,6 @@ public static class FoodCatalogEndpointMappings
             return response.IsValidBarcode && response.FoodItem is not null
                 ? Results.Ok(response)
                 : Results.NotFound(response);
-        });
-        group.MapPost("/custom-foods", async (
-            CreateCustomFoodRequest request,
-            HttpContext context,
-            ICreateCustomFoodUseCase create,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(context.User, out var ownerUserId))
-                return Results.Forbid();
-            try
-            {
-                var response = await create.ExecuteAsync(request, ownerUserId, cancellationToken).ConfigureAwait(false);
-                return Results.Created($"{CatalogRoute}/custom-foods/{response.FoodKey}", response);
-            }
-            catch (ArgumentException exception)
-            {
-                return Results.BadRequest(new { error = exception.Message });
-            }
         });
         return endpoints;
     }

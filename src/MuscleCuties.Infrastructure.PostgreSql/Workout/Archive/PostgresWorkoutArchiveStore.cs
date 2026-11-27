@@ -6,7 +6,6 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Archive;
 public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : IServerWorkoutArchiveStore
 {
     private const int PrimaryExerciseSummaryCount = 4;
-    private const double EpleyFormulaDivisor = 30.0;
     private const int MinValidYear = 1;
     private const int MaxValidYear = 9998;
     private const int MinValidMonth = 0;
@@ -309,80 +308,6 @@ public sealed class PostgresWorkoutArchiveStore(PostgresDbContext dbContext) : I
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
             return count;
-        }).ConfigureAwait(false);
-
-    /// <summary>The user's personal records per exercise.</summary>
-    public async Task<IReadOnlyList<ExercisePersonalRecordDto>> GetPersonalRecordsAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default) =>
-        await dbContext.Database.CreateExecutionStrategy().ExecuteAsync<IReadOnlyList<ExercisePersonalRecordDto>>(async () =>
-        {
-            dbContext.ChangeTracker.Clear();
-            await using var transaction = await dbContext.Database.BeginTransactionAsync(cancellationToken)
-                .ConfigureAwait(false);
-            await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
-                .ConfigureAwait(false);
-
-            var query = from s in dbContext.ExerciseSetLogs.AsNoTracking()
-                        join w in dbContext.WorkoutSessionLogs.AsNoTracking()
-                            on new { s.UserId, WorkoutSessionLogId = s.WorkoutSessionLogId }
-                            equals new { w.UserId, WorkoutSessionLogId = w.Id }
-                        where s.UserId == userId && !s.IsDeleted && !s.IsWarmup && !w.IsDeleted
-                        select new
-                        {
-                            s.Id,
-                            s.WorkoutSessionLogId,
-                            s.ExerciseId,
-                            s.ExerciseName,
-                            s.WeightKg,
-                            s.RepsCompleted,
-                            s.CreatedAt
-                        };
-
-            var allSets = await query.ToListAsync(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-
-            if (allSets.Count == 0)
-                return Array.Empty<ExercisePersonalRecordDto>();
-
-            var grouped = allSets
-                .Where(s => !string.IsNullOrWhiteSpace(s.ExerciseName))
-                .GroupBy(s => s.ExerciseName.Trim(), StringComparer.OrdinalIgnoreCase);
-
-            var records = new List<ExercisePersonalRecordDto>();
-
-            foreach (var group in grouped)
-            {
-                var exerciseName = group.First().ExerciseName.Trim();
-                var exerciseId = group.FirstOrDefault(s => !string.IsNullOrWhiteSpace(s.ExerciseId))?.ExerciseId;
-
-                var maxWeight = group.Max(s => (double)s.WeightKg);
-                var bestWeightSet = group
-                    .Where(s => (double)s.WeightKg == maxWeight)
-                    .OrderByDescending(s => s.RepsCompleted)
-                    .ThenByDescending(s => s.CreatedAt)
-                    .First();
-
-                var maxVolume = group.Max(s => (double)s.WeightKg * s.RepsCompleted);
-
-                var maxEstimated1Rm = group.Max(s =>
-                    s.RepsCompleted <= 1
-                        ? (double)s.WeightKg
-                        : (double)s.WeightKg * (1.0 + s.RepsCompleted / EpleyFormulaDivisor));
-
-                records.Add(new ExercisePersonalRecordDto(
-                    exerciseId,
-                    exerciseName,
-                    Math.Round(maxWeight, 2),
-                    bestWeightSet.RepsCompleted,
-                    Math.Round(maxVolume, 2),
-                    Math.Round(maxEstimated1Rm, 2),
-                    DateTime.SpecifyKind(bestWeightSet.CreatedAt, DateTimeKind.Utc),
-                    bestWeightSet.WorkoutSessionLogId,
-                    bestWeightSet.Id));
-            }
-
-            return records.OrderBy(r => r.ExerciseName, StringComparer.OrdinalIgnoreCase).ToList();
         }).ConfigureAwait(false);
 
     /// <summary>Builds the summary rows for the given sessions.</summary>

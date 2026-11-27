@@ -3,7 +3,7 @@ using MuscleCuties.UseCases.Features.Nutrition.Diary;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
 
-/// <summary>Saves a batch, copies a day and quick-adds, each under the day's lock.</summary>
+/// <summary>Saves a batch and copies a day, each under the day's lock.</summary>
 public sealed class NutritionBatchAndCopyUseCase(
     INutritionBatchAndCopyStore store,
     INutritionBatchAndCopyChangeNotifier? changeNotifier = null)
@@ -68,33 +68,6 @@ public sealed class NutritionBatchAndCopyUseCase(
         var response = await store.CopyAsync(userId, request, cancellationToken).ConfigureAwait(false);
         if (!response.Replayed && response.CopiedCount > 0)
             changeNotifier?.NotifyNutritionChanged(userId, request.TargetDate);
-        return response;
-    }
-
-    /// <summary>Adds a quick-add entry to the diary.</summary>
-    public async Task<QuickAddNutritionDiaryResponse> QuickAddAsync(
-        Guid userId,
-        QuickAddNutritionDiaryRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        ArgumentNullException.ThrowIfNull(request);
-        ValidateOwnerAndKey(userId, request.IdempotencyKey);
-        _ = DailyFoodEntry.Create(
-            NutritionMealTypeMapper.ToDomain(request.MealType),
-            request.Name,
-            (double)request.ServingSize,
-            request.ServingUnit,
-            (double)request.ServingsCount,
-            (double)request.Calories,
-            (double)request.Protein,
-            (double)request.Carbs,
-            (double)request.Fat);
-        if (request.SourceVersion is <= 0)
-            throw new ArgumentOutOfRangeException(nameof(request), "Captured source version must be positive when provided.");
-
-        var response = await store.QuickAddAsync(userId, request, cancellationToken).ConfigureAwait(false);
-        if (!response.Replayed)
-            changeNotifier?.NotifyNutritionChanged(userId, request.Date);
         return response;
     }
 

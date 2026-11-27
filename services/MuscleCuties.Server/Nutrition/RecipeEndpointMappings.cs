@@ -32,22 +32,6 @@ public static class RecipeEndpointMappings
             return Results.Ok(result);
         });
 
-        group.MapPost("/recipes/preview", async (
-            CreateRecipeRequest request,
-            [FromServices] ICreateRecipeUseCase useCase,
-            CancellationToken cancellationToken) =>
-        {
-            try
-            {
-                var preview = await useCase.PreviewAsync(request, cancellationToken).ConfigureAwait(false);
-                return Results.Ok(preview);
-            }
-            catch (ArgumentException ex)
-            {
-                return Results.BadRequest(new { error = ex.Message });
-            }
-        });
-
         group.MapPost("/recipes", async (
             CreateRecipeRequest request,
             ClaimsPrincipal principal,
@@ -93,34 +77,6 @@ public static class RecipeEndpointMappings
             catch (InvalidOperationException ex)
             {
                 return Results.Conflict(new { error = ex.Message });
-            }
-            catch (ArgumentException ex)
-            {
-                return Results.BadRequest(new { error = ex.Message });
-            }
-        });
-
-        group.MapPost("/recipes/{id:guid}/portion-preview", async (
-            Guid id,
-            PreviewRecipePortionRequest request,
-            ClaimsPrincipal principal,
-            [FromServices] IPreviewRecipePortionUseCase useCase,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId))
-                return Results.Unauthorized();
-
-            try
-            {
-                var preview = await useCase.ExecuteAsync(
-                    userId,
-                    request with { RecipeId = id },
-                    cancellationToken).ConfigureAwait(false);
-                return Results.Ok(preview);
-            }
-            catch (KeyNotFoundException)
-            {
-                return Results.NotFound();
             }
             catch (ArgumentException ex)
             {

@@ -94,12 +94,6 @@ public sealed record RecipeDetailsDto(
     int ConcurrencyVersion = 1
 );
 
-/// <summary>A request to preview a portion of a recipe.</summary>
-public sealed record PreviewRecipePortionRequest(
-    Guid RecipeId,
-    float? ServingsCount,
-    float? Grams);
-
 /// <summary>A request to convert a portion into grams.</summary>
 public sealed record CalculateRecipePortionRequest(
     Guid RecipeId,
