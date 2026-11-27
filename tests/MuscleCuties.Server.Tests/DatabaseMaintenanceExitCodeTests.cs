@@ -77,6 +77,8 @@ public sealed class DatabaseMaintenanceExitCodeTests
         Assert.Equal(UnreachableExitCode, result.ExitCode);
         Assert.Contains("cause: configuration", result.Error);
         Assert.DoesNotContain("child", result.Output);
+        Assert.DoesNotContain("synthetic", result.Output);
+        Assert.DoesNotContain("synthetic", result.Error);
     }
 
     [Fact]
