@@ -145,6 +145,33 @@ jobs:
             exit 1
           fi
 
+      # The readiness probe compares the deployed EF model with ops.schema_metadata, so cutting the
+      # alias over a database that has not been migrated is a guaranteed partial release:
+      # release_status=partial, code=health_check_failed_ready, recovery=manual_rollback_required.
+      # The schema is checked with this release's own model before the first mutation, so a stale
+      # database stops the job with nothing deployed and nothing to roll back.
+      - name: Set up .NET SDK for the schema preflight
+        uses: actions/setup-dotnet@67a3573c9a986a3f9c594539f4ab511d57bb3ce9 # v4
+        with:
+          global-json-file: global.json
+
+      - name: Require the beta database to match this release's schema
+        env:
+          ConnectionStrings__PostgreSql: ${{ secrets.DATABASE_CONNECTION_STRING }}
+        run: |
+          set -euo pipefail
+          if [ -z "${ConnectionStrings__PostgreSql:-}" ]; then
+            echo "::error::DATABASE_CONNECTION_STRING is not available to the beta deploy job, so the schema preflight cannot run. Restore the environment secret; the release is stopped before any mutation rather than skipping the check."
+            exit 1
+          fi
+          dotnet build src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj --configuration Release
+          status=0
+          dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj --configuration Release --no-build -- dbcheck || status=$?
+          if [ "$status" -ne 0 ]; then
+            echo "::error::The beta database does not match this release's schema model (dbcheck exit $status). Run the 'Database Migration & Schema Release' workflow for beta, then re-run this release. The alias has not been moved."
+            exit 1
+          fi
+
       - name: Deploy and verify the configured Lambda functions
         env:
           TARGET_ENV: beta

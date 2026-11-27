@@ -372,6 +372,29 @@ class WorkflowContractTests(unittest.TestCase):
             self.assertIn(check, step)
         self.assertLess(step.index('[ ! -s "$p12" ]'), step.index('security import "$p12"'))
 
+    def test_certificate_failure_names_the_secret_that_is_wrong(self):
+        # A container that is not a .p12 and a password that does not open a real .p12 need
+        # different secrets replaced. One message for both sent an operator to the wrong one.
+        start = self.mobile.index('- name: Import the distribution identity')
+        end = self.mobile.index('- name: Install the App Store provisioning profile')
+        step = self.mobile[start:end]
+        self.assertIn('does not decode to a PKCS#12 container', step)
+        self.assertIn('does not open IOS_DISTRIBUTION_CERTIFICATE_P12', step)
+        self.assertNotIn('is not a valid PKCS#12 file for', step)
+        self.assertLess(step.index('od -An -tx1 -N1'), step.index('security import "$p12"'))
+
+    def test_backend_release_checks_the_database_schema_before_the_alias_moves(self):
+        # A model change without its migration let the deploy cut the alias over and then fail
+        # readiness (release_status=partial, manual rollback required). The schema is now proven
+        # against this release's own model before the first mutation.
+        deploy = self.job_block(self.workflow, 'deploy_beta')
+        preflight = deploy.index('- name: Require the beta database to match this release')
+        self.assertLess(preflight, deploy.index('- name: Deploy and verify the configured Lambda functions'))
+        guard = self.step_script(deploy, 'Require the beta database to match this release')
+        self.assertIn('-- dbcheck', guard)
+        self.assertIn('DATABASE_CONNECTION_STRING', guard)
+        self.assertIn('The alias has not been moved.', guard)
+
 
 if __name__ == '__main__':
     unittest.main()
