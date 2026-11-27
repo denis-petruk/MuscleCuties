@@ -167,6 +167,10 @@ jobs:
           dotnet build src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj --configuration Release
           status=0
           dotnet run --project src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj --configuration Release --no-build -- dbcheck || status=$?
+          if [ "$status" -eq 3 ]; then
+            echo "::error::The beta database could not be reached from this job (dbcheck exit 3), so its schema was never compared. This is a connection or configuration failure, not schema drift: check DATABASE_CONNECTION_STRING, the trusted root certificate (certs/global-bundle.pem), the runner's network path to the RDS endpoint and the role. Do not run the migration workflow for this. The alias has not been moved."
+            exit 1
+          fi
           if [ "$status" -ne 0 ]; then
             echo "::error::The beta database does not match this release's schema model (dbcheck exit $status). Run the 'Database Migration & Schema Release' workflow for beta, then re-run this release. The alias has not been moved."
             exit 1

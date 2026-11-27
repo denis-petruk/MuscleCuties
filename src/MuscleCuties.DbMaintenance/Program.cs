@@ -1,4 +1,6 @@
 using System.Diagnostics;
+using System.Net.Sockets;
+using System.Security.Authentication;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -30,7 +32,14 @@ public static class DatabaseMaintenance
     private const string CleanupPhotosCommand = "cleanup-photos";
     private const string CompatibleStatus = "compatible";
     private const string IncompatibleStatus = "incompatible";
+    private const string UnreachableStatus = "unreachable";
     private const string ContractVersion = "1.0.0";
+    private const int FailureExitCode = 1;
+    private const int UnreachableExitCode = 3;
+    private const string UnreachableHint =
+        "No session was established, so the schema was never compared: check the runner's network path to the " +
+        "endpoint, the trusted root certificate (certs/global-bundle.pem), the connection string and the role. " +
+        "This is not schema drift.";
     private const int AdvisoryLockAcquireTimeoutSeconds = 5;
     private const int AdvisoryLockPollMilliseconds = 100;
     private const int CleanupPageSizeMinimum = 1;
@@ -50,8 +59,9 @@ public static class DatabaseMaintenance
     private const int LockChildShutdownTimeoutSeconds = 10;
 
     /// <summary>
-    ///     Dispatches one command and returns the process exit code: 0 on success, 1 on a failed operation,
-    ///     2 on invalid usage. Refuses to run inside AWS Lambda and keeps provider detail out of the output.
+    ///     Dispatches one command and returns the process exit code: 0 on success, 1 on a failed operation or an
+    ///     incompatible schema, 2 on invalid usage, 3 when no database session could be established. Refuses to
+    ///     run inside AWS Lambda and keeps provider detail out of the output.
     /// </summary>
     public static async Task<int> RunAsync(string[] args)
     {
@@ -60,6 +70,9 @@ public static class DatabaseMaintenance
             Console.Error.WriteLine(
                 "Usage: DbMaintenance migrate | dbinit | dbcheck | seed | baseline-script | session-lock-runner -- <child-command> [args...] | " +
                 "cleanup-photos <page-size> <page-count> <owner-batch-size> <lease-minutes>");
+            Console.Error.WriteLine(
+                "Exit codes: 0 success; 1 a command failed or the schema is incompatible; 2 invalid usage; " +
+                "3 no database session could be established, so no schema was compared.");
             return InvalidUsageExitCode;
         }
 
@@ -89,8 +102,10 @@ public static class DatabaseMaintenance
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
+                // Only the connection attempt is classified, inside the runner. Reaching this catch means the
+                // lock or the child ran, so a session existed and this is an operation failure.
                 Console.Error.WriteLine($"Session lock runner failed ({exception.GetType().Name}).");
-                return 1;
+                return FailureExitCode;
             }
         }
 
@@ -102,48 +117,49 @@ public static class DatabaseMaintenance
             return InvalidUsageExitCode;
         }
 
+        if (isCleanupCommand)
+        {
+            try
+            {
+                return await RunPhotoCleanupAsync(args);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                Console.Error.WriteLine($"Database maintenance failed ({exception.GetType().Name}). Check the runner's connection, certificate and role settings.");
+                return FailureExitCode;
+            }
+        }
+
+        NpgsqlConnectionStringBuilder connection;
         try
         {
-            if (isCleanupCommand)
-                return await RunPhotoCleanupAsync(args);
-
-            var connection = new NpgsqlConnectionStringBuilder(connectionString);
-            var isLoopback = connection.Host is "127.0.0.1" or "localhost";
-            if (!isLoopback && connection.SslMode != SslMode.VerifyFull)
-                throw new InvalidOperationException("Database maintenance requires SSL Mode=VerifyFull.");
-
-            if (!isLoopback)
+            connection = ParseConnectionString(connectionString);
+            ApplyRootCertificateFallback(connection);
+            // Prove a session before any command runs. Everything after this point already had one, so a later
+            // timeout or dropped connection is an operation failure, never "unreachable".
+            await VerifySessionOpensAsync(connection);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            if (TryClassifyConnectionFailure(exception, out var cause))
             {
-                if (string.IsNullOrWhiteSpace(connection.RootCertificate))
+                WriteJson(new
                 {
-                    var candidates = new[]
-                    {
-                        Path.Combine(Directory.GetCurrentDirectory(), "certs", "global-bundle.pem"),
-                        Path.Combine(AppContext.BaseDirectory, "certs", "global-bundle.pem"),
-                        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "certs", "global-bundle.pem")
-                    };
-                    var foundCert = candidates.FirstOrDefault(File.Exists);
-                    if (foundCert is not null)
-                    {
-                        connection.RootCertificate = foundCert;
-                    }
-                }
-                else if (!File.Exists(connection.RootCertificate))
-                {
-                    var candidates = new[]
-                    {
-                        Path.Combine(Directory.GetCurrentDirectory(), connection.RootCertificate),
-                        Path.Combine(AppContext.BaseDirectory, connection.RootCertificate),
-                        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", connection.RootCertificate)
-                    };
-                    var foundCert = candidates.FirstOrDefault(File.Exists);
-                    if (foundCert is not null)
-                    {
-                        connection.RootCertificate = foundCert;
-                    }
-                }
+                    contract_version = ContractVersion,
+                    status = UnreachableStatus,
+                    command,
+                    failure = cause
+                });
+                Console.Error.WriteLine($"Database is unreachable ({exception.GetType().Name}; cause: {cause}). {UnreachableHint}");
+                return UnreachableExitCode;
             }
 
+            Console.Error.WriteLine($"Database maintenance failed ({exception.GetType().Name}). Check the runner's connection, certificate and role settings.");
+            return FailureExitCode;
+        }
+
+        try
+        {
             var options = new DbContextOptionsBuilder<PostgresDbContext>()
                 .UseNpgsql(connection.ConnectionString)
                 .Options;
@@ -212,9 +228,12 @@ public static class DatabaseMaintenance
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
+            // The session was opened before the command ran, so this is an operation failure: a migration
+            // checksum mismatch, a command timeout or a connection lost mid-run. Calling it unreachable would
+            // repeat the false diagnosis this change exists to remove.
             // Provider exceptions may include connection strings or object names. Keep runner logs secret-free.
             Console.Error.WriteLine($"Database maintenance failed ({exception.GetType().Name}). Check the runner's connection, certificate and role settings.");
-            return 1;
+            return FailureExitCode;
         }
     }
 
@@ -319,7 +338,7 @@ public static class DatabaseMaintenance
 
         if (Environment.GetEnvironmentVariable("MC_RELEASE_OFFLINE_TEST") == "1")
         {
-            return await ExecuteChildProcessAsync(childCmd, childArgs);
+            return MapChildExitCode(await ExecuteChildProcessAsync(childCmd, childArgs));
         }
 
         var connectionString = Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
@@ -329,28 +348,181 @@ public static class DatabaseMaintenance
             return 1;
         }
 
-        var connection = new NpgsqlConnectionStringBuilder(connectionString);
-        var isLoopback = connection.Host is "127.0.0.1" or "localhost";
-        if (!isLoopback && connection.SslMode != SslMode.VerifyFull)
-            throw new InvalidOperationException("session-lock-runner requires SSL Mode=VerifyFull.");
+        NpgsqlConnection npgsqlConnection;
+        try
+        {
+            var connection = ParseConnectionString(connectionString);
+            // This runner opens its own connection, so it needs the same trusted-root fallback as the command
+            // path; without it the migration workflow failed on the RDS chain while dbcheck passed.
+            ApplyRootCertificateFallback(connection);
+            npgsqlConnection = new NpgsqlConnection(connection.ConnectionString);
+            await npgsqlConnection.OpenAsync();
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            if (TryClassifyConnectionFailure(exception, out var cause))
+            {
+                WriteJson(new
+                {
+                    contract_version = ContractVersion,
+                    status = UnreachableStatus,
+                    command = SessionLockRunnerCommand,
+                    failure = cause
+                });
+                Console.Error.WriteLine($"Session lock runner could not open a database session ({exception.GetType().Name}; cause: {cause}). {UnreachableHint}");
+                return UnreachableExitCode;
+            }
 
-        await using var npgsqlConnection = new NpgsqlConnection(connection.ConnectionString);
-        await npgsqlConnection.OpenAsync();
+            Console.Error.WriteLine($"Session lock runner failed ({exception.GetType().Name}).");
+            return FailureExitCode;
+        }
 
-        if (!await TryAcquireAdvisoryLockAsync(npgsqlConnection))
+        await using var sessionConnection = npgsqlConnection;
+        if (!await TryAcquireAdvisoryLockAsync(sessionConnection))
         {
             Console.Error.WriteLine($"Failed to acquire deployment advisory lock within {AdvisoryLockAcquireTimeoutSeconds} seconds.");
             return 1;
         }
 
-        var backendPid = npgsqlConnection.ProcessID;
-        if (!await HasSessionLockAsync(npgsqlConnection, backendPid))
+        var backendPid = sessionConnection.ProcessID;
+        if (!await HasSessionLockAsync(sessionConnection, backendPid))
         {
             Console.Error.WriteLine("Deployment advisory lock could not be verified before starting the child.");
             return 1;
         }
 
-        return await ExecuteChildProcessAsync(childCmd, childArgs, npgsqlConnection, backendPid);
+        return MapChildExitCode(await ExecuteChildProcessAsync(childCmd, childArgs, sessionConnection, backendPid));
+    }
+
+    /// <summary>
+    ///     Exit 3 is reserved for "no database session could be established". A child cannot borrow it through
+    ///     this runner: the lock session was opened and verified, so its result says nothing about connectivity.
+    /// </summary>
+    public static int MapChildExitCode(int childExitCode)
+    {
+        if (childExitCode != UnreachableExitCode)
+            return childExitCode;
+
+        Console.Error.WriteLine(
+            "Child command exited 3, which is reserved for an unreachable database. This runner's session was established, so the failure is reported as an operation failure.");
+        return FailureExitCode;
+    }
+
+    /// <summary>
+    ///     Applies the checks and the trusted-root fallback every database connection needs before it opens:
+    ///     a non-loopback host requires <c>SSL Mode=VerifyFull</c>, and a missing or unreadable root certificate
+    ///     resolves to the packaged RDS bundle rather than failing the handshake.
+    /// </summary>
+    public static void ApplyRootCertificateFallback(NpgsqlConnectionStringBuilder connection)
+    {
+        if (connection.Host is "127.0.0.1" or "localhost")
+            return;
+
+        if (connection.SslMode != SslMode.VerifyFull)
+            throw new DatabaseConfigurationException("Database maintenance requires SSL Mode=VerifyFull.");
+
+        var certificate = string.IsNullOrWhiteSpace(connection.RootCertificate)
+            ? "certs/global-bundle.pem"
+            : connection.RootCertificate;
+        var foundCert = CertificateCandidates(certificate).FirstOrDefault(File.Exists);
+        if (foundCert is not null)
+            connection.RootCertificate = foundCert;
+    }
+
+    /// <summary>Where the packaged bundle may sit: the working directory, the output directory or the repository root.</summary>
+    private static IEnumerable<string> CertificateCandidates(string relativePath) =>
+    [
+        Path.Combine(Directory.GetCurrentDirectory(), relativePath),
+        Path.Combine(AppContext.BaseDirectory, relativePath),
+        Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", relativePath)
+    ];
+
+    /// <summary>Opens and closes one session, so a later failure can never be reported as "unreachable".</summary>
+    private static async Task VerifySessionOpensAsync(NpgsqlConnectionStringBuilder connection)
+    {
+        await using var probe = new NpgsqlConnection(connection.ConnectionString);
+        await probe.OpenAsync();
+    }
+
+    /// <summary>
+    ///     Parses the connection string, turning a malformed one into the configuration failure it is. The value
+    ///     itself never reaches the log: a parse error used to look like a command failure, which re-created the
+    ///     drift misdiagnosis for a purely local setting mistake.
+    /// </summary>
+    private static NpgsqlConnectionStringBuilder ParseConnectionString(string? connectionString)
+    {
+        try
+        {
+            return new NpgsqlConnectionStringBuilder(connectionString);
+        }
+        catch (Exception exception) when (exception is ArgumentException or FormatException)
+        {
+            throw new DatabaseConfigurationException(
+                "ConnectionStrings__PostgreSql is not a valid connection string.");
+        }
+    }
+
+    /// <summary>
+    ///     Decides whether a failure happened before a session existed, and names the cause in a secret-free
+    ///     token. A server that answered is never a connection failure, however its reply is spelled.
+    /// </summary>
+    public static bool TryClassifyConnectionFailure(Exception exception, out string cause)
+    {
+        for (var current = exception; current is not null; current = current.InnerException)
+        {
+            switch (current)
+            {
+                case DatabaseConfigurationException:
+                    cause = "configuration";
+                    return true;
+                // Npgsql validates the builder when the connection opens: a missing Host or an impossible
+                // setting fails there, before any session exists, so it is a configuration problem too.
+                case ArgumentException:
+                case FormatException:
+                    cause = "configuration";
+                    return true;
+                case PostgresException postgres:
+                    switch (postgres.SqlState)
+                    {
+                        case PostgresErrorCodes.InvalidPassword:
+                        case PostgresErrorCodes.InvalidAuthorizationSpecification:
+                            cause = "authentication";
+                            return true;
+                        case PostgresErrorCodes.InvalidCatalogName:
+                            cause = "database-missing";
+                            return true;
+                        // The server refused startup: no session exists, so the schema was never compared.
+                        case PostgresErrorCodes.TooManyConnections:
+                        case PostgresErrorCodes.CannotConnectNow:
+                            cause = "server-unavailable";
+                            return true;
+                    }
+
+                    // The server accepted the connection and answered: the failure is not a connectivity one.
+                    cause = string.Empty;
+                    return false;
+                case AuthenticationException:
+                    cause = "tls";
+                    return true;
+                case SocketException socket:
+                    cause = socket.SocketErrorCode is SocketError.HostNotFound or SocketError.NoData or SocketError.TryAgain
+                        ? "dns"
+                        : "transport";
+                    return true;
+                case TimeoutException:
+                    cause = "timeout";
+                    return true;
+            }
+        }
+
+        if (exception is NpgsqlException)
+        {
+            cause = "transport";
+            return true;
+        }
+
+        cause = string.Empty;
+        return false;
     }
 
     /// <summary>
