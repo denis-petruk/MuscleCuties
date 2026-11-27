@@ -475,6 +475,12 @@ public static class DatabaseMaintenance
                 case DatabaseConfigurationException:
                     cause = "configuration";
                     return true;
+                // Npgsql validates the builder when the connection opens: a missing Host or an impossible
+                // setting fails there, before any session exists, so it is a configuration problem too.
+                case ArgumentException:
+                case FormatException:
+                    cause = "configuration";
+                    return true;
                 case PostgresException postgres:
                     switch (postgres.SqlState)
                     {

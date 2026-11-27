@@ -57,6 +57,29 @@ public sealed class DatabaseMaintenanceExitCodeTests
     }
 
     [Fact]
+    public void AConnectionStringWithoutAHostIsAConfigurationFailure()
+    {
+        // Parses, then fails Npgsql validation when the connection opens: still no session, so no drift.
+        var result = RunDbCheck("Database=synthetic;Username=synthetic;Password=synthetic;SSL Mode=VerifyFull");
+
+        Assert.Equal(UnreachableExitCode, result.ExitCode);
+        Assert.Contains("cause: configuration", result.Error);
+        Assert.DoesNotContain("synthetic", result.Output);
+        Assert.DoesNotContain("synthetic", result.Error);
+    }
+
+    [Fact]
+    public void ASessionLockRunnerWithoutAHostIsAConfigurationFailure()
+    {
+        var result = Run("session-lock-runner", "--", "echo", "child",
+            "Database=synthetic;Username=synthetic;Password=synthetic;SSL Mode=VerifyFull");
+
+        Assert.Equal(UnreachableExitCode, result.ExitCode);
+        Assert.Contains("cause: configuration", result.Error);
+        Assert.DoesNotContain("child", result.Output);
+    }
+
+    [Fact]
     public void AServerThatAnsweredIsNeverClassifiedAsUnreachable()
     {
         Assert.False(DatabaseMaintenance.TryClassifyConnectionFailure(
