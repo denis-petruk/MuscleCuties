@@ -41,6 +41,7 @@
         <EmbeddedResource Include="Persistence/Schema/009_checkin_fatigue.sql"/>
         <EmbeddedResource Include="Persistence/Schema/010_unilateral_observed_sets.sql"/>
         <EmbeddedResource Include="Persistence/Schema/011_pain_reassessment_timestamps.sql"/>
+        <EmbeddedResource Include="Persistence/Schema/012_drop_food_sync_logs.sql"/>
         <EmbeddedResource Include="Persistence/Schema/security.sql"/>
         <EmbeddedResource Include="Persistence/Schema/schema_supplement.sql"/>
         <EmbeddedResource Include="Persistence/Seed/CanonicalCatalogManifest.json"/>

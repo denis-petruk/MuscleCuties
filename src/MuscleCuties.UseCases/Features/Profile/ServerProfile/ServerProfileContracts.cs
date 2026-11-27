@@ -53,19 +53,6 @@ public sealed record UpdateServerProfileRequest(
     string? ReproductiveContextJson = null,
     string? ProfileImagePath = null);
 
-/// <summary>One earlier profile version.</summary>
-public sealed record ServerProfileHistoryEntry(Guid Id, string Reason, string ProfileJson, DateTime CreatedAtUtc);
-
-/// <summary>One stored quiz answer.</summary>
-public sealed record ServerQuizResponse(int QuestionId, int AnswerId, DateTime AnsweredAtUtc);
-
-/// <summary>A correction to a stored quiz answer.</summary>
-public sealed record CorrectServerQuizResponseRequest(
-    Guid UserId,
-    int ExpectedVersion,
-    int QuestionId,
-    int AnswerId);
-
 /// <summary>A change to the nutrition preferences.</summary>
 public sealed record UpdateServerNutritionPreferencesRequest(
     Guid UserId,
@@ -110,10 +97,7 @@ public sealed record ServerProfileWriteResult(ServerProfileWriteStatus Status, i
 public interface IServerProfileDataStore
 {
     Task<ServerProfileSnapshot?> LoadAsync(Guid userId, CancellationToken cancellationToken);
-    Task<IReadOnlyList<ServerProfileHistoryEntry>> LoadHistoryAsync(Guid userId, CancellationToken cancellationToken);
-    Task<IReadOnlyList<ServerQuizResponse>> LoadQuizResponsesAsync(Guid userId, CancellationToken cancellationToken);
     Task<ServerProfileWriteResult> UpdateProfileAsync(UpdateServerProfileRequest request, CancellationToken cancellationToken);
-    Task<ServerProfileWriteResult> CorrectQuizResponseAsync(CorrectServerQuizResponseRequest request, CancellationToken cancellationToken);
     Task<ServerProfileWriteResult> UpdateNutritionPreferencesAsync(UpdateServerNutritionPreferencesRequest request, CancellationToken cancellationToken);
     Task<ServerProfileWriteResult> UpdateWorkoutPreferencesAsync(UpdateServerWorkoutPreferencesRequest request, CancellationToken cancellationToken);
     Task<ServerProfileWriteResult> UpdateNutritionTargetsAsync(UpdateServerNutritionTargetsRequest request, CancellationToken cancellationToken);

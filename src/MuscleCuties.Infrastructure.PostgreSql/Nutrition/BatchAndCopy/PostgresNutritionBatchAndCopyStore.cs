@@ -1,14 +1,13 @@
 using System.Text;
 using MuscleCuties.Core.Domain.Nutrition;
+using MuscleCuties.Infrastructure.PostgreSql.Common;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Operations;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
 using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
 
-using MuscleCuties.Infrastructure.PostgreSql.Common;
-
 namespace MuscleCuties.Infrastructure.PostgreSql.Nutrition.BatchAndCopy;
 
-/// <summary>Executes atomic PostgreSQL batch, copy, preview-copy, and quick-add diary commands with durable idempotency.</summary>
+/// <summary>Executes atomic PostgreSQL batch, copy and preview-copy diary commands with durable idempotency.</summary>
 public sealed class PostgresNutritionBatchAndCopyStore(
     PostgresDbContext dbContext,
     PostgresIdempotencyExecutor idempotencyExecutor,
@@ -19,7 +18,6 @@ public sealed class PostgresNutritionBatchAndCopyStore(
     private const string BatchCommandPrefix = "nutrition.diary.batch:";
     private const string CopyCommandPrefix = "nutrition.diary.copy:";
     private const string CopyPreviewCommitCommandPrefix = "nutrition.diary.copy.commit:";
-    private const string QuickAddCommandPrefix = "nutrition.diary.quickadd:";
 
     /// <summary>Reads the day's entries for a copy preview.</summary>
     public async Task<DiaryCopySnapshotDto> ReadSnapshotAsync(
@@ -422,163 +420,6 @@ public sealed class PostgresNutritionBatchAndCopyStore(
         var revisionPayload = string.Join("|", snapshots.Select(s => $"{s.Id:N}:{s.UpdatedAt.Ticks}:{s.Calories}:{s.MealType}"));
         var revisionHash = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes($"{userId:N}:{date:yyyy-MM-dd}:{revisionPayload}"))).ToLowerInvariant();
         return new DiaryCopySnapshotDto(userId, date, revisionHash, items);
-    }
-
-    /// <summary>Adds a quick-add entry.</summary>
-    public async Task<QuickAddNutritionDiaryResponse> QuickAddAsync(
-        Guid userId,
-        QuickAddNutritionDiaryRequest request,
-        CancellationToken cancellationToken)
-    {
-        var commandKey = IdempotencyCommandKey.Build(QuickAddCommandPrefix, request.IdempotencyKey);
-        var requestHash = request.LegacyTimestampUnspecified
-            ? PostgresIdempotencyExecutor.ComputeRequestHash(new
-            {
-                request.Date,
-                request.MealType,
-                request.Name,
-                request.ServingSize,
-                request.ServingUnit,
-                request.ServingsCount,
-                request.Calories,
-                request.Protein,
-                request.Carbs,
-                request.Fat,
-                request.SourceFoodKey,
-                request.SourceVersion
-            })
-            : PostgresIdempotencyExecutor.ComputeRequestHash(new
-            {
-                request.Date,
-                request.MealType,
-                request.Name,
-                request.ServingSize,
-                request.ServingUnit,
-                request.ServingsCount,
-                request.Calories,
-                request.Protein,
-                request.Carbs,
-                request.Fat,
-                request.LoggedAtUtc,
-                request.SourceFoodKey,
-                request.SourceVersion
-            });
-
-        var execution = await idempotencyExecutor.ExecuteAsync(
-            dbContext,
-            userId,
-            commandKey,
-            requestHash,
-            async (context, ct) =>
-            {
-                await NutritionDiaryDayLock.AcquireAsync(context, userId, request.Date, ct).ConfigureAwait(false);
-                int? capturedVersion = request.SourceVersion;
-                if (!string.IsNullOrWhiteSpace(request.SourceFoodKey))
-                    capturedVersion = await VerifySourceFoodOwnershipAndVersionAsync(
-                        context,
-                        userId,
-                        request.SourceFoodKey,
-                        request.SourceVersion,
-                        ct).ConfigureAwait(false);
-
-                var nowUtc = timeProvider.GetUtcNow().UtcDateTime;
-                var log = await GetOrCreateDailyLogAsync(context, userId, request.Date, nowUtc, ct).ConfigureAwait(false);
-                var entryId = CreateDeterministicUuid(userId, commandKey, 0);
-                context.FoodItemEntries.Add(new FoodItemEntryRecord
-                {
-                    Id = entryId,
-                    UserId = userId,
-                    DailyLogId = log.Id,
-                    LocalDate = request.Date,
-                    MealType = request.MealType.ToString(),
-                    Name = request.Name.Trim(),
-                    ServingSize = request.ServingSize,
-                    ServingUnit = request.ServingUnit.Trim(),
-                    ServingsCount = request.ServingsCount,
-                    Calories = request.Calories,
-                    Protein = request.Protein,
-                    Carbs = request.Carbs,
-                    Fat = request.Fat,
-                    LoggedAtTimestamp = DateTime.SpecifyKind(request.LoggedAtUtc, DateTimeKind.Utc),
-                    CreatedAt = nowUtc,
-                    UpdatedAt = nowUtc
-                });
-                log.UpdatedAt = nowUtc;
-                await context.SaveChangesAsync(ct).ConfigureAwait(false);
-                await PostgresNutritionDiaryEventWriter.AppendAsync(context, userId, request.Date, commandKey, ct).ConfigureAwait(false);
-
-                return new QuickAddNutritionDiaryResponse(
-                    log.Id,
-                    request.Date,
-                    SnapshotPrefix + entryId.ToString("N"),
-                    request.SourceFoodKey,
-                    capturedVersion,
-                    false);
-            },
-            cancellationToken).ConfigureAwait(false);
-
-        return execution.Replayed
-            ? execution.Response with { Replayed = true }
-            : execution.Response;
-    }
-
-    /// <summary>Checks the source food belongs to the user and is current.</summary>
-    private static async Task<int?> VerifySourceFoodOwnershipAndVersionAsync(
-        PostgresDbContext context,
-        Guid userId,
-        string sourceFoodKey,
-        int? expectedVersion,
-        CancellationToken cancellationToken)
-    {
-        if (TryParseCatalogId(sourceFoodKey, out var catalogId))
-        {
-            var catalogRows = await context.CatalogFoodItems
-                .FromSqlInterpolated($"SELECT * FROM catalog.food_items WHERE id = {catalogId} FOR SHARE")
-                .AsNoTracking()
-                .ToListAsync(cancellationToken)
-                .ConfigureAwait(false);
-            if (catalogRows.Count == 0)
-                throw new InvalidOperationException("Referenced canonical food item does not exist.");
-
-            var latestVersion = await context.FoodItemVersions.AsNoTracking()
-                .Where(version => version.FoodItemId == catalogId)
-                .CountAsync(cancellationToken)
-                .ConfigureAwait(false) + 1;
-            if (expectedVersion is { } expected && expected != latestVersion)
-                throw new InvalidOperationException("Referenced canonical food version is stale.");
-            return latestVersion;
-        }
-
-        if (TryParseCustomId(sourceFoodKey, out var customFoodId))
-        {
-            var customExists = await context.UserFoodItems.AsNoTracking()
-                .AnyAsync(item => item.UserId == userId && item.Id == customFoodId, cancellationToken)
-                .ConfigureAwait(false);
-            if (!customExists)
-                throw new InvalidOperationException("Referenced custom food item does not belong to this owner.");
-            return expectedVersion ?? 1;
-        }
-
-        throw new ArgumentException("Invalid source food key.", nameof(sourceFoodKey));
-    }
-
-    /// <summary>Reads the catalog id out of a food reference, answering false for one that names her own food instead.</summary>
-    private static bool TryParseCatalogId(string foodKey, out int catalogId)
-    {
-        const string prefix = "catalog:";
-        catalogId = 0;
-        return foodKey.StartsWith(prefix, StringComparison.Ordinal) &&
-            int.TryParse(foodKey.AsSpan(prefix.Length), NumberStyles.None, CultureInfo.InvariantCulture, out catalogId) &&
-            catalogId > 0;
-    }
-
-    /// <summary>The same for a reference to one of her own foods.</summary>
-    private static bool TryParseCustomId(string foodKey, out Guid customFoodId)
-    {
-        const string prefix = "custom:";
-        customFoodId = Guid.Empty;
-        return foodKey.StartsWith(prefix, StringComparison.Ordinal) &&
-            Guid.TryParseExact(foodKey.AsSpan(prefix.Length), "N", out customFoodId);
     }
 
     /// <summary>Returns the day's diary row, creating it when absent.</summary>

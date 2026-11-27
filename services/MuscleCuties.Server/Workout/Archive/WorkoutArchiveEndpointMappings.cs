@@ -170,19 +170,6 @@ public static class WorkoutArchiveEndpointMappings
                 return Results.BadRequest();
             }
         });
-
-        group.MapGet("/personal-records", async (
-            ClaimsPrincipal principal,
-            [FromServices] ServerWorkoutArchiveUseCase useCase,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId))
-                return Results.Unauthorized();
-
-            var records = await useCase.GetPersonalRecordsAsync(userId, cancellationToken)
-                .ConfigureAwait(false);
-            return Results.Ok(records);
-        });
     }
 
 }

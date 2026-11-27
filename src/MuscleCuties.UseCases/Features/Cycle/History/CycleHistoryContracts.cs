@@ -42,7 +42,6 @@ public interface ICycleHistoryStore
     Task<CycleHistorySnapshot> LoadAsync(Guid userId, DateOnly from, DateOnly through, CancellationToken cancellationToken);
     Task<CyclePredictionInputs> LoadPredictionInputsAsync(Guid userId, DateOnly today, CancellationToken cancellationToken);
     Task<CycleObservation?> SaveCycleAsync(SaveCycleObservation request, CancellationToken cancellationToken);
-    Task<bool> DeleteCycleAsync(Guid userId, Guid cycleId, CancellationToken cancellationToken);
     Task<CycleSymptom?> SaveSymptomAsync(SaveCycleSymptom request, CancellationToken cancellationToken);
     Task<bool> DeleteSymptomAsync(Guid userId, Guid symptomId, CancellationToken cancellationToken);
 }

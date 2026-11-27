@@ -46,33 +46,6 @@ public sealed record CopyNutritionDiaryResponse(
     IReadOnlyList<string> CopiedIdentities,
     bool Replayed);
 
-/// <summary>A quick add of a food with no measured portion.</summary>
-public sealed record QuickAddNutritionDiaryRequest(
-    string IdempotencyKey,
-    DateOnly Date,
-    MealType MealType,
-    string Name,
-    decimal ServingSize,
-    string ServingUnit,
-    decimal ServingsCount,
-    decimal Calories,
-    decimal Protein,
-    decimal Carbs,
-    decimal Fat,
-    DateTime LoggedAtUtc,
-    string? SourceFoodKey = null,
-    int? SourceVersion = null,
-    bool LegacyTimestampUnspecified = false);
-
-/// <summary>The stored entry and the day's new totals.</summary>
-public sealed record QuickAddNutritionDiaryResponse(
-    Guid LogId,
-    DateOnly Date,
-    string Identity,
-    string? SourceFoodKey,
-    int? SourceVersion,
-    bool Replayed);
-
 /// <summary>The persistence batch saves and copies need.</summary>
 public interface INutritionBatchAndCopyStore
 {
@@ -84,10 +57,5 @@ public interface INutritionBatchAndCopyStore
     Task<CopyNutritionDiaryResponse> CopyAsync(
         Guid userId,
         CopyNutritionDiaryRequest request,
-        CancellationToken cancellationToken);
-
-    Task<QuickAddNutritionDiaryResponse> QuickAddAsync(
-        Guid userId,
-        QuickAddNutritionDiaryRequest request,
         CancellationToken cancellationToken);
 }

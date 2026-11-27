@@ -1,7 +1,7 @@
-using MuscleCuties.Core.Services.Auth;
 using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using MuscleCuties.Core.Domain.Auth;
+using MuscleCuties.Core.Services.Auth;
 using MuscleCuties.UseCases.Features.Account.Registration;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
@@ -51,7 +51,7 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
         {
             using var headerDocument = JsonDocument.Parse(Decode(segments[0]));
             var header = headerDocument.RootElement;
-            if (!HasExactFields(header, "alg", "kid", "typ") ||
+            if (!ReceiptJsonHelper.HasExactFields(header, "alg", "kid", "typ") ||
                 !ReceiptJsonHelper.IsString(header, "alg", "RS256") || !ReceiptJsonHelper.IsString(header, "typ", "JWT") ||
                 !ReceiptJsonHelper.TryGetNonemptyString(header, "kid", out var keyId) ||
                 !publicKeysById.TryGetValue(keyId, out var publicKeyPem))
@@ -68,7 +68,7 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
 
             using var claimsDocument = JsonDocument.Parse(Decode(segments[1]));
             var claims = claimsDocument.RootElement;
-            if (!HasExactFields(claims, "iss", "aud", "email", "purpose", "challengeId", "iat", "exp", "jti") ||
+            if (!ReceiptJsonHelper.HasExactFields(claims, "iss", "aud", "email", "purpose", "challengeId", "iat", "exp", "jti") ||
                 !ReceiptJsonHelper.IsString(claims, "iss", issuer) || !ReceiptJsonHelper.IsString(claims, "aud", audience) ||
                 !ReceiptJsonHelper.IsString(claims, "email", AuthInputValidator.NormalizeEmail(email)) ||
                 !ReceiptJsonHelper.IsString(claims, "challengeId", challengeId) ||
@@ -92,20 +92,6 @@ public sealed class SignedRegistrationEmailReceiptVerifier : IRegistrationEmailR
         {
             return false;
         }
-    }
-
-    /// <summary>Requires the expected fields and no others, so a receipt cannot smuggle a second claim past the check.</summary>
-    private static bool HasExactFields(JsonElement element, params string[] expectedFields)
-    {
-        if (element.ValueKind != JsonValueKind.Object)
-            return false;
-
-        var seen = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var property in element.EnumerateObject())
-            if (!expectedFields.Contains(property.Name, StringComparer.Ordinal) || !seen.Add(property.Name))
-                return false;
-
-        return seen.Count == expectedFields.Length;
     }
 
     /// <summary>Base64url decoding for the receipt's segments, which the JWT-shaped token uses instead of standard base64.</summary>

@@ -10,7 +10,6 @@ public static class NutritionDiaryEndpointMappings
     private const string DiaryRoute = "/api/v1/nutrition/diary";
     private const int DefaultDayPageSize = 50;
     private const int DefaultHistoryPageSize = 30;
-    private const int DefaultEventPageSize = 50;
 
     /// <summary>Registers the diary read and write endpoints.</summary>
     public static IEndpointRouteBuilder MapNutritionDiaryEndpoints(this IEndpointRouteBuilder endpoints)
@@ -70,30 +69,6 @@ public static class NutritionDiaryEndpointMappings
                 pageSize ?? DefaultHistoryPageSize,
                 cancellationToken).ConfigureAwait(false);
             return Results.Ok(response);
-        });
-
-        group.MapGet("/events", async (
-            long? afterCursor,
-            int? pageSize,
-            ClaimsPrincipal principal,
-            INutritionDiaryCommandEventStore eventStore,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var ownerUserId))
-                return Results.Unauthorized();
-            try
-            {
-                var response = await eventStore.GetEventsAfterAsync(
-                    ownerUserId,
-                    afterCursor ?? 0,
-                    pageSize ?? DefaultEventPageSize,
-                    cancellationToken).ConfigureAwait(false);
-                return Results.Ok(response);
-            }
-            catch (ArgumentException)
-            {
-                return Results.BadRequest();
-            }
         });
 
         group.MapPut("/entries", async (

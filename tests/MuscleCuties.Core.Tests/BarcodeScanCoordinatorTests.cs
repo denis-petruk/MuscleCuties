@@ -66,7 +66,7 @@ public sealed class BarcodeScanCoordinatorTests
 
         Assert.Equal("0123456789012", scan.BarcodeText);
         Assert.Equal(BarcodeSymbology.Ean13, scan.Symbology);
-        Assert.Equal(coordinator.Revision, scan.Revision);
+        Assert.Equal(1, scan.Revision);
         Assert.Null(scan.StatusText);
     }
 
@@ -102,7 +102,7 @@ public sealed class BarcodeScanCoordinatorTests
         var scan = await coordinator.ScanAsync(() => true);
 
         Assert.False(coordinator.HasCamera);
-        Assert.Equal(0, coordinator.Revision);
+        Assert.True(coordinator.IsCurrent(0));
         Assert.Null(scan.BarcodeText);
         Assert.Equal(BarcodeScanCoordinator.StatusCameraUnavailableKey, scan.StatusText);
     }

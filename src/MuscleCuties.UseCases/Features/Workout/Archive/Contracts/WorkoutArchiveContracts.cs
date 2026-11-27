@@ -79,18 +79,6 @@ public sealed record WorkoutArchiveDetailDto(
 /// <summary>One month the history filter offers, with its session count.</summary>
 public sealed record HistoryMonthOptionDto(int Year, int Month);
 
-/// <summary>Her best set for one exercise.</summary>
-public sealed record ExercisePersonalRecordDto(
-    string? ExerciseId,
-    string ExerciseName,
-    double MaxWeightKg,
-    int RepsAtMaxWeight,
-    double MaxSetVolumeKg,
-    double EstimatedOneRepMaxKg,
-    DateTime AchievedAt,
-    Guid WorkoutSessionLogId,
-    Guid ExerciseSetLogId);
-
 /// <summary>A change to a finished session's notes.</summary>
 public sealed record UpdateWorkoutSessionNotesRequest(string? Notes, int? RpeRating);
 

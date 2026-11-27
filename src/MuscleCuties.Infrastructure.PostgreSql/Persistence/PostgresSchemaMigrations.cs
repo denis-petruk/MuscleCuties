@@ -122,6 +122,9 @@ public static class PostgresSchemaMigrations
     public const string PainReassessmentTimestampsResourceName =
         "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.011_pain_reassessment_timestamps.sql";
 
+    public const string DropFoodSyncLogsResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.012_drop_food_sync_logs.sql";
+
     public static readonly MigrationScriptDefinition BaselineScript =
         new(0, "000_model_baseline.sql", BaselineScriptResourceName);
 
@@ -137,7 +140,8 @@ public static class PostgresSchemaMigrations
         new(8, "008_glute_focus.sql", GluteFocusResourceName),
         new(9, "009_checkin_fatigue.sql", CheckInFatigueResourceName),
         new(10, "010_unilateral_observed_sets.sql", UnilateralObservedSetsResourceName),
-        new(11, "011_pain_reassessment_timestamps.sql", PainReassessmentTimestampsResourceName)
+        new(11, "011_pain_reassessment_timestamps.sql", PainReassessmentTimestampsResourceName),
+        new(12, "012_drop_food_sync_logs.sql", DropFoodSyncLogsResourceName)
     ];
 
     /// <summary>
@@ -145,31 +149,6 @@ public static class PostgresSchemaMigrations
     /// <see cref="BaselineScript"/> because it is applied only to an empty database.
     /// </summary>
     public static IReadOnlyList<MigrationScriptDefinition> Scripts => OrderedScripts;
-
-    /// <summary>
-    /// Rehearses and verifies the versioned evolution chain offline, validating that all
-    /// embedded scripts exist, are non-empty, follow strict monotonic ordering, and yield valid SHA-256 checksums.
-    /// </summary>
-    public static async Task<IReadOnlyList<MigrationExecutionResult>> RehearseChainAsync(
-        CancellationToken cancellationToken = default)
-    {
-        var results = new List<MigrationExecutionResult>();
-        for (var i = 0; i < OrderedScripts.Count; i++)
-        {
-            var script = OrderedScripts[i];
-            if (script.Version != i + 1)
-                throw new InvalidOperationException($"Migration script {script.ScriptName} has non-monotonic version {script.Version}. Expected {i + 1}.");
-
-            var sqlContent = await ReadScriptAsync(script.ResourceName, cancellationToken).ConfigureAwait(false);
-            if (string.IsNullOrWhiteSpace(sqlContent))
-                throw new InvalidOperationException($"Migration script {script.ScriptName} is empty or whitespace.");
-
-            var checksum = ComputeSha256Hex(sqlContent);
-            results.Add(new MigrationExecutionResult(script.Version, script.ScriptName, checksum, AlreadyApplied: false));
-        }
-
-        return results;
-    }
 
     /// <summary>Applies the pending schema migrations.</summary>
     public static async Task<SchemaMigrationSummary> ApplyMigrationsAsync(

@@ -27,6 +27,12 @@ class OidcPolicyTests(unittest.TestCase):
         self.assertIn("GitHubActionsBetaDeployRole", self.template_text)
         self.assertIn("environment:beta", self.template_text)
 
+    def test_beta_deploy_role_can_run_the_alias_cutover(self):
+        beta_section = self.template_text.split("GitHubActionsBetaDeployRole:")[1].split("Outputs:")[0]
+        self.assertIn("lambda:GetAlias", beta_section)
+        self.assertIn("s3:GetObject", beta_section)
+        self.assertIn("s3:GetObjectVersion", beta_section)
+
     def test_staging_role_has_no_beta_resources(self):
         staging_section = self.template_text.split("GitHubActionsBetaDeployRole:")[0]
         self.assertIn("GitHubActionsStagingDeployRole:", staging_section)

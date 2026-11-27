@@ -94,10 +94,4 @@ public sealed class ServerWorkoutArchiveUseCase(IServerWorkoutArchiveStore store
         int month,
         CancellationToken cancellationToken = default) =>
         store.GetWorkoutHistoryCountByMonthAsync(userId, year, month, cancellationToken);
-
-    /// <summary>The user's personal records per exercise.</summary>
-    public Task<IReadOnlyList<ExercisePersonalRecordDto>> GetPersonalRecordsAsync(
-        Guid userId,
-        CancellationToken cancellationToken = default) =>
-        store.GetPersonalRecordsAsync(userId, cancellationToken);
 }

@@ -55,8 +55,6 @@ public sealed class PostgresDbContext(DbContextOptions<PostgresDbContext> option
     public DbSet<WorkoutInjuryPrescriptionLinkRecord> WorkoutInjuryPrescriptionLinks => Set<WorkoutInjuryPrescriptionLinkRecord>();
     /// <summary>Slots withheld from a plan because of an injury, with the review reason the API returns.</summary>
     public DbSet<WorkoutInjuryOmittedSlotRecord> WorkoutInjuryOmittedSlots => Set<WorkoutInjuryOmittedSlotRecord>();
-    /// <summary>The strength style offered to an account, and whether it was accepted or dismissed.</summary>
-    public DbSet<StrengthStyleOfferRecord> StrengthStyleOffers => Set<StrengthStyleOfferRecord>();
     /// <summary>The plan in force; replacing it is the one write path that changes what she trains.</summary>
     public DbSet<WorkoutPlanRecord> WorkoutPlans => Set<WorkoutPlanRecord>();
     /// <summary>Per-account planning state: the lease and the proposal the account is currently on.</summary>
@@ -109,8 +107,6 @@ public sealed class PostgresDbContext(DbContextOptions<PostgresDbContext> option
     public DbSet<PhotoUploadIntentRecord> PhotoUploadIntents => Set<PhotoUploadIntentRecord>();
     /// <summary>Photo objects queued for deletion, drained by the cleanup worker.</summary>
     public DbSet<PhotoObjectCleanupRecord> PhotoObjectCleanups => Set<PhotoObjectCleanupRecord>();
-    /// <summary>Objects the reconciler must confirm against the bucket.</summary>
-    public DbSet<PhotoObjectReconcileTargetRecord> PhotoObjectReconcileTargets => Set<PhotoObjectReconcileTargetRecord>();
 
     /// <summary>Quiz questions from the shared catalog, ordered by their index.</summary>
     public DbSet<QuizQuestion> QuizQuestions => Set<QuizQuestion>();
@@ -144,8 +140,6 @@ public sealed class PostgresDbContext(DbContextOptions<PostgresDbContext> option
     public DbSet<WorkoutPlanningConfigEntry> WorkoutPlanningConfigEntries => Set<WorkoutPlanningConfigEntry>();
     /// <summary>Past nutrient snapshots of a food, so a sync's change can be traced.</summary>
     public DbSet<FoodItemVersionRecord> FoodItemVersions => Set<FoodItemVersionRecord>();
-    /// <summary>The record of catalog sync runs and what each changed.</summary>
-    public DbSet<FoodSyncLogRecord> FoodSyncLogs => Set<FoodSyncLogRecord>();
 
     /// <summary>Applies the column types every model shares: instants are stored as <c>timestamp with time zone</c> and decimals
     /// as <c>numeric</c>, so no property can silently fall back to a timezone-naive or floating-point type.</summary>

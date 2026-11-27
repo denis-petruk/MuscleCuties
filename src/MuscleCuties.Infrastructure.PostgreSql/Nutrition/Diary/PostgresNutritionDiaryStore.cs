@@ -8,7 +8,7 @@ namespace MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
 
 /// <summary>Owner-scoped unified diary adapter. Snapshot and grouped meal rows retain separate identities.</summary>
 public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvider timeProvider, PostgresIdempotencyExecutor? idempotencyExecutor = null,
-    MuscleCuties.UseCases.Features.Nutrition.Targets.IServerNutritionTargetProjectionStore? targetStore = null) : INutritionDiaryStore, INutritionDiaryCommandEventStore
+    MuscleCuties.UseCases.Features.Nutrition.Targets.IServerNutritionTargetProjectionStore? targetStore = null) : INutritionDiaryStore
 {
     private const string SnapshotPrefix = "snapshot:";
     private const string MealPrefix = "meal:";
@@ -35,14 +35,14 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
                 .OrderBy(x => x.LoggedAt).ThenBy(x => x.Id).ToListAsync(cancellationToken).ConfigureAwait(false);
             var mealIds = meals.Select(x => x.Id).ToArray();
             var mealEntries = await (from entry in db.LoggedMealEntries.AsNoTracking()
-                join food in db.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
-                where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
-                select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
+                                     join food in db.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
+                                     where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
+                                     select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
             var customMealEntries = await (from entry in db.LoggedMealEntries.AsNoTracking()
-                join food in db.UserFoodItems.AsNoTracking() on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
-                where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
-                select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
+                                           join food in db.UserFoodItems.AsNoTracking() on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
+                                           where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
+                                           select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
             var allMealEntries = mealEntries.Concat(customMealEntries).ToArray();
             var entries = snapshots.Select(ToSnapshotEntry).Concat(meals.Select(meal => ToMealEntry(meal,
@@ -86,14 +86,14 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
                 .Select(x => new { x.Id, x.Date }).ToListAsync(cancellationToken).ConfigureAwait(false);
             var ids = meals.Select(x => x.Id).ToArray();
             var mealEntries = await (from entry in db.LoggedMealEntries.AsNoTracking()
-                join food in db.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
-                where entry.UserId == userId && ids.Contains(entry.LoggedMealId)
-                select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
+                                     join food in db.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
+                                     where entry.UserId == userId && ids.Contains(entry.LoggedMealId)
+                                     select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
             var customMealEntries = await (from entry in db.LoggedMealEntries.AsNoTracking()
-                join food in db.UserFoodItems.AsNoTracking() on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
-                where entry.UserId == userId && ids.Contains(entry.LoggedMealId)
-                select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
+                                           join food in db.UserFoodItems.AsNoTracking() on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
+                                           where entry.UserId == userId && ids.Contains(entry.LoggedMealId)
+                                           select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
                 .ToListAsync(cancellationToken).ConfigureAwait(false);
             var allMealEntries = mealEntries.Concat(customMealEntries).ToArray();
             var dates = logs.Select(x => x.LocalDate).Concat(snapshots.Select(x => x.LocalDate)).Concat(meals.Select(x => x.Date))
@@ -122,8 +122,14 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
             var log = await db.DailyNutritionLogs.SingleOrDefaultAsync(x => x.UserId == userId && x.LocalDate == item.Date && !x.IsDeleted, cancellationToken).ConfigureAwait(false);
             if (log is null)
             {
-                log = new DailyNutritionLogRecord { Id = Guid.NewGuid(), UserId = userId, LocalDate = item.Date,
-                    CreatedAt = timeProvider.GetUtcNow().UtcDateTime, UpdatedAt = timeProvider.GetUtcNow().UtcDateTime };
+                log = new DailyNutritionLogRecord
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    LocalDate = item.Date,
+                    CreatedAt = timeProvider.GetUtcNow().UtcDateTime,
+                    UpdatedAt = timeProvider.GetUtcNow().UtcDateTime
+                };
                 db.DailyNutritionLogs.Add(log);
             }
             var row = await db.FoodItemEntries.SingleOrDefaultAsync(x => x.UserId == userId && x.Id == id && !x.IsDeleted, cancellationToken).ConfigureAwait(false);
@@ -144,8 +150,13 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
                 return true;
             }
 
-            row ??= new FoodItemEntryRecord { Id = id, UserId = userId, DailyLogId = log.Id,
-                CreatedAt = timeProvider.GetUtcNow().UtcDateTime };
+            row ??= new FoodItemEntryRecord
+            {
+                Id = id,
+                UserId = userId,
+                DailyLogId = log.Id,
+                CreatedAt = timeProvider.GetUtcNow().UtcDateTime
+            };
             row.LocalDate = item.Date; row.MealType = item.MealType.ToString(); row.Name = item.Name;
             row.ServingSize = item.ServingSize; row.ServingUnit = item.ServingUnit; row.ServingsCount = item.ServingsCount;
             row.Calories = item.Calories; row.Protein = item.Protein; row.Carbs = item.Carbs; row.Fat = item.Fat;
@@ -168,8 +179,13 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
             var log = await db.DailyNutritionLogs.SingleOrDefaultAsync(x => x.UserId == userId && x.LocalDate == metadata.Date && !x.IsDeleted, cancellationToken).ConfigureAwait(false);
             if (log is null)
             {
-                log = new DailyNutritionLogRecord { Id = Guid.NewGuid(), UserId = userId, LocalDate = metadata.Date,
-                    CreatedAt = timeProvider.GetUtcNow().UtcDateTime };
+                log = new DailyNutritionLogRecord
+                {
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    LocalDate = metadata.Date,
+                    CreatedAt = timeProvider.GetUtcNow().UtcDateTime
+                };
                 db.DailyNutritionLogs.Add(log);
             }
             log.WaterIntakeMl = metadata.WaterIntakeMl; log.Notes = metadata.Notes; log.UpdatedAt = timeProvider.GetUtcNow().UtcDateTime;
@@ -282,15 +298,15 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
 
             var mealIds = meals.Select(x => x.Id).ToArray();
             var mealEntries = await (from entry in context.LoggedMealEntries.AsNoTracking()
-                join food in context.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
-                where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
-                select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
+                                     join food in context.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
+                                     where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
+                                     select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
                 .ToListAsync(ct).ConfigureAwait(false);
 
             var customMealEntries = await (from entry in context.LoggedMealEntries.AsNoTracking()
-                join food in context.UserFoodItems.AsNoTracking() on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
-                where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
-                select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
+                                           join food in context.UserFoodItems.AsNoTracking() on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
+                                           where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
+                                           select new { entry.LoggedMealId, Amount = new FoodAmount(entry.Grams, food.Name, food.Calories, food.Protein, food.Carbs, food.Fats) })
                 .ToListAsync(ct).ConfigureAwait(false);
 
             var allMealEntries = mealEntries.Concat(customMealEntries).ToArray();
@@ -434,25 +450,6 @@ public sealed class PostgresNutritionDiaryStore(PostgresDbContext db, TimeProvid
         }, cancellationToken).ConfigureAwait(false);
 
         return execution.Response;
-    }
-
-    /// <summary>The command events after a sequence number.</summary>
-    public async Task<NutritionDiaryCommandEventPage> GetEventsAfterAsync(
-        Guid userId, long afterCursor, int pageSize, CancellationToken cancellationToken)
-    {
-        if (userId == Guid.Empty) throw new ArgumentException("A non-empty authenticated user ID is required.", nameof(userId));
-        if (afterCursor < 0) throw new ArgumentOutOfRangeException(nameof(afterCursor));
-        if (pageSize is < 1 or > 200) throw new ArgumentOutOfRangeException(nameof(pageSize));
-
-        return await WithTenant(userId, cancellationToken, async () =>
-        {
-            var events = await db.NutritionDiaryCommandEvents.AsNoTracking()
-                .Where(x => x.UserId == userId && x.Cursor > afterCursor)
-                .OrderBy(x => x.Cursor).Take(pageSize)
-                .Select(x => new NutritionDiaryCommandEvent(x.Cursor, x.DiaryDate, x.CommandId))
-                .ToListAsync(cancellationToken).ConfigureAwait(false);
-            return new NutritionDiaryCommandEventPage(events, events.Count == 0 ? afterCursor : events[^1].Cursor);
-        }).ConfigureAwait(false);
     }
 
     /// <summary>Runs the action with the tenant setting applied.</summary>

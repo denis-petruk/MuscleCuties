@@ -146,7 +146,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
                 .AnyAsync(row => row.UserId == ownerId));
 
             // Durable reconciliation targets survive account deletion.
-            var persistedTargets = await database.PhotoObjectReconcileTargets.AsNoTracking()
+            var persistedTargets = await database.Set<PhotoObjectReconcileTargetRecord>().AsNoTracking()
                 .Where(row => row.TargetKey == ownerUploadKey || row.TargetKey == ownerPublishedKey)
                 .ToListAsync();
             Xunit.Assert.Equal(2, persistedTargets.Count);
@@ -160,12 +160,12 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
                 .AnyAsync(row => row.UserId == otherOwnerId));
             Xunit.Assert.True(await database.WorkoutPlanRevisionsV02.AsNoTracking()
                 .AnyAsync(row => row.UserId == otherOwnerId));
-            Xunit.Assert.False(await database.PhotoObjectReconcileTargets.AsNoTracking()
+            Xunit.Assert.False(await database.Set<PhotoObjectReconcileTargetRecord>().AsNoTracking()
                 .AnyAsync(row => row.TargetKey == otherOwnerPublishedKey));
         }
         finally
         {
-            await database.PhotoObjectReconcileTargets
+            await database.Set<PhotoObjectReconcileTargetRecord>()
                 .Where(row => row.TargetKey == ownerUploadKey || row.TargetKey == ownerPublishedKey)
                 .ExecuteDeleteAsync();
             await SyntheticTenantSession.SetAsync(database, otherOwnerId);
@@ -199,14 +199,14 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
                 $"SELECT app.stage_account_photo_purge({ownerId}, {publishedKey}, {dueUtc})");
             await transaction.CommitAsync();
 
-            var targets = await database.PhotoObjectReconcileTargets.AsNoTracking()
+            var targets = await database.Set<PhotoObjectReconcileTargetRecord>().AsNoTracking()
                 .Where(row => row.TargetKey == uploadKey || row.TargetKey == publishedKey)
                 .ToListAsync();
             Xunit.Assert.Equal(2, targets.Count);
         }
         finally
         {
-            await database.PhotoObjectReconcileTargets
+            await database.Set<PhotoObjectReconcileTargetRecord>()
                 .Where(row => row.TargetKey == uploadKey || row.TargetKey == publishedKey)
                 .ExecuteDeleteAsync();
         }
@@ -256,7 +256,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             await tx3.RollbackAsync();
         }
 
-        Xunit.Assert.False(await database.PhotoObjectReconcileTargets.AsNoTracking()
+        Xunit.Assert.False(await database.Set<PhotoObjectReconcileTargetRecord>().AsNoTracking()
             .AnyAsync(row => row.TargetKey == uploadKey));
     }
 
@@ -303,7 +303,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             await tx3.RollbackAsync();
         }
 
-        Xunit.Assert.False(await database.PhotoObjectReconcileTargets.AsNoTracking()
+        Xunit.Assert.False(await database.Set<PhotoObjectReconcileTargetRecord>().AsNoTracking()
             .AnyAsync(row => row.TargetKey == activeOwnerKey || row.TargetKey == otherOwnerKey));
     }
 
@@ -335,7 +335,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
                 await tx1.CommitAsync();
             }
 
-            await database.PhotoObjectReconcileTargets
+            await database.Set<PhotoObjectReconcileTargetRecord>()
                 .Where(row => row.TargetKey == targetKey)
                 .ExecuteUpdateAsync(s => s
                     .SetProperty(row => row.LeaseToken, activeLeaseToken)
@@ -360,7 +360,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
                 await tx3.CommitAsync();
             }
 
-            var persisted = await database.PhotoObjectReconcileTargets.AsNoTracking()
+            var persisted = await database.Set<PhotoObjectReconcileTargetRecord>().AsNoTracking()
                 .SingleAsync(row => row.TargetKey == targetKey);
             Xunit.Assert.Equal(laterDeadlineUtc, persisted.NotBeforeUtc);
             Xunit.Assert.Equal(activeLeaseToken, persisted.LeaseToken);
@@ -369,7 +369,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         }
         finally
         {
-            await database.PhotoObjectReconcileTargets
+            await database.Set<PhotoObjectReconcileTargetRecord>()
                 .Where(row => row.TargetKey == targetKey)
                 .ExecuteDeleteAsync();
         }
@@ -396,7 +396,7 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
             await transaction.RollbackAsync();
         }
 
-        Xunit.Assert.False(await database.PhotoObjectReconcileTargets.AsNoTracking()
+        Xunit.Assert.False(await database.Set<PhotoObjectReconcileTargetRecord>().AsNoTracking()
             .AnyAsync(row => row.TargetKey == targetKey));
     }
 

@@ -105,12 +105,6 @@ public sealed class CycleHistoryUseCase(ICycleHistoryStore store)
         return store.SaveSymptomAsync(request with { Type = normalizedType }, cancellationToken);
     }
 
-    /// <summary>Deletes one cycle record, reporting whether it existed.</summary>
-    public Task<bool> DeleteCycleAsync(Guid userId, Guid cycleId, CancellationToken cancellationToken = default) =>
-        userId == Guid.Empty || cycleId == Guid.Empty
-            ? Task.FromResult(false)
-            : store.DeleteCycleAsync(userId, cycleId, cancellationToken);
-
     /// <summary>Deletes one symptom record, reporting whether it existed.</summary>
     public Task<bool> DeleteSymptomAsync(Guid userId, Guid symptomId, CancellationToken cancellationToken = default) =>
         userId == Guid.Empty || symptomId == Guid.Empty

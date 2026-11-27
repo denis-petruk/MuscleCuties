@@ -15,77 +15,75 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using MuscleCuties.Contracts.Account;
 using MuscleCuties.Core.Domain.Workout.Planning;
-using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
 using MuscleCuties.Infrastructure.PostgreSql.Account.Authentication;
+using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 using MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
 using MuscleCuties.Infrastructure.PostgreSql.Account.MigrationClaims;
-using MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
-using MuscleCuties.UseCases.Features.Account.Deletion;
-using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
+using MuscleCuties.Infrastructure.PostgreSql.Account.Registration;
+using MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
 using MuscleCuties.Infrastructure.PostgreSql.Cycle.History;
 using MuscleCuties.Infrastructure.PostgreSql.Cycle.Overview;
-using MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
+using MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
+using MuscleCuties.Infrastructure.PostgreSql.Dashboard;
+using MuscleCuties.Infrastructure.PostgreSql.Hydration;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.BatchAndCopy;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.CatalogSearch;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Diary;
-using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Targets;
-using MuscleCuties.Infrastructure.PostgreSql.Nutrition.BatchAndCopy;
-using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Recipes;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
-using MuscleCuties.Infrastructure.PostgreSql.Profile.UnitsDisplay;
-using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Recipes;
+using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Targets;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
+using MuscleCuties.Infrastructure.PostgreSql.Profile.UnitsDisplay;
+using MuscleCuties.Infrastructure.PostgreSql.Progress;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Archive;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Injury;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
-using MuscleCuties.UseCases.Features.Account.Registration;
-using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
-using MuscleCuties.UseCases.Features.Account.Authentication;
-using MuscleCuties.UseCases.Features.Account.EmailChallenge;
-using MuscleCuties.UseCases.Features.Account.MigrationClaims;
-using MuscleCuties.UseCases.Features.Cycle.History;
-using MuscleCuties.UseCases.Features.Cycle.Overview;
-using MuscleCuties.UseCases.Features.CheckInAndInjury;
-using MuscleCuties.UseCases.Features.Nutrition.Barcode;
-using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
-using MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
-using MuscleCuties.UseCases.Features.Nutrition.Diary;
-using MuscleCuties.UseCases.Features.Nutrition.Targets;
-using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
-using MuscleCuties.UseCases.Features.Nutrition.Recipes;
-using MuscleCuties.UseCases.Features.Nutrition.Overview;
-using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
-using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
-using MuscleCuties.UseCases.Features.Profile.ServerProfile;
-using MuscleCuties.UseCases.Features.Workout.Planning;
-using MuscleCuties.UseCases.Features.Workout.ActiveSession;
-using MuscleCuties.UseCases.Features.Workout.Archive;
-using MuscleCuties.UseCases.Features.Workout.Injury;
-using MuscleCuties.Infrastructure.PostgreSql.Dashboard;
-using MuscleCuties.UseCases.Features.Dashboard.Overview;
-using MuscleCuties.Server.Dashboard;
-using MuscleCuties.Server.Nutrition;
-using MuscleCuties.Server.Cycle;
-using MuscleCuties.Infrastructure.PostgreSql.Cycle.PhaseLog;
-using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
+using MuscleCuties.Server.Account.Registration;
 using MuscleCuties.Server.CheckInAndInjury;
-using MuscleCuties.Server.Workout.Planning;
+using MuscleCuties.Server.Cycle;
+using MuscleCuties.Server.Dashboard;
+using MuscleCuties.Server.Hydration;
+using MuscleCuties.Server.Nutrition;
+using MuscleCuties.Server.Profile.PhotoVault;
 using MuscleCuties.Server.Workout.ActiveSession;
 using MuscleCuties.Server.Workout.Archive;
 using MuscleCuties.Server.Workout.Injury;
+using MuscleCuties.Server.Workout.Planning;
 using MuscleCuties.Server.Workout.Session;
-using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
-using MuscleCuties.UseCases.Features.Profile.PhotoVault;
-using MuscleCuties.Server.Profile.PhotoVault;
-using MuscleCuties.Server.Account.Registration;
-using MuscleCuties.Infrastructure.PostgreSql.Hydration;
-using MuscleCuties.Infrastructure.PostgreSql.Progress;
-using MuscleCuties.Infrastructure.PostgreSql.Fasting;
+using MuscleCuties.UseCases.Features.Account.Authentication;
+using MuscleCuties.UseCases.Features.Account.Deletion;
+using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
+using MuscleCuties.UseCases.Features.Account.EmailChallenge;
+using MuscleCuties.UseCases.Features.Account.MigrationClaims;
+using MuscleCuties.UseCases.Features.Account.Registration;
+using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
+using MuscleCuties.UseCases.Features.CheckInAndInjury;
+using MuscleCuties.UseCases.Features.Cycle.History;
+using MuscleCuties.UseCases.Features.Cycle.Overview;
+using MuscleCuties.UseCases.Features.Cycle.PhaseLog;
+using MuscleCuties.UseCases.Features.Dashboard.Overview;
 using MuscleCuties.UseCases.Features.Hydration;
+using MuscleCuties.UseCases.Features.Nutrition.Barcode;
+using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
+using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
+using MuscleCuties.UseCases.Features.Nutrition.CustomFoods;
+using MuscleCuties.UseCases.Features.Nutrition.Diary;
+using MuscleCuties.UseCases.Features.Nutrition.Overview;
+using MuscleCuties.UseCases.Features.Nutrition.Recipes;
+using MuscleCuties.UseCases.Features.Nutrition.Targets;
+using MuscleCuties.UseCases.Features.Profile.PhotoVault;
+using MuscleCuties.UseCases.Features.Profile.ServerProfile;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
+using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 using MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
-using MuscleCuties.UseCases.Features.Fasting;
-using MuscleCuties.Server.Hydration;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
+using MuscleCuties.UseCases.Features.Workout.Archive;
+using MuscleCuties.UseCases.Features.Workout.Injury;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.Server;
 
@@ -243,8 +241,6 @@ public static class ApiApplication
         builder.Services.AddScoped<PostgresNutritionDiaryStore>();
         builder.Services.AddScoped<INutritionDiaryStore>(serviceProvider =>
             serviceProvider.GetRequiredService<PostgresNutritionDiaryStore>());
-        builder.Services.AddScoped<INutritionDiaryCommandEventStore>(serviceProvider =>
-            serviceProvider.GetRequiredService<PostgresNutritionDiaryStore>());
         builder.Services.AddScoped<NutritionDiaryUseCase>();
         builder.Services.AddScoped<PostgresNutritionBatchAndCopyStore>();
         builder.Services.AddScoped<INutritionBatchAndCopyStore>(sp => sp.GetRequiredService<PostgresNutritionBatchAndCopyStore>());
@@ -255,7 +251,6 @@ public static class ApiApplication
         builder.Services.AddScoped<PostgresRecipeStore>();
         builder.Services.AddScoped<IRecipeStore>(sp => sp.GetRequiredService<PostgresRecipeStore>());
         builder.Services.AddScoped<ICreateRecipeUseCase, CreateRecipeUseCase>();
-        builder.Services.AddScoped<IPreviewRecipePortionUseCase, PreviewRecipePortionUseCase>();
         builder.Services.AddScoped<IGetRecipesAndTemplatesUseCase, GetRecipesAndTemplatesUseCase>();
         builder.Services.AddScoped<ISaveMealTemplateUseCase, SaveMealTemplateUseCase>();
         builder.Services.AddSingleton<OpenSourceIngredientCache>();
@@ -282,7 +277,6 @@ public static class ApiApplication
         builder.Services.AddScoped<AcceptStrengthPlanProposalV020UseCase>();
         builder.Services.AddSingleton<IPlanningClockPort, SystemPlanningClockPort>();
         builder.Services.AddSingleton<IPlanningCatalogPort, DefaultPlanningCatalogPort>();
-        builder.Services.AddSingleton<IPlanningSafetyPort, DefaultPlanningSafetyPort>();
         builder.Services.AddScoped<IWorkoutPlanningApplicationService, WorkoutPlanningApplicationService>();
         builder.Services.AddScoped<IWorkoutActiveSessionStore, PostgresWorkoutActiveSessionStore>();
         builder.Services.AddScoped<WorkoutActiveSessionUseCase>();
@@ -315,8 +309,6 @@ public static class ApiApplication
         builder.Services.AddScoped<CorrectBodyMeasurementUseCase>();
         builder.Services.AddScoped<DeleteBodyMeasurementUseCase>();
         builder.Services.AddScoped<ReadBodyMeasurementHistoryUseCase>();
-        builder.Services.AddScoped<IFastingSessionStore, PostgresFastingStore>();
-        builder.Services.AddScoped<FastingSessionUseCase>();
         if (DefaultS3PresignedUrlService.IsConfigured(builder.Configuration))
         {
             builder.Services.AddSingleton<IS3PresignedUrlService, DefaultS3PresignedUrlService>();
@@ -515,10 +507,10 @@ public static class ApiApplication
         }
 
         app.MapHealthChecks(ReadyRoute, new Microsoft.AspNetCore.Diagnostics.HealthChecks.HealthCheckOptions
-            {
-                ResponseWriter = WriteHealthStatusAsync,
-                AllowCachingResponses = false
-            })
+        {
+            ResponseWriter = WriteHealthStatusAsync,
+            AllowCachingResponses = false
+        })
             .AllowAnonymous();
         app.MapGet(SessionRoute, (HttpContext context) => Results.Ok(new SessionResponse(
             IsAuthenticated: context.User.Identity?.IsAuthenticated == true,
@@ -583,33 +575,7 @@ public static class ApiApplication
                 request.ReproductiveContextJson, request.ProfileImagePath), cancellationToken).ConfigureAwait(false);
             return MapProfileWrite(result);
         }).RequireAuthorization();
-        app.MapGet("/api/v1/profile/history", async (
-            HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
-        {
-            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
-            return Results.Ok(await profile.LoadHistoryAsync(userId, cancellationToken).ConfigureAwait(false));
-        }).RequireAuthorization();
-        app.MapGet("/api/v1/profile/quiz-responses", async (
-            HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
-        {
-            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
-            return Results.Ok(await profile.LoadQuizResponsesAsync(userId, cancellationToken).ConfigureAwait(false));
-        }).RequireAuthorization();
-        app.MapPut("/api/v1/profile/quiz-responses/{questionId:int}", async (
-            int questionId, CorrectServerQuizResponseBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
-        {
-            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
-            return MapProfileWrite(await profile.CorrectQuizResponseAsync(new CorrectServerQuizResponseRequest(
-                userId, request.ExpectedVersion, questionId, request.AnswerId), cancellationToken).ConfigureAwait(false));
-        }).RequireAuthorization();
         app.MapPut("/api/v1/profile/nutrition-preferences", async (
-            UpdateServerNutritionPreferencesBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
-        {
-            if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
-            return MapProfileWrite(await profile.UpdateNutritionPreferencesAsync(new UpdateServerNutritionPreferencesRequest(
-                userId, request.ExpectedVersion, request.Goal, request.WeightGoalPace, request.DietaryTags), cancellationToken).ConfigureAwait(false));
-        }).RequireAuthorization();
-        app.MapPut("/api/v1/profile/nutrition-settings", async (
             UpdateServerNutritionPreferencesBody request, HttpContext context, ServerProfileUseCase profile, CancellationToken cancellationToken) =>
         {
             if (!TryGetAuthenticatedUserId(context, out var userId)) return Results.Unauthorized();
@@ -895,7 +861,7 @@ public static class ApiApplication
         app.MapCheckInAndInjuryEndpoints();
         app.MapDashboardEndpoints();
         app.MapPhotoVaultEndpoints();
-        app.MapHydrationProgressAndFastingEndpoints();
+        app.MapHydrationAndProgressEndpoints();
 
         return app;
     }
@@ -945,8 +911,6 @@ public static class ApiApplication
         string? Goal, string? WeightGoalPace, string? TrainingExperienceLevel,
         int? CycleLength, string? DietaryTags, string? EquipmentLevel,
         string? ReproductiveContextJson = null, string? ProfileImagePath = null);
-    /// <summary>A correction to one quiz answer, against the version the client believes it has.</summary>
-    private sealed record CorrectServerQuizResponseBody(int ExpectedVersion, int AnswerId);
     /// <summary>The nutrition preferences with the version they were read at.</summary>
     private sealed record UpdateServerNutritionPreferencesBody(int ExpectedVersion, string Goal, string WeightGoalPace, string DietaryTags);
     /// <summary>The workout preferences with the version they were read at; the exclusions and capabilities are optional so an</summary>

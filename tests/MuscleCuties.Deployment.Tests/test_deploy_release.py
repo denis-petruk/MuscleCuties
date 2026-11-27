@@ -19,7 +19,7 @@ state_path = os.environ['FAKE_STATE']
 state = json.loads(open(state_path).read()) if os.path.exists(state_path) else {}
 service, operation = args[0], args[1]
 function = args[args.index('--function-name') + 1] if '--function-name' in args else 'unknown'
-target = os.environ['TARGET_WORKER_B64'] if 'worker' in function else os.environ['TARGET_SERVER_B64']
+target = os.environ['TARGET_SERVER_B64']
 old = os.environ['OLD_B64']
 bucket_state = state.setdefault(function, {'updated': False, 'alias': '6'})
 def save():
@@ -75,17 +75,13 @@ class DeployTests(unittest.TestCase):
                         AWS_ACCOUNT_ID='028417007003',
                         SOURCE_SHA=self.source, SOURCE_TREE_SHA=self.tree,
                         SERVER_FUNCTION='fn-server', SERVER_ALIAS='live',
-                        WORKER_FUNCTION='fn-worker', WORKER_ALIAS='live',
                         REPORT_PATH=str(self.root / 'report.json'),
                         MC_TEST_AWS_EXECUTABLE=str(self.fake),
                         FAKE_STATE=str(self.state), FAKE_SCENARIO='happy',
                         OLD_B64=base64.b64encode(hashlib.sha256(b'old').digest()).decode())
         self.server = self.make_component('Server', b'server')
-        self.worker = self.make_component('WorkoutReconciliation', b'worker')
         self.env.update(self.server['env'])
-        self.env.update(self.worker['env'])
         self.env['TARGET_SERVER_B64'] = self.server['b64']
-        self.env['TARGET_WORKER_B64'] = self.worker['b64']
         # These tests describe an offline deploy driven by explicit inputs. A real GitHub run exports
         # GITHUB_EVENT_NAME/GITHUB_REPOSITORY, and the deployer correctly refuses a non-dispatch event,
         # so the inherited values would replace the case under test with manual_release_required.
@@ -108,15 +104,14 @@ class DeployTests(unittest.TestCase):
             'key': f'lambda/{name}/{self.source}/{digest.hex()}/{name}.zip',
             'version_id': 'v1', 'zip_sha256': digest.hex(),
             'zip_sha256_base64': b64, 'zip_bytes': len(payload)}))
-        prefix = 'SERVER' if name == 'Server' else 'WORKER'
         return {
             'b64': b64,
             'env': {
-                f'{prefix}_FUNCTION': 'fn-server' if name == 'Server' else 'fn-worker',
-                f'{prefix}_ALIAS': 'live',
-                f'{prefix}_ZIP': str(zip_path),
-                f'{prefix}_MANIFEST': str(manifest),
-                f'{prefix}_OBJECT': str(obj),
+                'SERVER_FUNCTION': 'fn-server',
+                'SERVER_ALIAS': 'live',
+                'SERVER_ZIP': str(zip_path),
+                'SERVER_MANIFEST': str(manifest),
+                'SERVER_OBJECT': str(obj),
             },
         }
 
@@ -131,16 +126,14 @@ class DeployTests(unittest.TestCase):
     def report(self):
         return json.loads((self.root / 'report.json').read_text())
 
-    def test_both_functions_are_verified(self):
+    def test_server_is_verified(self):
         result = self.run_deploy()
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         report = self.report()
         self.assertEqual(report['status'], 'verified')
         self.assertEqual(report['components']['server']['post_code_sha256'], self.server['b64'])
-        self.assertEqual(report['components']['worker']['post_code_sha256'], self.worker['b64'])
         self.assertEqual(report['components']['server']['previous_alias_version'], '6')
         self.assertEqual(report['components']['server']['post_version'], '7')
-        self.assertEqual(report['components']['worker']['post_version'], '7')
 
     def test_digest_mismatch_never_reports_verified(self):
         self.env['FAKE_SCENARIO'] = 'mismatch'
@@ -161,7 +154,6 @@ class DeployTests(unittest.TestCase):
         report = self.report()
         self.assertEqual(report['status'], 'rolled_back')
         self.assertEqual(report['rollback']['server']['restored_version'], '6')
-        self.assertEqual(report['rollback']['worker']['restored_version'], '6')
 
     def test_missing_alias_fails_before_mutation(self):
         self.env.pop('SERVER_ALIAS')
@@ -172,19 +164,6 @@ class DeployTests(unittest.TestCase):
         self.assertEqual(report['failure_code'], 'missing_server_alias')
         self.assertFalse(report['mutation_attempted'])
 
-
-    def test_unconfigured_worker_is_skipped_not_fatal(self):
-        # Only one Lambda exists today. An unset worker must be recorded as skipped and must not
-        # block a release of the function that does exist, nor leave a half-deployed state.
-        for key in ['WORKER_FUNCTION', 'WORKER_ALIAS', 'WORKER_ZIP', 'WORKER_MANIFEST', 'WORKER_OBJECT']:
-            self.env.pop(key, None)
-        result = self.run_deploy()
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        report = self.report()
-        self.assertEqual(report['status'], 'verified')
-        self.assertEqual(report['components']['server']['post_code_sha256'], self.server['b64'])
-        self.assertEqual(report['components']['worker']['status'], 'skipped')
-        self.assertEqual(report['components']['worker']['reason'], 'WORKER_FUNCTION is not configured')
 
     def test_push_to_main_releases_automatically(self):
         # ci.yml calls the deployer after its required gate on a push to main, so that event must
@@ -268,10 +247,9 @@ class WorkflowContractTests(unittest.TestCase):
         # validate_component expects lambda/<spec name>/<sha>/<digest>/, so the upload step has to
         # file the object under exactly that name. It once filed under MuscleCuties.Server, which
         # failed the release after the upload had already succeeded.
-        for name in ('Server', 'WorkoutReconciliation'):
-            self.assertIn('component("%s"' % name, self.script)
-            self.assertIn('ARTIFACT_COMPONENT: %s\n' % name, self.workflow)
-            self.assertNotIn('ARTIFACT_COMPONENT: MuscleCuties.%s' % name, self.workflow)
+        self.assertIn('component("Server"', self.script)
+        self.assertIn('ARTIFACT_COMPONENT: Server\n', self.workflow)
+        self.assertNotIn('ARTIFACT_COMPONENT: MuscleCuties.Server', self.workflow)
 
     def test_deploy_step_supplies_every_required_variable(self):
         required = ['TARGET_ENV', 'AWS_REGION', 'SERVER_FUNCTION', 'SERVER_ALIAS',
@@ -285,8 +263,7 @@ class WorkflowContractTests(unittest.TestCase):
         # upload step; a rename in either place would otherwise only surface during a real release.
         build = (ROOT / '.github' / 'workflows' / 'backend-build.yml').read_text()
         produced = build + self.workflow
-        for name in ('SERVER_ZIP', 'SERVER_MANIFEST', 'SERVER_OBJECT',
-                     'WORKER_ZIP', 'WORKER_MANIFEST', 'WORKER_OBJECT'):
+        for name in ('SERVER_ZIP', 'SERVER_MANIFEST', 'SERVER_OBJECT'):
             match = re.search(r'\n          ' + name + r': (\S+)', self.workflow)
             self.assertIsNotNone(match, name + ' is never supplied')
             base = match.group(1).rsplit('/', 1)[-1]
@@ -382,6 +359,18 @@ class WorkflowContractTests(unittest.TestCase):
         for job in ('upload_artifacts', 'deploy_beta', 'rollback_beta'):
             start = self.workflow.index(job + ':')
             self.assertIn('id-token: write', self.workflow[start:start + 900], job)
+
+
+    def test_ios_certificate_is_validated_before_import(self):
+        # The empty-secret failure must name the secret before security import, and an expired
+        # identity must fail here rather than at codesign with a less specific message.
+        start = self.mobile.index('- name: Import the distribution identity')
+        end = self.mobile.index('- name: Install the App Store provisioning profile')
+        step = self.mobile[start:end]
+        for check in ('[ ! -s "$p12" ]', 'openssl pkcs12 -in "$p12" -noout',
+                      'x509 -noout -checkend 0'):
+            self.assertIn(check, step)
+        self.assertLess(step.index('[ ! -s "$p12" ]'), step.index('security import "$p12"'))
 
 
 if __name__ == '__main__':
