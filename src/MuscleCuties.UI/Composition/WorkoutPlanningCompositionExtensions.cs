@@ -27,13 +27,12 @@ namespace MuscleCuties.UI.Composition;
 /// day and an account journey need.</summary>
 public static class WorkoutPlanningCompositionExtensions
 {
-    /// <summary>Registers the planning clock, catalogue and safety ports with their defaults, plus the session and</summary>
+    /// <summary>Registers the planning clock and catalogue ports with their defaults, plus the session and</summary>
     /// proposal clients.</summary>
     public static IServiceCollection RegisterWorkoutPlanningServices(this IServiceCollection services)
     {
         services.AddSingleton<IPlanningClockPort, SystemPlanningClockPort>();
         services.AddSingleton<IPlanningCatalogPort, DefaultPlanningCatalogPort>();
-        services.AddSingleton<IPlanningSafetyPort, DefaultPlanningSafetyPort>();
 
         services.AddScoped<IDailyCheckInNotificationService>(sp =>
             new DailyCheckInNotificationService(

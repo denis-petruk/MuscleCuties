@@ -37,11 +37,9 @@ public sealed class WorkoutPlanningApplicationService(
     CreateStrengthPlanProposalV020UseCase createProposalUseCase,
     AcceptStrengthPlanProposalV020UseCase acceptProposalUseCase,
     GetWorkoutPlanningCatalogUseCase catalogUseCase,
-    IPlanningClockPort? clockPort = null,
-    IPlanningSafetyPort? safetyPort = null) : IWorkoutPlanningApplicationService
+    IPlanningClockPort? clockPort = null) : IWorkoutPlanningApplicationService
 {
     private readonly IPlanningClockPort _clockPort = clockPort ?? new SystemPlanningClockPort();
-    private readonly IPlanningSafetyPort _safetyPort = safetyPort ?? new DefaultPlanningSafetyPort();
 
     /// <summary>Previews a strength plan for the user.</summary>
     public async Task<StrengthPlanPreviewResponseV020> PreviewPlanAsync(

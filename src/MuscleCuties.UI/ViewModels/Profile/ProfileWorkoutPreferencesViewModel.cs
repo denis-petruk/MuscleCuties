@@ -19,7 +19,6 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     private const string BodyweightEquipmentValue = "Bodyweight";
 
     private readonly Func<Task> _navigateAfterSaveAsync;
-    private readonly IProfileRefreshNotifier _refreshNotifier;
     private readonly IProfileWorkoutPreferencesUseCase _useCase;
     private readonly INavigationContextService? _navigationContext;
     private readonly IProfilePersonalInfoUseCase? _personalInfo;
@@ -39,7 +38,8 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     [ObservableProperty] private bool _isBusy;
     [ObservableProperty] private bool _isLoadingData;
     [ObservableProperty] private bool _isLoadError;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(SaveActionText))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SaveActionText))]
     private bool _isPlanSetupNavigationPending;
     [ObservableProperty] private SelectionOption<string>? _selectedEquipmentOption;
     [ObservableProperty] private bool _gluteFocus;
@@ -58,7 +58,6 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
     public ProfileWorkoutPreferencesViewModel(
         IProfileWorkoutPreferencesUseCase useCase,
         GetReviewedExerciseExclusionCatalogV020UseCase exerciseExclusionCatalog,
-        IProfileRefreshNotifier refreshNotifier,
         Func<Task> navigateBackAsync,
         Func<Task> navigateAfterSaveAsync,
         INavigationContextService? navigationContext = null,
@@ -68,7 +67,6 @@ public partial class ProfileWorkoutPreferencesViewModel : ObservableObject, IPag
         _personalInfo = personalInfo;
         _navigationContext = navigationContext;
         _exerciseExclusionCatalog = exerciseExclusionCatalog;
-        _refreshNotifier = refreshNotifier;
         _navigateAfterSaveAsync = navigateAfterSaveAsync;
         BackCommand = new AsyncRelayCommand(navigateBackAsync);
         LoadDataCommand = new AsyncRelayCommand(LoadDataAsync);

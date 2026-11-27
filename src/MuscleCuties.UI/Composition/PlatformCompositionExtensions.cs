@@ -31,7 +31,7 @@ public static class PlatformCompositionExtensions
     /// corner radius with layout protection.</summary>
     public static MauiAppBuilder ConfigurePlatformInputHandlers(this MauiAppBuilder builder)
     {
-        return builder.ConfigureMauiHandlers(handlers =>
+        return builder.ConfigureMauiHandlers(_ =>
         {
 #if ANDROID
             EntryHandler.Mapper.AppendToMapping("MuscleCutiesInputChrome", (handler, _) =>
