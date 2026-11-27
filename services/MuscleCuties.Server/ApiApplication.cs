@@ -37,7 +37,6 @@ using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.ServerProfile;
 using MuscleCuties.Infrastructure.PostgreSql.Profile.UnitsDisplay;
 using MuscleCuties.Infrastructure.PostgreSql.Progress;
-using MuscleCuties.Infrastructure.PostgreSql.Fasting;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Archive;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Injury;
@@ -81,7 +80,6 @@ using MuscleCuties.UseCases.Features.Profile.ServerProfile;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 using MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
-using MuscleCuties.UseCases.Features.Fasting;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Archive;
 using MuscleCuties.UseCases.Features.Workout.Injury;
@@ -311,8 +309,6 @@ public static class ApiApplication
         builder.Services.AddScoped<CorrectBodyMeasurementUseCase>();
         builder.Services.AddScoped<DeleteBodyMeasurementUseCase>();
         builder.Services.AddScoped<ReadBodyMeasurementHistoryUseCase>();
-        builder.Services.AddScoped<IFastingSessionStore, PostgresFastingStore>();
-        builder.Services.AddScoped<FastingSessionUseCase>();
         if (DefaultS3PresignedUrlService.IsConfigured(builder.Configuration))
         {
             builder.Services.AddSingleton<IS3PresignedUrlService, DefaultS3PresignedUrlService>();
