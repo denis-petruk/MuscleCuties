@@ -129,6 +129,30 @@ jobs:
           path: test-results/
           retention-days: 30
 
+  # Workflow and deployment-script edits are a restricted path, so the static gate runs in CI
+  # instead of relying on a manual `tools/deployment/lint-workflows.sh` before each merge.
+  verify_static:
+    name: verify_static
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Install actionlint
+        env:
+          ACTIONLINT_VERSION: 1.7.12
+          ACTIONLINT_SHA256: 8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8
+        run: |
+          curl -fsSL -o actionlint.tar.gz \
+            "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_linux_amd64.tar.gz"
+          echo "${ACTIONLINT_SHA256}  actionlint.tar.gz" | sha256sum --check --strict
+          tar -xzf actionlint.tar.gz actionlint
+          install -m 0755 actionlint "${RUNNER_TEMP}/actionlint"
+          echo "${RUNNER_TEMP}" >> "${GITHUB_PATH}"
+
+      - name: Lint every workflow
+        run: bash tools/deployment/lint-workflows.sh
+
   verify_ios_compile:
     name: verify_ios_compile
     # The maui-ios workload resolves to .NET for iOS 27.1, which refuses to build without
@@ -171,7 +195,7 @@ jobs:
 
   required:
     name: required
-    needs: [verify_source, verify_tests, verify_ios_compile, postgres_verify]
+    needs: [verify_source, verify_tests, verify_static, verify_ios_compile, postgres_verify]
     runs-on: ubuntu-latest
     if: always()
     steps:
@@ -191,6 +215,10 @@ jobs:
           fi
           if [ "${{ needs.postgres_verify.result }}" != "success" ]; then
             echo "postgres_verify failed: ${{ needs.postgres_verify.result }}"
+            exit 1
+          fi
+          if [ "${{ needs.verify_static.result }}" != "success" ]; then
+            echo "verify_static failed: ${{ needs.verify_static.result }}"
             exit 1
           fi
           echo "All required checks passed successfully."
