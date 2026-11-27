@@ -5,8 +5,9 @@ The mobile release workflow uploads the signed .ipa with altool, then runs this 
 the same App Store Connect API key. It resolves the app by bundle id, waits until App Store
 Connect finishes processing the build number, and reports the selected beta groups. Internal
 groups receive every build automatically, so only external groups are explicitly assigned;
-external groups also require Beta App Review before their testers receive the build. Setting
-TESTFLIGHT_GROUP (or --group) targets one named group instead.
+external groups also require Beta App Review, so a build that reaches one is submitted for it.
+Every group of the app is selected by default; TESTFLIGHT_GROUP (or --group) targets one named
+group instead.
 """
 
 import argparse
@@ -132,7 +133,7 @@ def list_groups(base, token, app_id):
 
 
 def choose_groups(groups, name):
-    """Return the target beta groups: the named group, or every internal group by default.
+    """Return the target beta groups: the named group, or every group of the app by default.
 
     Internal groups receive every build automatically, so assignment only posts external groups.
     """
@@ -143,13 +144,12 @@ def choose_groups(groups, name):
             available = ", ".join(sorted(g.get("attributes", {}).get("name", "") for g in groups)) or "none"
             raise SystemExit(f"TESTFLIGHT_GROUP '{name}' does not match a beta group; available: {available}")
         return matches
-    internal = [g for g in groups if g.get("attributes", {}).get("isInternalGroup")]
-    if not internal:
+    if not groups:
         raise SystemExit(
-            "the app has no internal beta group; set the repository variable "
-            "TESTFLIGHT_GROUP to the group name that should receive the build"
+            "the app has no beta group; create one in App Store Connect, or set the repository "
+            "variable TESTFLIGHT_GROUP to the group name that should receive the build"
         )
-    return internal
+    return groups
 
 
 def wait_for_build(base, token_provider, app_id, build_number, timeout_seconds, poll_seconds):
@@ -210,7 +210,42 @@ def assign_build(base, token, groups, build_id):
     return assigned
 
 
-def parse_args(argv=None):
+def submit_for_beta_review(base, token, build_id):
+    """Submit the build for Beta App Review so external testers can install it.
+
+    External groups receive a build only after Apple reviews it. An existing submission is
+    reported instead of repeated, and a 409 (one created concurrently) counts as submitted.
+    """
+    _, payload = api_request(
+        base, token, "GET", "/v1/betaAppReviewSubmissions",
+        query={"filter[build]": build_id, "limit": "1"},
+    )
+    existing = (payload or {}).get("data", [])
+    if existing:
+        state = existing[0].get("attributes", {}).get("betaReviewState") or "SUBMITTED"
+        print(f"build {build_id} already has a Beta App Review submission ({state})", flush=True)
+        return state
+    try:
+        _, created = api_request(
+            base, token, "POST", "/v1/betaAppReviewSubmissions",
+            body={
+                "data": {
+                    "type": "betaAppReviewSubmissions",
+                    "relationships": {"build": {"data": {"type": "builds", "id": build_id}}},
+                }
+            },
+        )
+    except ApiError as error:
+        if error.status != 409:
+            raise
+        print(f"build {build_id} was already submitted for Beta App Review", flush=True)
+        return "SUBMITTED"
+    state = (
+        ((created or {}).get("data") or {}).get("attributes", {}).get("betaReviewState")
+        or "WAITING_FOR_REVIEW"
+    )
+    print(f"submitted build {build_id} for Beta App Review ({state})", flush=True)
+    return state
     """Read the API key, build number and optional target group from flags or environment."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--key", default=os.environ.get("ASC_API_KEY_PATH"), help="path to the AuthKey .p8")
@@ -244,9 +279,12 @@ def main(argv=None):
     )
     assigned = assign_build(args.api_base, token_provider(), selected, build_id)
     internal = sum(1 for group in selected if group.get("attributes", {}).get("isInternalGroup"))
+    external = len(selected) - internal
+    if external:
+        submit_for_beta_review(args.api_base, token_provider(), build_id)
     print(
         f"build {args.build_number} is available to {len(selected)} tester group(s): "
-        f"{internal} internal automatically; {assigned} external assignment(s) made",
+        f"{internal} internal automatically; {assigned} of {external} external assignment(s) made",
         flush=True,
     )
 

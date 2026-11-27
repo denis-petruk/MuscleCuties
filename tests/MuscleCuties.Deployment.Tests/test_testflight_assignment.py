@@ -42,11 +42,11 @@ class DerEncodingTests(unittest.TestCase):
 
 
 class GroupSelectionTests(unittest.TestCase):
-    """Without configuration every internal group is selected; a name overrides that."""
+    """Without configuration every group is selected, internal and external; a name overrides that."""
 
-    def test_defaults_to_every_internal_group(self):
+    def test_defaults_to_every_group(self):
         groups = [group("1", "Internal", True), group("2", "External", False), group("3", "Team", True)]
-        self.assertEqual(["1", "3"], [g["id"] for g in tool.choose_groups(groups, None)])
+        self.assertEqual(["1", "2", "3"], [g["id"] for g in tool.choose_groups(groups, None)])
 
     def test_named_group_matches_case_insensitively(self):
         groups = [group("1", "Internal", True), group("2", "External", False)]
@@ -58,9 +58,9 @@ class GroupSelectionTests(unittest.TestCase):
             tool.choose_groups(groups, "Missing")
         self.assertIn("Internal", str(caught.exception))
 
-    def test_no_internal_group_requires_explicit_configuration(self):
+    def test_no_group_requires_explicit_configuration(self):
         with self.assertRaises(SystemExit) as caught:
-            tool.choose_groups([group("2", "External", False)], None)
+            tool.choose_groups([], None)
         self.assertIn("TESTFLIGHT_GROUP", str(caught.exception))
 
 
@@ -98,6 +98,41 @@ class AssignmentTests(unittest.TestCase):
         self.assertEqual("/v1/betaGroups/2/relationships/builds", args[3])
 
 
+class BetaReviewSubmissionTests(unittest.TestCase):
+    """External testers only receive a build after Apple reviews it, so it is submitted once."""
+
+    def test_missing_submission_is_created(self):
+        responses = [(200, {"data": []}), (201, {"data": {"attributes": {"betaReviewState": "WAITING_FOR_REVIEW"}}})]
+        with mock.patch.object(tool, "api_request", side_effect=responses) as request:
+            state = tool.submit_for_beta_review("https://api.example", "token", "build-1")
+        self.assertEqual("WAITING_FOR_REVIEW", state)
+        self.assertEqual(2, request.call_count)
+        args, kwargs = request.call_args
+        self.assertEqual("POST", args[2])
+        self.assertEqual("/v1/betaAppReviewSubmissions", args[3])
+        self.assertEqual(
+            {
+                "data": {
+                    "type": "betaAppReviewSubmissions",
+                    "relationships": {"build": {"data": {"type": "builds", "id": "build-1"}}},
+                }
+            },
+            kwargs["body"],
+        )
+
+    def test_existing_submission_is_reported_not_repeated(self):
+        responses = [(200, {"data": [{"id": "s", "attributes": {"betaReviewState": "IN_REVIEW"}}]})]
+        with mock.patch.object(tool, "api_request", side_effect=responses) as request:
+            state = tool.submit_for_beta_review("https://api.example", "token", "build-1")
+        self.assertEqual("IN_REVIEW", state)
+        self.assertEqual(1, request.call_count)
+
+    def test_conflict_means_already_submitted(self):
+        error = tool.ApiError(409, "already submitted")
+        with mock.patch.object(tool, "api_request", side_effect=[(200, {"data": []}), error]):
+            self.assertEqual("SUBMITTED", tool.submit_for_beta_review("https://api.example", "token", "build-1"))
+
+
 @unittest.skipUnless(shutil.which("openssl"), "openssl is required to sign the App Store Connect token")
 class TokenTests(unittest.TestCase):
     """The generated JWT uses ES256 and carries the issuer and audience Apple expects."""
@@ -130,6 +165,10 @@ class WorkflowWiringTests(unittest.TestCase):
         assignment = self.workflow.index("assign_testflight_build.py")
         self.assertGreater(assignment, upload)
         self.assertIn("vars.TESTFLIGHT_GROUP", self.workflow)
+
+    def test_assignment_targets_every_group_by_default(self):
+        self.assertIn("TESTFLIGHT_GROUP: ${{ vars.TESTFLIGHT_GROUP }}", self.workflow)
+        self.assertNotIn("TESTFLIGHT_GROUP ||", self.workflow)
 
     def test_key_is_still_staged_when_assignment_runs(self):
         assignment = self.workflow.index("assign_testflight_build.py")
