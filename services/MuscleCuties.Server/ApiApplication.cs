@@ -895,7 +895,7 @@ public static class ApiApplication
         app.MapCheckInAndInjuryEndpoints();
         app.MapDashboardEndpoints();
         app.MapPhotoVaultEndpoints();
-        app.MapHydrationProgressAndFastingEndpoints();
+        app.MapHydrationAndProgressEndpoints();
 
         return app;
     }

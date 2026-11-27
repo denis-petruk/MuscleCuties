@@ -152,7 +152,7 @@ public sealed class HydrationDiaryPersistenceTests(DisposableDatabaseFixture fix
             await next(context);
         });
         app.UseAuthorization();
-        app.MapHydrationProgressAndFastingEndpoints();
+        app.MapHydrationAndProgressEndpoints();
         await app.StartAsync();
         using var client = app.GetTestClient();
         const string route = "/api/v1/hydration/intake";

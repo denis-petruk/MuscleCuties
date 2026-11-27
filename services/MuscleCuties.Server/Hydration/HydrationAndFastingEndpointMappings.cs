@@ -3,7 +3,6 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
-using MuscleCuties.UseCases.Features.Fasting;
 using MuscleCuties.UseCases.Features.Hydration;
 using MuscleCuties.UseCases.Features.Hydration.Contracts;
 using MuscleCuties.UseCases.Features.Progress.BodyMeasurements;
@@ -27,11 +26,11 @@ public sealed class HttpContextBodyMeasurementSession(IHttpContextAccessor httpC
     public DateOnly Today => DateOnly.FromDateTime(timeProvider.GetUtcNow().UtcDateTime);
 }
 
-/// <summary>The hydration, fasting and water-preset routes.</summary>
+/// <summary>The hydration, water-preset and body-measurement routes.</summary>
 public static class HydrationAndFastingEndpointMappings
 {
-    /// <summary>Registers the hydration and fasting endpoints.</summary>
-    public static IEndpointRouteBuilder MapHydrationProgressAndFastingEndpoints(this IEndpointRouteBuilder endpoints)
+    /// <summary>Registers the hydration, water-preset and body-measurement endpoints.</summary>
+    public static IEndpointRouteBuilder MapHydrationAndProgressEndpoints(this IEndpointRouteBuilder endpoints)
     {
         var hydration = endpoints.MapGroup("/api/v1/hydration").RequireAuthorization();
 
@@ -201,104 +200,6 @@ public static class HydrationAndFastingEndpointMappings
             catch (ArgumentException ex) { return Results.BadRequest(new { error = ex.Message }); }
         });
 
-        var fasting = endpoints.MapGroup("/api/v1/fasting").RequireAuthorization();
-
-        fasting.MapGet("/session", async (
-            [FromQuery] bool? clockUncertain,
-            ClaimsPrincipal principal,
-            [FromServices] FastingSessionUseCase useCase,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            return Results.Ok(await useCase.GetStateAsync(userId, clockUncertain ?? false, cancellationToken).ConfigureAwait(false));
-        });
-
-        fasting.MapPost("/session/start", async (
-            [FromBody] StartFastingBody body,
-            ClaimsPrincipal principal,
-            [FromServices] FastingSessionUseCase useCase,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            return await ExecuteSafeAsync(() => useCase.StartAsync(
-                new StartFastingSessionInputDto(
-                    userId,
-                    body.SessionId == Guid.Empty ? Guid.CreateVersion7() : body.SessionId,
-                    body.CommandId,
-                    body.EligibilityResponse,
-                    body.StartedAtUtc,
-                    body.DisplayUtcOffsetMinutes,
-                    body.PlannedEndAtUtc,
-                    body.EnablePlannedEndReminder,
-                    body.IsProfilePregnant),
-                cancellationToken)).ConfigureAwait(false);
-        });
-
-        fasting.MapPost("/session/{sessionId:guid}/pause", async (
-            Guid sessionId,
-            [FromBody] TransitionFastingBody body,
-            ClaimsPrincipal principal,
-            [FromServices] FastingSessionUseCase useCase,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            return await ExecuteSafeAsync(() => useCase.PauseAsync(
-                new TransitionFastingSessionInputDto(userId, sessionId, body.CommandId, body.ExpectedVersion, body.TransitionAtUtc),
-                cancellationToken)).ConfigureAwait(false);
-        });
-
-        fasting.MapPost("/session/{sessionId:guid}/resume", async (
-            Guid sessionId,
-            [FromBody] TransitionFastingBody body,
-            ClaimsPrincipal principal,
-            [FromServices] FastingSessionUseCase useCase,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            return await ExecuteSafeAsync(() => useCase.ResumeAsync(
-                new TransitionFastingSessionInputDto(userId, sessionId, body.CommandId, body.ExpectedVersion, body.TransitionAtUtc, body.EligibilityResponse, body.IsProfilePregnant),
-                cancellationToken)).ConfigureAwait(false);
-        });
-
-        fasting.MapPost("/session/{sessionId:guid}/end", async (
-            Guid sessionId,
-            [FromBody] TransitionFastingBody body,
-            ClaimsPrincipal principal,
-            [FromServices] FastingSessionUseCase useCase,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            return await ExecuteSafeAsync(() => useCase.EndAsync(
-                new TransitionFastingSessionInputDto(userId, sessionId, body.CommandId, body.ExpectedVersion, body.TransitionAtUtc),
-                cancellationToken)).ConfigureAwait(false);
-        });
-
-        fasting.MapPut("/session/{sessionId:guid}/correction", async (
-            Guid sessionId,
-            [FromBody] CorrectFastingBody body,
-            ClaimsPrincipal principal,
-            [FromServices] FastingSessionUseCase useCase,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            return await ExecuteSafeAsync(() => useCase.CorrectTimesAsync(
-                new CorrectFastingSessionInputDto(userId, sessionId, body.CommandId, body.ExpectedVersion, body.CorrectedStartedAtUtc, body.CorrectedEndedAtUtc, body.CorrectedAtUtc),
-                cancellationToken)).ConfigureAwait(false);
-        });
-
-        fasting.MapPut("/session/{sessionId:guid}/planned-end", async (
-            Guid sessionId,
-            [FromBody] UpdateFastingPlannedEndBody body,
-            ClaimsPrincipal principal,
-            [FromServices] FastingSessionUseCase useCase,
-            CancellationToken cancellationToken) =>
-        {
-            if (!ApiApplication.TryGetUserId(principal, out var userId)) return Results.Unauthorized();
-            return await ExecuteSafeAsync(() => useCase.UpdatePlannedEndAsync(
-                new UpdateFastingPlannedEndInputDto(userId, sessionId, body.CommandId, body.ExpectedVersion, body.PlannedEndAtUtc, body.EnablePlannedEndReminder),
-                cancellationToken)).ConfigureAwait(false);
-        });
-
         return endpoints;
     }
 
@@ -336,37 +237,4 @@ public static class HydrationAndFastingEndpointMappings
     /// <summary>The reminder settings, sent with the version that was read.</summary>
     public sealed record SaveWaterReminderBody(string? ExpectedVersion, bool OptedIn, IReadOnlyList<TimeOnly>? LocalTimes, TimeOnly? QuietStart, TimeOnly? QuietEnd, Guid OperationId);
 
-    /// <summary>The start of a fast, with its planned end and the client's operation id.</summary>
-    public sealed record StartFastingBody(
-        Guid SessionId,
-        Guid CommandId,
-        FastingEligibilityResponseDto EligibilityResponse,
-        DateTimeOffset StartedAtUtc,
-        int DisplayUtcOffsetMinutes,
-        DateTimeOffset? PlannedEndAtUtc,
-        bool EnablePlannedEndReminder,
-        bool? IsProfilePregnant);
-
-    /// <summary>An ending or cancelling of the running fast, with the operation id that makes the transition idempotent.</summary>
-    public sealed record TransitionFastingBody(
-        Guid CommandId,
-        int ExpectedVersion,
-        DateTimeOffset TransitionAtUtc,
-        FastingEligibilityResponseDto EligibilityResponse = FastingEligibilityResponseDto.YesAllApply,
-        bool? IsProfilePregnant = null);
-
-    /// <summary>A correction to a fast's times, which is a separate operation from starting or ending one.</summary>
-    public sealed record CorrectFastingBody(
-        Guid CommandId,
-        int ExpectedVersion,
-        DateTimeOffset CorrectedStartedAtUtc,
-        DateTimeOffset? CorrectedEndedAtUtc,
-        DateTimeOffset CorrectedAtUtc);
-
-    /// <summary>A change to when the running fast is planned to end.</summary>
-    public sealed record UpdateFastingPlannedEndBody(
-        Guid CommandId,
-        int ExpectedVersion,
-        DateTimeOffset? PlannedEndAtUtc,
-        bool EnablePlannedEndReminder);
 }
