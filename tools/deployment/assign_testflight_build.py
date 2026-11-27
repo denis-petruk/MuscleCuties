@@ -246,6 +246,9 @@ def submit_for_beta_review(base, token, build_id):
     )
     print(f"submitted build {build_id} for Beta App Review ({state})", flush=True)
     return state
+
+
+def parse_args(argv=None):
     """Read the API key, build number and optional target group from flags or environment."""
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--key", default=os.environ.get("ASC_API_KEY_PATH"), help="path to the AuthKey .p8")

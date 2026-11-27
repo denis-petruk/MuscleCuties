@@ -154,6 +154,57 @@ class TokenTests(unittest.TestCase):
         self.assertEqual(64, len(base64.urlsafe_b64decode(signature_part + "==")))
 
 
+class CommandLineTests(unittest.TestCase):
+    """The release step invokes the module through main(), so its entry points must exist."""
+
+    def test_flags_become_the_tool_inputs(self):
+        args = tool.parse_args([
+            "--key", "/tmp/AuthKey_KEY.p8", "--key-id", "KEY", "--issuer", "issuer-id",
+            "--build-number", "20261127.120000", "--group", "External",
+        ])
+        self.assertEqual("/tmp/AuthKey_KEY.p8", args.key)
+        self.assertEqual("KEY", args.key_id)
+        self.assertEqual("issuer-id", args.issuer)
+        self.assertEqual("20261127.120000", args.build_number)
+        self.assertEqual("External", args.group)
+
+    def test_main_is_callable(self):
+        self.assertTrue(callable(tool.main))
+
+
+class EndToEndTests(unittest.TestCase):
+    """main() must wire resolution, group selection, assignment and review together."""
+
+    def test_main_assigns_the_external_group_and_submits_the_build_for_review(self):
+        calls = []
+
+        def fake_request(base, token, method, path, query=None, body=None):
+            calls.append((method, path))
+            if path == "/v1/apps":
+                return 200, {"data": [{"id": "app-1"}]}
+            if path == "/v1/betaGroups":
+                return 200, {"data": [group("1", "Internal", True), group("2", "External", False)]}
+            if path == "/v1/builds":
+                return 200, {"data": [{"id": "build-1", "attributes": {"processingState": "VALID"}}]}
+            if path == "/v1/betaAppReviewSubmissions" and method == "GET":
+                return 200, {"data": []}
+            if path == "/v1/betaAppReviewSubmissions":
+                return 201, {"data": {"attributes": {"betaReviewState": "WAITING_FOR_REVIEW"}}}
+            return 200, None
+
+        with mock.patch.object(tool, "api_request", side_effect=fake_request), \
+                mock.patch.object(tool, "make_token", return_value="token"):
+            tool.main([
+                "--key", "k.p8", "--key-id", "KEY", "--issuer", "issuer-id",
+                "--build-number", "20261127.120000",
+            ])
+
+        self.assertIn(("POST", "/v1/betaGroups/2/relationships/builds"), calls)
+        self.assertNotIn(("POST", "/v1/betaGroups/1/relationships/builds"), calls)
+        self.assertIn(("GET", "/v1/betaAppReviewSubmissions"), calls)
+        self.assertIn(("POST", "/v1/betaAppReviewSubmissions"), calls)
+
+
 class WorkflowWiringTests(unittest.TestCase):
     """The release workflow must assign the build after upload, before the key is deleted."""
 
