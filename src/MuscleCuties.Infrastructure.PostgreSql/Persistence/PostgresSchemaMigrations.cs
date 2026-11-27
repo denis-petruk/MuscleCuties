@@ -122,6 +122,9 @@ public static class PostgresSchemaMigrations
     public const string PainReassessmentTimestampsResourceName =
         "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.011_pain_reassessment_timestamps.sql";
 
+    public const string DropFoodSyncLogsResourceName =
+        "MuscleCuties.Infrastructure.PostgreSql.Persistence.Schema.012_drop_food_sync_logs.sql";
+
     public static readonly MigrationScriptDefinition BaselineScript =
         new(0, "000_model_baseline.sql", BaselineScriptResourceName);
 
@@ -137,7 +140,8 @@ public static class PostgresSchemaMigrations
         new(8, "008_glute_focus.sql", GluteFocusResourceName),
         new(9, "009_checkin_fatigue.sql", CheckInFatigueResourceName),
         new(10, "010_unilateral_observed_sets.sql", UnilateralObservedSetsResourceName),
-        new(11, "011_pain_reassessment_timestamps.sql", PainReassessmentTimestampsResourceName)
+        new(11, "011_pain_reassessment_timestamps.sql", PainReassessmentTimestampsResourceName),
+        new(12, "012_drop_food_sync_logs.sql", DropFoodSyncLogsResourceName)
     ];
 
     /// <summary>

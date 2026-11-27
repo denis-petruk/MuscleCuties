@@ -144,8 +144,6 @@ public sealed class PostgresDbContext(DbContextOptions<PostgresDbContext> option
     public DbSet<WorkoutPlanningConfigEntry> WorkoutPlanningConfigEntries => Set<WorkoutPlanningConfigEntry>();
     /// <summary>Past nutrient snapshots of a food, so a sync's change can be traced.</summary>
     public DbSet<FoodItemVersionRecord> FoodItemVersions => Set<FoodItemVersionRecord>();
-    /// <summary>The record of catalog sync runs and what each changed.</summary>
-    public DbSet<FoodSyncLogRecord> FoodSyncLogs => Set<FoodSyncLogRecord>();
 
     /// <summary>Applies the column types every model shares: instants are stored as <c>timestamp with time zone</c> and decimals
     /// as <c>numeric</c>, so no property can silently fall back to a timezone-naive or floating-point type.</summary>
