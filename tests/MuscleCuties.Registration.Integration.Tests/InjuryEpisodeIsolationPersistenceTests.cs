@@ -28,22 +28,38 @@ public sealed class InjuryEpisodeIsolationPersistenceTests
         AddUser(db, owner, now);
         db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = owner, TimeZoneId = UtcZone, SafetyRegenerationPending = true
+            Id = Guid.NewGuid(),
+            UserId = owner,
+            TimeZoneId = UtcZone,
+            SafetyRegenerationPending = true
         });
         db.WorkoutPlans.Add(new WorkoutPlanRecord
         {
-            Id = Guid.NewGuid(), UserId = owner, Name = "Synthetic plan", IsActive = true,
-            CyclePhaseTarget = "Follicular", CreatedAt = now
+            Id = Guid.NewGuid(),
+            UserId = owner,
+            Name = "Synthetic plan",
+            IsActive = true,
+            CyclePhaseTarget = "Follicular",
+            CreatedAt = now
         });
         db.WorkoutInjuryLogs.Add(new WorkoutInjuryLogRecord
         {
-            Id = injury, UserId = owner, SiteFlag = SyntheticSite, Status = "Acute",
-            Since = DateOnly.FromDateTime(now), Date = DateOnly.FromDateTime(now), CreatedAt = now
+            Id = injury,
+            UserId = owner,
+            SiteFlag = SyntheticSite,
+            Status = "Acute",
+            Since = DateOnly.FromDateTime(now),
+            Date = DateOnly.FromDateTime(now),
+            CreatedAt = now
         });
         db.WorkoutInjuryEpisodes.Add(new WorkoutInjuryEpisodeRecord
         {
-            Id = Guid.NewGuid(), UserId = owner, InjuryLogId = injury, SiteFlag = SyntheticSite,
-            StartedOn = DateOnly.FromDateTime(now), SourceDeleted = true
+            Id = Guid.NewGuid(),
+            UserId = owner,
+            InjuryLogId = injury,
+            SiteFlag = SyntheticSite,
+            StartedOn = DateOnly.FromDateTime(now),
+            SourceDeleted = true
         });
         await db.SaveChangesAsync();
         await db.WorkoutInjuryLogs.Where(row => row.Id == injury).ExecuteDeleteAsync();
@@ -77,16 +93,50 @@ public sealed class InjuryEpisodeIsolationPersistenceTests
             var episode = Guid.NewGuid();
             prescriptions.Add(prescription);
             episodes.Add(episode);
-            db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = plan, UserId = owner, Name = "Synthetic plan",
-                IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-            db.WorkoutDays.Add(new WorkoutDayRecord { Id = day, UserId = owner, WorkoutPlanId = plan,
-                DayOfWeek = (int)now.DayOfWeek, Date = DateOnly.FromDateTime(now), WorkoutType = "Strength", Name = "Synthetic day" });
-            db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = prescription, UserId = owner,
-                WorkoutDayId = day, ExerciseId = exerciseId, Sets = SyntheticSets, Reps = SyntheticRepetitions });
-            db.WorkoutInjuryEpisodes.Add(new WorkoutInjuryEpisodeRecord { Id = episode, UserId = owner,
-                InjuryLogId = Guid.NewGuid(), SiteFlag = SyntheticSite, StartedOn = DateOnly.FromDateTime(now) });
-            db.WorkoutInjuryPrescriptionLinks.Add(new WorkoutInjuryPrescriptionLinkRecord { Id = Guid.NewGuid(),
-                UserId = owner, WorkoutDayExerciseId = prescription, InjuryEpisodeId = episode, OriginalExerciseId = exerciseId });
+            db.WorkoutPlans.Add(new WorkoutPlanRecord
+            {
+                Id = plan,
+                UserId = owner,
+                Name = "Synthetic plan",
+                IsActive = true,
+                CyclePhaseTarget = "Follicular",
+                CreatedAt = now
+            });
+            db.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = day,
+                UserId = owner,
+                WorkoutPlanId = plan,
+                DayOfWeek = (int)now.DayOfWeek,
+                Date = DateOnly.FromDateTime(now),
+                WorkoutType = "Strength",
+                Name = "Synthetic day"
+            });
+            db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+            {
+                Id = prescription,
+                UserId = owner,
+                WorkoutDayId = day,
+                ExerciseId = exerciseId,
+                Sets = SyntheticSets,
+                Reps = SyntheticRepetitions
+            });
+            db.WorkoutInjuryEpisodes.Add(new WorkoutInjuryEpisodeRecord
+            {
+                Id = episode,
+                UserId = owner,
+                InjuryLogId = Guid.NewGuid(),
+                SiteFlag = SyntheticSite,
+                StartedOn = DateOnly.FromDateTime(now)
+            });
+            db.WorkoutInjuryPrescriptionLinks.Add(new WorkoutInjuryPrescriptionLinkRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = owner,
+                WorkoutDayExerciseId = prescription,
+                InjuryEpisodeId = episode,
+                OriginalExerciseId = exerciseId
+            });
             await db.SaveChangesAsync();
             db.ChangeTracker.Clear();
         }
@@ -144,8 +194,13 @@ public sealed class InjuryEpisodeIsolationPersistenceTests
 
     private static void AddUser(PostgresDbContext db, Guid owner, DateTime now) => db.Users.Add(new UserRecord
     {
-        Id = owner, Email = $"episode-{owner:N}@example.invalid", Username = $"epi_{owner.ToString("N")[..10]}",
-        CredentialType = "Password", PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now,
+        Id = owner,
+        Email = $"episode-{owner:N}@example.invalid",
+        Username = $"epi_{owner.ToString("N")[..10]}",
+        CredentialType = "Password",
+        PasswordHash = "synthetic-hash",
+        CreatedAt = now,
+        UpdatedAt = now,
         IsOnboardingComplete = true
     });
 }

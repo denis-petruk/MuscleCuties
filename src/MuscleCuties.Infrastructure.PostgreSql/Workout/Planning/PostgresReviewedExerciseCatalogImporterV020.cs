@@ -245,20 +245,20 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
     /// <summary>The evidence JSON stored for one catalog exercise.</summary>
     private static string EvidenceJson(JsonElement root, JsonElement exercise,
         IReadOnlyDictionary<int, int> databaseIdBySourceId) => JsonSerializer.Serialize(new
-    {
-        exerciseReviewVersion = String(root, "exerciseReviewVersion"),
-        directedSubstitutionReviewVersion = String(root, "directedSubstitutionReviewVersion"),
-        policyVersion = String(root, "policyVersion"),
-        templateVersion = String(root, "templateVersion"),
-        catalogSnapshot = String(root, "catalogSnapshot"),
-        workbookSha256 = String(root, "workbookSha256"),
-        reviewerNameAsProvided = String(root, "reviewerNameAsProvided"),
-        credentialsAndScopeAsProvided = String(root, "credentialsAndScopeAsProvided"),
-        approvalReferenceAsProvided = String(root, "approvalReferenceAsProvided"),
-        assessmentScopeAndLimits = String(root, "assessmentScopeAndLimits"),
-        ownerRestrictionAssessmentAssertion = root.GetProperty("ownerRestrictionAssessmentAssertion"),
-        ownerDirectVerification = root.GetProperty("ownerDirectVerification"),
-        resolvedDirectedSubstitutionReviews = exercise.GetProperty("directedSubstitutionReviews")
+        {
+            exerciseReviewVersion = String(root, "exerciseReviewVersion"),
+            directedSubstitutionReviewVersion = String(root, "directedSubstitutionReviewVersion"),
+            policyVersion = String(root, "policyVersion"),
+            templateVersion = String(root, "templateVersion"),
+            catalogSnapshot = String(root, "catalogSnapshot"),
+            workbookSha256 = String(root, "workbookSha256"),
+            reviewerNameAsProvided = String(root, "reviewerNameAsProvided"),
+            credentialsAndScopeAsProvided = String(root, "credentialsAndScopeAsProvided"),
+            approvalReferenceAsProvided = String(root, "approvalReferenceAsProvided"),
+            assessmentScopeAndLimits = String(root, "assessmentScopeAndLimits"),
+            ownerRestrictionAssessmentAssertion = root.GetProperty("ownerRestrictionAssessmentAssertion"),
+            ownerDirectVerification = root.GetProperty("ownerDirectVerification"),
+            resolvedDirectedSubstitutionReviews = exercise.GetProperty("directedSubstitutionReviews")
             .EnumerateArray().Select(pair => new
             {
                 targetExerciseId = databaseIdBySourceId[pair.GetProperty("targetSourceExerciseId").GetInt32()],
@@ -266,8 +266,8 @@ public sealed class PostgresReviewedExerciseCatalogImporterV020(PostgresDbContex
                 conditions = String(pair, "conditions"),
                 reference = String(pair, "reference")
             }).ToArray(),
-        exercise
-    });
+            exercise
+        });
 
     /// <summary>The named string property, or nothing when it is missing.</summary>
     private static string String(JsonElement value, string property) =>

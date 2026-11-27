@@ -1,7 +1,6 @@
+using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.Catalog;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
-
-using MuscleCuties.Core.Domain.Workout;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 

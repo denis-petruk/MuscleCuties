@@ -33,17 +33,55 @@ public sealed class PopulationSafetyPersistenceTests
         var session = Guid.NewGuid();
         var now = DateTime.UtcNow;
         await SyntheticTenantSession.SetAsync(setup, user);
-        setup.Users.Add(new UserRecord { Id = user, Email = $"population-{user:N}@example.invalid",
-            Username = $"pop_{user.ToString("N")[..IdentifierLength]}", CredentialType = "Password", PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now });
-        setup.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = user, Name = "Synthetic",
-            DateOfBirth = SyntheticBirthDate, ConcurrencyVersion = InitialProfileVersion, UpdatedAt = now });
+        setup.Users.Add(new UserRecord
+        {
+            Id = user,
+            Email = $"population-{user:N}@example.invalid",
+            Username = $"pop_{user.ToString("N")[..IdentifierLength]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        setup.UserProfiles.Add(new UserProfileRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = user,
+            Name = "Synthetic",
+            DateOfBirth = SyntheticBirthDate,
+            ConcurrencyVersion = InitialProfileVersion,
+            UpdatedAt = now
+        });
         setup.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = user, TimeZoneId = "UTC" });
-        setup.WorkoutPlans.Add(new WorkoutPlanRecord { Id = plan, UserId = user, Name = "Synthetic", IsActive = true,
-            CyclePhaseTarget = "Unknown", CreatedAt = now });
-        setup.WorkoutDays.Add(new WorkoutDayRecord { Id = day, UserId = user, WorkoutPlanId = plan,
-            Date = DateOnly.FromDateTime(now), DayOfWeek = (int)now.DayOfWeek, WorkoutType = "Cardio", Name = "Synthetic" });
-        setup.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = session, UserId = user, PlannedWorkoutDayId = day,
-            WorkoutName = "Synthetic", StartedAt = now, CreatedAt = now, UpdatedAt = now });
+        setup.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = plan,
+            UserId = user,
+            Name = "Synthetic",
+            IsActive = true,
+            CyclePhaseTarget = "Unknown",
+            CreatedAt = now
+        });
+        setup.WorkoutDays.Add(new WorkoutDayRecord
+        {
+            Id = day,
+            UserId = user,
+            WorkoutPlanId = plan,
+            Date = DateOnly.FromDateTime(now),
+            DayOfWeek = (int)now.DayOfWeek,
+            WorkoutType = "Cardio",
+            Name = "Synthetic"
+        });
+        setup.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+        {
+            Id = session,
+            UserId = user,
+            PlannedWorkoutDayId = day,
+            WorkoutName = "Synthetic",
+            StartedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
         await setup.SaveChangesAsync();
         try
         {

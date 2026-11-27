@@ -1,5 +1,5 @@
-using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Domain.Health;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Domain.Workout.Planning.V2;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;

@@ -132,54 +132,54 @@ public sealed class PostgresNutritionOverviewStore(
             var mealIds = meals.Select(x => x.Id).ToArray();
 
             var catalogEntries = await (from entry in db.LoggedMealEntries.AsNoTracking()
-                join food in db.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
-                where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
-                select new MealEntryNutrientRow(
-                    entry.LoggedMealId,
-                    entry.Grams,
-                    food.Name,
-                    (float)(food.Calories ?? 0),
-                    (float)(food.Protein ?? 0),
-                    (float)(food.Carbs ?? 0),
-                    (float)(food.Fats ?? 0),
-                    (float)(food.Fiber ?? 0),
-                    (float)(food.VitaminA ?? 0),
-                    (float)(food.VitaminC ?? 0),
-                    (float)(food.VitaminD ?? 0),
-                    (float)(food.VitaminB6 ?? 0),
-                    (float)(food.VitaminB12 ?? 0),
-                    (float)(food.Folate ?? 0),
-                    (float)(food.Calcium ?? 0),
-                    (float)(food.Iron ?? 0),
-                    (float)(food.Magnesium ?? 0),
-                    (float)(food.Zinc ?? 0),
-                    (float)(food.Potassium ?? 0)
-                )).ToListAsync(cancellationToken).ConfigureAwait(false);
+                                        join food in db.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
+                                        where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
+                                        select new MealEntryNutrientRow(
+                                            entry.LoggedMealId,
+                                            entry.Grams,
+                                            food.Name,
+                                            (float)(food.Calories ?? 0),
+                                            (float)(food.Protein ?? 0),
+                                            (float)(food.Carbs ?? 0),
+                                            (float)(food.Fats ?? 0),
+                                            (float)(food.Fiber ?? 0),
+                                            (float)(food.VitaminA ?? 0),
+                                            (float)(food.VitaminC ?? 0),
+                                            (float)(food.VitaminD ?? 0),
+                                            (float)(food.VitaminB6 ?? 0),
+                                            (float)(food.VitaminB12 ?? 0),
+                                            (float)(food.Folate ?? 0),
+                                            (float)(food.Calcium ?? 0),
+                                            (float)(food.Iron ?? 0),
+                                            (float)(food.Magnesium ?? 0),
+                                            (float)(food.Zinc ?? 0),
+                                            (float)(food.Potassium ?? 0)
+                                        )).ToListAsync(cancellationToken).ConfigureAwait(false);
 
             var userFoodEntries = await (from entry in db.LoggedMealEntries.AsNoTracking()
-                join food in db.UserFoodItems.AsNoTracking() on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
-                where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
-                select new MealEntryNutrientRow(
-                    entry.LoggedMealId,
-                    entry.Grams,
-                    food.Name,
-                    (float)(food.Calories ?? 0),
-                    (float)(food.Protein ?? 0),
-                    (float)(food.Carbs ?? 0),
-                    (float)(food.Fats ?? 0),
-                    (float)(food.Fiber ?? 0),
-                    (float)(food.VitaminA ?? 0),
-                    (float)(food.VitaminC ?? 0),
-                    (float)(food.VitaminD ?? 0),
-                    (float)(food.VitaminB6 ?? 0),
-                    (float)(food.VitaminB12 ?? 0),
-                    (float)(food.Folate ?? 0),
-                    (float)(food.Calcium ?? 0),
-                    (float)(food.Iron ?? 0),
-                    (float)(food.Magnesium ?? 0),
-                    (float)(food.Zinc ?? 0),
-                    (float)(food.Potassium ?? 0)
-                )).ToListAsync(cancellationToken).ConfigureAwait(false);
+                                         join food in db.UserFoodItems.AsNoTracking() on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
+                                         where entry.UserId == userId && mealIds.Contains(entry.LoggedMealId)
+                                         select new MealEntryNutrientRow(
+                                             entry.LoggedMealId,
+                                             entry.Grams,
+                                             food.Name,
+                                             (float)(food.Calories ?? 0),
+                                             (float)(food.Protein ?? 0),
+                                             (float)(food.Carbs ?? 0),
+                                             (float)(food.Fats ?? 0),
+                                             (float)(food.Fiber ?? 0),
+                                             (float)(food.VitaminA ?? 0),
+                                             (float)(food.VitaminC ?? 0),
+                                             (float)(food.VitaminD ?? 0),
+                                             (float)(food.VitaminB6 ?? 0),
+                                             (float)(food.VitaminB12 ?? 0),
+                                             (float)(food.Folate ?? 0),
+                                             (float)(food.Calcium ?? 0),
+                                             (float)(food.Iron ?? 0),
+                                             (float)(food.Magnesium ?? 0),
+                                             (float)(food.Zinc ?? 0),
+                                             (float)(food.Potassium ?? 0)
+                                         )).ToListAsync(cancellationToken).ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 
@@ -431,29 +431,29 @@ public sealed class PostgresNutritionOverviewStore(
             }
 
             var catalogRows = await (from entry in db.LoggedMealEntries.AsNoTracking()
-                join food in db.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
-                where entry.UserId == userId && entry.LoggedMealId == meal.Id
-                select new MealIngredientInputDto(
-                    food.Id,
-                    food.Name,
-                    (float)entry.Grams,
-                    (float)entry.Grams,
-                    "g",
-                    (float)(food.Calories ?? 0m),
-                    (float)(food.Protein ?? 0m),
-                    (float)(food.Carbs ?? 0m),
-                    (float)(food.Fats ?? 0m),
-                    food.DataType ?? "Catalog"
-                )).ToListAsync(cancellationToken).ConfigureAwait(false);
+                                     join food in db.CatalogFoodItems.AsNoTracking() on entry.CatalogFoodItemId equals food.Id
+                                     where entry.UserId == userId && entry.LoggedMealId == meal.Id
+                                     select new MealIngredientInputDto(
+                                         food.Id,
+                                         food.Name,
+                                         (float)entry.Grams,
+                                         (float)entry.Grams,
+                                         "g",
+                                         (float)(food.Calories ?? 0m),
+                                         (float)(food.Protein ?? 0m),
+                                         (float)(food.Carbs ?? 0m),
+                                         (float)(food.Fats ?? 0m),
+                                         food.DataType ?? "Catalog"
+                                     )).ToListAsync(cancellationToken).ConfigureAwait(false);
 
             var customRows = await (from entry in db.LoggedMealEntries.AsNoTracking()
-                join food in db.UserFoodItems.AsNoTracking() on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
-                where entry.UserId == userId && entry.LoggedMealId == meal.Id
-                select new
-                {
-                    Food = food,
-                    entry.Grams
-                }).ToListAsync(cancellationToken).ConfigureAwait(false);
+                                    join food in db.UserFoodItems.AsNoTracking() on new { entry.UserId, entry.UserFoodItemId } equals new { food.UserId, UserFoodItemId = (Guid?)food.Id }
+                                    where entry.UserId == userId && entry.LoggedMealId == meal.Id
+                                    select new
+                                    {
+                                        Food = food,
+                                        entry.Grams
+                                    }).ToListAsync(cancellationToken).ConfigureAwait(false);
 
             await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
 

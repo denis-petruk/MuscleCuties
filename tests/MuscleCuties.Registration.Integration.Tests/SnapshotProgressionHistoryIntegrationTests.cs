@@ -3,8 +3,8 @@ using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using Npgsql;
 using Xunit;
 
@@ -26,8 +26,13 @@ public sealed class SnapshotProgressionHistoryIntegrationTests
         var now = DateTime.UtcNow;
         db.Users.Add(new UserRecord
         {
-            Id = user, Email = $"catalog-history-{user:N}@example.invalid", Username = $"cat_{user:N}",
-            CredentialType = "Password", PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now
+            Id = user,
+            Email = $"catalog-history-{user:N}@example.invalid",
+            Username = $"cat_{user:N}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now
         });
         var definitions = await db.WorkoutExerciseDefinitions.AsNoTracking()
             .Where(row => row.SourceExerciseId != null).OrderBy(row => row.Id).Take(2).ToListAsync();
@@ -36,7 +41,12 @@ public sealed class SnapshotProgressionHistoryIntegrationTests
         var plan = Guid.NewGuid();
         db.WorkoutPlans.Add(new WorkoutPlanRecord
         {
-            Id = plan, UserId = user, Name = "Synthetic", IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now
+            Id = plan,
+            UserId = user,
+            Name = "Synthetic",
+            IsActive = true,
+            CyclePhaseTarget = "Follicular",
+            CreatedAt = now
         });
 
         foreach (var (age, savedName) in new[] { (2, exercise.Name), (1, definitions[1].Name) })
@@ -47,15 +57,26 @@ public sealed class SnapshotProgressionHistoryIntegrationTests
             var session = Guid.NewGuid();
             db.WorkoutDays.Add(new WorkoutDayRecord
             {
-                Id = day, UserId = user, WorkoutPlanId = plan, Date = date, DayOfWeek = (int)date.DayOfWeek,
-                WorkoutType = "Strength", Name = "Synthetic"
+                Id = day,
+                UserId = user,
+                WorkoutPlanId = plan,
+                Date = date,
+                DayOfWeek = (int)date.DayOfWeek,
+                WorkoutType = "Strength",
+                Name = "Synthetic"
             });
             var slot = new PlannedExerciseSnapshot(Guid.NewGuid(), exercise.Id, 2, 0, 8, null, false)
-                { PlanningSlotId = "v2-synthetic" };
+            { PlanningSlotId = "v2-synthetic" };
             db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
             {
-                Id = session, UserId = user, PlannedWorkoutDayId = day, WorkoutName = "Synthetic", StartedAt = began,
-                CompletedAt = began.AddMinutes(30), CreatedAt = began, UpdatedAt = began,
+                Id = session,
+                UserId = user,
+                PlannedWorkoutDayId = day,
+                WorkoutName = "Synthetic",
+                StartedAt = began,
+                CompletedAt = began.AddMinutes(30),
+                CreatedAt = began,
+                UpdatedAt = began,
                 PlannedPrescriptionSnapshotJson = new PlannedPrescriptionSnapshot(day, "Synthetic", "Strength",
                     null, null, [slot]).Serialize()
             });
@@ -63,9 +84,17 @@ public sealed class SnapshotProgressionHistoryIntegrationTests
             {
                 db.ExerciseSetLogs.Add(new ExerciseSetLogRecord
                 {
-                    Id = Guid.NewGuid(), UserId = user, WorkoutSessionLogId = session, ExerciseId = exercise.Id.ToString(),
-                    ExerciseName = savedName, SetNumber = number, WeightKg = 50m, RepsCompleted = 8, IsObserved = true,
-                    CreatedAt = began, UpdatedAt = began
+                    Id = Guid.NewGuid(),
+                    UserId = user,
+                    WorkoutSessionLogId = session,
+                    ExerciseId = exercise.Id.ToString(),
+                    ExerciseName = savedName,
+                    SetNumber = number,
+                    WeightKg = 50m,
+                    RepsCompleted = 8,
+                    IsObserved = true,
+                    CreatedAt = began,
+                    UpdatedAt = began
                 });
             }
         }
@@ -122,15 +151,34 @@ public sealed class SnapshotProgressionHistoryIntegrationTests
         // not permission to use two older successes.
         var unknownDay = await db.WorkoutDays.Where(d => d.UserId == user).FirstAsync();
         var otherExercise = catalog.First(e => e.Id != exercise).Id;
-        var unknownSession = new WorkoutSessionLogRecord { Id = Guid.NewGuid(), UserId = user,
-            PlannedWorkoutDayId = unknownDay.Id, WorkoutName = "Synthetic substitute",
-            StartedAt = now.AddHours(-6), CompletedAt = now.AddHours(-5), CreatedAt = now.AddHours(-6), UpdatedAt = now.AddHours(-5),
+        var unknownSession = new WorkoutSessionLogRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = user,
+            PlannedWorkoutDayId = unknownDay.Id,
+            WorkoutName = "Synthetic substitute",
+            StartedAt = now.AddHours(-6),
+            CompletedAt = now.AddHours(-5),
+            CreatedAt = now.AddHours(-6),
+            UpdatedAt = now.AddHours(-5),
             PlannedPrescriptionSnapshotJson = new PlannedPrescriptionSnapshot(unknownDay.Id, "Synthetic", "Strength", null, null,
-                [new PlannedExerciseSnapshot(Guid.NewGuid(), otherExercise, 2, 0, 8, null, false)]).Serialize() };
+                [new PlannedExerciseSnapshot(Guid.NewGuid(), otherExercise, 2, 0, 8, null, false)]).Serialize()
+        };
         db.WorkoutSessionLogs.Add(unknownSession);
-        db.ExerciseSetLogs.Add(new ExerciseSetLogRecord { Id = Guid.NewGuid(), UserId = user,
-            WorkoutSessionLogId = unknownSession.Id, ExerciseId = exercise.ToString(), ExerciseName = "Synthetic substitute",
-            SetNumber = 1, WeightKg = 60m, RepsCompleted = 4, IsObserved = true, CreatedAt = now.AddHours(-6), UpdatedAt = now.AddHours(-5) });
+        db.ExerciseSetLogs.Add(new ExerciseSetLogRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = user,
+            WorkoutSessionLogId = unknownSession.Id,
+            ExerciseId = exercise.ToString(),
+            ExerciseName = "Synthetic substitute",
+            SetNumber = 1,
+            WeightKg = 60m,
+            RepsCompleted = 4,
+            IsObserved = true,
+            CreatedAt = now.AddHours(-6),
+            UpdatedAt = now.AddHours(-5)
+        });
         await db.SaveChangesAsync();
         history = await PostgresSnapshotProgressionHistory.LoadAsync(db, user, [exercise], null, CancellationToken.None);
         advice = SnapshotProgressionRule.Resolve(MajorMuscleGroup.Quads, EffectiveExperienceTier.Tier2IntermediateOrEstablished, exercise, 8, 60m, history[exercise]);
@@ -149,17 +197,48 @@ public sealed class SnapshotProgressionHistoryIntegrationTests
         var priorSnapshot = PlannedPrescriptionSnapshot.Deserialize(prior.PlannedPrescriptionSnapshotJson)!;
         var priorSlot = priorSnapshot.Exercises.Single();
         var previousLogId = Guid.NewGuid();
-        db.WorkoutLogs.Add(new WorkoutLogRecord { Id = previousLogId, UserId = user, WorkoutDayId = priorSnapshot.DayId,
-            PlannedSessionId = prior.Id, Date = DateOnly.FromDateTime(prior.StartedAt), CreatedAt = prior.StartedAt });
-        db.WorkoutExerciseLogs.Add(new WorkoutExerciseLogRecord { Id = Guid.NewGuid(), UserId = user,
-            WorkoutLogId = previousLogId, WorkoutDayExerciseId = priorSlot.Id, ExerciseId = exercise,
-            CompletedSets = 2, CompletedReps = 8, WeightKg = 60m, CreatedAt = prior.StartedAt });
+        db.WorkoutLogs.Add(new WorkoutLogRecord
+        {
+            Id = previousLogId,
+            UserId = user,
+            WorkoutDayId = priorSnapshot.DayId,
+            PlannedSessionId = prior.Id,
+            Date = DateOnly.FromDateTime(prior.StartedAt),
+            CreatedAt = prior.StartedAt
+        });
+        db.WorkoutExerciseLogs.Add(new WorkoutExerciseLogRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = user,
+            WorkoutLogId = previousLogId,
+            WorkoutDayExerciseId = priorSlot.Id,
+            ExerciseId = exercise,
+            CompletedSets = 2,
+            CompletedReps = 8,
+            WeightKg = 60m,
+            CreatedAt = prior.StartedAt
+        });
         var currentDayId = Guid.NewGuid();
         var today = DateOnly.FromDateTime(now);
-        db.WorkoutDays.Add(new WorkoutDayRecord { Id = currentDayId, UserId = user, WorkoutPlanId = plan,
-            Date = today, DayOfWeek = (int)today.DayOfWeek, WorkoutType = "Strength", Name = "Synthetic current" });
-        db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = user,
-            WorkoutDayId = currentDayId, ExerciseId = exercise, Sets = 2, Reps = 8 });
+        db.WorkoutDays.Add(new WorkoutDayRecord
+        {
+            Id = currentDayId,
+            UserId = user,
+            WorkoutPlanId = plan,
+            Date = today,
+            DayOfWeek = (int)today.DayOfWeek,
+            WorkoutType = "Strength",
+            Name = "Synthetic current"
+        });
+        db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = user,
+            WorkoutDayId = currentDayId,
+            ExerciseId = exercise,
+            Sets = 2,
+            Reps = 8
+        });
         await db.SaveChangesAsync();
         await tx.CommitAsync();
         try

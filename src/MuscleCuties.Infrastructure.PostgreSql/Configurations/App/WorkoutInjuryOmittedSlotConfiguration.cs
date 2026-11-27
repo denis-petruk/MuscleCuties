@@ -9,8 +9,17 @@ public sealed class WorkoutInjuryOmittedSlotConfiguration : IEntityTypeConfigura
     public void Configure(EntityTypeBuilder<WorkoutInjuryOmittedSlotRecord> builder)
     {
         AppModelConfiguration.ConfigureTenant(builder, "workout_injury_omitted_slots");
-        builder.HasIndex(row => new { row.UserId, row.PlanId, row.ScheduledDate, row.TemplateId,
-            row.TemplateVersion, row.SessionIndex, row.SlotId, row.EpisodeId }).IsUnique()
+        builder.HasIndex(row => new
+        {
+            row.UserId,
+            row.PlanId,
+            row.ScheduledDate,
+            row.TemplateId,
+            row.TemplateVersion,
+            row.SessionIndex,
+            row.SlotId,
+            row.EpisodeId
+        }).IsUnique()
             .HasDatabaseName("ix_workout_injury_omitted_slot_identity");
     }
 }

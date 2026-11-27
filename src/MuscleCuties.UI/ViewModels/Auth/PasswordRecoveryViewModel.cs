@@ -35,7 +35,8 @@ public partial class PasswordRecoveryViewModel : ObservableObject, IDisposable
     [ObservableProperty] private string _maskedEmail = string.Empty;
     [ObservableProperty] private string _newPassword = string.Empty;
     [ObservableProperty] private string _otpCode = string.Empty;
-    [ObservableProperty] private string _resendButtonText =
+    [ObservableProperty]
+    private string _resendButtonText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Auth_PasswordRecovery_ResendCode");
 
     [ObservableProperty] private PasswordRecoveryStep _step = PasswordRecoveryStep.EnterIdentifier;

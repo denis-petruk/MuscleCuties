@@ -1,10 +1,10 @@
 using System.Diagnostics.CodeAnalysis;
-using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
-using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
-using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.UI.ViewModels.Common;
 using MuscleCuties.UseCases.Features.Profile.Overview;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 
 namespace MuscleCuties.UI.ViewModels.Profile;
 
@@ -19,7 +19,8 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly IProfileOverviewUseCase _useCase;
     private readonly ILocalPhotoCacheService? _photoCache;
     [ObservableProperty] private string _accountActionError = string.Empty;
-    [ObservableProperty] private string _activeInjuryBadgeText = UiTextCatalog.Format(
+    [ObservableProperty]
+    private string _activeInjuryBadgeText = UiTextCatalog.Format(
         "Profile_Summary_ActiveInjuryFormat", 0);
     [ObservableProperty] private int _activeInjuryCount;
 
@@ -32,7 +33,8 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private bool _hasActiveInjuries;
     [ObservableProperty] private bool _hasVaultPhotos;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading), nameof(IsAccountActionBusy))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading), nameof(IsAccountActionBusy))]
     private bool _isBusy;
 
     [ObservableProperty] private bool _isLoadError;
@@ -58,7 +60,8 @@ public partial class ProfileViewModel : ObservableObject, IPageLoadAware, IDispo
     [NotifyPropertyChangedFor(nameof(UnitsDisplayRowAccessibilityText))]
     private string _unitsDisplayText = UiTextCatalog.Get("Profile_Summary_MetricUnits");
     [ObservableProperty] private int _vaultPhotoCount;
-    [ObservableProperty] private string _vaultPhotoCountText = UiTextCatalog.Format(
+    [ObservableProperty]
+    private string _vaultPhotoCountText = UiTextCatalog.Format(
         "Profile_Summary_PhotoCountFormat", 0);
     [ObservableProperty] private int _workoutStreakDays;
 

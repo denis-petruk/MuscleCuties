@@ -25,14 +25,14 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
         Validate(userId, request, createdAtUtc, expiresAtUtc);
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-        dbContext.ChangeTracker.Clear();
-        await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
-        await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken);
-        await PhotoOwnerLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
+            dbContext.ChangeTracker.Clear();
+            await using var transaction = await dbContext.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
+            await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken);
+            await PhotoOwnerLock.AcquireAsync(dbContext, userId, cancellationToken).ConfigureAwait(false);
 
-        var photoId = Guid.NewGuid();
-        var s3Key = $"photos/{userId:D}/{photoId:N}";
-        await using (var command = new NpgsqlCommand("""
+            var photoId = Guid.NewGuid();
+            var s3Key = $"photos/{userId:D}/{photoId:N}";
+            await using (var command = new NpgsqlCommand("""
             INSERT INTO app.photo_upload_intents
                 (id, user_id, idempotency_key, s3_key, content_type, declared_size_bytes,
                  sha256_checksum, created_at_utc, expires_at_utc, state)
@@ -41,36 +41,36 @@ public sealed class PostgresPhotoUploadIntentStore(PostgresDbContext dbContext) 
             ON CONFLICT (user_id, idempotency_key) DO NOTHING
             RETURNING id
             """, (NpgsqlConnection)dbContext.Database.GetDbConnection(), (NpgsqlTransaction)transaction.GetDbTransaction()))
-        {
-            command.Parameters.AddWithValue("id", photoId);
-            command.Parameters.AddWithValue("user_id", userId);
-            command.Parameters.AddWithValue("idempotency_key", request.IdempotencyKey);
-            command.Parameters.AddWithValue("s3_key", s3Key);
-            command.Parameters.AddWithValue("content_type", request.ContentType);
-            command.Parameters.AddWithValue("declared_size_bytes", request.DeclaredSizeBytes);
-            command.Parameters.AddWithValue("sha256_checksum", request.Sha256Checksum.ToLowerInvariant());
-            command.Parameters.AddWithValue("created_at_utc", createdAtUtc);
-            command.Parameters.AddWithValue("expires_at_utc", expiresAtUtc);
-            var insertedId = await command.ExecuteScalarAsync(cancellationToken);
-            if (insertedId is null)
             {
-                var existing = await dbContext.PhotoUploadIntents.SingleAsync(
-                    intent => intent.UserId == userId && intent.IdempotencyKey == request.IdempotencyKey,
-                    cancellationToken);
-                if (!SameRequest(existing, request))
-                    throw new InvalidOperationException("The idempotency key was already used with different upload metadata.");
+                command.Parameters.AddWithValue("id", photoId);
+                command.Parameters.AddWithValue("user_id", userId);
+                command.Parameters.AddWithValue("idempotency_key", request.IdempotencyKey);
+                command.Parameters.AddWithValue("s3_key", s3Key);
+                command.Parameters.AddWithValue("content_type", request.ContentType);
+                command.Parameters.AddWithValue("declared_size_bytes", request.DeclaredSizeBytes);
+                command.Parameters.AddWithValue("sha256_checksum", request.Sha256Checksum.ToLowerInvariant());
+                command.Parameters.AddWithValue("created_at_utc", createdAtUtc);
+                command.Parameters.AddWithValue("expires_at_utc", expiresAtUtc);
+                var insertedId = await command.ExecuteScalarAsync(cancellationToken);
+                if (insertedId is null)
+                {
+                    var existing = await dbContext.PhotoUploadIntents.SingleAsync(
+                        intent => intent.UserId == userId && intent.IdempotencyKey == request.IdempotencyKey,
+                        cancellationToken);
+                    if (!SameRequest(existing, request))
+                        throw new InvalidOperationException("The idempotency key was already used with different upload metadata.");
 
-                existing = await ExpireIfNeededAsync(existing, createdAtUtc, cancellationToken);
-                await transaction.CommitAsync(cancellationToken);
-                return ToDto(existing);
+                    existing = await ExpireIfNeededAsync(existing, createdAtUtc, cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+                    return ToDto(existing);
+                }
             }
-        }
 
-        var created = await dbContext.PhotoUploadIntents.SingleAsync(
-            intent => intent.UserId == userId && intent.Id == photoId,
-            cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
-        return ToDto(created);
+            var created = await dbContext.PhotoUploadIntents.SingleAsync(
+                intent => intent.UserId == userId && intent.Id == photoId,
+                cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+            return ToDto(created);
         }).ConfigureAwait(false);
     }
 

@@ -1,21 +1,21 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Domain.Workout.Planning;
-using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Core.Models.Enums.Users;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Overview;
 using MuscleCuties.Infrastructure.PostgreSql.Nutrition.Targets;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Archive;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
-using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using Npgsql;
 
 namespace MuscleCuties.Registration.Integration.Tests;
@@ -47,9 +47,17 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         var userId = Guid.NewGuid();
         var now = DateTime.UtcNow;
         await SyntheticTenantSession.SetAsync(database, userId);
-        database.Users.Add(new UserRecord { Id = userId, Email = $"capture-{userId:N}@example.invalid",
-            Username = $"cap_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
+        database.Users.Add(new UserRecord
+        {
+            Id = userId,
+            Email = $"capture-{userId:N}@example.invalid",
+            Username = $"cap_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
+        });
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         { Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id });
         await database.SaveChangesAsync();
@@ -61,8 +69,10 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             var weeks = Enumerable.Range(1, ActivityPrescriptionRule.HiitRequiredPriorWeeks)
                 .Select(offset => new HiitAerobicWeekInputV020(offset, ActivityPrescriptionRule.HiitRequiredAerobicSessionsPerWeek)).ToArray();
             var request = new SaveActivityAnswersRequest(0, [swimming, swimming], new HiitEligibilityEvidenceInputV020(PreviousFourWeeksAerobicEvidence: weeks))
-            { HiitUnderlyingCardioActivity = MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Cycling,
-              HiitCaptureChallengeId = challenge.ChallengeId };
+            {
+                HiitUnderlyingCardioActivity = MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Cycling,
+                HiitCaptureChallengeId = challenge.ChallengeId
+            };
             var store = new PostgresStrengthPlanProposalStoreV020(database);
             var activeStore = new PostgresWorkoutActiveSessionStore(database, new PostgresIdempotencyExecutor(), TimeProvider.System);
             var sessionId = Guid.NewGuid();
@@ -85,14 +95,32 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             var planId = Guid.NewGuid();
             var dayId = Guid.NewGuid();
             var today = DateOnly.FromDateTime(now);
-            database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
-                IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-            database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
-                Date = today, DayOfWeek = (int)today.DayOfWeek, WorkoutType = "Cardio", Name = "Synthetic HIIT",
-                ActivityTypeId = (int)WorkoutActivityType.Hiit });
+            database.WorkoutPlans.Add(new WorkoutPlanRecord
+            {
+                Id = planId,
+                UserId = userId,
+                Name = "Synthetic plan",
+                IsActive = true,
+                CyclePhaseTarget = "Follicular",
+                CreatedAt = now
+            });
+            database.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = dayId,
+                UserId = userId,
+                WorkoutPlanId = planId,
+                Date = today,
+                DayOfWeek = (int)today.DayOfWeek,
+                WorkoutType = "Cardio",
+                Name = "Synthetic HIIT",
+                ActivityTypeId = (int)WorkoutActivityType.Hiit
+            });
             await database.SaveChangesAsync();
-            var plannedStart = start with { UnplannedActivity = null,
-                PlannedWorkoutDayId = PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId) };
+            var plannedStart = start with
+            {
+                UnplannedActivity = null,
+                PlannedWorkoutDayId = PostgresWorkoutPlanAndSessionStore.ToStableWorkoutIntId(dayId)
+            };
             await activeStore.StartSessionAsync(userId, plannedStart, CancellationToken.None);
             await activeStore.CancelSessionAsync(userId, new CancelWorkoutSessionCommand("synthetic-cancel", sessionId), CancellationToken.None);
             await database.WorkoutAccountPlanningStates.Where(row => row.UserId == userId)
@@ -115,13 +143,24 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         var userId = Guid.NewGuid();
         var now = DateTime.UtcNow;
         await SyntheticTenantSession.SetAsync(database, userId);
-        database.Users.Add(new UserRecord { Id = userId, Email = $"revision-{userId:N}@example.invalid",
-            Username = $"rev_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
+        database.Users.Add(new UserRecord
+        {
+            Id = userId,
+            Email = $"revision-{userId:N}@example.invalid",
+            Username = $"rev_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
+        });
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id,
-            BaselineExperience = TrainingExperienceLevel.Beginner, EffectiveExperience = TrainingExperienceLevel.Intermediate,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = TimeZoneInfo.Utc.Id,
+            BaselineExperience = TrainingExperienceLevel.Beginner,
+            EffectiveExperience = TrainingExperienceLevel.Intermediate,
             PromotionPending = true
         });
         await database.SaveChangesAsync();
@@ -133,14 +172,26 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             Xunit.Assert.True((await database.WorkoutAccountPlanningStates.AsNoTracking()
                 .SingleAsync(row => row.UserId == userId)).PromotionPending);
 
-            database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = Guid.NewGuid(), UserId = userId,
-                Name = "Synthetic current plan", IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+            database.WorkoutPlans.Add(new WorkoutPlanRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                Name = "Synthetic current plan",
+                IsActive = true,
+                CyclePhaseTarget = "Follicular",
+                CreatedAt = now
+            });
             database.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
             {
-                Id = Guid.NewGuid(), UserId = userId, PlanId = Guid.NewGuid(), Status = "Proposed",
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                PlanId = Guid.NewGuid(),
+                Status = "Proposed",
                 RulesetVersion = StrengthPlanPreviewRule.RulesetVersion,
                 TrainingPolicyVersion = StrengthPlanPreviewRule.Version,
-                CreatedAtUtc = now, LeaseId = Guid.NewGuid(), LeaseFence = 1,
+                CreatedAtUtc = now,
+                LeaseId = Guid.NewGuid(),
+                LeaseFence = 1,
                 LeaseExpiresAtUtc = now.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration)
             });
             await database.SaveChangesAsync();
@@ -346,8 +397,11 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             var archiveStore = new PostgresWorkoutArchiveStore(database);
             database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
             {
-                Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id,
-                TimeZoneVersion = 1, BaselineExperience = TrainingExperienceLevel.Intermediate,
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                TimeZoneId = TimeZoneInfo.Utc.Id,
+                TimeZoneVersion = 1,
+                BaselineExperience = TrainingExperienceLevel.Intermediate,
                 EffectiveExperience = TrainingExperienceLevel.Intermediate
             });
             await database.SaveChangesAsync();
@@ -368,19 +422,31 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
             var existingDayId = Guid.CreateVersion7();
             database.WorkoutPlans.Add(new WorkoutPlanRecord
             {
-                Id = existingPlanId, UserId = userId, Name = "Synthetic existing plan",
-                IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = nowUtc
+                Id = existingPlanId,
+                UserId = userId,
+                Name = "Synthetic existing plan",
+                IsActive = true,
+                CyclePhaseTarget = "Follicular",
+                CreatedAt = nowUtc
             });
             database.WorkoutDays.Add(new WorkoutDayRecord
             {
-                Id = existingDayId, UserId = userId, WorkoutPlanId = existingPlanId,
-                DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today,
-                WorkoutType = "Strength", Name = "Synthetic strength"
+                Id = existingDayId,
+                UserId = userId,
+                WorkoutPlanId = existingPlanId,
+                DayOfWeek = (int)today.DayOfWeek,
+                WeekIndex = 0,
+                Date = today,
+                WorkoutType = "Strength",
+                Name = "Synthetic strength"
             });
             database.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
             {
-                Id = Guid.CreateVersion7(), UserId = userId, WorkoutDayId = existingDayId,
-                ExerciseId = exerciseId, Sets = SyntheticStrengthSets,
+                Id = Guid.CreateVersion7(),
+                UserId = userId,
+                WorkoutDayId = existingDayId,
+                ExerciseId = exerciseId,
+                Sets = SyntheticStrengthSets,
                 Reps = SyntheticStrengthRepetitions
             });
             await database.SaveChangesAsync();
@@ -475,9 +541,17 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         var today = DateOnly.FromDateTime(now);
         var previousDay = today.AddDays(-1);
         await SyntheticTenantSession.SetAsync(database, userId);
-        database.Users.Add(new UserRecord { Id = userId, Email = $"safety-{userId:N}@example.invalid",
-            Username = $"saf_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
+        database.Users.Add(new UserRecord
+        {
+            Id = userId,
+            Email = $"safety-{userId:N}@example.invalid",
+            Username = $"saf_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
+        });
         var planId = Guid.NewGuid();
         var unfinishedDayId = Guid.NewGuid();
         var completedDayId = Guid.NewGuid();
@@ -490,38 +564,102 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         var previewId = Guid.NewGuid();
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id,
-            BaselineExperience = TrainingExperienceLevel.Beginner, EffectiveExperience = TrainingExperienceLevel.Beginner
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = TimeZoneInfo.Utc.Id,
+            BaselineExperience = TrainingExperienceLevel.Beginner,
+            EffectiveExperience = TrainingExperienceLevel.Beginner
         });
-        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
-            IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+        database.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = planId,
+            UserId = userId,
+            Name = "Synthetic plan",
+            IsActive = true,
+            CyclePhaseTarget = "Follicular",
+            CreatedAt = now
+        });
         database.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
         {
-            Id = previewId, UserId = userId, PlanId = planId, ExpectedRevisionId = Guid.NewGuid(),
-            RulesetVersion = "synthetic-ruleset", TrainingPolicyVersion = "synthetic-policy",
-            Status = ProposedStatus, CreatedAtUtc = now, LeaseId = Guid.NewGuid(),
-            LeaseFence = InitialLeaseFence, ConcurrencyVersion = InitialProposalVersion,
+            Id = previewId,
+            UserId = userId,
+            PlanId = planId,
+            ExpectedRevisionId = Guid.NewGuid(),
+            RulesetVersion = "synthetic-ruleset",
+            TrainingPolicyVersion = "synthetic-policy",
+            Status = ProposedStatus,
+            CreatedAtUtc = now,
+            LeaseId = Guid.NewGuid(),
+            LeaseFence = InitialLeaseFence,
+            ConcurrencyVersion = InitialProposalVersion,
             LeaseExpiresAtUtc = now.Add(PlanningLifecycleRule.FiveMinuteLeaseDuration)
         });
         foreach (var dayId in new[] { unfinishedDayId, completedDayId, activeDayId })
-            database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
-                DayOfWeek = (int)(dayId == activeDayId ? previousDay.DayOfWeek : today.DayOfWeek), WeekIndex = 0,
-                Date = dayId == activeDayId ? previousDay : today, WorkoutType = "Cardio",
-                ActivityTypeId = (int)WorkoutActivityType.Swimming, Name = "Synthetic swimming" });
-        database.WorkoutLogs.Add(new WorkoutLogRecord { Id = logId, UserId = userId, WorkoutDayId = unfinishedDayId,
-            Date = today, CompletionPercent = 100, CreatedAt = now });
-        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = finishedSessionId, UserId = userId,
-            PlannedWorkoutDayId = completedDayId, WorkoutName = "Synthetic finished", StartedAt = now,
-            CompletedAt = now, CreatedAt = now, UpdatedAt = now });
-        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = unfinishedSessionId, UserId = userId,
-            PlannedWorkoutDayId = unfinishedDayId, WorkoutName = "Synthetic abandoned", StartedAt = now,
-            IsDeleted = true, DeletedAt = now, CreatedAt = now, UpdatedAt = now });
-        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = activeSessionId, UserId = userId,
-            PlannedWorkoutDayId = activeDayId, WorkoutName = "Synthetic active", StartedAt = now,
-            CreatedAt = now, UpdatedAt = now });
-        database.ExerciseSetLogs.Add(new ExerciseSetLogRecord { Id = setId, UserId = userId,
-            WorkoutSessionLogId = unfinishedSessionId, ExerciseName = "Synthetic set", SetNumber = 1,
-            RepsCompleted = SyntheticStrengthRepetitions, CreatedAt = now, UpdatedAt = now });
+            database.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = dayId,
+                UserId = userId,
+                WorkoutPlanId = planId,
+                DayOfWeek = (int)(dayId == activeDayId ? previousDay.DayOfWeek : today.DayOfWeek),
+                WeekIndex = 0,
+                Date = dayId == activeDayId ? previousDay : today,
+                WorkoutType = "Cardio",
+                ActivityTypeId = (int)WorkoutActivityType.Swimming,
+                Name = "Synthetic swimming"
+            });
+        database.WorkoutLogs.Add(new WorkoutLogRecord
+        {
+            Id = logId,
+            UserId = userId,
+            WorkoutDayId = unfinishedDayId,
+            Date = today,
+            CompletionPercent = 100,
+            CreatedAt = now
+        });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+        {
+            Id = finishedSessionId,
+            UserId = userId,
+            PlannedWorkoutDayId = completedDayId,
+            WorkoutName = "Synthetic finished",
+            StartedAt = now,
+            CompletedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+        {
+            Id = unfinishedSessionId,
+            UserId = userId,
+            PlannedWorkoutDayId = unfinishedDayId,
+            WorkoutName = "Synthetic abandoned",
+            StartedAt = now,
+            IsDeleted = true,
+            DeletedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+        {
+            Id = activeSessionId,
+            UserId = userId,
+            PlannedWorkoutDayId = activeDayId,
+            WorkoutName = "Synthetic active",
+            StartedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        database.ExerciseSetLogs.Add(new ExerciseSetLogRecord
+        {
+            Id = setId,
+            UserId = userId,
+            WorkoutSessionLogId = unfinishedSessionId,
+            ExerciseName = "Synthetic set",
+            SetNumber = 1,
+            RepsCompleted = SyntheticStrengthRepetitions,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
         await database.SaveChangesAsync();
         try
         {
@@ -588,12 +726,21 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
                 .Select(day => day.IsRemovedBySafety).SingleAsync());
 
             var hiitDayId = Guid.NewGuid();
-            database.WorkoutDays.Add(new WorkoutDayRecord { Id = hiitDayId, UserId = userId, WorkoutPlanId = planId,
-                DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today, WorkoutType = "Cardio",
-                ActivityTypeId = (int)WorkoutActivityType.Hiit, Name = "Synthetic HIIT" });
+            database.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = hiitDayId,
+                UserId = userId,
+                WorkoutPlanId = planId,
+                DayOfWeek = (int)today.DayOfWeek,
+                WeekIndex = 0,
+                Date = today,
+                WorkoutType = "Cardio",
+                ActivityTypeId = (int)WorkoutActivityType.Hiit,
+                Name = "Synthetic HIIT"
+            });
             await database.SaveChangesAsync();
             var choice = new SaveActivityAnswersRequest(5, [], null)
-                { HiitUnderlyingCardioActivity = MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Cycling };
+            { HiitUnderlyingCardioActivity = MuscleCuties.UseCases.Features.Workout.Contracts.WorkoutActivityDto.Cycling };
             await store.SaveAnswersAsync(userId, choice, CancellationToken.None);
             Xunit.Assert.True(await database.WorkoutDays.AsNoTracking().Where(day => day.Id == hiitDayId)
                 .Select(day => day.IsRemovedBySafety).SingleAsync());
@@ -618,24 +765,72 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         var now = DateTime.UtcNow;
         var today = DateOnly.FromDateTime(now);
         await SyntheticTenantSession.SetAsync(database, userId);
-        database.Users.Add(new UserRecord { Id = userId, Email = $"progress-{userId:N}@example.invalid",
-            Username = $"pro_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
-        database.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = userId, Name = "Synthetic progress",
-            Height = 170m, Weight = 64m, Goal = "BuildMuscle", WeightGoalPace = "Maintain",
-            TrainingExperienceLevel = nameof(TrainingExperienceLevel.Advanced), WorkoutDaysPerWeek = TestWorkoutDaysPerWeek,
-            CycleLength = TestCycleLengthDays, EquipmentLevel = "FullGym", UpdatedAt = now });
-        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = userId,
-            TimeZoneId = TimeZoneInfo.Utc.Id, BaselineExperience = TrainingExperienceLevel.Beginner,
-            EffectiveExperience = TrainingExperienceLevel.Advanced, ExperienceVersion = ExistingExperienceVersion,
-            PromotionPending = true });
-        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
-            IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-        database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
-            DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today, WorkoutType = "Cardio", Name = "Synthetic cardio" });
-        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = sessionId, UserId = userId,
-            PlannedWorkoutDayId = dayId, WorkoutName = "Synthetic cardio", StartedAt = now.AddMinutes(-SyntheticElapsedSessionMinutes),
-            CreatedAt = now, UpdatedAt = now });
+        database.Users.Add(new UserRecord
+        {
+            Id = userId,
+            Email = $"progress-{userId:N}@example.invalid",
+            Username = $"pro_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
+        });
+        database.UserProfiles.Add(new UserProfileRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Name = "Synthetic progress",
+            Height = 170m,
+            Weight = 64m,
+            Goal = "BuildMuscle",
+            WeightGoalPace = "Maintain",
+            TrainingExperienceLevel = nameof(TrainingExperienceLevel.Advanced),
+            WorkoutDaysPerWeek = TestWorkoutDaysPerWeek,
+            CycleLength = TestCycleLengthDays,
+            EquipmentLevel = "FullGym",
+            UpdatedAt = now
+        });
+        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = TimeZoneInfo.Utc.Id,
+            BaselineExperience = TrainingExperienceLevel.Beginner,
+            EffectiveExperience = TrainingExperienceLevel.Advanced,
+            ExperienceVersion = ExistingExperienceVersion,
+            PromotionPending = true
+        });
+        database.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = planId,
+            UserId = userId,
+            Name = "Synthetic plan",
+            IsActive = true,
+            CyclePhaseTarget = "Follicular",
+            CreatedAt = now
+        });
+        database.WorkoutDays.Add(new WorkoutDayRecord
+        {
+            Id = dayId,
+            UserId = userId,
+            WorkoutPlanId = planId,
+            DayOfWeek = (int)today.DayOfWeek,
+            WeekIndex = 0,
+            Date = today,
+            WorkoutType = "Cardio",
+            Name = "Synthetic cardio"
+        });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+        {
+            Id = sessionId,
+            UserId = userId,
+            PlannedWorkoutDayId = dayId,
+            WorkoutName = "Synthetic cardio",
+            StartedAt = now.AddMinutes(-SyntheticElapsedSessionMinutes),
+            CreatedAt = now,
+            UpdatedAt = now
+        });
         await database.SaveChangesAsync();
         try
         {
@@ -674,25 +869,76 @@ public sealed class NutritionAndWorkoutContractsIntegrationTests
         var now = DateTime.UtcNow;
         var today = DateOnly.FromDateTime(now);
         await SyntheticTenantSession.SetAsync(database, userId);
-        database.Users.Add(new UserRecord { Id = userId, Email = $"rest-{userId:N}@example.invalid",
-            Username = $"rest_{userId.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
-        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = userId,
-            TimeZoneId = TimeZoneInfo.Utc.Id, BaselineExperience = TrainingExperienceLevel.Beginner,
-            EffectiveExperience = TrainingExperienceLevel.Beginner });
-        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
-            IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-        database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
-            DayOfWeek = (int)today.DayOfWeek, WeekIndex = 0, Date = today, WorkoutType = "Rest", Name = "Synthetic rest" });
+        database.Users.Add(new UserRecord
+        {
+            Id = userId,
+            Email = $"rest-{userId:N}@example.invalid",
+            Username = $"rest_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
+        });
+        database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = TimeZoneInfo.Utc.Id,
+            BaselineExperience = TrainingExperienceLevel.Beginner,
+            EffectiveExperience = TrainingExperienceLevel.Beginner
+        });
+        database.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = planId,
+            UserId = userId,
+            Name = "Synthetic plan",
+            IsActive = true,
+            CyclePhaseTarget = "Follicular",
+            CreatedAt = now
+        });
+        database.WorkoutDays.Add(new WorkoutDayRecord
+        {
+            Id = dayId,
+            UserId = userId,
+            WorkoutPlanId = planId,
+            DayOfWeek = (int)today.DayOfWeek,
+            WeekIndex = 0,
+            Date = today,
+            WorkoutType = "Rest",
+            Name = "Synthetic rest"
+        });
         var exerciseId = await database.Exercises.AsNoTracking().OrderBy(exercise => exercise.Id)
             .Select(exercise => exercise.Id).FirstAsync();
-        database.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = Guid.NewGuid(), UserId = userId,
-            WorkoutDayId = dayId, ExerciseId = exerciseId, Sets = SyntheticStrengthSets, Reps = SyntheticStrengthRepetitions });
-        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = sessionId, UserId = userId,
-            PlannedWorkoutDayId = dayId, WorkoutName = "Synthetic rest", StartedAt = now.AddMinutes(-SyntheticElapsedSessionMinutes),
-            CreatedAt = now, UpdatedAt = now });
-        database.WorkoutLogs.Add(new WorkoutLogRecord { Id = Guid.NewGuid(), UserId = userId, WorkoutDayId = dayId,
-            PlannedSessionId = sessionId, Date = today, CompletionPercent = completedPercent, CreatedAt = now });
+        database.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            WorkoutDayId = dayId,
+            ExerciseId = exerciseId,
+            Sets = SyntheticStrengthSets,
+            Reps = SyntheticStrengthRepetitions
+        });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+        {
+            Id = sessionId,
+            UserId = userId,
+            PlannedWorkoutDayId = dayId,
+            WorkoutName = "Synthetic rest",
+            StartedAt = now.AddMinutes(-SyntheticElapsedSessionMinutes),
+            CreatedAt = now,
+            UpdatedAt = now
+        });
+        database.WorkoutLogs.Add(new WorkoutLogRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            WorkoutDayId = dayId,
+            PlannedSessionId = sessionId,
+            Date = today,
+            CompletionPercent = completedPercent,
+            CreatedAt = now
+        });
         await database.SaveChangesAsync();
         try
         {

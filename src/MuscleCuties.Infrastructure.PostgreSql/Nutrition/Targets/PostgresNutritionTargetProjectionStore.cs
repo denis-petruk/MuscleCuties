@@ -1,9 +1,8 @@
-using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Cycle;
+using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Users;
-
 using MuscleCuties.Core.Models.Nutrition.Planning;
 using MuscleCuties.UseCases.Features.Nutrition.Targets;
 

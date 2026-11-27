@@ -1,8 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.ViewModels.Common;
-using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
+using MuscleCuties.UseCases.Features.Workout.Injury;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
@@ -25,7 +25,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
     [ObservableProperty] private ObservableCollection<InjuryLogItem> _clearedInjuries = new();
     [ObservableProperty] private int? _editingInjuryId;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError))]
     private string _errorText = string.Empty;
 
     private bool _hasLoaded;
@@ -52,7 +53,8 @@ public partial class InjuryLogViewModel : ObservableObject, IPageLoadAware
         nameof(ShowsSafetyGuidance))]
     private bool? _selectedClinicianAdvice;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(ShowsSafetyGuidance))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(ShowsSafetyGuidance))]
     private InjuryWorseningOption? _selectedWorseningOption;
     [ObservableProperty] private DateTime _sinceDateValue = DateTime.Today;
 

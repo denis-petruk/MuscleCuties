@@ -1,12 +1,12 @@
 using System.Data;
 using Microsoft.EntityFrameworkCore.Storage;
+using MuscleCuties.Contracts.Account;
+using MuscleCuties.Contracts.Onboarding;
 using MuscleCuties.Core.Domain.Cycle;
 using MuscleCuties.Core.Domain.Onboarding;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Quiz;
 using MuscleCuties.Core.Models.Enums.Users;
-using MuscleCuties.Contracts.Account;
-using MuscleCuties.Contracts.Onboarding;
 using MuscleCuties.UseCases.Features.Account.Registration;
 using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning.Contracts;
@@ -127,177 +127,177 @@ public sealed class PostgresCompleteAccountRegistrationStore(
 
         return await dbContext.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
         {
-        dbContext.ChangeTracker.Clear();
-        var userId = Guid.CreateVersion7();
-        await using var transaction = await dbContext.Database
-            .BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken)
-            .ConfigureAwait(false);
-
-        try
-        {
-            if (await dbContext.Users.AsNoTracking()
-                    .AnyAsync(user => user.NormalizedEmail == normalizedEmail, cancellationToken)
-                    .ConfigureAwait(false))
-                return await RollbackAndReturnAsync(transaction,
-                    new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.EmailAlreadyRegistered))
-                    .ConfigureAwait(false);
-
-            if (await dbContext.Users.AsNoTracking()
-                    .AnyAsync(user => user.Username != null && user.Username.ToLower() == normalizedUsername,
-                        cancellationToken)
-                    .ConfigureAwait(false))
-                return await RollbackAndReturnAsync(transaction,
-                    new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.UsernameTaken))
-                    .ConfigureAwait(false);
-
-            var user = new UserRecord
-            {
-                Id = userId,
-                Email = normalizedEmail,
-                Username = request.Username.Trim(),
-                CredentialType = PasswordCredentialType,
-                PasswordHash = passwordHash,
-                PrivacyNoticeVersion = privacyConsent.NoticeVersion,
-                PrivacyNoticeAcceptedAtUtc = privacyConsent.AcceptedAtUtc.UtcDateTime,
-                CreatedAt = now.UtcDateTime,
-                UpdatedAt = now.UtcDateTime,
-                IsOnboardingComplete = false
-            };
-            dbContext.Users.Add(user);
-            await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
+            dbContext.ChangeTracker.Clear();
+            var userId = Guid.CreateVersion7();
+            await using var transaction = await dbContext.Database
+                .BeginTransactionAsync(IsolationLevel.Serializable, cancellationToken)
                 .ConfigureAwait(false);
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            var receipt = new EmailChallengeRecord
+            try
             {
-                Id = emailReceiptId,
-                Purpose = RegistrationPurpose,
-                RedeemedAtUtc = now.UtcDateTime
-            };
-            dbContext.EmailChallenges.Add(receipt);
+                if (await dbContext.Users.AsNoTracking()
+                        .AnyAsync(user => user.NormalizedEmail == normalizedEmail, cancellationToken)
+                        .ConfigureAwait(false))
+                    return await RollbackAndReturnAsync(transaction,
+                        new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.EmailAlreadyRegistered))
+                        .ConfigureAwait(false);
 
-            profileProjection.Id = Guid.CreateVersion7();
-            profileProjection.UserId = userId;
-            profileProjection.Name = string.IsNullOrWhiteSpace(request.Profile.Name)
-                ? request.Username.Trim()
-                : request.Profile.Name.Trim();
-            profileProjection.DateOfBirth = DateOnly.FromDateTime(request.Profile.BirthDate);
-            profileProjection.Height = Convert.ToDecimal(request.Profile.HeightCm, CultureInfo.InvariantCulture);
-            profileProjection.Weight = Convert.ToDecimal(request.Profile.WeightKg, CultureInfo.InvariantCulture);
-            profileProjection.CycleLength = request.Profile.CycleLength;
-            profileProjection.ProfileImagePath = EmptyProfileImagePath;
-            profileProjection.UpdatedAt = now.UtcDateTime;
-            var profile = profileProjection;
-            dbContext.UserProfiles.Add(profile);
+                if (await dbContext.Users.AsNoTracking()
+                        .AnyAsync(user => user.Username != null && user.Username.ToLower() == normalizedUsername,
+                            cancellationToken)
+                        .ConfigureAwait(false))
+                    return await RollbackAndReturnAsync(transaction,
+                        new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.UsernameTaken))
+                        .ConfigureAwait(false);
 
-            var snapshot = new UserProfileSnapshotRecord
-            {
-                Id = Guid.CreateVersion7(),
-                UserId = userId,
-                SnapshotReason = InitialSnapshotReason,
-                ProfileJson = JsonSerializer.Serialize(profile),
-                CreatedAt = now.UtcDateTime
-            };
-            dbContext.UserProfileSnapshots.Add(snapshot);
+                var user = new UserRecord
+                {
+                    Id = userId,
+                    Email = normalizedEmail,
+                    Username = request.Username.Trim(),
+                    CredentialType = PasswordCredentialType,
+                    PasswordHash = passwordHash,
+                    PrivacyNoticeVersion = privacyConsent.NoticeVersion,
+                    PrivacyNoticeAcceptedAtUtc = privacyConsent.AcceptedAtUtc.UtcDateTime,
+                    CreatedAt = now.UtcDateTime,
+                    UpdatedAt = now.UtcDateTime,
+                    IsOnboardingComplete = false
+                };
+                dbContext.Users.Add(user);
+                await PostgresTenantContext.SetForCurrentTransactionAsync(dbContext, userId, cancellationToken)
+                    .ConfigureAwait(false);
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 
-            foreach (var selectedAnswer in selectedAnswers)
-            {
-                dbContext.UserQuizResponses.Add(new UserQuizResponseRecord
+                var receipt = new EmailChallengeRecord
+                {
+                    Id = emailReceiptId,
+                    Purpose = RegistrationPurpose,
+                    RedeemedAtUtc = now.UtcDateTime
+                };
+                dbContext.EmailChallenges.Add(receipt);
+
+                profileProjection.Id = Guid.CreateVersion7();
+                profileProjection.UserId = userId;
+                profileProjection.Name = string.IsNullOrWhiteSpace(request.Profile.Name)
+                    ? request.Username.Trim()
+                    : request.Profile.Name.Trim();
+                profileProjection.DateOfBirth = DateOnly.FromDateTime(request.Profile.BirthDate);
+                profileProjection.Height = Convert.ToDecimal(request.Profile.HeightCm, CultureInfo.InvariantCulture);
+                profileProjection.Weight = Convert.ToDecimal(request.Profile.WeightKg, CultureInfo.InvariantCulture);
+                profileProjection.CycleLength = request.Profile.CycleLength;
+                profileProjection.ProfileImagePath = EmptyProfileImagePath;
+                profileProjection.UpdatedAt = now.UtcDateTime;
+                var profile = profileProjection;
+                dbContext.UserProfiles.Add(profile);
+
+                var snapshot = new UserProfileSnapshotRecord
                 {
                     Id = Guid.CreateVersion7(),
                     UserId = userId,
-                    QuizQuestionId = selectedAnswer.QuestionId,
-                    QuizAnswerId = selectedAnswer.AnswerId,
-                    AnsweredAt = now.UtcDateTime,
-                    UserProfileSnapshotId = snapshot.Id
-                });
-            }
+                    SnapshotReason = InitialSnapshotReason,
+                    ProfileJson = JsonSerializer.Serialize(profile),
+                    CreatedAt = now.UtcDateTime
+                };
+                dbContext.UserProfileSnapshots.Add(snapshot);
 
-            if (Enum.TryParse<CyclePhase>(profile.CurrentCyclePhase, true, out var onboardingPhase) &&
-                Enum.IsDefined(onboardingPhase) && onboardingPhase != CyclePhase.Unknown)
-            {
-                // The quiz phase is the first captured observation, so it also anchors the first cycle.
-                // Without the anchor the account has a phase log but no active cycle to count days from.
-                var onboardingLocalDate = DateOnly.FromDateTime(now.UtcDateTime);
-                var onboardingCycleStart = CyclePhaseRule.GetImpliedCycleStart(
-                    onboardingPhase, onboardingLocalDate, profile.CycleLength);
-                if (onboardingCycleStart >= MinimumSupportedCycleDate)
+                foreach (var selectedAnswer in selectedAnswers)
                 {
-                    var onboardingCycle = new CycleLogRecord
+                    dbContext.UserQuizResponses.Add(new UserQuizResponseRecord
                     {
                         Id = Guid.CreateVersion7(),
                         UserId = userId,
-                        StartDate = onboardingCycleStart,
-                        EndDate = null,
-                        CycleLength = UnknownCycleLength,
-                        CreatedAt = now.UtcDateTime
-                    };
-                    dbContext.CycleLogs.Add(onboardingCycle);
-                    dbContext.CyclePhaseLogs.Add(new CyclePhaseLogRecord
-                    {
-                        Id = Guid.CreateVersion7(),
-                        UserId = userId,
-                        CycleLogId = onboardingCycle.Id,
-                        Phase = onboardingPhase.ToString(),
-                        LocalDate = onboardingLocalDate,
-                        LoggedAt = UtcMidnight(onboardingLocalDate),
-                        Note = OnboardingPhaseNote,
-                        CreatedAt = now.UtcDateTime
+                        QuizQuestionId = selectedAnswer.QuestionId,
+                        QuizAnswerId = selectedAnswer.AnswerId,
+                        AnsweredAt = now.UtcDateTime,
+                        UserProfileSnapshotId = snapshot.Id
                     });
                 }
+
+                if (Enum.TryParse<CyclePhase>(profile.CurrentCyclePhase, true, out var onboardingPhase) &&
+                    Enum.IsDefined(onboardingPhase) && onboardingPhase != CyclePhase.Unknown)
+                {
+                    // The quiz phase is the first captured observation, so it also anchors the first cycle.
+                    // Without the anchor the account has a phase log but no active cycle to count days from.
+                    var onboardingLocalDate = DateOnly.FromDateTime(now.UtcDateTime);
+                    var onboardingCycleStart = CyclePhaseRule.GetImpliedCycleStart(
+                        onboardingPhase, onboardingLocalDate, profile.CycleLength);
+                    if (onboardingCycleStart >= MinimumSupportedCycleDate)
+                    {
+                        var onboardingCycle = new CycleLogRecord
+                        {
+                            Id = Guid.CreateVersion7(),
+                            UserId = userId,
+                            StartDate = onboardingCycleStart,
+                            EndDate = null,
+                            CycleLength = UnknownCycleLength,
+                            CreatedAt = now.UtcDateTime
+                        };
+                        dbContext.CycleLogs.Add(onboardingCycle);
+                        dbContext.CyclePhaseLogs.Add(new CyclePhaseLogRecord
+                        {
+                            Id = Guid.CreateVersion7(),
+                            UserId = userId,
+                            CycleLogId = onboardingCycle.Id,
+                            Phase = onboardingPhase.ToString(),
+                            LocalDate = onboardingLocalDate,
+                            LoggedAt = UtcMidnight(onboardingLocalDate),
+                            Note = OnboardingPhaseNote,
+                            CreatedAt = now.UtcDateTime
+                        });
+                    }
+                }
+
+                user.IsOnboardingComplete = true;
+                user.UpdatedAt = now.UtcDateTime;
+                await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+
+                return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.Created, userId);
             }
-
-            user.IsOnboardingComplete = true;
-            user.UpdatedAt = now.UtcDateTime;
-            await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
-            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-
-            return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.Created, userId);
-        }
-        catch (DbUpdateException exception) when (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.UniqueViolation)
-        {
-            await RollbackAsync(transaction).ConfigureAwait(false);
-            var postgresException = FindPostgresException(exception);
-            var status = postgresException?.ConstraintName switch
+            catch (DbUpdateException exception) when (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.UniqueViolation)
             {
-                "uq_users_normalized_email" => CompleteAccountRegistrationStatus.EmailAlreadyRegistered,
-                "uq_users_normalized_username" => CompleteAccountRegistrationStatus.UsernameTaken,
-                _ => CompleteAccountRegistrationStatus.EmailReceiptAlreadyUsed
-            };
-            return new CompleteAccountRegistrationResult(status);
-        }
-        catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.SerializationFailure)
-        {
-            await RollbackAsync(transaction).ConfigureAwait(false);
-            return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.Failed,
-                ErrorMessage: "The registration changed concurrently. Please try again.");
-        }
-        catch (DbUpdateException exception) when
-            (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.SerializationFailure)
-        {
-            await RollbackAsync(transaction).ConfigureAwait(false);
-            return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.Failed,
-                ErrorMessage: "The registration changed concurrently. Please try again.");
-        }
-        catch (RetryLimitExceededException exception) when
-            (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.SerializationFailure)
-        {
-            await RollbackAsync(transaction).ConfigureAwait(false);
-            return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.Failed,
-                ErrorMessage: "The registration changed concurrently. Please try again.");
-        }
-        catch (Exception exception) when
-            (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.SerializationFailure)
-        {
-            await RollbackAsync(transaction).ConfigureAwait(false);
-            return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.Failed,
-                ErrorMessage: "The registration changed concurrently. Please try again.");
-        }
-        catch
-        {
-            await RollbackAsync(transaction).ConfigureAwait(false);
-            throw;
-        }
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                var postgresException = FindPostgresException(exception);
+                var status = postgresException?.ConstraintName switch
+                {
+                    "uq_users_normalized_email" => CompleteAccountRegistrationStatus.EmailAlreadyRegistered,
+                    "uq_users_normalized_username" => CompleteAccountRegistrationStatus.UsernameTaken,
+                    _ => CompleteAccountRegistrationStatus.EmailReceiptAlreadyUsed
+                };
+                return new CompleteAccountRegistrationResult(status);
+            }
+            catch (PostgresException exception) when (exception.SqlState == PostgresErrorCodes.SerializationFailure)
+            {
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.Failed,
+                    ErrorMessage: "The registration changed concurrently. Please try again.");
+            }
+            catch (DbUpdateException exception) when
+                (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.SerializationFailure)
+            {
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.Failed,
+                    ErrorMessage: "The registration changed concurrently. Please try again.");
+            }
+            catch (RetryLimitExceededException exception) when
+                (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.SerializationFailure)
+            {
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.Failed,
+                    ErrorMessage: "The registration changed concurrently. Please try again.");
+            }
+            catch (Exception exception) when
+                (FindPostgresException(exception)?.SqlState == PostgresErrorCodes.SerializationFailure)
+            {
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                return new CompleteAccountRegistrationResult(CompleteAccountRegistrationStatus.Failed,
+                    ErrorMessage: "The registration changed concurrently. Please try again.");
+            }
+            catch
+            {
+                await RollbackAsync(transaction).ConfigureAwait(false);
+                throw;
+            }
         }).ConfigureAwait(false);
     }
 

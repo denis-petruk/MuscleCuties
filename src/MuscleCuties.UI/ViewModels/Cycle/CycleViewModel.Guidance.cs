@@ -2,11 +2,11 @@
 // Second half of CycleViewModel; see its declaration for the full contract.
 
 using Microsoft.Maui.Graphics;
+using MuscleCuties.UI.Models.UI.Cycle;
+using MuscleCuties.UI.Services.Dashboard;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
-using MuscleCuties.UI.Models.UI.Cycle;
-using MuscleCuties.UI.Services.Dashboard;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
 

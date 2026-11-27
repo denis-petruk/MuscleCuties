@@ -41,7 +41,8 @@ public partial class FoodLogViewModel
 
     [ObservableProperty] private string _foodSearchStatus = string.Empty;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsManualEditorVisible))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsManualEditorVisible))]
     private bool _isFastLoggingVisible;
 
     [ObservableProperty]
@@ -249,7 +250,7 @@ public partial class FoodLogViewModel
                 item.ServingSize, item.ServingUnit, item.ServingsCount, item.Calories, item.Protein, item.Carbs,
                 item.Fat,
                 date.ToDateTime(TimeOnly.FromDateTime(DateTime.Now)))
-            { Ingredients = item.Ingredients };
+        { Ingredients = item.Ingredients };
         await CommitFoodAsync(date,
             () => _dailyLogUseCase.ReLogFoodAsync(date, category,
                 NutritionPresentationMapper.ToQuickSnapshot(item), NutritionPresentationMapper.ToLoggedFood(draft)),

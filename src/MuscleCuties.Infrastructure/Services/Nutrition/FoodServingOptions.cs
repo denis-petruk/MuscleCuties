@@ -267,7 +267,7 @@ public static partial class FoodServingOptions
         return values.FirstOrDefault(value => !string.IsNullOrWhiteSpace(value));
     }
 
-        /// <summary>The generated regex that recognizes a package weight.</summary>
+    /// <summary>The generated regex that recognizes a package weight.</summary>
     [GeneratedRegex(
         @"(?<amount>\d+(?:\.\d+)?)\s*(?<unit>kg|kilograms?|g|grams?|mg|milligrams?|lb|lbs|pounds?|oz|ounces?)",
         RegexOptions.IgnoreCase)]

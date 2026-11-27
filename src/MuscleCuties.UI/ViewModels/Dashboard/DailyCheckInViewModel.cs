@@ -1,8 +1,8 @@
 using System.Diagnostics.CodeAnalysis;
-using IHealthSyncService = MuscleCuties.Core.Services.Health.IHealthSyncService;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
+using IHealthSyncService = MuscleCuties.Core.Services.Health.IHealthSyncService;
 
 namespace MuscleCuties.UI.ViewModels.Dashboard;
 

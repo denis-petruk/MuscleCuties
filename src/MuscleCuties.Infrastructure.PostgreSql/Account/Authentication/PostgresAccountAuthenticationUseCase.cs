@@ -404,8 +404,11 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         {
             dbContext.RevokedAccessTokens.Add(new RevokedAccessTokenRecord
             {
-                Id = Guid.CreateVersion7(), UserId = request.UserId, TokenId = request.AccessTokenId,
-                ExpiresAtUtc = expiration.UtcDateTime, RevokedAtUtc = now
+                Id = Guid.CreateVersion7(),
+                UserId = request.UserId,
+                TokenId = request.AccessTokenId,
+                ExpiresAtUtc = expiration.UtcDateTime,
+                RevokedAtUtc = now
             });
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             revokedAccessToken = true;
@@ -517,8 +520,11 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         var refreshToken = Encode(RandomNumberGenerator.GetBytes(32));
         dbContext.RefreshSessions.Add(new RefreshSessionRecord
         {
-            Id = Guid.CreateVersion7(), UserId = userId, FamilyId = familyId,
-            TokenHash = Hash(refreshToken), CreatedAtUtc = now.UtcDateTime,
+            Id = Guid.CreateVersion7(),
+            UserId = userId,
+            FamilyId = familyId,
+            TokenHash = Hash(refreshToken),
+            CreatedAtUtc = now.UtcDateTime,
             ExpiresAtUtc = now.AddDays(RefreshLifetimeDays).UtcDateTime
         });
         await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -539,9 +545,13 @@ public sealed class PostgresAccountAuthenticationUseCase : IAccountAuthenticatio
         var header = Encode(JsonSerializer.SerializeToUtf8Bytes(new { alg = "HS256", typ = "JWT" }));
         var payload = Encode(JsonSerializer.SerializeToUtf8Bytes(new
         {
-            iss = issuer, aud = audience, sub = userId.ToString("D"),
-            iat = now.ToUnixTimeSeconds(), exp = expires.ToUnixTimeSeconds(),
-            jti = Guid.CreateVersion7().ToString("D"), sid = familyId.ToString("D")
+            iss = issuer,
+            aud = audience,
+            sub = userId.ToString("D"),
+            iat = now.ToUnixTimeSeconds(),
+            exp = expires.ToUnixTimeSeconds(),
+            jti = Guid.CreateVersion7().ToString("D"),
+            sid = familyId.ToString("D")
         }));
         var unsignedToken = $"{header}.{payload}";
         using var hmac = new HMACSHA256(accessSigningKey);

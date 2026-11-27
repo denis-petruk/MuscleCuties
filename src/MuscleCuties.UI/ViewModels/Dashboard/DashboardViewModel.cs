@@ -1,26 +1,26 @@
 using System.Diagnostics.CodeAnalysis;
 using Microsoft.Maui.Graphics;
-using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
-using IHealthSyncService = MuscleCuties.Core.Services.Health.IHealthSyncService;
-using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
-using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
-using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.UI.Models.UI.Cycle;
 using MuscleCuties.UI.Models.UI.Dashboard;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Services.Dashboard;
 using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.ViewModels.Workout;
-using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
-using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
+using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
+using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.DailyLog;
+using MuscleCuties.UseCases.Features.Profile.PersonalInfo.Contracts;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay;
 using MuscleCuties.UseCases.Features.Profile.UnitsDisplay.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using IHealthSyncService = MuscleCuties.Core.Services.Health.IHealthSyncService;
 using IPageLoadAware = MuscleCuties.UI.ViewModels.Common.IPageLoadAware;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 
 namespace MuscleCuties.UI.ViewModels.Dashboard;
 
@@ -77,7 +77,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     private bool _isBulkLoading;
     private MuscleCuties.UI.Services.Api.ApiFailureNotice? _lastFailure;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
 
     [ObservableProperty]
@@ -95,16 +96,19 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private Color _phaseCardBackgroundColor = AppThemeResources.GetColor("AccentSurface", default);
     [ObservableProperty] private Color _phaseCardDividerColor = AppThemeResources.GetColor("InputStroke", default);
     [ObservableProperty] private Color _phaseCardTextColor = AppThemeResources.GetColor("DashboardPhaseCardTextLight", default);
-    [ObservableProperty] private string _photoButtonText =
+    [ObservableProperty]
+    private string _photoButtonText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Photo_CheckInAction");
-    [ObservableProperty] private string _photoCheckInText =
+    [ObservableProperty]
+    private string _photoCheckInText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Photo_AddToday");
     private bool _isCycleLengthEstimated;
     [ObservableProperty] private int _predictedCycleLength = 28;
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(ReadinessProgress), nameof(CompositeScore))]
     private int _readinessScore;
-    [ObservableProperty] private string _readinessTrendSummary =
+    [ObservableProperty]
+    private string _readinessTrendSummary =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Readiness_TrendEmpty");
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasTodayReadinessGuidance))]
@@ -123,7 +127,8 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(RecoveryProgress), nameof(CompositeScore))]
     private int _recoveryScore;
-    [ObservableProperty] private string _sessionProgressText =
+    [ObservableProperty]
+    private string _sessionProgressText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Workout_Overview_Status_Upcoming");
     [ObservableProperty] private string _sleepGoal = "8h";
     [ObservableProperty] private float _targetCalories;
@@ -134,25 +139,31 @@ public partial class DashboardViewModel : ObservableObject, IPageLoadAware, IDis
     [ObservableProperty] private IReadOnlyList<DashboardTrendPoint> _trendPoints = [];
     [ObservableProperty] private bool _useDarkTheme;
     [ObservableProperty] private bool _usePhaseCardColor;
-    [ObservableProperty] private string _weightTrendSummary =
+    [ObservableProperty]
+    private string _weightTrendSummary =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Weight_TrendEmpty");
 
-    [ObservableProperty] private Color _workoutActivityBackground =
+    [ObservableProperty]
+    private Color _workoutActivityBackground =
         WorkoutPresentationPalette.Background("REST");
 
     [ObservableProperty] private ObservableCollection<WorkoutActivitySection> _workoutActivitySections = [];
 
-    [ObservableProperty] private Color _workoutActivityTextColor =
+    [ObservableProperty]
+    private Color _workoutActivityTextColor =
         WorkoutPresentationPalette.Text("REST");
 
-    [ObservableProperty] private string _workoutDurationText =
+    [ObservableProperty]
+    private string _workoutDurationText =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_RestDay");
     [ObservableProperty] private string _workoutExercisesCount = "0";
     [ObservableProperty] private string _workoutIntensity = "Low";
     [ObservableProperty] private int _workoutStreakDays;
-    [ObservableProperty] private string _workoutSubtitle =
+    [ObservableProperty]
+    private string _workoutSubtitle =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Dashboard_Workout_RecoverySubtitle");
-    [ObservableProperty] private string _workoutTitle =
+    [ObservableProperty]
+    private string _workoutTitle =
         MuscleCuties.UI.Services.Localization.UiTextCatalog.Get("Workout_Page_PlaceholderTitle");
 
     /// <summary>Takes the use cases and the callbacks the dashboard reports to.</summary>

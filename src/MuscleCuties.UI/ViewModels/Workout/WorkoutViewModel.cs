@@ -3,14 +3,14 @@ using Microsoft.Maui.Graphics;
 using MuscleCuties.UI.Models.UI.Workout;
 using MuscleCuties.UI.Pages.Profile;
 using MuscleCuties.UI.Pages.Workout;
-using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.Services.Api;
+using MuscleCuties.UI.Services.Workout;
 using MuscleCuties.UI.ViewModels.Common;
+using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Injury;
-using MuscleCuties.UseCases.Features.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
-using MuscleCuties.UseCases.Features.Workout.Contracts;
+using MuscleCuties.UseCases.Features.Workout.Planning;
 
 namespace MuscleCuties.UI.ViewModels.Workout;
 
@@ -29,7 +29,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly Func<WorkoutActivityDto, Task>? _openStylePreviewAsync;
     private StrengthStyleOfferDto? _styleOffer;
     [ObservableProperty] private bool _hasStrengthStyleOffer;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasStyleOfferMessage))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasStyleOfferMessage))]
     private string? _styleOfferMessage;
     /// <summary>True when a style offer message is shown.</summary>
     public bool HasStyleOfferMessage => !string.IsNullOrWhiteSpace(StyleOfferMessage);
@@ -42,7 +43,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private readonly IWorkoutOverviewUseCase _overview;
 
     [ObservableProperty] private string? _activePlanName;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasInProgressWorkout))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasInProgressWorkout))]
     private WorkoutListEntry? _inProgressWorkout;
     private MuscleCuties.UseCases.Features.Workout.Overview.Contracts.WorkoutOverviewResponse? _lastOverview;
     private bool _hasLoadedOverview;
@@ -53,30 +55,37 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     private IReadOnlyList<ScheduleDayItem> _datedSchedule = [];
     private IReadOnlyList<WorkoutDayExercisePreview> _dayPreviews = [];
     private WorkoutItem? _featuredWorkout;
-    [ObservableProperty] private string _featuredWorkoutActionText =
+    [ObservableProperty]
+    private string _featuredWorkoutActionText =
         UiTextCatalog.Get("Dashboard_Workout_StartWorkout");
     [ObservableProperty] private bool _featuredWorkoutHasAction;
     [ObservableProperty] private bool _featuredWorkoutIsEditAction;
     [ObservableProperty] private bool _featuredWorkoutIsRestDay = true;
 
-    [ObservableProperty] private Color _featuredWorkoutActivityBackground =
+    [ObservableProperty]
+    private Color _featuredWorkoutActivityBackground =
         WorkoutPresentationPalette.Background("STRENGTH");
 
     [ObservableProperty] private ObservableCollection<WorkoutActivitySection> _featuredWorkoutActivitySections = [];
 
-    [ObservableProperty] private Color _featuredWorkoutActivityTextColor =
+    [ObservableProperty]
+    private Color _featuredWorkoutActivityTextColor =
         WorkoutPresentationPalette.Text("STRENGTH");
 
-    [ObservableProperty] private string _featuredWorkoutBadgeText =
+    [ObservableProperty]
+    private string _featuredWorkoutBadgeText =
         UiTextCatalog.Get("Dashboard_Workout_TodayRecovery");
-    [ObservableProperty] private string _featuredWorkoutDurationText =
+    [ObservableProperty]
+    private string _featuredWorkoutDurationText =
         UiTextCatalog.Get("Dashboard_Workout_Flexible");
     [ObservableProperty] private ObservableCollection<string> _featuredWorkoutExercisePreviews = [];
     [ObservableProperty] private string _featuredWorkoutExercisesCount = "0";
     [ObservableProperty] private bool _featuredWorkoutHasMultipleActivities;
-    [ObservableProperty] private string _featuredWorkoutIntensity =
+    [ObservableProperty]
+    private string _featuredWorkoutIntensity =
         UiTextCatalog.Get("Dashboard_Workout_IntensityLight");
-    [ObservableProperty] private string _featuredWorkoutSubtitle =
+    [ObservableProperty]
+    private string _featuredWorkoutSubtitle =
         UiTextCatalog.Get("Dashboard_Workout_RecoverySubtitle");
     // C2: the rest-day copy is authored by the server; the client never substitutes its own.
     [ObservableProperty] private string _featuredWorkoutTitle = string.Empty;
@@ -90,7 +99,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private string _injuryBannerSummary = string.Empty;
     private InjuryLogViewModel? _injuryLogVm;
 
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isBusy;
 
     [ObservableProperty] private bool _isInjuryBannerExpanded;
@@ -99,7 +109,8 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
     [ObservableProperty] private bool _isSessionActivitiesVisible;
     [ObservableProperty] private bool _isLoadError;
     [ObservableProperty] private bool _isRefreshing;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsPageLoading))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(IsPageLoading))]
     private bool _isPlanStale = true;
     [ObservableProperty] private ObservableCollection<string> _rehabExerciseNames = new();
     [ObservableProperty] private ObservableCollection<ScheduleDayItem> _scheduleDays = [];
@@ -114,15 +125,18 @@ public partial class WorkoutViewModel : ObservableObject, IPageLoadAware, IDispo
 
     [ObservableProperty] private bool _isRescheduleModalVisible;
     [ObservableProperty] private bool _isRescheduleBusy;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasRescheduleStatusMessage))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasRescheduleStatusMessage))]
     private string _rescheduleStatusMessage = string.Empty;
     /// <summary>True when a reschedule status is shown.</summary>
     public bool HasRescheduleStatusMessage => !string.IsNullOrWhiteSpace(RescheduleStatusMessage);
     [ObservableProperty] private WorkoutItem? _reschedulingWorkout;
     [ObservableProperty] private string _reschedulingWorkoutTitle = string.Empty;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasAvailableRescheduleDates), nameof(CanConfirmReschedule))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasAvailableRescheduleDates), nameof(CanConfirmReschedule))]
     private ObservableCollection<RescheduleDateOption> _availableRescheduleDates = [];
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanConfirmReschedule))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(CanConfirmReschedule))]
     private RescheduleDateOption? _selectedRescheduleDate;
     /// <summary>True when there are dates to reschedule to.</summary>
     public bool HasAvailableRescheduleDates => AvailableRescheduleDates.Count > 0;

@@ -3,9 +3,9 @@ using MuscleCuties.Core.Domain.Health;
 using MuscleCuties.Core.Domain.Workout;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Workout.Planning;
-using MuscleCuties.UseCases.Features.CheckInAndInjury;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+using MuscleCuties.UseCases.Features.CheckInAndInjury;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.CheckInAndInjury;
 
@@ -295,8 +295,11 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
             {
                 episode = new WorkoutInjuryEpisodeRecord
                 {
-                    Id = Guid.CreateVersion7(), UserId = request.UserId, InjuryLogId = request.Id,
-                    SiteFlag = request.SiteFlag, StartedOn = request.Since
+                    Id = Guid.CreateVersion7(),
+                    UserId = request.UserId,
+                    InjuryLogId = request.Id,
+                    SiteFlag = request.SiteFlag,
+                    StartedOn = request.Since
                 };
                 dbContext.WorkoutInjuryEpisodes.Add(episode);
             }
@@ -486,13 +489,18 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 }
                 dbContext.WorkoutInjuryPrescriptions.Add(new WorkoutInjuryPrescriptionRecord
                 {
-                    Id = Guid.CreateVersion7(), UserId = userId, EpisodeId = observedEpisodeId,
-                    WorkoutDayId = original.WorkoutDayId, OriginalWorkoutDayExerciseId = original.Id,
+                    Id = Guid.CreateVersion7(),
+                    UserId = userId,
+                    EpisodeId = observedEpisodeId,
+                    WorkoutDayId = original.WorkoutDayId,
+                    OriginalWorkoutDayExerciseId = original.Id,
                     OriginalExerciseId = source?.OriginalExerciseId ?? original.ExerciseId,
                     OriginalPlanningSlotId = source is null ? original.PlanningSlotId : source.OriginalPlanningSlotId,
                     OriginalOriginWorkoutDayExerciseId = source is null ? original.OriginWorkoutDayExerciseId : source.OriginalOriginWorkoutDayExerciseId,
-                    OriginalSets = source?.OriginalSets ?? original.Sets, OriginalOptionalSets = source?.OriginalOptionalSets ?? original.OptionalSets,
-                    OriginalReps = source?.OriginalReps ?? original.Reps, OriginalDurationSeconds = source is null ? original.DurationSeconds : source.OriginalDurationSeconds,
+                    OriginalSets = source?.OriginalSets ?? original.Sets,
+                    OriginalOptionalSets = source?.OriginalOptionalSets ?? original.OptionalSets,
+                    OriginalReps = source?.OriginalReps ?? original.Reps,
+                    OriginalDurationSeconds = source is null ? original.DurationSeconds : source.OriginalDurationSeconds,
                     OriginalIsOptional = source?.OriginalIsOptional ?? original.IsOptional,
                     OriginalIsRemovedByReadiness = source?.OriginalIsRemovedByReadiness ?? original.IsRemovedByReadiness
                 });
@@ -569,8 +577,11 @@ public sealed class PostgresCheckInAndInjuryStore(PostgresDbContext dbContext, T
                 exercise.InjuryOriginalExerciseId = originalId;
                 dbContext.WorkoutInjuryPrescriptionLinks.Add(new WorkoutInjuryPrescriptionLinkRecord
                 {
-                    Id = Guid.NewGuid(), UserId = userId, WorkoutDayExerciseId = exercise.Id,
-                    InjuryEpisodeId = episode.Id, OriginalExerciseId = originalId
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    WorkoutDayExerciseId = exercise.Id,
+                    InjuryEpisodeId = episode.Id,
+                    OriginalExerciseId = originalId
                 });
             }
         }

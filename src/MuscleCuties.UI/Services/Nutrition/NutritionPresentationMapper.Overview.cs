@@ -38,7 +38,10 @@ public static partial class NutritionPresentationMapper
             item.Carbs, item.Fats,
             item.MacroItems.Select(m => new MacroBreakdownItem
             {
-                Name = m.Name, Grams = m.Grams, Calories = m.Calories, Progress = m.Progress
+                Name = m.Name,
+                Grams = m.Grams,
+                Calories = m.Calories,
+                Progress = m.Progress
             }).ToList(),
             item.Micronutrients.Select(FromMicronutrient).ToList(), item.IngredientSummary);
 

@@ -27,14 +27,16 @@ public partial class NutritionBreakdownPresenter : ObservableObject
 
     [ObservableProperty] private bool _isVisible;
     [ObservableProperty] private bool _isLoading;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasError))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasError))]
     private string _errorText = string.Empty;
     [ObservableProperty] private string _title = string.Empty;
     [ObservableProperty] private string _caloriesText = string.Empty;
     [ObservableProperty] private string _macrosText = string.Empty;
     [ObservableProperty] private string _fiberText = string.Empty;
     [ObservableProperty] private string _nutrientSummaryText = string.Empty;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasCoverageText))]
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasCoverageText))]
     private string _coverageText = string.Empty;
     [ObservableProperty] private float _proteinCalories;
     [ObservableProperty] private float _carbsCalories;

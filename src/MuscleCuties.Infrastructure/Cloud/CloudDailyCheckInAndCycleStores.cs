@@ -1,6 +1,8 @@
 using System.Globalization;
 using System.Security.Cryptography;
 using System.Text;
+using MuscleCuties.Core.Domain.Workout;
+using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
@@ -10,14 +12,11 @@ using MuscleCuties.UseCases.Features.Cycle.DailyLog;
 using MuscleCuties.UseCases.Features.Cycle.History;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Cycle.PhaseEdit;
-using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Dashboard.CheckIn;
+using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.UseCases.Features.Profile.ServerProfile;
-using MuscleCuties.Core.Domain.Workout.Planning;
 using MuscleCuties.UseCases.Features.Workout.Injury;
 using MuscleCuties.UseCases.Features.Workout.Planning;
-
-using MuscleCuties.Core.Domain.Workout;
 
 namespace MuscleCuties.Infrastructure.Cloud;
 

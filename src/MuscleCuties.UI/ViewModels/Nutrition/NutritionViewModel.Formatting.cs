@@ -142,7 +142,7 @@ public partial class NutritionViewModel
         if (IsStandardAmountUnit(option) &&
             food.ServingSize is > 0f &&
             _recipePortionUseCase.ConvertMassToGrams(food.ServingSize.Value, food.ServingSizeUnit) is
-                { Succeeded: true, Grams: { } servingGrams })
+            { Succeeded: true, Grams: { } servingGrams })
         {
             var amount = servingGrams / option.Grams;
             if (amount is > 0f and < 1000f)

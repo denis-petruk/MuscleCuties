@@ -1,7 +1,7 @@
+using MuscleCuties.UI.Models.UI.Cycle;
 using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
 using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
 using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
-using MuscleCuties.UI.Models.UI.Cycle;
 
 namespace MuscleCuties.UI.ViewModels.Cycle;
 

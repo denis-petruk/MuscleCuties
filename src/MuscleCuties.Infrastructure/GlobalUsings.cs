@@ -1,6 +1,8 @@
 // Shared imports for the Infrastructure project; the cloud stores would otherwise repeat this block.
 global using System.Collections.Concurrent;
 global using System.Text.Json;
+global using MuscleCuties.Contracts.Account;
+global using MuscleCuties.Contracts.Onboarding;
 global using MuscleCuties.Core.Domain.Health;
 global using MuscleCuties.Core.Domain.Profile;
 global using MuscleCuties.Core.Models.Entities.Users;
@@ -18,13 +20,11 @@ global using MuscleCuties.UseCases.Features.Account.Otp;
 global using MuscleCuties.UseCases.Features.Account.Otp.Contracts;
 global using MuscleCuties.UseCases.Features.Account.Recovery;
 global using MuscleCuties.UseCases.Features.Account.Recovery.Contracts;
-global using MuscleCuties.Contracts.Account;
-global using MuscleCuties.Contracts.Onboarding;
 global using MuscleCuties.UseCases.Features.Account.Registration;
 global using MuscleCuties.UseCases.Features.Account.Registration.Contracts;
 global using MuscleCuties.UseCases.Features.CheckInAndInjury;
-global using MuscleCuties.UseCases.Features.Cycle.Overview;
 global using MuscleCuties.UseCases.Features.Cycle.Contracts;
+global using MuscleCuties.UseCases.Features.Cycle.Overview;
 global using MuscleCuties.UseCases.Features.Dashboard.Overview.Contracts;
 global using MuscleCuties.UseCases.Features.Onboarding.ProfileSetup;
 global using MuscleCuties.UseCases.Features.Onboarding.Quiz;

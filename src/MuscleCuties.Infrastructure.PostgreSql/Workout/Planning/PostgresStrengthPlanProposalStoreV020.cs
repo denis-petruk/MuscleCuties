@@ -267,7 +267,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
         };
         var json = JsonSerializer.Serialize(answers, JsonOptions);
         var previousComparable = JsonSerializer.Serialize(previous with
-            { Version = state.AnswerVersion, SafetyPlanChanged = false }, JsonOptions);
+        { Version = state.AnswerVersion, SafetyPlanChanged = false }, JsonOptions);
         var safetyPlanChanged = false;
         if (state.AnswerVersion != request.ExpectedVersion)
         {
@@ -324,7 +324,7 @@ public sealed class PostgresStrengthPlanProposalStoreV020(PostgresDbContext dbCo
             }
             state.AnswerVersion = checked(state.AnswerVersion + 1);
             state.AnswersJson = JsonSerializer.Serialize(answers with
-                { Version = state.AnswerVersion, SafetyPlanChanged = safetyPlanChanged }, JsonOptions);
+            { Version = state.AnswerVersion, SafetyPlanChanged = safetyPlanChanged }, JsonOptions);
             await dbContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
             if (state.SafetyRegenerationPending)
                 await new PostgresWorkoutPlanReconciler(dbContext).ReconcileInCurrentTransactionAsync(userId, cancellationToken)

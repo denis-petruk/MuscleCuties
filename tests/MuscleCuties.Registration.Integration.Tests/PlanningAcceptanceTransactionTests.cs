@@ -5,13 +5,13 @@ using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.UseCases.Features.Profile.WorkoutPreferences;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Planning;
-using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using Npgsql;
 
 namespace MuscleCuties.Registration.Integration.Tests;
@@ -49,26 +49,81 @@ public sealed class PlanningAcceptanceTransactionTests
         await SyntheticTenantSession.SetAsync(db, user);
         try
         {
-        db.Users.Add(new UserRecord { Id = user, Email = $"planning-{user:N}@example.invalid",
-            Username = $"plan_{user.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
-        db.UserProfiles.Add(new UserProfileRecord { Id = Guid.NewGuid(), UserId = user, Name = "Synthetic",
-            DateOfBirth = SyntheticBirthDate,
-            Goal = "MuscleTone", TrainingExperienceLevel = "Beginner", EquipmentLevel = "FullGym",
-            Height = 168m, Weight = 62m, WorkoutDaysPerWeek = 3, CycleLength = 28, UpdatedAt = now });
-        db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = user,
-            TimeZoneId = TimeZoneInfo.Utc.Id, BaselineExperience = TrainingExperienceLevel.Beginner,
-            EffectiveExperience = TrainingExperienceLevel.Beginner });
-        db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = oldPlan, UserId = user, Name = "Synthetic prior plan",
-            IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-        db.WorkoutDays.Add(new WorkoutDayRecord { Id = oldDay, UserId = user, WorkoutPlanId = oldPlan,
-            Date = today, DayOfWeek = (int)today.DayOfWeek, WorkoutType = "Cardio", Name = "Synthetic activity" });
-        db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = session, UserId = user,
-            PlannedWorkoutDayId = oldDay, WorkoutName = "Synthetic active session", StartedAt = now,
-            CreatedAt = now, UpdatedAt = now });
-        db.ExerciseSetLogs.Add(new ExerciseSetLogRecord { Id = setId, UserId = user, WorkoutSessionLogId = session,
-            ExerciseName = "Synthetic movement", SetNumber = 1, RepsCompleted = 10, CreatedAt = now, UpdatedAt = now });
-        await db.SaveChangesAsync();
+            db.Users.Add(new UserRecord
+            {
+                Id = user,
+                Email = $"planning-{user:N}@example.invalid",
+                Username = $"plan_{user.ToString("N")[..10]}",
+                CredentialType = "Password",
+                PasswordHash = "synthetic-hash",
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsOnboardingComplete = true
+            });
+            db.UserProfiles.Add(new UserProfileRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = user,
+                Name = "Synthetic",
+                DateOfBirth = SyntheticBirthDate,
+                Goal = "MuscleTone",
+                TrainingExperienceLevel = "Beginner",
+                EquipmentLevel = "FullGym",
+                Height = 168m,
+                Weight = 62m,
+                WorkoutDaysPerWeek = 3,
+                CycleLength = 28,
+                UpdatedAt = now
+            });
+            db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = user,
+                TimeZoneId = TimeZoneInfo.Utc.Id,
+                BaselineExperience = TrainingExperienceLevel.Beginner,
+                EffectiveExperience = TrainingExperienceLevel.Beginner
+            });
+            db.WorkoutPlans.Add(new WorkoutPlanRecord
+            {
+                Id = oldPlan,
+                UserId = user,
+                Name = "Synthetic prior plan",
+                IsActive = true,
+                CyclePhaseTarget = "Follicular",
+                CreatedAt = now
+            });
+            db.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = oldDay,
+                UserId = user,
+                WorkoutPlanId = oldPlan,
+                Date = today,
+                DayOfWeek = (int)today.DayOfWeek,
+                WorkoutType = "Cardio",
+                Name = "Synthetic activity"
+            });
+            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+            {
+                Id = session,
+                UserId = user,
+                PlannedWorkoutDayId = oldDay,
+                WorkoutName = "Synthetic active session",
+                StartedAt = now,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+            db.ExerciseSetLogs.Add(new ExerciseSetLogRecord
+            {
+                Id = setId,
+                UserId = user,
+                WorkoutSessionLogId = session,
+                ExerciseName = "Synthetic movement",
+                SetNumber = 1,
+                RepsCompleted = 10,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+            await db.SaveChangesAsync();
             var source = Xunit.Assert.IsType<StrengthPlanPreviewSourceV020>(await new PostgresStrengthPlanPreviewSourceV020(db)
                 .LoadAsync(user, CancellationToken.None));
             var timedExerciseIds = await db.WorkoutExerciseDefinitions.AsNoTracking()
@@ -95,7 +150,7 @@ public sealed class PlanningAcceptanceTransactionTests
                 new Dictionary<int, int> { [strength] = SyntheticDurationMinutes, [cycling] = SyntheticDurationMinutes },
                 "FullGym", ExcludedExerciseIds: [excludedExerciseId]);
             var request = new StrengthPlanPreviewRequestV020(WorkoutActivityDto.GeneralStrength, today, null)
-                { DraftPreferences = draft };
+            { DraftPreferences = draft };
             var schedule = new MixedActivityScheduleV020(
                 [new(cycling, today.DayOfWeek, SyntheticDurationMinutes, false, 1),
                  new(strength, today.AddDays(2).DayOfWeek, SyntheticDurationMinutes, true, 1)],
@@ -105,10 +160,14 @@ public sealed class PlanningAcceptanceTransactionTests
                 StrengthPlanPreviewRule.Version, StrengthPlanPreviewRule.RulesetVersion, "Feasible", 0,
                 [strengthSession], [], [], [], schedule)
             {
-                SourceProfileVersion = source.ProfileVersion, SourceInjuryFingerprint = source.InjuryFingerprint,
-                SourceActivePlanId = source.ActivePlanId, SourceActiveRevisionId = source.ActiveRevisionId,
-                SourceHistoryFingerprint = source.HistoryFingerprint, SourceCatalogFingerprint = source.CatalogFingerprint,
-                SourceTimeZoneVersion = source.TimeZoneVersion, SourceExperienceVersion = source.ExperienceVersion,
+                SourceProfileVersion = source.ProfileVersion,
+                SourceInjuryFingerprint = source.InjuryFingerprint,
+                SourceActivePlanId = source.ActivePlanId,
+                SourceActiveRevisionId = source.ActiveRevisionId,
+                SourceHistoryFingerprint = source.HistoryFingerprint,
+                SourceCatalogFingerprint = source.CatalogFingerprint,
+                SourceTimeZoneVersion = source.TimeZoneVersion,
+                SourceExperienceVersion = source.ExperienceVersion,
                 SourceAnswerVersion = source.AnswerVersion,
                 SourceObservedHistoryFingerprint = source.ObservedHistoryFingerprint,
                 SourceReadinessRevision = source.ReadinessRevision,
@@ -133,13 +192,30 @@ public sealed class PlanningAcceptanceTransactionTests
             var proposalStore = new PostgresStrengthPlanProposalStoreV020(db);
             var changedSessionId = Guid.NewGuid();
             var changedSetId = Guid.NewGuid();
-            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = changedSessionId, UserId = user,
-                WorkoutName = "Synthetic completed V2 history change", StartedAt = now.AddMinutes(-3),
-                CompletedAt = DateTime.UtcNow.AddMinutes(-1), CreatedAt = now, UpdatedAt = now });
-            db.ExerciseSetLogs.Add(new ExerciseSetLogRecord { Id = changedSetId, UserId = user,
-                WorkoutSessionLogId = changedSessionId, ExerciseId = strengthExercise.Candidate.ExerciseId.ToString(),
-                ExerciseName = strengthExercise.Name, SetNumber = 1, RepsCompleted = 8, WeightKg = 10m,
-                IsObserved = true, CreatedAt = now, UpdatedAt = now });
+            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+            {
+                Id = changedSessionId,
+                UserId = user,
+                WorkoutName = "Synthetic completed V2 history change",
+                StartedAt = now.AddMinutes(-3),
+                CompletedAt = DateTime.UtcNow.AddMinutes(-1),
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+            db.ExerciseSetLogs.Add(new ExerciseSetLogRecord
+            {
+                Id = changedSetId,
+                UserId = user,
+                WorkoutSessionLogId = changedSessionId,
+                ExerciseId = strengthExercise.Candidate.ExerciseId.ToString(),
+                ExerciseName = strengthExercise.Name,
+                SetNumber = 1,
+                RepsCompleted = 8,
+                WeightKg = 10m,
+                IsObserved = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
             await db.SaveChangesAsync();
             await Xunit.Assert.ThrowsAsync<WorkoutPlanningInputsChangedException>(() =>
                 proposalStore.SaveAsync(user, request, preview, CancellationToken.None));
@@ -147,11 +223,22 @@ public sealed class PlanningAcceptanceTransactionTests
             await db.WorkoutSessionLogs.Where(row => row.Id == changedSessionId).ExecuteDeleteAsync();
 
             var changedReadinessId = Guid.NewGuid();
-            db.DailyReadinessLogs.Add(new DailyReadinessLogRecord { Id = changedReadinessId, UserId = user,
-                Date = today, Energy = 3, PlanningSleepQuality = 3, PlanningFatigue = 3,
-                PlanningTimeZoneId = TimeZoneInfo.Utc.Id, PlanningRecordedAtUtc = now,
-                PlanningRevision = 1, ReadinessScore = 60, ReadinessTier = MuscleCuties.Core.Models.Enums.Workout.ReadinessTier.Moderate,
-                Phase = "Synthetic", CreatedAt = now });
+            db.DailyReadinessLogs.Add(new DailyReadinessLogRecord
+            {
+                Id = changedReadinessId,
+                UserId = user,
+                Date = today,
+                Energy = 3,
+                PlanningSleepQuality = 3,
+                PlanningFatigue = 3,
+                PlanningTimeZoneId = TimeZoneInfo.Utc.Id,
+                PlanningRecordedAtUtc = now,
+                PlanningRevision = 1,
+                ReadinessScore = 60,
+                ReadinessTier = MuscleCuties.Core.Models.Enums.Workout.ReadinessTier.Moderate,
+                Phase = "Synthetic",
+                CreatedAt = now
+            });
             await db.SaveChangesAsync();
             await Xunit.Assert.ThrowsAsync<WorkoutPlanningInputsChangedException>(() =>
                 proposalStore.SaveAsync(user, request, preview, CancellationToken.None));
@@ -173,13 +260,30 @@ public sealed class PlanningAcceptanceTransactionTests
 
             var acceptedHistorySessionId = Guid.NewGuid();
             var acceptedHistorySetId = Guid.NewGuid();
-            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = acceptedHistorySessionId, UserId = user,
-                WorkoutName = "Synthetic completed V2 history change", StartedAt = now.AddMinutes(-3),
-                CompletedAt = DateTime.UtcNow.AddMinutes(-1), CreatedAt = now, UpdatedAt = now });
-            db.ExerciseSetLogs.Add(new ExerciseSetLogRecord { Id = acceptedHistorySetId, UserId = user,
-                WorkoutSessionLogId = acceptedHistorySessionId, ExerciseId = strengthExercise.Candidate.ExerciseId.ToString(),
-                ExerciseName = strengthExercise.Name, SetNumber = 1, RepsCompleted = 8, WeightKg = 10m,
-                IsObserved = true, CreatedAt = now, UpdatedAt = now });
+            db.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+            {
+                Id = acceptedHistorySessionId,
+                UserId = user,
+                WorkoutName = "Synthetic completed V2 history change",
+                StartedAt = now.AddMinutes(-3),
+                CompletedAt = DateTime.UtcNow.AddMinutes(-1),
+                CreatedAt = now,
+                UpdatedAt = now
+            });
+            db.ExerciseSetLogs.Add(new ExerciseSetLogRecord
+            {
+                Id = acceptedHistorySetId,
+                UserId = user,
+                WorkoutSessionLogId = acceptedHistorySessionId,
+                ExerciseId = strengthExercise.Candidate.ExerciseId.ToString(),
+                ExerciseName = strengthExercise.Name,
+                SetNumber = 1,
+                RepsCompleted = 8,
+                WeightKg = 10m,
+                IsObserved = true,
+                CreatedAt = now,
+                UpdatedAt = now
+            });
             await db.SaveChangesAsync();
             var staleObservedHistory = await store.AcceptAsync(user, command, CancellationToken.None);
             Xunit.Assert.Equal("Stale", staleObservedHistory.Status);
@@ -187,12 +291,22 @@ public sealed class PlanningAcceptanceTransactionTests
             await db.WorkoutSessionLogs.Where(row => row.Id == acceptedHistorySessionId).ExecuteDeleteAsync();
 
             var acceptedReadinessId = Guid.NewGuid();
-            db.DailyReadinessLogs.Add(new DailyReadinessLogRecord { Id = acceptedReadinessId, UserId = user,
-                Date = today, Energy = 3, PlanningSleepQuality = 3, PlanningFatigue = 3,
-                PlanningTimeZoneId = TimeZoneInfo.Utc.Id, PlanningRecordedAtUtc = now,
-                PlanningRevision = 1, ReadinessScore = 60,
+            db.DailyReadinessLogs.Add(new DailyReadinessLogRecord
+            {
+                Id = acceptedReadinessId,
+                UserId = user,
+                Date = today,
+                Energy = 3,
+                PlanningSleepQuality = 3,
+                PlanningFatigue = 3,
+                PlanningTimeZoneId = TimeZoneInfo.Utc.Id,
+                PlanningRecordedAtUtc = now,
+                PlanningRevision = 1,
+                ReadinessScore = 60,
                 ReadinessTier = MuscleCuties.Core.Models.Enums.Workout.ReadinessTier.Moderate,
-                Phase = "Synthetic", CreatedAt = now });
+                Phase = "Synthetic",
+                CreatedAt = now
+            });
             await db.SaveChangesAsync();
             var staleReadiness = await store.AcceptAsync(user, command, CancellationToken.None);
             Xunit.Assert.Equal("Stale", staleReadiness.Status);
@@ -247,8 +361,14 @@ public sealed class PlanningAcceptanceTransactionTests
             var activeStore = new PostgresWorkoutActiveSessionStore(db, new PostgresIdempotencyExecutor(), new FixedTimeProvider(now));
             var legacyCommand = new StartWorkoutSessionCommand("synthetic-legacy", Guid.NewGuid(), "Legacy activity", now);
             var legacyStart = await activeStore.StartSessionAsync(user, legacyCommand, CancellationToken.None);
-            var oldHash = PostgresIdempotencyExecutor.ComputeRequestHash(new { legacyCommand.SessionId,
-                legacyCommand.WorkoutName, legacyCommand.StartedAtUtc, legacyCommand.Notes, legacyCommand.PlannedWorkoutDayId });
+            var oldHash = PostgresIdempotencyExecutor.ComputeRequestHash(new
+            {
+                legacyCommand.SessionId,
+                legacyCommand.WorkoutName,
+                legacyCommand.StartedAtUtc,
+                legacyCommand.Notes,
+                legacyCommand.PlannedWorkoutDayId
+            });
             Xunit.Assert.Equal(oldHash, (await db.CommandIdempotencyRecords.AsNoTracking().SingleAsync(row => row.UserId == user &&
                 row.CommandKey == "workout.session.start:synthetic-legacy")).RequestHash);
             var legacyReplay = await activeStore.StartSessionAsync(user, legacyCommand, CancellationToken.None);
@@ -276,13 +396,20 @@ public sealed class PlanningAcceptanceTransactionTests
 
             var current = Xunit.Assert.IsType<StrengthPlanPreviewSourceV020>(await new PostgresStrengthPlanPreviewSourceV020(db)
                 .LoadAsync(user, CancellationToken.None));
-            var laterPreview = preview with { SourceProfileVersion = current.ProfileVersion,
-                SourceActivePlanId = current.ActivePlanId, SourceActiveRevisionId = current.ActiveRevisionId,
-                SourceHistoryFingerprint = current.HistoryFingerprint, SourceInjuryFingerprint = current.InjuryFingerprint,
-                SourceCatalogFingerprint = current.CatalogFingerprint, SourceTimeZoneVersion = current.TimeZoneVersion,
-                SourceExperienceVersion = current.ExperienceVersion, SourceAnswerVersion = current.AnswerVersion,
+            var laterPreview = preview with
+            {
+                SourceProfileVersion = current.ProfileVersion,
+                SourceActivePlanId = current.ActivePlanId,
+                SourceActiveRevisionId = current.ActiveRevisionId,
+                SourceHistoryFingerprint = current.HistoryFingerprint,
+                SourceInjuryFingerprint = current.InjuryFingerprint,
+                SourceCatalogFingerprint = current.CatalogFingerprint,
+                SourceTimeZoneVersion = current.TimeZoneVersion,
+                SourceExperienceVersion = current.ExperienceVersion,
+                SourceAnswerVersion = current.AnswerVersion,
                 SourceObservedHistoryFingerprint = current.ObservedHistoryFingerprint,
-                SourceReadinessRevision = current.ReadinessRevision };
+                SourceReadinessRevision = current.ReadinessRevision
+            };
             var later = await new PostgresStrengthPlanProposalStoreV020(db).SaveAsync(user, request, laterPreview, CancellationToken.None);
             var laterLease = Xunit.Assert.IsType<PlanningLeaseDto>(later.Lease);
             await db.WorkoutAccountPlanningStates.Where(row => row.UserId == user)
@@ -299,15 +426,25 @@ public sealed class PlanningAcceptanceTransactionTests
                 new PlanningLeaseRequest(later.ProposalId, laterLease.LeaseId, laterLease.Fence), CancellationToken.None);
             var fresh = Xunit.Assert.IsType<StrengthPlanPreviewSourceV020>(await new PostgresStrengthPlanPreviewSourceV020(db)
                 .LoadAsync(user, CancellationToken.None));
-            var rollbackPreview = preview with { SourceProfileVersion = fresh.ProfileVersion,
-                SourceActivePlanId = fresh.ActivePlanId, SourceActiveRevisionId = fresh.ActiveRevisionId,
-                SourceHistoryFingerprint = fresh.HistoryFingerprint, SourceInjuryFingerprint = fresh.InjuryFingerprint,
-                SourceCatalogFingerprint = fresh.CatalogFingerprint, SourceTimeZoneVersion = fresh.TimeZoneVersion,
-                SourceExperienceVersion = fresh.ExperienceVersion, SourceAnswerVersion = fresh.AnswerVersion,
+            var rollbackPreview = preview with
+            {
+                SourceProfileVersion = fresh.ProfileVersion,
+                SourceActivePlanId = fresh.ActivePlanId,
+                SourceActiveRevisionId = fresh.ActiveRevisionId,
+                SourceHistoryFingerprint = fresh.HistoryFingerprint,
+                SourceInjuryFingerprint = fresh.InjuryFingerprint,
+                SourceCatalogFingerprint = fresh.CatalogFingerprint,
+                SourceTimeZoneVersion = fresh.TimeZoneVersion,
+                SourceExperienceVersion = fresh.ExperienceVersion,
+                SourceAnswerVersion = fresh.AnswerVersion,
                 SourceObservedHistoryFingerprint = fresh.ObservedHistoryFingerprint,
-                SourceReadinessRevision = fresh.ReadinessRevision };
-            var rollbackRequest = request with { DraftPreferences = draft with
-                { AvailableWeekdays = [(int)today.DayOfWeek, (int)today.AddDays(2).DayOfWeek] } };
+                SourceReadinessRevision = fresh.ReadinessRevision
+            };
+            var rollbackRequest = request with
+            {
+                DraftPreferences = draft with
+                { AvailableWeekdays = [(int)today.DayOfWeek, (int)today.AddDays(2).DayOfWeek] }
+            };
             var rollbackProposal = await new PostgresStrengthPlanProposalStoreV020(db)
                 .SaveAsync(user, rollbackRequest, rollbackPreview, CancellationToken.None);
             var rollbackLease = Xunit.Assert.IsType<PlanningLeaseDto>(rollbackProposal.Lease);

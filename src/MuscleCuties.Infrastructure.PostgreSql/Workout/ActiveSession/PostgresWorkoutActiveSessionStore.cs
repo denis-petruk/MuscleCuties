@@ -1,10 +1,9 @@
 using System.Text;
+using MuscleCuties.Infrastructure.PostgreSql.Common;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
+using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Contracts;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Session;
-using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
-
-using MuscleCuties.Infrastructure.PostgreSql.Common;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Workout.ActiveSession;
 
@@ -153,13 +152,20 @@ public sealed class PostgresWorkoutActiveSessionStore(
         var requestHash = command.UnplannedActivity is null
             ? PostgresIdempotencyExecutor.ComputeRequestHash(new
             {
-                command.SessionId, command.WorkoutName, command.StartedAtUtc,
-                command.Notes, command.PlannedWorkoutDayId
+                command.SessionId,
+                command.WorkoutName,
+                command.StartedAtUtc,
+                command.Notes,
+                command.PlannedWorkoutDayId
             })
             : PostgresIdempotencyExecutor.ComputeRequestHash(new
             {
-                command.SessionId, command.WorkoutName, command.StartedAtUtc,
-                command.Notes, command.PlannedWorkoutDayId, command.UnplannedActivity
+                command.SessionId,
+                command.WorkoutName,
+                command.StartedAtUtc,
+                command.Notes,
+                command.PlannedWorkoutDayId,
+                command.UnplannedActivity
             });
 
         var execution = await idempotencyExecutor.ExecuteAsync(

@@ -1,7 +1,7 @@
+using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 using MuscleCuties.UseCases.Features.Account.Deletion;
 using MuscleCuties.UseCases.Features.Account.Deletion.Contracts;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
-using MuscleCuties.Infrastructure.PostgreSql.Profile.PhotoVault;
 
 namespace MuscleCuties.Infrastructure.PostgreSql.Account.Deletion;
 

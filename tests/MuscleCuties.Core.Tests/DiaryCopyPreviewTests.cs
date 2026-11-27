@@ -1,10 +1,10 @@
 using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy;
+using Xunit;
+using ContractMealType = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType;
 using CoreDiaryCopyMode = MuscleCuties.Core.Models.Enums.Nutrition.DiaryCopyMode;
 using CoreMealType = MuscleCuties.Core.Models.Enums.Nutrition.MealType;
-using ContractMealType = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType;
 using DiaryCopyModeDto = MuscleCuties.UseCases.Features.Nutrition.BatchAndCopy.DiaryCopyModeDto;
-using Xunit;
 
 namespace MuscleCuties.Core.Tests;
 

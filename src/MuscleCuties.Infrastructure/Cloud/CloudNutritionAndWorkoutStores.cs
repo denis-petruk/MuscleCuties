@@ -1,10 +1,11 @@
-using System.Text.Json;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.Core.Models.Enums.Cycle;
 using MuscleCuties.Core.Models.Enums.Nutrition;
 using MuscleCuties.Infrastructure.ApiClient;
+using MuscleCuties.UseCases.Features.Cycle.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
@@ -14,15 +15,14 @@ using MuscleCuties.UseCases.Features.Nutrition.Overview;
 using MuscleCuties.UseCases.Features.Nutrition.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes;
 using MuscleCuties.UseCases.Features.Nutrition.Recipes.Contracts;
-using MuscleCuties.UseCases.Features.Cycle.Overview;
+using MuscleCuties.UseCases.Features.Workout.ActiveSession;
 using MuscleCuties.UseCases.Features.Workout.Archive;
 using MuscleCuties.UseCases.Features.Workout.Overview;
 using MuscleCuties.UseCases.Features.Workout.Overview.Contracts;
 using MuscleCuties.UseCases.Features.Workout.Session;
 using MuscleCuties.UseCases.Features.Workout.Session.Contracts;
-using MuscleCuties.UseCases.Features.Workout.ActiveSession;
-using DiaryMealType = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType;
 using DiaryContracts = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts;
+using DiaryMealType = MuscleCuties.UseCases.Features.Nutrition.Diary.Contracts.MealType;
 
 namespace MuscleCuties.Infrastructure.Cloud;
 

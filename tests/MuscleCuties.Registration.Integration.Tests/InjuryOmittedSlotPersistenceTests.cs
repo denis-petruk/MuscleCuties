@@ -1,10 +1,10 @@
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
+using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.Core.Models.Enums.Workout;
 using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.Infrastructure.PostgreSql.Workout.Planning;
-using MuscleCuties.Core.Models.Enums.Workout;
-using MuscleCuties.Core.Domain.Workout.Planning;
-using System.Reflection;
 using Npgsql;
 using Xunit;
 
@@ -37,18 +37,35 @@ public sealed class InjuryOmittedSlotPersistenceTests
         var secondEpisode = Guid.NewGuid();
         var now = DateTime.UtcNow;
         await SyntheticTenantSession.SetAsync(db, user);
-        db.Users.Add(new UserRecord { Id = user, Email = $"omission-{user:N}@example.invalid",
-            Username = $"om_{user.ToString("N")[..SyntheticUsernameSuffixLength]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-            CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
+        db.Users.Add(new UserRecord
+        {
+            Id = user,
+            Email = $"omission-{user:N}@example.invalid",
+            Username = $"om_{user.ToString("N")[..SyntheticUsernameSuffixLength]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
+        });
         await db.SaveChangesAsync();
         try
         {
             WorkoutInjuryOmittedSlotRecord NewSlot(Guid episode) => new()
             {
-                Id = Guid.NewGuid(), UserId = user, PlanId = plan, ScheduledDate = DateOnly.FromDateTime(now),
-                TemplateId = "synthetic-template", TemplateVersion = "synthetic-version", SessionIndex = 0,
-                SlotId = "synthetic-slot", EpisodeId = episode, OriginWorkoutDayExerciseId = origin,
-                OriginalExerciseId = SyntheticExerciseId, OriginalSets = SyntheticSets, OriginalReps = SyntheticRepetitions
+                Id = Guid.NewGuid(),
+                UserId = user,
+                PlanId = plan,
+                ScheduledDate = DateOnly.FromDateTime(now),
+                TemplateId = "synthetic-template",
+                TemplateVersion = "synthetic-version",
+                SessionIndex = 0,
+                SlotId = "synthetic-slot",
+                EpisodeId = episode,
+                OriginWorkoutDayExerciseId = origin,
+                OriginalExerciseId = SyntheticExerciseId,
+                OriginalSets = SyntheticSets,
+                OriginalReps = SyntheticRepetitions
             };
             await using (var transaction = await db.Database.BeginTransactionAsync())
             {
@@ -65,11 +82,25 @@ public sealed class InjuryOmittedSlotPersistenceTests
             Assert.All(rows, row => { Assert.Equal(origin, row.OriginWorkoutDayExerciseId); Assert.Equal(SyntheticSets, row.OriginalSets); });
             var revisedPlan = Guid.NewGuid();
             var revisedDay = Guid.NewGuid();
-            db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = revisedPlan, UserId = user, Name = "Synthetic revision",
-                IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-            db.WorkoutDays.Add(new WorkoutDayRecord { Id = revisedDay, UserId = user, WorkoutPlanId = revisedPlan,
-                Date = DateOnly.FromDateTime(now), DayOfWeek = (int)now.DayOfWeek,
-                WorkoutType = nameof(WorkoutType.Strength), Name = "Synthetic strength" });
+            db.WorkoutPlans.Add(new WorkoutPlanRecord
+            {
+                Id = revisedPlan,
+                UserId = user,
+                Name = "Synthetic revision",
+                IsActive = true,
+                CyclePhaseTarget = "Follicular",
+                CreatedAt = now
+            });
+            db.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = revisedDay,
+                UserId = user,
+                WorkoutPlanId = revisedPlan,
+                Date = DateOnly.FromDateTime(now),
+                DayOfWeek = (int)now.DayOfWeek,
+                WorkoutType = nameof(WorkoutType.Strength),
+                Name = "Synthetic strength"
+            });
             await db.SaveChangesAsync();
             await using (var transaction = await db.Database.BeginTransactionAsync())
             {
@@ -107,12 +138,29 @@ public sealed class InjuryOmittedSlotPersistenceTests
             {
                 var exerciseId = await db.Exercises.AsNoTracking().OrderBy(row => row.Id).Select(row => row.Id).FirstAsync();
                 var exerciseRowId = Guid.NewGuid();
-                db.WorkoutInjuryEpisodes.Add(new WorkoutInjuryEpisodeRecord { Id = firstEpisode, UserId = user,
-                    InjuryLogId = Guid.NewGuid(), StartedOn = DateOnly.FromDateTime(now), ClearedOn = DateOnly.FromDateTime(now),
-                    ClearanceTimeZoneId = TimeZoneInfo.Utc.Id, ClearanceTimeZoneVersion = 1 });
-                db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = exerciseRowId, UserId = user, WorkoutDayId = revisedDay,
-                    ExerciseId = exerciseId, PlanningTemplateId = "synthetic-template", PlanningTemplateVersion = "synthetic-version",
-                    PlanningSessionIndex = 0, PlanningSlotId = "synthetic-slot", Sets = ConservativeSets, Reps = ConservativeRepetitions });
+                db.WorkoutInjuryEpisodes.Add(new WorkoutInjuryEpisodeRecord
+                {
+                    Id = firstEpisode,
+                    UserId = user,
+                    InjuryLogId = Guid.NewGuid(),
+                    StartedOn = DateOnly.FromDateTime(now),
+                    ClearedOn = DateOnly.FromDateTime(now),
+                    ClearanceTimeZoneId = TimeZoneInfo.Utc.Id,
+                    ClearanceTimeZoneVersion = 1
+                });
+                db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+                {
+                    Id = exerciseRowId,
+                    UserId = user,
+                    WorkoutDayId = revisedDay,
+                    ExerciseId = exerciseId,
+                    PlanningTemplateId = "synthetic-template",
+                    PlanningTemplateVersion = "synthetic-version",
+                    PlanningSessionIndex = 0,
+                    PlanningSlotId = "synthetic-slot",
+                    Sets = ConservativeSets,
+                    Reps = ConservativeRepetitions
+                });
                 await db.SaveChangesAsync();
                 var restorationType = typeof(PostgresWorkoutPlanReconciler).GetNestedType("ExactRestoration", BindingFlags.NonPublic);
                 Assert.NotNull(restorationType);

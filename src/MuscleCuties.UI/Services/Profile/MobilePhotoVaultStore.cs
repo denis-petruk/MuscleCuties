@@ -1,11 +1,11 @@
 using System.Net.Http.Headers;
 using System.Security.Cryptography;
-using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
-using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
-using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 using MuscleCuties.Infrastructure.ApiClient;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault;
 using MuscleCuties.UseCases.Features.Profile.PhotoVault.Contracts;
+using CyclePhase = MuscleCuties.UseCases.Features.Cycle.Contracts.CyclePhaseDto;
+using FlowIntensity = MuscleCuties.UseCases.Features.Cycle.Contracts.FlowIntensityDto;
+using SymptomType = MuscleCuties.UseCases.Features.Cycle.Contracts.SymptomTypeDto;
 
 namespace MuscleCuties.UI.Services.Profile;
 

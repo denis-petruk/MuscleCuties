@@ -1,6 +1,6 @@
-using Microsoft.Maui.Controls;
 using MauiIcons.Core;
 using MauiIcons.Fluent;
+using Microsoft.Maui.Controls;
 
 namespace MuscleCuties.UI.Resources.Converters;
 

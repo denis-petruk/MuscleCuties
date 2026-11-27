@@ -19,25 +19,47 @@ internal static class PlanningCatalogFingerprint
         {
             Definitions = definitions.OrderBy(row => row.Id).Select(row => new
             {
-                row.Id, row.SeedCode, row.Name, row.Pattern, row.Required, row.LongLengthLoaded,
-                row.FatigueCost, row.SkillDemand, row.SetupSeconds, row.SecondsPerRep,
-                row.EligibleForHiBlock, row.UnilateralDoublesTime, row.IsBodyweight,
-                row.Contraindications, row.PreferredFor, row.SupineOrProne, row.ValsalvaDemand,
-                row.SubstituteGroupId, row.TrainingCatalogVersionV020, row.SupportedExperiencesV020Json,
-                row.DemandTagsV020Json, row.DemandTagsReviewedV020, row.RestrictionConflictTagsV020Json,
-                row.RestrictionMappingsReviewedV020, row.SupportedTimingMethodsV020Json,
-                row.ReviewedSubstituteExerciseIdsV020Json, row.ReviewEvidenceV020Json,
+                row.Id,
+                row.SeedCode,
+                row.Name,
+                row.Pattern,
+                row.Required,
+                row.LongLengthLoaded,
+                row.FatigueCost,
+                row.SkillDemand,
+                row.SetupSeconds,
+                row.SecondsPerRep,
+                row.EligibleForHiBlock,
+                row.UnilateralDoublesTime,
+                row.IsBodyweight,
+                row.Contraindications,
+                row.PreferredFor,
+                row.SupineOrProne,
+                row.ValsalvaDemand,
+                row.SubstituteGroupId,
+                row.TrainingCatalogVersionV020,
+                row.SupportedExperiencesV020Json,
+                row.DemandTagsV020Json,
+                row.DemandTagsReviewedV020,
+                row.RestrictionConflictTagsV020Json,
+                row.RestrictionMappingsReviewedV020,
+                row.SupportedTimingMethodsV020Json,
+                row.ReviewedSubstituteExerciseIdsV020Json,
+                row.ReviewEvidenceV020Json,
                 Contributions = row.MuscleContributions.OrderBy(item => item.Id).Select(item => new
                 {
-                    item.Id, item.ExerciseId, item.MuscleGroupId, item.Fraction,
+                    item.Id,
+                    item.ExerciseId,
+                    item.MuscleGroupId,
+                    item.Fraction,
                     MuscleGroupName = item.MuscleGroup == null ? null : item.MuscleGroup.Name
                 }).ToArray()
             }).ToArray(),
             Weights = weights.OrderBy(row => row.Id).Select(row => new
-                { row.Id, row.Goal, row.MuscleGroupId, row.Tier }).ToArray(),
+            { row.Id, row.Goal, row.MuscleGroupId, row.Tier }).ToArray(),
             Floors = floors.OrderBy(row => row.TemplateId).ToArray(),
             Preferences = preferences.OrderBy(row => row.CreatedAt).ThenBy(row => row.Id).Select(row => new
-                { row.Id, row.OriginalExerciseId, row.PreferredExerciseId, row.CreatedAt }).ToArray()
+            { row.Id, row.OriginalExerciseId, row.PreferredExerciseId, row.CreatedAt }).ToArray()
         });
 
     /// <summary>Fingerprint of the catalog as it currently stands for the user.</summary>

@@ -1,8 +1,8 @@
-using BarcodeModel = MuscleCuties.Core.Domain.Nutrition.Barcode;
 using MuscleCuties.Core.Domain.Nutrition;
 using MuscleCuties.UseCases.Features.Nutrition.Barcode.Contracts;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch;
 using MuscleCuties.UseCases.Features.Nutrition.CatalogSearch.Contracts;
+using BarcodeModel = MuscleCuties.Core.Domain.Nutrition.Barcode;
 
 namespace MuscleCuties.UseCases.Features.Nutrition.Barcode;
 

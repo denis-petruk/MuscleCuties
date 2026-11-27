@@ -1,5 +1,5 @@
-using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 using MuscleCuties.Core.Domain.Workout.Planning;
+using MuscleCuties.UseCases.Features.Dashboard.CheckIn.Contracts;
 
 namespace MuscleCuties.UseCases.Features.Dashboard.CheckIn;
 

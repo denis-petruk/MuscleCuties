@@ -21,8 +21,12 @@ public sealed class PostgresStrengthStyleOfferStore(PostgresDbContext context) :
                 cancellationToken).ConfigureAwait(false)) return;
         var offer = new StrengthStyleOfferRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, PlanId = planId, RevisionId = revisionId,
-            CurrentStyleId = currentStyleId, AlternativeStyleIds = alternatives
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PlanId = planId,
+            RevisionId = revisionId,
+            CurrentStyleId = currentStyleId,
+            AlternativeStyleIds = alternatives
         };
         context.Set<StrengthStyleOfferRecord>().Add(offer);
         try

@@ -27,20 +27,36 @@ public sealed class GluteFocusPersistenceTests
         await SyntheticTenantSession.SetAsync(database, userId);
         database.Users.Add(new UserRecord
         {
-            Id = userId, Email = $"glute-{userId:N}@example.invalid",
-            Username = $"glt_{userId.ToString("N")[..10]}", CredentialType = "Password",
-            PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true
+            Id = userId,
+            Email = $"glute-{userId:N}@example.invalid",
+            Username = $"glt_{userId.ToString("N")[..10]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
         });
         database.UserProfiles.Add(new UserProfileRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, Name = "Synthetic", DateOfBirth = SyntheticBirthDate,
-            Goal = "MuscleTone", TrainingExperienceLevel = "Beginner", EquipmentLevel = "FullGym",
-            Height = 168m, Weight = 62m, WorkoutDaysPerWeek = 3, CycleLength = 28, UpdatedAt = now,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Name = "Synthetic",
+            DateOfBirth = SyntheticBirthDate,
+            Goal = "MuscleTone",
+            TrainingExperienceLevel = "Beginner",
+            EquipmentLevel = "FullGym",
+            Height = 168m,
+            Weight = 62m,
+            WorkoutDaysPerWeek = 3,
+            CycleLength = 28,
+            UpdatedAt = now,
             GluteFocus = true
         });
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = TimeZoneInfo.Utc.Id
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = TimeZoneInfo.Utc.Id
         });
         await database.SaveChangesAsync();
         try

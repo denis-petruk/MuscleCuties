@@ -44,8 +44,10 @@ public sealed class AutomaticPlanningPersistenceTests
             AddSyntheticUser(database, owner);
             database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
             {
-                Id = Guid.NewGuid(), UserId = owner,
-                PromotionPending = owner == first, SafetyRegenerationPending = owner == second
+                Id = Guid.NewGuid(),
+                UserId = owner,
+                PromotionPending = owner == first,
+                SafetyRegenerationPending = owner == second
             });
             await database.SaveChangesAsync();
             database.ChangeTracker.Clear();
@@ -119,8 +121,11 @@ public sealed class AutomaticPlanningPersistenceTests
         AddSyntheticUser(database, userId);
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = UtcTimeZone,
-            PromotionPending = true, SafetyRegenerationPending = true
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = UtcTimeZone,
+            PromotionPending = true,
+            SafetyRegenerationPending = true
         });
         var proposal = AddProposal(database, userId, automaticOrigin: false);
         proposal.LeaseId = Guid.NewGuid();
@@ -151,13 +156,36 @@ public sealed class AutomaticPlanningPersistenceTests
         var sessionId = Guid.NewGuid();
         await SyntheticTenantSession.SetAsync(database, userId);
         AddSyntheticUser(database, userId);
-        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId, Name = "Synthetic plan",
-            IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-        database.WorkoutDays.Add(new WorkoutDayRecord { Id = dayId, UserId = userId, WorkoutPlanId = planId,
-            Date = DateOnly.FromDateTime(now), DayOfWeek = (int)now.DayOfWeek, WorkoutType = "Strength",
-            ActivityTypeId = (int)WorkoutActivityType.GeneralStrength, Name = "Synthetic strength" });
-        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = sessionId, UserId = userId,
-            PlannedWorkoutDayId = dayId, WorkoutName = "Synthetic active", StartedAt = now, CreatedAt = now, UpdatedAt = now });
+        database.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = planId,
+            UserId = userId,
+            Name = "Synthetic plan",
+            IsActive = true,
+            CyclePhaseTarget = "Follicular",
+            CreatedAt = now
+        });
+        database.WorkoutDays.Add(new WorkoutDayRecord
+        {
+            Id = dayId,
+            UserId = userId,
+            WorkoutPlanId = planId,
+            Date = DateOnly.FromDateTime(now),
+            DayOfWeek = (int)now.DayOfWeek,
+            WorkoutType = "Strength",
+            ActivityTypeId = (int)WorkoutActivityType.GeneralStrength,
+            Name = "Synthetic strength"
+        });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+        {
+            Id = sessionId,
+            UserId = userId,
+            PlannedWorkoutDayId = dayId,
+            WorkoutName = "Synthetic active",
+            StartedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
         await database.SaveChangesAsync();
         var store = new PostgresAcceptStrengthPlanProposalStoreV020(database);
         Xunit.Assert.False((await store.InspectPromotionActiveSessionsAsync(userId, planId, CancellationToken.None)).Proven);
@@ -193,18 +221,29 @@ public sealed class AutomaticPlanningPersistenceTests
         AddSyntheticUser(database, userId);
         database.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, TimeZoneId = UtcTimeZone,
-            PromotionPending = true, SafetyRegenerationPending = true
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            TimeZoneId = UtcTimeZone,
+            PromotionPending = true,
+            SafetyRegenerationPending = true
         });
         database.WorkoutPlans.Add(new WorkoutPlanRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, Name = "Synthetic plan", IsActive = true,
-            CyclePhaseTarget = "Follicular", CreatedAt = now
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            Name = "Synthetic plan",
+            IsActive = true,
+            CyclePhaseTarget = "Follicular",
+            CreatedAt = now
         });
         database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
         {
-            Id = Guid.NewGuid(), UserId = userId, WorkoutName = "Synthetic active session",
-            StartedAt = now, CreatedAt = now, UpdatedAt = now
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            WorkoutName = "Synthetic active session",
+            StartedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
         });
         await database.SaveChangesAsync();
 
@@ -233,15 +272,24 @@ public sealed class AutomaticPlanningPersistenceTests
         AddSyntheticUser(database, userId);
         database.WorkoutPlans.Add(new WorkoutPlanRecord
         {
-            Id = planId, UserId = userId, Name = "Synthetic plan", IsActive = true,
-            CyclePhaseTarget = "Follicular", CreatedAt = now
+            Id = planId,
+            UserId = userId,
+            Name = "Synthetic plan",
+            IsActive = true,
+            CyclePhaseTarget = "Follicular",
+            CreatedAt = now
         });
         foreach (var date in new[] { today, tomorrow, following })
             database.WorkoutDays.Add(new WorkoutDayRecord
             {
-                Id = Guid.NewGuid(), UserId = userId, WorkoutPlanId = planId,
-                Date = date, DayOfWeek = (int)date.DayOfWeek, WorkoutType = SyntheticCardio,
-                Name = "Synthetic activity", IsRemovedBySafety = date == tomorrow
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                WorkoutPlanId = planId,
+                Date = date,
+                DayOfWeek = (int)date.DayOfWeek,
+                WorkoutType = SyntheticCardio,
+                Name = "Synthetic activity",
+                IsRemovedBySafety = date == tomorrow
             });
         await database.SaveChangesAsync();
         var store = new PostgresAcceptStrengthPlanProposalStoreV020(database);
@@ -264,20 +312,53 @@ public sealed class AutomaticPlanningPersistenceTests
         var now = DateTime.UtcNow;
         await SyntheticTenantSession.SetAsync(database, userId);
         AddSyntheticUser(database, userId);
-        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = planId, UserId = userId,
-            Name = "Synthetic plan", IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
+        database.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = planId,
+            UserId = userId,
+            Name = "Synthetic plan",
+            IsActive = true,
+            CyclePhaseTarget = "Follicular",
+            CreatedAt = now
+        });
         var firstOrder = WorkoutSessionOrderingRule.FirstSessionOrder;
         var secondOrder = firstOrder + 1;
         database.WorkoutDays.AddRange(
-            new WorkoutDayRecord { Id = firstDayId, UserId = userId, WorkoutPlanId = planId,
-                Date = today, DayOfWeek = (int)today.DayOfWeek, DayOrder = firstOrder,
-                ActivityTypeId = (int)WorkoutActivityType.GeneralStrength, WorkoutType = "Strength", Name = "First" },
-            new WorkoutDayRecord { Id = secondDayId, UserId = userId, WorkoutPlanId = planId,
-                Date = today, DayOfWeek = (int)today.DayOfWeek, DayOrder = secondOrder,
-                ActivityTypeId = (int)WorkoutActivityType.Yoga, WorkoutType = SyntheticCardio, Name = "Second" });
-        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord { Id = sessionId, UserId = userId,
-            PlannedWorkoutDayId = firstDayId, WorkoutName = "First", StartedAt = now, CompletedAt = now,
-            CreatedAt = now, UpdatedAt = now });
+            new WorkoutDayRecord
+            {
+                Id = firstDayId,
+                UserId = userId,
+                WorkoutPlanId = planId,
+                Date = today,
+                DayOfWeek = (int)today.DayOfWeek,
+                DayOrder = firstOrder,
+                ActivityTypeId = (int)WorkoutActivityType.GeneralStrength,
+                WorkoutType = "Strength",
+                Name = "First"
+            },
+            new WorkoutDayRecord
+            {
+                Id = secondDayId,
+                UserId = userId,
+                WorkoutPlanId = planId,
+                Date = today,
+                DayOfWeek = (int)today.DayOfWeek,
+                DayOrder = secondOrder,
+                ActivityTypeId = (int)WorkoutActivityType.Yoga,
+                WorkoutType = SyntheticCardio,
+                Name = "Second"
+            });
+        database.WorkoutSessionLogs.Add(new WorkoutSessionLogRecord
+        {
+            Id = sessionId,
+            UserId = userId,
+            PlannedWorkoutDayId = firstDayId,
+            WorkoutName = "First",
+            StartedAt = now,
+            CompletedAt = now,
+            CreatedAt = now,
+            UpdatedAt = now
+        });
         await database.SaveChangesAsync();
         var store = new PostgresAcceptStrengthPlanProposalStoreV020(database);
         MixedActivityScheduleSessionV020[] proposed =
@@ -286,11 +367,24 @@ public sealed class AutomaticPlanningPersistenceTests
         Xunit.Assert.Equal(secondOrder, await store.FindProvenSameDayPromotionOrderAsync(userId, planId, today,
             proposed, CancellationToken.None));
         var conflictingLogId = Guid.NewGuid();
-        database.WorkoutLogs.Add(new WorkoutLogRecord { Id = conflictingLogId, UserId = userId,
-            WorkoutDayId = secondDayId, Date = today, CreatedAt = now });
-        database.WorkoutCompletionDayCredits.Add(new WorkoutCompletionDayCreditRecord { Id = Guid.NewGuid(),
-            UserId = userId, LocalDate = today, SourceSessionId = sessionId, SourceWorkoutLogId = conflictingLogId,
-            AcceptedAtUtc = now, TimeZoneId = TimeZoneInfo.Utc.Id });
+        database.WorkoutLogs.Add(new WorkoutLogRecord
+        {
+            Id = conflictingLogId,
+            UserId = userId,
+            WorkoutDayId = secondDayId,
+            Date = today,
+            CreatedAt = now
+        });
+        database.WorkoutCompletionDayCredits.Add(new WorkoutCompletionDayCreditRecord
+        {
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            LocalDate = today,
+            SourceSessionId = sessionId,
+            SourceWorkoutLogId = conflictingLogId,
+            AcceptedAtUtc = now,
+            TimeZoneId = TimeZoneInfo.Utc.Id
+        });
         await database.SaveChangesAsync();
         Xunit.Assert.Null(await store.FindProvenSameDayPromotionOrderAsync(userId, planId, today,
             proposed, CancellationToken.None));
@@ -316,9 +410,14 @@ public sealed class AutomaticPlanningPersistenceTests
         var now = DateTime.UtcNow;
         database.Users.Add(new UserRecord
         {
-            Id = userId, Email = $"automatic-{userId:N}@example.invalid",
-            Username = $"auto_{userId.ToString("N")[^10..]}", CredentialType = "Password",
-            PasswordHash = "synthetic-hash", CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true
+            Id = userId,
+            Email = $"automatic-{userId:N}@example.invalid",
+            Username = $"auto_{userId.ToString("N")[^10..]}",
+            CredentialType = "Password",
+            PasswordHash = "synthetic-hash",
+            CreatedAt = now,
+            UpdatedAt = now,
+            IsOnboardingComplete = true
         });
     }
 
@@ -326,10 +425,16 @@ public sealed class AutomaticPlanningPersistenceTests
     {
         var proposal = new WorkoutPlanProposalV02Record
         {
-            Id = Guid.NewGuid(), UserId = userId, PlanId = Guid.NewGuid(), ExpectedRevisionId = Guid.NewGuid(),
-            RulesetVersion = SyntheticRuleset, TrainingPolicyVersion = SyntheticPolicy, Status = ProposedStatus,
+            Id = Guid.NewGuid(),
+            UserId = userId,
+            PlanId = Guid.NewGuid(),
+            ExpectedRevisionId = Guid.NewGuid(),
+            RulesetVersion = SyntheticRuleset,
+            TrainingPolicyVersion = SyntheticPolicy,
+            Status = ProposedStatus,
             InputSnapshotJson = automaticOrigin ? "{\"automaticOrigin\":true}" : "{\"automaticOrigin\":false}",
-            CreatedAtUtc = DateTime.UtcNow, ConcurrencyVersion = InitialVersion
+            CreatedAtUtc = DateTime.UtcNow,
+            ConcurrencyVersion = InitialVersion
         };
         database.WorkoutPlanProposalsV02.Add(proposal);
         return proposal;

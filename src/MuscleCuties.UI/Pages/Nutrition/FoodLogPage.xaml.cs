@@ -49,7 +49,8 @@ public partial class FoodLogPage : ContentPage, IQueryAttributable
             {
                 _pendingEntry = null;
                 await _viewModel.OpenRecordAsync(id);
-            }        });
+            }
+        });
     }
 
     /// <summary>Closes the open sheet before leaving the page.</summary>

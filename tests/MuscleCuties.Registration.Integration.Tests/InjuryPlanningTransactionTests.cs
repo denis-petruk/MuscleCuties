@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using MuscleCuties.Core.Models.Enums.Users;
 using MuscleCuties.Core.Models.Enums.Workout;
@@ -6,7 +7,6 @@ using MuscleCuties.Infrastructure.PostgreSql.Models.App;
 using MuscleCuties.Infrastructure.PostgreSql.Persistence;
 using MuscleCuties.UseCases.Features.CheckInAndInjury;
 using Npgsql;
-using System.Text.Json;
 
 namespace MuscleCuties.Registration.Integration.Tests;
 
@@ -44,32 +44,101 @@ public sealed class InjuryPlanningTransactionTests
         try
         {
             var exerciseId = await db.Exercises.AsNoTracking().OrderBy(row => row.Id).Select(row => row.Id).FirstAsync();
-            db.Users.Add(new UserRecord { Id = user, Email = $"injury-{user:N}@example.invalid",
-                Username = $"inj_{user.ToString("N")[..10]}", CredentialType = "Password", PasswordHash = "synthetic-hash",
-                CreatedAt = now, UpdatedAt = now, IsOnboardingComplete = true });
-            db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord { Id = Guid.NewGuid(), UserId = user,
-                TimeZoneId = TimeZoneInfo.Utc.Id, BaselineExperience = TrainingExperienceLevel.Beginner,
-                EffectiveExperience = TrainingExperienceLevel.Beginner });
-            db.WorkoutPlans.Add(new WorkoutPlanRecord { Id = plan, UserId = user, Name = "Synthetic plan",
-                IsActive = true, CyclePhaseTarget = "Follicular", CreatedAt = now });
-            db.WorkoutDays.Add(new WorkoutDayRecord { Id = day, UserId = user, WorkoutPlanId = plan,
-                Date = today.AddDays(1), DayOfWeek = (int)today.AddDays(1).DayOfWeek,
-                WorkoutType = nameof(WorkoutType.Strength), Name = "Synthetic strength" });
-            db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord { Id = exercise, UserId = user, WorkoutDayId = day,
-                ExerciseId = exerciseId, PlanningSlotId = "synthetic-slot", Sets = SyntheticSets,
-                OptionalSets = SyntheticOptionalSets, Reps = SyntheticRepetitions });
-            db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record { Id = proposal, UserId = user,
-                PlanId = Guid.NewGuid(), Status = "Proposed", RulesetVersion = "synthetic", TrainingPolicyVersion = "synthetic",
-                CreatedAtUtc = now, LeaseId = Guid.NewGuid(), LeaseFence = 1, LeaseExpiresAtUtc = now.AddMinutes(5) });
-            db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record { Id = acceptedProposal, UserId = user,
-                PlanId = plan, Status = "Accepted", RulesetVersion = "synthetic", TrainingPolicyVersion = "synthetic", CreatedAtUtc = now,
-                DecidedAtUtc = now, AcceptedRevisionId = acceptedRevision });
-            db.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record { Id = acceptedRevision, UserId = user,
-                PlanId = plan, SourceProposalId = acceptedProposal, RevisionNumber = 1, RulesetVersion = "synthetic",
-                TrainingPolicyVersion = "synthetic", AcceptedAtUtc = now,
-                PlanJson = JsonSerializer.Serialize(new { proposal = new { sessions = new[] { new { sessionIndex = 0,
-                    slots = new[] { new { exerciseId } } } } }, weekdayAssignments = new[] { new { sessionIndex = 0,
-                    weekday = (int)today.AddDays(1).DayOfWeek } } }) });
+            db.Users.Add(new UserRecord
+            {
+                Id = user,
+                Email = $"injury-{user:N}@example.invalid",
+                Username = $"inj_{user.ToString("N")[..10]}",
+                CredentialType = "Password",
+                PasswordHash = "synthetic-hash",
+                CreatedAt = now,
+                UpdatedAt = now,
+                IsOnboardingComplete = true
+            });
+            db.WorkoutAccountPlanningStates.Add(new WorkoutAccountPlanningStateRecord
+            {
+                Id = Guid.NewGuid(),
+                UserId = user,
+                TimeZoneId = TimeZoneInfo.Utc.Id,
+                BaselineExperience = TrainingExperienceLevel.Beginner,
+                EffectiveExperience = TrainingExperienceLevel.Beginner
+            });
+            db.WorkoutPlans.Add(new WorkoutPlanRecord
+            {
+                Id = plan,
+                UserId = user,
+                Name = "Synthetic plan",
+                IsActive = true,
+                CyclePhaseTarget = "Follicular",
+                CreatedAt = now
+            });
+            db.WorkoutDays.Add(new WorkoutDayRecord
+            {
+                Id = day,
+                UserId = user,
+                WorkoutPlanId = plan,
+                Date = today.AddDays(1),
+                DayOfWeek = (int)today.AddDays(1).DayOfWeek,
+                WorkoutType = nameof(WorkoutType.Strength),
+                Name = "Synthetic strength"
+            });
+            db.WorkoutDayExercises.Add(new WorkoutDayExerciseRecord
+            {
+                Id = exercise,
+                UserId = user,
+                WorkoutDayId = day,
+                ExerciseId = exerciseId,
+                PlanningSlotId = "synthetic-slot",
+                Sets = SyntheticSets,
+                OptionalSets = SyntheticOptionalSets,
+                Reps = SyntheticRepetitions
+            });
+            db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
+            {
+                Id = proposal,
+                UserId = user,
+                PlanId = Guid.NewGuid(),
+                Status = "Proposed",
+                RulesetVersion = "synthetic",
+                TrainingPolicyVersion = "synthetic",
+                CreatedAtUtc = now,
+                LeaseId = Guid.NewGuid(),
+                LeaseFence = 1,
+                LeaseExpiresAtUtc = now.AddMinutes(5)
+            });
+            db.WorkoutPlanProposalsV02.Add(new WorkoutPlanProposalV02Record
+            {
+                Id = acceptedProposal,
+                UserId = user,
+                PlanId = plan,
+                Status = "Accepted",
+                RulesetVersion = "synthetic",
+                TrainingPolicyVersion = "synthetic",
+                CreatedAtUtc = now,
+                DecidedAtUtc = now,
+                AcceptedRevisionId = acceptedRevision
+            });
+            db.WorkoutPlanRevisionsV02.Add(new WorkoutPlanRevisionV02Record
+            {
+                Id = acceptedRevision,
+                UserId = user,
+                PlanId = plan,
+                SourceProposalId = acceptedProposal,
+                RevisionNumber = 1,
+                RulesetVersion = "synthetic",
+                TrainingPolicyVersion = "synthetic",
+                AcceptedAtUtc = now,
+                PlanJson = JsonSerializer.Serialize(new
+                {
+                    proposal = new
+                    {
+                        sessions = new[] { new { sessionIndex = 0,
+                    slots = new[] { new { exerciseId } } } }
+                    },
+                    weekdayAssignments = new[] { new { sessionIndex = 0,
+                    weekday = (int)today.AddDays(1).DayOfWeek } }
+                })
+            });
             await db.SaveChangesAsync();
             var store = new PostgresCheckInAndInjuryStore(db, clock);
             var first = new SaveInjuryObservationRequest(user, firstInjury, (int)InjuryFlag.Knee, "Acute", today, 3, today);
@@ -84,8 +153,11 @@ public sealed class InjuryPlanningTransactionTests
             // that either injury affects it; associations are established separately.
             Xunit.Assert.Equal(2, associations.Count);
             Xunit.Assert.Equal(2, associations.Select(row => row.EpisodeId).Distinct().Count());
-            Xunit.Assert.All(associations, row => { Xunit.Assert.Equal(exercise, row.OriginalWorkoutDayExerciseId);
-                Xunit.Assert.Equal(SyntheticOptionalSets, row.OriginalOptionalSets); Xunit.Assert.Equal("synthetic-slot", row.OriginalPlanningSlotId); });
+            Xunit.Assert.All(associations, row =>
+            {
+                Xunit.Assert.Equal(exercise, row.OriginalWorkoutDayExerciseId);
+                Xunit.Assert.Equal(SyntheticOptionalSets, row.OriginalOptionalSets); Xunit.Assert.Equal("synthetic-slot", row.OriginalPlanningSlotId);
+            });
             await Xunit.Assert.ThrowsAsync<InvalidOperationException>(() => store.SaveInjuryAsync(
                 first with { SiteFlag = (int)InjuryFlag.Shoulder }, CancellationToken.None));
             Xunit.Assert.Equal(2, await db.WorkoutInjuryEpisodes.AsNoTracking().CountAsync(row => row.UserId == user));

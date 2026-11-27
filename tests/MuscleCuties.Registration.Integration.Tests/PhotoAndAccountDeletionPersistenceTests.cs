@@ -95,15 +95,32 @@ public sealed class PhotoAndAccountDeletionPersistenceTests
         AddSyntheticWorkoutProposalAndRevision(database, ownerId, nowUtc);
         var ownerPlanId = Guid.NewGuid();
         var ownerDayId = Guid.NewGuid();
-        database.WorkoutPlans.Add(new WorkoutPlanRecord { Id = ownerPlanId, UserId = ownerId,
-            Name = "Synthetic", IsActive = true, CreatedAt = nowUtc });
-        database.WorkoutDays.Add(new WorkoutDayRecord { Id = ownerDayId, UserId = ownerId, WorkoutPlanId = ownerPlanId,
-            Name = "Synthetic", WorkoutType = "Strength", Date = DateOnly.FromDateTime(nowUtc) });
+        database.WorkoutPlans.Add(new WorkoutPlanRecord
+        {
+            Id = ownerPlanId,
+            UserId = ownerId,
+            Name = "Synthetic",
+            IsActive = true,
+            CreatedAt = nowUtc
+        });
+        database.WorkoutDays.Add(new WorkoutDayRecord
+        {
+            Id = ownerDayId,
+            UserId = ownerId,
+            WorkoutPlanId = ownerPlanId,
+            Name = "Synthetic",
+            WorkoutType = "Strength",
+            Date = DateOnly.FromDateTime(nowUtc)
+        });
         database.WorkoutCycleReadinessOccurrences.Add(new WorkoutCycleReadinessOccurrenceRecord
         {
-            Id = Guid.NewGuid(), UserId = ownerId, WorkoutDayId = ownerDayId,
-            LocalDate = DateOnly.FromDateTime(nowUtc), InputFingerprint = "synthetic",
-            PrescriptionJson = "{}", UpdatedAtUtc = nowUtc
+            Id = Guid.NewGuid(),
+            UserId = ownerId,
+            WorkoutDayId = ownerDayId,
+            LocalDate = DateOnly.FromDateTime(nowUtc),
+            InputFingerprint = "synthetic",
+            PrescriptionJson = "{}",
+            UpdatedAtUtc = nowUtc
         });
         database.PhotoJourneyEntries.Add(new PhotoJourneyEntryRecord
         {

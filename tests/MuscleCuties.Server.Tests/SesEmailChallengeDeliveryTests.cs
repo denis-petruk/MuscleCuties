@@ -1,8 +1,8 @@
 using Amazon.Runtime;
 using Amazon.SimpleEmailV2;
+using Amazon.SimpleEmailV2.Model;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-using Amazon.SimpleEmailV2.Model;
 using MuscleCuties.Infrastructure.PostgreSql.Account.EmailChallenge;
 using Xunit;
 

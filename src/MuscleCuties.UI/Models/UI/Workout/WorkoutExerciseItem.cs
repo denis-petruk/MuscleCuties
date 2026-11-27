@@ -9,7 +9,7 @@ namespace MuscleCuties.UI.Models.UI.Workout;
 public partial class WorkoutExerciseItem : ObservableObject
 {
     [ObservableProperty] private bool _isExpanded;
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CanMarkOptional), nameof(CalibrationPromptText), nameof(HasRecommendationText))] private bool _isLogged;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(CanMarkOptional), nameof(CalibrationPromptText), nameof(HasRecommendationText))] private bool _isLogged;
     [ObservableProperty] private bool _isOptional;
     [ObservableProperty] private int _optionalSets;
     private bool _lastSavedIsOptional;
@@ -208,17 +208,17 @@ public partial class WorkoutExerciseItem : ObservableObject
 
     // Gate 75, 76, 77: Unilateral, Superset split, and Initial Calibration UI metadata.
     /// <summary>True when the exercise belongs to a superset.</summary>
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(IsInSuperset), nameof(SupersetLabel))] private int? _supersetGroupId;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(IsInSuperset), nameof(SupersetLabel))] private int? _supersetGroupId;
     public bool IsInSuperset => SupersetGroupId.HasValue;
     /// <summary>Superset badge text, naming the group; empty when the exercise is not in one.</summary>
     public string SupersetLabel => SupersetGroupId is { } groupId
         ? UiTextCatalog.Format("Workout_Session_SupersetLabelFormat", groupId)
         : string.Empty;
     /// <summary>The label explaining the unilateral mode.</summary>
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(UnilateralModeLabel))] private bool _isUnilateral;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(UnilateralModeLabel))] private bool _isUnilateral;
     public string UnilateralModeLabel => IsUnilateral ? UiTextCatalog.Get("Workout_Session_UnilateralPerSide") : string.Empty;
     /// <summary>The prompt shown while the exercise still needs calibrating.</summary>
-    [ObservableProperty] [NotifyPropertyChangedFor(nameof(CalibrationPromptText), nameof(HasRecommendationText))] private bool _requiresInitialCalibration;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(CalibrationPromptText), nameof(HasRecommendationText))] private bool _requiresInitialCalibration;
     public string CalibrationPromptText => RequiresInitialCalibration && !IsLogged
         ? UiTextCatalog.Get("Workout_Session_CalibrationPrompt")
         : string.Empty;

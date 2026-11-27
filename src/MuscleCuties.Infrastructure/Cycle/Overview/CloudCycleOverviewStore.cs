@@ -1,8 +1,7 @@
 using MuscleCuties.Infrastructure.ApiClient;
+using MuscleCuties.Infrastructure.Cloud;
 using MuscleCuties.UseCases.Features.Cycle.Contracts;
 using MuscleCuties.UseCases.Features.Cycle.Overview;
-
-using MuscleCuties.Infrastructure.Cloud;
 
 namespace MuscleCuties.Infrastructure.Cycle.Overview;
 

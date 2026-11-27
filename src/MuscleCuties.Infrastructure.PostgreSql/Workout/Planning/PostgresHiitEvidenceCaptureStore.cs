@@ -21,8 +21,12 @@ public sealed class PostgresHiitEvidenceCaptureStore(PostgresDbContext context, 
             var expiry = now.Add(HiitEvidenceCaptureRule.ChallengeLifetime);
             var challenge = new HiitEvidenceCaptureChallengeRecord
             {
-                Id = Guid.NewGuid(), UserId = userId, IssuedAtUtc = now.UtcDateTime,
-                ExpiresAtUtc = expiry.UtcDateTime, IssuedLocalDate = date, TimeZoneVersion = state.TimeZoneVersion
+                Id = Guid.NewGuid(),
+                UserId = userId,
+                IssuedAtUtc = now.UtcDateTime,
+                ExpiresAtUtc = expiry.UtcDateTime,
+                IssuedLocalDate = date,
+                TimeZoneVersion = state.TimeZoneVersion
             };
             context.HiitEvidenceCaptureChallenges.Add(challenge);
             await context.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

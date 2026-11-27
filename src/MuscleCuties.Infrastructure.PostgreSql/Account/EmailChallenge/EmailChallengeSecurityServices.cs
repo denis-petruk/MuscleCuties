@@ -1,7 +1,7 @@
+using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
-using System.Net.Http;
 using MuscleCuties.Core.Domain.Auth;
 using MuscleCuties.UseCases.Features.Account.EmailChallenge;
 
@@ -79,8 +79,14 @@ public sealed class SignedEmailReceiptTokenIssuer(
         var header = Encode(JsonSerializer.SerializeToUtf8Bytes(new { alg = "RS256", kid = keyId, typ = "JWT" }));
         var claims = Encode(JsonSerializer.SerializeToUtf8Bytes(new
         {
-            iss = issuer, aud = audience, email = normalizedEmail, purpose, challengeId,
-            iat = now, exp = expires, jti = receiptId
+            iss = issuer,
+            aud = audience,
+            email = normalizedEmail,
+            purpose,
+            challengeId,
+            iat = now,
+            exp = expires,
+            jti = receiptId
         }));
         var unsignedToken = $"{header}.{claims}";
         var signature = rsa.SignData(Encoding.ASCII.GetBytes(unsignedToken), HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
