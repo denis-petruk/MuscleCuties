@@ -112,8 +112,27 @@ jobs:
             echo "::error::IOS_DISTRIBUTION_CERTIFICATE_P12 decoded to an empty file; the secret is set but has no content." >&2
             exit 1
           fi
-          if ! openssl pkcs12 -in "$p12" -noout -passin "env:CERTIFICATE_PASSWORD" 2>/dev/null; then
-            echo "::error::IOS_DISTRIBUTION_CERTIFICATE_P12 is not a valid PKCS#12 file for IOS_DISTRIBUTION_CERTIFICATE_PASSWORD." >&2
+          # A PKCS#12 container is a DER SEQUENCE, so its first byte is 0x30. Checking that before
+          # openssl separates "the secret holds something that is not a .p12 at all" (a path, a PEM
+          # certificate, a line-wrapped base64 block) from "the password does not open a real .p12",
+          # which need different secrets replaced.
+          if [ "$(od -An -tx1 -N1 "$p12" | tr -d ' \n')" != "30" ]; then
+            echo "::error::IOS_DISTRIBUTION_CERTIFICATE_P12 does not decode to a PKCS#12 container: its first byte is not 0x30. Store the single-line base64 of the exported Apple Distribution .p12, not a path, a PEM certificate or a wrapped base64 block." >&2
+            exit 1
+          fi
+          # openssl never echoes key material and its own wording is the only thing that tells the
+          # remaining causes apart, so its message is kept instead of being sent to /dev/null.
+          if ! openssl_error="$(openssl pkcs12 -in "$p12" -noout -passin "env:CERTIFICATE_PASSWORD" 2>&1)"; then
+            detail="$(printf '%s\n' "$openssl_error" | head -1)"
+            [ -n "$detail" ] || detail="no diagnostic output"
+            case "$detail" in
+              *"ac verify"*|*"nvalid password"*)
+                echo "::error::IOS_DISTRIBUTION_CERTIFICATE_PASSWORD does not open IOS_DISTRIBUTION_CERTIFICATE_P12 (openssl: $detail). Both secrets come from the same export; set them together." >&2
+                ;;
+              *)
+                echo "::error::IOS_DISTRIBUTION_CERTIFICATE_P12 could not be read as PKCS#12 (openssl: $detail)." >&2
+                ;;
+            esac
             exit 1
           fi
           # Non-secret metadata only: the identity and the date it stops being usable.
