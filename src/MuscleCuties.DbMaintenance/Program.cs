@@ -338,7 +338,7 @@ public static class DatabaseMaintenance
 
         if (Environment.GetEnvironmentVariable("MC_RELEASE_OFFLINE_TEST") == "1")
         {
-            return await ExecuteChildProcessAsync(childCmd, childArgs);
+            return MapChildExitCode(await ExecuteChildProcessAsync(childCmd, childArgs));
         }
 
         var connectionString = Environment.GetEnvironmentVariable(ConnectionStringEnvironmentVariable);
@@ -391,7 +391,21 @@ public static class DatabaseMaintenance
             return 1;
         }
 
-        return await ExecuteChildProcessAsync(childCmd, childArgs, sessionConnection, backendPid);
+        return MapChildExitCode(await ExecuteChildProcessAsync(childCmd, childArgs, sessionConnection, backendPid));
+    }
+
+    /// <summary>
+    ///     Exit 3 is reserved for "no database session could be established". A child cannot borrow it through
+    ///     this runner: the lock session was opened and verified, so its result says nothing about connectivity.
+    /// </summary>
+    public static int MapChildExitCode(int childExitCode)
+    {
+        if (childExitCode != UnreachableExitCode)
+            return childExitCode;
+
+        Console.Error.WriteLine(
+            "Child command exited 3, which is reserved for an unreachable database. This runner's session was established, so the failure is reported as an operation failure.");
+        return FailureExitCode;
     }
 
     /// <summary>
@@ -470,6 +484,11 @@ public static class DatabaseMaintenance
                             return true;
                         case PostgresErrorCodes.InvalidCatalogName:
                             cause = "database-missing";
+                            return true;
+                        // The server refused startup: no session exists, so the schema was never compared.
+                        case PostgresErrorCodes.TooManyConnections:
+                        case PostgresErrorCodes.CannotConnectNow:
+                            cause = "server-unavailable";
                             return true;
                     }
 

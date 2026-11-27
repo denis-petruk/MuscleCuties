@@ -75,6 +75,43 @@ public sealed class DatabaseMaintenanceExitCodeTests
     }
 
     [Fact]
+    public void AStartupRefusalIsNeverClassifiedAsDrift()
+    {
+        // 53300 and 57P03 are the server refusing startup, not a query failing after it answered.
+        foreach (var sqlState in new[] { PostgresErrorCodes.TooManyConnections, PostgresErrorCodes.CannotConnectNow })
+        {
+            Assert.True(DatabaseMaintenance.TryClassifyConnectionFailure(
+                new PostgresException("startup refused", "FATAL", "FATAL", sqlState), out var cause));
+            Assert.Equal("server-unavailable", cause);
+        }
+    }
+
+    [Fact]
+    public void AChildCannotBorrowTheUnreachableExitCode()
+    {
+        // The runner already opened and verified its lock session, so a child's 3 is an operation failure.
+        Assert.Equal(1, DatabaseMaintenance.MapChildExitCode(UnreachableExitCode));
+        Assert.Equal(0, DatabaseMaintenance.MapChildExitCode(0));
+        Assert.Equal(1, DatabaseMaintenance.MapChildExitCode(1));
+    }
+
+    [Fact]
+    public void TheMaintenanceOutputShipsTheTrustedRootBundle()
+    {
+        // Resolving any bundle is not enough: the packaged copy is what makes the fallback work from the
+        // release runner's working directory, which is not a repository checkout.
+        var configuration = new DirectoryInfo(AppContext.BaseDirectory).Parent!.Name;
+        var repository = new DirectoryInfo(AppContext.BaseDirectory);
+        while (repository is not null && !File.Exists(Path.Combine(repository.FullName, "global.json")))
+            repository = repository.Parent;
+
+        Assert.NotNull(repository);
+        var bundled = Path.Combine(repository!.FullName, "src", "MuscleCuties.DbMaintenance", "bin",
+            configuration, "net10.0", "certs", "global-bundle.pem");
+        Assert.True(File.Exists(bundled), bundled);
+    }
+
+    [Fact]
     public void ThePackagedRootBundleIsResolvedWhenTheConnectionDoesNotNameOne()
     {
         // The runner resolves the RDS chain from the bundle shipped next to the binary; without this the
