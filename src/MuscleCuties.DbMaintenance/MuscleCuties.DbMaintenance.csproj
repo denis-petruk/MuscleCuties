@@ -11,4 +11,9 @@
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
+  <ItemGroup>
+    <!-- Shipped next to the binary so the trusted-root fallback resolves from any working directory. -->
+    <None Include="../../certs/global-bundle.pem" Link="certs/global-bundle.pem"
+          Condition="Exists('../../certs/global-bundle.pem')" CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
 </Project>

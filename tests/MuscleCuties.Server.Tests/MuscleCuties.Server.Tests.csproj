@@ -17,5 +17,6 @@
   <ItemGroup>
     <ProjectReference Include="../../services/MuscleCuties.Server/MuscleCuties.Server.csproj" />
     <ProjectReference Include="../../src/MuscleCuties.Infrastructure/MuscleCuties.Infrastructure.csproj" />
+    <ProjectReference Include="../../src/MuscleCuties.DbMaintenance/MuscleCuties.DbMaintenance.csproj" />
   </ItemGroup>
 </Project>
