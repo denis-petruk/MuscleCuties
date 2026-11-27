@@ -420,6 +420,35 @@ class WorkflowContractTests(unittest.TestCase):
         self.assertIn('Do not run the migration workflow for this.', guard)
         self.assertIn('dbcheck exit $status', guard)
 
+    def test_the_preflight_stops_with_the_right_diagnosis_on_every_exit_code(self):
+        # Run the step's own shell with a stub dotnet: exit 3 must stop as connectivity, exit 1 as drift and
+        # exit 0 as success. Asserting on strings in the YAML alone would miss a branch that fell through.
+        deploy = self.job_block(self.workflow, 'deploy_beta')
+        guard = self.step_script(deploy, 'Require the beta database to match this release')
+        cases = (
+            (0, 0, None, None),
+            (1, 1, 'does not match this release', 'could not be reached'),
+            (3, 1, 'could not be reached', 'does not match this release'),
+        )
+        for exit_code, expected_exit, expected_text, forbidden in cases:
+            with tempfile.TemporaryDirectory() as tmp:
+                stub = Path(tmp) / 'dotnet'
+                stub.write_text('#!/usr/bin/env bash\nif [ "$1" = build ]; then exit 0; fi\nexit '
+                                + str(exit_code) + '\n')
+                stub.chmod(0o755)
+                env = {name: value for name, value in os.environ.items()
+                       if not name.startswith('GITHUB_')}
+                env['ConnectionStrings__PostgreSql'] = 'synthetic'
+                env['PATH'] = tmp + os.pathsep + env.get('PATH', '')
+                result = subprocess.run(['bash', '-c', guard], env=env,
+                                        capture_output=True, text=True)
+                self.assertEqual(expected_exit, result.returncode, result.stdout + result.stderr)
+                if expected_text:
+                    self.assertIn(expected_text, result.stdout)
+                    self.assertNotIn(forbidden, result.stdout)
+                else:
+                    self.assertNotIn('::error::', result.stdout)
+
 
 if __name__ == '__main__':
     unittest.main()
