@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 
 namespace MuscleCuties.UI.Services.Localization;
 
@@ -59,19 +58,6 @@ public static partial class UiTextCatalog
 
     private static readonly Dictionary<string, string> AuthoredKeyByEnglish;
 
-    /// <summary>Keys with no Russian translation, used by the localization check so a gap is caught before</summary>
-    /// release rather than showing English on a Russian device.</summary>
-    internal static IReadOnlyCollection<string> MissingRussianKeys =>
-        English.Keys.Where(key => !RussianUiText.Values.ContainsKey(key)).ToArray();
-
-    /// <summary>Keys whose Russian text dropped or reordered format placeholders, which would print a literal</summary>
-    /// brace or lose a value.</summary>
-    internal static IReadOnlyCollection<string> InvalidRussianFormatKeys => English
-        .Where(pair => RussianUiText.Values.TryGetValue(pair.Key, out var russian) &&
-                       !FormatArguments(pair.Value).SequenceEqual(FormatArguments(russian)))
-        .Select(pair => pair.Key)
-        .ToArray();
-
     /// <summary>True when the key is registered, used before resolving text that may be a plain string.</summary>
     internal static bool HasKey(string key)
     {
@@ -110,11 +96,4 @@ public static partial class UiTextCatalog
         return true;
     }
 
-    /// <summary>The format placeholders in a string, sorted, so two translations can be compared for the same</summary>
-    /// set of arguments.</summary>
-    private static string[] FormatArguments(string text)
-    {
-        return Regex.Matches(text, @"\{\d+(?::[^}]*)?\}")
-            .Select(match => match.Value).OrderBy(value => value, StringComparer.Ordinal).ToArray();
-    }
 }
